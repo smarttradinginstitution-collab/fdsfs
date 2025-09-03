@@ -103,7 +103,7 @@ const emit = defineEmits(['close']);
   padding: var(--semantic-size-inset-xl);
   z-index: var(--semantic-layer-z-index-modal);
   width: 90%;
-  max-width: 500px;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
