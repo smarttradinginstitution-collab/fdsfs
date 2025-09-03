@@ -113,6 +113,18 @@ const emit = defineEmits(['close']);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.modal-body {
+  flex-grow: 1; /* Allow body to take up available space */
+  min-height: 0; /* Critical for allowing overflow on flex children */
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-footer {
+    flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .close-button {

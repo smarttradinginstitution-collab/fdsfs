@@ -140,20 +140,23 @@ const tradeTableHeaders = computed(() => [
 .header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); }
 
 /* Body Styles */
-.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-xl); }
-
-/* --- CRITICAL FIXES ARE HERE --- */
+.modal-body-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+  flex-grow: 1;
+  min-height: 0; /* Allow flex children to shrink and grow */
+}
 .top-section {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: var(--semantic-size-gap-xl);
   align-items: stretch; /* FIX: ensures chart container gets full height */
+  flex-shrink: 0; /* Prevent this section from shrinking */
 }
 .chart-section {
-  min-height: 150px; /* Ensure the section has a minimum height */
+  min-height: 150px;
 }
-/* --- END OF CRITICAL FIXES --- */
-
 .stats-section { display: grid; grid-template-columns: repeat(4, 1fr); }
 .stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-2); padding: 0 var(--semantic-size-inset-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); }
 .stat-cell:last-child { border-right: none; }
@@ -162,10 +165,15 @@ const tradeTableHeaders = computed(() => [
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
 /* Table Styles */
-.table-wrapper { overflow-x: auto; }
+.table-wrapper {
+  flex-grow: 1; /* Allow table to take up remaining space */
+  min-height: 0; /* Critical for allowing overflow-y to work in a flex container */
+  overflow-y: auto; /* FIX: Make ONLY the table scroll vertically */
+  overflow-x: auto;
+}
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: var(--semantic-size-inset-md) var(--semantic-size-inset-sm); text-align: left; white-space: nowrap; border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default); }
-th { font: var(--semantic-font-style-label-md); font-weight: 500; color: var(--semantic-color-text-secondary); text-transform: uppercase; }
+th { font: var(--semantic-font-style-label-md); font-weight: 500; color: var(--semantic-color-text-secondary); text-transform: uppercase; position: sticky; top: 0; background-color: var(--semantic-color-surface-primary); }
 tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
 .no-trades-cell { text-align: center; color: var(--semantic-color-text-secondary); font-style: italic; padding: var(--semantic-size-inset-xl) 0; }
 
@@ -174,9 +182,10 @@ tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
 </style>
 
 <style>
-/* --- CRITICAL FIXES ARE HERE --- */
 .daily-summary-modal .modal-card {
   max-width: 960px; /* FIX: Make modal wider */
-  gap: var(--semantic-size-stack-xl);
+  max-height: 90vh; /* FIX: Constrain height to make it a horizontal rectangle */
+  gap: var(--semantic-size-stack-lg);
+  /* The .modal-card is already a flex column, so its children (header, body, footer) will stack */
 }
 </style>
