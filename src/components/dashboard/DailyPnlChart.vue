@@ -97,8 +97,9 @@ const chartOptions = computed(() => ({
     y: {
       display: true,
       grid: {
-        color: 'var(--semantic-color-border-muted)',
-        borderDash: [5, 5],
+        color: 'rgba(229, 231, 235, 0.2)', // Use a hardcoded light gray color
+        borderDash: [3, 3], // Dotted line effect
+        drawBorder: false, // Do not draw the solid axis line
       },
       ticks: {
         color: 'var(--semantic-color-text-secondary)',
