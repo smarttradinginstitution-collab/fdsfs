@@ -6,7 +6,8 @@
 // =============================================================================
 -->
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import apiClient from '../services/api';
 import StatCard from '../components/dashboard/StatCard.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
@@ -36,10 +37,41 @@ const visibleStats = computed(() => {
   const allStats = tradesStore.allDashboardStats;
   return visibleKeys.map(key => allStats[key]);
 });
+
+// --- DATA FETCHING EXAMPLE ---
+// Esempio di come recuperare i dati dal backend
+const backendData = ref(null);
+const fetchError = ref(null);
+
+onMounted(async () => {
+  try {
+    // Replace '/api/v1/trades' with your actual endpoint.
+    // Sostituisci '/api/v1/trades' con il tuo vero endpoint.
+    const response = await apiClient.get('/api/v1/trades');
+    backendData.value = response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    fetchError.value = 'Failed to fetch data from the backend. Make sure the backend is running and that the VITE_API_URL in your .env file is correct.';
+    // Also, check the browser's console for CORS errors.
+    // Controlla anche la console del browser per errori CORS.
+  }
+});
 </script>
 
 <template>
   <div class="dashboard-view">
+
+    <!-- Esempio di visualizzazione dati dal backend -->
+    <div v-if="fetchError" class="error-box">
+      <h3>Backend Connection Error</h3>
+      <p>{{ fetchError }}</p>
+    </div>
+    <div v-if="backendData" class="data-box">
+      <h3>Data from Backend (for testing):</h3>
+      <pre>{{ JSON.stringify(backendData, null, 2) }}</pre>
+    </div>
+
+
     <div class="action-bar">
       <BaseButton variant="secondary" @click="isSettingsModalOpen = true">
         <SettingsIcon />
@@ -111,6 +143,27 @@ const visibleStats = computed(() => {
 
 .main-content-grid > * {
   min-width: 0;
+}
+
+.error-box, .data-box {
+  padding: var(--semantic-size-inset-lg);
+  border-radius: var(--semantic-border-radius-lg);
+  background-color: var(--color-background-muted);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.error-box {
+  background-color: var(--color-background-negative-subtle);
+  border-color: var(--color-border-negative);
+  color: var(--color-text-negative);
+}
+
+.data-box pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background-color: var(--color-background-subtle);
+  padding: var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-md);
 }
 
 @media (max-width: 1280px) {
