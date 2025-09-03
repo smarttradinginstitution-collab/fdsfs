@@ -30,6 +30,19 @@ defineProps({
 const emit = defineEmits(['close']);
 </script>
 
+<!--
+Aggiungiamo un secondo blocco <script> per definire opzioni a livello di componente
+che non sono disponibili all'interno di `<script setup>`.
+`inheritAttrs: false` dice a Vue di NON applicare automaticamente gli attributi
+passati al componente (come `class` o `id`) all'elemento radice.
+Lo faremo manualmente con `v-bind="$attrs"` per avere un controllo preciso.
+-->
+<script>
+export default {
+  inheritAttrs: false,
+};
+</script>
+
 <template>
   <!--
   `<Teleport to="body">` è una funzionalità avanzata di Vue.
@@ -52,8 +65,10 @@ const emit = defineEmits(['close']);
         solo se si clicca direttamente su questo `div` (l'overlay scuro) e non
         sui suoi figli (la card bianca). In questo modo, chiudiamo la modale
         cliccando sullo sfondo.
+      - `v-bind="$attrs"`: Applichiamo manualmente tutti gli attributi non-prop
+        (come `class`) a questo elemento.
       -->
-      <div v-if="show" class="modal-overlay" @click.self="emit('close')">
+      <div v-if="show" class="modal-overlay" @click.self="emit('close')" v-bind="$attrs">
         <!-- La card (il "foglio" bianco) che contiene il contenuto della modale. -->
         <div class="modal-card">
           <header class="modal-header">
