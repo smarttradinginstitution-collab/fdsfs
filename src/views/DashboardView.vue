@@ -227,5 +227,11 @@ onMounted(async () => {
     flex-direction: column; /* Impila i bottoni verticalmente */
     align-items: stretch; /* Allunga i bottoni a tutta larghezza */
   }
+
+  .stats-grid {
+    /* Forza un layout a 2 colonne su schermi piccoli, come richiesto */
+    grid-template-columns: 1fr 1fr;
+    gap: var(--semantic-size-stack-sm); /* Riduci il gap per compattare */
+  }
 }
 </style>

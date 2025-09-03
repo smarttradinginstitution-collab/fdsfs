@@ -47,7 +47,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 
     <!-- Layout per Profit Factor -->
     <template v-else-if="isProfitFactor">
-        <div class="text-content">
+        <div class="text-content text-content--simple">
             <p class="stat-label">{{ stat.label }}</p>
             <p :class="valueClasses">{{ stat.value }}</p>
         </div>
@@ -111,6 +111,8 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   display: flex;
   flex-direction: column;
   gap: clamp(var(--base-size-spacing-0-5), 1vw, var(--semantic-size-stack-xs));
+  /* Aggiunto per assicurare che il contenitore del testo possa restringersi */
+  min-width: 0;
 }
 .stat-label {
   /* Font fluido per l'etichetta */
@@ -140,6 +142,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     display: flex;
     align-items: center;
     gap: var(--semantic-size-stack-sm);
+    flex-wrap: wrap; /* Permette ai badge di andare a capo se necessario */
 }
 .badges {
     display: flex;
@@ -163,19 +166,51 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 .chart-content {
     flex-shrink: 0;
     /* Larghezza fluida per il contenitore del grafico */
-    width: clamp(45px, 12vw, 60px);
+    width: clamp(40px, 10vw, 50px); /* Leggermente più piccolo */
 }
 
 /* Responsive Stacking per le card con grafici */
 @media (max-width: 480px) {
+    .stat-card {
+        /* Riduciamo il padding per i telefoni */
+        padding: clamp(var(--base-size-spacing-2), 2.5vw, var(--base-size-spacing-3));
+    }
     .stat-card--with-chart {
         flex-direction: column;
+        align-items: stretch; /* Allinea gli elementi per occupare tutta la larghezza */
+        gap: var(--semantic-size-stack-xs); /* Riduciamo il gap */
+    }
+    .text-content {
+        /* Allinea il testo e il grafico */
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: var(--semantic-size-stack-sm);
+    }
+    .stat-label, .stat-value {
+        /* Riduciamo la dimensione del testo per adattarsi meglio */
+        font-size: clamp(0.75rem, 3.5vw, 0.9rem);
+    }
+    .stat-value {
+        font-size: clamp(1rem, 5vw, 1.25rem);
+    }
+    .win-rate-label {
+        flex-direction: column;
         align-items: flex-start;
-        gap: var(--semantic-size-stack-sm); /* Leggermente ridotto per schermi piccoli */
+        gap: 2px;
+    }
+    .chart-content {
+        /* Allinea il grafico a destra quando il testo è a sinistra */
+        align-self: center;
+        width: clamp(35px, 10vw, 45px);
     }
 
-    .text-content {
-        width: 100%; /* Assicura che il testo occupi tutta la larghezza */
+    /* Layout specifico per Profit Factor che ha solo due linee */
+    .text-content--simple {
+        flex-direction: column !important; /* Usiamo !important per sovrascrivere lo stile generale di .text-content */
+        align-items: flex-start !important;
     }
 }
 
