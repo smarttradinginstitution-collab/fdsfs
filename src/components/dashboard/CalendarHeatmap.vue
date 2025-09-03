@@ -140,7 +140,6 @@ function formatCellPnl(pnl) {
 .day-cell:not(.placeholder):hover {
     transform: scale(1.05);
     outline: 2px solid var(--semantic-color-border-focus);
-    z-index: 10;
 }
 .placeholder {
   background-color: transparent;
