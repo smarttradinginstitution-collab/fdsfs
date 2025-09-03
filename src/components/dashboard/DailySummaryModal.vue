@@ -133,7 +133,7 @@ const tradeTableHeaders = computed(() => [
         </div>
 
         <div class="table-wrapper">
-          <table>
+          <table class="summary-table">
             <thead>
               <tr>
                 <th v-for="header in tradeTableHeaders" :key="header.key">{{ header.text }}</th>
@@ -180,10 +180,12 @@ const tradeTableHeaders = computed(() => [
 .header-left { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); }
 .date { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
 .pnl { font: var(--semantic-font-style-heading-sm); font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); }
+
+/* P&L Coloring - This will apply to header and table via :deep selector below */
 .pnl--positive { color: var(--semantic-color-text-positive); }
 .pnl--negative { color: var(--semantic-color-text-negative); }
 .pnl--neutral { color: var(--semantic-color-text-primary); }
-.header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); }
 
 /* Body Styles */
 .modal-body-content {
@@ -202,7 +204,7 @@ const tradeTableHeaders = computed(() => [
 }
 .chart-section { min-height: 150px; }
 
-/* New Stats Section Styles */
+/* Stats Section Styles */
 .stats-section {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -220,17 +222,17 @@ const tradeTableHeaders = computed(() => [
     gap: var(--base-size-spacing-1);
 }
 .stat-label {
-  font: var(--semantic-font-style-label-md); /* Match table header */
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
-  display: block; /* Force label to its own line */
+  display: block;
 }
 .stat-value {
-  font: var(--semantic-font-style-body-sm); /* Match table cell */
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
-  font-weight: 600; /* Keep it slightly bolder than normal text */
+  font-weight: 600;
   white-space: nowrap;
-  display: block; /* Force value to its own line */
+  display: block;
 }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
@@ -241,10 +243,11 @@ const tradeTableHeaders = computed(() => [
   overflow-y: auto;
   overflow-x: auto;
 }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: var(--semantic-size-inset-md) var(--semantic-size-inset-sm); text-align: left; white-space: nowrap; border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default); }
-th { font: var(--semantic-font-style-label-md); font-weight: 500; color: var(--semantic-color-text-secondary); text-transform: uppercase; position: sticky; top: 0; background-color: var(--semantic-color-surface-primary); }
-tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
+.summary-table { width: 100%; border-collapse: collapse; }
+.summary-table th, .summary-table td { padding: var(--semantic-size-inset-md) var(--semantic-size-inset-sm); text-align: left; white-space: nowrap; border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.summary-table th { font: var(--semantic-font-style-label-sm); font-weight: 500; color: var(--semantic-color-text-secondary); text-transform: uppercase; position: sticky; top: 0; background-color: var(--semantic-color-surface-primary); }
+.summary-table td { font: var(--semantic-font-style-body-xs); } /* Smaller font for table cells */
+.summary-table tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
 .no-trades-cell { text-align: center; color: var(--semantic-color-text-secondary); font-style: italic; padding: var(--semantic-size-inset-xl) 0; }
 
 /* Footer Styles */
@@ -252,10 +255,19 @@ tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
 </style>
 
 <style>
+/* Non-scoped styles for modal card and deep selectors */
 .daily-summary-modal .modal-card {
   max-width: 800px;
   width: 95%;
   max-height: 90vh;
   gap: var(--semantic-size-stack-lg);
+}
+
+/* Deep selector to apply P&L colors inside the child BaseTable component */
+.daily-summary-modal .pnl--positive {
+    color: var(--semantic-color-text-positive);
+}
+.daily-summary-modal .pnl--negative {
+    color: var(--semantic-color-text-negative);
 }
 </style>
