@@ -52,6 +52,16 @@
           "$type": "typography",
           "$comment": "Stile per testo secondario o didascalie."
         },
+        "body-xs": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.size.xs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per testo terziario, come metadati o timestamp."
+        },
         "label-md": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
@@ -61,6 +71,36 @@
           },
           "$type": "typography",
           "$comment": "Stile per etichette, bottoni e input di medie dimensioni."
+        },
+        "label-sm": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.medium}",
+            "fontSize": "{base.font.size.xs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per etichette piccole, come quelle nelle tabelle."
+        },
+        "label-xs": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.medium}",
+            "fontSize": "{base.font.size.xs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per etichette molto piccole, varianti per la tabella x-small."
+        },
+        "body-xxs": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.size.xxs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per testo piccolissimo, varianti per la tabella x-small."
         },
         "data-numeric": {
             "$value": {

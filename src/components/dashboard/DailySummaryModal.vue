@@ -92,7 +92,7 @@ const tradeTableHeaders = computed(() => [
         </div>
 
         <div class="table-wrapper">
-          <BaseTable :headers="tradeTableHeaders" :items="dailyData.trades" size="small">
+          <BaseTable :headers="tradeTableHeaders" :items="dailyData.trades" size="x-small">
             <template #pnl="{ item }">
               <span :class="pnlClass(item.pnl)">{{ formattedPnl(item.pnl) }}</span>
             </template>
