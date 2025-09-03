@@ -69,21 +69,6 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
-  // --- STATO E AZIONI PER IL MODALE DI RIEPILOGO GIORNALIERO ---
-  const isDailySummaryModalOpen = ref(false);
-  const selectedDate = ref(null);
-
-  function openDailySummaryModal(date) {
-    selectedDate.value = date;
-    isDailySummaryModalOpen.value = true;
-  }
-
-  function closeDailySummaryModal() {
-    isDailySummaryModalOpen.value = false;
-    selectedDate.value = null;
-  }
-
-
   // --- ESPORTAZIONE ---
   return {
     isSidebarCollapsed,
@@ -99,11 +84,5 @@ export const useUiStore = defineStore('ui', () => {
     toggleCalendarTradeCount,
     isCalendarWinRateVisible,
     toggleCalendarWinRate,
-
-    // Esportazione per il modale
-    isDailySummaryModalOpen,
-    selectedDate,
-    openDailySummaryModal,
-    closeDailySummaryModal,
   };
 });

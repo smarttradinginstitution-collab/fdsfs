@@ -62,7 +62,6 @@ function formatCellPnl(pnl) {
             class="day-cell"
             :class="{ 'no-trade': day.dailyData.tradeCount === 0 }"
             :style="getPnlColor(day.dailyData.totalPnl)"
-            @click="uiStore.openDailySummaryModal(day.fullDate)"
           >
             <span class="day-number">{{ day.date }}</span>
             <div v-if="day.dailyData.tradeCount > 0" class="day-details">
@@ -133,7 +132,6 @@ function formatCellPnl(pnl) {
   transition: transform 150ms;
   display: flex;
   align-items: center;
-  cursor: pointer;
   justify-content: center;
   overflow: hidden;
 }

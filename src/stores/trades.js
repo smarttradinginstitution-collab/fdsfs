@@ -112,6 +112,10 @@ export const useTradesStore = defineStore('trades', {
       return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats, recentTrades: trades.slice(0, 4) };
     },
 
+    recentTrades() {
+      return this.processedData.recentTrades;
+    },
+
     allDashboardStats() {
       const { stats } = this.processedData;
       const { totalPnl, tradeCount, winningTrades, losingTrades, breakEvenTrades, grossProfit, grossLoss } = stats;
@@ -187,7 +191,6 @@ export const useTradesStore = defineStore('trades', {
 
     calendarDataByMonth() {
       const { dailyDataForCalendar } = this.processedData;
-      //... this getter and others remain the same as the original
       const filterStore = useFilterStore();
       const viewDate = new Date(filterStore.endDate);
       const year = viewDate.getFullYear();
@@ -234,6 +237,67 @@ export const useTradesStore = defineStore('trades', {
 
       return { weeksOfDays, weeklySummaries };
     },
+
+    strategyPerformanceData() {
+      const rawData = this.processedData.performanceByStrategy;
+      if (Object.keys(rawData).length === 0) return [];
+      const maxPnl = Math.max(...Object.values(rawData).map(stat => Math.abs(stat.totalPnl)));
+      return Object.entries(rawData).map(([strategy, stats]) => {
+        const winRate = stats.tradeCount > 0 ? (stats.winningTrades / stats.tradeCount) * 100 : 0;
+        return {
+          label: strategy,
+          value: `${stats.tradeCount} trades | ${winRate.toFixed(0)}% WR | $${stats.totalPnl.toFixed(2)}`,
+          barWidth: maxPnl > 0 ? `${(Math.abs(stats.totalPnl) / maxPnl) * 100}%` : '0%',
+          isPositive: stats.totalPnl >= 0,
+        };
+      });
+    },
+
+    performanceByDayOfWeek() {
+        return this.processedData.performanceByDayOfWeek;
+    },
+
+    winLossDays(state) {
+      if (!this.processedData.winLossDaysStats) {
+        return { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
+      }
+      return this.processedData.winLossDaysStats;
+    },
+
+    equityCurveData(state) {
+      if (this.filteredTrades.length === 0) return { labels: [], data: [] };
+      const sortedTrades = [...this.filteredTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let cumulativePnl = 0;
+      const dataPoints = sortedTrades.map(trade => {
+        cumulativePnl += trade.pnl;
+        return { date: trade.date, pnl: cumulativePnl };
+      });
+      return { labels: dataPoints.map(p => p.date), data: dataPoints.map(p => p.pnl) };
+    },
+
+    tradeHeaders: () => [
+      { key: 'ticker', text: 'Ticker' },
+      { key: 'type', text: 'Type' },
+      { key: 'pnl', text: 'Net P&L' },
+      { key: 'date', text: 'Date' },
+    ],
+
+    calendarControlsData() {
+      const filterStore = useFilterStore();
+      const viewDate = new Date(filterStore.endDate);
+
+      if (isNaN(viewDate.getTime())) return { monthLabel: 'Invalid Date', monthlyPnl: 0 };
+
+      const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      let monthlyPnl = 0;
+      for (const trade of this.filteredTrades) {
+        const tradeDate = new Date(trade.date);
+        if (tradeDate.getFullYear() === viewDate.getFullYear() && tradeDate.getMonth() === viewDate.getMonth()) {
+          monthlyPnl += trade.pnl;
+        }
+      }
+      return { monthLabel, monthlyPnl };
+    }
   },
 
   actions: {
