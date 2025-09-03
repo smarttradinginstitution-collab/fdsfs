@@ -161,6 +161,8 @@ const tradeTableHeaders = computed(() => [
 <style>
 /* Non-scoped styles for modal card and deep selectors */
 .daily-summary-modal .modal-card { max-width: 800px; width: 95%; max-height: 90vh; gap: var(--semantic-size-stack-lg); }
-.daily-summary-modal .pnl--positive { color: var(--semantic-color-text-positive) !important; }
-.daily-summary-modal .pnl--negative { color: var(--semantic-color-text-negative) !important; }
+.daily-summary-modal .pnl--positive,
+.daily-summary-modal .stat-value.pnl--positive { color: var(--semantic-color-text-positive) !important; }
+.daily-summary-modal .pnl--negative,
+.daily-summary-modal .stat-value.pnl--negative { color: var(--semantic-color-text-negative) !important; }
 </style>
