@@ -23,7 +23,7 @@ const props = defineProps({
   size: {
     type: String,
     default: 'medium',
-    validator: (value) => ['medium', 'small'].includes(value),
+    validator: (value) => ['medium', 'small', 'x-small'].includes(value),
   }
 });
 
@@ -83,6 +83,18 @@ td {
     font: var(--semantic-font-style-label-sm);
     padding-top: var(--semantic-size-inset-sm);
     padding-bottom: var(--semantic-size-inset-sm);
+}
+
+/* Stili per la dimensione extra piccola */
+.table--x-small th {
+    font: var(--semantic-font-style-label-xs);
+    padding-top: var(--semantic-size-inset-xs);
+    padding-bottom: var(--semantic-size-inset-xs);
+}
+.table--x-small td {
+    font: var(--semantic-font-style-body-xxs);
+    padding-top: var(--semantic-size-inset-xs);
+    padding-bottom: var(--semantic-size-inset-xs);
 }
 .table--small td {
     font: var(--semantic-font-style-body-xs);

@@ -81,7 +81,11 @@ function formatCellPnl(pnl) {
         </template>
 
         <!-- Riepilogo Settimanale - renderizzato una volta per riga della griglia -->
-        <div v-if="uiStore.isWeeklySummaryVisible" class="week-summary-card">
+        <div
+          v-if="uiStore.isWeeklySummaryVisible"
+          class="week-summary-card"
+          @click="uiStore.openWeeklySummaryModal(weekIndex)"
+        >
           <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
           <span class="week-pnl" :class="{
               'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
@@ -205,7 +209,14 @@ function formatCellPnl(pnl) {
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--base-border-radius-sm);
+  transition: all 150ms ease-in-out;
+  cursor: pointer;
   /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
+}
+.week-summary-card:hover {
+  transform: scale(1.03);
+  border-color: var(--semantic-color-border-focus);
+  background-color: var(--semantic-color-surface-secondary);
 }
 
 .week-title {

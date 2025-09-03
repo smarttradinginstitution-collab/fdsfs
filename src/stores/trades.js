@@ -189,6 +189,60 @@ export const useTradesStore = defineStore('trades', {
         }
 
         summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
+        summary.stats.pnlAfterCommission = summary.stats.netPnl - summary.stats.totalCommission;
+
+        return summary;
+      };
+    },
+
+    getWeeklySummaryDetails(state) {
+      return (weekIndex) => {
+        if (weekIndex === null || weekIndex === undefined) return null;
+
+        const weekData = this.calendarDataByMonth.weeksOfDays[weekIndex];
+        if (!weekData) return null;
+
+        const weekDates = weekData.filter(day => !day.isPlaceholder).map(day => day.fullDate);
+        const weeklyTrades = state.trades.filter(t => weekDates.includes(t.date));
+        const sortedWeeklyTrades = [...weeklyTrades].sort((a, b) => new Date(a.date) - new Date(b.date) || a.id - b.id);
+
+        const startDate = weekDates[0];
+        const endDate = weekDates[weekDates.length - 1];
+
+        const summary = {
+          startDate,
+          endDate,
+          trades: sortedWeeklyTrades,
+          stats: { netPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, totalCommission: 0, profitFactor: 0, grossProfit: 0, totalVolume: 0 },
+          cumulativePnlForChart: { labels: ['Start'], data: [0] }
+        };
+
+        if (weeklyTrades.length === 0) return summary;
+
+        let grossLoss = 0;
+        let cumulativePnl = 0;
+
+        for (const trade of sortedWeeklyTrades) {
+          summary.stats.netPnl += trade.pnl;
+          summary.stats.tradeCount++;
+          summary.stats.totalCommission += trade.commission;
+          summary.stats.totalVolume += trade.volume;
+
+          if (trade.pnl > 0) {
+            summary.stats.winningTrades++;
+            summary.stats.grossProfit += trade.pnl;
+          } else if (trade.pnl < 0) {
+            summary.stats.losingTrades++;
+            grossLoss += Math.abs(trade.pnl);
+          }
+
+          cumulativePnl += trade.pnl;
+          summary.cumulativePnlForChart.data.push(cumulativePnl);
+          summary.cumulativePnlForChart.labels.push(`${trade.date.split('-')[2]} - ${trade.ticker}`);
+        }
+
+        summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
+        summary.stats.pnlAfterCommission = summary.stats.netPnl - summary.stats.totalCommission;
 
         return summary;
       };

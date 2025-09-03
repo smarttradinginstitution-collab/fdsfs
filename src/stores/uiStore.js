@@ -83,6 +83,20 @@ export const useUiStore = defineStore('ui', () => {
     selectedDate.value = null;
   }
 
+  // --- STATO E AZIONI PER IL MODALE DI RIEPILOGO SETTIMANALE ---
+  const isWeeklySummaryModalOpen = ref(false);
+  const selectedWeekIndex = ref(null);
+
+  function openWeeklySummaryModal(weekIndex) {
+    selectedWeekIndex.value = weekIndex;
+    isWeeklySummaryModalOpen.value = true;
+  }
+
+  function closeWeeklySummaryModal() {
+    isWeeklySummaryModalOpen.value = false;
+    selectedWeekIndex.value = null;
+  }
+
 
   // --- ESPORTAZIONE ---
   return {
@@ -100,10 +114,16 @@ export const useUiStore = defineStore('ui', () => {
     isCalendarWinRateVisible,
     toggleCalendarWinRate,
 
-    // Esportazione per il modale
+    // Esportazione per il modale giornaliero
     isDailySummaryModalOpen,
     selectedDate,
     openDailySummaryModal,
     closeDailySummaryModal,
+
+    // Esportazione per il modale settimanale
+    isWeeklySummaryModalOpen,
+    selectedWeekIndex,
+    openWeeklySummaryModal,
+    closeWeeklySummaryModal,
   };
 });

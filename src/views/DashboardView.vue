@@ -19,6 +19,7 @@ import PlusIcon from '../components/icons/PlusIcon.vue';
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
+import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
@@ -78,6 +79,8 @@ const visibleStats = computed(() => {
 
     <!-- Modale per il Riepilogo Giornaliero -->
     <DailySummaryModal />
+    <!-- Modale per il Riepilogo Settimanale -->
+    <WeeklySummaryModal />
   </div>
 </template>
 

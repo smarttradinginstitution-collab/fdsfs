@@ -8,18 +8,18 @@ import IconButton from '@/components/ui/IconButton.vue';
 import SparkleIcon from '@/components/icons/SparkleIcon.vue';
 import DailyPnlChart from './DailyPnlChart.vue';
 import BasePill from '@/components/ui/BasePill.vue';
-import BaseTable from '@/components/ui/BaseTable.vue'; // Import BaseTable
+import BaseTable from '@/components/ui/BaseTable.vue';
 
 const uiStore = useUiStore();
 const tradesStore = useTradesStore();
 
-const dailyData = computed(() => {
-  if (!uiStore.selectedDate) return null;
-  return tradesStore.getDailySummary(uiStore.selectedDate);
+const weeklyData = computed(() => {
+  if (uiStore.selectedWeekIndex === null) return null;
+  return tradesStore.getWeeklySummaryDetails(uiStore.selectedWeekIndex);
 });
 
 const handleClose = () => {
-  uiStore.closeDailySummaryModal();
+  uiStore.closeWeeklySummaryModal();
 };
 
 const pnlStyle = (pnl) => {
@@ -28,10 +28,18 @@ const pnlStyle = (pnl) => {
   return {};
 };
 
-const formattedDate = computed(() => {
-  if (!dailyData.value) return '';
-  const date = new Date(dailyData.value.date + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+const formattedDateRange = computed(() => {
+  if (!weeklyData.value || !weeklyData.value.startDate || !weeklyData.value.endDate) return '';
+  const start = new Date(weeklyData.value.startDate + 'T00:00:00');
+  const end = new Date(weeklyData.value.endDate + 'T00:00:00');
+  const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+  const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+
+  if (startMonth === endMonth) {
+    return `${startMonth} ${start.getDate()} - ${end.getDate()}, ${start.getFullYear()}`;
+  } else {
+    return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${start.getFullYear()}`;
+  }
 });
 
 const formattedPnl = (pnl) => {
@@ -41,21 +49,21 @@ const formattedPnl = (pnl) => {
 };
 
 const statsGrid = computed(() => {
-    if (!dailyData.value) return null;
-    const stats = dailyData.value.stats;
+    if (!weeklyData.value) return null;
+    const stats = weeklyData.value.stats;
     return {
         col1: [ { label: 'Total Trades', value: stats.tradeCount }, { label: 'Winrate', value: `${(stats.winningTrades / (stats.tradeCount || 1) * 100).toFixed(1)}%` }, ],
         col2: [ { label: 'Winners', value: stats.winningTrades }, { label: 'Losers', value: stats.losingTrades }, ],
         col3: [
-          { label: 'Gross P&L', value: formattedPnl(stats.pnlAfterCommission), rawValue: stats.pnlAfterCommission, isPnl: true },
-          { label: 'Volume', value: stats.totalVolume },
+            { label: 'Gross P&L', value: formattedPnl(stats.pnlAfterCommission), rawValue: stats.pnlAfterCommission, isPnl: true },
+            { label: 'Volume', value: stats.totalVolume },
         ],
         col4: [ { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` }, { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) }, ]
     };
 });
 
 const tradeTableHeaders = computed(() => [
-    { key: 'openTime', text: 'Open Time' }, { key: 'ticker', text: 'Ticker' }, { key: 'type', text: 'Side' }, { key: 'instrument', text: 'Instrument' },
+    { key: 'openTime', text: 'Open Time' }, { key: 'date', text: 'Date' }, { key: 'ticker', text: 'Ticker' }, { key: 'type', text: 'Side' }, { key: 'instrument', text: 'Instrument' },
     { key: 'pnl', text: 'Net P&L' }, { key: 'netROI', text: 'Net ROI' }, { key: 'rMultiple', text: 'Realized R' }, { key: 'playbook', text: 'Playbook' },
     { key: 'ticks', text: 'Ticks' }, { key: 'bestExit', text: 'Best Exit' }, { key: 'commission', text: 'Commission' },
 ]);
@@ -63,16 +71,16 @@ const tradeTableHeaders = computed(() => [
 
 <template>
   <BaseModal
-    :show="uiStore.isDailySummaryModalOpen"
+    :show="uiStore.isWeeklySummaryModalOpen"
     @close="handleClose"
     :show-close-button="false"
-    class="daily-summary-modal"
+    class="weekly-summary-modal"
   >
     <template #header>
       <div class="header-content">
         <div class="header-left">
-          <span class="date">{{ formattedDate }}</span>
-          <span :style="pnlStyle(dailyData?.stats.netPnl)">Net P&L {{ formattedPnl(dailyData?.stats.netPnl) }}</span>
+          <span class="date">{{ formattedDateRange }}</span>
+          <span :style="pnlStyle(weeklyData?.stats.netPnl)">Net P&L {{ formattedPnl(weeklyData?.stats.netPnl) }}</span>
         </div>
         <div class="header-right">
           <BaseButton variant="secondary">Add Note</BaseButton>
@@ -82,9 +90,9 @@ const tradeTableHeaders = computed(() => [
     </template>
 
     <template #default>
-      <div v-if="dailyData" class="modal-body-content">
+      <div v-if="weeklyData" class="modal-body-content">
         <div class="top-section">
-          <div class="chart-section"><DailyPnlChart :chart-data="dailyData.cumulativePnlForChart" /></div>
+          <div class="chart-section"><DailyPnlChart :chart-data="weeklyData.cumulativePnlForChart" /></div>
           <div class="stats-section">
             <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
                 <div v-for="stat in col" :key="stat.label" class="stat-cell">
@@ -97,7 +105,7 @@ const tradeTableHeaders = computed(() => [
         </div>
 
         <div class="table-wrapper">
-          <BaseTable :headers="tradeTableHeaders" :items="dailyData.trades" size="x-small">
+          <BaseTable :headers="tradeTableHeaders" :items="weeklyData.trades" size="x-small">
             <template #pnl="{ item }">
               <span :style="pnlStyle(item.pnl)">{{ formattedPnl(item.pnl) }}</span>
             </template>

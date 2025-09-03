@@ -2,6 +2,11 @@
   "base": {
     "font": {
       "size": {
+        "xxs": {
+          "$value": "0.625rem",
+          "$type": "fontSize",
+          "$comment": "10px. Per testo estremamente piccolo, usato raramente."
+        },
         "xs": {
           "$value": "0.75rem",
           "$type": "fontSize",
