@@ -51,9 +51,11 @@ const statsGrid = computed(() => {
             { label: 'Losers', value: stats.losingTrades },
         ],
         col3: [
-            { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` },
+            { label: 'Gross P&L', value: formattedPnl(stats.grossProfit) },
+            { label: 'Volume', value: stats.totalVolume },
         ],
         col4: [
+            { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` },
             { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) },
         ]
     };
@@ -116,13 +118,13 @@ const tradeTableHeaders = computed(() => [
                 </div>
             </div>
             <div class="stat-col">
-                <div v-for="stat in statsGrid.col3" :key="stat.label" class="stat-cell">
+                <div v-for="stat in statsGrid.col3" :key="stat.label" class="stat-cell stacked">
                     <span class="stat-label">{{ stat.label }}</span>
                     <span class="stat-value">{{ stat.value }}</span>
                 </div>
             </div>
             <div class="stat-col">
-                <div v-for="stat in statsGrid.col4" :key="stat.label" class="stat-cell">
+                <div v-for="stat in statsGrid.col4" :key="stat.label" class="stat-cell stacked">
                     <span class="stat-label">{{ stat.label }}</span>
                     <span class="stat-value">{{ stat.value }}</span>
                 </div>
@@ -214,7 +216,9 @@ const tradeTableHeaders = computed(() => [
     border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
     padding: 0 var(--semantic-size-inset-lg);
 }
-.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-1); }
+.stat-cell.stacked {
+    gap: var(--base-size-spacing-1);
+}
 .stat-label { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
 .stat-value { font: var(--semantic-font-style-heading-xs); color: var(--semantic-color-text-primary); font-weight: 600; }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }

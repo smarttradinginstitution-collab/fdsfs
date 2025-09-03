@@ -10,13 +10,13 @@ export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [
       // Dati di esempio con i nuovi campi
-      { id: 1, ticker: 'AAPL', type: 'Long', pnl: 150.75, date: '2025-08-28', strategy: 'Breakout', risk: 50, openTime: '09:30:15', instrument: 'Stocks', commission: 4.50, netROI: 1.5, rMultiple: 3.01, ticks: 60, bestExit: 151.00 },
-      { id: 2, ticker: 'TSLA', type: 'Short', pnl: -75.20, date: '2025-08-28', strategy: 'Reversal', risk: 50, openTime: '10:05:40', instrument: 'Stocks', commission: 4.50, netROI: -0.75, rMultiple: -1.50, ticks: -30, bestExit: 249.50 },
-      { id: 3, ticker: 'NVDA', type: 'Long', pnl: 278.40, date: '2025-08-27', strategy: 'Breakout', risk: 100, openTime: '11:15:00', instrument: 'Stocks', commission: 6.20, netROI: 1.39, rMultiple: 2.78, ticks: 110, bestExit: 450.00 },
-      { id: 4, ticker: 'GOOG', type: 'Long', pnl: 121.00, date: '2025-08-20', strategy: 'Momentum', risk: 60, openTime: '14:00:05', instrument: 'Stocks', commission: 3.80, netROI: 1.0, rMultiple: 2.01, ticks: 48, bestExit: 135.00 },
-      { id: 5, ticker: 'MSFT', type: 'Long', pnl: 88.50, date: '2025-08-28', strategy: 'Reversal', risk: 40, openTime: '14:30:00', instrument: 'Stocks', commission: 4.50, netROI: 1.1, rMultiple: 2.21, ticks: 35, bestExit: 330.00 },
-      { id: 6, ticker: 'AMD', type: 'Short', pnl: -42.10, date: '2025-08-10', strategy: 'Breakout', risk: 40, openTime: '09:45:10', instrument: 'Stocks', commission: 2.10, netROI: -0.52, rMultiple: -1.05, ticks: -21, bestExit: 109.00 },
-      { id: 7, ticker: 'META', type: 'Long', pnl: 210.00, date: '2025-07-30', strategy: 'Momentum', risk: 70, openTime: '10:10:10', instrument: 'Stocks', commission: 5.00, netROI: 1.5, rMultiple: 3.00, ticks: 84, bestExit: 315.00 },
+      { id: 1, ticker: 'AAPL', type: 'Long', pnl: 150.75, date: '2025-08-28', strategy: 'Breakout', risk: 50, openTime: '09:30:15', instrument: 'Stocks', commission: 4.50, netROI: 1.5, rMultiple: 3.01, ticks: 60, bestExit: 151.00, volume: 100 },
+      { id: 2, ticker: 'TSLA', type: 'Short', pnl: -75.20, date: '2025-08-28', strategy: 'Reversal', risk: 50, openTime: '10:05:40', instrument: 'Stocks', commission: 4.50, netROI: -0.75, rMultiple: -1.50, ticks: -30, bestExit: 249.50, volume: 50 },
+      { id: 3, ticker: 'NVDA', type: 'Long', pnl: 278.40, date: '2025-08-27', strategy: 'Breakout', risk: 100, openTime: '11:15:00', instrument: 'Stocks', commission: 6.20, netROI: 1.39, rMultiple: 2.78, ticks: 110, bestExit: 450.00, volume: 200 },
+      { id: 4, ticker: 'GOOG', type: 'Long', pnl: 121.00, date: '2025-08-20', strategy: 'Momentum', risk: 60, openTime: '14:00:05', instrument: 'Stocks', commission: 3.80, netROI: 1.0, rMultiple: 2.01, ticks: 48, bestExit: 135.00, volume: 75 },
+      { id: 5, ticker: 'MSFT', type: 'Long', pnl: 88.50, date: '2025-08-28', strategy: 'Reversal', risk: 40, openTime: '14:30:00', instrument: 'Stocks', commission: 4.50, netROI: 1.1, rMultiple: 2.21, ticks: 35, bestExit: 330.00, volume: 150 },
+      { id: 6, ticker: 'AMD', type: 'Short', pnl: -42.10, date: '2025-08-10', strategy: 'Breakout', risk: 40, openTime: '09:45:10', instrument: 'Stocks', commission: 2.10, netROI: -0.52, rMultiple: -1.05, ticks: -21, bestExit: 109.00, volume: 100 },
+      { id: 7, ticker: 'META', type: 'Long', pnl: 210.00, date: '2025-07-30', strategy: 'Momentum', risk: 70, openTime: '10:10:10', instrument: 'Stocks', commission: 5.00, netROI: 1.5, rMultiple: 3.00, ticks: 84, bestExit: 315.00, volume: 50 },
     ],
   }),
 
@@ -160,13 +160,12 @@ export const useTradesStore = defineStore('trades', {
         const summary = {
           date,
           trades: sortedDailyTrades,
-          stats: { netPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, totalCommission: 0, profitFactor: 0 },
+          stats: { netPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, totalCommission: 0, profitFactor: 0, grossProfit: 0, totalVolume: 0 },
           cumulativePnlForChart: { labels: ['Start'], data: [0] }
         };
 
         if (dailyTrades.length === 0) return summary;
 
-        let grossProfit = 0;
         let grossLoss = 0;
         let cumulativePnl = 0;
 
@@ -174,16 +173,22 @@ export const useTradesStore = defineStore('trades', {
           summary.stats.netPnl += trade.pnl;
           summary.stats.tradeCount++;
           summary.stats.totalCommission += trade.commission;
+          summary.stats.totalVolume += trade.volume;
 
-          if (trade.pnl > 0) { summary.stats.winningTrades++; grossProfit += trade.pnl; }
-          else if (trade.pnl < 0) { summary.stats.losingTrades++; grossLoss += Math.abs(trade.pnl); }
+          if (trade.pnl > 0) {
+            summary.stats.winningTrades++;
+            summary.stats.grossProfit += trade.pnl;
+          } else if (trade.pnl < 0) {
+            summary.stats.losingTrades++;
+            grossLoss += Math.abs(trade.pnl);
+          }
 
           cumulativePnl += trade.pnl;
           summary.cumulativePnlForChart.data.push(cumulativePnl);
           summary.cumulativePnlForChart.labels.push(trade.ticker);
         }
 
-        summary.stats.profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
+        summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
 
         return summary;
       };
@@ -312,7 +317,8 @@ export const useTradesStore = defineStore('trades', {
         netROI: Math.random() * 2,
         rMultiple: Math.random() * 3,
         ticks: Math.floor(Math.random() * 100),
-        bestExit: newTrade.pnl * 1.1
+        bestExit: newTrade.pnl * 1.1,
+        volume: Math.floor(Math.random() * 1000) + 100,
       };
       this.trades.unshift(fullTrade);
     },
