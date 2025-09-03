@@ -18,6 +18,7 @@ import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
+import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
@@ -74,6 +75,9 @@ const visibleStats = computed(() => {
       <template #header><h3>Customize Dashboard Stats</h3></template>
       <template #default><StatSelector /></template>
     </BaseModal>
+
+    <!-- Modale per il Riepilogo Giornaliero -->
+    <DailySummaryModal />
   </div>
 </template>
 
