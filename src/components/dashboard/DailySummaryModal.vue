@@ -18,10 +18,8 @@ const dailyData = computed(() => {
 });
 
 const handleClose = () => {
-  uiStore.isDailySummaryModalOpen = false;
+  uiStore.closeDailySummaryModal();
 };
-
-// --- Computed properties for the template ---
 
 const pnlClass = (pnl) => {
   if (pnl === 0 || pnl === null || pnl === undefined) return 'pnl--neutral';
@@ -57,7 +55,6 @@ const tradeTableHeaders = computed(() => [
     { key: 'pnl', text: 'Net P&L' },
     { key: 'strategy', text: 'Playbook' },
 ]);
-
 </script>
 
 <template>
@@ -89,7 +86,7 @@ const tradeTableHeaders = computed(() => [
             <DailyPnlChart :chart-data="dailyData.cumulativePnlForChart" />
           </div>
           <div class="stats-section">
-            <div v-for="(stat, index) in statsGrid" :key="index" class="stat-cell">
+            <div v-for="stat in statsGrid" :key="stat.label" class="stat-cell">
               <span class="stat-label">{{ stat.label }}</span>
               <span class="stat-value">{{ stat.value }}</span>
             </div>
@@ -136,68 +133,38 @@ const tradeTableHeaders = computed(() => [
 .header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .header-left { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); }
 .date { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
-.pnl { font: var(--semantic-font-style-heading-xs); font-weight: 600; }
+.pnl { font: var(--semantic-font-style-heading-sm); font-weight: 600; /* semibold */ }
 .pnl--positive { color: var(--semantic-color-text-positive); }
 .pnl--negative { color: var(--semantic-color-text-negative); }
 .pnl--neutral { color: var(--semantic-color-text-primary); }
 .header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); }
 
 /* Body Styles */
-.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-gap-lg); }
-.top-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: var(--semantic-size-gap-lg); align-items: center; }
+.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-xl); }
+.top-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: var(--semantic-size-gap-xl); align-items: center; }
 .stats-section { display: grid; grid-template-columns: repeat(4, 1fr); }
-.stat-cell { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); padding: 0 var(--semantic-size-inset-md); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.stat-cell { display: flex; flex-direction: column; gap: var(--base-size-spacing-2); padding: 0 var(--semantic-size-inset-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); }
 .stat-cell:last-child { border-right: none; }
-.stat-label { font: var(--semantic-font-style-body-xs); color: var(--semantic-color-text-secondary); }
-.stat-value { font: var(--semantic-font-style-body-lg); color: var(--semantic-color-text-primary); font-weight: 500; }
+.stat-label { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
+.stat-value { font: var(--semantic-font-style-heading-xs); color: var(--semantic-color-text-primary); font-weight: 600; }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
 /* Table Styles */
-.table-wrapper {
-  overflow-x: auto;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-default);
-}
-th, td {
-  padding: var(--semantic-size-inset-md);
-  text-align: left;
-  white-space: nowrap;
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
-}
-th {
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-secondary);
-}
-tbody tr {
-  transition: background-color var(--base-animation-duration-fast);
-}
-tbody tr:hover {
-  background-color: var(--semantic-color-surface-secondary);
-}
-.no-trades-cell {
-    text-align: center;
-    color: var(--semantic-color-text-secondary);
-    font-style: italic;
-}
-
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: var(--semantic-size-inset-md) var(--semantic-size-inset-sm); text-align: left; white-space: nowrap; border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+th { font: var(--semantic-font-style-label-md); font-weight: 500; color: var(--semantic-color-text-secondary); text-transform: uppercase; }
+tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
+.no-trades-cell { text-align: center; color: var(--semantic-color-text-secondary); font-style: italic; padding: var(--semantic-size-inset-xl) 0; }
 
 /* Footer Styles */
-.footer-content {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--semantic-size-gap-sm);
-  padding-top: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-default);
-}
+.footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-1) solid var(--semantic-color-border-default); }
 </style>
 
 <style>
+/* Non-scoped styles to target the modal card from the outside */
 .daily-summary-modal .modal-card {
   max-width: 800px;
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--semantic-size-stack-xl);
 }
 </style>
