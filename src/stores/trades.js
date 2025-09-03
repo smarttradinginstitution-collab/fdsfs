@@ -189,6 +189,7 @@ export const useTradesStore = defineStore('trades', {
         }
 
         summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
+        summary.stats.pnlAfterCommission = summary.stats.netPnl - summary.stats.totalCommission;
 
         return summary;
       };
@@ -241,6 +242,7 @@ export const useTradesStore = defineStore('trades', {
         }
 
         summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
+        summary.stats.pnlAfterCommission = summary.stats.netPnl - summary.stats.totalCommission;
 
         return summary;
       };

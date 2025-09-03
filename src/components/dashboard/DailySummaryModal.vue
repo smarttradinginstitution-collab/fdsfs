@@ -47,7 +47,7 @@ const statsGrid = computed(() => {
         col1: [ { label: 'Total Trades', value: stats.tradeCount }, { label: 'Winrate', value: `${(stats.winningTrades / (stats.tradeCount || 1) * 100).toFixed(1)}%` }, ],
         col2: [ { label: 'Winners', value: stats.winningTrades }, { label: 'Losers', value: stats.losingTrades }, ],
         col3: [
-          { label: 'Net P&L', value: formattedPnl(stats.netPnl), rawValue: stats.netPnl, isPnl: true },
+          { label: 'Gross P&L', value: formattedPnl(stats.pnlAfterCommission), rawValue: stats.pnlAfterCommission, isPnl: true },
           { label: 'Volume', value: stats.totalVolume },
         ],
         col4: [ { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` }, { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) }, ]
