@@ -23,8 +23,8 @@ const handleClose = () => {
 };
 
 const pnlStyle = (pnl) => {
-  if (pnl > 0) return { color: 'var(--semantic-color-text-positive)' };
-  if (pnl < 0) return { color: 'var(--semantic-color-text-negative)' };
+  if (pnl > 0) return { color: 'var(--semantic-color-feedback-positive-text)' };
+  if (pnl < 0) return { color: 'var(--semantic-color-feedback-negative-text)' };
   return {};
 };
 
