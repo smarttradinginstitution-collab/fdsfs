@@ -118,7 +118,7 @@ export default {
   padding: var(--semantic-size-inset-xl);
   z-index: var(--semantic-layer-z-index-modal);
   width: 100%;
-  max-width: 800px;
+  max-width: 850px;
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
