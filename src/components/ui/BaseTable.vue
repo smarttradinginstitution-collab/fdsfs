@@ -113,32 +113,35 @@ tbody tr:hover {
   .table thead { display: none; }
   .table tr {
     display: block;
-    margin-bottom: var(--semantic-size-stack-md);
+    margin-bottom: clamp(var(--semantic-size-stack-sm), 4vw, var(--semantic-size-stack-md));
     border: var(--base-border-width-1) solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-surface);
-    padding: var(--semantic-size-inset-sm);
+    padding: clamp(var(--semantic-size-inset-sm), 3vw, var(--semantic-size-inset-md));
   }
   .table td {
-    display: block;
+    display: flex; /* Usiamo flex per un miglior allineamento */
+    justify-content: space-between; /* Allinea label e valore */
+    align-items: center;
     text-align: right;
-    padding-left: 50%;
+    padding: clamp(var(--base-size-spacing-2), 2vw, var(--base-size-spacing-3)) 0;
     position: relative;
-    border-top: none;
-    padding-top: var(--base-size-spacing-1);
-    padding-bottom: var(--base-size-spacing-1);
+    border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
   }
   .table td::before {
     content: attr(data-label);
-    position: absolute;
-    left: var(--base-size-spacing-2);
-    width: 45%;
-    padding-right: var(--base-size-spacing-2);
-    white-space: nowrap;
-    text-align: left;
-    font-weight: var(--base-font-weight-bold);
+    font-weight: var(--base-font-weight-medium);
     color: var(--semantic-color-text-secondary);
+    text-align: left;
+    margin-right: var(--semantic-size-stack-sm); /* Spazio tra label e valore */
   }
-  .table td:first-child { border-top: none; }
-  .table tr:first-child td:first-child { border-top: none; }
+  .table tr:first-of-type td:first-of-type {
+    border-top: none;
+  }
+  .table td:first-of-type {
+    padding-top: 0;
+  }
+  .table td:last-of-type {
+    padding-bottom: 0;
+  }
 }
 </style>

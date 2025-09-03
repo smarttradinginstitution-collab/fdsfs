@@ -117,30 +117,48 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/*
+// =============================================================================
+// STYLING: views/DashboardView.vue
+// DESCRIZIONE: Aggiunta di stili iper-responsive.
+//
+// NOTE:
+// - Usiamo clamp() per rendere le spaziature fluide. I valori min/max sono
+//   basati sui token esistenti per mantenere coerenza.
+// - Aggiunte media query per breakpoint più piccoli per riorganizzare i layout
+//   in modo significativo (es. stacking di elementi).
+// =============================================================================
+*/
 .dashboard-view {
   width: 100%;
-  padding: var(--semantic-size-inset-xl);
+  /* Spaziatura fluida per il padding principale */
+  padding: clamp(var(--semantic-size-inset-md), 4vw, var(--semantic-size-inset-xl));
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-lg);
+  /* Spaziatura fluida tra le sezioni */
+  gap: clamp(var(--semantic-size-stack-md), 5vh, var(--semantic-size-stack-lg));
 }
 
 .action-bar {
   display: flex;
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
+  flex-wrap: wrap; /* Permette ai bottoni di andare a capo su schermi piccoli */
 }
 
 .stats-grid {
   display: grid;
+  /* La funzione minmax() è già ottima per la responsività delle card */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--semantic-size-stack-md);
+  /* Spaziatura fluida tra le card */
+  gap: clamp(var(--semantic-size-stack-sm), 3vw, var(--semantic-size-stack-md));
 }
 
 .main-content-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: var(--semantic-size-stack-lg);
+  /* Spaziatura fluida tra i widget principali */
+  gap: clamp(var(--semantic-size-stack-md), 5vh, var(--semantic-size-stack-lg));
   grid-auto-flow: dense;
 }
 
@@ -169,9 +187,45 @@ onMounted(async () => {
   border-radius: var(--semantic-border-radius-md);
 }
 
-@media (max-width: 1280px) {
+/* --- Media Queries per Iper-Responsività --- */
+
+/* Tablet e schermi medi (es. iPad in verticale) */
+@media (max-width: 1024px) {
   .main-content-grid {
+    /* Passa a una singola colonna prima */
     grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    /* Aumenta la dimensione minima delle card per evitare che diventino troppo piccole */
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+/* Cellulari grandi (es. tablet in verticale, cellulari in orizzontale) */
+@media (max-width: 768px) {
+  .action-bar {
+    /* I bottoni ora occupano tutta la larghezza e sono giustificati allo stesso modo */
+    justify-content: space-between;
+  }
+
+  .action-bar > * {
+    /* Assicura che i bottoni abbiano una larghezza minima e possano crescere */
+    flex-grow: 1;
+    min-width: 150px;
+  }
+}
+
+/* Cellulari piccoli */
+@media (max-width: 480px) {
+  .dashboard-view {
+    /* Riduci ulteriormente il padding su schermi molto piccoli */
+    padding: clamp(var(--base-size-spacing-2), 3vw, var(--semantic-size-inset-md));
+  }
+
+  .action-bar {
+    flex-direction: column; /* Impila i bottoni verticalmente */
+    align-items: stretch; /* Allunga i bottoni a tutta larghezza */
   }
 }
 </style>

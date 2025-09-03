@@ -65,10 +65,23 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 </template>
 
 <style scoped>
+/*
+// =============================================================================
+// STYLING: components/dashboard/StatCard.vue
+// DESCRIZIONE: Aggiunta di stili iper-responsive per le card delle statistiche.
+//
+// NOTE:
+// - Tipografia e spaziature rese fluide con clamp().
+// - Dimensione del grafico resa fluida per adattarsi meglio.
+// - Migliorata la gestione del layout su schermi piccoli.
+// =============================================================================
+*/
+
 /* Stili di base della card */
 .stat-card {
   background-color: var(--semantic-color-surface-primary);
-  padding: var(--semantic-size-inset-md);
+  /* Padding fluido */
+  padding: clamp(var(--base-size-spacing-3), 3vw, var(--semantic-size-inset-md));
   border-radius: var(--semantic-border-radius-surface);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
@@ -83,30 +96,37 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 .text-content-default {
     display: flex;
     flex-direction: column;
-    gap: var(--semantic-size-stack-xs);
+    gap: clamp(var(--base-size-spacing-0-5), 1vw, var(--semantic-size-stack-xs));
 }
 
 /* Layout per card con grafici (2 colonne) */
 .stat-card--with-chart {
     justify-content: space-between;
     align-items: center;
-    gap: var(--semantic-size-stack-md);
+    gap: clamp(var(--base-size-spacing-2), 2vw, var(--semantic-size-stack-md));
 }
 
 /* Stili per il testo */
 .text-content {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: clamp(var(--base-size-spacing-0-5), 1vw, var(--semantic-size-stack-xs));
 }
 .stat-label {
-  font: var(--semantic-font-style-body-sm);
+  /* Font fluido per l'etichetta */
+  font-size: clamp(var(--base-font-size-xs), 2.5vw, var(--base-font-size-sm));
+  font-family: var(--base-font-family-palette-sans);
+  font-weight: var(--base-font-weight-medium);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
 }
 .stat-value {
-  font: var(--semantic-font-style-heading-xl);
+  /* Font fluido per il valore principale */
+  font-size: clamp(var(--base-font-size-lg), 5vw, var(--base-font-size-2xl));
+  font-family: var(--base-font-family-palette-sans);
+  font-weight: var(--base-font-weight-bold);
   color: var(--semantic-color-text-primary);
+  line-height: var(--base-font-line-height-tight);
 }
 .stat-value--positive {
   color: var(--semantic-color-feedback-positive-text);
@@ -126,8 +146,9 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     gap: var(--semantic-size-stack-xs);
 }
 .badge {
-    font-size: 0.75rem;
-    padding: 0.1rem 0.4rem;
+    /* Font e padding fluidi per i badge */
+    font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+    padding: clamp(0.05rem, 0.5vw, 0.1rem) clamp(0.2rem, 1vw, 0.4rem);
     border-radius: var(--semantic-border-radius-tag);
 }
 .badge.win {
@@ -141,15 +162,35 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 
 .chart-content {
     flex-shrink: 0;
-    width: 60px; /* Defines a consistent size for the chart container */
+    /* Larghezza fluida per il contenitore del grafico */
+    width: clamp(45px, 12vw, 60px);
 }
 
-/* Responsive Stacking per Win Rate Card */
+/* Responsive Stacking per le card con grafici */
 @media (max-width: 480px) {
     .stat-card--with-chart {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--semantic-size-stack-md);
+        gap: var(--semantic-size-stack-sm); /* Leggermente ridotto per schermi piccoli */
+    }
+
+    .text-content {
+        width: 100%; /* Assicura che il testo occupi tutta la larghezza */
+    }
+}
+
+/* Breakpoint aggiuntivo per card con grafici su schermi molto stretti */
+@media (max-width: 280px) {
+    .stat-card--with-chart {
+        /* Su schermi piccolissimi, il grafico potrebbe sovrapporsi.
+           Qui potremmo nasconderlo o ridurlo ulteriormente se necessario.
+           Per ora, lo manteniamo ma con spaziature ridotte. */
+        gap: var(--semantic-size-stack-xs);
+    }
+
+    .stat-value {
+        /* Riduciamo un po' la dimensione massima del font del valore principale */
+        font-size: clamp(var(--base-font-size-lg), 8vw, var(--base-font-size-xl));
     }
 }
 </style>
