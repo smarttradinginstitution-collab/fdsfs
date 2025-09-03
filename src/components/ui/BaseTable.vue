@@ -87,12 +87,12 @@ td {
 
 /* Stili per la dimensione extra piccola */
 .table--x-small th {
-    font: var(--semantic-font-style-label-xs);
+    font: var(--semantic-font-style-label-md);
     padding-top: var(--semantic-size-inset-xs);
     padding-bottom: var(--semantic-size-inset-xs);
 }
 .table--x-small td {
-    font: var(--semantic-font-style-body-xxs);
+    font: var(--semantic-font-style-body-sm);
     padding-top: var(--semantic-size-inset-xs);
     padding-bottom: var(--semantic-size-inset-xs);
 }
