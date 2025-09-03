@@ -288,6 +288,92 @@ export const useTradesStore = defineStore('trades', {
     },
 
     /**
+     * Restituisce un riepilogo completo per una singola giornata.
+     * Questo getter restituisce una funzione che può essere chiamata con una data.
+     * @param {Object} state - Lo stato di Pinia.
+     * @returns {Function} Una funzione che accetta una data (es. '2025-08-28') e restituisce i dati di riepilogo.
+     */
+    getDailySummary(state) {
+      return (date) => {
+        if (!date) return null;
+
+        // Filtra i trade per la data specificata.
+        const dailyTrades = state.trades.filter(t => t.date === date);
+
+        if (dailyTrades.length === 0) {
+          return {
+            date,
+            trades: [],
+            stats: {
+              netPnl: 0,
+              tradeCount: 0,
+              winningTrades: 0,
+              losingTrades: 0,
+              breakEvenTrades: 0,
+              grossProfit: 0,
+              grossLoss: 0,
+              winRate: 0,
+              avgWin: 0,
+              avgLoss: 0,
+            },
+            cumulativePnlForChart: { labels: [], data: [] }
+          };
+        }
+
+        // Ordiniamo i trade per ID per avere un ordine (ipoteticamente cronologico)
+        const sortedDailyTrades = [...dailyTrades].sort((a, b) => a.id - b.id);
+
+        // Calcolo delle statistiche giornaliere
+        const stats = {
+          netPnl: 0,
+          tradeCount: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          breakEvenTrades: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+        };
+
+        let cumulativePnl = 0;
+        const cumulativeData = [];
+
+        for (const trade of sortedDailyTrades) {
+          stats.netPnl += trade.pnl;
+          stats.tradeCount++;
+          if (trade.pnl > 0) {
+            stats.winningTrades++;
+            stats.grossProfit += trade.pnl;
+          } else if (trade.pnl < 0) {
+            stats.losingTrades++;
+            stats.grossLoss += Math.abs(trade.pnl);
+          } else {
+            stats.breakEvenTrades++;
+          }
+
+          cumulativePnl += trade.pnl;
+          cumulativeData.push(cumulativePnl);
+        }
+
+        stats.winRate = stats.tradeCount > 0 ? (stats.winningTrades / stats.tradeCount) * 100 : 0;
+        stats.avgWin = stats.winningTrades > 0 ? stats.grossProfit / stats.winningTrades : 0;
+        stats.avgLoss = stats.losingTrades > 0 ? stats.grossLoss / stats.losingTrades : 0;
+
+        // Dati per il grafico
+        const chartLabels = sortedDailyTrades.map((trade, index) => `Trade ${index + 1}`);
+
+        return {
+          date,
+          trades: sortedDailyTrades,
+          stats,
+          cumulativePnlForChart: {
+            labels: chartLabels,
+            data: cumulativeData,
+          },
+        };
+      };
+    },
+
+    /**
      * Calcola i dati per il grafico della curva di equity.
      * Ordina i trade per data e calcola il P&L cumulativo.
      */

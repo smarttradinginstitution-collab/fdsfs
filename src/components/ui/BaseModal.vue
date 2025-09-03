@@ -16,6 +16,11 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  // Aggiungiamo una prop per controllare la visibilità del bottone di chiusura
+  showCloseButton: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 // --- EMITS ---
@@ -59,7 +64,7 @@ const emit = defineEmits(['close']);
             Se non viene fornito nulla, mostra il contenuto di default ("Titolo del Modal").
             -->
             <slot name="header">Titolo del Modal</slot>
-            <button class="close-button" @click="emit('close')">&times;</button>
+            <button v-if="showCloseButton" class="close-button" @click="emit('close')">&times;</button>
           </header>
 
           <main class="modal-body">
