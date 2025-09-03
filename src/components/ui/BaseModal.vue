@@ -1,0 +1,130 @@
+<!--
+// =============================================================================
+// FILE: components/ui/BaseModal.vue
+// DESCRIZIONE: Questo componente crea una finestra modale (o "popup").
+// È un elemento fondamentale per mostrare form, messaggi di conferma o
+// dettagli importanti senza dover cambiare pagina.
+// =============================================================================
+-->
+
+<script setup>
+// --- PROPS ---
+defineProps({
+  // `show` è un booleano che controlla se la modale è visibile o meno.
+  // Viene passato dal componente genitore.
+  show: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+// --- EMITS ---
+// Definiamo un evento `close` per permettere al componente genitore
+// di sapere quando l'utente vuole chiudere la modale (es. cliccando
+// sullo sfondo o sul pulsante di chiusura).
+const emit = defineEmits(['close']);
+</script>
+
+<template>
+  <!--
+  `<Teleport to="body">` è una funzionalità avanzata di Vue.
+  Dice a Vue di "teletrasportare" il contenuto di questo template
+  e di renderizzarlo direttamente come figlio del tag `<body>` nel DOM.
+  Questo è fondamentale per le modali, per evitare problemi di stacking
+  (z-index) e di layout causati dai componenti genitori.
+  -->
+  <Teleport to="body">
+    <!--
+    `<Transition>` è un altro componente speciale di Vue che permette di
+    applicare animazioni di entrata e uscita a un elemento.
+    Il `name="modal-fade"` si collega alle classi CSS sottostanti
+    (`.modal-fade-enter-active`, ecc.) per creare un effetto di dissolvenza.
+    -->
+    <Transition name="modal-fade">
+      <!--
+      Il contenitore principale della modale viene mostrato solo se `show` è true.
+      - `@click.self`: Questo modificatore fa sì che l'evento `click` si attivi
+        solo se si clicca direttamente su questo `div` (l'overlay scuro) e non
+        sui suoi figli (la card bianca). In questo modo, chiudiamo la modale
+        cliccando sullo sfondo.
+      -->
+      <div v-if="show" class="modal-overlay" @click.self="emit('close')">
+        <!-- La card (il "foglio" bianco) che contiene il contenuto della modale. -->
+        <div class="modal-card">
+          <header class="modal-header">
+            <!--
+            `<slot>` con un nome permette di creare dei "segnaposto nominati".
+            Il genitore può fornire contenuto specifico per l'header in questo modo:
+            <BaseModal><template #header>Mio Titolo</template></BaseModal>
+            Se non viene fornito nulla, mostra il contenuto di default ("Titolo del Modal").
+            -->
+            <slot name="header">Titolo del Modal</slot>
+            <button class="close-button" @click="emit('close')">&times;</button>
+          </header>
+
+          <main class="modal-body">
+            <!-- Questo è lo slot di default, per il contenuto principale. -->
+            <slot>Contenuto del Modal</slot>
+          </main>
+
+          <footer class="modal-footer">
+            <!-- Slot per il footer, tipicamente per i bottoni di azione. -->
+            <slot name="footer"></slot>
+          </footer>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
+<style scoped>
+.modal-overlay {
+  position: fixed; /* Si posiziona rispetto alla finestra del browser. */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, var(--semantic-opacity-50));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--semantic-layer-z-index-overlay); /* Si assicura che sia sopra tutto. */
+}
+
+.modal-card {
+  background-color: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-surface);
+  box-shadow: var(--semantic-effect-shadow-elevation-high);
+  padding: var(--semantic-size-inset-xl);
+  z-index: var(--semantic-layer-z-index-modal);
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-md);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: var(--base-font-size-2xl);
+  cursor: pointer;
+  color: var(--semantic-color-text-secondary);
+}
+
+/* Stili per la transizione di dissolvenza. */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity var(--base-animation-duration-base) var(--base-animation-easing-out);
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+</style>

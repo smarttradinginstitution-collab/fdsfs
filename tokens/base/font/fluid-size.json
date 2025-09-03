@@ -1,0 +1,45 @@
+{
+  "base": {
+    "font": {
+      "fluid-size": {
+        "$comment": "Token per la tipografia fluida. Ogni dimensione contiene i tre valori (min, ideal, max) per la funzione CSS clamp(). I valori sono stati ricalibrati per essere meno aggressivi.",
+        "sm": {
+          "$comment": "Dimensione fluida piccola, adatta per metadati o testi ausiliari.",
+          "min": { "$value": "0.5rem", "$type": "dimension" },
+          "ideal": { "$value": "0.8vw", "$type": "dimension" },
+          "max": { "$value": "0.65rem", "$type": "dimension" }
+        },
+        "md": {
+          "$comment": "Dimensione fluida media, per testo di corpo o secondario.",
+          "min": { "$value": "0.6rem", "$type": "dimension" },
+          "ideal": { "$value": "1.0vw", "$type": "dimension" },
+          "max": { "$value": "0.75rem", "$type": "dimension" }
+        },
+        "lg": {
+          "$comment": "Dimensione fluida grande, per titoli o dati importanti.",
+          "min": { "$value": "0.7rem", "$type": "dimension" },
+          "ideal": { "$value": "1.2vw", "$type": "dimension" },
+          "max": { "$value": "0.9rem", "$type": "dimension" }
+        },
+        "xl": {
+          "$comment": "Dimensione fluida extra-large, per il P&L nel calendario.",
+          "min": { "$value": "0.7rem", "$type": "dimension" },
+          "ideal": { "$value": "1.5vw", "$type": "dimension" },
+          "max": { "$value": "1.1rem", "$type": "dimension" }
+        },
+        "xs": {
+          "$comment": "Dimensione fluida extra-piccola, per il numero di trade.",
+          "min": { "$value": "0.6rem", "$type": "dimension" },
+          "ideal": { "$value": "0.9vw", "$type": "dimension" },
+          "max": { "$value": "0.8rem", "$type": "dimension" }
+        },
+        "xxs": {
+          "$comment": "Dimensione fluida microscopica, per statistiche extra come WR%.",
+          "min": { "$value": "0.5rem", "$type": "dimension" },
+          "ideal": { "$value": "0.7vw", "$type": "dimension" },
+          "max": { "$value": "0.65rem", "$type": "dimension" }
+        }
+      }
+    }
+  }
+}

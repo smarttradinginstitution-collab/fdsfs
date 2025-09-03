@@ -1,0 +1,78 @@
+{
+  "semantic": {
+    "font": {
+      "style": {
+        "heading-4xl": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "{base.font.size.4xl}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per metriche 'hero' ad alto impatto nelle dashboard."
+        },
+        "heading-2xl": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "{base.font.size.2xl}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per i titoli di pagina principali."
+        },
+        "heading-xl": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "{base.font.size.xl}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per i titoli delle card o dei widget."
+        },
+        "body-base": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.size.base}",
+            "lineHeight": "{base.font.line-height.loose}"
+          },
+          "$type": "typography",
+          "$comment": "Stile standard per tutto il corpo del testo e paragrafi."
+        },
+        "body-sm": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.size.sm}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per testo secondario o didascalie."
+        },
+        "label-md": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.medium}",
+            "fontSize": "{base.font.size.sm}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per etichette, bottoni e input di medie dimensioni."
+        },
+        "data-numeric": {
+            "$value": {
+              "fontFamily": "{base.font.family.palette.monospace}",
+              "fontWeight": "{base.font.weight.regular}",
+              "fontSize": "{base.font.size.sm}",
+              "lineHeight": "{base.font.line-height.normal}"
+            },
+            "$type": "typography",
+            "$comment": "Stile specifico per dati numerici in tabelle per garantire l'allineamento."
+        }
+      }
+    }
+  }
+}
