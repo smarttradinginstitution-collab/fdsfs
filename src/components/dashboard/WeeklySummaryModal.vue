@@ -165,4 +165,30 @@ const tradeTableHeaders = computed(() => [
 
 /* Footer Styles */
 .footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--semantic-size-stack-md);
+  }
+  .header-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .top-section {
+    grid-template-columns: 1fr;
+    gap: var(--semantic-size-gap-lg);
+  }
+  .stats-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-col {
+    padding: 0 var(--semantic-size-inset-md);
+    gap: var(--semantic-size-stack-md);
+  }
+  .stat-col:nth-child(2) {
+    border-right: none;
+  }
+}
 </style>
