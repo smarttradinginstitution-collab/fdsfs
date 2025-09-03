@@ -223,12 +223,14 @@ const tradeTableHeaders = computed(() => [
   font: var(--semantic-font-style-label-md); /* Match table header */
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
+  display: block; /* Force label to its own line */
 }
 .stat-value {
   font: var(--semantic-font-style-body-sm); /* Match table cell */
   color: var(--semantic-color-text-primary);
   font-weight: 600; /* Keep it slightly bolder than normal text */
   white-space: nowrap;
+  display: block; /* Force value to its own line */
 }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
