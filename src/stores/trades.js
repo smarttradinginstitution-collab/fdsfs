@@ -10,6 +10,7 @@ export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [
       // Dati di esempio con i nuovi campi
+      { id: 0, ticker: 'SPY', type: 'Long', pnl: 250.00, date: '2025-09-02', strategy: 'Momentum', risk: 80, openTime: '10:00:00', instrument: 'ETF', commission: 1.50, netROI: 1.25, rMultiple: 3.12, ticks: 100, bestExit: 450.00, volume: 50 },
       { id: 1, ticker: 'AAPL', type: 'Long', pnl: 150.75, date: '2025-08-28', strategy: 'Breakout', risk: 50, openTime: '09:30:15', instrument: 'Stocks', commission: 4.50, netROI: 1.5, rMultiple: 3.01, ticks: 60, bestExit: 151.00, volume: 100 },
       { id: 2, ticker: 'TSLA', type: 'Short', pnl: -75.20, date: '2025-08-28', strategy: 'Reversal', risk: 50, openTime: '10:05:40', instrument: 'Stocks', commission: 4.50, netROI: -0.75, rMultiple: -1.50, ticks: -30, bestExit: 249.50, volume: 50 },
       { id: 3, ticker: 'NVDA', type: 'Long', pnl: 278.40, date: '2025-08-27', strategy: 'Breakout', risk: 100, openTime: '11:15:00', instrument: 'Stocks', commission: 6.20, netROI: 1.39, rMultiple: 2.78, ticks: 110, bestExit: 450.00, volume: 200 },

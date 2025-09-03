@@ -22,10 +22,9 @@ const handleClose = () => {
   uiStore.closeDailySummaryModal();
 };
 
-const pnlStyle = (pnl) => {
-  if (pnl > 0) return { color: 'var(--semantic-color-feedback-positive-text)' };
-  if (pnl < 0) return { color: 'var(--semantic-color-feedback-negative-text)' };
-  return {};
+const pnlClass = (pnl) => {
+  if (pnl === 0 || pnl === null || pnl === undefined) return 'pnl--neutral';
+  return pnl > 0 ? 'pnl--positive' : 'pnl--negative';
 };
 
 const formattedDate = computed(() => {
@@ -46,10 +45,7 @@ const statsGrid = computed(() => {
     return {
         col1: [ { label: 'Total Trades', value: stats.tradeCount }, { label: 'Winrate', value: `${(stats.winningTrades / (stats.tradeCount || 1) * 100).toFixed(1)}%` }, ],
         col2: [ { label: 'Winners', value: stats.winningTrades }, { label: 'Losers', value: stats.losingTrades }, ],
-        col3: [
-          { label: 'Gross P&L', value: formattedPnl(stats.pnlAfterCommission), rawValue: stats.pnlAfterCommission, isPnl: true },
-          { label: 'Volume', value: stats.totalVolume },
-        ],
+        col3: [ { label: 'Gross P&L', value: formattedPnl(stats.grossProfit) }, { label: 'Volume', value: stats.totalVolume }, ],
         col4: [ { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` }, { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) }, ]
     };
 });
@@ -72,7 +68,7 @@ const tradeTableHeaders = computed(() => [
       <div class="header-content">
         <div class="header-left">
           <span class="date">{{ formattedDate }}</span>
-          <span :style="pnlStyle(dailyData?.stats.netPnl)">Net P&L {{ formattedPnl(dailyData?.stats.netPnl) }}</span>
+          <span :class="pnlClass(dailyData?.stats.netPnl)">Net P&L {{ formattedPnl(dailyData?.stats.netPnl) }}</span>
         </div>
         <div class="header-right">
           <BaseButton variant="secondary">Add Note</BaseButton>
@@ -89,17 +85,16 @@ const tradeTableHeaders = computed(() => [
             <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
                 <div v-for="stat in col" :key="stat.label" class="stat-cell">
                     <span class="stat-label">{{ stat.label }}</span>
-                    <span v-if="stat.isPnl" class="stat-value" :style="pnlStyle(stat.rawValue)">{{ stat.value }}</span>
-                    <span v-else class="stat-value">{{ stat.value }}</span>
+                    <span class="stat-value">{{ stat.value }}</span>
                 </div>
             </div>
           </div>
         </div>
 
         <div class="table-wrapper">
-          <BaseTable :headers="tradeTableHeaders" :items="dailyData.trades" size="x-small">
+          <BaseTable :headers="tradeTableHeaders" :items="dailyData.trades" size="small">
             <template #pnl="{ item }">
-              <span :style="pnlStyle(item.pnl)">{{ formattedPnl(item.pnl) }}</span>
+              <span :class="pnlClass(item.pnl)">{{ formattedPnl(item.pnl) }}</span>
             </template>
             <template #playbook="{ item }">
               <BasePill>{{ item.strategy }}</BasePill>
@@ -183,4 +178,11 @@ const tradeTableHeaders = computed(() => [
     border-right: none;
   }
 }
+</style>
+
+<style>
+/* Non-scoped styles for modal card and deep selectors */
+.daily-summary-modal .modal-card { max-width: 800px; width: 95%; max-height: 90vh; gap: var(--semantic-size-stack-lg); }
+.daily-summary-modal .pnl--positive { color: var(--semantic-color-text-positive) !important; }
+.daily-summary-modal .pnl--negative { color: var(--semantic-color-text-negative) !important; }
 </style>
