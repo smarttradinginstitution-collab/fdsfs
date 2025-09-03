@@ -48,29 +48,58 @@ export const useTradesStore = defineStore('trades', {
       const filterStore = useFilterStore();
       const viewDateForCalendar = new Date(filterStore.endDate);
 
-      const stats = { totalPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, breakEvenTrades: 0, grossProfit: 0, grossLoss: 0, totalRisk: 0, };
+      const stats = { totalPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, breakEvenTrades: 0, grossProfit: 0, grossLoss: 0, totalRisk: 0 };
       const dailyDataForCalendar = {};
       const performanceByStrategy = {};
+      const performanceByDayOfWeek = {};
       const pnlByDay = {};
+      const daysOfWeek = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+      daysOfWeek.forEach(day => {
+        performanceByDayOfWeek[day] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
+      });
 
       for (const trade of trades) {
         stats.totalPnl += trade.pnl;
         stats.tradeCount++;
-        if (trade.pnl > 0) { stats.winningTrades++; stats.grossProfit += trade.pnl; }
-        else if (trade.pnl < 0) { stats.losingTrades++; stats.grossLoss += Math.abs(trade.pnl); }
-        else { stats.breakEvenTrades++; }
+        stats.totalRisk += trade.risk;
+        if (trade.pnl > 0) {
+          stats.winningTrades++;
+          stats.grossProfit += trade.pnl;
+        } else if (trade.pnl < 0) {
+          stats.losingTrades++;
+          stats.grossLoss += Math.abs(trade.pnl);
+        } else {
+          stats.breakEvenTrades++;
+        }
 
-        const dayKey = trade.date;
+        const tradeDate = new Date(trade.date);
+        const dayKey = tradeDate.toISOString().split('T')[0];
+
         if (!pnlByDay[dayKey]) pnlByDay[dayKey] = 0;
         pnlByDay[dayKey] += trade.pnl;
 
-        const tradeDate = new Date(trade.date);
         if (tradeDate.getFullYear() === viewDateForCalendar.getFullYear() && tradeDate.getMonth() === viewDateForCalendar.getMonth()) {
-          if (!dailyDataForCalendar[dayKey]) dailyDataForCalendar[dayKey] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
+          if (!dailyDataForCalendar[dayKey]) {
+            dailyDataForCalendar[dayKey] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
+          }
           dailyDataForCalendar[dayKey].totalPnl += trade.pnl;
           dailyDataForCalendar[dayKey].tradeCount++;
           if (trade.pnl > 0) dailyDataForCalendar[dayKey].winningTrades++;
         }
+
+        if (trade.strategy) {
+          if (!performanceByStrategy[trade.strategy]) {
+            performanceByStrategy[trade.strategy] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
+          }
+          performanceByStrategy[trade.strategy].totalPnl += trade.pnl;
+          performanceByStrategy[trade.strategy].tradeCount++;
+          if (trade.pnl > 0) performanceByStrategy[trade.strategy].winningTrades++;
+        }
+
+        const dayName = daysOfWeek[tradeDate.getDay()];
+        performanceByDayOfWeek[dayName].totalPnl += trade.pnl;
+        performanceByDayOfWeek[dayName].tradeCount++;
+        if (trade.pnl > 0) performanceByDayOfWeek[dayName].winningTrades++;
       }
 
       const winLossDaysStats = { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
@@ -80,7 +109,41 @@ export const useTradesStore = defineStore('trades', {
         else winLossDaysStats.breakEvenDays++;
       }
 
-      return { stats, dailyDataForCalendar, winLossDaysStats };
+      return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats, recentTrades: trades.slice(0, 4) };
+    },
+
+    allDashboardStats() {
+      const { stats } = this.processedData;
+      const { totalPnl, tradeCount, winningTrades, losingTrades, breakEvenTrades, grossProfit, grossLoss } = stats;
+
+      if (tradeCount === 0) {
+        return {
+          netPnl: { key: 'netPnl', label: 'Net P&L', value: '$0.00', changeType: 'neutral' },
+          winRate: { key: 'winRate', label: 'Win Rate', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
+          trades: { key: 'trades', label: 'Trades', value: '0', changeType: 'neutral' },
+          profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: 'N/A', changeType: 'neutral' },
+          avgWin: { key: 'avgWin', label: 'Avg. Win', value: '$0.00', changeType: 'neutral' },
+          avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: '$0.00', changeType: 'neutral' },
+          expectancy: { key: 'expectancy', label: 'Expectancy', value: '$0.00', changeType: 'neutral' },
+        };
+      }
+
+      const winRate = (winningTrades / tradeCount) * 100;
+      const lossRate = 1 - (winRate / 100);
+      const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : Infinity;
+      const avgWin = winningTrades > 0 ? grossProfit / winningTrades : 0;
+      const avgLoss = (tradeCount - winningTrades) > 0 ? grossLoss / (tradeCount - winningTrades) : 0;
+      const expectancy = (winRate / 100 * avgWin) - (lossRate * avgLoss);
+
+      return {
+        netPnl: { key: 'netPnl', label: 'Net P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
+        winRate: { key: 'winRate', label: 'Win Rate', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'positive' },
+        trades: { key: 'trades', label: 'Trades', value: String(tradeCount), changeType: 'neutral' },
+        profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: profitFactor > 1 ? 'positive' : 'negative' },
+        avgWin: { key: 'avgWin', label: 'Avg. Win', value: `$${avgWin.toFixed(2)}`, changeType: 'positive' },
+        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: `$${avgLoss.toFixed(2)}`, changeType: 'negative' },
+        expectancy: { key: 'expectancy', label: 'Expectancy', value: `$${expectancy.toFixed(2)}`, changeType: expectancy > 0 ? 'positive' : 'negative' },
+      };
     },
 
     getDailySummary(state) {
@@ -93,14 +156,7 @@ export const useTradesStore = defineStore('trades', {
         const summary = {
           date,
           trades: sortedDailyTrades,
-          stats: {
-            netPnl: 0,
-            tradeCount: 0,
-            winningTrades: 0,
-            losingTrades: 0,
-            totalCommission: 0,
-            profitFactor: 0,
-          },
+          stats: { netPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, totalCommission: 0, profitFactor: 0 },
           cumulativePnlForChart: { labels: ['Start'], data: [0] }
         };
 
@@ -115,13 +171,8 @@ export const useTradesStore = defineStore('trades', {
           summary.stats.tradeCount++;
           summary.stats.totalCommission += trade.commission;
 
-          if (trade.pnl > 0) {
-            summary.stats.winningTrades++;
-            grossProfit += trade.pnl;
-          } else if (trade.pnl < 0) {
-            summary.stats.losingTrades++;
-            grossLoss += Math.abs(trade.pnl);
-          }
+          if (trade.pnl > 0) { summary.stats.winningTrades++; grossProfit += trade.pnl; }
+          else if (trade.pnl < 0) { summary.stats.losingTrades++; grossLoss += Math.abs(trade.pnl); }
 
           cumulativePnl += trade.pnl;
           summary.cumulativePnlForChart.data.push(cumulativePnl);
@@ -134,8 +185,55 @@ export const useTradesStore = defineStore('trades', {
       };
     },
 
-    // Other getters can be simplified if they are not used, for now we keep them
-    // ...
+    calendarDataByMonth() {
+      const { dailyDataForCalendar } = this.processedData;
+      //... this getter and others remain the same as the original
+      const filterStore = useFilterStore();
+      const viewDate = new Date(filterStore.endDate);
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDayOfWeek = new Date(year, month, 1).getDay();
+      const calendarDays = [];
+      const offset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1;
+      for (let i = 0; i < offset; i++) {
+        calendarDays.push({ isPlaceholder: true, key: `ph-start-${i}` });
+      }
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        calendarDays.push({
+          date: i,
+          fullDate: dateStr,
+          dailyData: dailyDataForCalendar[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
+          isPlaceholder: false,
+          key: dateStr,
+        });
+      }
+
+      while (calendarDays.length % 7 !== 0) {
+        calendarDays.push({ isPlaceholder: true, key: `ph-end-${calendarDays.length}` });
+      }
+
+      const weeksOfDays = [];
+      const weeklySummaries = [];
+      for (let i = 0; i < calendarDays.length; i += 7) {
+        const weekChunk = calendarDays.slice(i, i + 7);
+        weeksOfDays.push(weekChunk);
+
+        const weeklyPnl = weekChunk.reduce((sum, day) => sum + (day.dailyData?.totalPnl || 0), 0);
+        const tradingDaysCount = weekChunk.filter(day => !day.isPlaceholder && day.dailyData.tradeCount > 0).length;
+
+        weeklySummaries.push({
+          weekNumber: (i / 7) + 1,
+          totalPnl: weeklyPnl,
+          tradingDaysCount: tradingDaysCount,
+        });
+      }
+
+      return { weeksOfDays, weeklySummaries };
+    },
   },
 
   actions: {
