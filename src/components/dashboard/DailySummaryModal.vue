@@ -133,7 +133,7 @@ const tradeTableHeaders = computed(() => [
 .header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .header-left { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); }
 .date { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
-.pnl { font: var(--semantic-font-style-heading-sm); font-weight: 600; /* semibold */ }
+.pnl { font: var(--semantic-font-style-heading-sm); font-weight: 600; }
 .pnl--positive { color: var(--semantic-color-text-positive); }
 .pnl--negative { color: var(--semantic-color-text-negative); }
 .pnl--neutral { color: var(--semantic-color-text-primary); }
@@ -141,9 +141,21 @@ const tradeTableHeaders = computed(() => [
 
 /* Body Styles */
 .modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-xl); }
-.top-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: var(--semantic-size-gap-xl); align-items: center; }
+
+/* --- CRITICAL FIXES ARE HERE --- */
+.top-section {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: var(--semantic-size-gap-xl);
+  align-items: stretch; /* FIX: ensures chart container gets full height */
+}
+.chart-section {
+  min-height: 150px; /* Ensure the section has a minimum height */
+}
+/* --- END OF CRITICAL FIXES --- */
+
 .stats-section { display: grid; grid-template-columns: repeat(4, 1fr); }
-.stat-cell { display: flex; flex-direction: column; gap: var(--base-size-spacing-2); padding: 0 var(--semantic-size-inset-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-2); padding: 0 var(--semantic-size-inset-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); }
 .stat-cell:last-child { border-right: none; }
 .stat-label { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
 .stat-value { font: var(--semantic-font-style-heading-xs); color: var(--semantic-color-text-primary); font-weight: 600; }
@@ -162,9 +174,9 @@ tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
 </style>
 
 <style>
-/* Non-scoped styles to target the modal card from the outside */
+/* --- CRITICAL FIXES ARE HERE --- */
 .daily-summary-modal .modal-card {
-  max-width: 800px;
+  max-width: 960px; /* FIX: Make modal wider */
   gap: var(--semantic-size-stack-xl);
 }
 </style>
