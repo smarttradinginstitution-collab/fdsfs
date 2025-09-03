@@ -219,8 +219,17 @@ const tradeTableHeaders = computed(() => [
 .stat-cell.stacked {
     gap: var(--base-size-spacing-1);
 }
-.stat-label { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
-.stat-value { font: var(--semantic-font-style-heading-xs); color: var(--semantic-color-text-primary); font-weight: 600; }
+.stat-label {
+  font: var(--semantic-font-style-label-md); /* Match table header */
+  color: var(--semantic-color-text-secondary);
+  white-space: nowrap;
+}
+.stat-value {
+  font: var(--semantic-font-style-body-sm); /* Match table cell */
+  color: var(--semantic-color-text-primary);
+  font-weight: 600; /* Keep it slightly bolder than normal text */
+  white-space: nowrap;
+}
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
 /* Table Styles */

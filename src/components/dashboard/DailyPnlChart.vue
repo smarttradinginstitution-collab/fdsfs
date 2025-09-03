@@ -33,17 +33,39 @@ const props = defineProps({
 const data = computed(() => {
   const isPositive = props.chartData.data.length > 0 ? props.chartData.data[props.chartData.data.length - 1] >= 0 : true;
 
-  const positiveColor = 'rgba(16, 185, 129, 0.2)';
   const positiveBorder = 'rgb(16, 185, 129)';
-  const negativeColor = 'rgba(239, 68, 68, 0.2)';
   const negativeBorder = 'rgb(239, 68, 68)';
+
+  // This function will be executed by Chart.js, which provides the chart context.
+  const getGradient = (context) => {
+    const chart = context.chart;
+    const { ctx, chartArea } = chart;
+
+    if (!chartArea) {
+      // This happens on the initial render before the chart area is defined.
+      // A gradient will be applied on the next update.
+      return null;
+    }
+
+    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+
+    if (isPositive) {
+      gradient.addColorStop(0, 'rgba(16, 185, 129, 0)');
+      gradient.addColorStop(1, 'rgba(16, 185, 129, 0.4)');
+    } else {
+      gradient.addColorStop(0, 'rgba(239, 68, 68, 0)');
+      gradient.addColorStop(1, 'rgba(239, 68, 68, 0.4)');
+    }
+
+    return gradient;
+  };
 
   return {
     labels: props.chartData.labels,
     datasets: [
       {
         label: 'Cumulative P&L',
-        backgroundColor: isPositive ? positiveColor : negativeColor,
+        backgroundColor: getGradient, // Pass the function to create the gradient
         borderColor: isPositive ? positiveBorder : negativeBorder,
         data: props.chartData.data,
         tension: 0.3,
@@ -76,6 +98,7 @@ const chartOptions = computed(() => ({
       display: true,
       grid: {
         color: 'var(--semantic-color-border-muted)',
+        borderDash: [5, 5],
       },
       ticks: {
         color: 'var(--semantic-color-text-secondary)',
