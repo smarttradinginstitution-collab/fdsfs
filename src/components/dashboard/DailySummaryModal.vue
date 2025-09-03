@@ -38,22 +38,40 @@ const formattedPnl = (pnl) => {
     return `${sign}$${Math.abs(pnl).toFixed(2)}`;
 };
 
+// New stats grid based on the final blueprint
 const statsGrid = computed(() => {
     if (!dailyData.value) return [];
     const stats = dailyData.value.stats;
-    return [
-        { label: 'Total Trades', value: stats.tradeCount },
-        { label: 'Win Rate', value: `${stats.winRate.toFixed(1)}%` },
-        { label: 'Avg. Win', value: `$${stats.avgWin.toFixed(2)}` },
-        { label: 'Avg. Loss', value: `$${stats.avgLoss.toFixed(2)}` },
-    ];
+    return {
+        col1: [
+            { label: 'Total Trades', value: stats.tradeCount },
+            { label: 'Winrate', value: `${(stats.winningTrades / (stats.tradeCount || 1) * 100).toFixed(1)}%` },
+        ],
+        col2: [
+            { label: 'Winners', value: stats.winningTrades },
+            { label: 'Losers', value: stats.losingTrades },
+        ],
+        col3: [
+            { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` },
+        ],
+        col4: [
+            { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) },
+        ]
+    };
 });
 
 const tradeTableHeaders = computed(() => [
+    { key: 'openTime', text: 'Open Time' },
     { key: 'ticker', text: 'Ticker' },
-    { key: 'type', text: 'Type' },
+    { key: 'type', text: 'Side' },
+    { key: 'instrument', text: 'Instrument' },
     { key: 'pnl', text: 'Net P&L' },
-    { key: 'strategy', text: 'Playbook' },
+    { key: 'netROI', text: 'Net ROI' },
+    { key: 'rMultiple', text: 'Realized R' },
+    { key: 'playbook', text: 'Playbook' },
+    { key: 'ticks', text: 'Ticks' },
+    { key: 'bestExit', text: 'Best Exit' },
+    { key: 'commission', text: 'Commission' },
 ]);
 </script>
 
@@ -86,9 +104,29 @@ const tradeTableHeaders = computed(() => [
             <DailyPnlChart :chart-data="dailyData.cumulativePnlForChart" />
           </div>
           <div class="stats-section">
-            <div v-for="stat in statsGrid" :key="stat.label" class="stat-cell">
-              <span class="stat-label">{{ stat.label }}</span>
-              <span class="stat-value">{{ stat.value }}</span>
+            <div class="stat-col">
+                <div v-for="stat in statsGrid.col1" :key="stat.label" class="stat-cell stacked">
+                    <span class="stat-label">{{ stat.label }}</span>
+                    <span class="stat-value">{{ stat.value }}</span>
+                </div>
+            </div>
+            <div class="stat-col">
+                <div v-for="stat in statsGrid.col2" :key="stat.label" class="stat-cell stacked">
+                    <span class="stat-label">{{ stat.label }}</span>
+                    <span class="stat-value">{{ stat.value }}</span>
+                </div>
+            </div>
+            <div class="stat-col">
+                <div v-for="stat in statsGrid.col3" :key="stat.label" class="stat-cell">
+                    <span class="stat-label">{{ stat.label }}</span>
+                    <span class="stat-value">{{ stat.value }}</span>
+                </div>
+            </div>
+            <div class="stat-col">
+                <div v-for="stat in statsGrid.col4" :key="stat.label" class="stat-cell">
+                    <span class="stat-label">{{ stat.label }}</span>
+                    <span class="stat-value">{{ stat.value }}</span>
+                </div>
             </div>
           </div>
         </div>
@@ -102,10 +140,17 @@ const tradeTableHeaders = computed(() => [
             </thead>
             <tbody>
               <tr v-if="dailyData.trades.length > 0" v-for="trade in dailyData.trades" :key="trade.id">
+                <td>{{ trade.openTime }}</td>
                 <td>{{ trade.ticker }}</td>
                 <td>{{ trade.type }}</td>
+                <td>{{ trade.instrument }}</td>
                 <td :class="pnlClass(trade.pnl)">{{ formattedPnl(trade.pnl) }}</td>
+                <td>{{ trade.netROI.toFixed(2) }}%</td>
+                <td>{{ trade.rMultiple.toFixed(2) }}</td>
                 <td><BasePill>{{ trade.strategy }}</BasePill></td>
+                <td>{{ trade.ticks }}</td>
+                <td>{{ trade.bestExit.toFixed(2) }}</td>
+                <td>${{ trade.commission.toFixed(2) }}</td>
               </tr>
               <tr v-else>
                 <td :colspan="tradeTableHeaders.length" class="no-trades-cell">No trades for this day.</td>
@@ -145,30 +190,41 @@ const tradeTableHeaders = computed(() => [
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
   flex-grow: 1;
-  min-height: 0; /* Allow flex children to shrink and grow */
+  min-height: 0;
 }
 .top-section {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: var(--semantic-size-gap-xl);
-  align-items: stretch; /* FIX: ensures chart container gets full height */
-  flex-shrink: 0; /* Prevent this section from shrinking */
+  align-items: stretch;
+  flex-shrink: 0;
 }
-.chart-section {
-  min-height: 150px;
+.chart-section { min-height: 150px; }
+
+/* New Stats Section Styles */
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-left: var(--base-border-width-1) solid var(--semantic-color-border-default);
 }
-.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); }
-.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-2); padding: 0 var(--semantic-size-inset-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); }
-.stat-cell:last-child { border-right: none; }
+.stat-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--semantic-size-stack-lg);
+    border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+    padding: 0 var(--semantic-size-inset-lg);
+}
+.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-1); }
 .stat-label { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
 .stat-value { font: var(--semantic-font-style-heading-xs); color: var(--semantic-color-text-primary); font-weight: 600; }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
 /* Table Styles */
 .table-wrapper {
-  flex-grow: 1; /* Allow table to take up remaining space */
-  min-height: 0; /* Critical for allowing overflow-y to work in a flex container */
-  overflow-y: auto; /* FIX: Make ONLY the table scroll vertically */
+  flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
   overflow-x: auto;
 }
 table { width: 100%; border-collapse: collapse; }
@@ -183,9 +239,9 @@ tbody tr:hover { background-color: var(--semantic-color-surface-secondary); }
 
 <style>
 .daily-summary-modal .modal-card {
-  max-width: 960px; /* FIX: Make modal wider */
-  max-height: 90vh; /* FIX: Constrain height to make it a horizontal rectangle */
+  max-width: 800px;
+  max-height: 90vh;
+  width: 95%;
   gap: var(--semantic-size-stack-lg);
-  /* The .modal-card is already a flex column, so its children (header, body, footer) will stack */
 }
 </style>

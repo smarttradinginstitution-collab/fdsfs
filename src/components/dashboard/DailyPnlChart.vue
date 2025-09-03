@@ -31,10 +31,8 @@ const props = defineProps({
 });
 
 const data = computed(() => {
-  // The last point in the data array is the final cumulative P&L
   const isPositive = props.chartData.data.length > 0 ? props.chartData.data[props.chartData.data.length - 1] >= 0 : true;
 
-  // These are approximations. In a real scenario, we'd use a plugin to get CSS variables.
   const positiveColor = 'rgba(16, 185, 129, 0.2)';
   const positiveBorder = 'rgb(16, 185, 129)';
   const negativeColor = 'rgba(239, 68, 68, 0.2)';
@@ -58,7 +56,7 @@ const data = computed(() => {
   };
 });
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -75,13 +73,22 @@ const chartOptions = {
       display: false,
     },
     y: {
-      display: false,
+      display: true, // FIX: Make Y-axis visible
+      grid: {
+        color: 'var(--semantic-color-border-muted)',
+      },
+      ticks: {
+        color: 'var(--semantic-color-text-secondary)',
+        callback: function(value) {
+          return '$' + value;
+        }
+      },
     },
   },
-};
+}));
 
 const hasData = computed(() => {
-  return props.chartData && props.chartData.data.length > 0;
+  return props.chartData && props.chartData.data.length > 1; // Needs more than just the 'Start' point
 });
 </script>
 
