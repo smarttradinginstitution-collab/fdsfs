@@ -18,6 +18,11 @@
   --base-border-radius-full: 9999px;
   --base-border-width-base: 1px;
   --base-border-width-strong: 2px;
+  --base-breakpoint-sm: 640px;
+  --base-breakpoint-md: 768px;
+  --base-breakpoint-lg: 1024px;
+  --base-breakpoint-xl: 1280px;
+  --base-breakpoint-2xl: 1536px;
   --base-color-black: #000000;
   --base-color-black-alpha-50: rgba(0, 0, 0, 0.5);
   --base-color-white: #ffffff;
@@ -84,11 +89,6 @@
   --base-font-weight-semibold: 600;
   --base-font-weight-bold: 700;
   --base-font-weight-extrabold: 800;
-  --base-layout-breakpoint-sm: 640px;
-  --base-layout-breakpoint-md: 768px;
-  --base-layout-breakpoint-lg: 1024px;
-  --base-layout-breakpoint-xl: 1280px;
-  --base-layout-breakpoint-2xl: 1536px;
   --base-opacity-0: 0;
   --base-opacity-10: 0.1;
   --base-opacity-20: 0.2;
