@@ -85,7 +85,7 @@ function onInput(event) {
   font-size: var(--semantic-font-style-body-base-font-size);
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   /* Transizione fluida per il focus. */

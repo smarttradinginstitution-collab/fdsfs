@@ -145,8 +145,8 @@ const tradeTableHeaders = computed(() => [
 .chart-section { min-height: 150px; }
 
 /* Stats Section Styles */
-.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); border-left: var(--base-border-width-1) solid var(--semantic-color-border-default); }
-.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); padding: 0 var(--semantic-size-inset-lg); }
+.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); border-left: var(--base-border-width-base) solid var(--semantic-color-border-default); }
+.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-lg); border-right: var(--base-border-width-base) solid var(--semantic-color-border-default); padding: 0 var(--semantic-size-inset-lg); }
 .stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-1); }
 .stat-label { font: var(--semantic-font-style-label-md); color: var(--semantic-color-text-secondary); white-space: nowrap; display: block; }
 .stat-value { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-primary); font-weight: 600; white-space: nowrap; display: block; }
@@ -156,5 +156,5 @@ const tradeTableHeaders = computed(() => [
 .table-wrapper { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; }
 
 /* Footer Styles */
-.footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-base) solid var(--semantic-color-border-default); }
 </style>

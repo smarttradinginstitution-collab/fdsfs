@@ -69,13 +69,13 @@ th {
   color: var(--semantic-color-text-secondary);
   text-align: left;
   padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-bottom: var(--base-border-width-base) solid var(--semantic-color-border-default);
 }
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
   padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+  border-top: var(--base-border-width-base) solid var(--semantic-color-border-subtle);
 }
 
 /* Stili per la dimensione piccola */
@@ -114,8 +114,8 @@ tbody tr:hover {
   .table tr {
     display: block;
     margin-bottom: var(--semantic-size-stack-md);
-    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-surface);
+    border: var(--base-border-width-base) solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-container);
     padding: var(--semantic-size-inset-sm);
   }
   .table td {

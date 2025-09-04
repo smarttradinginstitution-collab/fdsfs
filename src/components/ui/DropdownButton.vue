@@ -47,7 +47,7 @@ function toggle() {
   align-items: center;
   gap: var(--base-size-spacing-2); /* 8px */
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-label-md);
   padding: var(--base-size-spacing-2) var(--base-size-spacing-3); /* 8px vertical, 12px horizontal */
@@ -90,8 +90,8 @@ function toggle() {
   top: calc(100% + var(--base-size-spacing-1)); /* 4px gap */
   right: 0;
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-container);
   box-shadow: var(--semantic-effect-shadow-elevation-medium);
   z-index: var(--base-layer-z-index-dropdown);
   /* min-width rimosso per permettere al menu di adattarsi a schermi piccoli */

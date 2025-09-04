@@ -106,10 +106,10 @@ function formatCellPnl(pnl) {
 <style scoped>
 .calendar-card {
   background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
+  border-radius: var(--semantic-border-radius-container);
   /* Ridotto il padding verticale per un header più compatto */
   padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
 }
@@ -122,7 +122,7 @@ function formatCellPnl(pnl) {
   text-align: center;
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-label-sm);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   border-radius: var(--base-border-radius-sm);
   margin-bottom: var(--base-size-spacing-xs);
 }
@@ -207,7 +207,7 @@ function formatCellPnl(pnl) {
   gap: var(--base-size-spacing-1);
   padding: var(--semantic-size-inset-sm);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   border-radius: var(--base-border-radius-sm);
   transition: all 150ms ease-in-out;
   cursor: pointer;

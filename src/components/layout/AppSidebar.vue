@@ -86,7 +86,7 @@ const navLinks = [
   width: var(--base-size-component-sidebar-width-expanded); /* Usa il nuovo token */
   height: 100vh;
   background-color: var(--base-color-gray-900);
-  border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-right: var(--base-border-width-base) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
   padding: var(--semantic-size-inset-lg);

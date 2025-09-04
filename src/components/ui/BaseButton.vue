@@ -35,7 +35,7 @@ const buttonClass = computed(() => `button button--${props.variant}`);
   font: var(--semantic-font-style-label-md);
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
-  border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
+  border: var(--base-border-width-base) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
   transition: all var(--base-animation-duration-fast);
 }

@@ -85,7 +85,7 @@ ma mantenerlo accessibile per gli screen reader e la navigazione da tastiera.
   width: 1.125rem;
   height: 1.125rem;
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   border-radius: var(--base-border-radius-sm);
   transition: all var(--base-animation-duration-fast);
   flex-shrink: 0; /* Impedisce alla checkbox di restringersi. */

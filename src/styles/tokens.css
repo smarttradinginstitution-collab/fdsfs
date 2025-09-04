@@ -16,8 +16,8 @@
   --base-border-radius-md: 0.5rem;
   --base-border-radius-lg: 1rem;
   --base-border-radius-full: 9999px;
-  --base-border-width-1: 1px;
-  --base-border-width-2: 2px;
+  --base-border-width-base: 1px;
+  --base-border-width-strong: 2px;
   --base-color-black: #000000;
   --base-color-black-alpha-50: rgba(0, 0, 0, 0.5);
   --base-color-white: #ffffff;
@@ -142,7 +142,7 @@
   --base-size-spacing-2-5: 0.625rem;
   --base-size-spacing-3-5: 0.875rem;
   --semantic-border-radius-interactive: 0.5rem;
-  --semantic-border-radius-surface: 0.5rem;
+  --semantic-border-radius-container: 0.5rem;
   --semantic-border-radius-tag: 9999px;
   --semantic-color-background-page: #f4f4f5;
   --semantic-color-background-primary: #ffffff;

@@ -48,7 +48,7 @@ const totalDays = computed(() => {
 .breakdown-card {
   background-color: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
+  border-radius: var(--semantic-border-radius-container);
   padding: var(--semantic-size-inset-lg);
   display: flex;
   flex-direction: column;

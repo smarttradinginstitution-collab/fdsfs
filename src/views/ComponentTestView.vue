@@ -91,7 +91,7 @@ h2 {
   gap: var(--semantic-size-stack-sm);
   padding: var(--semantic-size-inset-lg);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
+  border-radius: var(--semantic-border-radius-container);
 }
 pre {
   font-family: var(--base-font-family-palette-monospace);
