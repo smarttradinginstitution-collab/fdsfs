@@ -1,0 +1,116 @@
+{
+  "typography": {
+    "style": {
+      "heading-4xl": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.bold}",
+          "fontSize": "{base.typography.size.4xl}",
+          "lineHeight": "{base.typography.line-height.tight}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per metriche 'hero' ad alto impatto nelle dashboard."
+      },
+      "heading-2xl": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.bold}",
+          "fontSize": "{base.typography.size.2xl}",
+          "lineHeight": "{base.typography.line-height.tight}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per i titoli di pagina principali."
+      },
+      "heading-xl": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.semibold}",
+          "fontSize": "{base.typography.size.xl}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per i titoli delle card o dei widget."
+      },
+      "body-base": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.regular}",
+          "fontSize": "{base.typography.size.base}",
+          "lineHeight": "{base.typography.line-height.loose}"
+        },
+        "$type": "typography",
+        "$comment": "Stile standard per tutto il corpo del testo e paragrafi."
+      },
+      "body-sm": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.regular}",
+          "fontSize": "{base.typography.size.sm}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per testo secondario o didascalie."
+      },
+      "body-xs": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.regular}",
+          "fontSize": "{base.typography.size.xs}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per testo terziario, come metadati o timestamp."
+      },
+      "label-md": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.medium}",
+          "fontSize": "{base.typography.size.sm}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per etichette, bottoni e input di medie dimensioni."
+      },
+      "label-sm": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.medium}",
+          "fontSize": "{base.typography.size.xs}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per etichette piccole, come quelle nelle tabelle."
+      },
+      "label-xs": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.medium}",
+          "fontSize": "{base.typography.size.xs}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per etichette molto piccole, varianti per la tabella x-small."
+      },
+      "body-xxs": {
+        "$value": {
+          "fontFamily": "{base.typography.family.sans}",
+          "fontWeight": "{base.typography.weight.regular}",
+          "fontSize": "{base.typography.size.xxs}",
+          "lineHeight": "{base.typography.line-height.normal}"
+        },
+        "$type": "typography",
+        "$comment": "Stile per testo piccolissimo, varianti per la tabella x-small."
+      },
+      "data-numeric": {
+          "$value": {
+            "fontFamily": "{base.typography.family.monospace}",
+            "fontWeight": "{base.typography.weight.regular}",
+            "fontSize": "{base.typography.size.sm}",
+            "lineHeight": "{base.typography.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile specifico per dati numerici in tabelle per garantire l'allineamento."
+      }
+    }
+  }
+}

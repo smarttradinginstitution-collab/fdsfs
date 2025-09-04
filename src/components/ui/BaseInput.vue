@@ -69,45 +69,45 @@ function onInput(event) {
 .input-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--size-stack-xs);
   width: 100%;
 }
 
 .input-label {
-  font-family: var(--semantic-font-style-label-md-font-family);
-  font-size: var(--semantic-font-style-label-md-font-size);
-  font-weight: var(--semantic-font-style-label-md-font-weight);
-  color: var(--semantic-color-text-secondary);
+  font-family: var(--typography-style-label-md-font-family);
+  font-size: var(--typography-style-label-md-font-size);
+  font-weight: var(--typography-style-label-md-font-weight);
+  color: var(--color-text-secondary);
 }
 
 .input-field {
-  font-family: var(--semantic-font-style-body-base-font-family);
-  font-size: var(--semantic-font-style-body-base-font-size);
-  color: var(--semantic-color-text-primary);
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+  font-family: var(--typography-style-body-base-font-family);
+  font-size: var(--typography-style-body-base-font-size);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
+  border-radius: var(--border-radius-interactive);
+  padding: var(--size-inset-sm) var(--size-inset-md);
   /* Transizione fluida per il focus. */
   transition: box-shadow var(--base-animation-duration-fast), border-color var(--base-animation-duration-fast);
 }
 
 /* Stile per il testo segnaposto. */
 .input-field::placeholder {
-  color: var(--semantic-color-text-tertiary);
+  color: var(--color-text-tertiary);
 }
 
 /* Stile quando il campo riceve il focus. */
 .input-field:focus {
   outline: none;
-  border-color: var(--semantic-color-border-focus);
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus-ring);
 }
 
 /* Stile quando il campo è disabilitato. */
 .input-field:disabled {
-  background-color: var(--semantic-color-surface-disabled);
-  color: var(--semantic-color-text-disabled);
+  background-color: var(--color-surface-disabled);
+  color: var(--color-text-disabled);
   cursor: not-allowed;
 }
 </style>

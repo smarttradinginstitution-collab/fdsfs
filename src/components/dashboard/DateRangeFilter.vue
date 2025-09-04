@@ -55,8 +55,8 @@ const selectPreset = (presetKey) => {
 
 .filter-button {
   /* Stili di base del bottone */
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-secondary);
+  font: var(--typography-style-label-md);
+  color: var(--color-text-secondary);
   background-color: transparent;
   border: none;
   padding: var(--base-size-spacing-1-5) var(--base-size-spacing-3);
@@ -66,14 +66,14 @@ const selectPreset = (presetKey) => {
 }
 
 .filter-button:hover {
-  color: var(--semantic-color-text-primary);
-  background-color: var(--semantic-color-surface-primary);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-primary);
 }
 
 /* Stile per il bottone attualmente attivo. */
 .filter-button--active {
-  background-color: var(--semantic-color-surface-primary);
-  color: var(--semantic-color-text-primary);
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-primary);
   font-weight: var(--base-font-weight-semibold);
   box-shadow: var(--base-effect-shadow-sm);
 }

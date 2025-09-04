@@ -104,24 +104,24 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, var(--semantic-opacity-50));
+  background-color: rgba(0, 0, 0, var(--opacity-50));
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: var(--semantic-layer-z-index-overlay); /* Si assicura che sia sopra tutto. */
+  z-index: var(--z-index-overlay); /* Si assicura che sia sopra tutto. */
 }
 
 .modal-card {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  box-shadow: var(--semantic-effect-shadow-elevation-high);
-  padding: var(--semantic-size-inset-xl);
-  z-index: var(--semantic-layer-z-index-modal);
+  background-color: var(--color-surface-primary);
+  border-radius: var(--border-radius-surface);
+  box-shadow: var(--shadow-elevation-high);
+  padding: var(--size-inset-xl);
+  z-index: var(--z-index-modal);
   width: 100%;
   max-width: 850px;
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 
 .modal-header {
@@ -147,7 +147,7 @@ export default {
   border: none;
   font-size: var(--base-font-size-2xl);
   cursor: pointer;
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
 }
 
 /* Stili per la transizione di dissolvenza. */

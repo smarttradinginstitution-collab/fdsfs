@@ -62,15 +62,15 @@ function onChange(event) {
 .select-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--size-stack-xs);
   width: 100%;
 }
 
 .select-label {
-  font-family: var(--semantic-font-style-label-md-font-family);
-  font-size: var(--semantic-font-style-label-md-font-size);
-  font-weight: var(--semantic-font-style-label-md-font-weight);
-  color: var(--semantic-color-text-secondary);
+  font-family: var(--typography-style-label-md-font-family);
+  font-size: var(--typography-style-label-md-font-size);
+  font-weight: var(--typography-style-label-md-font-weight);
+  color: var(--color-text-secondary);
 }
 
 .select-container {
@@ -85,14 +85,14 @@ function onChange(event) {
   cursor: pointer;
 
   /* Stili condivisi con BaseInput per coerenza. */
-  font-family: var(--semantic-font-style-body-base-font-family);
-  font-size: var(--semantic-font-style-body-base-font-size);
-  color: var(--semantic-color-text-primary);
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
-  padding-right: var(--semantic-size-inset-xl); /* Spazio extra a destra per la freccia. */
+  font-family: var(--typography-style-body-base-font-family);
+  font-size: var(--typography-style-body-base-font-size);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
+  border-radius: var(--border-radius-interactive);
+  padding: var(--size-inset-sm) var(--size-inset-md);
+  padding-right: var(--size-inset-xl); /* Spazio extra a destra per la freccia. */
   transition: box-shadow var(--base-animation-duration-fast), border-color var(--base-animation-duration-fast);
 }
 
@@ -104,11 +104,11 @@ di default non è stilizzabile. Usiamo un pseudo-elemento `::after` sul contenit
   content: '';
   position: absolute;
   top: 50%;
-  right: var(--semantic-size-inset-md);
+  right: var(--size-inset-md);
   transform: translateY(-50%);
   width: 1em; /* Usiamo 'em' per renderla proporzionale alla dimensione del font. */
   height: 1em;
-  background-color: var(--semantic-color-text-tertiary);
+  background-color: var(--color-text-tertiary);
   /* `clip-path` disegna una forma (in questo caso, un triangolo). */
   clip-path: polygon(100% 25%, 50% 75%, 0 25%);
   pointer-events: none; /* Impedisce alla freccia di intercettare i click. */
@@ -117,13 +117,13 @@ di default non è stilizzabile. Usiamo un pseudo-elemento `::after` sul contenit
 
 /* Cambiamo colore alla freccia quando si passa il mouse sopra il select. */
 .select-field:hover + .select-container::after {
-    background-color: var(--semantic-color-text-primary);
+    background-color: var(--color-text-primary);
 }
 
 /* Stile per il focus. */
 .select-field:focus {
   outline: none;
-  border-color: var(--semantic-color-border-focus);
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus-ring);
 }
 </style>

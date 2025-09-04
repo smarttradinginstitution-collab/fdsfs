@@ -86,10 +86,10 @@ const navLinks = [
   width: var(--base-size-component-sidebar-width-expanded); /* Usa il nuovo token */
   height: 100vh;
   background-color: var(--base-color-gray-900);
-  border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-right: var(--base-border-width-1) solid var(--color-border-default);
   display: flex;
   flex-direction: column;
-  padding: var(--semantic-size-inset-lg);
+  padding: var(--size-inset-lg);
   /* Transizione fluida per la larghezza. */
   transition: width var(--base-animation-duration-base) var(--base-animation-easing-out);
 }
@@ -103,15 +103,15 @@ const navLinks = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font: var(--semantic-font-style-heading-2xl);
+  font: var(--typography-style-heading-2xl);
   font-weight: var(--base-font-weight-extrabold);
-  margin-bottom: var(--semantic-size-stack-xl);
+  margin-bottom: var(--size-stack-xl);
 }
 
 .toggle-button {
   background: none;
   border: none;
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -120,8 +120,8 @@ const navLinks = [
   transition: all var(--base-animation-duration-fast);
 }
 .toggle-button:hover {
-  background-color: var(--semantic-color-surface-secondary);
-  color: var(--semantic-color-text-primary);
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
 }
 /* Ruotiamo il pulsante quando la sidebar è collassata. */
 .sidebar.is-collapsed .toggle-button {
@@ -131,19 +131,19 @@ const navLinks = [
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--size-stack-xs);
   flex-grow: 1;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-sm);
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-secondary);
+  gap: var(--size-stack-sm);
+  font: var(--typography-style-label-md);
+  color: var(--color-text-secondary);
   text-decoration: none;
-  padding: var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-interactive);
+  padding: var(--size-inset-sm);
+  border-radius: var(--border-radius-interactive);
   transition: all var(--base-animation-duration-fast);
   white-space: nowrap; /* Impedisce al testo di andare a capo durante la transizione */
   overflow: hidden; /* Nasconde il testo che fuoriesce */
@@ -160,14 +160,14 @@ const navLinks = [
 
 .nav-item:hover,
 .nav-item.router-link-active {
-  background-color: var(--semantic-color-surface-secondary);
-  color: var(--semantic-color-text-primary);
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
 }
 
 .sidebar-footer {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--size-stack-sm);
   overflow: hidden;
 }
 
@@ -175,11 +175,11 @@ const navLinks = [
   min-width: var(--base-size-component-avatar-md);
   height: var(--base-size-component-avatar-md);
   border-radius: var(--base-border-radius-full);
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: var(--semantic-color-text-on-brand);
+  background-color: var(--color-interactive-primary-default);
+  color: var(--color-text-on-brand);
   display: grid;
   place-items: center;
-  font: var(--semantic-font-style-label-md);
+  font: var(--typography-style-label-md);
   flex-shrink: 0;
 }
 

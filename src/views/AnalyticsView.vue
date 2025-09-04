@@ -30,15 +30,15 @@ import WinLossDays from '../components/analytics/WinLossDays.vue';
 /* Stili specifici per questa pagina. */
 .analytics-view {
   width: 100%;
-  padding: var(--semantic-size-inset-xl);
+  padding: var(--size-inset-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--size-stack-lg);
 }
 
 .widget-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--size-stack-lg);
 }
 </style>

@@ -1,6 +1,6 @@
 {
   "base": {
-    "layout": {
+    "breakpoint": {
       "breakpoint": {
         "sm": {
           "$value": "640px",

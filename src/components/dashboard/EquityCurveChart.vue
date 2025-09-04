@@ -72,18 +72,18 @@ const chartOptions = computed(() => ({
     x: {
       grid: {
         // Usiamo le variabili CSS dei token per i colori
-        color: 'var(--semantic-color-border-muted)',
+        color: 'var(--color-border-muted)',
       },
       ticks: {
-        color: 'var(--semantic-color-text-secondary)',
+        color: 'var(--color-text-secondary)',
       },
     },
     y: {
       grid: {
-        color: 'var(--semantic-color-border-muted)',
+        color: 'var(--color-border-muted)',
       },
       ticks: {
-        color: 'var(--semantic-color-text-secondary)',
+        color: 'var(--color-text-secondary)',
         // Formattiamo i tick dell'asse Y per mostrare il simbolo del dollaro
         callback: function(value) {
           return '$' + value;
@@ -115,14 +115,14 @@ const hasData = computed(() => {
 
 <style scoped>
 .chart-card {
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  box-shadow: var(--semantic-effect-shadow-elevation-low);
-  padding: var(--semantic-size-inset-lg);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
+  border-radius: var(--border-radius-surface);
+  box-shadow: var(--shadow-elevation-low);
+  padding: var(--size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 
 .chart-header {
@@ -132,8 +132,8 @@ const hasData = computed(() => {
 }
 
 .chart-title {
-  font: var(--semantic-font-style-heading-xl); /* Usiamo la shorthand per i font */
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-xl); /* Usiamo la shorthand per i font */
+  color: var(--color-text-primary);
 }
 
 /*
@@ -150,11 +150,11 @@ const hasData = computed(() => {
   height: 100%;
   display: grid;
   place-items: center;
-  border-radius: var(--semantic-border-radius-interactive);
-  background-color: var(--semantic-color-surface-page);
+  border-radius: var(--border-radius-interactive);
+  background-color: var(--color-surface-page);
 }
 .placeholder-text {
-    color: var(--semantic-color-text-tertiary);
-    font: var(--semantic-font-style-body-md);
+    color: var(--color-text-tertiary);
+    font: var(--typography-style-body-md);
 }
 </style>

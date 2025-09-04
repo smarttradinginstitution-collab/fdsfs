@@ -105,11 +105,11 @@ function formatCellPnl(pnl) {
 
 <style scoped>
 .calendar-card {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
+  background-color: var(--color-surface-primary);
+  border-radius: var(--border-radius-surface);
   /* Ridotto il padding verticale per un header più compatto */
-  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  padding: var(--size-inset-md) var(--size-inset-lg);
+  border: var(--base-border-width-1) solid var(--color-border-default);
   display: flex;
   flex-direction: column;
 }
@@ -120,9 +120,9 @@ function formatCellPnl(pnl) {
 }
 .day-header {
   text-align: center;
-  color: var(--semantic-color-text-secondary);
-  font: var(--semantic-font-style-label-sm);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  color: var(--color-text-secondary);
+  font: var(--typography-style-label-sm);
+  border: var(--base-border-width-1) solid var(--color-border-default);
   border-radius: var(--base-border-radius-sm);
   margin-bottom: var(--base-size-spacing-xs);
 }
@@ -143,23 +143,23 @@ function formatCellPnl(pnl) {
 }
 .day-cell:not(.placeholder):hover {
     transform: scale(1.05);
-    outline: 2px solid var(--semantic-color-border-focus);
+    outline: 2px solid var(--color-border-focus);
 }
 .placeholder {
   background-color: transparent;
 }
 .no-trade {
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--color-surface-secondary);
 }
 .day-number {
   position: absolute;
   top: 0.1rem;
   right: 0.35rem;
   font-size: 0.7rem;
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
 }
 .day-cell:not(.no-trade) .day-number {
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   opacity: 0.7;
 }
 .day-details {
@@ -168,12 +168,12 @@ function formatCellPnl(pnl) {
   align-items: flex-end;
   gap: 0;
   line-height: 1.15;
-  color: var(--semantic-color-text-on-brand);
+  color: var(--color-text-on-brand);
   width: 100%;
 }
 .day-pnl {
   font-weight: var(--base-font-weight-bold);
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min),
     var(--base-font-fluid-size-lg-ideal),
@@ -181,7 +181,7 @@ function formatCellPnl(pnl) {
   );
 }
 .day-trade-count {
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-xxs-min),
     var(--base-font-fluid-size-xxs-ideal),
@@ -189,7 +189,7 @@ function formatCellPnl(pnl) {
   );
 }
 .day-extra-stats {
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   opacity: 0.8;
   font-size: clamp(
     var(--base-font-fluid-size-xxs-min),
@@ -205,9 +205,9 @@ function formatCellPnl(pnl) {
   align-items: start;
   line-height: 1.15;
   gap: var(--base-size-spacing-1);
-  padding: var(--semantic-size-inset-sm);
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  padding: var(--size-inset-sm);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
   border-radius: var(--base-border-radius-sm);
   transition: all 150ms ease-in-out;
   cursor: pointer;
@@ -215,14 +215,14 @@ function formatCellPnl(pnl) {
 }
 .week-summary-card:hover {
   transform: scale(1.03);
-  border-color: var(--semantic-color-border-focus);
-  background-color: var(--semantic-color-surface-secondary);
+  border-color: var(--color-border-focus);
+  background-color: var(--color-surface-secondary);
 }
 
 .week-title {
   font-family: var(--base-font-family-palette-sans);
   font-size: 0.7rem;
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -230,29 +230,29 @@ function formatCellPnl(pnl) {
 .week-days {
   font-family: var(--base-font-family-palette-sans);
   font-size: 0.7rem;
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   line-height: 1.2;
   white-space: nowrap;
   /* Stili per lo sfondo richiesto */
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--color-surface-secondary);
   padding: 0.1rem var(--base-size-spacing-1-5);
-  border-radius: var(--semantic-border-radius-tag);
+  border-radius: var(--border-radius-tag);
 }
 
 .week-pnl {
   font-size: var(--base-font-size-sm);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
+  font-family: var(--typography-style-data-numeric-font-family);
   font-weight: var(--base-font-weight-semibold);
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .week-pnl.positive {
-  color: var(--semantic-color-feedback-positive-text);
+  color: var(--color-feedback-positive-text);
 }
 
 .week-pnl.negative {
-  color: var(--semantic-color-feedback-negative-text);
+  color: var(--color-feedback-negative-text);
 }
 
 @media (max-width: 1024px) {

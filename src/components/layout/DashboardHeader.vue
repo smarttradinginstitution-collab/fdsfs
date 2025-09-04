@@ -74,24 +74,24 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
   /* Il padding è ora gestito completamente dal contenitore MainLayout */
 }
 .header-left, .header-right, .header-controls {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--size-stack-sm);
 }
 
 .title {
-  font: var(--semantic-font-style-heading-2xl);
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-2xl);
+  color: var(--color-text-primary);
 }
 
 .mobile-filters {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 
 /* --- RESPONSIVE VISIBILITY --- */
@@ -105,7 +105,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
     display: flex;
   }
   .title {
-    font: var(--semantic-font-style-heading-xl);
+    font: var(--typography-style-heading-xl);
   }
 }
 </style>

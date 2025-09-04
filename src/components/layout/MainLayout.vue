@@ -22,17 +22,17 @@
 
 .layout-header {
   /* Stili richiesti per il contenitore dell'header */
-  background-color: var(--semantic-color-surface-primary);
-  padding: var(--semantic-size-stack-sm); /* Modificato come da richiesta */
-  border-bottom: 1px solid var(--semantic-color-border-default); /* Modificato come da richiesta */
+  background-color: var(--color-surface-primary);
+  padding: var(--size-stack-sm); /* Modificato come da richiesta */
+  border-bottom: 1px solid var(--color-border-default); /* Modificato come da richiesta */
   width: 100%;
 }
 
 .layout-main {
   /* Il contenuto principale occuperà lo spazio rimanente */
   flex-grow: 1;
-  padding: var(--semantic-size-stack-lg) var(--semantic-size-gutter-screen);
+  padding: var(--size-stack-lg) var(--size-gutter-screen);
   /* Aggiungo uno sfondo di pagina per coerenza */
-  background-color: var(--semantic-color-surface-page);
+  background-color: var(--color-surface-page);
 }
 </style>

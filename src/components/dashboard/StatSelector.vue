@@ -60,17 +60,17 @@ const handleCheckboxChange = (statKey) => {
 .stat-selector {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 .selector-title {
-  font: var(--semantic-font-style-heading-lg);
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-lg);
+  color: var(--color-text-primary);
 }
 .selector-list {
   display: grid;
   /* Creiamo una griglia a due colonne per la lista. */
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--size-stack-sm);
 }
 .selector-item {
   /* Stile per ogni riga della lista. */

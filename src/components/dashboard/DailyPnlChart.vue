@@ -102,7 +102,7 @@ const chartOptions = computed(() => ({
         drawBorder: false, // Do not draw the solid axis line
       },
       ticks: {
-        color: 'var(--semantic-color-text-secondary)',
+        color: 'var(--color-text-secondary)',
         callback: function(value) {
           return '$' + value;
         }
@@ -136,9 +136,9 @@ const hasData = computed(() => {
   height: 100%;
   display: grid;
   place-items: center;
-  border-radius: var(--semantic-border-radius-interactive);
-  background-color: var(--semantic-color-surface-page);
-  color: var(--semantic-color-text-tertiary);
-  font: var(--semantic-font-style-body-sm);
+  border-radius: var(--border-radius-interactive);
+  background-color: var(--color-surface-page);
+  color: var(--color-text-tertiary);
+  font: var(--typography-style-body-sm);
 }
 </style>

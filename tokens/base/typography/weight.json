@@ -1,6 +1,6 @@
 {
   "base": {
-    "font": {
+    "typography": {
       "weight": {
         "light": { "$value": 300, "$type": "fontWeight" },
         "regular": { "$value": 400, "$type": "fontWeight" },

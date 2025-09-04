@@ -32,9 +32,9 @@ const buttonClass = computed(() => `button button--${props.variant}`);
   align-items: center;
   justify-content: center;
   gap: var(--base-size-spacing-2);
-  font: var(--semantic-font-style-label-md);
-  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-interactive);
+  font: var(--typography-style-label-md);
+  padding: var(--size-inset-xs) var(--size-inset-sm);
+  border-radius: var(--border-radius-interactive);
   border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
   transition: all var(--base-animation-duration-fast);
@@ -42,26 +42,26 @@ const buttonClass = computed(() => `button button--${props.variant}`);
 
 .button:focus-visible {
   outline: none;
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+  box-shadow: var(--shadow-focus-ring);
 }
 
 /* Variante Primaria */
 .button--primary {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: var(--semantic-color-text-on-brand);
+  background-color: var(--color-interactive-primary-default);
+  color: var(--color-text-on-brand);
 }
 .button--primary:hover {
-  background-color: var(--semantic-color-interactive-primary-hover);
+  background-color: var(--color-interactive-primary-hover);
 }
 
 /* Variante Secondaria */
 .button--secondary {
-  background-color: var(--semantic-color-surface-primary);
-  color: var(--semantic-color-text-interactive);
-  border-color: var(--semantic-color-border-default);
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-interactive);
+  border-color: var(--color-border-default);
 }
 .button--secondary:hover {
-  background-color: var(--semantic-color-surface-secondary);
-  border-color: var(--semantic-color-border-subtle);
+  background-color: var(--color-surface-secondary);
+  border-color: var(--color-border-subtle);
 }
 </style>

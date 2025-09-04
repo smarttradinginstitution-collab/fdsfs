@@ -21,19 +21,19 @@ defineProps({
   height: var(--base-size-component-button-min-height-md); /* 40px */
   border-radius: var(--base-border-radius-full);
   background-color: transparent;
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   border: none;
   cursor: pointer;
   transition: background-color var(--base-animation-duration-fast), color var(--base-animation-duration-fast);
 }
 
 .icon-button:hover {
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--color-surface-secondary);
 }
 
 .icon-button:focus-visible {
   outline: none;
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+  box-shadow: var(--shadow-focus-ring);
 }
 
 /* Make the SVG inside the button scale nicely */

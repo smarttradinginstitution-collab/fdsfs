@@ -46,8 +46,8 @@ const selectStrategy = (strategy) => {
 
 .filter-button {
   /* Stili di base del bottone */
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-secondary);
+  font: var(--typography-style-label-md);
+  color: var(--color-text-secondary);
   background-color: transparent;
   border: none;
   padding: var(--base-size-spacing-1-5) var(--base-size-spacing-3);
@@ -59,19 +59,19 @@ const selectStrategy = (strategy) => {
 }
 
 .filter-button:hover {
-  color: var(--semantic-color-text-primary);
-  background-color: var(--semantic-color-surface-secondary);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-secondary);
 }
 
 /* Stile per il bottone attualmente attivo. */
 .filter-button--active {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: var(--semantic-color-text-on-brand);
+  background-color: var(--color-interactive-primary-default);
+  color: var(--color-text-on-brand);
   font-weight: var(--base-font-weight-semibold);
 }
 
 .filter-button--active:hover {
-  background-color: var(--semantic-color-interactive-primary-hover);
-  color: var(--semantic-color-text-on-brand);
+  background-color: var(--color-interactive-primary-hover);
+  color: var(--color-text-on-brand);
 }
 </style>

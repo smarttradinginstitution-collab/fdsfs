@@ -20,11 +20,11 @@ export function useChartColors() {
     try {
       const style = getComputedStyle(document.documentElement);
       const fetchedColors = {
-        positive: style.getPropertyValue('--semantic-color-feedback-positive-text').trim(),
-        negative: style.getPropertyValue('--semantic-color-feedback-negative-text').trim(),
-        neutral: style.getPropertyValue('--semantic-color-text-interactive').trim(),
-        surfaceSecondary: style.getPropertyValue('--semantic-color-surface-secondary').trim(),
-        textTertiary: style.getPropertyValue('--semantic-color-text-tertiary').trim()
+        positive: style.getPropertyValue('--color-feedback-positive-text').trim(),
+        negative: style.getPropertyValue('--color-feedback-negative-text').trim(),
+        neutral: style.getPropertyValue('--color-text-interactive').trim(),
+        surfaceSecondary: style.getPropertyValue('--color-surface-secondary').trim(),
+        textTertiary: style.getPropertyValue('--color-text-tertiary').trim()
       };
 
       // Assicuriamoci che i colori siano stati effettivamente caricati prima di aggiornare

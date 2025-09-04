@@ -59,36 +59,36 @@ function formatPnl(pnl) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: var(--semantic-size-inset-md);
-  margin-bottom: var(--semantic-size-stack-sm); /* Ridotto il margine inferiore */
-  border-bottom: 1px solid var(--semantic-color-border-default);
+  padding-bottom: var(--size-inset-md);
+  margin-bottom: var(--size-stack-sm); /* Ridotto il margine inferiore */
+  border-bottom: 1px solid var(--color-border-default);
   flex-shrink: 0;
 }
 .controls-left, .controls-right, .month-selector {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--size-stack-sm);
 }
 .month-label {
-  font-family: var(--semantic-font-style-heading-xl-font-family);
-  font-weight: var(--semantic-font-style-heading-xl-font-weight);
+  font-family: var(--typography-style-heading-xl-font-family);
+  font-weight: var(--typography-style-heading-xl-font-weight);
   font-size: clamp(
     var(--base-font-fluid-size-xl-min),
     1.2vw, /* Tweak ideal value for this context */
     var(--base-font-fluid-size-xl-max)
   );
-  color: var(--semantic-color-text-primary);
+  color: var(--color-text-primary);
   white-space: nowrap;
 }
 .monthly-stats {
-  font-family: var(--semantic-font-style-body-sm-font-family);
-  font-weight: var(--semantic-font-style-body-sm-font-weight);
+  font-family: var(--typography-style-body-sm-font-family);
+  font-weight: var(--typography-style-body-sm-font-weight);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min), /* Usiamo una scala più grande */
     1vw, /* Valore ideale aggiustato */
     var(--base-font-fluid-size-lg-max)
   );
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 /* Override IconButton size for this specific context */
@@ -98,14 +98,14 @@ function formatPnl(pnl) {
     height: clamp(1.75rem, 5vw, var(--base-size-component-button-min-height-sm));
 }
 .stats-value {
-  color: var(--semantic-color-text-primary);
+  color: var(--color-text-primary);
   font-weight: var(--base-font-weight-medium);
   margin-left: var(--base-size-spacing-1);
 }
 .stats-value.positive {
-  color: var(--semantic-color-feedback-positive-text);
+  color: var(--color-feedback-positive-text);
 }
 .stats-value.negative {
-  color: var(--semantic-color-feedback-negative-text);
+  color: var(--color-feedback-negative-text);
 }
 </style>

@@ -1,6 +1,6 @@
 {
   "base": {
-    "font": {
+    "typography": {
       "size": {
         "xxs": {
           "$value": "0.625rem",

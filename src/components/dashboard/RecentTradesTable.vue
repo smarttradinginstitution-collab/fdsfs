@@ -47,26 +47,26 @@ const headers = tradesStore.tradeHeaders;
 .recent-trades-card {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  box-shadow: var(--semantic-effect-shadow-elevation-low);
-  padding: var(--semantic-size-inset-lg);
+  gap: var(--size-stack-md);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
+  border-radius: var(--border-radius-surface);
+  box-shadow: var(--shadow-elevation-low);
+  padding: var(--size-inset-lg);
 }
 .card-title {
-  font-family: var(--semantic-font-style-heading-xl-font-family);
-  font-size: var(--semantic-font-style-heading-xl-font-size);
-  font-weight: var(--semantic-font-style-heading-xl-font-weight);
-  color: var(--semantic-color-text-primary);
+  font-family: var(--typography-style-heading-xl-font-family);
+  font-size: var(--typography-style-heading-xl-font-size);
+  font-weight: var(--typography-style-heading-xl-font-weight);
+  color: var(--color-text-primary);
 }
 
 .pnl-positive {
-  color: var(--semantic-color-feedback-positive-text);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
+  color: var(--color-feedback-positive-text);
+  font-family: var(--typography-style-data-numeric-font-family);
 }
 .pnl-negative {
-  color: var(--semantic-color-feedback-negative-text);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
+  color: var(--color-feedback-negative-text);
+  font-family: var(--typography-style-data-numeric-font-family);
 }
 </style>

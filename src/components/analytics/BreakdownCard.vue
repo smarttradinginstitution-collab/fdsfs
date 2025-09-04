@@ -58,18 +58,18 @@ defineProps({
 
 <style scoped>
 .breakdown-card {
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  padding: var(--semantic-size-inset-lg);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
+  border-radius: var(--border-radius-surface);
+  padding: var(--size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 
 .card-title {
-  font: var(--semantic-font-style-heading-lg);
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-lg);
+  color: var(--color-text-primary);
 }
 
 .item-list {
@@ -78,35 +78,35 @@ defineProps({
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 
 .item-row {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--size-stack-xs);
 }
 
 .item-info {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: var(--semantic-font-style-body-sm-font-size);
+  font-size: var(--typography-style-body-sm-font-size);
 }
 
 .item-label {
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .item-value {
-  color: var(--semantic-color-text-primary);
+  color: var(--color-text-primary);
   font-weight: var(--base-font-weight-medium);
 }
 
 .progress-bar-bg {
   width: 100%;
   height: 8px;
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--color-surface-secondary);
   border-radius: var(--base-border-radius-full);
   overflow: hidden;
 }
@@ -118,10 +118,10 @@ defineProps({
 }
 
 .progress-bar-fg.positive {
-  background-color: var(--semantic-color-feedback-positive-text);
+  background-color: var(--color-feedback-positive-text);
 }
 
 .progress-bar-fg.negative {
-  background-color: var(--semantic-color-feedback-negative-text);
+  background-color: var(--color-feedback-negative-text);
 }
 </style>

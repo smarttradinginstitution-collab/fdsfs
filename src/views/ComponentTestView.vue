@@ -70,10 +70,10 @@ const selectOptions = [
 <style scoped>
 /* Stili specifici per questa pagina di test, per renderla più leggibile. */
 .test-page {
-  padding: var(--semantic-size-inset-xl);
+  padding: var(--size-inset-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xl);
+  gap: var(--size-stack-xl);
   flex-grow: 1;
 }
 h1, h2 {
@@ -88,15 +88,15 @@ h2 {
 .component-group {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
-  padding: var(--semantic-size-inset-lg);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
+  gap: var(--size-stack-sm);
+  padding: var(--size-inset-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--border-radius-surface);
 }
 pre {
   font-family: var(--base-font-family-palette-monospace);
-  background-color: var(--semantic-color-surface-secondary);
-  padding: var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-interactive);
+  background-color: var(--color-surface-secondary);
+  padding: var(--size-inset-md);
+  border-radius: var(--border-radius-interactive);
 }
 </style>

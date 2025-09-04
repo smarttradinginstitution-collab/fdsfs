@@ -46,18 +46,18 @@ const totalDays = computed(() => {
 <style scoped>
 /* Riusiamo lo stile di BreakdownCard per coerenza */
 .breakdown-card {
-  background-color: var(--semantic-color-surface-primary);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  padding: var(--semantic-size-inset-lg);
+  background-color: var(--color-surface-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--border-radius-surface);
+  padding: var(--size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 
 .card-title {
-  font: var(--semantic-font-style-heading-md);
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-md);
+  color: var(--color-text-primary);
 }
 
 .stats-container {
@@ -69,35 +69,35 @@ const totalDays = computed(() => {
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--size-stack-xs);
 }
 
 .stat-value {
-  font: var(--semantic-font-style-heading-xl);
+  font: var(--typography-style-heading-xl);
   font-weight: var(--base-font-weight-bold);
 }
 
 .stat-label {
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
+  font: var(--typography-style-body-sm);
+  color: var(--color-text-secondary);
 }
 
 .positive {
-  color: var(--semantic-color-text-positive);
+  color: var(--color-text-positive);
 }
 
 .negative {
-  color: var(--semantic-color-text-negative);
+  color: var(--color-text-negative);
 }
 
 .neutral {
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .no-data-placeholder {
   text-align: center;
-  color: var(--semantic-color-text-tertiary);
-  padding: var(--semantic-size-inset-xl);
-  font: var(--semantic-font-style-body-md);
+  color: var(--color-text-tertiary);
+  padding: var(--size-inset-xl);
+  font: var(--typography-style-body-md);
 }
 </style>

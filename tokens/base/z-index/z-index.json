@@ -1,6 +1,6 @@
 {
   "base": {
-    "layer": {
+    "z-index": {
       "z-index": {
         "base": {
           "$value": "0",

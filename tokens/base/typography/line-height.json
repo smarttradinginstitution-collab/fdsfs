@@ -1,6 +1,6 @@
 {
   "base": {
-    "font": {
+    "typography": {
       "line-height": {
         "$comment": "Token per l'altezza di riga (line-height). I valori sono unitless per essere relativi al font-size.",
         "none":   { "$value": 1, "$type": "lineHeight", "$comment": "Nessuna spaziatura extra." },

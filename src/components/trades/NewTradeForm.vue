@@ -68,10 +68,10 @@ const handleSubmit = () => {
 .new-trade-form {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--size-stack-md);
 }
 .form-actions {
-  margin-top: var(--semantic-size-stack-md);
+  margin-top: var(--size-stack-md);
   display: flex;
   justify-content: flex-end; /* Allinea il bottone a destra. */
 }

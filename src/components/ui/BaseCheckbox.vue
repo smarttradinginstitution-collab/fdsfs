@@ -84,15 +84,15 @@ ma mantenerlo accessibile per gli screen reader e la navigazione da tastiera.
   /* Dimensioni ridotte per la checkbox */
   width: 1.125rem;
   height: 1.125rem;
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  background-color: var(--color-surface-primary);
+  border: var(--base-border-width-1) solid var(--color-border-default);
   border-radius: var(--base-border-radius-sm);
   transition: all var(--base-animation-duration-fast);
   flex-shrink: 0; /* Impedisce alla checkbox di restringersi. */
 }
 
 .checkbox-label {
-  color: var(--semantic-color-text-secondary);
+  color: var(--color-text-secondary);
   /* Font ridotto per la label */
   font-size: var(--base-font-size-xs);
 }
@@ -101,8 +101,8 @@ ma mantenerlo accessibile per gli screen reader e la navigazione da tastiera.
    Il selettore `+` significa "seleziona l'elemento `.checkbox-custom`
    che viene immediatamente dopo un `.checkbox-hidden` che è `:checked`". */
 .checkbox-hidden:checked + .checkbox-custom {
-  background-color: var(--semantic-color-interactive-primary-default);
-  border-color: var(--semantic-color-interactive-primary-default);
+  background-color: var(--color-interactive-primary-default);
+  border-color: var(--color-interactive-primary-default);
   /* Aggiungiamo un'icona di spunta (checkmark) come immagine di sfondo.
      L'SVG è "inlined", cioè scritto direttamente nel CSS. */
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
@@ -110,6 +110,6 @@ ma mantenerlo accessibile per gli screen reader e la navigazione da tastiera.
 
 /* Stile per l'anello di focus per l'accessibilità. */
 .checkbox-hidden:focus-visible + .checkbox-custom {
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+  box-shadow: var(--shadow-focus-ring);
 }
 </style>

@@ -63,7 +63,7 @@ defineEmits(['toggle']);
 .hamburger-inner::after {
   width: 30px;
   height: 3px;
-  background-color: var(--semantic-color-text-primary);
+  background-color: var(--color-text-primary);
   border-radius: 4px;
   position: absolute;
   transition-property: transform;

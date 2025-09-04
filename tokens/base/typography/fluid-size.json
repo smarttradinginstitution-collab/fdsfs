@@ -1,6 +1,6 @@
 {
   "base": {
-    "font": {
+    "typography": {
       "fluid-size": {
         "$comment": "Token per la tipografia fluida. Ogni dimensione contiene i tre valori (min, ideal, max) per la funzione CSS clamp(). I valori sono stati ricalibrati per essere meno aggressivi.",
         "sm": {

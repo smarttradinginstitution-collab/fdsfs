@@ -60,17 +60,17 @@ watch(isDesktop, (isNowDesktop) => {
 .settings-menu {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--size-stack-sm);
   padding: var(--base-size-spacing-2);
 }
 .settings-title {
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-tertiary);
+  font: var(--typography-style-label-md);
+  color: var(--color-text-tertiary);
   margin-bottom: var(--base-size-spacing-1);
 }
 .settings-list {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--size-stack-sm);
 }
 </style>

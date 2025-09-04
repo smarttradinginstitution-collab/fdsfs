@@ -54,12 +54,12 @@ Se fossero necessari stili specifici, andrebbero qui. Esempio:
 .trades-view {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-lg);
-  padding: var(--semantic-size-inset-xl); /* Aggiunto padding per coerenza */
+  gap: var(--size-stack-lg);
+  padding: var(--size-inset-xl); /* Aggiunto padding per coerenza */
   flex-grow: 1; /* Aggiunto per occupare lo spazio disponibile */
 }
 .view-title {
-  font: var(--semantic-font-style-heading-h3);
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-h3);
+  color: var(--color-text-primary);
 }
 </style>

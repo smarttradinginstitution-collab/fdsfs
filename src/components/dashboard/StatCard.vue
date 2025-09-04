@@ -67,76 +67,76 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 <style scoped>
 /* Stili di base della card */
 .stat-card {
-  background-color: var(--semantic-color-surface-primary);
-  padding: var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-surface);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  box-shadow: var(--semantic-effect-shadow-elevation-low);
+  background-color: var(--color-surface-primary);
+  padding: var(--size-inset-md);
+  border-radius: var(--border-radius-surface);
+  border: var(--base-border-width-1) solid var(--color-border-default);
+  box-shadow: var(--shadow-elevation-low);
   display: flex;
   transition: box-shadow var(--base-animation-duration-fast) var(--base-animation-easing-out);
 }
 .stat-card:hover {
-    box-shadow: var(--semantic-effect-shadow-elevation-medium);
+    box-shadow: var(--shadow-elevation-medium);
 }
 
 /* Layout di default (verticale) */
 .text-content-default {
     display: flex;
     flex-direction: column;
-    gap: var(--semantic-size-stack-xs);
+    gap: var(--size-stack-xs);
 }
 
 /* Layout per card con grafici (2 colonne) */
 .stat-card--with-chart {
     justify-content: space-between;
     align-items: center;
-    gap: var(--semantic-size-stack-md);
+    gap: var(--size-stack-md);
 }
 
 /* Stili per il testo */
 .text-content {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--size-stack-xs);
 }
 .stat-label {
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
+  font: var(--typography-style-body-sm);
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 .stat-value {
-  font: var(--semantic-font-style-heading-xl);
-  color: var(--semantic-color-text-primary);
+  font: var(--typography-style-heading-xl);
+  color: var(--color-text-primary);
 }
 .stat-value--positive {
-  color: var(--semantic-color-feedback-positive-text);
+  color: var(--color-feedback-positive-text);
 }
 .stat-value--negative {
-  color: var(--semantic-color-feedback-negative-text);
+  color: var(--color-feedback-negative-text);
 }
 
 /* Stili specifici per Win Rate Card */
 .win-rate-label {
     display: flex;
     align-items: center;
-    gap: var(--semantic-size-stack-sm);
+    gap: var(--size-stack-sm);
 }
 .badges {
     display: flex;
-    gap: var(--semantic-size-stack-xs);
+    gap: var(--size-stack-xs);
 }
 .badge {
     font-size: 0.75rem;
     padding: 0.1rem 0.4rem;
-    border-radius: var(--semantic-border-radius-tag);
+    border-radius: var(--border-radius-tag);
 }
 .badge.win {
-    background-color: var(--semantic-color-feedback-positive-surface);
-    color: var(--semantic-color-feedback-positive-text);
+    background-color: var(--color-feedback-positive-surface);
+    color: var(--color-feedback-positive-text);
 }
 .badge.loss {
-    background-color: var(--semantic-color-feedback-negative-surface);
-    color: var(--semantic-color-feedback-negative-text);
+    background-color: var(--color-feedback-negative-surface);
+    color: var(--color-feedback-negative-text);
 }
 
 .chart-content {
@@ -149,7 +149,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     .stat-card--with-chart {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--semantic-size-stack-md);
+        gap: var(--size-stack-md);
     }
 }
 </style>
