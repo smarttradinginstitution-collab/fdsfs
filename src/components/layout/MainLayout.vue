@@ -33,6 +33,6 @@
   flex-grow: 1;
   padding: var(--semantic-size-stack-lg) var(--semantic-size-gutter-screen);
   /* Aggiungo uno sfondo di pagina per coerenza */
-  background-color: var(--semantic-color-background-page);
+  background-color: var(--semantic-color-surface-page);
 }
 </style>
