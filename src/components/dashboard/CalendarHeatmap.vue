@@ -140,6 +140,7 @@ function formatCellPnl(pnl) {
   cursor: pointer;
   justify-content: center;
   overflow: hidden;
+  z-index: auto;
 }
 .day-cell:not(.placeholder):hover {
     transform: scale(1.05);
@@ -175,26 +176,26 @@ function formatCellPnl(pnl) {
   font-weight: var(--base-font-weight-bold);
   color: var(--color-text-secondary);
   font-size: clamp(
-    var(--base-font-fluid-size-lg-min),
-    var(--base-font-fluid-size-lg-ideal),
-    var(--base-font-fluid-size-lg-max)
+    var(--base-typography-fluid-size-lg-min),
+    var(--base-typography-fluid-size-lg-ideal),
+    var(--base-typography-fluid-size-lg-max)
   );
 }
 .day-trade-count {
   color: var(--color-text-secondary);
   font-size: clamp(
-    var(--base-font-fluid-size-xxs-min),
-    var(--base-font-fluid-size-xxs-ideal),
-    var(--base-font-fluid-size-xxs-max)
+    var(--base-typography-fluid-size-xxs-min),
+    var(--base-typography-fluid-size-xxs-ideal),
+    var(--base-typography-fluid-size-xxs-max)
   );
 }
 .day-extra-stats {
   color: var(--color-text-secondary);
   opacity: 0.8;
   font-size: clamp(
-    var(--base-font-fluid-size-xxs-min),
-    var(--base-font-fluid-size-xxs-ideal),
-    var(--base-font-fluid-size-xxs-max)
+    var(--base-typography-fluid-size-xxs-min),
+    var(--base-typography-fluid-size-xxs-ideal),
+    var(--base-typography-fluid-size-xxs-max)
   );
 }
 /* --- Stili per il riepilogo settimanale --- */

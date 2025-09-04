@@ -118,7 +118,7 @@ const hasData = computed(() => {
   background-color: var(--color-surface-primary);
   border: var(--base-border-width-1) solid var(--color-border-default);
   border-radius: var(--border-radius-surface);
-  box-shadow: var(--shadow-elevation-low);
+  box-shadow: var(--shadow-shadow-elevation-low);
   padding: var(--size-inset-lg);
   display: flex;
   flex-direction: column;

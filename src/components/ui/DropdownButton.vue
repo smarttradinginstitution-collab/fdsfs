@@ -77,7 +77,7 @@ function toggle() {
 
 .dropdown-trigger:focus-visible {
   outline: none;
-  box-shadow: var(--shadow-focus-ring);
+  box-shadow: var(--shadow-shadow-focus-ring);
 }
 
 .trigger-icon, .trigger-chevron {
@@ -92,7 +92,7 @@ function toggle() {
   background-color: var(--color-surface-primary);
   border: var(--base-border-width-1) solid var(--color-border-default);
   border-radius: var(--border-radius-surface);
-  box-shadow: var(--shadow-elevation-medium);
+  box-shadow: var(--shadow-shadow-elevation-medium);
   z-index: var(--base-layer-z-index-dropdown);
   /* min-width rimosso per permettere al menu di adattarsi a schermi piccoli */
   padding: var(--base-size-spacing-2);

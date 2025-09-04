@@ -124,6 +124,6 @@ di default non è stilizzabile. Usiamo un pseudo-elemento `::after` sul contenit
 .select-field:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: var(--shadow-focus-ring);
+  box-shadow: var(--shadow-shadow-focus-ring);
 }
 </style>

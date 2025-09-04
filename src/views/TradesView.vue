@@ -48,7 +48,7 @@ Gli stili "scoped" si applicano solo a questo componente.
 In questo caso, sono stati rimossi perché la dashboard-view non esiste in questo file.
 Se fossero necessari stili specifici, andrebbero qui. Esempio:
 .trades-view {
-  padding: var(--semantic-size-inset-xl);
+  padding: var(--size-inset-xl);
 }
 */
 .trades-view {

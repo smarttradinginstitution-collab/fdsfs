@@ -33,7 +33,7 @@ defineProps({
 
 .icon-button:focus-visible {
   outline: none;
-  box-shadow: var(--shadow-focus-ring);
+  box-shadow: var(--shadow-shadow-focus-ring);
 }
 
 /* Make the SVG inside the button scale nicely */

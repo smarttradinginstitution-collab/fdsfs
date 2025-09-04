@@ -108,15 +108,15 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: var(--z-index-overlay); /* Si assicura che sia sopra tutto. */
+  z-index: var(--z-index-z-index-overlay); /* Si assicura che sia sopra tutto. */
 }
 
 .modal-card {
   background-color: var(--color-surface-primary);
   border-radius: var(--border-radius-surface);
-  box-shadow: var(--shadow-elevation-high);
+  box-shadow: var(--shadow-shadow-elevation-high);
   padding: var(--size-inset-xl);
-  z-index: var(--z-index-modal);
+  z-index: var(--z-index-z-index-modal);
   width: 100%;
   max-width: 850px;
   display: flex;

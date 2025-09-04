@@ -71,12 +71,12 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   padding: var(--size-inset-md);
   border-radius: var(--border-radius-surface);
   border: var(--base-border-width-1) solid var(--color-border-default);
-  box-shadow: var(--shadow-elevation-low);
+  box-shadow: var(--shadow-shadow-elevation-low);
   display: flex;
   transition: box-shadow var(--base-animation-duration-fast) var(--base-animation-easing-out);
 }
 .stat-card:hover {
-    box-shadow: var(--shadow-elevation-medium);
+    box-shadow: var(--shadow-shadow-elevation-medium);
 }
 
 /* Layout di default (verticale) */
