@@ -75,6 +75,6 @@ const selectPreset = (presetKey) => {
   background-color: var(--semantic-color-surface-primary);
   color: var(--semantic-color-text-primary);
   font-weight: var(--base-font-weight-semibold);
-  box-shadow: var(--base-effect-shadow-sm);
+  box-shadow: var(--base-shadow-shadow-sm);
 }
 </style>

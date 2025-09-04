@@ -114,7 +114,7 @@ export default {
 .modal-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-container);
-  box-shadow: var(--semantic-effect-shadow-elevation-high);
+  box-shadow: var(--semantic-shadow-shadow-elevation-high);
   padding: var(--semantic-size-inset-xl);
   z-index: var(--semantic-layer-z-index-modal);
   width: 100%;

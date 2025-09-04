@@ -44,10 +44,6 @@
   --base-color-red-500: #ef4444;
   --base-color-red-600: #dc2626;
   --base-color-red-600-rgb: 220, 38, 38;
-  --base-effect-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --base-effect-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --base-effect-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --base-effect-shadow-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
   --base-font-fluid-size-sm-min: 0.5rem;
   --base-font-fluid-size-sm-ideal: 0.8vw;
   --base-font-fluid-size-sm-max: 0.65rem;
@@ -111,6 +107,10 @@
   --base-opacity-80: 0.8;
   --base-opacity-90: 0.9;
   --base-opacity-100: 1;
+  --base-shadow-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --base-shadow-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --base-shadow-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --base-shadow-shadow-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
   --base-size-component-button-min-height-sm: 2rem;
   --base-size-component-button-min-height-md: 2.5rem;
   --base-size-component-button-min-height-lg: 3rem;
@@ -168,10 +168,6 @@
   --semantic-color-border-subtle: #e9e9ea;
   --semantic-color-border-focus: #3b82f6;
   --semantic-color-overlay-background: rgba(0, 0, 0, 0.5);
-  --semantic-effect-shadow-elevation-low: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --semantic-effect-shadow-elevation-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --semantic-effect-shadow-elevation-high: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --semantic-effect-shadow-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
   --semantic-font-style-heading-4xl: 700 2.25rem/1.2 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-font-style-heading-2xl: 700 1.5rem/1.2 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-font-style-heading-xl: 600 1.25rem/1.5 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -183,6 +179,10 @@
   --semantic-font-style-label-xs: 500 0.75rem/1.5 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-font-style-body-xxs: 400 0.625rem/1.5 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-font-style-data-numeric: 400 0.875rem/1.5 'Roboto Mono', 'SF Mono', 'Fira Code', 'Fira Mono', 'Droid Sans Mono', monospace;
+  --semantic-shadow-shadow-elevation-low: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --semantic-shadow-shadow-elevation-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --semantic-shadow-shadow-elevation-high: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --semantic-shadow-shadow-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
   --semantic-size-inset-xs: 0.5rem;
   --semantic-size-inset-sm: 0.75rem;
   --semantic-size-inset-md: 1rem;
