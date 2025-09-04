@@ -137,7 +137,7 @@ const hasData = computed(() => {
   display: grid;
   place-items: center;
   border-radius: var(--semantic-border-radius-interactive);
-  background-color: var(--semantic-color-surface-page);
+  background-color: var(--semantic-color-background-page);
   color: var(--semantic-color-text-tertiary);
   font: var(--semantic-font-style-body-sm);
 }

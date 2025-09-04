@@ -144,10 +144,10 @@
   --semantic-border-radius-interactive: 0.5rem;
   --semantic-border-radius-surface: 0.5rem;
   --semantic-border-radius-tag: 9999px;
-  --semantic-color-surface-page: #f4f4f5;
-  --semantic-color-surface-primary: #ffffff;
-  --semantic-color-surface-secondary: #e9e9ea;
-  --semantic-color-surface-disabled: #e9e9ea;
+  --semantic-color-background-page: #f4f4f5;
+  --semantic-color-background-primary: #ffffff;
+  --semantic-color-background-secondary: #e9e9ea;
+  --semantic-color-background-disabled: #e9e9ea;
   --semantic-color-text-primary: #1c1c21;
   --semantic-color-text-secondary: #5d5d61;
   --semantic-color-text-tertiary: #909093;
