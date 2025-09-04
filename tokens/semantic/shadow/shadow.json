@@ -2,23 +2,19 @@
   "shadow": {
     "elevation-low": {
       "$value": "{base.shadow.md}",
-      "$type": "boxShadow",
-      "$comment": "Livello di elevazione base per elementi a riposo come le card."
+      "$type": "boxShadow"
     },
     "elevation-medium": {
       "$value": "{base.shadow.lg}",
-      "$type": "boxShadow",
-      "$comment": "Livello di elevazione intermedio, per elementi in hover o leggermente sollevati."
+      "$type": "boxShadow"
     },
     "elevation-high": {
       "$value": "{base.shadow.lg}",
-      "$type": "boxShadow",
-      "$comment": "Livello di elevazione massimo per elementi fluttuanti come modali e dropdown."
+      "$type": "boxShadow"
     },
     "focus-ring": {
       "$value": "{base.shadow.focus-ring}",
-      "$type": "boxShadow",
-      "$comment": "Stile di focus standard per garantire l'accessibilità su tutti gli elementi interattivi."
+      "$type": "boxShadow"
     }
   }
 }
