@@ -82,7 +82,7 @@ const navLinks = [
   position: fixed;
   top: 0;
   left: 0;
-  z-index: var(--base-layer-z-index-sticky);
+  z-index: var(--base-z-index-sticky);
   width: var(--base-size-component-sidebar-width-expanded); /* Usa il nuovo token */
   height: 100vh;
   background-color: var(--base-color-gray-900);
@@ -198,7 +198,7 @@ const navLinks = [
   .sidebar {
     /* Su mobile, la sidebar è un overlay che appare da sinistra */
     position: fixed;
-    z-index: var(--base-layer-z-index-modal);
+    z-index: var(--base-z-index-modal);
     transform: translateX(-100%); /* Nascosta di default */
     transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
 

@@ -63,7 +63,7 @@ const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: var(--base-layer-z-index-overlay);
+  z-index: var(--base-z-index-overlay);
 }
 
 @media (max-width: 768px) {

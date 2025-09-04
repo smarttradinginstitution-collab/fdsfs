@@ -77,7 +77,7 @@ function toggle() {
 
 .dropdown-trigger:focus-visible {
   outline: none;
-  box-shadow: var(--semantic-shadow-shadow-focus-ring);
+  box-shadow: var(--semantic-shadow-focus-ring);
 }
 
 .trigger-icon, .trigger-chevron {
@@ -92,8 +92,8 @@ function toggle() {
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-base) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-container);
-  box-shadow: var(--semantic-shadow-shadow-elevation-medium);
-  z-index: var(--base-layer-z-index-dropdown);
+  box-shadow: var(--semantic-shadow-elevation-medium);
+  z-index: var(--base-z-index-dropdown);
   /* min-width rimosso per permettere al menu di adattarsi a schermi piccoli */
   padding: var(--base-size-spacing-2);
 }

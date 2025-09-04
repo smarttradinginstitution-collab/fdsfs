@@ -101,7 +101,7 @@ function onInput(event) {
 .input-field:focus {
   outline: none;
   border-color: var(--semantic-color-border-focus);
-  box-shadow: var(--semantic-shadow-shadow-focus-ring);
+  box-shadow: var(--semantic-shadow-focus-ring);
 }
 
 /* Stile quando il campo è disabilitato. */

@@ -110,6 +110,6 @@ ma mantenerlo accessibile per gli screen reader e la navigazione da tastiera.
 
 /* Stile per l'anello di focus per l'accessibilità. */
 .checkbox-hidden:focus-visible + .checkbox-custom {
-  box-shadow: var(--semantic-shadow-shadow-focus-ring);
+  box-shadow: var(--semantic-shadow-focus-ring);
 }
 </style>

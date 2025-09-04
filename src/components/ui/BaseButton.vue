@@ -42,7 +42,7 @@ const buttonClass = computed(() => `button button--${props.variant}`);
 
 .button:focus-visible {
   outline: none;
-  box-shadow: var(--semantic-shadow-shadow-focus-ring);
+  box-shadow: var(--semantic-shadow-focus-ring);
 }
 
 /* Variante Primaria */
