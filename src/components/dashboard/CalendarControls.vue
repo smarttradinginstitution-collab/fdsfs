@@ -73,9 +73,9 @@ function formatPnl(pnl) {
   font-family: var(--typography-style-heading-xl-font-family);
   font-weight: var(--typography-style-heading-xl-font-weight);
   font-size: clamp(
-    var(--base-font-fluid-size-xl-min),
+    var(--base-typography-fluid-size-xl-min),
     1.2vw, /* Tweak ideal value for this context */
-    var(--base-font-fluid-size-xl-max)
+    var(--base-typography-fluid-size-xl-max)
   );
   color: var(--color-text-primary);
   white-space: nowrap;
@@ -84,9 +84,9 @@ function formatPnl(pnl) {
   font-family: var(--typography-style-body-sm-font-family);
   font-weight: var(--typography-style-body-sm-font-weight);
   font-size: clamp(
-    var(--base-font-fluid-size-lg-min), /* Usiamo una scala più grande */
+    var(--base-typography-fluid-size-lg-min), /* Usiamo una scala più grande */
     1vw, /* Valore ideale aggiustato */
-    var(--base-font-fluid-size-lg-max)
+    var(--base-typography-fluid-size-lg-max)
   );
   color: var(--color-text-secondary);
   white-space: nowrap;
