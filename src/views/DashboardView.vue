@@ -119,28 +119,34 @@ onMounted(async () => {
 <style scoped>
 .dashboard-view {
   width: 100%;
-  padding: var(--size-inset-xl);
+  padding: var(--semantic-size-inset-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--size-stack-lg);
+  gap: var(--semantic-size-stack-lg);
 }
 
 .action-bar {
   display: flex;
   justify-content: flex-end;
-  gap: var(--size-stack-sm);
+  gap: var(--semantic-size-stack-sm);
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--size-stack-md);
+  gap: var(--semantic-size-stack-md);
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .main-content-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: var(--size-stack-lg);
+  gap: var(--semantic-size-stack-lg);
   grid-auto-flow: dense;
 }
 
@@ -149,8 +155,8 @@ onMounted(async () => {
 }
 
 .error-box, .data-box {
-  padding: var(--size-inset-lg);
-  border-radius: var(--border-radius-lg);
+  padding: var(--semantic-size-inset-lg);
+  border-radius: var(--semantic-border-radius-lg);
   background-color: var(--color-background-muted);
   border: 1px solid var(--color-border-subtle);
 }
@@ -165,8 +171,8 @@ onMounted(async () => {
   white-space: pre-wrap;
   word-break: break-all;
   background-color: var(--color-background-subtle);
-  padding: var(--size-inset-md);
-  border-radius: var(--border-radius-md);
+  padding: var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-md);
 }
 
 @media (max-width: 1280px) {
