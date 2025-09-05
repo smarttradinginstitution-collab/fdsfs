@@ -11,3 +11,12 @@ body {
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-page);
 }
+
+/*
+ * Stile per il blocco dello scroll (Scroll Trapping).
+ * Quando un modale è aperto, la classe `modal-open` viene aggiunta al body
+ * per impedire lo scroll della pagina sottostante.
+ */
+body.modal-open {
+  overflow: hidden;
+}

@@ -8,8 +8,10 @@
 -->
 
 <script setup>
+import { watch } from 'vue';
+
 // --- PROPS ---
-defineProps({
+const props = defineProps({
   // `show` è un booleano che controlla se la modale è visibile o meno.
   // Viene passato dal componente genitore.
   show: {
@@ -28,6 +30,18 @@ defineProps({
 // di sapere quando l'utente vuole chiudere la modale (es. cliccando
 // sullo sfondo o sul pulsante di chiusura).
 const emit = defineEmits(['close']);
+
+// --- LOGICA ---
+// Osserviamo la prop `show` per applicare/rimuovere una classe al body.
+// Questo è il meccanismo di "scroll-trapping": quando il modale è aperto,
+// il body ha `overflow: hidden` per impedire lo scroll della pagina sottostante.
+watch(() => props.show, (isShown) => {
+  if (isShown) {
+    document.body.classList.add('modal-open');
+  } else {
+    document.body.classList.remove('modal-open');
+  }
+});
 </script>
 
 <!--
@@ -122,24 +136,40 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
+  /*
+   * Aggiungiamo una max-height per garantire che il modale non sia mai più alto
+   * della viewport. Usiamo 85vh (85% dell'altezza della viewport) per lasciare
+   * un po' di margine sopra e sotto. Questo è cruciale per abilitare lo
+   * scrolling interno.
+  */
+  max-height: 85vh;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0; /* Impedisce all'header di restringersi */
 }
 
 .modal-body {
-  flex-grow: 1; /* Allow body to take up available space */
-  min-height: 0; /* Critical for allowing overflow on flex children */
+  /*
+   * Questa è la parte centrale del pattern "sticky footer" con flexbox.
+   * flex-grow: 1 fa sì che questo elemento si espanda per riempire tutto lo
+   * spazio disponibile verticalmente all'interno di .modal-card.
+   * overflow-y: auto fa sì che appaia una scrollbar solo se il contenuto
+   * interno è più alto dello spazio che ha a disposizione.
+  */
+  flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .modal-footer {
-    flex-shrink: 0; /* Prevent footer from shrinking */
+    /* flex-shrink: 0 impedisce al footer di restringersi. */
+    flex-shrink: 0;
 }
 
 .close-button {
