@@ -5,46 +5,37 @@
 // le parti fondamentali di Vue e dei suoi plugin.
 // =============================================================================
 
-// --- IMPORTAZIONI FONDAMENTALI ---
-// Qui importiamo le librerie e i file necessari per avviare l'applicazione.
-
-// `createApp` è la funzione di Vue 3 per creare una nuova istanza dell'applicazione.
 import { createApp } from 'vue';
-
-// `createPinia` è la funzione per creare l'istanza di Pinia, il nostro gestore di stato.
 import { createPinia } from 'pinia';
-
-// `App` è il componente Vue principale, il "guscio" che contiene tutta l'interfaccia.
 import App from './App.vue';
-
-// `router` è la nostra configurazione di Vue Router, che gestisce le pagine e la navigazione.
 import router from './router';
 
-
 // --- IMPORTAZIONI DEGLI STILI GLOBALI ---
-// Questi file CSS vengono importati qui per essere disponibili in tutta l'applicazione.
-
-// `main.css` contiene stili CSS globali o reset di base.
-import './assets/main.css';
-// `tokens.css` contiene le variabili CSS generate dal nostro sistema di design token.
-import './styles/tokens.css';
+/*
+  BEST PRACTICE: Importazione Centralizzata degli Stili
+  Importiamo prima `index.css`, che è il nostro punto di ingresso per tutti i
+  design token. A sua volta, `index.css` importa i file dei token nell'ordine
+  corretto (`_base.css` e poi `tokens.css`).
+  Successivamente importiamo `main.css`, che contiene gli stili globali e i reset,
+  e che può quindi utilizzare i token definiti in precedenza.
+*/
+import '@/styles/index.css';
+import '@/assets/main.css';
 
 
 // --- CREAZIONE E CONFIGURAZIONE DELL'APP ---
 
-// 1. Creiamo l'istanza principale dell'applicazione Vue, usando il nostro componente `App.vue` come base.
+// 1. Creiamo l'istanza principale dell'applicazione Vue.
 const app = createApp(App);
 
-// 2. Diciamo a Vue di usare Pinia. Da questo momento, possiamo usare gli "stores" in qualsiasi componente.
+// 2. Diciamo a Vue di usare Pinia per la gestione dello stato.
 app.use(createPinia());
 
-// 3. Diciamo a Vue di usare il nostro router. Ora l'applicazione può gestire diverse pagine (rotte).
+// 3. Diciamo a Vue di usare il nostro router per la navigazione.
 app.use(router);
 
 
 // --- MONTAGGIO DELL'APP ---
 
-// 4. Infine, "montiamo" l'applicazione. Vue prende tutto quello che abbiamo costruito
-//    e lo inserisce nell'elemento HTML con `id="app"` che si trova nel file `index.html`.
-//    Da questo momento, l'applicazione è visibile e interattiva nel browser.
+// 4. Infine, "montiamo" l'applicazione nell'elemento `#app` del DOM.
 app.mount('#app');
