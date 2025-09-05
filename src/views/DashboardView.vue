@@ -169,9 +169,15 @@ onMounted(async () => {
   border-radius: var(--semantic-border-radius-md);
 }
 
-@media (max-width: var(--base-layout-breakpoint-xl)) {
+@media (--media-xl) {
   .main-content-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (--media-xxs) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
 </style>
