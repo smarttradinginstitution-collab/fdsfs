@@ -13,7 +13,7 @@
   --semantic-layer-z-index-modal: 1400;
   --semantic-layer-z-index-notification: 2000;
   --semantic-size-component-stat-card-min-width: 200px;
-  --semantic-size-component-calendar-week-summary-width: 5rem;
+  --semantic-size-component-calendar-week-summary-width: 10rem;
   --semantic-animation-duration-interactive: var(--base-animation-duration-fast);
   --semantic-animation-duration-complex: var(--base-animation-duration-base);
   --semantic-animation-easing-enter: var(--base-animation-easing-in);
@@ -68,6 +68,11 @@
   --semantic-font-style-label-checkbox: var(--base-font-weight-regular) var(--base-font-size-xs)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-font-style-body-bold: var(--base-font-weight-bold) var(--base-font-size-base)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-sidebar-title: var(--base-font-weight-extrabold) var(--base-font-size-2xl)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
+  --semantic-font-weight-regular: var(--base-font-weight-regular);
+  --semantic-font-weight-medium: var(--base-font-weight-medium);
+  --semantic-font-weight-semibold: var(--base-font-weight-semibold);
+  --semantic-font-weight-bold: var(--base-font-weight-bold);
+  --semantic-font-weight-extrabold: var(--base-font-weight-extrabold);
   --semantic-size-component-button-min-height-sm: var(--base-size-spacing-8);
   --semantic-size-component-button-min-height-md: var(--base-size-spacing-10);
   --semantic-size-component-button-min-height-lg: var(--base-size-spacing-12);

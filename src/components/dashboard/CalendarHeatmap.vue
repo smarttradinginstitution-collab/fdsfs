@@ -174,7 +174,7 @@ function formatCellPnl(pnl) {
   width: 100%;
 }
 .day-pnl {
-  font-weight: var(--semantic-font-style-body-bold-font-weight);
+  font-weight: var(--semantic-font-weight-extrabold);
   color: var(--semantic-color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min),
@@ -201,12 +201,11 @@ function formatCellPnl(pnl) {
 }
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
-  padding: 5px;
   position: relative;
   display: flex;
-  justify-content: start;
+  justify-content: center;
   align-items: center;
-  background-color: var(--semantic-color-surface-primary);
+  background-color: var(--semantic-color-surface-secondary);
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-small);
   transition: all 150ms ease-in-out;
@@ -221,16 +220,16 @@ function formatCellPnl(pnl) {
 .week-details {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  line-height: 1;
+  align-items: flex-end;
+  gap: 0;
+  line-height: 1.15;
   width: 100%;
 }
 
 .week-title {
   position: absolute;
   top: 0.1rem;
-  left: 0.35rem;
+  right: 0.35rem;
   font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
 }
@@ -242,14 +241,10 @@ function formatCellPnl(pnl) {
     var(--base-font-fluid-size-xxs-ideal),
     var(--base-font-fluid-size-xxs-max)
   );
-    /* Stili per lo sfondo richiesto */
-  background-color: var(--semantic-color-surface-secondary);
-  padding: 0.1rem var(--semantic-size-inset-xs);
-  border-radius: var(--semantic-border-radius-tag);
 }
 
 .week-pnl {
-  font-weight: var(--semantic-font-style-body-bold-font-weight);
+  font-weight: var(--semantic-font-weight-extrabold);
   color: var(--semantic-color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min),
