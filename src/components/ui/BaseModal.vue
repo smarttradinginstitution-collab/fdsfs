@@ -8,8 +8,10 @@
 -->
 
 <script setup>
+import { watch } from 'vue';
+
 // --- PROPS ---
-defineProps({
+const props = defineProps({
   // `show` è un booleano che controlla se la modale è visibile o meno.
   // Viene passato dal componente genitore.
   show: {
@@ -28,6 +30,18 @@ defineProps({
 // di sapere quando l'utente vuole chiudere la modale (es. cliccando
 // sullo sfondo o sul pulsante di chiusura).
 const emit = defineEmits(['close']);
+
+// --- LOGICA ---
+// Osserviamo la prop `show` per applicare/rimuovere una classe al body.
+// Questo è il meccanismo di "scroll-trapping": quando il modale è aperto,
+// il body ha `overflow: hidden` per impedire lo scroll della pagina sottostante.
+watch(() => props.show, (isShown) => {
+  if (isShown) {
+    document.body.classList.add('modal-open');
+  } else {
+    document.body.classList.remove('modal-open');
+  }
+});
 </script>
 
 <!--
@@ -115,31 +129,49 @@ export default {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-high);
-  padding: var(--semantic-size-inset-xl);
+  padding: var(--semantic-size-component-modal-padding-mobile);
   z-index: var(--semantic-layer-z-index-modal);
   width: 100%;
-  max-width: 850px;
+  max-width: var(--semantic-size-component-modal-max-width-mobile);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--semantic-size-component-modal-gap-mobile);
+  max-height: 85vh;
+}
+
+@media (min-width: 768px) {
+  .modal-card {
+    max-width: var(--semantic-size-component-modal-max-width-tablet);
+    padding: var(--semantic-size-component-modal-padding-tablet);
+    gap: var(--semantic-size-component-modal-gap-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-card {
+    max-width: var(--semantic-size-component-modal-max-width-desktop);
+    padding: var(--semantic-size-component-modal-padding-desktop);
+    gap: var(--semantic-size-component-modal-gap-desktop);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0;
 }
 
 .modal-body {
-  flex-grow: 1; /* Allow body to take up available space */
-  min-height: 0; /* Critical for allowing overflow on flex children */
+  flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .modal-footer {
-    flex-shrink: 0; /* Prevent footer from shrinking */
+    flex-shrink: 0;
 }
 
 .close-button {
