@@ -26,7 +26,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.semibold}",
-            "fontSize": "clamp({base.font.fluid-size.fluid-heading-xl.min}, {base.font.fluid-size.fluid-heading-xl.ideal}, {base.font.fluid-size.fluid-heading-xl.max})",
+            "fontSize": "{base.font.size.xl}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography",
@@ -46,7 +46,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.regular}",
-            "fontSize": "clamp({base.font.fluid-size.fluid-body-sm.min}, {base.font.fluid-size.fluid-body-sm.ideal}, {base.font.fluid-size.fluid-body-sm.max})",
+            "fontSize": "{base.font.size.sm}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography",
@@ -66,7 +66,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.medium}",
-            "fontSize": "clamp({base.font.fluid-size.fluid-label-md.min}, {base.font.fluid-size.fluid-label-md.ideal}, {base.font.fluid-size.fluid-label-md.max})",
+            "fontSize": "{base.font.size.sm}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography",
@@ -131,43 +131,6 @@
           },
           "$type": "typography",
           "$comment": "Stile per etichette minuscole, usato nelle StatCard su mobile."
-        },
-        "button-label": {
-          "$comment": "Stile per le etichette dei bottoni, responsive.",
-          "$value": {
-            "fontFamily": "{base.font.family.palette.sans}",
-            "fontWeight": "{base.font.weight.medium}",
-            "fontSize": "clamp({base.font.fluid-size.button-label.min}, {base.font.fluid-size.button-label.ideal}, {base.font.fluid-size.button-label.max})",
-            "lineHeight": "{base.font.line-height.normal}"
-          },
-          "$type": "typography"
-        },
-        "calendar-day-header": {
-            "$value": {
-                "fontFamily": "{base.font.family.palette.sans}",
-                "fontWeight": "{base.font.weight.medium}",
-                "fontSize": "clamp({base.font.fluid-size.fluid-calendar-day-header.min}, {base.font.fluid-size.fluid-calendar-day-header.ideal}, {base.font.fluid-size.fluid-calendar-day-header.max})",
-                "lineHeight": "{base.font.line-height.normal}"
-            },
-            "$type": "typography"
-        },
-        "calendar-day-number": {
-            "$value": {
-                "fontFamily": "{base.font.family.palette.sans}",
-                "fontWeight": "{base.font.weight.regular}",
-                "fontSize": "clamp({base.font.fluid-size.fluid-calendar-day-number.min}, {base.font.fluid-size.fluid-calendar-day-number.ideal}, {base.font.fluid-size.fluid-calendar-day-number.max})",
-                "lineHeight": "{base.font.line-height.normal}"
-            },
-            "$type": "typography"
-        },
-        "heading-sm": {
-            "$value": {
-                "fontFamily": "{base.font.family.palette.sans}",
-                "fontWeight": "{base.font.weight.semibold}",
-                "fontSize": "clamp({base.font.fluid-size.fluid-heading-sm.min}, {base.font.fluid-size.fluid-heading-sm.ideal}, {base.font.fluid-size.fluid-heading-sm.max})",
-                "lineHeight": "{base.font.line-height.normal}"
-            },
-            "$type": "typography"
         }
       }
     }

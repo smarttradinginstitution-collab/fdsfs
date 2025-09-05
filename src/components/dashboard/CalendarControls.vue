@@ -59,7 +59,6 @@ function formatPnl(pnl) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   padding-bottom: var(--semantic-size-inset-md);
   margin-bottom: var(--semantic-size-stack-sm);
   border-bottom: 1px solid var(--semantic-color-border-default);
@@ -68,7 +67,7 @@ function formatPnl(pnl) {
 .controls-left, .controls-right, .month-selector {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-calendar-controls-gap-mobile);
+  gap: var(--semantic-size-stack-sm);
 }
 .month-label {
   font: var(--semantic-font-style-heading-xl);
@@ -80,6 +79,12 @@ function formatPnl(pnl) {
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
 }
+/* Override IconButton size for this specific context */
+.controls-left :deep(.icon-button),
+.controls-right :deep(.icon-button) {
+    width: var(--semantic-size-component-button-min-height-sm);
+    height: var(--semantic-size-component-button-min-height-sm);
+}
 .stats-value {
   color: var(--semantic-color-text-primary);
   font-weight: var(--semantic-font-weight-medium);
@@ -90,23 +95,5 @@ function formatPnl(pnl) {
 }
 .stats-value.negative {
   color: var(--semantic-color-feedback-negative-text);
-}
-
-@media (min-width: 768px) {
-    .controls-left, .controls-right, .month-selector {
-        gap: var(--semantic-size-calendar-controls-gap-tablet);
-    }
-}
-
-@media (min-width: 1024px) {
-    .controls-left, .controls-right, .month-selector {
-        gap: var(--semantic-size-calendar-controls-gap-desktop);
-    }
-}
-
-@media (max-width: 768px) {
-    .monthly-stats {
-        display: none;
-    }
 }
 </style>

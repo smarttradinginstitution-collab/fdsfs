@@ -198,7 +198,7 @@ const navLinks = [
   .sidebar {
     /* Su mobile, la sidebar è un overlay che appare da sinistra */
     position: fixed;
-    z-index: var(--base-layer-z-index-modal);
+    z-index: var(--base-layer-z-index-sidebar-overlay);
     transform: translateX(-100%); /* Nascosta di default */
     transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
 

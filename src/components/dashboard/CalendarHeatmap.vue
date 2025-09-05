@@ -107,8 +107,8 @@ function formatCellPnl(pnl) {
 .calendar-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
-  padding-block: var(--semantic-size-calendar-card-padding-block-mobile);
-  padding-inline: var(--semantic-size-calendar-card-padding-inline-mobile);
+  /* Ridotto il padding verticale per un header più compatto */
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
@@ -116,12 +116,12 @@ function formatCellPnl(pnl) {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr) auto;
-  gap: var(--semantic-size-calendar-grid-gap-mobile);
+  gap: var(--base-size-spacing-1);
 }
 .day-header {
   text-align: center;
   color: var(--semantic-color-text-secondary);
-  font: var(--semantic-font-style-calendar-day-header);
+  font: var(--semantic-font-style-label-sm);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--base-border-radius-sm);
   margin-bottom: var(--base-size-spacing-xs);
@@ -133,7 +133,7 @@ function formatCellPnl(pnl) {
   position: relative;
   aspect-ratio: 1 / 1;
   border-radius: var(--base-border-radius-sm);
-  padding: var(--semantic-size-calendar-day-cell-padding-mobile);
+  padding: 0.25rem;
   transition: transform 150ms;
   display: flex;
   align-items: center;
@@ -155,7 +155,7 @@ function formatCellPnl(pnl) {
   position: absolute;
   top: 0.1rem;
   right: 0.35rem;
-  font: var(--semantic-font-style-calendar-day-number);
+  font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
 }
 .day-cell:not(.no-trade) .day-number {
@@ -253,35 +253,6 @@ function formatCellPnl(pnl) {
 
 .week-pnl.negative {
   color: var(--semantic-color-feedback-negative-text);
-}
-
-@media (min-width: 768px) {
-  .calendar-card {
-    padding-block: var(--semantic-size-calendar-card-padding-block-tablet);
-    padding-inline: var(--semantic-size-calendar-card-padding-inline-tablet);
-  }
-  .calendar-grid {
-    gap: var(--semantic-size-calendar-grid-gap-tablet);
-  }
-  .day-cell {
-    padding: var(--semantic-size-calendar-day-cell-padding-tablet);
-  }
-}
-
-@media (min-width: 1024px) {
-  .calendar-card {
-    padding-block: var(--semantic-size-calendar-card-padding-block-desktop);
-    padding-inline: var(--semantic-size-calendar-card-padding-inline-desktop);
-  }
-  .calendar-grid {
-    gap: var(--semantic-size-calendar-grid-gap-desktop);
-  }
-  .day-cell {
-    padding: var(--semantic-size-calendar-day-cell-padding-desktop);
-  }
-  .day-extra-stats {
-    display: block;
-  }
 }
 
 @media (max-width: 1024px) {

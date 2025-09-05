@@ -60,8 +60,8 @@ watch(isDesktop, (isNowDesktop) => {
 .settings-menu {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-calendar-controls-gap-mobile);
-  padding: var(--semantic-size-calendar-settings-padding-mobile);
+  gap: var(--semantic-size-stack-sm);
+  padding: var(--base-size-spacing-2);
 }
 .settings-title {
   font: var(--semantic-font-style-label-md);
@@ -71,26 +71,6 @@ watch(isDesktop, (isNowDesktop) => {
 .settings-list {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-calendar-controls-gap-mobile);
-}
-
-@media (min-width: 768px) {
-  .settings-menu {
-    gap: var(--semantic-size-calendar-controls-gap-tablet);
-    padding: var(--semantic-size-calendar-settings-padding-tablet);
-  }
-  .settings-list {
-    gap: var(--semantic-size-calendar-controls-gap-tablet);
-  }
-}
-
-@media (min-width: 1024px) {
-  .settings-menu {
-    gap: var(--semantic-size-calendar-controls-gap-desktop);
-    padding: var(--semantic-size-calendar-settings-padding-desktop);
-  }
-  .settings-list {
-    gap: var(--semantic-size-calendar-controls-gap-desktop);
-  }
+  gap: var(--semantic-size-stack-sm);
 }
 </style>

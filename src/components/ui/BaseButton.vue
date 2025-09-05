@@ -32,29 +32,12 @@ const buttonClass = computed(() => `button button--${props.variant}`);
   align-items: center;
   justify-content: center;
   gap: var(--base-size-spacing-2);
-  font: var(--semantic-font-style-button-label);
-  padding-block: var(--semantic-size-button-padding-block-mobile);
-  padding-inline: var(--semantic-size-button-padding-inline-mobile);
+  font: var(--semantic-font-style-label-md);
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
   border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
   transition: all var(--base-animation-duration-fast);
-}
-
-/* Tablet and larger */
-@media (min-width: 768px) {
-  .button {
-    padding-block: var(--semantic-size-button-padding-block-tablet);
-    padding-inline: var(--semantic-size-button-padding-inline-tablet);
-  }
-}
-
-/* Desktop and larger */
-@media (min-width: 1024px) {
-  .button {
-    padding-block: var(--semantic-size-button-padding-block-desktop);
-    padding-inline: var(--semantic-size-button-padding-inline-desktop);
-  }
 }
 
 .button:focus-visible {
