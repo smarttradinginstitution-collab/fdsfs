@@ -140,11 +140,13 @@ const tradeTableHeaders = computed(() => [
 </template>
 
 <style scoped>
+/* --- Mobile First Styles --- */
+
 /* Header Styles */
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Align to start for wrapping */
+  align-items: flex-start;
   width: 100%;
   flex-wrap: wrap;
   gap: var(--semantic-size-stack-sm);
@@ -155,39 +157,91 @@ const tradeTableHeaders = computed(() => [
 .header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); flex-shrink: 0; }
 
 /* Body Styles */
-.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-lg); flex-grow: 1; min-height: 0; }
-.top-section { display: grid; grid-template-columns: 1fr; gap: var(--semantic-size-stack-lg); align-items: stretch; flex-shrink: 0; }
+.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-sm); flex-grow: 1; min-height: 0; }
+.top-section { display: flex; flex-direction: column; gap: var(--semantic-size-stack-sm); }
 .chart-section { min-height: 150px; }
 
 /* Stats Section Styles */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  border-left: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  min-width: 0; /* Allow grid to shrink */
+  grid-template-columns: 1fr 1fr; /* 2 columns for mobile */
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  overflow: hidden;
 }
-.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-md); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md); }
-.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-1); }
-.stat-label { font: var(--semantic-font-style-label-md); color: var(--semantic-color-text-secondary); white-space: nowrap; display: block; }
-.stat-value { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-primary); font-weight: 600; white-space: nowrap; display: block; }
+.stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-xs);
+  padding: var(--semantic-size-inset-xs);
+}
+/* Add borders to create a grid visually */
+.stat-col:nth-child(odd) {
+  border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+}
+.stat-col:nth-child(1), .stat-col:nth-child(2) {
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+}
+
+.stat-cell { display: flex; flex-direction: column; gap: var(--base-size-spacing-0-5); }
+.stat-label { font: var(--semantic-font-style-label-sm); color: var(--semantic-color-text-secondary); }
+.stat-value { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-primary); font-weight: 600; }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
 
 /* Table Styles */
 .table-wrapper {
   flex-grow: 1;
-  min-height: 0;
-  min-width: 0; /* Important fix for flexbox overflow */
-  overflow: auto; /* Let browser handle scroll direction */
+  min-height: 0; /* Important for vertical scrolling in flex */
 }
 
 /* Footer Styles */
-.footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.footer-content {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--semantic-size-gap-sm);
+  padding-top: var(--semantic-size-inset-md);
+  border-top: var(--base-border-width-1) solid var(--semantic-color-border-default);
+}
 
-/* Responsive Grid Layouts */
+
+/* --- Tablet & Desktop Overrides --- */
 @media (min-width: 768px) {
-    .top-section {
-        grid-template-columns: 1fr 1.5fr;
-        gap: var(--semantic-size-stack-xl);
-    }
+  .modal-body-content {
+    gap: var(--semantic-size-stack-lg);
+  }
+  .top-section {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: var(--semantic-size-stack-xl);
+    flex-direction: row; /* Revert to row for grid */
+  }
+  .stats-section {
+    grid-template-columns: repeat(4, 1fr);
+    border-left: var(--base-border-width-1) solid var(--semantic-color-border-default);
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 0;
+  }
+  .stat-col {
+    gap: var(--semantic-size-stack-lg);
+    padding: 0 var(--semantic-size-inset-lg);
+    border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+    border-bottom: none;
+  }
+  .stat-col:nth-child(odd) {
+    border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  }
+  .stat-col:last-child {
+    border-right: none;
+  }
+  .stat-col:nth-child(1), .stat-col:nth-child(2) {
+    border-bottom: none;
+  }
+  .table-wrapper {
+    min-width: 0; /* Fix for horizontal scrolling in flex */
+    overflow-x: auto;
+  }
 }
 </style>

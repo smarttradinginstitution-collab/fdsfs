@@ -22,11 +22,6 @@
           "$type": "zIndex",
           "$comment": "Per elementi fissi durante lo scroll, come header o footer."
         },
-        "sidebar-overlay": {
-          "$value": "1200",
-          "$type": "zIndex",
-          "$comment": "Per la sidebar quando si comporta come un overlay su mobile."
-        },
         "overlay": {
           "$value": "1300",
           "$type": "zIndex",

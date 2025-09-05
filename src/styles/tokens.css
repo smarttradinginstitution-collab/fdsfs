@@ -9,9 +9,6 @@
   --semantic-size-component-stat-card-chart-width-desktop: 60px;
   --semantic-size-component-stat-card-chart-width-tablet: 48px;
   --semantic-size-component-stat-card-chart-width-mobile: 40px;
-  --semantic-size-component-modal-max-width-desktop: 850px;
-  --semantic-size-component-modal-max-width-tablet: 700px;
-  --semantic-size-component-modal-max-width-mobile: 95vw;
   --semantic-border-radius-interactive: var(--base-border-radius-md);
   --semantic-border-radius-surface: var(--base-border-radius-md);
   --semantic-border-radius-tag: var(--base-border-radius-full);
@@ -76,10 +73,4 @@
   --semantic-size-stack-md: var(--base-size-spacing-6);
   --semantic-size-stack-lg: var(--base-size-spacing-8);
   --semantic-size-stack-xl: var(--base-size-spacing-12);
-  --semantic-size-component-modal-padding-desktop: var(--semantic-size-inset-xl);
-  --semantic-size-component-modal-padding-tablet: var(--semantic-size-inset-lg);
-  --semantic-size-component-modal-padding-mobile: var(--semantic-size-inset-md);
-  --semantic-size-component-modal-gap-desktop: var(--semantic-size-stack-md);
-  --semantic-size-component-modal-gap-tablet: var(--semantic-size-stack-sm);
-  --semantic-size-component-modal-gap-mobile: var(--semantic-size-stack-xs);
 }
