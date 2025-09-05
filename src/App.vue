@@ -45,13 +45,13 @@ const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
 
 .content-wrapper {
   flex-grow: 1; /* Mantenuto per occupare lo spazio */
-  margin-left: var(--semantic-size-component-sidebar-width-expanded);
-  transition: margin-left var(--semantic-animation-duration-complex) var(--semantic-animation-easing-exit);
+  margin-left: var(--base-size-component-sidebar-width-expanded);
+  transition: margin-left var(--base-animation-duration-base) var(--base-animation-easing-out);
   /* 'display: flex' rimosso per evitare conflitti di layout */
 }
 
 .content-wrapper.sidebar-is-collapsed {
-  margin-left: var(--semantic-size-component-sidebar-width-collapsed);
+  margin-left: var(--base-size-component-sidebar-width-collapsed);
 }
 
 /* .main-content rimosso perché la sua logica è ora in MainLayout.vue */
@@ -63,7 +63,7 @@ const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: var(--semantic-layer-z-index-overlay);
+  z-index: var(--base-layer-z-index-overlay);
 }
 
 @media (max-width: 768px) {

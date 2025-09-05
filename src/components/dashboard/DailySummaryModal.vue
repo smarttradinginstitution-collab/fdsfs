@@ -134,10 +134,10 @@ const tradeTableHeaders = computed(() => [
 <style scoped>
 /* Header Styles */
 .header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-.header-left { display: flex; flex-direction: column; gap: var(--semantic-size-gap-xs); }
+.header-left { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); }
 .date { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
 .header-left > span:last-child { font: var(--semantic-font-style-heading-sm); font-weight: 600; }
-.header-right { display: flex; align-items: center; gap: var(--semantic-size-gap-sm); }
+.header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); }
 
 /* Body Styles */
 .modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-lg); flex-grow: 1; min-height: 0; }
@@ -145,9 +145,9 @@ const tradeTableHeaders = computed(() => [
 .chart-section { min-height: 150px; }
 
 /* Stats Section Styles */
-.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); border-left: var(--semantic-border-width-default) solid var(--semantic-color-border-default); }
-.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-lg); border-right: var(--semantic-border-width-default) solid var(--semantic-color-border-default); padding: 0 var(--semantic-size-inset-lg); }
-.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-gap-xs); }
+.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); border-left: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); padding: 0 var(--semantic-size-inset-lg); }
+.stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-1); }
 .stat-label { font: var(--semantic-font-style-label-md); color: var(--semantic-color-text-secondary); white-space: nowrap; display: block; }
 .stat-value { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-primary); font-weight: 600; white-space: nowrap; display: block; }
 .loading-state { text-align: center; padding: var(--semantic-size-inset-xl); color: var(--semantic-color-text-secondary); }
@@ -156,5 +156,5 @@ const tradeTableHeaders = computed(() => [
 .table-wrapper { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; }
 
 /* Footer Styles */
-.footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--semantic-border-width-default) solid var(--semantic-color-border-default); }
+.footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-1) solid var(--semantic-color-border-default); }
 </style>

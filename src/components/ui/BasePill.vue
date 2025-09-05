@@ -7,8 +7,8 @@
 <style scoped>
 .pill {
   display: inline-block;
-  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-tag);
+  padding: var(--base-size-spacing-1) var(--base-size-spacing-3);
+  border-radius: var(--base-border-radius-full);
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-label-sm);

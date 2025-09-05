@@ -112,35 +112,15 @@
             "$type": "typography",
             "$comment": "Stile specifico per dati numerici in tabelle per garantire l'allineamento."
         },
-        "label-checkbox": {
-          "$value": {
-            "fontFamily": "{base.font.family.palette.sans}",
-            "fontWeight": "{base.font.weight.regular}",
-            "fontSize": "{base.font.size.xs}",
-            "lineHeight": "{base.font.line-height.tight}"
-          },
-          "$type": "typography",
-          "$comment": "Stile per le etichette delle checkbox, con riga più stretta per l'allineamento."
-        },
-        "body-bold": {
+        "metric-display": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.bold}",
-            "fontSize": "{base.font.size.base}",
-            "lineHeight": "{base.font.line-height.normal}"
-          },
-          "$type": "typography",
-          "$comment": "Testo standard in grassetto."
-        },
-        "sidebar-title": {
-          "$value": {
-            "fontFamily": "{base.font.family.palette.sans}",
-            "fontWeight": "{base.font.weight.extrabold}",
-            "fontSize": "{base.font.size.2xl}",
+            "fontSize": "clamp({base.font.fluid-size.stat-display.min}, {base.font.fluid-size.stat-display.ideal}, {base.font.fluid-size.stat-display.max})",
             "lineHeight": "{base.font.line-height.tight}"
           },
           "$type": "typography",
-          "$comment": "Stile per il titolo principale nella sidebar."
+          "$comment": "Stile per i valori principali nelle StatCard, con dimensione fluida."
         }
       }
     }

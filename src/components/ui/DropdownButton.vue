@@ -45,25 +45,25 @@ function toggle() {
 .dropdown-trigger {
   display: inline-flex;
   align-items: center;
-  gap: var(--semantic-size-gap-sm); /* 8px */
+  gap: var(--base-size-spacing-2); /* 8px */
   background-color: var(--semantic-color-surface-primary);
-  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-label-md);
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md); /* 8px vertical, 12px horizontal */
+  padding: var(--base-size-spacing-2) var(--base-size-spacing-3); /* 8px vertical, 12px horizontal */
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
-  transition: background-color var(--semantic-animation-duration-interactive), border-color var(--semantic-animation-duration-interactive);
+  transition: background-color var(--base-animation-duration-fast), border-color var(--base-animation-duration-fast);
 }
 
 /* Stili per la variante solo icona */
 .dropdown-trigger.icon-only {
   background-color: transparent;
   border: none;
-  border-radius: var(--semantic-border-radius-tag);
-  padding: var(--semantic-size-inset-xs); /* Padding ridotto */
-  width: var(--semantic-size-component-button-min-height-md);
-  height: var(--semantic-size-component-button-min-height-md);
+  border-radius: var(--base-border-radius-full);
+  padding: var(--base-size-spacing-1); /* Padding ridotto */
+  width: var(--base-size-component-button-min-height-md);
+  height: var(--base-size-component-button-min-height-md);
   justify-content: center;
 }
 .dropdown-trigger.icon-only .trigger-icon > :deep(svg) {
@@ -87,14 +87,14 @@ function toggle() {
 
 .dropdown-content {
   position: absolute;
-  top: calc(100% + var(--semantic-size-gap-xs)); /* 4px gap */
+  top: calc(100% + var(--base-size-spacing-1)); /* 4px gap */
   right: 0;
   background-color: var(--semantic-color-surface-primary);
-  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-medium);
-  z-index: var(--semantic-layer-z-index-dropdown);
+  z-index: var(--base-layer-z-index-dropdown);
   /* min-width rimosso per permettere al menu di adattarsi a schermi piccoli */
-  padding: var(--semantic-size-inset-sm);
+  padding: var(--base-size-spacing-2);
 }
 </style>

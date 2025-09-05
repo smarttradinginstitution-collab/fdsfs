@@ -116,7 +116,7 @@ const hasData = computed(() => {
 <style scoped>
 .chart-card {
   background-color: var(--semantic-color-surface-primary);
-  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   padding: var(--semantic-size-inset-lg);

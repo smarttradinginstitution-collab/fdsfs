@@ -1,9 +1,0 @@
-{
-  "semantic": {
-    "color": {
-      "surface": {
-        "sidebar": { "$value": "{base.color.gray.900}", "$type": "color" }
-      }
-    }
-  }
-}

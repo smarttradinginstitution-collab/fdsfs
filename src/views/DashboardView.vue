@@ -175,10 +175,9 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 365px) {
+@media (max-width: 640px) { /* sm breakpoint */
   .stats-grid {
-    /* On very small screens, reduce the min-width of stat cards to prevent overflow */
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

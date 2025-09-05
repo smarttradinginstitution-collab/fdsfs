@@ -1,9 +1,0 @@
-{
-  "semantic": {
-    "font": {
-      "line-height": {
-        "none": { "$value": "{base.font.line-height.none}", "$type": "lineHeight" }
-      }
-    }
-  }
-}
