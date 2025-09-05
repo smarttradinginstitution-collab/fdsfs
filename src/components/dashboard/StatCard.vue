@@ -145,7 +145,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 }
 
 /* Responsive Stacking per Win Rate Card */
-@media (--media-xs) {
+@media (max-width: 480px) {
     .stat-card--with-chart {
         flex-direction: column;
         align-items: flex-start;

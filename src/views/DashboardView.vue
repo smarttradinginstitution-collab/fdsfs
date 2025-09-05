@@ -169,14 +169,15 @@ onMounted(async () => {
   border-radius: var(--semantic-border-radius-md);
 }
 
-@media (--media-xl) {
+@media (max-width: 1280px) {
   .main-content-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (--media-xxs) {
+@media (max-width: 365px) {
   .stats-grid {
+    /* On very small screens, reduce the min-width of stat cards to prevent overflow */
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }

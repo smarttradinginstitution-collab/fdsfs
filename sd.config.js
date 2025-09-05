@@ -1,24 +1,4 @@
-import StyleDictionary from 'style-dictionary';
-
-/**
- * Custom format per generare le Custom Media Queries.
- * Itera sui token di breakpoint e crea una regola @custom-media per ognuno.
- * Esempio di output: @custom-media --media-md (max-width: 768px);
- */
-StyleDictionary.registerFormat({
-  name: 'css/custom-media',
-  format: function({ allTokens }) {
-    return allTokens
-      .map(prop => {
-        // Assumiamo che i token dei breakpoint abbiano una struttura come:
-        // base.layout.breakpoint.md
-        const name = prop.path.slice(3).join('-'); // es. md
-        return `@custom-media --media-${name} (max-width: ${prop.$value});`;
-      })
-      .join('\n');
-  },
-});
-
+// sd.config.js
 
 export default {
   // Sorgente di tutti i token, sia base che semantici.
@@ -28,44 +8,35 @@ export default {
   ],
 
   platforms: {
-    // Piattaforma esistente per generare le variabili CSS
     css: {
       transformGroup: 'css',
       buildPath: 'src/styles/',
       files: [
+        // === 1. File dei token di base (_base.css) ===
+        // Contiene solo i valori primitivi, non deve essere usato direttamente nei componenti.
         {
           destination: '_base.css',
           format: 'css/variables',
           options: {
             selector: ':root',
-            outputReferences: false,
+            outputReferences: false, // Emette i valori grezzi (es. #ffffff)
           },
+          // Filtra per includere solo i token provenienti dalla cartella 'base'.
           filter: (token) => token.filePath.startsWith('tokens/base/')
         },
+        // === 2. File dei token semantici (tokens.css) ===
+        // Contiene i token contestuali che fanno riferimento ai token di base.
         {
           destination: 'tokens.css',
           format: 'css/variables',
           options: {
             selector: ':root',
-            outputReferences: true,
+            outputReferences: true, // Emette i riferimenti (es. var(--base-color-white))
           },
+          // Filtra per includere solo i token provenienti dalla cartella 'semantic'.
           filter: (token) => token.filePath.startsWith('tokens/semantic/')
         }
       ]
-    },
-    // Nuova piattaforma per generare le Custom Media Queries
-    customMedia: {
-        transformGroup: 'css',
-        buildPath: 'src/styles/',
-        files: [{
-            destination: '_breakpoints.css',
-            format: 'css/custom-media',
-            // Filtra per includere solo i token dei breakpoint
-            filter: (token) =>
-              token.attributes.category === 'base' &&
-              token.attributes.type === 'layout' &&
-              token.attributes.item === 'breakpoint',
-        }]
     }
   }
 };

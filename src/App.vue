@@ -66,7 +66,7 @@ const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
   z-index: var(--semantic-layer-z-index-overlay);
 }
 
-@media (--media-md) {
+@media (max-width: 768px) {
   /* Aumentata la specificità per sovrascrivere lo stato collassato su mobile */
   .content-wrapper.sidebar-is-collapsed,
   .content-wrapper {

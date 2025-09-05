@@ -108,7 +108,7 @@ tbody tr:hover {
 }
 
 /* === Stili per la Responsività === */
-@media (--media-md) {
+@media (max-width: 768px) {
   .table { white-space: normal; }
   .table thead { display: none; }
   .table tr {

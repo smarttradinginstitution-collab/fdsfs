@@ -261,11 +261,11 @@ function formatCellPnl(pnl) {
   color: var(--semantic-color-feedback-negative-text);
 }
 
-@media (--media-lg) {
+@media (max-width: 1024px) {
   .day-extra-stats { display: none; }
 }
 
-@media (--media-md) {
+@media (max-width: 768px) {
     .calendar-grid {
       grid-template-columns: repeat(7, 1fr);
     }
