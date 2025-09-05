@@ -51,6 +51,7 @@
   --semantic-font-style-data-numeric: var(--base-font-weight-regular) var(--base-font-size-sm)/var(--base-font-line-height-normal) var(--base-font-family-palette-monospace);
   --semantic-font-style-metric-display: var(--base-font-weight-bold) clamp(var(--base-font-fluid-size-stat-display-min), var(--base-font-fluid-size-stat-display-ideal), var(--base-font-fluid-size-stat-display-max))/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-font-style-label-xxs: var(--base-font-weight-medium) var(--base-font-size-xxs)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
+  --semantic-font-style-button-label: var(--base-font-weight-medium) clamp(var(--base-font-fluid-size-button-label-min), var(--base-font-fluid-size-button-label-ideal), var(--base-font-fluid-size-button-label-max))/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-size-component-button-min-height-sm: var(--base-size-spacing-8);
   --semantic-size-component-button-min-height-md: var(--base-size-spacing-10);
   --semantic-size-component-button-min-height-lg: var(--base-size-spacing-12);
@@ -73,4 +74,10 @@
   --semantic-size-stack-md: var(--base-size-spacing-6);
   --semantic-size-stack-lg: var(--base-size-spacing-8);
   --semantic-size-stack-xl: var(--base-size-spacing-12);
+  --semantic-size-button-padding-inline-desktop: var(--semantic-size-inset-md);
+  --semantic-size-button-padding-inline-tablet: var(--semantic-size-inset-sm);
+  --semantic-size-button-padding-inline-mobile: var(--semantic-size-inset-sm);
+  --semantic-size-button-padding-block-desktop: var(--semantic-size-inset-sm);
+  --semantic-size-button-padding-block-tablet: var(--semantic-size-inset-xs);
+  --semantic-size-button-padding-block-mobile: var(--semantic-size-inset-xs);
 }

@@ -69,6 +69,9 @@
   --base-font-fluid-size-stat-display-min: 1rem;
   --base-font-fluid-size-stat-display-ideal: 2vw;
   --base-font-fluid-size-stat-display-max: 1.5rem;
+  --base-font-fluid-size-button-label-min: 0.75rem;
+  --base-font-fluid-size-button-label-ideal: 1.5vw;
+  --base-font-fluid-size-button-label-max: 0.875rem;
   --base-font-line-height-none: 1;
   --base-font-line-height-tight: 1.2;
   --base-font-line-height-normal: 1.5;
