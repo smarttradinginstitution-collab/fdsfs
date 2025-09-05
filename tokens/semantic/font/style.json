@@ -131,6 +131,16 @@
           },
           "$type": "typography",
           "$comment": "Stile per etichette minuscole, usato nelle StatCard su mobile."
+        },
+        "button-label": {
+          "$comment": "Stile per le etichette dei bottoni, responsive.",
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.medium}",
+            "fontSize": "clamp({base.font.fluid-size.button-label.min}, {base.font.fluid-size.button-label.ideal}, {base.font.fluid-size.button-label.max})",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography"
         }
       }
     }

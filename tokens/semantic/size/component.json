@@ -39,6 +39,13 @@
               "mobile": { "$value": "40px", "$type": "dimension" }
             }
           }
+        },
+        "icon-button": {
+            "size": {
+                "desktop": { "$value": "{base.size.spacing.10}", "$type": "dimension" },
+                "tablet": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+                "mobile": { "$value": "{base.size.spacing.8}", "$type": "dimension" }
+            }
         }
       }
     }

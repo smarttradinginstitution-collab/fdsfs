@@ -79,11 +79,13 @@ const tradeTableHeaders = computed(() => [
     <template #header>
       <div class="header-content">
         <div class="header-left">
-          <span class="date">{{ formattedDateRange }}</span>
-          <span :style="pnlStyle(weeklyData?.stats.netPnl)">Net P&L {{ formattedPnl(weeklyData?.stats.netPnl) }}</span>
+          <div class="header-info">
+            <span class="date">{{ formattedDateRange }}</span>
+            <span :style="pnlStyle(weeklyData?.stats.netPnl)">Net P&L {{ formattedPnl(weeklyData?.stats.netPnl) }}</span>
+          </div>
+          <BaseButton variant="secondary">Add Note</BaseButton>
         </div>
         <div class="header-right">
-          <BaseButton variant="secondary">Add Note</BaseButton>
           <IconButton aria-label="AI Assistant"><SparkleIcon /></IconButton>
         </div>
       </div>
@@ -151,9 +153,10 @@ const tradeTableHeaders = computed(() => [
   flex-wrap: wrap;
   gap: var(--semantic-size-stack-sm);
 }
-.header-left { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); }
+.header-left { display: flex; align-items: center; gap: var(--semantic-size-stack-sm); }
+.header-info { display: flex; flex-direction: column; }
 .date { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
-.header-left > span:last-child { font: var(--semantic-font-style-heading-sm); font-weight: 600; }
+.header-info > span:last-child { font: var(--semantic-font-style-heading-sm); font-weight: 600; }
 .header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); flex-shrink: 0; }
 
 /* Body Styles */

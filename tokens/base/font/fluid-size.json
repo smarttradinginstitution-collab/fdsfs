@@ -44,6 +44,12 @@
           "min": { "$value": "1rem", "$type": "dimension" },
           "ideal": { "$value": "2vw", "$type": "dimension" },
           "max": { "$value": "1.5rem", "$type": "dimension" }
+        },
+        "button-label": {
+          "$comment": "Dimensione fluida per le etichette dei bottoni.",
+          "min": { "$value": "{base.font.size.xxs}", "$type": "dimension" },
+          "ideal": { "$value": "1.2vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.sm}", "$type": "dimension" }
         }
       }
     }
