@@ -86,17 +86,19 @@ function formatCellPnl(pnl) {
           class="week-summary-card"
           @click="uiStore.openWeeklySummaryModal(weekIndex)"
         >
-          <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
-          <span class="week-pnl" :class="{
-              'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
-              'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
-            }">
-            {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
-          </span>
-          <span class="week-days">
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
-          </span>
+          <span class="week-title">W{{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
+          <div class="week-details">
+            <span class="week-pnl" :class="{
+                'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
+                'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
+              }">
+              {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
+            </span>
+            <span class="week-days">
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
+            </span>
+          </div>
         </div>
       </template>
     </div>
@@ -199,59 +201,63 @@ function formatCellPnl(pnl) {
 }
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: start;
-  align-items: start;
-  line-height: 1.15;
-  gap: var(--semantic-size-gap-xs);
-  padding: var(--semantic-size-inset-sm);
-  background-color: var(--semantic-color-surface-primary);
+  justify-content: center;
+  align-items: center;
+  background-color: var(--semantic-color-surface-secondary);
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-small);
   transition: all 150ms ease-in-out;
   cursor: pointer;
-  /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
+  overflow: hidden;
 }
 .week-summary-card:hover {
   transform: scale(1.03);
   border-color: var(--semantic-color-border-focus);
-  background-color: var(--semantic-color-surface-secondary);
+}
+
+.week-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  line-height: 1.15;
+  width: 100%;
 }
 
 .week-title {
-  font-family: var(--semantic-font-style-body-xs-font-family);
-  font-size: var(--semantic-font-style-body-xs-font-size);
+  position: absolute;
+  top: 0.1rem;
+  right: 0.35rem;
+  font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
-  white-space: nowrap;
 }
 
 .week-days {
-  font-family: var(--semantic-font-style-body-xs-font-family);
-  font-size: var(--semantic-font-style-body-xs-font-size);
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
-  white-space: nowrap;
-  /* Stili per lo sfondo richiesto */
-  background-color: var(--semantic-color-surface-secondary);
-  padding: 0.1rem var(--semantic-size-inset-xs);
-  border-radius: var(--semantic-border-radius-tag);
+  font-size: clamp(
+    var(--base-font-fluid-size-xxs-min),
+    var(--base-font-fluid-size-xxs-ideal),
+    var(--base-font-fluid-size-xxs-max)
+  );
 }
 
 .week-pnl {
-  font-size: var(--semantic-font-style-body-sm-font-size);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
-  font-weight: var(--semantic-font-style-body-sm-font-weight);
-  line-height: 1.2;
-  white-space: nowrap;
+  font-weight: var(--semantic-font-style-body-bold-font-weight);
+  color: var(--semantic-color-text-secondary);
+  font-size: clamp(
+    var(--base-font-fluid-size-lg-min),
+    var(--base-font-fluid-size-lg-ideal),
+    var(--base-font-fluid-size-lg-max)
+  );
 }
 
-.week-pnl.positive {
+.week-details .positive {
   color: var(--semantic-color-feedback-positive-text);
 }
 
-.week-pnl.negative {
+.week-details .negative {
   color: var(--semantic-color-feedback-negative-text);
 }
 
