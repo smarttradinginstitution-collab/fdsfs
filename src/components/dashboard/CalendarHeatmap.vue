@@ -14,7 +14,7 @@ const controlsData = computed(() => tradesStore.calendarControlsData);
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: uiStore.isWeeklySummaryVisible
-    ? 'repeat(7, 1fr) auto'
+    ? `repeat(7, 1fr) var(--semantic-size-component-calendar-week-summary-width)`
     : 'repeat(7, 1fr)',
 }));
 
@@ -86,7 +86,7 @@ function formatCellPnl(pnl) {
           class="week-summary-card"
           @click="uiStore.openWeeklySummaryModal(weekIndex)"
         >
-          <span class="week-title">W{{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
+          <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
           <div class="week-details">
             <span class="week-pnl" :class="{
                 'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
