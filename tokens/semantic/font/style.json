@@ -111,6 +111,36 @@
             },
             "$type": "typography",
             "$comment": "Stile specifico per dati numerici in tabelle per garantire l'allineamento."
+        },
+        "label-checkbox": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.size.xs}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per le etichette delle checkbox, con riga più stretta per l'allineamento."
+        },
+        "body-bold": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "{base.font.size.base}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Testo standard in grassetto."
+        },
+        "sidebar-title": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.extrabold}",
+            "fontSize": "{base.font.size.2xl}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per il titolo principale nella sidebar."
         }
       }
     }

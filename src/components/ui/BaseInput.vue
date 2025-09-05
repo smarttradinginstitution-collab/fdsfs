@@ -74,22 +74,19 @@ function onInput(event) {
 }
 
 .input-label {
-  font-family: var(--semantic-font-style-label-md-font-family);
-  font-size: var(--semantic-font-style-label-md-font-size);
-  font-weight: var(--semantic-font-style-label-md-font-weight);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
 }
 
 .input-field {
-  font-family: var(--semantic-font-style-body-base-font-family);
-  font-size: var(--semantic-font-style-body-base-font-size);
+  font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   /* Transizione fluida per il focus. */
-  transition: box-shadow var(--base-animation-duration-fast), border-color var(--base-animation-duration-fast);
+  transition: box-shadow var(--semantic-animation-duration-interactive), border-color var(--semantic-animation-duration-interactive);
 }
 
 /* Stile per il testo segnaposto. */

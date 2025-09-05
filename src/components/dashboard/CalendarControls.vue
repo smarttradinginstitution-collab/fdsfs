@@ -94,13 +94,13 @@ function formatPnl(pnl) {
 /* Override IconButton size for this specific context */
 .controls-left :deep(.icon-button),
 .controls-right :deep(.icon-button) {
-    width: clamp(1.75rem, 5vw, var(--base-size-component-button-min-height-sm));
-    height: clamp(1.75rem, 5vw, var(--base-size-component-button-min-height-sm));
+    width: clamp(1.75rem, 5vw, var(--semantic-size-component-button-min-height-sm));
+    height: clamp(1.75rem, 5vw, var(--semantic-size-component-button-min-height-sm));
 }
 .stats-value {
   color: var(--semantic-color-text-primary);
-  font-weight: var(--base-font-weight-medium);
-  margin-left: var(--base-size-spacing-1);
+  font-weight: var(--semantic-font-style-label-md-font-weight);
+  margin-left: var(--semantic-size-gap-xs);
 }
 .stats-value.positive {
   color: var(--semantic-color-feedback-positive-text);

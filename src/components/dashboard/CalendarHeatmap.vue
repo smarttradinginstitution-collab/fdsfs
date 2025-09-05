@@ -14,7 +14,7 @@ const controlsData = computed(() => tradesStore.calendarControlsData);
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: uiStore.isWeeklySummaryVisible
-    ? 'repeat(7, 1fr) auto'
+    ? `repeat(7, 1fr) var(--semantic-size-component-calendar-week-summary-width)`
     : 'repeat(7, 1fr)',
 }));
 
@@ -87,16 +87,18 @@ function formatCellPnl(pnl) {
           @click="uiStore.openWeeklySummaryModal(weekIndex)"
         >
           <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
-          <span class="week-pnl" :class="{
-              'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
-              'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
-            }">
-            {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
-          </span>
-          <span class="week-days">
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
-          </span>
+          <div class="week-details">
+            <span class="week-pnl" :class="{
+                'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
+                'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
+              }">
+              {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
+            </span>
+            <span class="week-days">
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
+            </span>
+          </div>
         </div>
       </template>
     </div>
@@ -109,30 +111,30 @@ function formatCellPnl(pnl) {
   border-radius: var(--semantic-border-radius-surface);
   /* Ridotto il padding verticale per un header più compatto */
   padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
 }
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr) auto;
-  gap: var(--base-size-spacing-1);
+  gap: var(--semantic-size-gap-xs);
 }
 .day-header {
   text-align: center;
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-label-sm);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--base-border-radius-sm);
-  margin-bottom: var(--base-size-spacing-xs);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-small);
+  margin-bottom: var(--semantic-size-stack-xs);
 }
 .week-summary-header {
-  font-weight: var(--base-font-weight-bold);
+  font: var(--semantic-font-style-body-bold);
 }
 .day-cell {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: var(--base-border-radius-sm);
+  border-radius: var(--semantic-border-radius-small);
   padding: 0.25rem;
   transition: transform 150ms;
   display: flex;
@@ -172,7 +174,7 @@ function formatCellPnl(pnl) {
   width: 100%;
 }
 .day-pnl {
-  font-weight: var(--base-font-weight-bold);
+  font-weight: var(--semantic-font-weight-bold);
   color: var(--semantic-color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min),
@@ -199,59 +201,63 @@ function formatCellPnl(pnl) {
 }
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: start;
-  align-items: start;
-  line-height: 1.15;
-  gap: var(--base-size-spacing-1);
-  padding: var(--semantic-size-inset-sm);
-  background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--base-border-radius-sm);
+  justify-content: center;
+  align-items: center;
+  background-color: var(--semantic-color-surface-secondary);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-small);
   transition: all 150ms ease-in-out;
   cursor: pointer;
-  /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
+  overflow: hidden;
 }
 .week-summary-card:hover {
   transform: scale(1.03);
   border-color: var(--semantic-color-border-focus);
-  background-color: var(--semantic-color-surface-secondary);
+}
+
+.week-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  line-height: 1.15;
+  width: 100%;
 }
 
 .week-title {
-  font-family: var(--base-font-family-palette-sans);
+  position: absolute;
+  top: 0.1rem;
+  right: 0.35rem;
   font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
-  white-space: nowrap;
 }
 
 .week-days {
-  font-family: var(--base-font-family-palette-sans);
-  font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
-  white-space: nowrap;
-  /* Stili per lo sfondo richiesto */
-  background-color: var(--semantic-color-surface-secondary);
-  padding: 0.1rem var(--base-size-spacing-1-5);
-  border-radius: var(--semantic-border-radius-tag);
+  font-size: clamp(
+    var(--base-font-fluid-size-xxs-min),
+    var(--base-font-fluid-size-xxs-ideal),
+    var(--base-font-fluid-size-xxs-max)
+  );
 }
 
 .week-pnl {
-  font-size: var(--base-font-size-sm);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
-  font-weight: var(--base-font-weight-semibold);
-  line-height: 1.2;
-  white-space: nowrap;
+  font-weight: var(--semantic-font-weight-bold);
+  color: var(--semantic-color-text-secondary);
+  font-size: clamp(
+    var(--base-font-fluid-size-lg-min),
+    var(--base-font-fluid-size-lg-ideal),
+    var(--base-font-fluid-size-lg-max)
+  );
 }
 
-.week-pnl.positive {
+.week-details .positive {
   color: var(--semantic-color-feedback-positive-text);
 }
 
-.week-pnl.negative {
+.week-details .negative {
   color: var(--semantic-color-feedback-negative-text);
 }
 

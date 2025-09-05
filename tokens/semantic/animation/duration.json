@@ -1,0 +1,10 @@
+{
+  "semantic": {
+    "animation": {
+      "duration": {
+        "interactive": { "$value": "{base.animation.duration.fast}", "$type": "duration" },
+        "complex": { "$value": "{base.animation.duration.base}", "$type": "duration" }
+      }
+    }
+  }
+}

@@ -49,15 +49,13 @@ const headers = tradesStore.tradeHeaders;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   padding: var(--semantic-size-inset-lg);
 }
 .card-title {
-  font-family: var(--semantic-font-style-heading-xl-font-family);
-  font-size: var(--semantic-font-style-heading-xl-font-size);
-  font-weight: var(--semantic-font-style-heading-xl-font-weight);
+  font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
 }
 

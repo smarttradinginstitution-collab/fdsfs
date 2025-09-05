@@ -17,14 +17,14 @@ defineProps({
 .icon-button {
   display: grid;
   place-items: center;
-  width: var(--base-size-component-button-min-height-md); /* 40px */
-  height: var(--base-size-component-button-min-height-md); /* 40px */
-  border-radius: var(--base-border-radius-full);
+  width: var(--semantic-size-component-button-min-height-md); /* 40px */
+  height: var(--semantic-size-component-button-min-height-md); /* 40px */
+  border-radius: var(--semantic-border-radius-tag);
   background-color: transparent;
   color: var(--semantic-color-text-secondary);
   border: none;
   cursor: pointer;
-  transition: background-color var(--base-animation-duration-fast), color var(--base-animation-duration-fast);
+  transition: background-color var(--semantic-animation-duration-interactive), color var(--semantic-animation-duration-interactive);
 }
 
 .icon-button:hover {

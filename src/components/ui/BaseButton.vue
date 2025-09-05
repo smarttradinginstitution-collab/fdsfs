@@ -31,13 +31,13 @@ const buttonClass = computed(() => `button button--${props.variant}`);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--base-size-spacing-2);
+  gap: var(--semantic-size-gap-sm);
   font: var(--semantic-font-style-label-md);
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
-  border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
+  border: var(--semantic-border-width-interactive) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
-  transition: all var(--base-animation-duration-fast);
+  transition: all var(--semantic-animation-duration-interactive);
 }
 
 .button:focus-visible {

@@ -1,5 +1,5 @@
 {
-  "base": {
+  "semantic": {
     "size": {
       "component": {
         "button": {
@@ -32,6 +32,13 @@
             "$value": "200px",
             "$type": "dimension",
             "$comment": "Larghezza minima per le card delle statistiche nella griglia fluida della dashboard."
+          }
+        },
+        "calendar": {
+          "week-summary-width": {
+            "$value": "10rem",
+            "$type": "dimension",
+            "$comment": "Larghezza della colonna del riepilogo settimanale nella heatmap del calendario."
           }
         }
       }

@@ -76,14 +76,11 @@ const selectOptions = [
   gap: var(--semantic-size-stack-xl);
   flex-grow: 1;
 }
-h1, h2 {
-  font-family: var(--base-font-family-palette-sans-serif);
-}
 h1 {
-  font-size: var(--base-font-size-2xl);
+  font: var(--semantic-font-style-heading-2xl);
 }
 h2 {
-  font-size: var(--base-font-size-xl);
+  font: var(--semantic-font-style-heading-xl);
 }
 .component-group {
   display: flex;
@@ -94,7 +91,7 @@ h2 {
   border-radius: var(--semantic-border-radius-surface);
 }
 pre {
-  font-family: var(--base-font-family-palette-monospace);
+  font: var(--semantic-font-style-data-numeric);
   background-color: var(--semantic-color-surface-secondary);
   padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-interactive);

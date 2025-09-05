@@ -59,7 +59,7 @@ defineProps({
 <style scoped>
 .breakdown-card {
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   padding: var(--semantic-size-inset-lg);
   display: flex;
@@ -100,21 +100,21 @@ defineProps({
 
 .item-value {
   color: var(--semantic-color-text-primary);
-  font-weight: var(--base-font-weight-medium);
+  font-weight: var(--semantic-font-style-label-md-font-weight);
 }
 
 .progress-bar-bg {
   width: 100%;
   height: 8px;
   background-color: var(--semantic-color-surface-secondary);
-  border-radius: var(--base-border-radius-full);
+  border-radius: var(--semantic-border-radius-tag);
   overflow: hidden;
 }
 
 .progress-bar-fg {
   height: 100%;
-  border-radius: var(--base-border-radius-full);
-  transition: width 0.5s var(--base-animation-easing-out);
+  border-radius: var(--semantic-border-radius-tag);
+  transition: width 0.5s var(--semantic-animation-easing-exit);
 }
 
 .progress-bar-fg.positive {
