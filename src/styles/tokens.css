@@ -66,9 +66,9 @@
   --base-font-fluid-size-xxs-min: 0.5rem;
   --base-font-fluid-size-xxs-ideal: 0.7vw;
   --base-font-fluid-size-xxs-max: 0.65rem;
-  --base-font-fluid-size-stat-display-min: 1.25rem;
-  --base-font-fluid-size-stat-display-ideal: 2.5vw;
-  --base-font-fluid-size-stat-display-max: 2rem;
+  --base-font-fluid-size-stat-display-min: 1rem;
+  --base-font-fluid-size-stat-display-ideal: 2vw;
+  --base-font-fluid-size-stat-display-max: 1.5rem;
   --base-font-line-height-none: 1;
   --base-font-line-height-tight: 1.2;
   --base-font-line-height-normal: 1.5;
@@ -186,7 +186,8 @@
   --semantic-font-style-label-xs: 500 0.75rem/1.5 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-font-style-body-xxs: 400 0.625rem/1.5 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-font-style-data-numeric: 400 0.875rem/1.5 'Roboto Mono', 'SF Mono', 'Fira Code', 'Fira Mono', 'Droid Sans Mono', monospace;
-  --semantic-font-style-metric-display: 700 clamp(1.25rem, 2.5vw, 2rem)/1.2 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --semantic-font-style-metric-display: 700 clamp(1rem, 2vw, 1.5rem)/1.2 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --semantic-font-style-label-xxs: 500 0.625rem/1.2 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --semantic-size-inset-xs: 0.5rem;
   --semantic-size-inset-sm: 0.75rem;
   --semantic-size-inset-md: 1rem;

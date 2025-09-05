@@ -53,19 +53,21 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 </template>
 
 <style scoped>
-/* Stili di base della card, ora con layout a 2 colonne di default */
+/* Stili di base della card, ora con layout a griglia per un controllo migliore */
 .stat-card {
   background-color: var(--semantic-color-surface-primary);
   padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  display: flex;
-  justify-content: space-between;
+
+  display: grid;
+  grid-template-columns: 1fr auto; /* Colonna testo flessibile, colonna grafico fissa */
   align-items: center;
   gap: var(--semantic-size-stack-md);
-  transition: box-shadow var(--base-animation-duration-fast) var(--base-animation-easing-out);
-  overflow: hidden; /* Aggiunto per contenere meglio gli elementi */
+
+  transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
+  overflow: hidden;
 }
 .stat-card:hover {
     box-shadow: var(--semantic-effect-shadow-elevation-medium);
@@ -122,14 +124,30 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     width: 60px;
 }
 
-/* Media Query per schermi piccoli (es. telefoni) */
+/* === Media Queries per la Responsività Mobile === */
 @media (max-width: 480px) { /* xs breakpoint */
     .stat-card {
         padding: var(--semantic-size-inset-sm);
         gap: var(--semantic-size-stack-sm);
     }
+    .stat-label {
+        font: var(--semantic-font-style-label-xs);
+    }
     .chart-content {
         width: 48px;
+    }
+}
+
+@media (max-width: 365px) { /* xxs breakpoint */
+    .stat-card {
+        gap: var(--semantic-size-gap-xs);
+        padding: var(--semantic-size-inset-xs);
+    }
+    .stat-label {
+        font: var(--semantic-font-style-label-xxs);
+    }
+    .chart-content {
+        width: 40px;
     }
 }
 </style>

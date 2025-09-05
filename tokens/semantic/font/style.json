@@ -121,6 +121,16 @@
           },
           "$type": "typography",
           "$comment": "Stile per i valori principali nelle StatCard, con dimensione fluida."
+        },
+        "label-xxs": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.medium}",
+            "fontSize": "{base.font.size.xxs}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per etichette minuscole, usato nelle StatCard su mobile."
         }
       }
     }
