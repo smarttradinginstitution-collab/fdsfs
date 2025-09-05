@@ -14,9 +14,14 @@ const props = defineProps({
     default: 'primary', // 'primary' o 'secondary'
     validator: (value) => ['primary', 'secondary'].includes(value),
   },
+  size: {
+    type: String,
+    default: 'medium',
+    validator: (value) => ['medium', 'small'].includes(value),
+  }
 });
 
-const buttonClass = computed(() => `button button--${props.variant}`);
+const buttonClass = computed(() => `button button--${props.variant} button--${props.size}`);
 </script>
 
 <template>
@@ -32,26 +37,47 @@ const buttonClass = computed(() => `button button--${props.variant}`);
   align-items: center;
   justify-content: center;
   gap: var(--base-size-spacing-2);
-  font: var(--semantic-font-style-button-label);
-  padding-block: var(--semantic-size-button-padding-block-mobile);
-  padding-inline: var(--semantic-size-button-padding-inline-mobile);
   border-radius: var(--semantic-border-radius-interactive);
   border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
   transition: all var(--base-animation-duration-fast);
 }
 
+/* Stili per dimensione Medium (default) */
+.button--medium {
+  font: var(--semantic-font-style-button-label-medium);
+  padding-block: var(--semantic-size-button-padding-block-medium-mobile);
+  padding-inline: var(--semantic-size-button-padding-inline-medium-mobile);
+}
 @media (min-width: 768px) {
-  .button {
-    padding-block: var(--semantic-size-button-padding-block-tablet);
-    padding-inline: var(--semantic-size-button-padding-inline-tablet);
+  .button--medium {
+    padding-block: var(--semantic-size-button-padding-block-medium-tablet);
+    padding-inline: var(--semantic-size-button-padding-inline-medium-tablet);
+  }
+}
+@media (min-width: 1024px) {
+  .button--medium {
+    padding-block: var(--semantic-size-button-padding-block-medium-desktop);
+    padding-inline: var(--semantic-size-button-padding-inline-medium-desktop);
   }
 }
 
+/* Stili per dimensione Small */
+.button--small {
+  font: var(--semantic-font-style-button-label-small);
+  padding-block: var(--semantic-size-button-padding-block-small-mobile);
+  padding-inline: var(--semantic-size-button-padding-inline-small-mobile);
+}
+@media (min-width: 768px) {
+  .button--small {
+    padding-block: var(--semantic-size-button-padding-block-small-tablet);
+    padding-inline: var(--semantic-size-button-padding-inline-small-tablet);
+  }
+}
 @media (min-width: 1024px) {
-  .button {
-    padding-block: var(--semantic-size-button-padding-block-desktop);
-    padding-inline: var(--semantic-size-button-padding-inline-desktop);
+  .button--small {
+    padding-block: var(--semantic-size-button-padding-block-small-desktop);
+    padding-inline: var(--semantic-size-button-padding-inline-small-desktop);
   }
 }
 

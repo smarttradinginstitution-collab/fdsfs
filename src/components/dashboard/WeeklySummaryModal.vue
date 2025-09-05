@@ -83,10 +83,10 @@ const tradeTableHeaders = computed(() => [
             <span class="date">{{ formattedDateRange }}</span>
             <span :style="pnlStyle(weeklyData?.stats.netPnl)">Net P&L {{ formattedPnl(weeklyData?.stats.netPnl) }}</span>
           </div>
-          <BaseButton variant="secondary">Add Note</BaseButton>
+          <BaseButton variant="secondary" size="small">Add Note</BaseButton>
         </div>
         <div class="header-right">
-          <IconButton aria-label="AI Assistant"><SparkleIcon /></IconButton>
+          <IconButton aria-label="AI Assistant" size="small"><SparkleIcon /></IconButton>
         </div>
       </div>
     </template>
@@ -134,8 +134,8 @@ const tradeTableHeaders = computed(() => [
 
     <template #footer>
       <div class="footer-content">
-        <BaseButton variant="secondary" @click="handleClose">Cancel</BaseButton>
-        <BaseButton variant="primary">View Details</BaseButton>
+        <BaseButton variant="secondary" size="small" @click="handleClose">Cancel</BaseButton>
+        <BaseButton variant="primary" size="small">View Details</BaseButton>
       </div>
     </template>
   </BaseModal>
@@ -160,8 +160,8 @@ const tradeTableHeaders = computed(() => [
 .header-right { display: flex; align-items: center; gap: var(--base-size-spacing-2); flex-shrink: 0; }
 
 /* Body Styles */
-.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-sm); flex-grow: 1; min-height: 0; }
-.top-section { display: flex; flex-direction: column; gap: var(--semantic-size-stack-sm); }
+.modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-md); flex-grow: 1; min-height: 0; }
+.top-section { display: flex; flex-direction: column; gap: var(--semantic-size-stack-md); }
 .chart-section { min-height: 150px; }
 
 /* Stats Section Styles */
@@ -175,8 +175,8 @@ const tradeTableHeaders = computed(() => [
 .stat-col {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
-  padding: var(--semantic-size-inset-xs);
+  gap: var(--semantic-size-stack-sm);
+  padding: var(--semantic-size-inset-sm);
 }
 /* Add borders to create a grid visually */
 .stat-col:nth-child(odd) {

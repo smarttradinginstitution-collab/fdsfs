@@ -129,37 +129,40 @@ export default {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-high);
-  padding: var(--semantic-size-inset-xl);
+  padding: var(--semantic-size-component-modal-padding-mobile);
   z-index: var(--semantic-layer-z-index-modal);
   width: 100%;
-  max-width: 850px;
+  max-width: var(--semantic-size-component-modal-max-width-mobile);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
-  /*
-   * Aggiungiamo una max-height per garantire che il modale non sia mai più alto
-   * della viewport. Usiamo 85vh (85% dell'altezza della viewport) per lasciare
-   * un po' di margine sopra e sotto. Questo è cruciale per abilitare lo
-   * scrolling interno.
-  */
+  gap: var(--semantic-size-component-modal-gap-mobile);
   max-height: 85vh;
+}
+
+@media (min-width: 768px) {
+  .modal-card {
+    max-width: var(--semantic-size-component-modal-max-width-tablet);
+    padding: var(--semantic-size-component-modal-padding-tablet);
+    gap: var(--semantic-size-component-modal-gap-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-card {
+    max-width: var(--semantic-size-component-modal-max-width-desktop);
+    padding: var(--semantic-size-component-modal-padding-desktop);
+    gap: var(--semantic-size-component-modal-gap-desktop);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* Impedisce all'header di restringersi */
+  flex-shrink: 0;
 }
 
 .modal-body {
-  /*
-   * Questa è la parte centrale del pattern "sticky footer" con flexbox.
-   * flex-grow: 1 fa sì che questo elemento si espanda per riempire tutto lo
-   * spazio disponibile verticalmente all'interno di .modal-card.
-   * overflow-y: auto fa sì che appaia una scrollbar solo se il contenuto
-   * interno è più alto dello spazio che ha a disposizione.
-  */
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
@@ -168,7 +171,6 @@ export default {
 }
 
 .modal-footer {
-    /* flex-shrink: 0 impedisce al footer di restringersi. */
     flex-shrink: 0;
 }
 
