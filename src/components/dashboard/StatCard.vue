@@ -121,7 +121,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 
 .chart-content {
     flex-shrink: 0;
-    width: 60px;
+    width: var(--semantic-size-component-stat-card-chart-width-desktop);
 }
 
 /* === Media Queries per la Responsività Mobile === */
@@ -141,7 +141,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
         font: var(--semantic-font-style-label-xs);
     }
     .chart-content {
-        width: 48px;
+        width: var(--semantic-size-component-stat-card-chart-width-tablet);
     }
 }
 
@@ -154,7 +154,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
         font: var(--semantic-font-style-label-xxs);
     }
     .chart-content {
-        width: 40px;
+        width: var(--semantic-size-component-stat-card-chart-width-mobile);
     }
 }
 </style>

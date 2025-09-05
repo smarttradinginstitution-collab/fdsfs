@@ -1,0 +1,46 @@
+{
+  "semantic": {
+    "size": {
+      "component": {
+        "button": {
+          "min-height": {
+            "sm": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+            "md": { "$value": "{base.size.spacing.10}", "$type": "dimension" },
+            "lg": { "$value": "{base.size.spacing.12}", "$type": "dimension" }
+          }
+        },
+        "input": {
+          "height": {
+            "sm": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+            "md": { "$value": "{base.size.spacing.10}", "$type": "dimension" },
+            "lg": { "$value": "{base.size.spacing.12}", "$type": "dimension" }
+          }
+        },
+        "avatar": {
+          "sm": { "$value": "{base.size.spacing.6}", "$type": "dimension" },
+          "md": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+          "lg": { "$value": "{base.size.spacing.10}", "$type": "dimension" }
+        },
+        "sidebar": {
+          "width": {
+            "expanded": { "$value": "{base.size.spacing.64}", "$type": "dimension" },
+            "collapsed": { "$value": "{base.size.spacing.20}", "$type": "dimension" }
+          }
+        },
+        "stat-card": {
+          "min-width": {
+            "$value": "200px",
+            "$type": "dimension"
+          },
+          "chart": {
+            "width": {
+              "desktop": { "$value": "60px", "$type": "dimension" },
+              "tablet": { "$value": "48px", "$type": "dimension" },
+              "mobile": { "$value": "40px", "$type": "dimension" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
