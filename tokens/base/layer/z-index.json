@@ -28,12 +28,12 @@
           "$comment": "Per la sidebar quando si comporta come un overlay su mobile."
         },
         "overlay": {
-          "$value": "1300",
+          "$value": "5000",
           "$type": "zIndex",
           "$comment": "Per lo sfondo semi-trasparente dietro una modale (backdrop/scrim)."
         },
         "modal": {
-          "$value": "1400",
+          "$value": "5100",
           "$type": "zIndex",
           "$comment": "Per le finestre modali, che devono stare sopra l'overlay."
         },
