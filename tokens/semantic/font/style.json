@@ -113,14 +113,14 @@
             "$comment": "Stile specifico per dati numerici in tabelle per garantire l'allineamento."
         },
         "metric-display": {
+          "$comment": "Stile per i valori principali nelle StatCard. Usa la tipografia fluida per adattarsi alle dimensioni dello schermo.",
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.bold}",
             "fontSize": "clamp({base.font.fluid-size.stat-display.min}, {base.font.fluid-size.stat-display.ideal}, {base.font.fluid-size.stat-display.max})",
             "lineHeight": "{base.font.line-height.tight}"
           },
-          "$type": "typography",
-          "$comment": "Stile per i valori principali nelle StatCard, con dimensione fluida."
+          "$type": "typography"
         },
         "label-xxs": {
           "$value": {

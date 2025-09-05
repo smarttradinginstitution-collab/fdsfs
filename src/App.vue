@@ -44,10 +44,17 @@ const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
 }
 
 .content-wrapper {
-  flex-grow: 1; /* Mantenuto per occupare lo spazio */
+  flex-grow: 1;
+  /*
+    BEST PRACTICE: Layout con Sidebar Fissa
+    La sidebar ha `position: fixed`, quindi è rimossa dal flusso del layout.
+    Per evitare che il contenuto principale finisca sotto la sidebar, applichiamo
+    un `margin-left` al content-wrapper. Questo margine è uguale alla larghezza
+    della sidebar, creando lo spazio necessario.
+    Usiamo i token per la larghezza della sidebar per mantenere tutto sincronizzato.
+  */
   margin-left: var(--semantic-size-component-sidebar-width-expanded);
   transition: margin-left var(--semantic-animation-duration-complex) var(--semantic-animation-easing-exit);
-  /* 'display: flex' rimosso per evitare conflitti di layout */
 }
 
 .content-wrapper.sidebar-is-collapsed {
