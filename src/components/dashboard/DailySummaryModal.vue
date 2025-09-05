@@ -133,7 +133,7 @@ const tradeTableHeaders = computed(() => [
 
 <style scoped>
 /* Header Styles */
-.header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: var(--semantic-size-stack-sm); }
 .header-left { display: flex; flex-direction: column; gap: var(--base-size-spacing-1); }
 .date { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-secondary); }
 .header-left > span:last-child { font: var(--semantic-font-style-heading-sm); font-weight: 600; }
@@ -141,12 +141,12 @@ const tradeTableHeaders = computed(() => [
 
 /* Body Styles */
 .modal-body-content { display: flex; flex-direction: column; gap: var(--semantic-size-stack-lg); flex-grow: 1; min-height: 0; }
-.top-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: var(--semantic-size-gap-xl); align-items: stretch; flex-shrink: 0; }
+.top-section { display: grid; grid-template-columns: 1fr; gap: var(--semantic-size-stack-lg); align-items: stretch; flex-shrink: 0; }
 .chart-section { min-height: 150px; }
 
 /* Stats Section Styles */
-.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); border-left: var(--base-border-width-1) solid var(--semantic-color-border-default); }
-.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-lg); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); padding: 0 var(--semantic-size-inset-lg); }
+.stats-section { display: grid; grid-template-columns: repeat(2, 1fr); border-left: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+.stat-col { display: flex; flex-direction: column; justify-content: center; gap: var(--semantic-size-stack-md); border-right: var(--base-border-width-1) solid var(--semantic-color-border-default); padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md); }
 .stat-cell { display: flex; flex-direction: column; justify-content: center; gap: var(--base-size-spacing-1); }
 .stat-label { font: var(--semantic-font-style-label-md); color: var(--semantic-color-text-secondary); white-space: nowrap; display: block; }
 .stat-value { font: var(--semantic-font-style-body-sm); color: var(--semantic-color-text-primary); font-weight: 600; white-space: nowrap; display: block; }
@@ -157,4 +157,23 @@ const tradeTableHeaders = computed(() => [
 
 /* Footer Styles */
 .footer-content { width: 100%; display: flex; justify-content: flex-end; gap: var(--semantic-size-gap-sm); padding-top: var(--semantic-size-inset-lg); border-top: var(--base-border-width-1) solid var(--semantic-color-border-default); }
+
+@media (min-width: 768px) {
+    .top-section {
+        grid-template-columns: 1fr 1.5fr;
+        gap: var(--semantic-size-stack-xl);
+    }
+    .stats-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .stat-col {
+        padding: 0 var(--semantic-size-inset-lg);
+    }
+}
+
+@media (min-width: 1024px) {
+    .stats-section {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
 </style>

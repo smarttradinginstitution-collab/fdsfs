@@ -115,13 +115,29 @@ export default {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-high);
-  padding: var(--semantic-size-inset-xl);
+  padding: var(--semantic-size-component-modal-padding-mobile);
   z-index: var(--semantic-layer-z-index-modal);
   width: 100%;
-  max-width: 850px;
+  max-width: var(--semantic-size-component-modal-max-width-mobile);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--semantic-size-component-modal-gap-mobile);
+}
+
+@media (min-width: 768px) {
+  .modal-card {
+    max-width: var(--semantic-size-component-modal-max-width-tablet);
+    padding: var(--semantic-size-component-modal-padding-tablet);
+    gap: var(--semantic-size-component-modal-gap-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-card {
+    max-width: var(--semantic-size-component-modal-max-width-desktop);
+    padding: var(--semantic-size-component-modal-padding-desktop);
+    gap: var(--semantic-size-component-modal-gap-desktop);
+  }
 }
 
 .modal-header {

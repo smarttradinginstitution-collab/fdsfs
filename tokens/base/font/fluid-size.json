@@ -49,6 +49,36 @@
         "min": { "$value": "{base.font.size.xs}", "$type": "dimension" },
         "ideal": { "$value": "1.5vw", "$type": "dimension" },
         "max": { "$value": "{base.font.size.sm}", "$type": "dimension" }
+        },
+        "fluid-heading-xl": {
+          "min": { "$value": "{base.font.size.lg}", "$type": "dimension" },
+          "ideal": { "$value": "3vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.xl}", "$type": "dimension" }
+        },
+        "fluid-label-md": {
+          "min": { "$value": "{base.font.size.xs}", "$type": "dimension" },
+          "ideal": { "$value": "1.5vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.sm}", "$type": "dimension" }
+        },
+        "fluid-body-sm": {
+          "min": { "$value": "{base.font.size.xs}", "$type": "dimension" },
+          "ideal": { "$value": "1.5vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.sm}", "$type": "dimension" }
+        },
+        "fluid-calendar-day-header": {
+          "min": { "$value": "{base.font.size.xxs}", "$type": "dimension" },
+          "ideal": { "$value": "1.2vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.xs}", "$type": "dimension" }
+        },
+        "fluid-calendar-day-number": {
+          "min": { "$value": "{base.font.size.xxs}", "$type": "dimension" },
+          "ideal": { "$value": "1vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.xs}", "$type": "dimension" }
+        },
+        "fluid-heading-sm": {
+          "min": { "$value": "{base.font.size.sm}", "$type": "dimension" },
+          "ideal": { "$value": "2vw", "$type": "dimension" },
+          "max": { "$value": "{base.font.size.base}", "$type": "dimension" }
         }
       }
     }
