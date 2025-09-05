@@ -66,6 +66,9 @@
   --base-font-fluid-size-xxs-min: 0.5rem;
   --base-font-fluid-size-xxs-ideal: 0.7vw;
   --base-font-fluid-size-xxs-max: 0.65rem;
+  --base-font-fluid-size-stat-display-min: 1rem;
+  --base-font-fluid-size-stat-display-ideal: 2vw;
+  --base-font-fluid-size-stat-display-max: 1.5rem;
   --base-font-line-height-none: 1;
   --base-font-line-height-tight: 1.2;
   --base-font-line-height-normal: 1.5;
@@ -88,8 +91,13 @@
   --base-font-weight-semibold: 600;
   --base-font-weight-bold: 700;
   --base-font-weight-extrabold: 800;
-  --base-layout-breakpoint-xxs: 365px;
-  --base-layout-breakpoint-xs: 480px;
+  --base-layer-z-index-base: 0;
+  --base-layer-z-index-above: 10;
+  --base-layer-z-index-dropdown: 1000;
+  --base-layer-z-index-sticky: 1100;
+  --base-layer-z-index-overlay: 1300;
+  --base-layer-z-index-modal: 1400;
+  --base-layer-z-index-notification: 2000;
   --base-layout-breakpoint-sm: 640px;
   --base-layout-breakpoint-md: 768px;
   --base-layout-breakpoint-lg: 1024px;

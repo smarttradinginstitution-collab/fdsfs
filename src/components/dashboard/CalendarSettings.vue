@@ -61,12 +61,12 @@ watch(isDesktop, (isNowDesktop) => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-sm);
-  padding: var(--semantic-size-inset-sm);
+  padding: var(--base-size-spacing-2);
 }
 .settings-title {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-tertiary);
-  margin-bottom: var(--semantic-size-stack-xs);
+  margin-bottom: var(--base-size-spacing-1);
 }
 .settings-list {
   display: flex;

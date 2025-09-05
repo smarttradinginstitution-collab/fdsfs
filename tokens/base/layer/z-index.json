@@ -1,5 +1,5 @@
 {
-  "semantic": {
+  "base": {
     "layer": {
       "z-index": {
         "base": {

@@ -82,28 +82,29 @@ const navLinks = [
   position: fixed;
   top: 0;
   left: 0;
-  z-index: var(--semantic-layer-z-index-sticky);
-  width: var(--semantic-size-component-sidebar-width-expanded);
+  z-index: var(--base-layer-z-index-sticky);
+  width: var(--base-size-component-sidebar-width-expanded); /* Usa il nuovo token */
   height: 100vh;
-  background-color: var(--semantic-color-surface-sidebar);
-  border-right: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  background-color: var(--base-color-gray-900);
+  border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
   padding: var(--semantic-size-inset-lg);
   /* Transizione fluida per la larghezza. */
-  transition: width var(--semantic-animation-duration-complex) var(--semantic-animation-easing-exit);
+  transition: width var(--base-animation-duration-base) var(--base-animation-easing-out);
 }
 
 /* Stili per lo stato collassato */
 .sidebar.is-collapsed {
-  width: var(--semantic-size-component-sidebar-width-collapsed);
+  width: var(--base-size-component-sidebar-width-collapsed); /* Usa il nuovo token */
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font: var(--semantic-font-style-sidebar-title);
+  font: var(--semantic-font-style-heading-2xl);
+  font-weight: var(--base-font-weight-extrabold);
   margin-bottom: var(--semantic-size-stack-xl);
 }
 
@@ -116,7 +117,7 @@ const navLinks = [
   border-radius: 50%;
   display: grid;
   place-items: center;
-  transition: all var(--semantic-animation-duration-interactive);
+  transition: all var(--base-animation-duration-fast);
 }
 .toggle-button:hover {
   background-color: var(--semantic-color-surface-secondary);
@@ -143,7 +144,7 @@ const navLinks = [
   text-decoration: none;
   padding: var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
-  transition: all var(--semantic-animation-duration-interactive);
+  transition: all var(--base-animation-duration-fast);
   white-space: nowrap; /* Impedisce al testo di andare a capo durante la transizione */
   overflow: hidden; /* Nasconde il testo che fuoriesce */
 }
@@ -171,9 +172,9 @@ const navLinks = [
 }
 
 .avatar {
-  min-width: var(--semantic-size-component-avatar-md);
-  height: var(--semantic-size-component-avatar-md);
-  border-radius: var(--semantic-border-radius-tag);
+  min-width: var(--base-size-component-avatar-md);
+  height: var(--base-size-component-avatar-md);
+  border-radius: var(--base-border-radius-full);
   background-color: var(--semantic-color-interactive-primary-default);
   color: var(--semantic-color-text-on-brand);
   display: grid;
@@ -184,7 +185,7 @@ const navLinks = [
 
 .user-info, .nav-text {
   /* Effetto di dissolvenza per il testo */
-  transition: opacity var(--semantic-animation-duration-interactive);
+  transition: opacity var(--base-animation-duration-fast);
 }
 .sidebar.is-collapsed .user-info,
 .sidebar.is-collapsed .nav-text {
@@ -197,12 +198,12 @@ const navLinks = [
   .sidebar {
     /* Su mobile, la sidebar è un overlay che appare da sinistra */
     position: fixed;
-    z-index: var(--semantic-layer-z-index-modal);
+    z-index: var(--base-layer-z-index-modal);
     transform: translateX(-100%); /* Nascosta di default */
-    transition: transform var(--semantic-animation-duration-complex) var(--semantic-animation-easing-exit);
+    transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
 
     /* Su mobile, non vogliamo mai la versione "collassata", ma sempre quella estesa */
-    width: var(--semantic-size-component-sidebar-width-expanded) !important;
+    width: var(--base-size-component-sidebar-width-expanded) !important;
   }
 
   /* Quando il menu mobile è aperto, la facciamo apparire */

@@ -4,41 +4,40 @@
       "component": {
         "button": {
           "min-height": {
-            "sm": { "$value": "{base.size.spacing.8}", "$type": "dimension", "$comment": "32px. Altezza minima per bottoni piccoli." },
-            "md": { "$value": "{base.size.spacing.10}", "$type": "dimension", "$comment": "40px. Altezza minima per bottoni medi." },
-            "lg": { "$value": "{base.size.spacing.12}", "$type": "dimension", "$comment": "48px. Altezza minima per bottoni grandi." }
+            "sm": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+            "md": { "$value": "{base.size.spacing.10}", "$type": "dimension" },
+            "lg": { "$value": "{base.size.spacing.12}", "$type": "dimension" }
           }
         },
         "input": {
           "height": {
-            "sm": { "$value": "{base.size.spacing.8}", "$type": "dimension", "$comment": "32px. Altezza per input piccoli." },
-            "md": { "$value": "{base.size.spacing.10}", "$type": "dimension", "$comment": "40px. Altezza per input medi." },
-            "lg": { "$value": "{base.size.spacing.12}", "$type": "dimension", "$comment": "48px. Altezza per input grandi." }
+            "sm": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+            "md": { "$value": "{base.size.spacing.10}", "$type": "dimension" },
+            "lg": { "$value": "{base.size.spacing.12}", "$type": "dimension" }
           }
         },
         "avatar": {
-          "sm": { "$value": "{base.size.spacing.6}", "$type": "dimension", "$comment": "24px. Dimensione per avatar piccoli." },
-          "md": { "$value": "{base.size.spacing.8}", "$type": "dimension", "$comment": "32px. Dimensione per avatar medi." },
-          "lg": { "$value": "{base.size.spacing.10}", "$type": "dimension", "$comment": "40px. Dimensione per avatar grandi." }
+          "sm": { "$value": "{base.size.spacing.6}", "$type": "dimension" },
+          "md": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
+          "lg": { "$value": "{base.size.spacing.10}", "$type": "dimension" }
         },
         "sidebar": {
           "width": {
-            "expanded": { "$value": "{base.size.spacing.64}", "$type": "dimension", "$comment": "256px. Larghezza standard per la sidebar espansa." },
-            "collapsed": { "$value": "{base.size.spacing.20}", "$type": "dimension", "$comment": "80px. Larghezza per la sidebar collassata." }
+            "expanded": { "$value": "{base.size.spacing.64}", "$type": "dimension" },
+            "collapsed": { "$value": "{base.size.spacing.20}", "$type": "dimension" }
           }
         },
         "stat-card": {
           "min-width": {
             "$value": "200px",
-            "$type": "dimension",
-            "$comment": "Larghezza minima per le card delle statistiche nella griglia fluida della dashboard."
-          }
-        },
-        "calendar": {
-          "week-summary-width": {
-            "$value": "10rem",
-            "$type": "dimension",
-            "$comment": "Larghezza della colonna del riepilogo settimanale nella heatmap del calendario."
+            "$type": "dimension"
+          },
+          "chart": {
+            "width": {
+              "desktop": { "$value": "60px", "$type": "dimension" },
+              "tablet": { "$value": "48px", "$type": "dimension" },
+              "mobile": { "$value": "40px", "$type": "dimension" }
+            }
           }
         }
       }

@@ -14,34 +14,32 @@ import breakpointTokens from '../../tokens/base/layout/breakpoint.json';
 export const useUiStore = defineStore('ui', () => {
 
   // --- STATO (State) ---
-  // `isSidebarCollapsed` è un booleano che ci dice se la sidebar è collassata o meno.
   const isSidebarCollapsed = ref(false);
-
-  // `isMobileMenuOpen` gestisce la visibilità della sidebar su mobile (come overlay)
   const isMobileMenuOpen = ref(false);
+  const visibleStatKeys = ref(['netPnl', 'winRate', 'profitFactor', 'trades', 'avgWin']);
+  const isWeeklySummaryVisible = ref(true);
+  const isCalendarTradeCountVisible = ref(true);
+  const isCalendarWinRateVisible = ref(true);
 
-  // Usiamo @vueuse/core per reagire alla larghezza dello schermo,
-  // usando il valore del token direttamente dal file JSON per coerenza.
+  // --- LOGICA RESPONSIVE ---
+  /*
+    BEST PRACTICE: Sincronizzazione JS e CSS tramite Token
+    Per la logica responsiva in JavaScript (es. per sapere se siamo su mobile),
+    è fondamentale usare la stessa identica soglia (breakpoint) del nostro CSS.
+    Invece di scrivere un valore fisso (es. 768px), importiamo direttamente il
+    file JSON dei token e usiamo il valore del breakpoint `md`.
+    Questo garantisce che se un giorno modificheremo il token, la logica JS
+    si aggiornerà automaticamente insieme al CSS.
+  */
   const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
 
-  // Chiudiamo automaticamente il menu mobile se si passa a una visuale desktop
+  // Chiudiamo automaticamente il menu mobile se l'utente allarga la finestra
+  // passando dalla visuale mobile a quella desktop.
   watch(isMobile, (isNowMobile) => {
-    if (!isNowMobile) {
+    if (!isNowMobile && isMobileMenuOpen.value) {
       closeMobileMenu();
     }
   });
-
-  // `visibleStatKeys` è un array che memorizza le chiavi delle statistiche
-  // che l'utente ha scelto di visualizzare nella dashboard.
-  // Impostiamo 5 valori di default per riempire la griglia.
-  const visibleStatKeys = ref(['netPnl', 'winRate', 'profitFactor', 'trades', 'avgWin']);
-
-  // Nuovo stato per la visibilità del riepilogo settimanale del calendario
-  const isWeeklySummaryVisible = ref(true);
-
-  // Nuovi stati per la visibilità dei dettagli nelle celle del calendario
-  const isCalendarTradeCountVisible = ref(true);
-  const isCalendarWinRateVisible = ref(true);
 
 
   // --- AZIONI (Actions) ---
@@ -73,21 +71,20 @@ export const useUiStore = defineStore('ui', () => {
     isMobileMenuOpen.value = false;
   }
 
-  // `toggleStatVisibility` aggiunge o rimuove una chiave dall'array delle statistiche visibili.
   function toggleStatVisibility(key) {
     const index = visibleStatKeys.value.indexOf(key);
     if (index === -1) {
-      // Se la chiave non c'è, la aggiungiamo.
       visibleStatKeys.value.push(key);
     } else {
-      // Se la chiave c'è già, la rimuoviamo.
       visibleStatKeys.value.splice(index, 1);
     }
   }
 
-  // --- STATO E AZIONI PER IL MODALE DI RIEPILOGO GIORNALIERO ---
+  // --- STATO E AZIONI PER I MODALI ---
   const isDailySummaryModalOpen = ref(false);
   const selectedDate = ref(null);
+  const isWeeklySummaryModalOpen = ref(false);
+  const selectedWeekIndex = ref(null);
 
   function openDailySummaryModal(date) {
     selectedDate.value = date;
@@ -98,10 +95,6 @@ export const useUiStore = defineStore('ui', () => {
     isDailySummaryModalOpen.value = false;
     selectedDate.value = null;
   }
-
-  // --- STATO E AZIONI PER IL MODALE DI RIEPILOGO SETTIMANALE ---
-  const isWeeklySummaryModalOpen = ref(false);
-  const selectedWeekIndex = ref(null);
 
   function openWeeklySummaryModal(weekIndex) {
     selectedWeekIndex.value = weekIndex;
@@ -117,29 +110,26 @@ export const useUiStore = defineStore('ui', () => {
   // --- ESPORTAZIONE ---
   return {
     isSidebarCollapsed,
-    toggleSidebar,
     isMobileMenuOpen,
-    isMobile,
-    toggleMobileMenu,
-    closeMobileMenu,
+    isMobile, // Esportiamo lo stato reattivo
     visibleStatKeys,
-    toggleStatVisibility,
     isWeeklySummaryVisible,
-    toggleWeeklySummary,
     isCalendarTradeCountVisible,
-    toggleCalendarTradeCount,
     isCalendarWinRateVisible,
-    toggleCalendarWinRate,
-
-    // Esportazione per il modale giornaliero
     isDailySummaryModalOpen,
     selectedDate,
-    openDailySummaryModal,
-    closeDailySummaryModal,
-
-    // Esportazione per il modale settimanale
     isWeeklySummaryModalOpen,
     selectedWeekIndex,
+
+    toggleSidebar,
+    toggleMobileMenu,
+    closeMobileMenu,
+    toggleStatVisibility,
+    toggleWeeklySummary,
+    toggleCalendarTradeCount,
+    toggleCalendarWinRate,
+    openDailySummaryModal,
+    closeDailySummaryModal,
     openWeeklySummaryModal,
     closeWeeklySummaryModal,
   };

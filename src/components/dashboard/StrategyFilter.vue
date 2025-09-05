@@ -40,7 +40,7 @@ const selectStrategy = (strategy) => {
 .filter-group {
   display: flex;
   flex-direction: column; /* Impilare i bottoni verticalmente */
-  gap: var(--semantic-size-gap-xs);
+  gap: var(--base-size-spacing-1);
   align-items: stretch; /* Allunga i bottoni per riempire lo spazio */
 }
 
@@ -50,10 +50,10 @@ const selectStrategy = (strategy) => {
   color: var(--semantic-color-text-secondary);
   background-color: transparent;
   border: none;
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-small);
+  padding: var(--base-size-spacing-1-5) var(--base-size-spacing-3);
+  border-radius: var(--base-border-radius-sm);
   cursor: pointer;
-  transition: all var(--semantic-animation-duration-interactive);
+  transition: all var(--base-animation-duration-fast);
   text-align: left; /* Allinea il testo a sinistra */
   width: 100%;
 }
@@ -67,7 +67,7 @@ const selectStrategy = (strategy) => {
 .filter-button--active {
   background-color: var(--semantic-color-interactive-primary-default);
   color: var(--semantic-color-text-on-brand);
-  font-weight: var(--semantic-font-style-heading-xl-font-weight);
+  font-weight: var(--base-font-weight-semibold);
 }
 
 .filter-button--active:hover {

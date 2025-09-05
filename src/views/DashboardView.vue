@@ -133,6 +133,13 @@ onMounted(async () => {
 
 .stats-grid {
   display: grid;
+  /*
+    BEST PRACTICE: Griglia Responsiva
+    - `repeat(auto-fit, ...)`: Crea tante colonne quante ce ne stanno nello spazio disponibile.
+    - `minmax(200px, 1fr)`: Ogni colonna deve essere larga almeno 200px. Se c'è più spazio,
+      `1fr` le fa espandere equamente per riempire la larghezza.
+    Questo crea una griglia fluida su desktop e tablet.
+  */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--semantic-size-stack-md);
 }
@@ -175,10 +182,9 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 365px) {
+@media (max-width: 640px) { /* sm breakpoint */
   .stats-grid {
-    /* On very small screens, reduce the min-width of stat cards to prevent overflow */
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

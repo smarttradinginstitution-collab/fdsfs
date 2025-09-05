@@ -16,11 +16,6 @@
           "$value": "{base.border.radius.full}",
           "$type": "borderRadius",
           "$comment": "Radius per elementi piccoli a forma di 'pillola' come tag o badge."
-        },
-        "small": {
-          "$value": "{base.border.radius.sm}",
-          "$type": "borderRadius",
-          "$comment": "Radius per elementi piccoli o interni come celle di un calendario."
         }
       }
     }

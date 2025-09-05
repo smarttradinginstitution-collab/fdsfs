@@ -38,6 +38,12 @@
           "min": { "$value": "0.5rem", "$type": "dimension" },
           "ideal": { "$value": "0.7vw", "$type": "dimension" },
           "max": { "$value": "0.65rem", "$type": "dimension" }
+        },
+        "stat-display": {
+          "$comment": "Dimensione fluida per i valori principali nelle StatCard, ottimizzata per mobile.",
+          "min": { "$value": "1rem", "$type": "dimension" },
+          "ideal": { "$value": "2vw", "$type": "dimension" },
+          "max": { "$value": "1.5rem", "$type": "dimension" }
         }
       }
     }

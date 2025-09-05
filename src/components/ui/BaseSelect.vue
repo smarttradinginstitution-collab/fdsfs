@@ -67,7 +67,9 @@ function onChange(event) {
 }
 
 .select-label {
-  font: var(--semantic-font-style-label-md);
+  font-family: var(--semantic-font-style-label-md-font-family);
+  font-size: var(--semantic-font-style-label-md-font-size);
+  font-weight: var(--semantic-font-style-label-md-font-weight);
   color: var(--semantic-color-text-secondary);
 }
 
@@ -83,14 +85,15 @@ function onChange(event) {
   cursor: pointer;
 
   /* Stili condivisi con BaseInput per coerenza. */
-  font: var(--semantic-font-style-body-base);
+  font-family: var(--semantic-font-style-body-base-font-family);
+  font-size: var(--semantic-font-style-body-base-font-size);
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   padding-right: var(--semantic-size-inset-xl); /* Spazio extra a destra per la freccia. */
-  transition: box-shadow var(--semantic-animation-duration-interactive), border-color var(--semantic-animation-duration-interactive);
+  transition: box-shadow var(--base-animation-duration-fast), border-color var(--base-animation-duration-fast);
 }
 
 /*
@@ -109,7 +112,7 @@ di default non è stilizzabile. Usiamo un pseudo-elemento `::after` sul contenit
   /* `clip-path` disegna una forma (in questo caso, un triangolo). */
   clip-path: polygon(100% 25%, 50% 75%, 0 25%);
   pointer-events: none; /* Impedisce alla freccia di intercettare i click. */
-  transition: background-color var(--semantic-animation-duration-interactive);
+  transition: background-color var(--base-animation-duration-fast);
 }
 
 /* Cambiamo colore alla freccia quando si passa il mouse sopra il select. */

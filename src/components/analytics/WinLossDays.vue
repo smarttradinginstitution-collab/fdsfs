@@ -74,7 +74,7 @@ const totalDays = computed(() => {
 
 .stat-value {
   font: var(--semantic-font-style-heading-xl);
-  font-weight: var(--semantic-font-style-heading-xl-font-weight);
+  font-weight: var(--base-font-weight-bold);
 }
 
 .stat-label {
