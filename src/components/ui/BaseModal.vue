@@ -145,15 +145,16 @@ export default {
 .close-button {
   background: none;
   border: none;
-  font-size: var(--base-font-size-2xl);
+  font: var(--semantic-font-style-heading-2xl);
   cursor: pointer;
   color: var(--semantic-color-text-secondary);
+  line-height: var(--semantic-font-line-height-none); /* Reset line-height for the 'x' */
 }
 
 /* Stili per la transizione di dissolvenza. */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
-  transition: opacity var(--base-animation-duration-base) var(--base-animation-easing-out);
+  transition: opacity var(--semantic-animation-duration-complex) var(--semantic-animation-easing-exit);
 }
 .modal-fade-enter-from,
 .modal-fade-leave-to {

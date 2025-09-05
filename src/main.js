@@ -24,10 +24,13 @@ import router from './router';
 // --- IMPORTAZIONI DEGLI STILI GLOBALI ---
 // Questi file CSS vengono importati qui per essere disponibili in tutta l'applicazione.
 
+// `index.css` è il nuovo punto di ingresso per tutti i design token.
+// Importa sia i token di base che quelli semantici nell'ordine corretto.
+import './styles/index.css';
+
 // `main.css` contiene stili CSS globali o reset di base.
+// Viene importato dopo i token in modo da poterli utilizzare.
 import './assets/main.css';
-// `tokens.css` contiene le variabili CSS generate dal nostro sistema di design token.
-import './styles/tokens.css';
 
 
 // --- CREAZIONE E CONFIGURAZIONE DELL'APP ---

@@ -69,13 +69,13 @@ th {
   color: var(--semantic-color-text-secondary);
   text-align: left;
   padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-bottom: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
 }
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
   padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+  border-top: var(--semantic-border-width-default) solid var(--semantic-color-border-subtle);
 }
 
 /* Stili per la dimensione piccola */
@@ -114,7 +114,7 @@ tbody tr:hover {
   .table tr {
     display: block;
     margin-bottom: var(--semantic-size-stack-md);
-    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+    border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-surface);
     padding: var(--semantic-size-inset-sm);
   }
@@ -124,18 +124,18 @@ tbody tr:hover {
     padding-left: 50%;
     position: relative;
     border-top: none;
-    padding-top: var(--base-size-spacing-1);
-    padding-bottom: var(--base-size-spacing-1);
+    padding-top: var(--semantic-size-inset-xs);
+    padding-bottom: var(--semantic-size-inset-xs);
   }
   .table td::before {
     content: attr(data-label);
     position: absolute;
-    left: var(--base-size-spacing-2);
+    left: var(--semantic-size-inset-sm);
     width: 45%;
-    padding-right: var(--base-size-spacing-2);
+    padding-right: var(--semantic-size-inset-sm);
     white-space: nowrap;
     text-align: left;
-    font-weight: var(--base-font-weight-bold);
+    font-weight: var(--semantic-font-style-body-bold-font-weight);
     color: var(--semantic-color-text-secondary);
   }
   .table td:first-child { border-top: none; }

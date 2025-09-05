@@ -70,10 +70,10 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   background-color: var(--semantic-color-surface-primary);
   padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   display: flex;
-  transition: box-shadow var(--base-animation-duration-fast) var(--base-animation-easing-out);
+  transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
 }
 .stat-card:hover {
     box-shadow: var(--semantic-effect-shadow-elevation-medium);

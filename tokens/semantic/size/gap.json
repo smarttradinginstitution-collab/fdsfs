@@ -1,0 +1,12 @@
+{
+  "semantic": {
+    "size": {
+      "gap": {
+        "xs": { "$value": "{base.size.spacing.1}", "$type": "dimension" },
+        "sm": { "$value": "{base.size.spacing.2}", "$type": "dimension" },
+        "md": { "$value": "{base.size.spacing.3}", "$type": "dimension" },
+        "lg": { "$value": "{base.size.spacing.4}", "$type": "dimension" }
+      }
+    }
+  }
+}

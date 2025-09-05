@@ -49,7 +49,7 @@ const selectPreset = (presetKey) => {
 /* Stili specifici per questo componente. */
 .filter-group {
   display: flex;
-  gap: var(--base-size-spacing-2);
+  gap: var(--semantic-size-gap-sm);
   /* The background and padding are now handled by the Dropdown container */
 }
 
@@ -59,10 +59,10 @@ const selectPreset = (presetKey) => {
   color: var(--semantic-color-text-secondary);
   background-color: transparent;
   border: none;
-  padding: var(--base-size-spacing-1-5) var(--base-size-spacing-3);
-  border-radius: var(--base-border-radius-sm);
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-small);
   cursor: pointer;
-  transition: all var(--base-animation-duration-fast);
+  transition: all var(--semantic-animation-duration-interactive);
 }
 
 .filter-button:hover {
@@ -74,7 +74,7 @@ const selectPreset = (presetKey) => {
 .filter-button--active {
   background-color: var(--semantic-color-surface-primary);
   color: var(--semantic-color-text-primary);
-  font-weight: var(--base-font-weight-semibold);
-  box-shadow: var(--base-effect-shadow-sm);
+  font-weight: var(--semantic-font-style-heading-xl-font-weight);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
 }
 </style>
