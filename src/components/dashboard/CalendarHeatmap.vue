@@ -205,7 +205,7 @@ function formatCellPnl(pnl) {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--semantic-color-surface-primary);
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-small);
   transition: all 150ms ease-in-out;
@@ -241,6 +241,10 @@ function formatCellPnl(pnl) {
     var(--base-font-fluid-size-xxs-ideal),
     var(--base-font-fluid-size-xxs-max)
   );
+    /* Stili per lo sfondo richiesto */
+  background-color: var(--semantic-color-surface-secondary);
+  padding: 0.1rem var(--semantic-size-inset-xs);
+  border-radius: var(--semantic-border-radius-tag);
 }
 
 .week-pnl {
