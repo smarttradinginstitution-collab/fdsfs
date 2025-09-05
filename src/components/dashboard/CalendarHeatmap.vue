@@ -174,7 +174,7 @@ function formatCellPnl(pnl) {
   width: 100%;
 }
 .day-pnl {
-  font-weight: var(--semantic-font-weight-bold);
+  font-weight: var(--semantic-font-weight-extrabold);
   color: var(--semantic-color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min),
@@ -244,7 +244,7 @@ function formatCellPnl(pnl) {
 }
 
 .week-pnl {
-  font-weight: var(--semantic-font-weight-bold);
+  font-weight: var(--semantic-font-weight-extrabold);
   color: var(--semantic-color-text-secondary);
   font-size: clamp(
     var(--base-font-fluid-size-lg-min),

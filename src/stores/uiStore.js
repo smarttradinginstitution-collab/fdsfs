@@ -6,7 +6,9 @@
 // =============================================================================
 
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useMediaQuery } from '@vueuse/core';
+import breakpointTokens from '../../tokens/base/layout/breakpoint.json';
 
 // Definiamo lo store usando la sintassi "Setup Store"
 export const useUiStore = defineStore('ui', () => {
@@ -17,6 +19,17 @@ export const useUiStore = defineStore('ui', () => {
 
   // `isMobileMenuOpen` gestisce la visibilità della sidebar su mobile (come overlay)
   const isMobileMenuOpen = ref(false);
+
+  // Usiamo @vueuse/core per reagire alla larghezza dello schermo,
+  // usando il valore del token direttamente dal file JSON per coerenza.
+  const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
+
+  // Chiudiamo automaticamente il menu mobile se si passa a una visuale desktop
+  watch(isMobile, (isNowMobile) => {
+    if (!isNowMobile) {
+      closeMobileMenu();
+    }
+  });
 
   // `visibleStatKeys` è un array che memorizza le chiavi delle statistiche
   // che l'utente ha scelto di visualizzare nella dashboard.
@@ -46,7 +59,10 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   function toggleSidebar() {
-    isSidebarCollapsed.value = !isSidebarCollapsed.value;
+    // La sidebar collassabile funziona solo su schermi grandi.
+    if (!isMobile.value) {
+      isSidebarCollapsed.value = !isSidebarCollapsed.value;
+    }
   }
 
   function toggleMobileMenu() {
@@ -103,6 +119,7 @@ export const useUiStore = defineStore('ui', () => {
     isSidebarCollapsed,
     toggleSidebar,
     isMobileMenuOpen,
+    isMobile,
     toggleMobileMenu,
     closeMobileMenu,
     visibleStatKeys,

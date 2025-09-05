@@ -88,6 +88,8 @@
   --base-font-weight-semibold: 600;
   --base-font-weight-bold: 700;
   --base-font-weight-extrabold: 800;
+  --base-layout-breakpoint-xxs: 365px;
+  --base-layout-breakpoint-xs: 480px;
   --base-layout-breakpoint-sm: 640px;
   --base-layout-breakpoint-md: 768px;
   --base-layout-breakpoint-lg: 1024px;

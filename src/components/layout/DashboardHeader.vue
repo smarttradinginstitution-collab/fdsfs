@@ -33,7 +33,12 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
 <template>
   <header class="header">
     <div class="header-left">
-      <HamburgerButton class="hamburger-menu" :is-open="uiStore.isMobileMenuOpen" @toggle="uiStore.toggleMobileMenu" />
+      <HamburgerButton
+        class="hamburger-menu"
+        :class="{ 'is-active': uiStore.isMobileMenuOpen }"
+        :is-open="uiStore.isMobileMenuOpen"
+        @toggle="uiStore.toggleMobileMenu"
+      />
       <h1 class="title">{{ title }}</h1>
     </div>
 
@@ -97,6 +102,13 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
 /* --- RESPONSIVE VISIBILITY --- */
 .hamburger-menu {
   display: none;
+  /* position: relative è necessario per far funzionare lo z-index */
+  position: relative;
+}
+
+/* Quando il menu mobile è aperto, il bottone deve stare sopra l'overlay della sidebar */
+.hamburger-menu.is-active {
+  z-index: var(--semantic-layer-z-index-notification);
 }
 
 /* Tablet and below */
