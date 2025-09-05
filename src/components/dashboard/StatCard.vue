@@ -149,5 +149,9 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     .chart-content {
         width: 40px;
     }
+    .badge {
+        font: var(--semantic-font-style-body-xxs);
+        padding: 0.05rem 0.25rem;
+    }
 }
 </style>
