@@ -100,7 +100,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
 }
 
 /* Tablet and below */
-@media (max-width: 768px) {
+@media (max-width: var(--base-layout-breakpoint-md)) {
   .hamburger-menu {
     display: flex;
   }

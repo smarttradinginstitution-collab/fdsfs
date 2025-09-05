@@ -169,7 +169,7 @@ onMounted(async () => {
   border-radius: var(--semantic-border-radius-md);
 }
 
-@media (max-width: 1280px) {
+@media (max-width: var(--base-layout-breakpoint-xl)) {
   .main-content-grid {
     grid-template-columns: 1fr;
   }

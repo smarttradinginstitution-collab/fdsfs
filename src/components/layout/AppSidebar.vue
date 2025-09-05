@@ -193,7 +193,7 @@ const navLinks = [
 
 
 /* --- Media Query per il comportamento Mobile --- */
-@media (max-width: 768px) {
+@media (max-width: var(--base-layout-breakpoint-md)) {
   .sidebar {
     /* Su mobile, la sidebar è un overlay che appare da sinistra */
     position: fixed;
