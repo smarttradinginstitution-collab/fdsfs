@@ -24,6 +24,10 @@ const props = defineProps({
     type: String,
     default: 'medium',
     validator: (value) => ['medium', 'small', 'x-small'].includes(value),
+  },
+  disableResponsive: {
+    type: Boolean,
+    default: false,
   }
 });
 
@@ -33,7 +37,7 @@ const tableClass = computed(() => {
 </script>
 
 <template>
-  <div class="table-container">
+  <div class="table-container" :class="{ 'responsive-disabled': disableResponsive }">
     <table :class="tableClass">
       <thead>
         <tr>
@@ -109,16 +113,16 @@ tbody tr:hover {
 
 /* === Stili per la Responsività === */
 @media (max-width: 768px) {
-  .table { white-space: normal; }
-  .table thead { display: none; }
-  .table tr {
+  .table-container:not(.responsive-disabled) .table { white-space: normal; }
+  .table-container:not(.responsive-disabled) .table thead { display: none; }
+  .table-container:not(.responsive-disabled) .table tr {
     display: block;
     margin-bottom: var(--semantic-size-stack-md);
     border: var(--base-border-width-1) solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-surface);
     padding: var(--semantic-size-inset-sm);
   }
-  .table td {
+  .table-container:not(.responsive-disabled) .table td {
     display: block;
     text-align: right;
     padding-left: 50%;
@@ -127,7 +131,7 @@ tbody tr:hover {
     padding-top: var(--base-size-spacing-1);
     padding-bottom: var(--base-size-spacing-1);
   }
-  .table td::before {
+  .table-container:not(.responsive-disabled) .table td::before {
     content: attr(data-label);
     position: absolute;
     left: var(--base-size-spacing-2);
@@ -138,7 +142,7 @@ tbody tr:hover {
     font-weight: var(--base-font-weight-bold);
     color: var(--semantic-color-text-secondary);
   }
-  .table td:first-child { border-top: none; }
-  .table tr:first-child td:first-child { border-top: none; }
+  .table-container:not(.responsive-disabled) .table td:first-child { border-top: none; }
+  .table-container:not(.responsive-disabled) .table tr:first-child td:first-child { border-top: none; }
 }
 </style>
