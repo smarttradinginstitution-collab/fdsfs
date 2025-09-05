@@ -103,7 +103,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 }
 .badges {
     display: flex;
-    gap: var(--semantic-size-stack-xs);
+    gap: var(--semantic-size-stack-xxs);
 }
 .badge {
     font: var(--semantic-font-style-body-xs);
@@ -125,6 +125,13 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 }
 
 /* === Media Queries per la Responsività Mobile === */
+@media (max-width: 640px) { /* sm breakpoint */
+    .badge {
+        font: var(--semantic-font-style-body-xxs);
+        padding: 0.05rem 0.25rem;
+    }
+}
+
 @media (max-width: 480px) { /* xs breakpoint */
     .stat-card {
         padding: var(--semantic-size-inset-sm);
@@ -148,10 +155,6 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     }
     .chart-content {
         width: 40px;
-    }
-    .badge {
-        font: var(--semantic-font-style-body-xxs);
-        padding: 0.05rem 0.25rem;
     }
 }
 </style>

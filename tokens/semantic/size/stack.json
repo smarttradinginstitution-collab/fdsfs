@@ -2,6 +2,11 @@
   "semantic": {
     "size": {
       "stack": {
+        "xxs": {
+          "$value": "{base.size.spacing.1}",
+          "$type": "spacing",
+          "$comment": "4px. Spazio minimo assoluto, per elementi compatti come i badge."
+        },
         "xs": {
           "$value": "{base.size.spacing.2}",
           "$type": "spacing",
