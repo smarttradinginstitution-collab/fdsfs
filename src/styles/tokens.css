@@ -13,7 +13,7 @@
   --semantic-layer-z-index-modal: 1400;
   --semantic-layer-z-index-notification: 2000;
   --semantic-size-component-stat-card-min-width: 200px;
-  --semantic-size-component-calendar-week-summary-width: 6rem;
+  --semantic-size-component-calendar-week-summary-width: 5rem;
   --semantic-animation-duration-interactive: var(--base-animation-duration-fast);
   --semantic-animation-duration-complex: var(--base-animation-duration-base);
   --semantic-animation-easing-enter: var(--base-animation-easing-in);

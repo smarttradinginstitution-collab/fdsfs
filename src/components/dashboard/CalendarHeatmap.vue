@@ -201,9 +201,10 @@ function formatCellPnl(pnl) {
 }
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
+  padding: 5px;
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   background-color: var(--semantic-color-surface-primary);
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
@@ -220,16 +221,16 @@ function formatCellPnl(pnl) {
 .week-details {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0;
-  line-height: 1.15;
+  align-items: flex-start;
+  gap: 5px;
+  line-height: 1;
   width: 100%;
 }
 
 .week-title {
   position: absolute;
   top: 0.1rem;
-  right: 0.35rem;
+  left: 0.35rem;
   font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
 }
