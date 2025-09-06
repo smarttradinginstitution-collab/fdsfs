@@ -186,13 +186,14 @@ function formatCellPnl(pnl) {
 }
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
+  aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
-  justify-content: start;
-  align-items: start;
+  justify-content: center;
+  align-items: center;
   line-height: 1.15;
   gap: var(--semantic-size-stack-xs);
-  padding: var(--semantic-size-inset-sm);
+  padding: var(--semantic-size-calendar-day-cell-padding-mobile);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
