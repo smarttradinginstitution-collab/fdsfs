@@ -9,15 +9,15 @@ defineProps({
 });
 
 const isOpen = ref(false);
-
-function toggle() {
-  isOpen.value = !isOpen.value;
-}
 </script>
 
 <template>
-  <div class="dropdown-container">
-    <button @click="toggle" class="dropdown-trigger" :class="{ 'icon-only': iconOnly }">
+  <div
+    class="dropdown-container"
+    @mouseenter="isOpen = true"
+    @mouseleave="isOpen = false"
+  >
+    <button class="dropdown-trigger" :class="{ 'icon-only': iconOnly }">
       <span class="trigger-icon">
         <!-- Slot for an optional icon on the left -->
         <slot name="icon" />
@@ -87,7 +87,8 @@ function toggle() {
 
 .dropdown-content {
   position: absolute;
-  top: calc(100% + var(--base-size-spacing-1)); /* 4px gap */
+  /* La posizione viene calcolata aggiungendo lo spazio '0' a 100% per coerenza. */
+  top: calc(100% + var(--base-size-spacing-0));
   right: 0;
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
