@@ -1,0 +1,16 @@
+{
+  "semantic": {
+    "size": {
+      "spacing": {
+        "none":    { "$value": "{base.size.spacing.0.value}",    "$type": "spacing", "$comment": "0px" },
+        "hairline":{ "$value": "{base.size.spacing.0.5.value}",  "$type": "spacing", "$comment": "2px" },
+        "xxs":     { "$value": "{base.size.spacing.0.75.value}", "$type": "spacing", "$comment": "3px" },
+        "xs":      { "$value": "{base.size.spacing.1.value}",    "$type": "spacing", "$comment": "4px" },
+        "sm":      { "$value": "{base.size.spacing.2.5.value}",  "$type": "spacing", "$comment": "10px" },
+        "sm-plus": { "$value": "{base.size.spacing.3.value}",    "$type": "spacing", "$comment": "12px" },
+        "md":      { "$value": "{base.size.spacing.6.value}",    "$type": "spacing", "$comment": "24px" },
+        "lg":      { "$value": "{base.size.spacing.7.5.value}",  "$type": "spacing", "$comment": "30px" }
+      }
+    }
+  }
+}

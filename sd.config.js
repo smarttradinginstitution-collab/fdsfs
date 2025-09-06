@@ -22,34 +22,17 @@ export default {
       // `files` è un array che ci permette di generare più file di output
       // dalla stessa fonte di token, applicando filtri diversi.
       files: [
-        // --- 1. File dei token di base (_base.css) ---
-        // Questo file contiene solo i valori primitivi (la nostra palette).
-        // È considerato "privato" e non dovrebbe essere usato direttamente nei componenti.
         {
-          destination: '_base.css',
-          format: 'css/variables',
-          options: {
-            selector: ':root',
-            // `outputReferences: false` assicura che vengano emessi i valori grezzi (es. #ffffff).
-            outputReferences: false,
-          },
-          // Filtriamo per includere solo i token che provengono dalla cartella 'base'.
-          filter: (token) => token.filePath.startsWith('tokens/base/')
-        },
-        // --- 2. File dei token semantici (tokens.css) ---
-        // Questo file contiene i token contestuali (es. `colore-testo-primario`).
-        // È il file "pubblico" che l'applicazione deve usare.
-        {
+          // Unico file di output che contiene TUTTI i token (base e semantici).
+          // I token semantici faranno riferimento a quelli di base.
           destination: 'tokens.css',
           format: 'css/variables',
           options: {
             selector: ':root',
-            // `outputReferences: true` è la chiave: emette riferimenti ad altre variabili
-            // (es. `var(--base-color-white)`), creando il collegamento tra semantico e base.
+            // outputReferences: true farà in modo che i token semantici
+            // vengano risolti in var(--base-*) invece che in valori grezzi.
             outputReferences: true,
-          },
-          // Filtriamo per includere solo i token che provengono dalla cartella 'semantic'.
-          filter: (token) => token.filePath.startsWith('tokens/semantic/')
+          }
         }
       ]
     }
