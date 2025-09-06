@@ -3,17 +3,25 @@ import { computed } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import AppSidebar from './components/layout/AppSidebar.vue';
 import DashboardHeader from './components/layout/DashboardHeader.vue';
-import MainLayout from './components/layout/MainLayout.vue'; // Importato MainLayout
+import MainLayout from './components/layout/MainLayout.vue';
 import { useUiStore } from './stores/uiStore';
 
 const uiStore = useUiStore();
 const route = useRoute();
 
 const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
+
+// This computed property checks if the route is marked as public.
+// Public routes (like login) will not use the main app layout.
+const isPublicRoute = computed(() => route.meta.public);
 </script>
 
 <template>
-  <div class="app-layout">
+  <!-- Render only the component for public routes -->
+  <RouterView v-if="isPublicRoute" />
+
+  <!-- Render the full layout for protected routes -->
+  <div v-else class="app-layout">
     <AppSidebar />
 
     <div class="content-wrapper" :class="{ 'sidebar-is-collapsed': uiStore.isSidebarCollapsed }">

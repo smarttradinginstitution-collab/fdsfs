@@ -9,7 +9,7 @@ const router = createRouter({
       name: 'login',
       // I'm not using MainLayout for the login page
       component: () => import('../views/LoginView.vue'),
-      meta: { title: 'Login' }
+      meta: { title: 'Login', public: true }
     },
     {
       path: '/',
@@ -51,8 +51,9 @@ router.beforeEach(async (to, from, next) => {
   }
 
   const isAuthenticated = authStore.isAuthenticated;
-  const publicPages = ['/login'];
-  const authRequired = !publicPages.includes(to.path);
+
+  // A route is considered protected if it's not marked as public in its meta field.
+  const authRequired = !to.meta.public;
 
   if (authRequired && !isAuthenticated) {
     // Se la pagina richiede autenticazione e l'utente non è loggato,
