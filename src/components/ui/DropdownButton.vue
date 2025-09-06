@@ -87,7 +87,8 @@ const isOpen = ref(false);
 
 .dropdown-content {
   position: absolute;
-  top: 100%;
+  /* La posizione viene calcolata aggiungendo lo spazio '0' a 100% per coerenza. */
+  top: calc(100% + var(--base-size-spacing-0));
   right: 0;
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
