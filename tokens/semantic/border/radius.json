@@ -3,22 +3,22 @@
     "border": {
       "radius": {
         "micro": {
-          "$value": "{base.border.radius.sm}",
+          "$value": "{base.border.radius.sm.value}",
           "$type": "borderRadius",
           "$comment": "Radius per elementi molto piccoli o dettagli interni."
         },
         "interactive": {
-          "$value": "{base.border.radius.md}",
+          "$value": "{base.border.radius.md.value}",
           "$type": "borderRadius",
           "$comment": "Radius standard per tutti i componenti interattivi come bottoni e input."
         },
         "surface": {
-          "$value": "{base.border.radius.md}",
+          "$value": "{base.border.radius.md.value}",
           "$type": "borderRadius",
           "$comment": "Radius per i contenitori principali come card, widget e modali."
         },
         "tag": {
-          "$value": "{base.border.radius.full}",
+          "$value": "{base.border.radius.full.value}",
           "$type": "borderRadius",
           "$comment": "Radius per elementi piccoli a forma di 'pillola' come tag o badge."
         }
