@@ -9,15 +9,15 @@ defineProps({
 });
 
 const isOpen = ref(false);
-
-function toggle() {
-  isOpen.value = !isOpen.value;
-}
 </script>
 
 <template>
-  <div class="dropdown-container">
-    <button @click="toggle" class="dropdown-trigger" :class="{ 'icon-only': iconOnly }">
+  <div
+    class="dropdown-container"
+    @mouseenter="isOpen = true"
+    @mouseleave="isOpen = false"
+  >
+    <button class="dropdown-trigger" :class="{ 'icon-only': iconOnly }">
       <span class="trigger-icon">
         <!-- Slot for an optional icon on the left -->
         <slot name="icon" />
