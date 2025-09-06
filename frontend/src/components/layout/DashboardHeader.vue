@@ -12,12 +12,15 @@ import DropdownButton from '../ui/DropdownButton.vue';
 import StrategyFilter from '../dashboard/StrategyFilter.vue';
 import DateRangeFilter from '../dashboard/DateRangeFilter.vue';
 import { useUiStore } from '../../stores/uiStore';
+import { useAuthStore } from '../../stores/auth';
+import BaseButton from '../ui/BaseButton.vue';
 
 // Import the icon components
 import FilterIcon from '../icons/FilterIcon.vue';
 import CalendarIcon from '../icons/CalendarIcon.vue';
 
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 
 defineProps({
   title: {
@@ -65,6 +68,15 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
           </template>
         </DropdownButton>
       </div>
+
+      <BaseButton
+        v-if="authStore.isAuthenticated"
+        variant="secondary"
+        size="small"
+        @click="authStore.logout"
+      >
+        Logout
+      </BaseButton>
     </div>
   </header>
 </template>
