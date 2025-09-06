@@ -85,45 +85,25 @@ export const useUiStore = defineStore('ui', () => {
   const selectedDate = ref(null);
   const isWeeklySummaryModalOpen = ref(false);
   const selectedWeekIndex = ref(null);
-  // Salviamo lo stato della sidebar prima di aprire un modale
-  let sidebarStateBeforeModal = false;
 
   function openDailySummaryModal(date) {
     selectedDate.value = date;
     isDailySummaryModalOpen.value = true;
-    // Quando apriamo un modale, collassiamo la sidebar se siamo su desktop.
-    if (!isMobile.value) {
-      sidebarStateBeforeModal = isSidebarCollapsed.value;
-      isSidebarCollapsed.value = true;
-    }
   }
 
   function closeDailySummaryModal() {
     isDailySummaryModalOpen.value = false;
     selectedDate.value = null;
-    // Ripristiniamo lo stato della sidebar
-    if (!isMobile.value) {
-      isSidebarCollapsed.value = sidebarStateBeforeModal;
-    }
   }
 
   function openWeeklySummaryModal(weekIndex) {
     selectedWeekIndex.value = weekIndex;
     isWeeklySummaryModalOpen.value = true;
-    // Quando apriamo un modale, collassiamo la sidebar se siamo su desktop.
-    if (!isMobile.value) {
-      sidebarStateBeforeModal = isSidebarCollapsed.value;
-      isSidebarCollapsed.value = true;
-    }
   }
 
   function closeWeeklySummaryModal() {
     isWeeklySummaryModalOpen.value = false;
     selectedWeekIndex.value = null;
-    // Ripristiniamo lo stato della sidebar
-    if (!isMobile.value) {
-      isSidebarCollapsed.value = sidebarStateBeforeModal;
-    }
   }
 
 

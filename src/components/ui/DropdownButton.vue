@@ -61,7 +61,7 @@ const isOpen = ref(false);
   background-color: transparent;
   border: none;
   border-radius: var(--base-border-radius-full);
-  padding: var(--semantic-size-spacing-xs); /* Padding ridotto */
+  padding: var(--semantic-size-spacing-xs);
   width: var(--base-size-component-button-min-height-md);
   height: var(--base-size-component-button-min-height-md);
   justify-content: center;
