@@ -4,7 +4,6 @@
       "spacing": {
         "0":    { "$value": "0rem", "$type": "spacing" },
         "0.5":  { "$value": "0.125rem", "$type": "spacing", "$comment": "2px" },
-        "0.75": { "$value": "0.1875rem", "$type": "spacing", "$comment": "3px" },
         "1":    { "$value": "0.25rem", "$type": "spacing", "$comment": "4px. Unità base." },
         "1.5":  { "$value": "0.375rem", "$type": "spacing", "$comment": "6px" },
         "2":    { "$value": "0.5rem", "$type": "spacing", "$comment": "8px. Spazio piccolo." },
@@ -15,7 +14,6 @@
         "5":    { "$value": "1.25rem", "$type": "spacing", "$comment": "20px" },
         "6":    { "$value": "1.5rem", "$type": "spacing", "$comment": "24px. Padding per contenitori." },
         "7":    { "$value": "1.75rem", "$type": "spacing", "$comment": "28px" },
-        "7.5":  { "$value": "1.875rem", "$type": "spacing", "$comment": "30px" },
         "8":    { "$value": "2rem", "$type": "spacing", "$comment": "32px. Spazio ampio." },
         "10":   { "$value": "2.5rem", "$type": "spacing", "$comment": "40px" },
         "12":   { "$value": "3rem", "$type": "spacing", "$comment": "48px. Spazio per sezioni." },

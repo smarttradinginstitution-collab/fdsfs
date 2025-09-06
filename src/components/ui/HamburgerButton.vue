@@ -38,7 +38,7 @@ defineEmits(['toggle']);
   cursor: pointer;
   background-color: transparent;
   border: none;
-  padding: var(--semantic-size-spacing-sm); /* 10px */
+  padding: 10px;
   /* Rimuoviamo l'outline di default del browser quando il bottone è in focus */
   &:focus {
     outline: none;
@@ -46,8 +46,8 @@ defineEmits(['toggle']);
 }
 
 .hamburger-box {
-  width: var(--semantic-size-spacing-lg); /* 30px */
-  height: var(--semantic-size-spacing-md); /* 24px */
+  width: 30px;
+  height: 24px;
   display: inline-block;
   position: relative;
 }
@@ -55,19 +55,19 @@ defineEmits(['toggle']);
 .hamburger-inner {
   display: block;
   top: 50%;
-  margin-top: calc(var(--semantic-size-spacing-hairline) * -1); /* -2px */
+  margin-top: -2px;
 }
 
 .hamburger-inner,
 .hamburger-inner::before,
 .hamburger-inner::after {
-  width: var(--semantic-size-spacing-lg); /* 30px */
-  height: var(--semantic-size-spacing-xxs); /* 3px */
+  width: 30px;
+  height: 3px;
   background-color: var(--semantic-color-text-primary);
-  border-radius: var(--semantic-border-radius-micro); /* 4px */
+  border-radius: 4px;
   position: absolute;
   transition-property: transform;
-  transition-duration: var(--semantic-animation-duration-interactive); /* 150ms */
+  transition-duration: 0.15s;
   transition-timing-function: ease;
 }
 
@@ -78,11 +78,11 @@ defineEmits(['toggle']);
 }
 
 .hamburger-inner::before {
-  top: calc(var(--semantic-size-spacing-sm) * -1); /* -10px */
+  top: -10px;
 }
 
 .hamburger-inner::after {
-  bottom: calc(var(--semantic-size-spacing-sm) * -1); /* -10px */
+  bottom: -10px;
 }
 
 /* --- Animazione per lo stato "is-open" --- */

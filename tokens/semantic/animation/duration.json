@@ -3,7 +3,7 @@
     "animation": {
       "duration": {
         "interactive": {
-          "$value": "{base.animation.duration.fast.value}",
+          "$value": "{animation.duration.fast.value}",
           "$type": "duration",
           "$comment": "Durata per le animazioni di interazione rapide, come gli hover."
         }
