@@ -191,6 +191,8 @@ function formatCellPnl(pnl) {
    differiscono da .day-cell */
 .week-summary-card {
   background-color: var(--semantic-color-surface-primary);
+  justify-content: flex-start; /* Allinea il blocco in alto */
+  border-color: var(--semantic-color-border-subtle);
   /* Sovrascrive il colore di sfondo del PNL da .day-cell */
 }
 
