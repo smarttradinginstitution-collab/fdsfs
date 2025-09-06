@@ -189,8 +189,8 @@ function formatCellPnl(pnl) {
   aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   line-height: 1.15;
   gap: var(--semantic-size-stack-xs);
   padding: var(--semantic-size-calendar-day-cell-padding-mobile);
