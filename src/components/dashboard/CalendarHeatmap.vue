@@ -192,7 +192,7 @@ function formatCellPnl(pnl) {
   justify-content: flex-start;
   align-items: flex-start;
   line-height: 1.15;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--semantic-size-stack-xxxs);
   padding: var(--semantic-size-calendar-day-cell-padding-mobile);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
@@ -208,13 +208,13 @@ function formatCellPnl(pnl) {
 }
 
 .week-title {
-  font: var(--semantic-font-style-label-xs);
+  font: var(--semantic-font-style-label-xxs);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
 }
 
 .week-days {
-  font: var(--semantic-font-style-label-xs);
+  font: var(--semantic-font-style-label-xxs);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
   /* Stili per lo sfondo richiesto */
@@ -224,7 +224,7 @@ function formatCellPnl(pnl) {
 }
 
 .week-pnl {
-  font: var(--semantic-font-style-data-numeric-semibold);
+  font: var(--semantic-font-style-data-numeric-semibold-xs);
   line-height: 1.2;
   white-space: nowrap;
 }

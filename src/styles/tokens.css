@@ -57,6 +57,7 @@
   --semantic-font-style-body-xxs: var(--base-font-weight-regular) var(--base-font-size-xxs)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-data-numeric: var(--base-font-weight-regular) var(--base-font-size-sm)/var(--base-font-line-height-normal) var(--base-font-family-palette-monospace);
   --semantic-font-style-data-numeric-semibold: var(--base-font-weight-semibold) var(--base-font-size-sm)/var(--base-font-line-height-normal) var(--base-font-family-palette-monospace);
+  --semantic-font-style-data-numeric-semibold-xs: var(--base-font-weight-semibold) var(--base-font-size-xs)/var(--base-font-line-height-normal) var(--base-font-family-palette-monospace);
   --semantic-font-style-data-display-lg-bold: var(--base-font-weight-bold) clamp(var(--base-font-fluid-size-lg-min), var(--base-font-fluid-size-lg-ideal), var(--base-font-fluid-size-lg-max))/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-font-style-metric-display: var(--base-font-weight-bold) clamp(var(--base-font-fluid-size-stat-display-min), var(--base-font-fluid-size-stat-display-ideal), var(--base-font-fluid-size-stat-display-max))/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-font-style-label-xxs: var(--base-font-weight-medium) var(--base-font-size-xxs)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);

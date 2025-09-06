@@ -152,6 +152,16 @@
           "$type": "typography",
           "$comment": "Variante di data-numeric per valori enfatizzati."
         },
+        "data-numeric-semibold-xs": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.monospace}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "{base.font.size.xs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Versione xs di data-numeric-semibold per contesti compatti."
+        },
         "data-display-lg-bold": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
