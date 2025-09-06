@@ -48,7 +48,7 @@ onMounted(async () => {
   try {
     // Replace '/api/v1/trades' with your actual endpoint.
     // Sostituisci '/api/v1/trades' con il tuo vero endpoint.
-    const response = await apiClient.get('/api/v1/trades');
+    const response = await apiClient.get('/api/v1/users');
     backendData.value = response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -63,14 +63,14 @@ onMounted(async () => {
   <div class="dashboard-view">
 
     <!-- Esempio di visualizzazione dati dal backend -->
-    <div v-if="fetchError" class="error-box">
+    <!-- <div v-if="fetchError" class="error-box">
       <h3>Backend Connection Error</h3>
       <p>{{ fetchError }}</p>
     </div>
     <div v-if="backendData" class="data-box">
       <h3>Data from Backend (for testing):</h3>
       <pre>{{ JSON.stringify(backendData, null, 2) }}</pre>
-    </div>
+    </div> -->
 
 
     <div class="action-bar">
