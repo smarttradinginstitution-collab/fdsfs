@@ -124,18 +124,18 @@ tbody tr:hover {
     padding-left: 50%;
     position: relative;
     border-top: none;
-    padding-top: var(--base-size-spacing-1);
-    padding-bottom: var(--base-size-spacing-1);
+    padding-top: var(--semantic-size-inset-xxs);
+    padding-bottom: var(--semantic-size-inset-xxs);
   }
   .table td::before {
     content: attr(data-label);
     position: absolute;
     left: var(--base-size-spacing-2);
     width: 45%;
-    padding-right: var(--base-size-spacing-2);
+    padding-right: var(--semantic-size-inset-xs);
     white-space: nowrap;
     text-align: left;
-    font-weight: var(--base-font-weight-bold);
+    font: var(--semantic-font-style-label-sm-bold);
     color: var(--semantic-color-text-secondary);
   }
   .table td:first-child { border-top: none; }

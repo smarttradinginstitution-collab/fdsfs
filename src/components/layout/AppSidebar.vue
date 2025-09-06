@@ -83,9 +83,9 @@ const navLinks = [
   top: 0;
   left: 0;
   z-index: var(--base-layer-z-index-sticky);
-  width: var(--base-size-component-sidebar-width-expanded); /* Usa il nuovo token */
+  width: var(--semantic-size-component-sidebar-width-expanded);
   height: 100vh;
-  background-color: var(--base-color-gray-900);
+  background-color: var(--semantic-color-surface-sidebar);
   border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
@@ -96,15 +96,14 @@ const navLinks = [
 
 /* Stili per lo stato collassato */
 .sidebar.is-collapsed {
-  width: var(--base-size-component-sidebar-width-collapsed); /* Usa il nuovo token */
+  width: var(--semantic-size-component-sidebar-width-collapsed);
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font: var(--semantic-font-style-heading-2xl);
-  font-weight: var(--base-font-weight-extrabold);
+  font: var(--semantic-font-style-heading-2xl-extrabold);
   margin-bottom: var(--semantic-size-stack-xl);
 }
 
@@ -172,9 +171,9 @@ const navLinks = [
 }
 
 .avatar {
-  min-width: var(--base-size-component-avatar-md);
-  height: var(--base-size-component-avatar-md);
-  border-radius: var(--base-border-radius-full);
+  min-width: var(--semantic-size-component-avatar-md);
+  height: var(--semantic-size-component-avatar-md);
+  border-radius: var(--semantic-border-radius-tag);
   background-color: var(--semantic-color-interactive-primary-default);
   color: var(--semantic-color-text-on-brand);
   display: grid;
@@ -203,7 +202,7 @@ const navLinks = [
     transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
 
     /* Su mobile, non vogliamo mai la versione "collassata", ma sempre quella estesa */
-    width: var(--base-size-component-sidebar-width-expanded) !important;
+    width: var(--semantic-size-component-sidebar-width-expanded) !important;
   }
 
   /* Quando il menu mobile è aperto, la facciamo apparire */

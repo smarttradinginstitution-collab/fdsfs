@@ -124,15 +124,15 @@ function formatCellPnl(pnl) {
   font: var(--semantic-font-style-calendar-day-header);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--base-border-radius-sm);
-  margin-bottom: var(--base-size-spacing-xs);
+  margin-bottom: var(--semantic-size-stack-xs);
 }
 .week-summary-header {
-  font-weight: var(--base-font-weight-bold);
+  /* This class is empty and unused. */
 }
 .day-cell {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: var(--base-border-radius-sm);
+  border-radius: var(--semantic-border-radius-surface);
   padding: var(--semantic-size-calendar-day-cell-padding-mobile);
   transition: transform 150ms;
   display: flex;
@@ -172,30 +172,17 @@ function formatCellPnl(pnl) {
   width: 100%;
 }
 .day-pnl {
-  font-weight: var(--base-font-weight-bold);
+  font: var(--semantic-font-style-data-display-lg-bold);
   color: var(--semantic-color-text-secondary);
-  font-size: clamp(
-    var(--base-font-fluid-size-lg-min),
-    var(--base-font-fluid-size-lg-ideal),
-    var(--base-font-fluid-size-lg-max)
-  );
 }
 .day-trade-count {
+  font: var(--semantic-font-style-label-xxs);
   color: var(--semantic-color-text-secondary);
-  font-size: clamp(
-    var(--base-font-fluid-size-xxs-min),
-    var(--base-font-fluid-size-xxs-ideal),
-    var(--base-font-fluid-size-xxs-max)
-  );
 }
 .day-extra-stats {
+  font: var(--semantic-font-style-label-xxs);
   color: var(--semantic-color-text-secondary);
   opacity: 0.8;
-  font-size: clamp(
-    var(--base-font-fluid-size-xxs-min),
-    var(--base-font-fluid-size-xxs-ideal),
-    var(--base-font-fluid-size-xxs-max)
-  );
 }
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
@@ -204,11 +191,11 @@ function formatCellPnl(pnl) {
   justify-content: start;
   align-items: start;
   line-height: 1.15;
-  gap: var(--base-size-spacing-1);
+  gap: var(--semantic-size-stack-xs);
   padding: var(--semantic-size-inset-sm);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--base-border-radius-sm);
+  border-radius: var(--semantic-border-radius-surface);
   transition: all 150ms ease-in-out;
   cursor: pointer;
   /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
@@ -220,29 +207,23 @@ function formatCellPnl(pnl) {
 }
 
 .week-title {
-  font-family: var(--base-font-family-palette-sans);
-  font-size: 0.7rem;
+  font: var(--semantic-font-style-label-xs);
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
   white-space: nowrap;
 }
 
 .week-days {
-  font-family: var(--base-font-family-palette-sans);
-  font-size: 0.7rem;
+  font: var(--semantic-font-style-label-xs);
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
   white-space: nowrap;
   /* Stili per lo sfondo richiesto */
   background-color: var(--semantic-color-surface-secondary);
-  padding: 0.1rem var(--base-size-spacing-1-5);
+  padding: 0.1rem var(--semantic-size-inset-xxxs);
   border-radius: var(--semantic-border-radius-tag);
 }
 
 .week-pnl {
-  font-size: var(--base-font-size-sm);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
-  font-weight: var(--base-font-weight-semibold);
+  font: var(--semantic-font-style-data-numeric-semibold);
   line-height: 1.2;
   white-space: nowrap;
 }

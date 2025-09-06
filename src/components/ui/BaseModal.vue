@@ -177,9 +177,10 @@ export default {
 .close-button {
   background: none;
   border: none;
-  font-size: var(--base-font-size-2xl);
+  font: var(--semantic-font-style-heading-2xl);
   cursor: pointer;
   color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-none); /* Reset line-height to prevent alignment issues */
 }
 
 /* Stili per la transizione di dissolvenza. */

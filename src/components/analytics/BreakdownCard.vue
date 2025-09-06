@@ -91,29 +91,29 @@ defineProps({
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: var(--semantic-font-style-body-sm-font-size);
 }
 
 .item-label {
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
 .item-value {
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);
-  font-weight: var(--base-font-weight-medium);
 }
 
 .progress-bar-bg {
   width: 100%;
   height: 8px;
   background-color: var(--semantic-color-surface-secondary);
-  border-radius: var(--base-border-radius-full);
+  border-radius: var(--semantic-border-radius-tag);
   overflow: hidden;
 }
 
 .progress-bar-fg {
   height: 100%;
-  border-radius: var(--base-border-radius-full);
+  border-radius: var(--semantic-border-radius-tag);
   transition: width 0.5s var(--base-animation-easing-out);
 }
 

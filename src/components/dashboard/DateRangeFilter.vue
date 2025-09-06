@@ -59,8 +59,8 @@ const selectPreset = (presetKey) => {
   color: var(--semantic-color-text-secondary);
   background-color: transparent;
   border: none;
-  padding: var(--base-size-spacing-1-5) var(--base-size-spacing-3);
-  border-radius: var(--base-border-radius-sm);
+  padding: var(--semantic-size-inset-xxxs) var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: all var(--base-animation-duration-fast);
 }
@@ -74,7 +74,7 @@ const selectPreset = (presetKey) => {
 .filter-button--active {
   background-color: var(--semantic-color-surface-primary);
   color: var(--semantic-color-text-primary);
-  font-weight: var(--base-font-weight-semibold);
-  box-shadow: var(--base-effect-shadow-sm);
+  font: var(--semantic-font-style-label-md-semibold);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
 }
 </style>

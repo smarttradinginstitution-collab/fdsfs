@@ -2,6 +2,11 @@
   "semantic": {
     "size": {
       "stack": {
+        "xxxs": {
+          "$value": "{base.size.spacing.0.5}",
+          "$type": "spacing",
+          "$comment": "2px. Spaziatura minima per elementi molto vicini."
+        },
         "xxs": {
           "$value": "{base.size.spacing.1}",
           "$type": "spacing",

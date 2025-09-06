@@ -22,6 +22,16 @@
           "$type": "typography",
           "$comment": "Stile per i titoli di pagina principali."
         },
+        "heading-2xl-extrabold": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.extrabold}",
+            "fontSize": "{base.font.size.2xl}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Variante extra-bold per il logo/brand header."
+        },
         "heading-xl": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
@@ -72,6 +82,16 @@
           "$type": "typography",
           "$comment": "Stile per etichette, bottoni e input di medie dimensioni."
         },
+        "label-md-semibold": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "clamp({base.font.fluid-size.fluid-label-md.min}, {base.font.fluid-size.fluid-label-md.ideal}, {base.font.fluid-size.fluid-label-md.max})",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Variante di label-md per stati attivi o enfatizzati."
+        },
         "label-sm": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
@@ -81,6 +101,16 @@
           },
           "$type": "typography",
           "$comment": "Stile per etichette piccole, come quelle nelle tabelle."
+        },
+        "label-sm-bold": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "{base.font.size.xs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Variante bold di label-sm, per header di tabella su mobile."
         },
         "label-xs": {
           "$value": {
@@ -111,6 +141,26 @@
             },
             "$type": "typography",
             "$comment": "Stile specifico per dati numerici in tabelle per garantire l'allineamento."
+        },
+        "data-numeric-semibold": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.monospace}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "{base.font.size.sm}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Variante di data-numeric per valori enfatizzati."
+        },
+        "data-display-lg-bold": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "clamp({base.font.fluid-size.lg.min}, {base.font.fluid-size.lg.ideal}, {base.font.fluid-size.lg.max})",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Per valori grandi e bold, come il PNL nel calendario."
         },
         "metric-display": {
           "$comment": "Stile per i valori principali nelle StatCard. Usa la tipografia fluida per adattarsi alle dimensioni dello schermo.",

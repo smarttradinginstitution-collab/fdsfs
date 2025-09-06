@@ -26,7 +26,7 @@ const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
 .icon-button {
   display: grid;
   place-items: center;
-  border-radius: var(--base-border-radius-full);
+  border-radius: var(--semantic-border-radius-tag);
   background-color: transparent;
   color: var(--semantic-color-text-secondary);
   border: none;

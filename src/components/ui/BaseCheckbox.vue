@@ -61,10 +61,8 @@ function onChange(event) {
 .checkbox-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: var(--base-size-spacing-2); /* Ridotto lo spazio */
+  gap: var(--semantic-size-stack-sm);
   cursor: pointer;
-  /* Altezza di riga ridotta per compattare verticalmente */
-  line-height: var(--base-font-line-height-tight);
 }
 
 /*
@@ -86,15 +84,14 @@ ma mantenerlo accessibile per gli screen reader e la navigazione da tastiera.
   height: 1.125rem;
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--base-border-radius-sm);
+  border-radius: var(--semantic-border-radius-interactive);
   transition: all var(--base-animation-duration-fast);
   flex-shrink: 0; /* Impedisce alla checkbox di restringersi. */
 }
 
 .checkbox-label {
   color: var(--semantic-color-text-secondary);
-  /* Font ridotto per la label */
-  font-size: var(--base-font-size-xs);
+  font: var(--semantic-font-style-body-xs);
 }
 
 /* Stile per quando la checkbox è selezionata.

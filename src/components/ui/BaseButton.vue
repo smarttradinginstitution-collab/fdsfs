@@ -36,7 +36,7 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--base-size-spacing-2);
+  gap: var(--semantic-size-stack-xs);
   border-radius: var(--semantic-border-radius-interactive);
   border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
