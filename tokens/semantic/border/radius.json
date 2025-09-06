@@ -2,6 +2,11 @@
   "semantic": {
     "border": {
       "radius": {
+        "micro": {
+          "$value": "{base.border.radius.sm}",
+          "$type": "borderRadius",
+          "$comment": "Radius per elementi molto piccoli o dettagli interni."
+        },
         "interactive": {
           "$value": "{base.border.radius.md}",
           "$type": "borderRadius",

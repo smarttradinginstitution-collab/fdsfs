@@ -45,15 +45,15 @@ const isOpen = ref(false);
 .dropdown-trigger {
   display: inline-flex;
   align-items: center;
-  gap: var(--base-size-spacing-2); /* 8px */
+  gap: var(--semantic-size-spacing-sm);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-label-md);
-  padding: var(--base-size-spacing-2) var(--base-size-spacing-3); /* 8px vertical, 12px horizontal */
+  padding: var(--semantic-size-spacing-sm) var(--semantic-size-spacing-sm-plus);
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
-  transition: background-color var(--base-animation-duration-fast), border-color var(--base-animation-duration-fast);
+  transition: background-color var(--semantic-animation-duration-interactive), border-color var(--semantic-animation-duration-interactive);
 }
 
 /* Stili per la variante solo icona */
@@ -61,7 +61,7 @@ const isOpen = ref(false);
   background-color: transparent;
   border: none;
   border-radius: var(--base-border-radius-full);
-  padding: var(--base-size-spacing-1); /* Padding ridotto */
+  padding: var(--semantic-size-spacing-xs); /* Padding ridotto */
   width: var(--base-size-component-button-min-height-md);
   height: var(--base-size-component-button-min-height-md);
   justify-content: center;
@@ -87,15 +87,13 @@ const isOpen = ref(false);
 
 .dropdown-content {
   position: absolute;
-  /* La posizione viene calcolata aggiungendo lo spazio '0' a 100% per coerenza. */
-  top: calc(100% + var(--base-size-spacing-0));
+  top: calc(100% + var(--semantic-size-spacing-none));
   right: 0;
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-medium);
   z-index: var(--base-layer-z-index-dropdown);
-  /* min-width rimosso per permettere al menu di adattarsi a schermi piccoli */
-  padding: var(--base-size-spacing-2);
+  padding: var(--semantic-size-spacing-sm);
 }
 </style>
