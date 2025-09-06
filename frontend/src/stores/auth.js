@@ -30,12 +30,19 @@ export const useAuthStore = defineStore('auth', {
     async login(credentials) {
       this.isLoading = true;
       try {
-        const response = await apiClient.post('/api/v1/auth/session', credentials);
-        const { user, session } = response.data;
-        const token = session.access_token;
-        this.setAuthData(user, token);
+        // 1. Endpoint corretto
+        const response = await apiClient.post('/api/v1/auth/login', credentials);
+
+        // 2. Parsing della risposta flat
+        const { user, access_token } = response.data;
+        if (!access_token || !user) {
+          throw new Error('Login response is missing access_token or user.');
+        }
+
+        this.setAuthData(user, access_token);
       } catch (error) {
         this.clearAuthData();
+        // Rilancia l'errore per permettere al componente di gestirlo (es. mostrare un messaggio)
         throw error;
       } finally {
         this.isLoading = false;
