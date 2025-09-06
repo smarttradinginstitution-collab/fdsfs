@@ -123,6 +123,7 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: var(--semantic-layer-z-index-overlay); /* Si assicura che sia sopra tutto. */
+  transform: translateZ(0); /* Forza la creazione di un nuovo stacking context */
 }
 
 .modal-card {
