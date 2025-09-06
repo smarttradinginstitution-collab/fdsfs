@@ -80,23 +80,25 @@ function formatCellPnl(pnl) {
           <div v-else class="day-cell placeholder"></div>
         </template>
 
-        <!-- Riepilogo Settimanale - renderizzato una volta per riga della griglia -->
+        <!-- Riepilogo Settimanale - Clonato dalla struttura di .day-cell per coerenza -->
         <div
           v-if="uiStore.isWeeklySummaryVisible"
-          class="week-summary-card"
+          class="day-cell week-summary-card"
           @click="uiStore.openWeeklySummaryModal(weekIndex)"
         >
-          <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
-          <span class="week-pnl" :class="{
-              'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
-              'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
-            }">
-            {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
-          </span>
-          <span class="week-days">
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
-          </span>
+          <span class="day-number">W{{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
+          <div class="day-details">
+            <span class="day-pnl" :class="{
+                'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
+                'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
+              }">
+              {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
+            </span>
+            <span class="day-trade-count">
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
+            </span>
+          </div>
         </div>
       </template>
     </div>
@@ -185,56 +187,35 @@ function formatCellPnl(pnl) {
   opacity: 0.8;
 }
 /* --- Stili per il riepilogo settimanale --- */
+/* Questa ora è una classe modificatrice. Applica solo gli stili che
+   differiscono da .day-cell */
 .week-summary-card {
-  aspect-ratio: 1 / 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  line-height: 1.15;
-  gap: var(--semantic-size-stack-xxxs);
-  padding: var(--semantic-size-calendar-day-cell-padding-mobile);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  transition: all 150ms ease-in-out;
-  cursor: pointer;
-  /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
+  /* Sovrascrive il colore di sfondo del PNL da .day-cell */
 }
+
+/* Allineiamo i dettagli a sinistra, a differenza di .day-details che li allinea a destra */
+.week-summary-card .day-details {
+  align-items: flex-start;
+}
+
+/* Il pnl settimanale non deve ereditare il colore grigio da .day-pnl */
+.week-summary-card .day-pnl {
+  color: inherit;
+}
+
+.week-summary-card .day-pnl.positive {
+  color: var(--semantic-color-feedback-positive-text);
+}
+
+.week-summary-card .day-pnl.negative {
+  color: var(--semantic-color-feedback-negative-text);
+}
+
 .week-summary-card:hover {
   transform: scale(1.03);
   border-color: var(--semantic-color-border-focus);
   background-color: var(--semantic-color-surface-secondary);
-}
-
-.week-title {
-  font: var(--semantic-font-style-label-xxs);
-  color: var(--semantic-color-text-secondary);
-  white-space: nowrap;
-}
-
-.week-days {
-  font: var(--semantic-font-style-label-xxs);
-  color: var(--semantic-color-text-secondary);
-  white-space: nowrap;
-  /* Stili per lo sfondo richiesto */
-  background-color: var(--semantic-color-surface-secondary);
-  padding: 0.1rem var(--semantic-size-inset-xxxs);
-  border-radius: var(--semantic-border-radius-tag);
-}
-
-.week-pnl {
-  font: var(--semantic-font-style-data-numeric-semibold-xs);
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.week-pnl.positive {
-  color: var(--semantic-color-feedback-positive-text);
-}
-
-.week-pnl.negative {
-  color: var(--semantic-color-feedback-negative-text);
 }
 
 @media (min-width: 768px) {
