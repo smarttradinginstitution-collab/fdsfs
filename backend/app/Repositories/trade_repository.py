@@ -336,12 +336,18 @@ class TradeRepository:
     # ──────────────────────────────────────────────────────────────────────
     async def get_calendar_data(self, user_id: UUID) -> List[dict]:
         """
-        Restituisce [{date: 'YYYY-MM-DD', pnl: float}, ...] aggregando per giorno (entry_timestamp)
-        i P&L (p_l) dei trades dell'utente. Esclude i trade senza entry_timestamp.
+        Restituisce dati aggregati per giorno per il calendario.
+        Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
+        Esclude i trade senza entry_timestamp.
         """
         day_alias = func.date_trunc("day", Trade.entry_timestamp).label("day")
         q = (
-            select(day_alias, func.sum(Trade.p_l).label("daily_pnl"))
+            select(
+                day_alias,
+                func.sum(Trade.p_l).label("daily_pnl"),
+                func.count(Trade.id).label("trade_count"),
+                func.count().filter(Trade.p_l > 0).label("winning_trades_count"),
+            )
             .where(Trade.user_id == user_id)
             .where(Trade.entry_timestamp.is_not(None))
             .group_by(day_alias)
@@ -351,7 +357,13 @@ class TradeRepository:
         rows = res.all()
 
         out = []
-        for day, pnl in rows:
-            # day è un datetime (00:00); serializza in 'YYYY-MM-DD'
-            out.append({"date": day.date().isoformat(), "pnl": float(pnl or 0)})
+        for day, pnl, trade_count, winning_trades_count in rows:
+            out.append(
+                {
+                    "date": day.date().isoformat(),
+                    "pnl": float(pnl or 0),
+                    "trade_count": trade_count,
+                    "winning_trades_count": winning_trades_count,
+                }
+            )
         return out

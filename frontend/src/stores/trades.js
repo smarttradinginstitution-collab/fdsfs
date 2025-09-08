@@ -257,11 +257,11 @@ export const useTradesStore = defineStore('trades', {
 
     calendarDataByMonth() {
       const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
-        // Il backend non fornisce il conteggio dei trade, ma solo il PNL aggregato.
-        // Se un giorno è presente nei dati, significa che ha avuto almeno un trade.
-        // Usiamo `tradeCount: 1` come segnaposto per indicare attività.
-        // `winningTrades` non è disponibile, quindi lo impostiamo a 0.
-        acc[entry.date] = { totalPnl: entry.pnl, tradeCount: 1, winningTrades: 0 };
+        acc[entry.date] = {
+          totalPnl: entry.pnl,
+          tradeCount: entry.trade_count,
+          winningTrades: entry.winning_trades_count,
+        };
         return acc;
       }, {});
 
