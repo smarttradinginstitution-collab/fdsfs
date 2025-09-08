@@ -382,7 +382,7 @@ export const useTradesStore = defineStore('trades', {
         end_date: _endDate?.toISOString().split('T')[0],
       };
 
-      if (_strategy && _strategy !== 'All') {
+      if (_strategy && _strategy.toLowerCase() !== 'all') {
         params.setups = [_strategy];
       }
 
@@ -465,7 +465,7 @@ export const useTradesStore = defineStore('trades', {
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
 
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy !== 'All') {
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
         params.setups = [filterStore.selectedStrategy];
       }
 
@@ -492,6 +492,9 @@ export const useTradesStore = defineStore('trades', {
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
+
+      // Il calendario non dovrebbe essere filtrato per setup, ma solo per data.
+      // Quindi non aggiungiamo il parametro 'setups'.
 
       try {
         const response = await apiClient.get('/api/v1/trades/calendar/data', { params });
