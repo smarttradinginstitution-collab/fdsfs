@@ -25,6 +25,7 @@ export const useTradesStore = defineStore('trades', {
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
+    recentTrades: [],
   }),
 
   getters: {
@@ -116,11 +117,7 @@ export const useTradesStore = defineStore('trades', {
         else winLossDaysStats.breakEvenDays++;
       }
 
-      return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats, recentTrades: trades.slice(0, 4) };
-    },
-
-    recentTrades() {
-      return this.processedData.recentTrades;
+      return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats };
     },
 
     allDashboardStats() {
@@ -258,10 +255,10 @@ export const useTradesStore = defineStore('trades', {
     },
 
     tradeHeaders: () => [
-      { key: 'ticker', text: 'Ticker' },
-      { key: 'type', text: 'Type' },
-      { key: 'pnl', text: 'Net P&L' },
-      { key: 'date', text: 'Date' },
+      { key: 'symbol', text: 'Ticker' },
+      { key: 'direction', text: 'Side' },
+      { key: 'p_l', text: 'Net P&L' },
+      { key: 'entry_timestamp', text: 'Date' },
     ],
 
     calendarControlsData() {
@@ -359,6 +356,25 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    async fetchRecentTrades() {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error("User not authenticated for recent trades fetch.");
+        return;
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/', {
+          params: { user_id: userId },
+        });
+        this.recentTrades = response.data.slice(0, 5);
+      } catch (error) {
+        console.error('Error fetching recent trades:', error);
+      }
+    },
+
     async fetchDashboardStats() {
       const authStore = useAuthStore();
       const userId = authStore.user?.id;
@@ -448,6 +464,7 @@ export const useTradesStore = defineStore('trades', {
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
         await this.fetchCalendarData();
+        await this.fetchRecentTrades();
 
         return newTradeFromServer;
       } catch (error) {

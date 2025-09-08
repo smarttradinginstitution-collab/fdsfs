@@ -61,6 +61,7 @@ const fetchError = ref(null);
 onMounted(() => {
   tradesStore.fetchDashboardStats();
   tradesStore.fetchCalendarData();
+  tradesStore.fetchRecentTrades();
 });
 </script>
 

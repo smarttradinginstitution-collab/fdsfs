@@ -87,17 +87,17 @@ td {
 
 /* Stili per la dimensione extra piccola */
 .table--x-small th {
-    font: var(--semantic-font-style-label-sm);
+    font: var(--semantic-font-style-label-xs);
     padding-top: var(--semantic-size-inset-xs);
     padding-bottom: var(--semantic-size-inset-xs);
 }
 .table--x-small td {
-    font: var(--semantic-font-style-body-sm);
+    font: var(--semantic-font-style-body-xxs);
     padding-top: var(--semantic-size-inset-xs);
     padding-bottom: var(--semantic-size-inset-xs);
 }
 .table--small td {
-    font: var(--semantic-font-style-body-sm);
+    font: var(--semantic-font-style-body-xs);
     padding-top: var(--semantic-size-inset-sm);
     padding-bottom: var(--semantic-size-inset-sm);
 }
