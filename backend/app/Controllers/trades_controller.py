@@ -17,7 +17,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
@@ -175,12 +175,12 @@ class TradesController:
         trade_id: UUID,
         user_id: UUID = Query(..., description="ID utente proprietario del trade"),
         db: AsyncSession = Depends(get_db),
-    ) -> None:
+    ) -> Response:
         repo = TradeRepository(db)
         ok = await repo.delete(user_id, trade_id)
         if not ok:
             raise HTTPException(status_code=404, detail="Trade non trovato")
-        return None
+        return Response(status_code=204)
 
     # --------------------------
     # DISTINCT SETUPS

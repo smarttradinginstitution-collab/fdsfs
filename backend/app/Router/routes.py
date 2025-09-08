@@ -152,6 +152,6 @@ router_trades.get("/performance/metrics")(trades.get_performance_metrics)
 router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
 router_trades.post("/", response_model=TradeRead, status_code=201)(trades.create_trade)
 router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
-router_trades.delete("/{trade_id}", status_code=204)(trades.delete_trade)
+router_trades.delete("/{trade_id}")(trades.delete_trade)
 
 router.include_router(router_trades)
