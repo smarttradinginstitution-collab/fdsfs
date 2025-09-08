@@ -75,6 +75,7 @@ class TradeRead(BaseModel):
     notes_post_trade: Optional[str] = None
     entry_timestamp: Optional[datetime] = None
     exit_timestamp: Optional[datetime] = None
+    duration_minutes: Optional[float] = None
 
     tags: List[str] = []
 

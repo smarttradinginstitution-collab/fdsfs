@@ -36,6 +36,24 @@ function formatCellPnl(pnl) {
   if (num >= 1000 && num < 1000000) return `${sign}${(num / 1000).toFixed(1).replace(/\.0$/, '')}k`;
   return `${sign}${(num / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
 }
+
+// --- CLICK HANDLERS ---
+const handleDayClick = (day) => {
+  if (day.isPlaceholder || day.dailyData.tradeCount === 0) return;
+  tradesStore.fetchTradeSummaryForPeriod({ startDate: day.fullDate, endDate: day.fullDate });
+  uiStore.openDailySummaryModal();
+};
+
+const handleWeekClick = (weekIndex) => {
+  const week = calendarData.value.weeksOfDays[weekIndex];
+  const weekDates = week.filter(day => !day.isPlaceholder).map(day => day.fullDate);
+  if (weekDates.length > 0) {
+    const startDate = weekDates[0];
+    const endDate = weekDates[weekDates.length - 1];
+    tradesStore.fetchTradeSummaryForPeriod({ startDate, endDate });
+    uiStore.openWeeklySummaryModal();
+  }
+};
 </script>
 
 <template>
@@ -62,7 +80,7 @@ function formatCellPnl(pnl) {
             class="day-cell"
             :class="{ 'no-trade': day.dailyData.tradeCount === 0 }"
             :style="getPnlColor(day.dailyData.totalPnl)"
-            @click="uiStore.openDailySummaryModal(day.fullDate)"
+            @click="handleDayClick(day)"
           >
             <span class="day-number">{{ day.date }}</span>
             <div v-if="day.dailyData.tradeCount > 0" class="day-details">
@@ -84,7 +102,7 @@ function formatCellPnl(pnl) {
         <div
           v-if="uiStore.isWeeklySummaryVisible"
           class="week-summary-card"
-          @click="uiStore.openWeeklySummaryModal(weekIndex)"
+          @click="handleWeekClick(weekIndex)"
         >
           <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
           <span class="week-pnl" :class="{

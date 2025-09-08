@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
 
@@ -159,6 +160,8 @@ class TradeRepository:
         min_size: Optional[float] = None,
         max_size: Optional[float] = None,
         tags: Optional[List[str]] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
     ) -> List[Tuple[Trade, List[str]]]:
         """
         Ritorna una lista di tuple (Trade, [tag_names]) filtrate per user_id e criteri opzionali.
@@ -171,6 +174,7 @@ class TradeRepository:
           - days_of_week: func.extract('isodow', entry_timestamp).in_(days_of_week)
           - min/max_size: range su position_size
           - tags: deve contenere TUTTI i tag passati (subquery con count(distinct) == len(tags))
+          - start_date/end_date: range su func.date(entry_timestamp)
         """
         base = select(Trade).where(Trade.user_id == user_id)
 
@@ -191,6 +195,11 @@ class TradeRepository:
             base = base.where(Trade.position_size >= min_size)
         if max_size is not None:
             base = base.where(Trade.position_size <= max_size)
+        if start_date:
+            base = base.where(func.date(Trade.entry_timestamp) >= start_date)
+        if end_date:
+            base = base.where(func.date(Trade.entry_timestamp) <= end_date)
+
 
         # Filtra per TAGS (tutti presenti) con subquery:
         if tags:

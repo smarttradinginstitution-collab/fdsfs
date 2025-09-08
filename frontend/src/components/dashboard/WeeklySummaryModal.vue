@@ -13,10 +13,8 @@ import BaseTable from '@/components/ui/BaseTable.vue';
 const uiStore = useUiStore();
 const tradesStore = useTradesStore();
 
-const weeklyData = computed(() => {
-  if (uiStore.selectedWeekIndex === null) return null;
-  return tradesStore.getWeeklySummaryDetails(uiStore.selectedWeekIndex);
-});
+const summaryData = computed(() => tradesStore.activeSummary);
+const isLoading = computed(() => tradesStore.isSummaryLoading);
 
 const handleClose = () => {
   uiStore.closeWeeklySummaryModal();
@@ -29,9 +27,9 @@ const pnlStyle = (pnl) => {
 };
 
 const formattedDateRange = computed(() => {
-  if (!weeklyData.value || !weeklyData.value.startDate || !weeklyData.value.endDate) return '';
-  const start = new Date(weeklyData.value.startDate + 'T00:00:00');
-  const end = new Date(weeklyData.value.endDate + 'T00:00:00');
+  if (!summaryData.value || !summaryData.value.startDate || !summaryData.value.endDate) return '';
+  const start = new Date(summaryData.value.startDate + 'T00:00:00');
+  const end = new Date(summaryData.value.endDate + 'T00:00:00');
   const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
   const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
 
@@ -49,24 +47,35 @@ const formattedPnl = (pnl) => {
 };
 
 const statsGrid = computed(() => {
-    if (!weeklyData.value) return null;
-    const stats = weeklyData.value.stats;
+    if (!summaryData.value) return null;
+    const stats = summaryData.value.stats;
     return {
         col1: [ { label: 'Total Trades', value: stats.tradeCount }, { label: 'Winrate', value: `${(stats.winningTrades / (stats.tradeCount || 1) * 100).toFixed(1)}%` }, ],
         col2: [ { label: 'Winners', value: stats.winningTrades }, { label: 'Losers', value: stats.losingTrades }, ],
         col3: [
-            { label: 'Gross P&L', value: formattedPnl(stats.pnlAfterCommission), rawValue: stats.pnlAfterCommission, isPnl: true },
-            { label: 'Volume', value: stats.totalVolume },
+          { label: 'Gross Profit', value: formattedPnl(stats.grossProfit), rawValue: stats.grossProfit, isPnl: true },
+          { label: 'Gross Loss', value: formattedPnl(stats.grossLoss), rawValue: stats.grossLoss, isPnl: true },
         ],
-        col4: [ { label: 'Commissions', value: `$${stats.totalCommission.toFixed(2)}` }, { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) }, ]
+        col4: [ { label: 'Net P&L', value: formattedPnl(stats.netPnl), rawValue: stats.netPnl, isPnl: true }, { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) }, ]
     };
 });
 
 const tradeTableHeaders = computed(() => [
-    { key: 'openTime', text: 'Open Time' }, { key: 'date', text: 'Date' }, { key: 'ticker', text: 'Ticker' }, { key: 'type', text: 'Side' }, { key: 'instrument', text: 'Instrument' },
-    { key: 'pnl', text: 'Net P&L' }, { key: 'netROI', text: 'Net ROI' }, { key: 'rMultiple', text: 'Realized R' }, { key: 'playbook', text: 'Playbook' },
-    { key: 'ticks', text: 'Ticks' }, { key: 'bestExit', text: 'Best Exit' }, { key: 'commission', text: 'Commission' },
+    { key: 'dayOfWeek', text: 'Day' },
+    { key: 'entry_timestamp', text: 'Open Time' },
+    { key: 'duration_minutes', text: 'Duration' },
+    { key: 'symbol', text: 'Ticker' },
+    { key: 'direction', text: 'Side' },
+    { key: 'setup', text: 'Playbook' },
+    { key: 'p_l', text: 'Net P&L' },
 ]);
+
+const formatDuration = (minutes) => {
+  if (minutes === null || minutes === undefined) return 'N/A';
+  const mins = Math.floor(minutes);
+  const secs = Math.round((minutes - mins) * 60);
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
 </script>
 
 <template>
@@ -77,11 +86,11 @@ const tradeTableHeaders = computed(() => [
     class="weekly-summary-modal"
   >
     <template #header>
-      <div class="header-content">
+      <div v-if="summaryData && !isLoading" class="header-content">
         <div class="header-left">
           <div class="header-info">
             <span class="date">{{ formattedDateRange }}</span>
-            <span :style="pnlStyle(weeklyData?.stats.netPnl)">Net P&L {{ formattedPnl(weeklyData?.stats.netPnl) }}</span>
+            <span :style="pnlStyle(summaryData.stats.netPnl)">Net P&L {{ formattedPnl(summaryData.stats.netPnl) }}</span>
           </div>
           <BaseButton variant="secondary" size="small">Add Note</BaseButton>
         </div>
@@ -89,12 +98,16 @@ const tradeTableHeaders = computed(() => [
           <IconButton aria-label="AI Assistant" size="small"><SparkleIcon /></IconButton>
         </div>
       </div>
+      <div v-else class="header-content">
+        <h3>Loading Summary...</h3>
+      </div>
     </template>
 
     <template #default>
-      <div v-if="weeklyData" class="modal-body-content">
+      <div v-if="isLoading" class="loading-state">Loading data...</div>
+      <div v-else-if="summaryData && summaryData.trades.length > 0" class="modal-body-content">
         <div class="top-section">
-          <div class="chart-section"><DailyPnlChart :chart-data="weeklyData.cumulativePnlForChart" /></div>
+          <div class="chart-section"><DailyPnlChart :chart-data="summaryData.cumulativePnlForChart" /></div>
           <div class="stats-section">
             <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
                 <div v-for="stat in col" :key="stat.label" class="stat-cell">
@@ -107,29 +120,26 @@ const tradeTableHeaders = computed(() => [
         </div>
 
         <div class="table-wrapper">
-          <BaseTable :headers="tradeTableHeaders" :items="weeklyData.trades" size="x-small">
-            <template #pnl="{ item }">
-              <span :style="pnlStyle(item.pnl)">{{ formattedPnl(item.pnl) }}</span>
+          <BaseTable :headers="tradeTableHeaders" :items="summaryData.trades" size="x-small">
+            <template #p_l="{ item }">
+              <span :style="pnlStyle(item.p_l)">{{ formattedPnl(item.p_l) }}</span>
             </template>
-            <template #playbook="{ item }">
-              <BasePill>{{ item.strategy }}</BasePill>
+            <template #setup="{ item }">
+              <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
             </template>
-             <template #netROI="{ item }">
-              {{ item.netROI.toFixed(2) }}%
+            <template #entry_timestamp="{ item }">
+              {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
             </template>
-             <template #rMultiple="{ item }">
-              {{ item.rMultiple.toFixed(2) }}
+            <template #duration_minutes="{ item }">
+              {{ formatDuration(item.duration_minutes) }}
             </template>
-             <template #bestExit="{ item }">
-              {{ item.bestExit.toFixed(2) }}
-            </template>
-             <template #commission="{ item }">
-              ${{ item.commission.toFixed(2) }}
+            <template #dayOfWeek="{ item }">
+              {{ new Date(item.entry_timestamp).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() }}
             </template>
           </BaseTable>
         </div>
       </div>
-       <div v-else class="loading-state">Loading data...</div>
+      <div v-else class="loading-state">No trades for this week.</div>
     </template>
 
     <template #footer>

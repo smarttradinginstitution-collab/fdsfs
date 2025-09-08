@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
@@ -37,9 +38,14 @@ class TradesController:
     @staticmethod
     def _to_trade_read_dict(trade, tag_names: List[str]) -> dict:
         """
-        Estrae solo i campi “piatti” dal modello ORM Trade e aggiunge `tags`.
-        NON passa l'oggetto ORM a Pydantic per evitare accessi lazy.
+        Estrae solo i campi “piatti” dal modello ORM Trade, calcola la durata,
+        e aggiunge `tags`. NON passa l'oggetto ORM a Pydantic.
         """
+        duration_minutes = None
+        if trade.entry_timestamp and trade.exit_timestamp:
+            duration = trade.exit_timestamp - trade.entry_timestamp
+            duration_minutes = duration.total_seconds() / 60
+
         return {
             "id": trade.id,
             "created_at": trade.created_at,
@@ -62,6 +68,7 @@ class TradesController:
             "notes_post_trade": trade.notes_post_trade,
             "entry_timestamp": trade.entry_timestamp,
             "exit_timestamp": trade.exit_timestamp,
+            "duration_minutes": duration_minutes,
             "tags": tag_names or [],
         }
 
@@ -81,6 +88,8 @@ class TradesController:
         min_size: Optional[float] = Query(None),
         max_size: Optional[float] = Query(None),
         tags: Optional[List[str]] = Query(None),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
         repo = TradeRepository(db)
@@ -94,6 +103,8 @@ class TradesController:
             min_size=min_size,
             max_size=max_size,
             tags=tags,
+            start_date=start_date,
+            end_date=end_date,
         )
         out: List[TradeRead] = []
         for trade, tag_names in rows:

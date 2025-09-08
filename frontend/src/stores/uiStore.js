@@ -107,67 +107,49 @@ export const useUiStore = defineStore('ui', () => {
 
   // --- STATO E AZIONI PER I MODALI ---
   const isDailySummaryModalOpen = ref(false);
-  const selectedDate = ref(null);
   const isWeeklySummaryModalOpen = ref(false);
-  const selectedWeekIndex = ref(null);
+  const isAddTradeModalOpen = ref(false);
+
   // Salviamo lo stato della sidebar prima di aprire un modale
   let sidebarStateBeforeModal = false;
 
-  // --- ADD TRADE MODAL ---
-  const isAddTradeModalOpen = ref(false);
-
-  function openAddTradeModal() {
-    isAddTradeModalOpen.value = true;
+  function _openModal(modalStateRef) {
+    modalStateRef.value = true;
     if (!isMobile.value) {
       sidebarStateBeforeModal = isSidebarCollapsed.value;
       isSidebarCollapsed.value = true;
     }
+  }
+
+  function _closeModal(modalStateRef) {
+    modalStateRef.value = false;
+    if (!isMobile.value) {
+      isSidebarCollapsed.value = sidebarStateBeforeModal;
+    }
+  }
+
+  function openAddTradeModal() {
+    _openModal(isAddTradeModalOpen);
   }
 
   function closeAddTradeModal() {
-    isAddTradeModalOpen.value = false;
-    if (!isMobile.value) {
-      isSidebarCollapsed.value = sidebarStateBeforeModal;
-    }
+    _closeModal(isAddTradeModalOpen);
   }
 
-
-  function openDailySummaryModal(date) {
-    selectedDate.value = date;
-    isDailySummaryModalOpen.value = true;
-    // Quando apriamo un modale, collassiamo la sidebar se siamo su desktop.
-    if (!isMobile.value) {
-      sidebarStateBeforeModal = isSidebarCollapsed.value;
-      isSidebarCollapsed.value = true;
-    }
+  function openDailySummaryModal() {
+    _openModal(isDailySummaryModalOpen);
   }
 
   function closeDailySummaryModal() {
-    isDailySummaryModalOpen.value = false;
-    selectedDate.value = null;
-    // Ripristiniamo lo stato della sidebar
-    if (!isMobile.value) {
-      isSidebarCollapsed.value = sidebarStateBeforeModal;
-    }
+    _closeModal(isDailySummaryModalOpen);
   }
 
-  function openWeeklySummaryModal(weekIndex) {
-    selectedWeekIndex.value = weekIndex;
-    isWeeklySummaryModalOpen.value = true;
-    // Quando apriamo un modale, collassiamo la sidebar se siamo su desktop.
-    if (!isMobile.value) {
-      sidebarStateBeforeModal = isSidebarCollapsed.value;
-      isSidebarCollapsed.value = true;
-    }
+  function openWeeklySummaryModal() {
+    _openModal(isWeeklySummaryModalOpen);
   }
 
   function closeWeeklySummaryModal() {
-    isWeeklySummaryModalOpen.value = false;
-    selectedWeekIndex.value = null;
-    // Ripristiniamo lo stato della sidebar
-    if (!isMobile.value) {
-      isSidebarCollapsed.value = sidebarStateBeforeModal;
-    }
+    _closeModal(isWeeklySummaryModalOpen);
   }
 
 
@@ -181,9 +163,7 @@ export const useUiStore = defineStore('ui', () => {
     isCalendarTradeCountVisible,
     isCalendarWinRateVisible,
     isDailySummaryModalOpen,
-    selectedDate,
     isWeeklySummaryModalOpen,
-    selectedWeekIndex,
     isAddTradeModalOpen,
 
     toggleSidebar,
