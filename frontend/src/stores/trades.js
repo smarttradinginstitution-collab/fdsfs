@@ -5,6 +5,7 @@
 
 import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
+import apiClient from '../services/api';
 
 export const useTradesStore = defineStore('trades', {
   state: () => ({
@@ -18,6 +19,7 @@ export const useTradesStore = defineStore('trades', {
       { id: 6, ticker: 'AMD', type: 'Short', pnl: -42.10, date: '2025-08-10', strategy: 'Breakout', risk: 40, openTime: '09:45:10', instrument: 'Stocks', commission: 2.10, netROI: -0.52, rMultiple: -1.05, ticks: -21, bestExit: 109.00, volume: 100 },
       { id: 7, ticker: 'META', type: 'Long', pnl: 210.00, date: '2025-07-30', strategy: 'Momentum', risk: 70, openTime: '10:10:10', instrument: 'Stocks', commission: 5.00, netROI: 1.5, rMultiple: 3.00, ticks: 84, bestExit: 315.00, volume: 50 },
     ],
+    dashboardStats: null,
   }),
 
   getters: {
@@ -117,10 +119,7 @@ export const useTradesStore = defineStore('trades', {
     },
 
     allDashboardStats() {
-      const { stats } = this.processedData;
-      const { totalPnl, tradeCount, winningTrades, losingTrades, breakEvenTrades, grossProfit, grossLoss } = stats;
-
-      if (tradeCount === 0) {
+      if (!this.dashboardStats) {
         return {
           netPnl: { key: 'netPnl', label: 'Net P&L', value: '$0.00', changeType: 'neutral' },
           winRate: { key: 'winRate', label: 'Win Rate', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
@@ -132,12 +131,17 @@ export const useTradesStore = defineStore('trades', {
         };
       }
 
-      const winRate = (winningTrades / tradeCount) * 100;
-      const lossRate = 1 - (winRate / 100);
-      const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : Infinity;
-      const avgWin = winningTrades > 0 ? grossProfit / winningTrades : 0;
-      const avgLoss = (tradeCount - winningTrades) > 0 ? grossLoss / (tradeCount - winningTrades) : 0;
-      const expectancy = (winRate / 100 * avgWin) - (lossRate * avgLoss);
+      const stats = this.dashboardStats.stats;
+      const totalPnl = parseFloat(stats.total_pl);
+      const tradeCount = stats.trade_count;
+      const winningTrades = stats.winning_trades_count;
+      const losingTrades = stats.losing_trades_count;
+      const breakEvenTrades = stats.breakeven_trades_count;
+      const winRate = parseFloat(stats.win_rate);
+      const profitFactor = parseFloat(stats.profit_factor);
+      const avgWin = parseFloat(stats.avg_win);
+      const avgLoss = parseFloat(stats.avg_loss);
+      const expectancy = parseFloat(stats.expectancy);
 
       return {
         netPnl: { key: 'netPnl', label: 'Net P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
@@ -360,6 +364,20 @@ export const useTradesStore = defineStore('trades', {
   },
 
   actions: {
+    async fetchDashboardStats() {
+      try {
+        // We need a user_id to fetch the stats.
+        // For now, I'll hardcode a user_id.
+        // In a real app, this would come from the auth store.
+        const userId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; // Example UUID
+        const response = await apiClient.get(`/api/v1/trades/performance/metrics?user_id=${userId}`);
+        this.dashboardStats = response.data;
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        // Optionally, set an error state here
+      }
+    },
+
     addTrade(newTrade) {
       const fullTrade = {
         ...newTrade,

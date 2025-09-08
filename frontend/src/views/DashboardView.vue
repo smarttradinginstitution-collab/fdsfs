@@ -44,18 +44,8 @@ const visibleStats = computed(() => {
 const backendData = ref(null);
 const fetchError = ref(null);
 
-onMounted(async () => {
-  try {
-    // Replace '/api/v1/trades' with your actual endpoint.
-    // Sostituisci '/api/v1/trades' con il tuo vero endpoint.
-    const response = await apiClient.get('/api/v1/users');
-    backendData.value = response.data;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    fetchError.value = 'Failed to fetch data from the backend. Make sure the backend is running and that the VITE_API_URL in your .env file is correct.';
-    // Also, check the browser's console for CORS errors.
-    // Controlla anche la console del browser per errori CORS.
-  }
+onMounted(() => {
+  tradesStore.fetchDashboardStats();
 });
 </script>
 

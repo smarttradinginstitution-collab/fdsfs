@@ -183,9 +183,9 @@ class TradesController:
         return await repo.get_calendar_data(user_id)
 
     # --------------------------
-    # VANTAGE SCORE
+    # PERFORMANCE METRICS
     # --------------------------
-    async def vantage_score(
+    async def get_performance_metrics(
         self,
         user_id: UUID = Query(..., description="ID utente"),
         db: AsyncSession = Depends(get_db),
@@ -199,4 +199,4 @@ class TradesController:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
         calc = MetricsCalculator(trades_as_dicts)
-        return calc.calculate_vantage_score()
+        return calc.calculate_all_metrics()
