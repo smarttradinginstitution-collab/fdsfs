@@ -349,8 +349,15 @@ export const useTradesStore = defineStore('trades', {
     /**
      * Azione unificata per recuperare i trade dal backend con filtri.
      */
-    async fetchTrades() {
-      this.isLoading = true;
+    async fetchTrades(dateRange = null) {
+      // Se è una richiesta per un intervallo specifico, usa isSummaryLoading, altrimenti isLoading.
+      if (dateRange) {
+        this.isSummaryLoading = true;
+        this.activeSummary = null;
+      } else {
+        this.isLoading = true;
+      }
+
       const authStore = useAuthStore();
       const filterStore = useFilterStore();
       const userId = authStore.user?.id;
@@ -358,30 +365,49 @@ export const useTradesStore = defineStore('trades', {
       if (!userId) {
         console.error("Utente non autenticato.");
         this.isLoading = false;
+        this.isSummaryLoading = false;
         return;
       }
 
-      // Prepara i parametri per la richiesta API
+      // Determina quali filtri usare: quelli passati come argomento o quelli globali
+      const _startDate = dateRange ? dateRange.startDate : filterStore.startDate;
+      const _endDate = dateRange ? dateRange.endDate : filterStore.endDate;
+
+      // Applica il filtro per strategia solo se non stiamo chiedendo un intervallo di date specifico
+      const _strategy = dateRange ? null : filterStore.selectedStrategy;
+
       const params = {
         user_id: userId,
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
+        start_date: _startDate?.toISOString().split('T')[0],
+        end_date: _endDate?.toISOString().split('T')[0],
       };
 
-      // Aggiungi il filtro per setup solo se non è 'All'
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy !== 'All') {
-        params.setups = [filterStore.selectedStrategy];
+      if (_strategy && _strategy !== 'All') {
+        params.setups = [_strategy];
       }
 
       try {
         const response = await apiClient.get('/api/v1/trades/', { params });
-        // Mappa i dati dal backend al formato del frontend
-        this.trades = response.data.map(mapBackendTradeToFrontend);
+        const fetchedTrades = response.data.map(mapBackendTradeToFrontend);
+
+        if (dateRange) {
+          // Se la richiesta era per un intervallo specifico (es. modale), aggiorna activeSummary
+          this.activeSummary = { trades: fetchedTrades };
+        } else {
+          // Altrimenti, aggiorna la lista principale dei trade per la dashboard
+          this.trades = fetchedTrades;
+        }
+
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
-        this.trades = []; // Resetta i trade in caso di errore
+        if (dateRange) {
+          this.activeSummary = { error: 'Failed to load summary.' };
+        } else {
+          this.trades = [];
+        }
       } finally {
         this.isLoading = false;
+        this.isSummaryLoading = false;
       }
     },
 

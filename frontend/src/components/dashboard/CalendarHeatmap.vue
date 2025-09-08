@@ -40,7 +40,8 @@ function formatCellPnl(pnl) {
 // --- CLICK HANDLERS ---
 const handleDayClick = (day) => {
   if (day.isPlaceholder || day.dailyData.tradeCount === 0) return;
-  tradesStore.fetchTradeSummaryForPeriod({ startDate: day.fullDate, endDate: day.fullDate });
+  const date = new Date(day.fullDate);
+  tradesStore.fetchTrades({ startDate: date, endDate: date });
   uiStore.openDailySummaryModal();
 };
 
@@ -48,9 +49,9 @@ const handleWeekClick = (weekIndex) => {
   const week = calendarData.value.weeksOfDays[weekIndex];
   const weekDates = week.filter(day => !day.isPlaceholder).map(day => day.fullDate);
   if (weekDates.length > 0) {
-    const startDate = weekDates[0];
-    const endDate = weekDates[weekDates.length - 1];
-    tradesStore.fetchTradeSummaryForPeriod({ startDate, endDate });
+    const startDate = new Date(weekDates[0]);
+    const endDate = new Date(weekDates[weekDates.length - 1]);
+    tradesStore.fetchTrades({ startDate, endDate });
     uiStore.openWeeklySummaryModal();
   }
 };
