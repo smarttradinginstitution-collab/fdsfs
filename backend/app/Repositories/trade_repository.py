@@ -257,10 +257,16 @@ class TradeRepository:
         Crea un Trade per user_id e collega eventuali tag (creandoli se mancanti).
         Ritorna l'oggetto Trade appena creato.
         """
-        # 1) crea Trade
+        # 1) Pulisci i dati per evitare errori di tipo
+        # Se 'direction' non è fornito (è None), rimuovilo dal dizionario
+        # per permettere al DB di usare il suo valore di default o gestire il NULL.
+        if "direction" in data and data["direction"] is None:
+            del data["direction"]
+
+        # 2) crea Trade
         trade = Trade(user_id=user_id, **data)
         self.db.add(trade)
-        await self.db.flush()   # ottieni id immediatamente
+        await self.db.flush()  # ottieni id immediatamente
 
         # 2) gestisci Tags (se forniti)
         if tag_names:

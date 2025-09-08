@@ -398,7 +398,8 @@ export const useTradesStore = defineStore('trades', {
         symbol: tradeData.ticker, // 'ticker' dal form diventa 'symbol'
         p_l: tradeData.pnl,       // 'pnl' dal form diventa 'p_l'
         setup: tradeData.setup,
-        // Altri campi possono essere aggiunti qui se il form li include
+        // Non inviamo 'direction' o altri campi non presenti nel form,
+        // così il backend può usare i suoi valori di default.
       };
 
       try {
@@ -409,16 +410,16 @@ export const useTradesStore = defineStore('trades', {
         );
 
         // 3. Aggiungi il trade restituito (con ID e dati completi) allo state
-        // La risposta del backend dovrebbe contenere l'oggetto TradeRead completo
         const newTradeFromServer = response.data;
         this.trades.unshift(newTradeFromServer);
 
-        // 4. (Opzionale) Aggiorna le statistiche dopo l'aggiunta
+        // 4. (Opzionale ma consigliato) Aggiorna le statistiche
         await this.fetchDashboardStats();
 
       } catch (error) {
         console.error('Error adding trade:', error);
         // Gestisci l'errore, magari mostrando una notifica all'utente
+        throw error; // Rilancia l'errore se vuoi che il componente possa reagire
       }
     },
   },
