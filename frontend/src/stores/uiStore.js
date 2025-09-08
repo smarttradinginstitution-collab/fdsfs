@@ -16,7 +16,7 @@ export const useUiStore = defineStore('ui', () => {
   // --- STATO (State) ---
   const isSidebarCollapsed = ref(false);
   const isMobileMenuOpen = ref(false);
-  const visibleStatKeys = ref(['netPnl', 'winRate', 'profitFactor', 'trades', 'avgWin']);
+  const visibleStatKeys = ref(['netPnl', 'winRate', 'profitFactor', 'trades', 'avgWin', 'avgTradePnl', 'maxDrawdownAbs']);
   const isWeeklySummaryVisible = ref(true);
   const isCalendarTradeCountVisible = ref(true);
   const isCalendarWinRateVisible = ref(true);

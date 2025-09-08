@@ -144,6 +144,15 @@ export const useTradesStore = defineStore('trades', {
       const avgWin = parseFloat(stats.avg_win);
       const avgLoss = parseFloat(stats.avg_loss);
       const expectancy = parseFloat(stats.expectancy);
+      const avgTradePnl = parseFloat(stats.average_trade_pnl);
+      const largestProfit = parseFloat(stats.largest_profit);
+      const largestLoss = parseFloat(stats.largest_loss);
+      const maxConsecutiveWins = stats.max_consecutive_wins;
+      const maxConsecutiveLosses = stats.max_consecutive_losses;
+      const avgRealizedRr = parseFloat(stats.avg_realized_rr);
+      const maxDrawdownAbs = parseFloat(stats.max_drawdown_abs);
+      const sharpeRatio = parseFloat(stats.sharpe_ratio);
+      const averageHoldTime = parseFloat(stats.average_hold_time);
 
       return {
         netPnl: { key: 'netPnl', label: 'Net P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
@@ -153,6 +162,15 @@ export const useTradesStore = defineStore('trades', {
         avgWin: { key: 'avgWin', label: 'Avg. Win', value: `$${avgWin.toFixed(2)}`, changeType: 'positive' },
         avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: `$${avgLoss.toFixed(2)}`, changeType: 'negative' },
         expectancy: { key: 'expectancy', label: 'Expectancy', value: `$${expectancy.toFixed(2)}`, changeType: expectancy > 0 ? 'positive' : 'negative' },
+        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', value: `$${avgTradePnl.toFixed(2)}`, changeType: avgTradePnl > 0 ? 'positive' : 'negative' },
+        largestProfit: { key: 'largestProfit', label: 'Largest Profit', value: `$${largestProfit.toFixed(2)}`, changeType: 'positive' },
+        largestLoss: { key: 'largestLoss', label: 'Largest Loss', value: `$${largestLoss.toFixed(2)}`, changeType: 'negative' },
+        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', value: String(maxConsecutiveWins), changeType: 'positive' },
+        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', value: String(maxConsecutiveLosses), changeType: 'negative' },
+        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', value: `${avgRealizedRr.toFixed(2)}`, changeType: avgRealizedRr > 1 ? 'positive' : 'negative' },
+        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'negative' },
+        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', value: `${sharpeRatio.toFixed(2)}`, changeType: sharpeRatio > 1 ? 'positive' : 'negative' },
+        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
       };
     },
 
