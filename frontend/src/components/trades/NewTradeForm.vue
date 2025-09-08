@@ -58,41 +58,50 @@ const handleSubmit = () => {
 
 <template>
   <form class="new-trade-form" @submit.prevent="handleSubmit">
-    <div class="form-grid">
-      <!-- Core Info -->
-      <BaseInput v-model="form.ticker" label="Ticker" placeholder="e.g., AAPL" />
-      <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
-      <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
-      <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />
 
-      <!-- Prices -->
-      <BaseInput v-model.number="form.entry_price" label="Entry Price" type="number" step="0.01" />
-      <BaseInput v-model.number="form.exit_price" label="Exit Price" type="number" step="0.01" />
-      <BaseInput v-model.number="form.stop_loss_price" label="Stop Loss" type="number" step="0.01" />
-      <BaseInput v-model.number="form.take_profit_price" label="Take Profit" type="number" step="0.01" />
-
-      <!-- Details -->
-      <BaseInput v-model.number="form.position_size" label="Position Size" type="number" step="0.01" />
-      <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
-      <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
-      <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
-    </div>
-
-    <!-- Notes -->
-    <div class="notes-grid">
-      <div class="textarea-group">
-        <label>Pre-Trade Notes</label>
-        <textarea v-model="form.notes_pre_trade" rows="3"></textarea>
+    <fieldset class="form-section">
+      <legend>Core Information</legend>
+      <div class="grid-group grid-group-4-col">
+        <BaseInput v-model="form.ticker" label="Ticker" placeholder="e.g., AAPL" />
+        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
+        <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
+        <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />
       </div>
-      <div class="textarea-group">
-        <label>Post-Trade Notes</label>
-        <textarea v-model="form.notes_post_trade" rows="3"></textarea>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Prices & Size</legend>
+      <div class="grid-group grid-group-5-col">
+        <BaseInput v-model.number="form.entry_price" label="Entry Price" type="number" step="0.01" />
+        <BaseInput v-model.number="form.exit_price" label="Exit Price" type="number" step="0.01" />
+        <BaseInput v-model.number="form.position_size" label="Position Size" type="number" step="0.01" />
+        <BaseInput v-model.number="form.stop_loss_price" label="Stop Loss" type="number" step="0.01" />
+        <BaseInput v-model.number="form.take_profit_price" label="Take Profit" type="number" step="0.01" />
       </div>
-      <div class="textarea-group full-width">
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Analysis & Review</legend>
+      <div class="grid-group grid-group-3-col">
+        <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
+        <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
+        <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
+      </div>
+      <div class="grid-group grid-group-2-col notes-group">
+        <div class="textarea-group">
+          <label>Pre-Trade Notes</label>
+          <textarea v-model="form.notes_pre_trade" rows="4"></textarea>
+        </div>
+        <div class="textarea-group">
+          <label>Post-Trade Notes</label>
+          <textarea v-model="form.notes_post_trade" rows="4"></textarea>
+        </div>
+      </div>
+       <div class="textarea-group">
         <label>General Notes</label>
         <textarea v-model="form.notes" rows="4"></textarea>
       </div>
-    </div>
+    </fieldset>
 
     <div class="form-actions">
       <BaseButton type="submit">Save Trade</BaseButton>
@@ -107,19 +116,38 @@ const handleSubmit = () => {
   gap: var(--semantic-size-stack-lg);
   max-height: 70vh;
   overflow-y: auto;
-  padding-right: 1rem; /* Per dare spazio alla scrollbar */
+  padding: 0.5rem;
+  margin-right: -1rem; /* Counter-act padding for scrollbar */
 }
 
-.form-grid {
+.form-section {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--semantic-border-radius-lg);
+  padding: var(--semantic-size-inset-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-md);
+  background-color: var(--color-background-subtle);
+}
+
+.form-section legend {
+  padding: 0 var(--semantic-size-inset-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-default);
+}
+
+.grid-group {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--semantic-size-stack-md);
 }
 
-.notes-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--semantic-size-stack-md);
+.grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.grid-group-5-col { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.grid-group-3-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.grid-group-2-col { grid-template-columns: 1fr 1fr; }
+
+.notes-group {
+  margin-top: var(--semantic-size-stack-sm);
 }
 
 .textarea-group {
@@ -128,22 +156,19 @@ const handleSubmit = () => {
   gap: var(--semantic-size-stack-xxs);
 }
 
-.textarea-group.full-width {
-  grid-column: 1 / -1;
-}
-
 .textarea-group label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-subtle);
+  margin-left: 2px;
 }
 
 textarea {
   width: 100%;
   padding: var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-md);
-  border: 1px solid var(--color-border-subtle);
-  background-color: var(--color-background-subtle);
+  border: 1px solid var(--color-border-muted);
+  background-color: var(--color-background-default);
   color: var(--color-text-default);
   font-family: inherit;
   font-size: inherit;
@@ -157,8 +182,9 @@ textarea:focus {
 }
 
 .form-actions {
-  margin-top: var(--semantic-size-stack-md);
+  margin-top: var(--semantic-size-stack-sm);
   display: flex;
   justify-content: flex-end;
+  padding-right: 1rem;
 }
 </style>
