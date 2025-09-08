@@ -25,6 +25,10 @@ const getInitialFormState = () => ({
   stop_loss_price: null,
   take_profit_price: null,
   position_size: null,
+  lowest_price_during_trade: null,
+  highest_price_during_trade: null,
+  entry_timestamp: null,
+  exit_timestamp: null,
   notes: '',
   notes_pre_trade: '',
   notes_post_trade: '',
@@ -70,12 +74,18 @@ const handleSubmit = () => {
       <BaseInput v-model.number="form.exit_price" label="Exit Price" type="number" step="0.01" />
       <BaseInput v-model.number="form.stop_loss_price" label="Stop Loss" type="number" step="0.01" />
       <BaseInput v-model.number="form.take_profit_price" label="Take Profit" type="number" step="0.01" />
+      <BaseInput v-model.number="form.lowest_price_during_trade" label="Lowest Price (MAE)" type="number" step="0.01" />
+      <BaseInput v-model.number="form.highest_price_during_trade" label="Highest Price (MFE)" type="number" step="0.01" />
 
       <!-- Details -->
       <BaseInput v-model.number="form.position_size" label="Position Size" type="number" step="0.01" />
       <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
       <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
       <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
+
+      <!-- Timestamps -->
+      <BaseInput v-model="form.entry_timestamp" label="Entry Timestamp" type="datetime-local" />
+      <BaseInput v-model="form.exit_timestamp" label="Exit Timestamp" type="datetime-local" />
     </div>
 
     <!-- Notes -->
