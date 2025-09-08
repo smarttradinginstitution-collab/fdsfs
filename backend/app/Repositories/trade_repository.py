@@ -367,11 +367,12 @@ class TradeRepository:
         user_id: UUID,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        setups: Optional[List[str]] = None,
     ) -> List[dict]:
         """
         Restituisce dati aggregati per giorno per il calendario.
         Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
-        Filtra per un intervallo di date se fornito.
+        Filtra per un intervallo di date e per setup, se forniti.
         """
         day_alias = func.date_trunc("day", Trade.entry_timestamp).label("day")
         q = (
@@ -389,6 +390,8 @@ class TradeRepository:
             q = q.where(func.date(Trade.entry_timestamp) >= start_date)
         if end_date:
             q = q.where(func.date(Trade.entry_timestamp) <= end_date)
+        if setups:
+            q = q.where(Trade.setup.in_(setups))
 
         q = q.group_by(day_alias).order_by(day_alias.asc())
         res = await self.db.execute(q)
