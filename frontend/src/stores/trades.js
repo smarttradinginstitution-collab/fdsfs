@@ -21,6 +21,7 @@ export const useTradesStore = defineStore('trades', {
       { id: 7, ticker: 'META', type: 'Long', pnl: 210.00, date: '2025-07-30', strategy: 'Momentum', risk: 70, openTime: '10:10:10', instrument: 'Stocks', commission: 5.00, netROI: 1.5, rMultiple: 3.00, ticks: 84, bestExit: 315.00, volume: 50 },
     ],
     dashboardStats: null,
+    calendarData: [],
     isLoading: false,
   }),
 
@@ -255,7 +256,15 @@ export const useTradesStore = defineStore('trades', {
     },
 
     calendarDataByMonth() {
-      const { dailyDataForCalendar } = this.processedData;
+      const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
+        acc[entry.date] = {
+          totalPnl: entry.pnl,
+          tradeCount: entry.trade_count,
+          winningTrades: entry.winning_trades_count,
+        };
+        return acc;
+      }, {});
+
       const filterStore = useFilterStore();
       const viewDate = new Date(filterStore.endDate);
       const year = viewDate.getFullYear();
@@ -264,22 +273,26 @@ export const useTradesStore = defineStore('trades', {
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDayOfWeek = new Date(year, month, 1).getDay();
       const calendarDays = [];
-      const offset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1;
+      const offset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1; // Lunedì = 0, Domenica = 6
+
+      // Aggiungi giorni placeholder all'inizio
       for (let i = 0; i < offset; i++) {
         calendarDays.push({ isPlaceholder: true, key: `ph-start-${i}` });
       }
 
+      // Aggiungi i giorni del mese
       for (let i = 1; i <= daysInMonth; i++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         calendarDays.push({
           date: i,
           fullDate: dateStr,
-          dailyData: dailyDataForCalendar[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
+          dailyData: dailyDataFromBackend[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
           isPlaceholder: false,
           key: dateStr,
         });
       }
 
+      // Completa l'ultima settimana con placeholder
       while (calendarDays.length % 7 !== 0) {
         calendarDays.push({ isPlaceholder: true, key: `ph-end-${calendarDays.length}` });
       }
@@ -384,6 +397,24 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    async fetchCalendarData() {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error('User not authenticated, cannot fetch calendar data.');
+        return;
+      }
+
+      try {
+        const response = await apiClient.get(`/api/v1/trades/calendar/data?user_id=${userId}`);
+        this.calendarData = response.data;
+      } catch (error) {
+        console.error('Error fetching calendar data:', error);
+        // Optionally, set an error state here
+      }
+    },
+
     async addTrade(tradeData) {
       this.isLoading = true;
       try {
@@ -436,6 +467,7 @@ export const useTradesStore = defineStore('trades', {
 
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
+        await this.fetchCalendarData();
 
         return newTradeFromServer;
       } catch (error) {
