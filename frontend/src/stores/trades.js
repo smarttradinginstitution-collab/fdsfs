@@ -467,6 +467,7 @@ export const useTradesStore = defineStore('trades', {
 
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
+        await this.fetchCalendarData();
 
         return newTradeFromServer;
       } catch (error) {
