@@ -217,10 +217,9 @@ class TradesController:
         user_id: UUID = Query(..., description="ID utente"),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
-        setups: Optional[List[str]] = Query(None, description="Filtra per setup specifici"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
-        print(f"DEBUG: Received filters for get_performance_metrics: start_date={start_date}, end_date={end_date}, setups={setups}")
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
