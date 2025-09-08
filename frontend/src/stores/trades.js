@@ -5,6 +5,7 @@
 
 import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
+import { useAuthStore } from './auth';
 import apiClient from '../services/api';
 
 export const useTradesStore = defineStore('trades', {
@@ -365,11 +366,15 @@ export const useTradesStore = defineStore('trades', {
 
   actions: {
     async fetchDashboardStats() {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error('User not authenticated, cannot fetch dashboard stats.');
+        return;
+      }
+
       try {
-        // We need a user_id to fetch the stats.
-        // For now, I'll hardcode a user_id.
-        // In a real app, this would come from the auth store.
-        const userId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; // Example UUID
         const response = await apiClient.get(`/api/v1/trades/performance/metrics?user_id=${userId}`);
         this.dashboardStats = response.data;
       } catch (error) {
