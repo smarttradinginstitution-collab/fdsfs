@@ -88,6 +88,25 @@ export const useUiStore = defineStore('ui', () => {
   // Salviamo lo stato della sidebar prima di aprire un modale
   let sidebarStateBeforeModal = false;
 
+  // --- ADD TRADE MODAL ---
+  const isAddTradeModalOpen = ref(false);
+
+  function openAddTradeModal() {
+    isAddTradeModalOpen.value = true;
+    if (!isMobile.value) {
+      sidebarStateBeforeModal = isSidebarCollapsed.value;
+      isSidebarCollapsed.value = true;
+    }
+  }
+
+  function closeAddTradeModal() {
+    isAddTradeModalOpen.value = false;
+    if (!isMobile.value) {
+      isSidebarCollapsed.value = sidebarStateBeforeModal;
+    }
+  }
+
+
   function openDailySummaryModal(date) {
     selectedDate.value = date;
     isDailySummaryModalOpen.value = true;
@@ -140,6 +159,7 @@ export const useUiStore = defineStore('ui', () => {
     selectedDate,
     isWeeklySummaryModalOpen,
     selectedWeekIndex,
+    isAddTradeModalOpen,
 
     toggleSidebar,
     toggleMobileMenu,
@@ -152,5 +172,7 @@ export const useUiStore = defineStore('ui', () => {
     closeDailySummaryModal,
     openWeeklySummaryModal,
     closeWeeklySummaryModal,
+    openAddTradeModal,
+    closeAddTradeModal,
   };
 });
