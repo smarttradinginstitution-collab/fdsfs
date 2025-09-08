@@ -183,6 +183,18 @@ class TradesController:
         return {"deleted": True}
 
     # --------------------------
+    # DISTINCT SETUPS
+    # --------------------------
+    async def list_setups(
+        self,
+        user_id: UUID = Query(..., description="ID utente"),
+        db: AsyncSession = Depends(get_db),
+    ) -> List[str]:
+        """Ritorna la lista di setup univoci per l'utente."""
+        repo = TradeRepository(db)
+        return await repo.get_distinct_setups(user_id)
+
+    # --------------------------
     # CALENDAR DATA
     # --------------------------
     async def calendar_data(

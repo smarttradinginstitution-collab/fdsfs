@@ -341,6 +341,25 @@ class TradeRepository:
         return (res.rowcount or 0) > 0
 
     # ──────────────────────────────────────────────────────────────────────
+    # DISTINCT VALUES (per filtri UI)
+    # ──────────────────────────────────────────────────────────────────────
+    async def get_distinct_setups(self, user_id: UUID) -> List[str]:
+        """
+        Ritorna una lista di tutti i valori "setup" univoci e non-null per un utente.
+        Utile per popolare i filtri dell'interfaccia utente.
+        """
+        q = (
+            select(Trade.setup)
+            .where(Trade.user_id == user_id)
+            .where(Trade.setup.is_not(None))
+            .distinct()
+            .order_by(Trade.setup)
+        )
+        res = await self.db.execute(q)
+        # scalars().all() estrae la prima colonna di ogni riga
+        return res.scalars().all()
+
+    # ──────────────────────────────────────────────────────────────────────
     # CALENDAR DATA
     # ──────────────────────────────────────────────────────────────────────
     async def get_calendar_data(self, user_id: UUID) -> List[dict]:
