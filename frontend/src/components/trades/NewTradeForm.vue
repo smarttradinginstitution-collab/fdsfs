@@ -121,19 +121,31 @@ const handleSubmit = () => {
 }
 
 .form-section {
-  border: 1px solid var(--color-border-subtle);
+  /* Usiamo solo il bordo superiore come linea di separazione */
+  border: none;
+  border-top: 1px solid var(--color-border-muted);
   border-radius: var(--semantic-border-radius-lg);
-  padding: var(--semantic-size-inset-lg);
+  padding: var(--semantic-size-inset-xl) var(--semantic-size-inset-lg);
+  margin-top: var(--semantic-size-stack-lg);
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
-  background-color: var(--color-background-subtle);
+  position: relative; /* Necessario per posizionare la legenda */
 }
 
 .form-section legend {
-  padding: 0 var(--semantic-size-inset-sm);
+  /* Stile "Pill" */
+  position: absolute;
+  top: 0;
+  left: 20px;
+  transform: translateY(-50%); /* Allinea verticalmente sulla linea */
+  background-color: var(--color-background-default); /* Lo stesso dello sfondo della modale */
+  padding: 2px var(--semantic-size-inset-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-default);
+  color: var(--color-text-accent);
+  border-radius: var(--semantic-border-radius-pill);
+  border: 1px solid var(--color-border-muted);
+  font-size: var(--font-size-sm);
 }
 
 .grid-group {
