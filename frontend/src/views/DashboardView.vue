@@ -13,7 +13,8 @@ import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
-import StatSelector from '../components/dashboard/StatSelector.vue';
+import PopoverMenu from '../components/ui/PopoverMenu.vue';
+import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
@@ -25,7 +26,7 @@ import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 
-const isSettingsModalOpen = ref(false);
+const popoverRef = ref(null);
 
 const handleNewTrade = async (tradeData) => {
   try {
@@ -80,10 +81,18 @@ onMounted(() => {
 
 
     <div class="action-bar">
-      <BaseButton variant="secondary" @click="isSettingsModalOpen = true">
-        <SettingsIcon />
-        <span>Modifica Widget</span>
-      </BaseButton>
+      <PopoverMenu ref="popoverRef">
+        <template #trigger="{ toggle }">
+          <BaseButton variant="secondary" @click="toggle">
+            <SettingsIcon />
+            <span>Modifica Widget</span>
+          </BaseButton>
+        </template>
+        <template #content="{ close }">
+          <StatSelectorMenu @close="close" />
+        </template>
+      </PopoverMenu>
+
       <BaseButton variant="primary" @click="uiStore.openAddTradeModal">
         <PlusIcon />
         <span>Nuovo Trade</span>
@@ -107,12 +116,6 @@ onMounted(() => {
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
       <template #header><h3>Log New Trade</h3></template>
       <NewTradeForm @submit="handleNewTrade" />
-    </BaseModal>
-
-    <!-- Modale per Personalizzare le Statistiche -->
-    <BaseModal :show="isSettingsModalOpen" @close="isSettingsModalOpen = false">
-      <template #header><h3>Customize Dashboard Stats</h3></template>
-      <template #default><StatSelector /></template>
     </BaseModal>
 
     <!-- Modale per il Riepilogo Giornaliero -->
