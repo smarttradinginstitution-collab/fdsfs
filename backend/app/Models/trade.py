@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import enum
 import uuid
 from typing import Any, Optional, TYPE_CHECKING
 
@@ -17,7 +18,7 @@ from sqlalchemy import (
     Float,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
@@ -26,6 +27,12 @@ if TYPE_CHECKING:
     # Solo per Pylance / type-checker (evita cicli d'import)
     from app.Models.trades_tags import TradesTags
     from app.Models.tag import Tag
+
+
+# Definizione dell'ENUM Python che corrisponde a 'trade_direction' in PostgreSQL
+class TradeDirectionEnum(enum.Enum):
+    Long = "Long"
+    Short = "Short"
 
 
 class Trade(Base):
@@ -70,9 +77,10 @@ class Trade(Base):
 
     # extra
     symbol: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    direction: Mapped[Optional[str]] = mapped_column(
-        String(50), nullable=True
-    )  # in DB è enum
+    direction: Mapped[Optional[TradeDirectionEnum]] = mapped_column(
+        ENUM(TradeDirectionEnum, name="trade_direction", create_type=False),
+        nullable=True,
+    )
     emotional_state: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     mistakes: Mapped[Optional[list[str]]] = mapped_column(ARRAY(Text), nullable=True)
     notes_pre_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

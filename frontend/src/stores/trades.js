@@ -403,9 +403,9 @@ export const useTradesStore = defineStore('trades', {
       };
 
       try {
-        // 2. Esegui la chiamata API POST
+        // 2. Esegui la chiamata API POST (con slash finale per evitare redirect)
         const response = await apiClient.post(
-          `/api/v1/trades?user_id=${userId}`,
+          `/api/v1/trades/?user_id=${userId}`,
           payload
         );
 
