@@ -121,33 +121,35 @@ const handleSubmit = () => {
 }
 
 .form-section {
-  border: 1px solid var(--color-border-muted);
-  border-radius: var(--semantic-border-radius-lg);
-  padding: var(--semantic-size-inset-xl) var(--semantic-size-inset-lg);
+  border: none;
+  border-top: 1px solid var(--semantic-color-border-default);
+  padding: var(--semantic-size-inset-xl) 0 0 0;
   margin-top: var(--semantic-size-stack-lg);
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
   position: relative;
-  background-color: var(--color-background-subtle);
 }
 
 .form-section legend {
   position: absolute;
   top: 0;
-  left: 20px;
+  left: 16px;
   transform: translateY(-50%);
-  background-color: var(--color-background-subtle);
-  padding: 0 var(--semantic-size-inset-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-accent);
-  font-size: var(--font-size-sm);
+  background-color: var(--semantic-color-surface-primary);
+  padding: 2px var(--semantic-size-inset-md);
+  font-weight: var(--base-font-weight-semibold);
+  color: var(--semantic-color-text-interactive);
+  border-radius: var(--base-border-radius-full);
+  font-size: var(--base-font-size-sm);
+  border: 1px solid var(--semantic-color-border-default);
   width: auto;
 }
 
 .grid-group {
   display: grid;
   gap: var(--semantic-size-stack-md);
+  padding: 0 var(--semantic-size-inset-xs);
 }
 
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -166,19 +168,18 @@ const handleSubmit = () => {
 }
 
 .textarea-group label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-subtle);
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-secondary);
   margin-left: 2px;
 }
 
 textarea {
   width: 100%;
   padding: var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-md);
-  border: 1px solid var(--color-border-muted);
-  background-color: var(--color-background-default);
-  color: var(--color-text-default);
+  border-radius: var(--semantic-border-radius-interactive);
+  border: 1px solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-primary);
+  color: var(--semantic-color-text-primary);
   font-family: inherit;
   font-size: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -186,8 +187,8 @@ textarea {
 
 textarea:focus {
   outline: none;
-  border-color: var(--color-border-accent);
-  box-shadow: 0 0 0 2px var(--color-focus-ring);
+  border-color: var(--semantic-color-border-focus);
+  box-shadow: var(--semantic-effect-shadow-focus-ring);
 }
 
 .form-actions {
