@@ -397,7 +397,30 @@ export const useTradesStore = defineStore('trades', {
         symbol: tradeData.ticker,
         p_l: tradeData.pnl,
         setup: tradeData.setup,
+        direction: tradeData.direction,
+        entry_price: tradeData.entry_price,
+        exit_price: tradeData.exit_price,
+        stop_loss_price: tradeData.stop_loss_price,
+        take_profit_price: tradeData.take_profit_price,
+        position_size: tradeData.position_size,
+        lowest_price_during_trade: tradeData.lowest_price_during_trade,
+        highest_price_during_trade: tradeData.highest_price_during_trade,
+        entry_timestamp: tradeData.entry_timestamp,
+        exit_timestamp: tradeData.exit_timestamp,
+        notes: tradeData.notes,
+        notes_pre_trade: tradeData.notes_pre_trade,
+        notes_post_trade: tradeData.notes_post_trade,
+        emotional_state: tradeData.emotional_state,
+        mistakes: tradeData.mistakes,
+        tags: tradeData.tags,
       };
+
+      // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === null || payload[key] === undefined || payload[key] === '') {
+          delete payload[key];
+        }
+      });
 
       try {
         // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
