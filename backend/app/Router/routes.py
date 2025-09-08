@@ -148,6 +148,6 @@ router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
 router_trades.post("/", response_model=TradeRead)(trades.create_trade)
 router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
 router_trades.get("/calendar/data")(trades.calendar_data)
-router_trades.get("/vantage-score")(trades.vantage_score)
+router_trades.get("/performance/metrics")(trades.get_performance_metrics)
 
 router.include_router(router_trades)
