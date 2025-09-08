@@ -389,54 +389,31 @@ export const useTradesStore = defineStore('trades', {
 
       if (!userId) {
         console.error('User not authenticated, cannot add trade.');
-        // Potresti voler lanciare un errore o notificarlo all'utente
-        return;
+        throw new Error('User not authenticated');
       }
 
-      // 1. Mappa i dati dal form al payload atteso dal backend
+      // Mappa i dati dal form al payload atteso dal backend
       const payload = {
         symbol: tradeData.ticker,
         p_l: tradeData.pnl,
         setup: tradeData.setup,
-        direction: tradeData.direction,
-        entry_price: tradeData.entry_price,
-        exit_price: tradeData.exit_price,
-        stop_loss_price: tradeData.stop_loss_price,
-        take_profit_price: tradeData.take_profit_price,
-        position_size: tradeData.position_size,
-        notes: tradeData.notes,
-        notes_pre_trade: tradeData.notes_pre_trade,
-        notes_post_trade: tradeData.notes_post_trade,
-        emotional_state: tradeData.emotional_state,
-        mistakes: tradeData.mistakes,
-        tags: tradeData.tags,
       };
 
-      // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
-      Object.keys(payload).forEach(key => {
-        if (payload[key] === null || payload[key] === undefined) {
-          delete payload[key];
-        }
-      });
-
       try {
-        // 2. Esegui la chiamata API POST (con slash finale per evitare redirect)
+        // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
         const response = await apiClient.post(
           `/api/v1/trades/?user_id=${userId}`,
           payload
         );
 
-        // 3. Aggiungi il trade restituito (con ID e dati completi) allo state
         const newTradeFromServer = response.data;
         this.trades.unshift(newTradeFromServer);
 
-        // 4. (Opzionale ma consigliato) Aggiorna le statistiche
+        // Aggiorna le statistiche
         await this.fetchDashboardStats();
-
       } catch (error) {
         console.error('Error adding trade:', error);
-        // Gestisci l'errore, magari mostrando una notifica all'utente
-        throw error; // Rilancia l'errore se vuoi che il componente possa reagire
+        throw error;
       }
     },
   },
