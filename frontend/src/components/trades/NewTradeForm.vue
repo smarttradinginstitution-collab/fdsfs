@@ -110,24 +110,25 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
+/* Diagnostic Styles: Using hardcoded values to bypass CSS variables */
 .new-trade-form {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-lg);
+  gap: 24px; /* was --semantic-size-stack-lg */
   max-height: 70vh;
   overflow-y: auto;
   padding: 0.5rem;
-  margin-right: -1rem; /* Counter-act padding for scrollbar */
+  margin-right: -1rem;
 }
 
 .form-section {
   border: none;
-  border-top: 1px solid var(--semantic-color-border-default);
-  padding: var(--semantic-size-inset-xl) 0 0 0;
-  margin-top: var(--semantic-size-stack-lg);
+  border-top: 1px solid #E5E7EB; /* was --semantic-color-border-default */
+  padding: 32px 0 0 0; /* was --semantic-size-inset-xl */
+  margin-top: 24px; /* was --semantic-size-stack-lg */
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: 16px; /* was --semantic-size-stack-md */
   position: relative;
 }
 
@@ -136,20 +137,20 @@ const handleSubmit = () => {
   top: 0;
   left: 16px;
   transform: translateY(-50%);
-  background-color: var(--semantic-color-surface-primary);
-  padding: 2px var(--semantic-size-inset-md);
-  font-weight: var(--base-font-weight-semibold);
-  color: var(--semantic-color-text-interactive);
-  border-radius: var(--base-border-radius-full);
-  font-size: var(--base-font-size-sm);
-  border: 1px solid var(--semantic-color-border-default);
+  background-color: #FFFFFF; /* was --semantic-color-surface-primary */
+  padding: 2px 12px; /* was 2px var(--semantic-size-inset-md) */
+  font-weight: 600; /* was --base-font-weight-semibold */
+  color: #2563EB; /* was --semantic-color-text-interactive */
+  border-radius: 9999px; /* was --base-border-radius-full */
+  font-size: 14px; /* was --base-font-size-sm */
+  border: 1px solid #E5E7EB; /* was --semantic-color-border-default */
   width: auto;
 }
 
 .grid-group {
   display: grid;
-  gap: var(--semantic-size-stack-md);
-  padding: 0 var(--semantic-size-inset-xs);
+  gap: 16px; /* was --semantic-size-stack-md */
+  padding: 0 8px; /* was 0 var(--semantic-size-inset-xs) */
 }
 
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -158,28 +159,29 @@ const handleSubmit = () => {
 .grid-group-2-col { grid-template-columns: 1fr 1fr; }
 
 .notes-group {
-  margin-top: var(--semantic-size-stack-sm);
+  margin-top: 16px; /* was --semantic-size-stack-sm */
 }
 
 .textarea-group {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xxs);
+  gap: 4px; /* was --semantic-size-stack-xxs */
 }
 
 .textarea-group label {
-  font: var(--semantic-font-style-label-sm);
-  color: var(--semantic-color-text-secondary);
+  font-size: 12px; /* was font-style-label-sm */
+  font-weight: 500;
+  color: #4B5563; /* was --semantic-color-text-secondary */
   margin-left: 2px;
 }
 
 textarea {
   width: 100%;
-  padding: var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-interactive);
-  border: 1px solid var(--semantic-color-border-default);
-  background-color: var(--semantic-color-surface-primary);
-  color: var(--semantic-color-text-primary);
+  padding: 8px; /* was --semantic-size-inset-sm */
+  border-radius: 6px; /* was --semantic-border-radius-interactive */
+  border: 1px solid #D1D5DB; /* was --semantic-color-border-default */
+  background-color: #FFFFFF; /* was --semantic-color-surface-primary */
+  color: #111827; /* was --semantic-color-text-primary */
   font-family: inherit;
   font-size: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -187,12 +189,12 @@ textarea {
 
 textarea:focus {
   outline: none;
-  border-color: var(--semantic-color-border-focus);
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+  border-color: #3B82F6; /* was --semantic-color-border-focus */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); /* was --semantic-effect-shadow-focus-ring */
 }
 
 .form-actions {
-  margin-top: var(--semantic-size-stack-sm);
+  margin-top: 16px; /* was --semantic-size-stack-sm */
   display: flex;
   justify-content: flex-end;
   padding-right: 1rem;
