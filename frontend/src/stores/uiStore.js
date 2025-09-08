@@ -21,6 +21,13 @@ export const useUiStore = defineStore('ui', () => {
   const isCalendarTradeCountVisible = ref(true);
   const isCalendarWinRateVisible = ref(true);
 
+  // --- NOTIFICATION STATE ---
+  const notification = ref({
+    show: false,
+    message: '',
+    type: 'success', // 'success' or 'error'
+  });
+
   // --- LOGICA RESPONSIVE ---
   /*
     BEST PRACTICE: Sincronizzazione JS e CSS tramite Token
@@ -79,6 +86,24 @@ export const useUiStore = defineStore('ui', () => {
       visibleStatKeys.value.splice(index, 1);
     }
   }
+
+  // --- NOTIFICATION ACTIONS ---
+  let notificationTimeout = null;
+
+  function showNotification({ message, type = 'success' }) {
+    if (notificationTimeout) {
+      clearTimeout(notificationTimeout);
+    }
+    notification.value = { show: true, message, type };
+    notificationTimeout = setTimeout(() => {
+      hideNotification();
+    }, 4000); // Hide after 4 seconds
+  }
+
+  function hideNotification() {
+    notification.value.show = false;
+  }
+
 
   // --- STATO E AZIONI PER I MODALI ---
   const isDailySummaryModalOpen = ref(false);
@@ -174,5 +199,9 @@ export const useUiStore = defineStore('ui', () => {
     closeWeeklySummaryModal,
     openAddTradeModal,
     closeAddTradeModal,
+
+    // Notifications
+    notification,
+    showNotification,
   };
 });

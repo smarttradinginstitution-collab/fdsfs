@@ -21,6 +21,7 @@ export const useTradesStore = defineStore('trades', {
       { id: 7, ticker: 'META', type: 'Long', pnl: 210.00, date: '2025-07-30', strategy: 'Momentum', risk: 70, openTime: '10:10:10', instrument: 'Stocks', commission: 5.00, netROI: 1.5, rMultiple: 3.00, ticks: 84, bestExit: 315.00, volume: 50 },
     ],
     dashboardStats: null,
+    isLoading: false,
   }),
 
   getters: {
@@ -384,45 +385,46 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async addTrade(tradeData) {
-      const authStore = useAuthStore();
-      const userId = authStore.user?.id;
-
-      if (!userId) {
-        console.error('User not authenticated, cannot add trade.');
-        throw new Error('User not authenticated');
-      }
-
-      // Mappa i dati dal form al payload atteso dal backend
-      const payload = {
-        symbol: tradeData.ticker,
-        p_l: tradeData.pnl,
-        setup: tradeData.setup,
-        direction: tradeData.direction,
-        entry_price: tradeData.entry_price,
-        exit_price: tradeData.exit_price,
-        stop_loss_price: tradeData.stop_loss_price,
-        take_profit_price: tradeData.take_profit_price,
-        position_size: tradeData.position_size,
-        lowest_price_during_trade: tradeData.lowest_price_during_trade,
-        highest_price_during_trade: tradeData.highest_price_during_trade,
-        entry_timestamp: tradeData.entry_timestamp,
-        exit_timestamp: tradeData.exit_timestamp,
-        notes: tradeData.notes,
-        notes_pre_trade: tradeData.notes_pre_trade,
-        notes_post_trade: tradeData.notes_post_trade,
-        emotional_state: tradeData.emotional_state,
-        mistakes: tradeData.mistakes,
-        tags: tradeData.tags,
-      };
-
-      // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
-      Object.keys(payload).forEach(key => {
-        if (payload[key] === null || payload[key] === undefined || payload[key] === '') {
-          delete payload[key];
-        }
-      });
-
+      this.isLoading = true;
       try {
+        const authStore = useAuthStore();
+        const userId = authStore.user?.id;
+
+        if (!userId) {
+          console.error('User not authenticated, cannot add trade.');
+          throw new Error('User not authenticated');
+        }
+
+        // Mappa i dati dal form al payload atteso dal backend
+        const payload = {
+          symbol: tradeData.ticker,
+          p_l: tradeData.pnl,
+          setup: tradeData.setup,
+          direction: tradeData.direction,
+          entry_price: tradeData.entry_price,
+          exit_price: tradeData.exit_price,
+          stop_loss_price: tradeData.stop_loss_price,
+          take_profit_price: tradeData.take_profit_price,
+          position_size: tradeData.position_size,
+          lowest_price_during_trade: tradeData.lowest_price_during_trade,
+          highest_price_during_trade: tradeData.highest_price_during_trade,
+          entry_timestamp: tradeData.entry_timestamp,
+          exit_timestamp: tradeData.exit_timestamp,
+          notes: tradeData.notes,
+          notes_pre_trade: tradeData.notes_pre_trade,
+          notes_post_trade: tradeData.notes_post_trade,
+          emotional_state: tradeData.emotional_state,
+          mistakes: tradeData.mistakes,
+          tags: tradeData.tags,
+        };
+
+        // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === null || payload[key] === undefined || payload[key] === '') {
+            delete payload[key];
+          }
+        });
+
         // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
         const response = await apiClient.post(
           `/api/v1/trades/?user_id=${userId}`,
@@ -434,9 +436,13 @@ export const useTradesStore = defineStore('trades', {
 
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
+
+        return newTradeFromServer;
       } catch (error) {
         console.error('Error adding trade:', error);
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
   },

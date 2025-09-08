@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router';
 import AppSidebar from './components/layout/AppSidebar.vue';
 import DashboardHeader from './components/layout/DashboardHeader.vue';
 import MainLayout from './components/layout/MainLayout.vue';
+import ToastNotification from './components/ui/ToastNotification.vue';
 import { useUiStore } from './stores/uiStore';
 
 const uiStore = useUiStore();
@@ -40,6 +41,9 @@ const isPublicRoute = computed(() => route.meta.public);
       class="mobile-menu-overlay"
       @click="uiStore.closeMobileMenu"
     ></div>
+
+    <!-- Toast Notification -->
+    <ToastNotification />
   </div>
 </template>
 
