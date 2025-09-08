@@ -365,6 +365,43 @@ export const useTradesStore = defineStore('trades', {
   },
 
   actions: {
+    async addTrade(newTrade) {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error('User not authenticated, cannot add trade.');
+        // In a real app, you might want to throw an error or show a notification
+        return;
+      }
+
+      // 1. Transform the form data to match the backend's TradeCreate schema
+      const payload = {
+        symbol: newTrade.ticker,
+        p_l: newTrade.pnl,
+        setup: newTrade.setup,
+        // Add other fields here if the form is extended in the future
+      };
+
+      try {
+        // 2. Make the API call to create the new trade
+        const response = await apiClient.post(`/api/v1/trades/?user_id=${userId}`, payload);
+        const createdTrade = response.data;
+
+        // 3. Perform optimistic UI updates
+        // Add the newly created trade to the start of the local trades array
+        this.trades.unshift(createdTrade);
+
+        // 4. Re-fetch dashboard stats to ensure all calculations are updated
+        await this.fetchDashboardStats();
+
+      } catch (error) {
+        console.error('Error adding trade:', error);
+        // Re-throw the error so the component can catch it and show a notification
+        throw error;
+      }
+    },
+
     async fetchDashboardStats() {
       const authStore = useAuthStore();
       const userId = authStore.user?.id;
@@ -379,25 +416,7 @@ export const useTradesStore = defineStore('trades', {
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        // Optionally, set an error state here
       }
-    },
-
-    addTrade(newTrade) {
-      const fullTrade = {
-        ...newTrade,
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        openTime: new Date().toLocaleTimeString(),
-        instrument: 'Stocks',
-        commission: 5.00,
-        netROI: Math.random() * 2,
-        rMultiple: Math.random() * 3,
-        ticks: Math.floor(Math.random() * 100),
-        bestExit: newTrade.pnl * 1.1,
-        volume: Math.floor(Math.random() * 1000) + 100,
-      };
-      this.trades.unshift(fullTrade);
     },
   },
 });
