@@ -55,7 +55,7 @@ class TradesController:
             "lowest_price_during_trade": trade.lowest_price_during_trade,
             "highest_price_during_trade": trade.highest_price_during_trade,
             "symbol": trade.symbol,
-            "direction": trade.direction,
+            "direction": trade.direction.value if trade.direction else None,
             "emotional_state": trade.emotional_state,
             "mistakes": trade.mistakes,
             "notes_pre_trade": trade.notes_pre_trade,
