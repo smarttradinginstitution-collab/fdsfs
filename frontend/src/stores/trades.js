@@ -23,6 +23,8 @@ export const useTradesStore = defineStore('trades', {
     dashboardStats: null,
     calendarData: [],
     isLoading: false,
+    isSummaryLoading: false,
+    activeSummary: null,
   }),
 
   getters: {
@@ -157,104 +159,6 @@ export const useTradesStore = defineStore('trades', {
       };
     },
 
-    getDailySummary(state) {
-      return (date) => {
-        if (!date) return null;
-
-        const dailyTrades = state.trades.filter(t => t.date === date);
-        const sortedDailyTrades = [...dailyTrades].sort((a, b) => a.id - b.id);
-
-        const summary = {
-          date,
-          trades: sortedDailyTrades,
-          stats: { netPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, totalCommission: 0, profitFactor: 0, grossProfit: 0, totalVolume: 0 },
-          cumulativePnlForChart: { labels: ['Start'], data: [0] }
-        };
-
-        if (dailyTrades.length === 0) return summary;
-
-        let grossLoss = 0;
-        let cumulativePnl = 0;
-
-        for (const trade of sortedDailyTrades) {
-          summary.stats.netPnl += trade.pnl;
-          summary.stats.tradeCount++;
-          summary.stats.totalCommission += trade.commission;
-          summary.stats.totalVolume += trade.volume;
-
-          if (trade.pnl > 0) {
-            summary.stats.winningTrades++;
-            summary.stats.grossProfit += trade.pnl;
-          } else if (trade.pnl < 0) {
-            summary.stats.losingTrades++;
-            grossLoss += Math.abs(trade.pnl);
-          }
-
-          cumulativePnl += trade.pnl;
-          summary.cumulativePnlForChart.data.push(cumulativePnl);
-          summary.cumulativePnlForChart.labels.push(trade.ticker);
-        }
-
-        summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
-        summary.stats.pnlAfterCommission = summary.stats.netPnl - summary.stats.totalCommission;
-
-        return summary;
-      };
-    },
-
-    getWeeklySummaryDetails(state) {
-      return (weekIndex) => {
-        if (weekIndex === null || weekIndex === undefined) return null;
-
-        const weekData = this.calendarDataByMonth.weeksOfDays[weekIndex];
-        if (!weekData) return null;
-
-        const weekDates = weekData.filter(day => !day.isPlaceholder).map(day => day.fullDate);
-        const weeklyTrades = state.trades.filter(t => weekDates.includes(t.date));
-        const sortedWeeklyTrades = [...weeklyTrades].sort((a, b) => new Date(a.date) - new Date(b.date) || a.id - b.id);
-
-        const startDate = weekDates[0];
-        const endDate = weekDates[weekDates.length - 1];
-
-        const summary = {
-          startDate,
-          endDate,
-          trades: sortedWeeklyTrades,
-          stats: { netPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, totalCommission: 0, profitFactor: 0, grossProfit: 0, totalVolume: 0 },
-          cumulativePnlForChart: { labels: ['Start'], data: [0] }
-        };
-
-        if (weeklyTrades.length === 0) return summary;
-
-        let grossLoss = 0;
-        let cumulativePnl = 0;
-
-        for (const trade of sortedWeeklyTrades) {
-          summary.stats.netPnl += trade.pnl;
-          summary.stats.tradeCount++;
-          summary.stats.totalCommission += trade.commission;
-          summary.stats.totalVolume += trade.volume;
-
-          if (trade.pnl > 0) {
-            summary.stats.winningTrades++;
-            summary.stats.grossProfit += trade.pnl;
-          } else if (trade.pnl < 0) {
-            summary.stats.losingTrades++;
-            grossLoss += Math.abs(trade.pnl);
-          }
-
-          cumulativePnl += trade.pnl;
-          summary.cumulativePnlForChart.data.push(cumulativePnl);
-          summary.cumulativePnlForChart.labels.push(`${trade.date.split('-')[2]} - ${trade.ticker}`);
-        }
-
-        summary.stats.profitFactor = grossLoss > 0 ? summary.stats.grossProfit / grossLoss : (summary.stats.grossProfit > 0 ? Infinity : 0);
-        summary.stats.pnlAfterCommission = summary.stats.netPnl - summary.stats.totalCommission;
-
-        return summary;
-      };
-    },
-
     calendarDataByMonth() {
       const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
         acc[entry.date] = {
@@ -379,6 +283,82 @@ export const useTradesStore = defineStore('trades', {
   },
 
   actions: {
+    async fetchTradeSummaryForPeriod({ startDate, endDate }) {
+      this.isSummaryLoading = true;
+      this.activeSummary = null;
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error("User not authenticated for summary fetch.");
+        this.isSummaryLoading = false;
+        return;
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/', {
+          params: {
+            user_id: userId,
+            start_date: startDate,
+            end_date: endDate,
+          },
+        });
+
+        const trades = response.data;
+        const sortedTrades = [...trades].sort((a, b) => new Date(a.entry_timestamp) - new Date(b.entry_timestamp));
+
+        const summary = {
+          startDate,
+          endDate,
+          trades: sortedTrades,
+          stats: {
+            netPnl: 0,
+            tradeCount: 0,
+            winningTrades: 0,
+            losingTrades: 0,
+            profitFactor: 0,
+            grossProfit: 0,
+            grossLoss: 0,
+          },
+          cumulativePnlForChart: { labels: ['Start'], data: [0] }
+        };
+
+        if (trades.length > 0) {
+          let cumulativePnl = 0;
+
+          for (const trade of sortedTrades) {
+            const pnl = trade.p_l || 0;
+            summary.stats.netPnl += pnl;
+            summary.stats.tradeCount++;
+
+            if (pnl > 0) {
+              summary.stats.winningTrades++;
+              summary.stats.grossProfit += pnl;
+            } else if (pnl < 0) {
+              summary.stats.losingTrades++;
+              summary.stats.grossLoss += Math.abs(pnl);
+            }
+
+            cumulativePnl += pnl;
+            summary.cumulativePnlForChart.data.push(cumulativePnl);
+            summary.cumulativePnlForChart.labels.push(trade.symbol);
+          }
+
+          summary.stats.profitFactor = summary.stats.grossLoss > 0
+            ? summary.stats.grossProfit / summary.stats.grossLoss
+            : (summary.stats.grossProfit > 0 ? Infinity : 0);
+        }
+
+        this.activeSummary = summary;
+
+      } catch (error) {
+        console.error('Error fetching trade summary:', error);
+        this.activeSummary = { error: 'Failed to load summary.' };
+      } finally {
+        this.isSummaryLoading = false;
+      }
+    },
+
     async fetchDashboardStats() {
       const authStore = useAuthStore();
       const userId = authStore.user?.id;

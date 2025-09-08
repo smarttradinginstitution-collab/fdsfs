@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
@@ -81,6 +82,8 @@ class TradesController:
         min_size: Optional[float] = Query(None),
         max_size: Optional[float] = Query(None),
         tags: Optional[List[str]] = Query(None),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
         repo = TradeRepository(db)
@@ -94,6 +97,8 @@ class TradesController:
             min_size=min_size,
             max_size=max_size,
             tags=tags,
+            start_date=start_date,
+            end_date=end_date,
         )
         out: List[TradeRead] = []
         for trade, tag_names in rows:
