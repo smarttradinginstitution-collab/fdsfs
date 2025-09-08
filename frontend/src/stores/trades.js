@@ -383,21 +383,43 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
-    addTrade(newTrade) {
-      const fullTrade = {
-        ...newTrade,
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        openTime: new Date().toLocaleTimeString(),
-        instrument: 'Stocks',
-        commission: 5.00,
-        netROI: Math.random() * 2,
-        rMultiple: Math.random() * 3,
-        ticks: Math.floor(Math.random() * 100),
-        bestExit: newTrade.pnl * 1.1,
-        volume: Math.floor(Math.random() * 1000) + 100,
+    async addTrade(tradeData) {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error('User not authenticated, cannot add trade.');
+        // Potresti voler lanciare un errore o notificarlo all'utente
+        return;
+      }
+
+      // 1. Mappa i dati dal form al payload atteso dal backend
+      const payload = {
+        symbol: tradeData.ticker, // 'ticker' dal form diventa 'symbol'
+        p_l: tradeData.pnl,       // 'pnl' dal form diventa 'p_l'
+        setup: tradeData.setup,
+        // Altri campi possono essere aggiunti qui se il form li include
       };
-      this.trades.unshift(fullTrade);
+
+      try {
+        // 2. Esegui la chiamata API POST
+        const response = await apiClient.post(
+          `/api/v1/trades?user_id=${userId}`,
+          payload
+        );
+
+        // 3. Aggiungi il trade restituito (con ID e dati completi) allo state
+        // La risposta del backend dovrebbe contenere l'oggetto TradeRead completo
+        const newTradeFromServer = response.data;
+        this.trades.unshift(newTradeFromServer);
+
+        // 4. (Opzionale) Aggiorna le statistiche dopo l'aggiunta
+        await this.fetchDashboardStats();
+
+      } catch (error) {
+        console.error('Error adding trade:', error);
+        // Gestisci l'errore, magari mostrando una notifica all'utente
+      }
     },
   },
 });
