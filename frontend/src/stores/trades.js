@@ -434,6 +434,8 @@ export const useTradesStore = defineStore('trades', {
 
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
+
+        return newTradeFromServer;
       } catch (error) {
         console.error('Error adding trade:', error);
         throw error;

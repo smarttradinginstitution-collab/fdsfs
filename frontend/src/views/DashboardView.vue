@@ -29,11 +29,21 @@ const isSettingsModalOpen = ref(false);
 
 const handleNewTrade = async (tradeData) => {
   try {
-    await tradesStore.addTrade(tradeData);
-    uiStore.closeAddTradeModal(); // Chiudi la modale tramite lo store solo se il trade è stato aggiunto con successo
+    const newTrade = await tradesStore.addTrade(tradeData);
+    if (newTrade) {
+      uiStore.closeAddTradeModal();
+      uiStore.showNotification({
+        message: 'Trade successfully created!',
+        type: 'success',
+      });
+    }
   } catch (error) {
-    // Qui si potrebbe mostrare una notifica di errore all'utente
     console.error('Failed to add trade:', error);
+    const errorMessage = error.response?.data?.detail || 'An unknown error occurred.';
+    uiStore.showNotification({
+      message: `Error: ${errorMessage}`,
+      type: 'error',
+    });
   }
 };
 
