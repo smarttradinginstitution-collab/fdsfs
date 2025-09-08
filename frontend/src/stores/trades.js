@@ -395,12 +395,29 @@ export const useTradesStore = defineStore('trades', {
 
       // 1. Mappa i dati dal form al payload atteso dal backend
       const payload = {
-        symbol: tradeData.ticker, // 'ticker' dal form diventa 'symbol'
-        p_l: tradeData.pnl,       // 'pnl' dal form diventa 'p_l'
+        symbol: tradeData.ticker,
+        p_l: tradeData.pnl,
         setup: tradeData.setup,
-        // Non inviamo 'direction' o altri campi non presenti nel form,
-        // così il backend può usare i suoi valori di default.
+        direction: tradeData.direction,
+        entry_price: tradeData.entry_price,
+        exit_price: tradeData.exit_price,
+        stop_loss_price: tradeData.stop_loss_price,
+        take_profit_price: tradeData.take_profit_price,
+        position_size: tradeData.position_size,
+        notes: tradeData.notes,
+        notes_pre_trade: tradeData.notes_pre_trade,
+        notes_post_trade: tradeData.notes_post_trade,
+        emotional_state: tradeData.emotional_state,
+        mistakes: tradeData.mistakes,
+        tags: tradeData.tags,
       };
+
+      // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === null || payload[key] === undefined) {
+          delete payload[key];
+        }
+      });
 
       try {
         // 2. Esegui la chiamata API POST (con slash finale per evitare redirect)
