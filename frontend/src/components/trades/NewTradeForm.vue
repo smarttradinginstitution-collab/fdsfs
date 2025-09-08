@@ -62,47 +62,60 @@ const handleSubmit = () => {
 
 <template>
   <form class="new-trade-form" @submit.prevent="handleSubmit">
-    <div class="form-grid">
-      <!-- Core Info -->
-      <BaseInput v-model="form.ticker" label="Ticker" placeholder="e.g., AAPL" />
-      <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
-      <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
-      <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />
 
-      <!-- Prices -->
-      <BaseInput v-model.number="form.entry_price" label="Entry Price" type="number" step="0.01" />
-      <BaseInput v-model.number="form.exit_price" label="Exit Price" type="number" step="0.01" />
-      <BaseInput v-model.number="form.stop_loss_price" label="Stop Loss" type="number" step="0.01" />
-      <BaseInput v-model.number="form.take_profit_price" label="Take Profit" type="number" step="0.01" />
-      <BaseInput v-model.number="form.lowest_price_during_trade" label="Lowest Price (MAE)" type="number" step="0.01" />
-      <BaseInput v-model.number="form.highest_price_during_trade" label="Highest Price (MFE)" type="number" step="0.01" />
-
-      <!-- Details -->
-      <BaseInput v-model.number="form.position_size" label="Position Size" type="number" step="0.01" />
-      <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
-      <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
-      <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
-
-      <!-- Timestamps -->
-      <BaseInput v-model="form.entry_timestamp" label="Entry Timestamp" type="datetime-local" />
-      <BaseInput v-model="form.exit_timestamp" label="Exit Timestamp" type="datetime-local" />
-    </div>
-
-    <!-- Notes -->
-    <div class="notes-grid">
-      <div class="textarea-group">
-        <label>Pre-Trade Notes</label>
-        <textarea v-model="form.notes_pre_trade" rows="3"></textarea>
+    <fieldset class="form-section">
+      <legend>Core Information</legend>
+      <div class="grid-group grid-group-4-col">
+        <BaseInput v-model="form.ticker" label="Ticker" placeholder="e.g., AAPL" />
+        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
+        <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
+        <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />
       </div>
-      <div class="textarea-group">
-        <label>Post-Trade Notes</label>
-        <textarea v-model="form.notes_post_trade" rows="3"></textarea>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Prices & Size</legend>
+      <div class="grid-group grid-group-4-col">
+        <BaseInput v-model.number="form.entry_price" label="Entry Price" type="number" step="0.01" />
+        <BaseInput v-model.number="form.exit_price" label="Exit Price" type="number" step="0.01" />
+        <BaseInput v-model.number="form.stop_loss_price" label="Stop Loss" type="number" step="0.01" />
+        <BaseInput v-model.number="form.take_profit_price" label="Take Profit" type="number" step="0.01" />
+        <BaseInput v-model.number="form.lowest_price_during_trade" label="Lowest Price (MAE)" type="number" step="0.01" />
+        <BaseInput v-model.number="form.highest_price_during_trade" label="Highest Price (MFE)" type="number" step="0.01" />
+        <BaseInput v-model.number="form.position_size" label="Position Size" type="number" step="0.01" />
       </div>
-      <div class="textarea-group full-width">
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Timestamps</legend>
+      <div class="grid-group grid-group-2-col">
+        <BaseInput v-model="form.entry_timestamp" label="Entry Timestamp" type="datetime-local" />
+        <BaseInput v-model="form.exit_timestamp" label="Exit Timestamp" type="datetime-local" />
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Analysis & Review</legend>
+      <div class="grid-group grid-group-3-col">
+        <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
+        <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
+        <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
+      </div>
+      <div class="grid-group grid-group-2-col notes-group">
+        <div class="textarea-group">
+          <label>Pre-Trade Notes</label>
+          <textarea v-model="form.notes_pre_trade" rows="4"></textarea>
+        </div>
+        <div class="textarea-group">
+          <label>Post-Trade Notes</label>
+          <textarea v-model="form.notes_post_trade" rows="4"></textarea>
+        </div>
+      </div>
+       <div class="textarea-group">
         <label>General Notes</label>
         <textarea v-model="form.notes" rows="4"></textarea>
       </div>
-    </div>
+    </fieldset>
 
     <div class="form-actions">
       <BaseButton type="submit">Save Trade</BaseButton>
@@ -111,50 +124,76 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
+/* Using hardcoded values for diagnosis to bypass any CSS token/variable issues */
 .new-trade-form {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-lg);
+  gap: 16px;
   max-height: 70vh;
   overflow-y: auto;
-  padding-right: 1rem; /* Per dare spazio alla scrollbar */
+  padding: 8px;
+  margin-right: -12px;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--semantic-size-stack-md);
+.form-section {
+  border: none;
+  border-top: 1px solid #E5E7EB; /* light gray */
+  padding: 24px 0 0 0;
+  margin-top: 24px;
+  position: relative;
 }
 
-.notes-grid {
+.form-section:first-of-type {
+  margin-top: 0;
+}
+
+.form-section legend {
+  position: absolute;
+  top: 0;
+  left: 16px;
+  transform: translateY(-50%);
+  background: #FFFFFF; /* Match modal background */
+  padding: 2px 12px;
+  font-weight: 600;
+  color: #1E40AF; /* A deep blue for professionalism */
+  font-size: 14px;
+  width: auto;
+}
+
+.grid-group {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--semantic-size-stack-md);
+  gap: 16px;
+  padding: 0 8px;
+}
+
+.grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.grid-group-3-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.grid-group-2-col { grid-template-columns: 1fr 1fr; }
+
+.notes-group {
+  margin-top: 8px;
 }
 
 .textarea-group {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xxs);
-}
-
-.textarea-group.full-width {
-  grid-column: 1 / -1;
+  gap: 4px;
 }
 
 .textarea-group label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  color: #4B5563; /* Gray */
+  margin-left: 2px;
 }
 
 textarea {
   width: 100%;
-  padding: var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-md);
-  border: 1px solid var(--color-border-subtle);
-  background-color: var(--color-background-subtle);
-  color: var(--color-text-default);
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #D1D5DB; /* Gray */
+  background-color: #FFFFFF;
+  color: #111827; /* Black */
   font-family: inherit;
   font-size: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -162,13 +201,14 @@ textarea {
 
 textarea:focus {
   outline: none;
-  border-color: var(--color-border-accent);
-  box-shadow: 0 0 0 2px var(--color-focus-ring);
+  border-color: #3B82F6; /* Blue */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
 }
 
 .form-actions {
-  margin-top: var(--semantic-size-stack-md);
+  margin-top: 16px;
   display: flex;
-  justify-content: flex-end; /* Allinea il bottone a destra. */
+  justify-content: flex-end;
+  padding-right: 1rem;
 }
 </style>
