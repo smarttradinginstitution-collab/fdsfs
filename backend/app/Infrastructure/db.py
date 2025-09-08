@@ -54,6 +54,8 @@ engine = create_async_engine(
     echo=False,
     pool_pre_ping=True,
     connect_args=_make_ssl_context(),
+    pool_size=10,  # Aumenta il numero di connessioni base
+    max_overflow=5, # E permette un extra di 5 connessioni sotto carico
 )
 
 SessionLocal = async_sessionmaker(
