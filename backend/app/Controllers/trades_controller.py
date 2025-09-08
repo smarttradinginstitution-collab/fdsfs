@@ -220,6 +220,7 @@ class TradesController:
         setups: Optional[List[str]] = Query(None, description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
+        print(f"DEBUG: Received filters for get_performance_metrics: start_date={start_date}, end_date={end_date}, setups={setups}")
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
