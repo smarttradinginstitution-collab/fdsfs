@@ -62,11 +62,19 @@ const statsGrid = computed(() => {
 
 const tradeTableHeaders = computed(() => [
     { key: 'entry_timestamp', text: 'Open Time' },
+    { key: 'duration_minutes', text: 'Duration' },
     { key: 'symbol', text: 'Ticker' },
     { key: 'direction', text: 'Side' },
-    { key: 'p_l', text: 'Net P&L' },
     { key: 'setup', text: 'Playbook' },
+    { key: 'p_l', text: 'Net P&L' },
 ]);
+
+const formatDuration = (minutes) => {
+  if (minutes === null || minutes === undefined) return 'N/A';
+  const mins = Math.floor(minutes);
+  const secs = Math.round((minutes - mins) * 60);
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
 </script>
 
 <template>
@@ -119,7 +127,10 @@ const tradeTableHeaders = computed(() => [
               <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
             </template>
             <template #entry_timestamp="{ item }">
-              {{ new Date(item.entry_timestamp).toLocaleTimeString() }}
+              {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
+            </template>
+            <template #duration_minutes="{ item }">
+              {{ formatDuration(item.duration_minutes) }}
             </template>
           </BaseTable>
         </div>

@@ -38,9 +38,14 @@ class TradesController:
     @staticmethod
     def _to_trade_read_dict(trade, tag_names: List[str]) -> dict:
         """
-        Estrae solo i campi “piatti” dal modello ORM Trade e aggiunge `tags`.
-        NON passa l'oggetto ORM a Pydantic per evitare accessi lazy.
+        Estrae solo i campi “piatti” dal modello ORM Trade, calcola la durata,
+        e aggiunge `tags`. NON passa l'oggetto ORM a Pydantic.
         """
+        duration_minutes = None
+        if trade.entry_timestamp and trade.exit_timestamp:
+            duration = trade.exit_timestamp - trade.entry_timestamp
+            duration_minutes = duration.total_seconds() / 60
+
         return {
             "id": trade.id,
             "created_at": trade.created_at,
@@ -63,6 +68,7 @@ class TradesController:
             "notes_post_trade": trade.notes_post_trade,
             "entry_timestamp": trade.entry_timestamp,
             "exit_timestamp": trade.exit_timestamp,
+            "duration_minutes": duration_minutes,
             "tags": tag_names or [],
         }
 
