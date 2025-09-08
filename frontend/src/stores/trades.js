@@ -391,8 +391,46 @@ export const useTradesStore = defineStore('trades', {
         const fetchedTrades = response.data.map(mapBackendTradeToFrontend);
 
         if (dateRange) {
-          // Se la richiesta era per un intervallo specifico (es. modale), aggiorna activeSummary
-          this.activeSummary = { trades: fetchedTrades };
+          // Se la richiesta era per un intervallo specifico, calcola il riepilogo per quel periodo.
+          const summary = {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            trades: fetchedTrades,
+            stats: {
+              netPnl: 0,
+              tradeCount: 0,
+              winningTrades: 0,
+              losingTrades: 0,
+              profitFactor: 0,
+              grossProfit: 0,
+              grossLoss: 0,
+            },
+            cumulativePnlForChart: { labels: ['Start'], data: [0] }
+          };
+
+          if (fetchedTrades.length > 0) {
+            let cumulativePnl = 0;
+            for (const trade of fetchedTrades) {
+              const pnl = trade.pnl || 0;
+              summary.stats.netPnl += pnl;
+              summary.stats.tradeCount++;
+              if (pnl > 0) {
+                summary.stats.winningTrades++;
+                summary.stats.grossProfit += pnl;
+              } else if (pnl < 0) {
+                summary.stats.losingTrades++;
+                summary.stats.grossLoss += Math.abs(pnl);
+              }
+              cumulativePnl += pnl;
+              summary.cumulativePnlForChart.data.push(cumulativePnl);
+              summary.cumulativePnlForChart.labels.push(trade.ticker);
+            }
+            summary.stats.profitFactor = summary.stats.grossLoss > 0
+              ? summary.stats.grossProfit / summary.stats.grossLoss
+              : (summary.stats.grossProfit > 0 ? Infinity : 0);
+          }
+          this.activeSummary = summary;
+
         } else {
           // Altrimenti, aggiorna la lista principale dei trade per la dashboard
           this.trades = fetchedTrades;
