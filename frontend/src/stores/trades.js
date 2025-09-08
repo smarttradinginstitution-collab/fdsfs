@@ -122,24 +122,24 @@ export const useTradesStore = defineStore('trades', {
 
     allDashboardStats() {
       if (!this.dashboardStats) {
-        const emptyStat = (key, label, value = 'N/A') => ({ key, label, value, changeType: 'neutral' });
+        const emptyStat = (key, label, category, value = 'N/A') => ({ key, label, category, value, changeType: 'neutral' });
         return {
-          netPnl: emptyStat('netPnl', 'Net P&L', '$0.00'),
-          winRate: { key: 'winRate', label: 'Win Rate', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
-          trades: emptyStat('trades', 'Trades', '0'),
-          profitFactor: emptyStat('profitFactor', 'Profit Factor'),
-          avgWin: emptyStat('avgWin', 'Avg. Win', '$0.00'),
-          avgLoss: emptyStat('avgLoss', 'Avg. Loss', '$0.00'),
-          expectancy: emptyStat('expectancy', 'Expectancy', '$0.00'),
-          avgTradePnl: emptyStat('avgTradePnl', 'Avg. Trade P&L', '$0.00'),
-          largestProfit: emptyStat('largestProfit', 'Largest Profit', '$0.00'),
-          largestLoss: emptyStat('largestLoss', 'Largest Loss', '$0.00'),
-          maxConsecutiveWins: emptyStat('maxConsecutiveWins', 'Max Consec. Wins', '0'),
-          maxConsecutiveLosses: emptyStat('maxConsecutiveLosses', 'Max Consec. Losses', '0'),
-          avgRealizedRr: emptyStat('avgRealizedRr', 'Avg. Realized R:R'),
-          maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', '$0.00'),
-          sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio'),
-          averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', '0 min'),
+          netPnl: { ...emptyStat('netPnl', 'Net P&L', 'Profitability', '$0.00'), changeType: 'neutral' },
+          winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
+          trades: emptyStat('trades', 'Trades', 'Consistency', '0'),
+          profitFactor: emptyStat('profitFactor', 'Profit Factor', 'Ratios & Efficiency'),
+          avgWin: emptyStat('avgWin', 'Avg. Win', 'Profitability', '$0.00'),
+          avgLoss: emptyStat('avgLoss', 'Avg. Loss', 'Profitability', '$0.00'),
+          expectancy: emptyStat('expectancy', 'Expectancy', 'Ratios & Efficiency', '$0.00'),
+          avgTradePnl: emptyStat('avgTradePnl', 'Avg. Trade P&L', 'Profitability', '$0.00'),
+          largestProfit: emptyStat('largestProfit', 'Largest Profit', 'Profitability', '$0.00'),
+          largestLoss: emptyStat('largestLoss', 'Largest Loss', 'Profitability', '$0.00'),
+          maxConsecutiveWins: emptyStat('maxConsecutiveWins', 'Max Consec. Wins', 'Consistency', '0'),
+          maxConsecutiveLosses: emptyStat('maxConsecutiveLosses', 'Max Consec. Losses', 'Consistency', '0'),
+          avgRealizedRr: emptyStat('avgRealizedRr', 'Avg. Realized R:R', 'Ratios & Efficiency'),
+          maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', 'Risk Management', '$0.00'),
+          sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio', 'Ratios & Efficiency'),
+          averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', 'Other', '0 min'),
         };
       }
 
@@ -165,22 +165,26 @@ export const useTradesStore = defineStore('trades', {
       const averageHoldTime = parseFloat(stats.average_hold_time);
 
       return {
-        netPnl: { key: 'netPnl', label: 'Net P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
-        winRate: { key: 'winRate', label: 'Win Rate', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'neutral' },
-        trades: { key: 'trades', label: 'Trades', value: String(tradeCount), changeType: 'neutral' },
-        profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: 'neutral' },
-        avgWin: { key: 'avgWin', label: 'Avg. Win', value: `$${avgWin.toFixed(2)}`, changeType: 'neutral' },
-        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: `$${avgLoss.toFixed(2)}`, changeType: 'neutral' },
-        expectancy: { key: 'expectancy', label: 'Expectancy', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
-        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', value: `$${avgTradePnl.toFixed(2)}`, changeType: 'neutral' },
-        largestProfit: { key: 'largestProfit', label: 'Largest Profit', value: `$${largestProfit.toFixed(2)}`, changeType: 'neutral' },
-        largestLoss: { key: 'largestLoss', label: 'Largest Loss', value: `$${largestLoss.toFixed(2)}`, changeType: 'neutral' },
-        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', value: String(maxConsecutiveWins), changeType: 'neutral' },
-        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', value: String(maxConsecutiveLosses), changeType: 'neutral' },
-        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
-        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
-        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
-        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
+        netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
+        avgWin: { key: 'avgWin', label: 'Avg. Win', category: 'Profitability', value: `$${avgWin.toFixed(2)}`, changeType: 'neutral' },
+        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', category: 'Profitability', value: `$${avgLoss.toFixed(2)}`, changeType: 'neutral' },
+        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', category: 'Profitability', value: `$${avgTradePnl.toFixed(2)}`, changeType: 'neutral' },
+        largestProfit: { key: 'largestProfit', label: 'Largest Profit', category: 'Profitability', value: `$${largestProfit.toFixed(2)}`, changeType: 'neutral' },
+        largestLoss: { key: 'largestLoss', label: 'Largest Loss', category: 'Profitability', value: `$${largestLoss.toFixed(2)}`, changeType: 'neutral' },
+
+        winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'neutral' },
+        profitFactor: { key: 'profitFactor', label: 'Profit Factor', category: 'Ratios & Efficiency', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: 'neutral' },
+        expectancy: { key: 'expectancy', label: 'Expectancy', category: 'Ratios & Efficiency', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
+        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
+        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
+
+        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
+
+        trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(tradeCount), changeType: 'neutral' },
+        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(maxConsecutiveWins), changeType: 'neutral' },
+        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', category: 'Consistency', value: String(maxConsecutiveLosses), changeType: 'neutral' },
+
+        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
       };
     },
 
