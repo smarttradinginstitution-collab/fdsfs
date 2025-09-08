@@ -5,8 +5,8 @@
 // dell'utente e il token JWT nel localStorage.
 // =============================================================================
 import { defineStore } from 'pinia';
-import { ref, computed }from 'vue';
-import apiClient from '@/services/api';
+import { ref, computed } from 'vue';
+import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -36,6 +36,8 @@ export const useAuthStore = defineStore('auth', () => {
         password,
       });
 
+      // (AGGIUNTA) La API può restituire anche token_type/expires_in.
+      // Qui ci servono solo access_token e user.
       const { access_token, user: userData } = response.data;
 
       // Aggiorna lo stato dello store
@@ -47,12 +49,13 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('user', JSON.stringify(userData));
 
       // Imposta il token nell'header di apiClient per le richieste future
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      // (AGGIUNTA) Usa l'helper centralizzato per coerenza con gli interceptor
+      setAuthToken(access_token);
 
       // Reindirizza al dashboard dopo il login
       router.push('/');
     } catch (error) {
-      console.error("Errore durante il login:", error);
+      console.error('Errore durante il login:', error);
       // Rilancia l'errore per poterlo gestire nel componente UI
       throw error;
     }
@@ -61,7 +64,15 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Esegue il logout dell'utente.
    */
-  function logout() {
+  async function logout() {
+    try {
+      // (AGGIUNTA) Prova a notificare il backend per invalidare i refresh token lato server.
+      // Non blocca il logout lato client in caso di errore.
+      await apiClient.post('/api/v1/auth/logout');
+    } catch {
+      /* noop */
+    }
+
     // Rimuovi i dati dallo stato
     user.value = null;
     token.value = null;
@@ -71,7 +82,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user');
 
     // Rimuovi l'header di autorizzazione da apiClient
-    delete apiClient.defaults.headers.common['Authorization'];
+    // (AGGIUNTA) Usa l'helper centralizzato per rimuovere l'Authorization
+    setAuthToken(null);
 
     // Reindirizza alla pagina di login
     router.push('/login');
@@ -84,10 +96,20 @@ export const useAuthStore = defineStore('auth', () => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       token.value = storedToken;
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      // (AGGIUNTA) Imposta l'Authorization centralmente
+      setAuthToken(storedToken);
+    }
+
+    // (AGGIUNTA) Ripristina anche l'utente se presente
+    const storedUser = localStorage.getItem('user');
+    if (storedUser && !user.value) {
+      try {
+        user.value = JSON.parse(storedUser);
+      } catch {
+        localStorage.removeItem('user');
+      }
     }
   }
-
 
   // --- EXPORT ---
   // Esponiamo lo stato e le azioni per renderli accessibili
