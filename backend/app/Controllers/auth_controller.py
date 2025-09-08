@@ -20,10 +20,10 @@ from app.config import settings
 
 class AuthController:
     """
-    Controller per autenticazione basata su Supabase (GoTrue).
-    ✅ Versione "service-key only": TUTTE le chiamate a Supabase usano la SERVICE KEY
-       (compreso il password grant per il login).
-    Nota: i JWT di accesso sono stateless; il logout revoca solo le sessioni/refresh future.
+    Controller per autenticazione basata su Supabase (GoTrue) usando **solo SERVICE KEY**.
+    - /login: password grant (service key).
+    - /register: crea utente + eventuali patch admin; in dev può auto-confermare.
+    - /logout: revoca sessioni/refresh dell’utente corrente (access token rimane valido finché scade).
     """
 
     def __init__(self) -> None:
@@ -31,32 +31,34 @@ class AuthController:
 
     async def login(
         self,
-        payload: LoginInput,                          # email e password
-        db: AsyncSession = Depends(get_db),           # sessione DB (non usata direttamente)
+        payload: LoginInput,
+        db: AsyncSession = Depends(get_db),
     ) -> LoginResponse:
-        """
-        LOGIN:
-        - Chiede a Supabase un access_token/refresh_token via password grant.
-        - In questa versione usiamo SEMPRE la SERVICE KEY (non l'anon key).
-        """
         res = await supabase_service.sign_in(payload.email, payload.password)
         if res.get("error"):
-            # Supabase spesso restituisce un messaggio generico per security;
-            # in DEV arricchiamo per debug.
             msg = res.get("message") or "Credenziali non valide"
+            # Dettagli extra solo in DEV
             if settings.ENV == "dev":
                 bits: list[str] = []
                 if "http_status" in res:
                     bits.append(f"http_status={res['http_status']}")
                 if "error_code" in res:
                     bits.append(f"error_code={res['error_code']}")
-                if "raw" in res and isinstance(res["raw"], dict):
-                    raw_msg = res["raw"].get("message") or res["raw"].get("error_description")
+                raw = res.get("raw")
+                if isinstance(raw, dict):
+                    raw_msg = raw.get("message") or raw.get("error_description")
                     if raw_msg and raw_msg != msg:
                         bits.append(f"raw='{raw_msg}'")
                 if bits:
                     msg = f"{msg} ({', '.join(bits)})"
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg)
+
+        if not res.get("access_token"):
+            # evenienza rara, ma meglio errore chiaro
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Login upstream senza access_token",
+            )
 
         return LoginResponse(
             access_token=res.get("access_token"),
@@ -68,15 +70,9 @@ class AuthController:
 
     async def register(
         self,
-        payload: RegisterInput,                       # dati di registrazione
+        payload: RegisterInput,
         db: AsyncSession = Depends(get_db),
     ) -> RegisterResponse:
-        """
-        REGISTRAZIONE:
-        - Crea utente con email/password.
-        - Applica patch opzionali (app_meta, phone, ecc.) via Admin API.
-        - In DEV, se configurato, conferma l'email automaticamente.
-        """
         res = await supabase_service.register_user(
             email=payload.email,
             password=payload.password,
@@ -99,15 +95,14 @@ class AuthController:
 
     async def logout(
         self,
-        claims=Depends(get_current_claims),            # richiede Authorization: Bearer <access_token>
+        claims=Depends(get_current_claims),
         db: AsyncSession = Depends(get_db),
     ) -> LogoutResponse:
-        """
-        LOGOUT:
-        - Revoca le sessioni/refresh token dell'utente corrente via Admin API.
-        - L'access token in corso resta valido fino a scadenza → il client deve scartarlo.
-        """
+        # In DEV, se non abbiamo sub (perché non abbiamo usato un token “vero”), simuliamo OK
         user_id = claims.get("sub")
+        if settings.ENV == "dev" and not user_id:
+            return LogoutResponse(ok=True)
+
         if not user_id:
             raise HTTPException(status_code=401, detail="Token senza sub")
 

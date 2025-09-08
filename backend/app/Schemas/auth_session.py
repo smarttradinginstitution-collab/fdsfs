@@ -1,49 +1,36 @@
 # app/Schemas/auth_session.py
 
 from __future__ import annotations
+from typing import Any, Dict, Optional
+from pydantic import BaseModel, EmailStr, Field
 
-from typing import Any, Optional
-from pydantic import BaseModel, EmailStr
-from uuid import UUID
-
-# --------- LOGIN ---------
+# ───────────── Ingressi ─────────────
 
 class LoginInput(BaseModel):
-    """Payload di input per login (password grant)."""
     email: EmailStr
-    password: str
+    password: str = Field(min_length=6)
 
+class RegisterInput(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6)
+    user_meta: Optional[Dict[str, Any]] = None
+    app_meta: Optional[Dict[str, Any]] = None
+    phone: Optional[str] = None
+
+# ───────────── Uscite ─────────────
 
 class LoginResponse(BaseModel):
-    """Risposta del login: token + info utente."""
     access_token: str
     token_type: str = "bearer"
     expires_in: Optional[int] = None
     refresh_token: Optional[str] = None
-    user: dict[str, Any] = {}  # oggetto utente Supabase (id, email, ecc.)
-
-
-# --------- REGISTER ---------
-
-class RegisterInput(BaseModel):
-    """Payload per registrazione utente."""
-    email: EmailStr
-    password: str
-    user_meta: Optional[dict] = None   # metadati utente (profilo)
-    app_meta: Optional[dict] = None    # metadati applicativi
-    phone: Optional[str] = None        # telefono opzionale
-
+    user: Dict[str, Any]
 
 class RegisterResponse(BaseModel):
-    """Risposta della registrazione."""
-    user_id: UUID
-    email: Optional[EmailStr] = None
-    user: dict[str, Any] = {}          # oggetto utente Supabase completo
+    user_id: Optional[str] = None
+    email: Optional[str] = None
+    user: Dict[str, Any]
     status: str = "registered"
 
-
-# --------- LOGOUT ---------
-
 class LogoutResponse(BaseModel):
-    """Esito del logout."""
     ok: bool = True

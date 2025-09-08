@@ -9,32 +9,35 @@ from app.config import settings
 
 """
 Service async per Supabase Auth (GoTrue).
-⚠️ Tutte le chiamate (anche login/password grant) usano la SERVICE KEY.
+TUTTE le chiamate usano la SERVICE KEY nel solo header 'apikey'.
+Per ottenere l'utente corrente da un access token del client, chiamiamo
+/auth/v1/user con:
+  - Authorization: Bearer <access_token>
+  - apikey: <SUPABASE_KEY>
 """
-
-# --------- Header ---------
 
 def _service_headers() -> dict[str, str]:
     k = settings.SUPABASE_KEY
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "apikey": k,
-        "Authorization": f"Bearer {k}",
+        "apikey": k,                  # <-- obbligatorio per Supabase
     }
-
-# --------- HTTP helper ---------
 
 async def _request(
     method: str,
     path: str,
     json: Optional[dict] = None,
+    extra_headers: Optional[dict[str, str]] = None,
 ) -> Dict[str, Any]:
     base = settings.SUPABASE_PROJECT_URL.rstrip("/")
     url = f"{base}{path}"
     timeout = httpx.Timeout(30.0, connect=8.0)
+    headers = _service_headers()
+    if extra_headers:
+        headers.update(extra_headers)
     async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.request(method, url, headers=_service_headers(), json=json)
+        resp = await client.request(method, url, headers=headers, json=json)
 
     try:
         data: Dict[str, Any] = resp.json() if resp.content else {}
@@ -57,7 +60,7 @@ async def _request(
     data["error"] = None
     return data
 
-# --------- API ---------
+# ----------------- Flussi admin già esistenti -----------------
 
 async def sign_up(email: str, password: str, user_meta: Optional[dict] = None) -> Dict[str, Any]:
     payload = {"email": email, "password": password}
@@ -66,9 +69,6 @@ async def sign_up(email: str, password: str, user_meta: Optional[dict] = None) -
     return await _request("POST", "/auth/v1/signup", payload)
 
 async def sign_in(email: str, password: str) -> Dict[str, Any]:
-    """
-    Effettua login (password grant) usando la service key.
-    """
     payload = {"email": email, "password": password}
     return await _request("POST", "/auth/v1/token?grant_type=password", payload)
 
@@ -119,3 +119,20 @@ async def register_user(
             res["user"] = conf["user"]
 
     return res
+
+# ----------------- NUOVO: get user da access token -----------------
+
+async def get_user_from_access_token(access_token: str) -> Dict[str, Any]:
+    """
+    Chiama Supabase /auth/v1/user con:
+      - Authorization: Bearer <access_token>
+      - apikey: <SERVICE_KEY o ANON_KEY>
+    Se valido → ritorna { error: None, user: {...}, http_status: 200 }
+    Se non valido → ritorna { error: 'auth', message: ..., http_status: 401/403/... }
+    """
+    if not access_token:
+        return {"error": "auth", "message": "missing token", "http_status": 401}
+
+    extra = {"Authorization": f"Bearer {access_token}"}
+    # GET /auth/v1/user non richiede body
+    return await _request("GET", "/auth/v1/user", json=None, extra_headers=extra)

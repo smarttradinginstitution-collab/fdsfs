@@ -1,11 +1,11 @@
 <!--
-// =============================================================================
-// FILE: components/layout/DashboardHeader.vue
-// DESCRIZIONE: Header finale con logica responsive migliorata per i filtri.
-// Le azioni sono state spostate in DashboardView.
-// =============================================================================
+=============================================================================
+FILE: components/layout/DashboardHeader.vue
+DESCRIZIONE: Header con dati da /api/v1/users (per admin).
+=============================================================================
 -->
 <script setup>
+import { ref, onMounted } from 'vue';
 import { useMediaQuery } from '@vueuse/core';
 import HamburgerButton from '../ui/HamburgerButton.vue';
 import DropdownButton from '../ui/DropdownButton.vue';
@@ -14,6 +14,7 @@ import DateRangeFilter from '../dashboard/DateRangeFilter.vue';
 import { useUiStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/auth';
 import BaseButton from '../ui/BaseButton.vue';
+import apiClient from '@/services/api'; // 👈 client axios configurato
 
 // Import the icon components
 import FilterIcon from '../icons/FilterIcon.vue';
@@ -29,6 +30,31 @@ defineProps({
   },
 });
 
+// Stato per gli utenti
+const users = ref([]);
+const loadingUsers = ref(false);
+const errorUsers = ref(null);
+
+async function fetchUsers() {
+  if (!authStore.isAuthenticated) return;
+  loadingUsers.value = true;
+  errorUsers.value = null;
+  try {
+    const res = await apiClient.get('/api/v1/users/');
+    users.value = res.data;
+  } catch (err) {
+    console.error('Errore caricamento utenti:', err);
+    errorUsers.value = 'Impossibile caricare gli utenti';
+  } finally {
+    loadingUsers.value = false;
+  }
+}
+
+// carica utenti al mount (solo se loggato e admin)
+onMounted(() => {
+  fetchUsers();
+});
+
 // Logica responsive con VueUse
 const isDesktop = useMediaQuery('(min-width: 769px)');
 </script>
@@ -41,24 +67,41 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
     </div>
 
     <div class="header-right">
+      <!-- Mostra info utenti se disponibili -->
+      <div v-if="authStore.isAuthenticated" class="users-info">
+        <span v-if="loadingUsers">Caricamento utenti...</span>
+        <span v-else-if="errorUsers">{{ errorUsers }}</span>
+        <span v-else>Utenti totali: {{ users.length }}</span>
+      </div>
+
       <!-- Filtri per Desktop (v-if) -->
       <div v-if="isDesktop" class="header-controls">
         <DropdownButton>
-          <template #icon><FilterIcon /></template>
+          <template #icon>
+            <FilterIcon />
+          </template>
           <template #text>Strategy</template>
-          <template #content><StrategyFilter /></template>
+          <template #content>
+            <StrategyFilter />
+          </template>
         </DropdownButton>
         <DropdownButton>
-          <template #icon><CalendarIcon /></template>
+          <template #icon>
+            <CalendarIcon />
+          </template>
           <template #text>Date Range</template>
-          <template #content><DateRangeFilter /></template>
+          <template #content>
+            <DateRangeFilter />
+          </template>
         </DropdownButton>
       </div>
 
       <!-- Filtro unificato per Mobile (v-else) -->
       <div v-else class="header-controls">
         <DropdownButton>
-          <template #icon><FilterIcon /></template>
+          <template #icon>
+            <FilterIcon />
+          </template>
           <template #text>Filters</template>
           <template #content>
             <div class="mobile-filters">
@@ -69,12 +112,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
         </DropdownButton>
       </div>
 
-      <BaseButton
-        v-if="authStore.isAuthenticated"
-        variant="secondary"
-        size="small"
-        @click="authStore.logout"
-      >
+      <BaseButton v-if="authStore.isAuthenticated" variant="secondary" size="small" @click="authStore.logout">
         Logout
       </BaseButton>
     </div>
@@ -87,9 +125,11 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   justify-content: space-between;
   align-items: center;
   gap: var(--semantic-size-stack-md);
-  /* Il padding è ora gestito completamente dal contenitore MainLayout */
 }
-.header-left, .header-right, .header-controls {
+
+.header-left,
+.header-right,
+.header-controls {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-stack-sm);
@@ -100,22 +140,27 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   color: var(--semantic-color-text-primary);
 }
 
+.users-info {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  margin-right: var(--semantic-size-stack-md);
+}
+
 .mobile-filters {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
 }
 
-/* --- RESPONSIVE VISIBILITY --- */
 .hamburger-menu {
   display: none;
 }
 
-/* Tablet and below */
 @media (max-width: 768px) {
   .hamburger-menu {
     display: flex;
   }
+
   .title {
     font: var(--semantic-font-style-heading-xl);
   }

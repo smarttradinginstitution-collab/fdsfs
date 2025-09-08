@@ -1,71 +1,87 @@
 # app/Router/routes.py
-# Router aggregatore principale: Auth, Users, Roles, User↔Roles, Trades
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 
-# 🔒 Dipendenze per proteggere route con ruoli / autenticazione
+# 🔒 Dipendenze/guardie
 from app.Router.auth import require_roles, get_current_claims
+from app.Infrastructure.db import get_db
 
 # 📦 Controller applicativi
+from app.Controllers.auth_controller import AuthController
 from app.Controllers.users_controller import UsersController
 from app.Controllers.roles_controller import RolesController
 from app.Controllers.user_roles_controller import UserRolesController
-from app.Controllers.auth_controller import AuthController
 from app.Controllers.trades_controller import TradesController
 
-# 📦 Schemi per le response (tipi Pydantic)
+# 📦 Schemi response (opzionali ma utili in Swagger)
 from app.Schemas.auth_user import AuthUserRead
 from app.Schemas.role import RoleRead
+from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse
 from app.Schemas.trade import TradeRead
-from app.Schemas.auth_session import (
-    LoginResponse,
-    RegisterResponse,
-    LogoutResponse,
-)
 
+# Repo per diagnostica ruoli
+from app.Repositories.user_role_repository import UserRoleRepository
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Istanze controller (stateless)
+# ──────────────────────────────────────────────────────────────────────────────
+auth = AuthController()
 users = UsersController()
 roles = RolesController()
 user_roles = UserRolesController()
-auth = AuthController()
 trades = TradesController()
 
-# Router aggregatore principale
+# ──────────────────────────────────────────────────────────────────────────────
+# Router principale aggregatore
+# ──────────────────────────────────────────────────────────────────────────────
 router = APIRouter()
 
-# ───────────────────────────────
-# 🔐 AUTH (pubblico per login/register; autenticato per logout)
-# ───────────────────────────────
-router_auth = APIRouter(
-    prefix="/api/v1/auth",
-    tags=["Auth"],
-)
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔐 AUTH (pubblico login/register; protetto logout)
+# ──────────────────────────────────────────────────────────────────────────────
+router_auth = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
-# LOGIN: password grant verso Supabase (in questa codebase → sempre service key)
+# LOGIN/REGISTER pubblici
 router_auth.post("/login", response_model=LoginResponse)(auth.login)
-
-# REGISTER: crea utente; in dev può auto-confermare email
 router_auth.post("/register", response_model=RegisterResponse)(auth.register)
 
-# LOGOUT: revoca refresh token dell'utente corrente (serve solo essere autenticati)
+# LOGOUT protetto: richiede un token valido
 router_auth.post(
     "/logout",
     response_model=LogoutResponse,
     dependencies=[Depends(get_current_claims)],
 )(auth.logout)
 
+# (Facoltativo ma utile) Rotte diagnostiche per capire rapidamente chi è l'utente e i suoi ruoli
+@router_auth.get("/me", tags=["Auth"])
+async def who_am_i(claims=Depends(get_current_claims)):
+    return {"sub": claims.get("sub")}
+
+@router_auth.get("/me/roles", tags=["Auth"])
+async def my_roles(
+    claims=Depends(get_current_claims),
+    db: AsyncSession = Depends(get_db),
+):
+    repo = UserRoleRepository(db)
+    user_id = UUID(claims["sub"])
+    roles_list = await repo.list_user_roles(user_id)
+    return {"roles": [r.name for r in roles_list]}
+
 # monta il blocco auth nel router principale
 router.include_router(router_auth)
 
-# ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 # 👥 USERS (protetto: admin)
-# ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 router_users = APIRouter(
     prefix="/api/v1/users",
     tags=["Users"],
-    dependencies=[Depends(require_roles(["admin"]))],
+    dependencies=[Depends(require_roles(["admin"]))],  # protezione group-level
 )
 
 router_users.get("/", response_model=list[AuthUserRead])(users.list_users)
@@ -76,9 +92,9 @@ router_users.delete("/{user_id}")(users.delete_user)
 
 router.include_router(router_users)
 
-# ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 # 🛂 ROLES (protetto: admin)
-# ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 router_roles = APIRouter(
     prefix="/api/v1/roles",
     tags=["Roles"],
@@ -93,9 +109,9 @@ router_roles.delete("/{role_id}")(roles.delete_role)
 
 router.include_router(router_roles)
 
-# ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 # 🔗 USER ↔ ROLES (protetto: admin)
-# ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 router_user_roles = APIRouter(
     prefix="/api/v1",
     tags=["User-Roles"],
@@ -119,22 +135,19 @@ router_user_roles.delete(
     "/users/{user_id}/roles/{role_id}",
 )(user_roles.unassign_role)
 
-# monta il blocco user-roles nel router principale
 router.include_router(router_user_roles)
 
-# ───────────────────────────────
-# 📈 TRADES (pubblico: nessuna dipendenza auth/ruoli)
-# ───────────────────────────────
-router_trades = APIRouter(
-    prefix="/api/v1/trades",
-    tags=["Trades"],
-)
+# ──────────────────────────────────────────────────────────────────────────────
+# 💹 TRADES (pubblici a livello router; user_id via query per swagger)
+#    → se vuoi proteggerli con token in futuro, aggiungi get_current_claims
+# ──────────────────────────────────────────────────────────────────────────────
+router_trades = APIRouter(prefix="/api/v1/trades", tags=["Trades"])
 
 router_trades.get("/", response_model=list[TradeRead])(trades.list_trades)
 router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
-router_trades.post("/", response_model=TradeRead, status_code=201)(trades.create_trade)
+router_trades.post("/", response_model=TradeRead)(trades.create_trade)
 router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
 router_trades.get("/calendar/data")(trades.calendar_data)
-router_trades.get("/performance/vantage-score")(trades.vantage_score)
+router_trades.get("/vantage-score")(trades.vantage_score)
 
 router.include_router(router_trades)

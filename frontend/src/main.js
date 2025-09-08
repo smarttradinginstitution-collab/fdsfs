@@ -9,6 +9,8 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
+import { useAuthStore } from '@/stores/auth'; // (AGGIUNTA) Store di autenticazione per ripristinare il token
+import { setAuthToken } from '@/services/api'; // (AGGIUNTA) helper per impostare header Authorization
 
 // --- IMPORTAZIONI DEGLI STILI GLOBALI ---
 /*
@@ -22,20 +24,32 @@ import router from './router';
 import '@/styles/index.css';
 import '@/assets/main.css';
 
-
 // --- CREAZIONE E CONFIGURAZIONE DELL'APP ---
 
 // 1. Creiamo l'istanza principale dell'applicazione Vue.
 const app = createApp(App);
 
-// 2. Diciamo a Vue di usare Pinia per la gestione dello stato.
-app.use(createPinia());
+// 2. Creiamo un'istanza di Pinia (così possiamo anche usarla fuori dai componenti).
+const pinia = createPinia();
 
-// 3. Diciamo a Vue di usare il nostro router per la navigazione.
+// 3. Diciamo a Vue di usare Pinia per la gestione dello stato.
+app.use(pinia);
+
+// 4. Diciamo a Vue di usare il nostro router per la navigazione.
 app.use(router);
 
+// --- INIZIALIZZAZIONE AUTENTICAZIONE (AGGIUNTA) ---
+// Ripristina il token dal localStorage e imposta l'header Authorization su apiClient (se presente).
+// Va eseguito prima del mount, così tutte le richieste iniziali avranno già l'header corretto.
+const auth = useAuthStore(pinia); // <-- passa esplicitamente pinia poiché siamo fuori da setup()
+auth.initAuth();                  // imposta Authorization se trova un token salvato
+
+// (opzionale ma sicuro) Forza l'Authorization di axios in caso di token già presente
+const stored = localStorage.getItem('token');
+if (stored) {
+  setAuthToken(stored);
+}
 
 // --- MONTAGGIO DELL'APP ---
-
-// 4. Infine, "montiamo" l'applicazione nell'elemento `#app` del DOM.
+// 5. Infine, "montiamo" l'applicazione nell'elemento `#app` del DOM.
 app.mount('#app');
