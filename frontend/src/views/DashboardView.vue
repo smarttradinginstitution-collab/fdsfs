@@ -25,13 +25,12 @@ import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 
-const isAddTradeModalOpen = ref(false);
 const isSettingsModalOpen = ref(false);
 
 const handleNewTrade = async (tradeData) => {
   try {
     await tradesStore.addTrade(tradeData);
-    isAddTradeModalOpen.value = false; // Chiudi la modale solo se il trade è stato aggiunto con successo
+    uiStore.closeAddTradeModal(); // Chiudi la modale tramite lo store solo se il trade è stato aggiunto con successo
   } catch (error) {
     // Qui si potrebbe mostrare una notifica di errore all'utente
     console.error('Failed to add trade:', error);
@@ -73,7 +72,7 @@ onMounted(() => {
         <SettingsIcon />
         <span>Modifica Widget</span>
       </BaseButton>
-      <BaseButton variant="primary" @click="isAddTradeModalOpen = true">
+      <BaseButton variant="primary" @click="uiStore.openAddTradeModal">
         <PlusIcon />
         <span>Nuovo Trade</span>
       </BaseButton>
@@ -93,7 +92,7 @@ onMounted(() => {
     </div>
 
     <!-- Modale per Aggiungere un Trade -->
-    <BaseModal :show="isAddTradeModalOpen" @close="isAddTradeModalOpen = false">
+    <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
       <template #header><h3>Log New Trade</h3></template>
       <NewTradeForm @submit="handleNewTrade" />
     </BaseModal>

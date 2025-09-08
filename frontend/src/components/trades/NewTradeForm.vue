@@ -136,15 +136,16 @@ const handleSubmit = () => {
 }
 
 .form-section {
-  border: none;
-  border-top: 1px solid #E5E7EB; /* light gray */
-  padding: 24px 0 0 0;
+  border: 1px solid #E5E7EB; /* light gray border */
+  background-color: #F9FAFB; /* very light gray background */
+  border-radius: 8px;
+  padding: 24px 16px 16px 16px;
   margin-top: 24px;
   position: relative;
 }
 
 .form-section:first-of-type {
-  margin-top: 0;
+  margin-top: 12px;
 }
 
 .form-section legend {
@@ -152,12 +153,14 @@ const handleSubmit = () => {
   top: 0;
   left: 16px;
   transform: translateY(-50%);
-  background: #FFFFFF; /* Match modal background */
-  padding: 2px 12px;
+  background: #F3F4F6; /* Gray 100 for the pill background */
+  padding: 4px 12px;
   font-weight: 600;
-  color: #1E40AF; /* A deep blue for professionalism */
+  color: #374151; /* Gray 700 for text */
   font-size: 14px;
   width: auto;
+  border: 1px solid #E5E7EB; /* light gray border for the pill */
+  border-radius: 9999px;
 }
 
 .grid-group {
