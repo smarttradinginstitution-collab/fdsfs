@@ -61,6 +61,7 @@ const statsGrid = computed(() => {
 });
 
 const tradeTableHeaders = computed(() => [
+    { key: 'dayOfWeek', text: 'Day' },
     { key: 'entry_timestamp', text: 'Open Time' },
     { key: 'duration_minutes', text: 'Duration' },
     { key: 'symbol', text: 'Ticker' },
@@ -131,6 +132,9 @@ const formatDuration = (minutes) => {
             </template>
             <template #duration_minutes="{ item }">
               {{ formatDuration(item.duration_minutes) }}
+            </template>
+            <template #dayOfWeek="{ item }">
+              {{ new Date(item.entry_timestamp).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() }}
             </template>
           </BaseTable>
         </div>
