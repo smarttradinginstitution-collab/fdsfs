@@ -50,7 +50,7 @@ const handleNewTrade = async (tradeData) => {
 const visibleStats = computed(() => {
   const visibleKeys = uiStore.visibleStatKeys;
   const allStats = tradesStore.allDashboardStats;
-  return visibleKeys.map(key => allStats[key]);
+  return visibleKeys.map(key => allStats[key]).filter(Boolean);
 });
 
 // --- DATA FETCHING EXAMPLE ---

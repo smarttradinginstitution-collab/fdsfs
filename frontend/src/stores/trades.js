@@ -122,14 +122,24 @@ export const useTradesStore = defineStore('trades', {
 
     allDashboardStats() {
       if (!this.dashboardStats) {
+        const emptyStat = (key, label, value = 'N/A') => ({ key, label, value, changeType: 'neutral' });
         return {
-          netPnl: { key: 'netPnl', label: 'Net P&L', value: '$0.00', changeType: 'neutral' },
+          netPnl: emptyStat('netPnl', 'Net P&L', '$0.00'),
           winRate: { key: 'winRate', label: 'Win Rate', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
-          trades: { key: 'trades', label: 'Trades', value: '0', changeType: 'neutral' },
-          profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: 'N/A', changeType: 'neutral' },
-          avgWin: { key: 'avgWin', label: 'Avg. Win', value: '$0.00', changeType: 'neutral' },
-          avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: '$0.00', changeType: 'neutral' },
-          expectancy: { key: 'expectancy', label: 'Expectancy', value: '$0.00', changeType: 'neutral' },
+          trades: emptyStat('trades', 'Trades', '0'),
+          profitFactor: emptyStat('profitFactor', 'Profit Factor'),
+          avgWin: emptyStat('avgWin', 'Avg. Win', '$0.00'),
+          avgLoss: emptyStat('avgLoss', 'Avg. Loss', '$0.00'),
+          expectancy: emptyStat('expectancy', 'Expectancy', '$0.00'),
+          avgTradePnl: emptyStat('avgTradePnl', 'Avg. Trade P&L', '$0.00'),
+          largestProfit: emptyStat('largestProfit', 'Largest Profit', '$0.00'),
+          largestLoss: emptyStat('largestLoss', 'Largest Loss', '$0.00'),
+          maxConsecutiveWins: emptyStat('maxConsecutiveWins', 'Max Consec. Wins', '0'),
+          maxConsecutiveLosses: emptyStat('maxConsecutiveLosses', 'Max Consec. Losses', '0'),
+          avgRealizedRr: emptyStat('avgRealizedRr', 'Avg. Realized R:R'),
+          maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', '$0.00'),
+          sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio'),
+          averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', '0 min'),
         };
       }
 
