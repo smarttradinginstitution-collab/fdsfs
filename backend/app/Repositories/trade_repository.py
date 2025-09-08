@@ -341,13 +341,37 @@ class TradeRepository:
         return (res.rowcount or 0) > 0
 
     # ──────────────────────────────────────────────────────────────────────
+    # DISTINCT VALUES (per filtri UI)
+    # ──────────────────────────────────────────────────────────────────────
+    async def get_distinct_setups(self, user_id: UUID) -> List[str]:
+        """
+        Ritorna una lista di tutti i valori "setup" univoci e non-null per un utente.
+        Utile per popolare i filtri dell'interfaccia utente.
+        """
+        q = (
+            select(Trade.setup)
+            .where(Trade.user_id == user_id)
+            .where(Trade.setup.is_not(None))
+            .distinct()
+            .order_by(Trade.setup)
+        )
+        res = await self.db.execute(q)
+        # scalars().all() estrae la prima colonna di ogni riga
+        return res.scalars().all()
+
+    # ──────────────────────────────────────────────────────────────────────
     # CALENDAR DATA
     # ──────────────────────────────────────────────────────────────────────
-    async def get_calendar_data(self, user_id: UUID) -> List[dict]:
+    async def get_calendar_data(
+        self,
+        user_id: UUID,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> List[dict]:
         """
         Restituisce dati aggregati per giorno per il calendario.
         Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
-        Esclude i trade senza entry_timestamp.
+        Filtra per un intervallo di date se fornito.
         """
         day_alias = func.date_trunc("day", Trade.entry_timestamp).label("day")
         q = (
@@ -359,9 +383,14 @@ class TradeRepository:
             )
             .where(Trade.user_id == user_id)
             .where(Trade.entry_timestamp.is_not(None))
-            .group_by(day_alias)
-            .order_by(day_alias.asc())
         )
+
+        if start_date:
+            q = q.where(func.date(Trade.entry_timestamp) >= start_date)
+        if end_date:
+            q = q.where(func.date(Trade.entry_timestamp) <= end_date)
+
+        q = q.group_by(day_alias).order_by(day_alias.asc())
         res = await self.db.execute(q)
         rows = res.all()
 

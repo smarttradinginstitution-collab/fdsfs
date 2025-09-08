@@ -17,7 +17,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
@@ -175,12 +175,24 @@ class TradesController:
         trade_id: UUID,
         user_id: UUID = Query(..., description="ID utente proprietario del trade"),
         db: AsyncSession = Depends(get_db),
-    ) -> dict:
+    ) -> Response:
         repo = TradeRepository(db)
         ok = await repo.delete(user_id, trade_id)
         if not ok:
             raise HTTPException(status_code=404, detail="Trade non trovato")
-        return {"deleted": True}
+        return Response(status_code=204)
+
+    # --------------------------
+    # DISTINCT SETUPS
+    # --------------------------
+    async def list_setups(
+        self,
+        user_id: UUID = Query(..., description="ID utente"),
+        db: AsyncSession = Depends(get_db),
+    ) -> List[str]:
+        """Ritorna la lista di setup univoci per l'utente."""
+        repo = TradeRepository(db)
+        return await repo.get_distinct_setups(user_id)
 
     # --------------------------
     # CALENDAR DATA
@@ -188,10 +200,14 @@ class TradesController:
     async def calendar_data(
         self,
         user_id: UUID = Query(..., description="ID utente"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         db: AsyncSession = Depends(get_db),
     ) -> list[dict]:
         repo = TradeRepository(db)
-        return await repo.get_calendar_data(user_id)
+        return await repo.get_calendar_data(
+            user_id=user_id, start_date=start_date, end_date=end_date
+        )
 
     # --------------------------
     # PERFORMANCE METRICS
@@ -199,10 +215,15 @@ class TradesController:
     async def get_performance_metrics(
         self,
         user_id: UUID = Query(..., description="ID utente"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
         repo = TradeRepository(db)
-        rows = await repo.list_with_filters(user_id)
+        rows = await repo.list_with_filters(
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+        )
 
         # trasformiamo le tuple (Trade, tag_names) in dizionari flat per il calcolatore
         trades_as_dicts = []

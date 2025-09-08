@@ -8,30 +8,47 @@ import { useFilterStore } from './filterStore';
 import { useAuthStore } from './auth';
 import apiClient from '../services/api';
 
+/**
+ * Helper per mappare un trade dal formato del backend a quello del frontend.
+ * Questo garantisce coerenza e disaccoppia i due modelli.
+ * @param {object} trade - L'oggetto trade ricevuto dal backend.
+ * @returns {object} L'oggetto trade nel formato utilizzato dal frontend.
+ */
+const mapBackendTradeToFrontend = (trade) => ({
+  id: trade.id,
+  ticker: trade.symbol,
+  type: trade.direction,
+  pnl: trade.p_l,
+  date: trade.entry_timestamp,
+  strategy: trade.setup, // Mapping cruciale: 'setup' (backend) -> 'strategy' (frontend)
+  risk: trade.risk, // Assumendo che 'risk' esista o venga calcolato
+  openTime: new Date(trade.entry_timestamp).toLocaleTimeString(),
+  instrument: 'Stocks', // Da rendere dinamico se necessario
+  commission: trade.commission, // Assumendo che esista
+  netROI: trade.net_roi, // Assumendo che esista
+  rMultiple: trade.r_multiple, // Assumendo che esista
+  ticks: trade.ticks, // Assumendo che esista
+  bestExit: trade.best_exit, // Assumendo che esista
+  volume: trade.position_size,
+  // Manteniamo anche i campi originali se servono altrove
+  ...trade,
+});
+
 export const useTradesStore = defineStore('trades', {
   state: () => ({
-    trades: [
-      // Dati di esempio con i nuovi campi
-      { id: 1, ticker: 'AAPL', type: 'Long', pnl: 150.75, date: '2025-08-28', strategy: 'Breakout', risk: 50, openTime: '09:30:15', instrument: 'Stocks', commission: 4.50, netROI: 1.5, rMultiple: 3.01, ticks: 60, bestExit: 151.00, volume: 100 },
-      { id: 2, ticker: 'TSLA', type: 'Short', pnl: -75.20, date: '2025-08-28', strategy: 'Reversal', risk: 50, openTime: '10:05:40', instrument: 'Stocks', commission: 4.50, netROI: -0.75, rMultiple: -1.50, ticks: -30, bestExit: 249.50, volume: 50 },
-      { id: 3, ticker: 'NVDA', type: 'Long', pnl: 278.40, date: '2025-08-27', strategy: 'Breakout', risk: 100, openTime: '11:15:00', instrument: 'Stocks', commission: 6.20, netROI: 1.39, rMultiple: 2.78, ticks: 110, bestExit: 450.00, volume: 200 },
-      { id: 4, ticker: 'GOOG', type: 'Long', pnl: 121.00, date: '2025-08-20', strategy: 'Momentum', risk: 60, openTime: '14:00:05', instrument: 'Stocks', commission: 3.80, netROI: 1.0, rMultiple: 2.01, ticks: 48, bestExit: 135.00, volume: 75 },
-      { id: 5, ticker: 'MSFT', type: 'Long', pnl: 88.50, date: '2025-08-28', strategy: 'Reversal', risk: 40, openTime: '14:30:00', instrument: 'Stocks', commission: 4.50, netROI: 1.1, rMultiple: 2.21, ticks: 35, bestExit: 330.00, volume: 150 },
-      { id: 6, ticker: 'AMD', type: 'Short', pnl: -42.10, date: '2025-08-10', strategy: 'Breakout', risk: 40, openTime: '09:45:10', instrument: 'Stocks', commission: 2.10, netROI: -0.52, rMultiple: -1.05, ticks: -21, bestExit: 109.00, volume: 100 },
-      { id: 7, ticker: 'META', type: 'Long', pnl: 210.00, date: '2025-07-30', strategy: 'Momentum', risk: 70, openTime: '10:10:10', instrument: 'Stocks', commission: 5.00, netROI: 1.5, rMultiple: 3.00, ticks: 84, bestExit: 315.00, volume: 50 },
-    ],
+    trades: [], // Inizializzato vuoto, verrà popolato dal backend
+    setups: [], // Elenco dei setup/strategie per i filtri
     dashboardStats: null,
     calendarData: [],
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
-    recentTrades: [],
   }),
 
   getters: {
     allStrategies(state) {
-      const strategies = new Set(state.trades.map(trade => trade.strategy).filter(Boolean));
-      return ['All', ...Array.from(strategies)];
+      // Ora usa l'elenco dei setup caricato dal backend.
+      return ['All', ...state.setups];
     },
 
     filteredTrades: (state) => {
@@ -312,103 +329,129 @@ export const useTradesStore = defineStore('trades', {
   },
 
   actions: {
-    async fetchTradeSummaryForPeriod({ startDate, endDate }) {
-      this.isSummaryLoading = true;
-      this.activeSummary = null;
+    /**
+     * Recupera l'elenco di tutti i setup/strategie univoci per l'utente.
+     */
+    async fetchSetups() {
       const authStore = useAuthStore();
       const userId = authStore.user?.id;
-
-      if (!userId) {
-        console.error("User not authenticated for summary fetch.");
-        this.isSummaryLoading = false;
-        return;
-      }
+      if (!userId) return;
 
       try {
-        const response = await apiClient.get('/api/v1/trades/', {
-          params: {
-            user_id: userId,
-            start_date: startDate,
-            end_date: endDate,
-          },
-        });
-
-        const trades = response.data;
-        const sortedTrades = [...trades].sort((a, b) => new Date(a.entry_timestamp) - new Date(b.entry_timestamp));
-
-        const summary = {
-          startDate,
-          endDate,
-          trades: sortedTrades,
-          stats: {
-            netPnl: 0,
-            tradeCount: 0,
-            winningTrades: 0,
-            losingTrades: 0,
-            profitFactor: 0,
-            grossProfit: 0,
-            grossLoss: 0,
-          },
-          cumulativePnlForChart: { labels: ['Start'], data: [0] }
-        };
-
-        if (trades.length > 0) {
-          let cumulativePnl = 0;
-
-          for (const trade of sortedTrades) {
-            const pnl = trade.p_l || 0;
-            summary.stats.netPnl += pnl;
-            summary.stats.tradeCount++;
-
-            if (pnl > 0) {
-              summary.stats.winningTrades++;
-              summary.stats.grossProfit += pnl;
-            } else if (pnl < 0) {
-              summary.stats.losingTrades++;
-              summary.stats.grossLoss += Math.abs(pnl);
-            }
-
-            cumulativePnl += pnl;
-            summary.cumulativePnlForChart.data.push(cumulativePnl);
-            summary.cumulativePnlForChart.labels.push(trade.symbol);
-          }
-
-          summary.stats.profitFactor = summary.stats.grossLoss > 0
-            ? summary.stats.grossProfit / summary.stats.grossLoss
-            : (summary.stats.grossProfit > 0 ? Infinity : 0);
-        }
-
-        this.activeSummary = summary;
-
+        const response = await apiClient.get(`/api/v1/trades/setups?user_id=${userId}`);
+        this.setups = response.data;
       } catch (error) {
-        console.error('Error fetching trade summary:', error);
-        this.activeSummary = { error: 'Failed to load summary.' };
-      } finally {
-        this.isSummaryLoading = false;
+        console.error('Errore nel recupero dei setup:', error);
+        this.setups = []; // Resetta in caso di errore
       }
     },
 
-    async fetchRecentTrades() {
+    /**
+     * Azione unificata per recuperare i trade dal backend con filtri.
+     */
+    async fetchTrades(dateRange = null) {
+      // Se è una richiesta per un intervallo specifico, usa isSummaryLoading, altrimenti isLoading.
+      if (dateRange) {
+        this.isSummaryLoading = true;
+        this.activeSummary = null;
+      } else {
+        this.isLoading = true;
+      }
+
       const authStore = useAuthStore();
+      const filterStore = useFilterStore();
       const userId = authStore.user?.id;
 
       if (!userId) {
-        console.error("User not authenticated for recent trades fetch.");
+        console.error("Utente non autenticato.");
+        this.isLoading = false;
+        this.isSummaryLoading = false;
         return;
       }
 
+      // Determina quali filtri usare: quelli passati come argomento o quelli globali
+      const _startDate = dateRange ? dateRange.startDate : filterStore.startDate;
+      const _endDate = dateRange ? dateRange.endDate : filterStore.endDate;
+
+      // Applica il filtro per strategia solo se non stiamo chiedendo un intervallo di date specifico
+      const _strategy = dateRange ? null : filterStore.selectedStrategy;
+
+      const params = {
+        user_id: userId,
+        start_date: _startDate?.toISOString().split('T')[0],
+        end_date: _endDate?.toISOString().split('T')[0],
+      };
+
+      if (_strategy && _strategy.toLowerCase() !== 'all') {
+        params.setups = [_strategy];
+      }
+
       try {
-        const response = await apiClient.get('/api/v1/trades/', {
-          params: { user_id: userId },
-        });
-        this.recentTrades = response.data.slice(0, 5);
+        const response = await apiClient.get('/api/v1/trades/', { params });
+        const fetchedTrades = response.data.map(mapBackendTradeToFrontend);
+
+        if (dateRange) {
+          // Se la richiesta era per un intervallo specifico, calcola il riepilogo per quel periodo.
+          const summary = {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            trades: fetchedTrades,
+            stats: {
+              netPnl: 0,
+              tradeCount: 0,
+              winningTrades: 0,
+              losingTrades: 0,
+              profitFactor: 0,
+              grossProfit: 0,
+              grossLoss: 0,
+            },
+            cumulativePnlForChart: { labels: ['Start'], data: [0] }
+          };
+
+          if (fetchedTrades.length > 0) {
+            let cumulativePnl = 0;
+            for (const trade of fetchedTrades) {
+              const pnl = trade.pnl || 0;
+              summary.stats.netPnl += pnl;
+              summary.stats.tradeCount++;
+              if (pnl > 0) {
+                summary.stats.winningTrades++;
+                summary.stats.grossProfit += pnl;
+              } else if (pnl < 0) {
+                summary.stats.losingTrades++;
+                summary.stats.grossLoss += Math.abs(pnl);
+              }
+              cumulativePnl += pnl;
+              summary.cumulativePnlForChart.data.push(cumulativePnl);
+              summary.cumulativePnlForChart.labels.push(trade.ticker);
+            }
+            summary.stats.profitFactor = summary.stats.grossLoss > 0
+              ? summary.stats.grossProfit / summary.stats.grossLoss
+              : (summary.stats.grossProfit > 0 ? Infinity : 0);
+          }
+          this.activeSummary = summary;
+
+        } else {
+          // Altrimenti, aggiorna la lista principale dei trade per la dashboard
+          this.trades = fetchedTrades;
+        }
+
       } catch (error) {
-        console.error('Error fetching recent trades:', error);
+        console.error('Errore nel recupero dei trade:', error);
+        if (dateRange) {
+          this.activeSummary = { error: 'Failed to load summary.' };
+        } else {
+          this.trades = [];
+        }
+      } finally {
+        this.isLoading = false;
+        this.isSummaryLoading = false;
       }
     },
 
     async fetchDashboardStats() {
       const authStore = useAuthStore();
+      const filterStore = useFilterStore();
       const userId = authStore.user?.id;
 
       if (!userId) {
@@ -416,17 +459,27 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
       try {
-        const response = await apiClient.get(`/api/v1/trades/performance/metrics?user_id=${userId}`);
+        const response = await apiClient.get('/api/v1/trades/performance/metrics', { params });
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        // Optionally, set an error state here
       }
     },
 
     async fetchCalendarData() {
       const authStore = useAuthStore();
+      const filterStore = useFilterStore();
       const userId = authStore.user?.id;
 
       if (!userId) {
@@ -434,12 +487,20 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+
+      // Il calendario non dovrebbe essere filtrato per setup, ma solo per data.
+      // Quindi non aggiungiamo il parametro 'setups'.
+
       try {
-        const response = await apiClient.get(`/api/v1/trades/calendar/data?user_id=${userId}`);
+        const response = await apiClient.get('/api/v1/trades/calendar/data', { params });
         this.calendarData = response.data;
       } catch (error) {
         console.error('Error fetching calendar data:', error);
-        // Optionally, set an error state here
       }
     },
 
@@ -490,13 +551,12 @@ export const useTradesStore = defineStore('trades', {
           payload
         );
 
-        const newTradeFromServer = response.data;
+        const newTradeFromServer = mapBackendTradeToFrontend(response.data);
         this.trades.unshift(newTradeFromServer);
 
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
         await this.fetchCalendarData();
-        await this.fetchRecentTrades();
 
         return newTradeFromServer;
       } catch (error) {

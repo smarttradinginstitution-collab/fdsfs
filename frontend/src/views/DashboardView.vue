@@ -6,8 +6,7 @@
 // =============================================================================
 -->
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import apiClient from '../services/api';
+import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '../components/dashboard/StatCard.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
@@ -20,11 +19,13 @@ import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
+import { useFilterStore } from '../stores/filterStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
+const filterStore = useFilterStore();
 
 const popoverRef = ref(null);
 
@@ -54,16 +55,24 @@ const visibleStats = computed(() => {
   return visibleKeys.map(key => allStats[key]).filter(Boolean);
 });
 
-// --- DATA FETCHING EXAMPLE ---
-// Esempio di come recuperare i dati dal backend
-const backendData = ref(null);
-const fetchError = ref(null);
-
+// --- Data Fetching ---
 onMounted(() => {
+  tradesStore.fetchSetups();
+  tradesStore.fetchTrades();
   tradesStore.fetchDashboardStats();
   tradesStore.fetchCalendarData();
-  tradesStore.fetchRecentTrades();
 });
+
+// Watch for filter changes and refetch all dashboard data
+watch(
+  () => [filterStore.selectedStrategy, filterStore.endDate],
+  () => {
+    tradesStore.fetchTrades();
+    tradesStore.fetchDashboardStats();
+    tradesStore.fetchCalendarData();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
