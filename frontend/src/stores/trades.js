@@ -1,10 +1,6 @@
 // =============================================================================
 // FILE: stores/trades.js
-// DESCRIZIONE: Store Pinia per la gestione centralizzata dei dati dei trade.
-// Questo store si occupa di:
-// - Mantenere lo stato dei trade, dei setup disponibili e dei dati statistici.
-// - Interagire con il backend per recuperare e inviare dati.
-// - Fornire dati calcolati (getters) ai componenti Vue.
+// DESCRIZIONE: Store dei trade, refattorizzato per massima efficienza.
 // =============================================================================
 
 import { defineStore } from 'pinia';
@@ -38,7 +34,6 @@ const mapBackendTradeToFrontend = (trade) => ({
   ...trade,
 });
 
-
 export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
@@ -46,44 +41,32 @@ export const useTradesStore = defineStore('trades', {
     dashboardStats: null,
     calendarData: [],
     isLoading: false,
-    isSummaryLoading: false, // Potrebbe essere unificato con isLoading
+    isSummaryLoading: false,
     activeSummary: null,
   }),
 
   getters: {
-    // Fornisce i setup per il menu a discesa del filtro.
     allStrategies(state) {
       // Ora usa l'elenco dei setup caricato dal backend.
       return ['All', ...state.setups];
     },
 
-    // Filtra i trade in base ai filtri attivi (data e strategia).
     filteredTrades: (state) => {
       const filterStore = useFilterStore();
-      let tradesToFilter = state.trades;
-
-      // 1. Filtro per data
+      let trades = state.trades;
       if (filterStore.startDate && filterStore.endDate) {
         const start = new Date(filterStore.startDate).setHours(0, 0, 0, 0);
         const end = new Date(filterStore.endDate).setHours(23, 59, 59, 999);
-        tradesToFilter = tradesToFilter.filter(trade => {
+        trades = trades.filter(trade => {
           const tradeDate = new Date(trade.date);
           return tradeDate >= start && tradeDate <= end;
         });
       }
-
-      // 2. Filtro per strategia/setup
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy !== 'All') {
-        tradesToFilter = tradesToFilter.filter(trade => trade.strategy === filterStore.selectedStrategy);
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy !== 'all') {
+        trades = trades.filter(trade => trade.strategy === filterStore.selectedStrategy);
       }
-
-      return tradesToFilter;
+      return trades;
     },
-
-    // Tutti gli altri getters (processedData, allDashboardStats, etc.) dovrebbero
-    // funzionare correttamente dato che si basano su `filteredTrades`.
-    // NOTA: I campi usati in questi getters (es. `pnl`, `date`, `strategy`)
-    // devono essere presenti dopo il mapping da backend a frontend.
 
     processedData(state) {
       const trades = this.filteredTrades;
@@ -154,12 +137,195 @@ export const useTradesStore = defineStore('trades', {
       return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats };
     },
 
+    allDashboardStats() {
+      if (!this.dashboardStats) {
+        const emptyStat = (key, label, category, value = 'N/A') => ({ key, label, category, value, changeType: 'neutral' });
+        return {
+          netPnl: { ...emptyStat('netPnl', 'Net P&L', 'Profitability', '$0.00'), changeType: 'neutral' },
+          winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
+          trades: emptyStat('trades', 'Trades', 'Consistency', '0'),
+          profitFactor: emptyStat('profitFactor', 'Profit Factor', 'Ratios & Efficiency'),
+          avgWin: emptyStat('avgWin', 'Avg. Win', 'Profitability', '$0.00'),
+          avgLoss: emptyStat('avgLoss', 'Avg. Loss', 'Profitability', '$0.00'),
+          expectancy: emptyStat('expectancy', 'Expectancy', 'Ratios & Efficiency', '$0.00'),
+          avgTradePnl: emptyStat('avgTradePnl', 'Avg. Trade P&L', 'Profitability', '$0.00'),
+          largestProfit: emptyStat('largestProfit', 'Largest Profit', 'Profitability', '$0.00'),
+          largestLoss: emptyStat('largestLoss', 'Largest Loss', 'Profitability', '$0.00'),
+          maxConsecutiveWins: emptyStat('maxConsecutiveWins', 'Max Consec. Wins', 'Consistency', '0'),
+          maxConsecutiveLosses: emptyStat('maxConsecutiveLosses', 'Max Consec. Losses', 'Consistency', '0'),
+          avgRealizedRr: emptyStat('avgRealizedRr', 'Avg. Realized R:R', 'Ratios & Efficiency'),
+          maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', 'Risk Management', '$0.00'),
+          sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio', 'Ratios & Efficiency'),
+          averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', 'Other', '0 min'),
+        };
+      }
+
+      const stats = this.dashboardStats.stats;
+      const totalPnl = parseFloat(stats.total_pl);
+      const tradeCount = stats.trade_count;
+      const winningTrades = stats.winning_trades_count;
+      const losingTrades = stats.losing_trades_count;
+      const breakEvenTrades = stats.breakeven_trades_count;
+      const winRate = parseFloat(stats.win_rate);
+      const profitFactor = parseFloat(stats.profit_factor);
+      const avgWin = parseFloat(stats.avg_win);
+      const avgLoss = parseFloat(stats.avg_loss);
+      const expectancy = parseFloat(stats.expectancy);
+      const avgTradePnl = parseFloat(stats.average_trade_pnl);
+      const largestProfit = parseFloat(stats.largest_profit);
+      const largestLoss = parseFloat(stats.largest_loss);
+      const maxConsecutiveWins = stats.max_consecutive_wins;
+      const maxConsecutiveLosses = stats.max_consecutive_losses;
+      const avgRealizedRr = parseFloat(stats.avg_realized_rr);
+      const maxDrawdownAbs = parseFloat(stats.max_drawdown_abs);
+      const sharpeRatio = parseFloat(stats.sharpe_ratio);
+      const averageHoldTime = parseFloat(stats.average_hold_time);
+
+      return {
+        netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
+        avgWin: { key: 'avgWin', label: 'Avg. Win', category: 'Profitability', value: `$${avgWin.toFixed(2)}`, changeType: 'neutral' },
+        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', category: 'Profitability', value: `$${avgLoss.toFixed(2)}`, changeType: 'neutral' },
+        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', category: 'Profitability', value: `$${avgTradePnl.toFixed(2)}`, changeType: 'neutral' },
+        largestProfit: { key: 'largestProfit', label: 'Largest Profit', category: 'Profitability', value: `$${largestProfit.toFixed(2)}`, changeType: 'neutral' },
+        largestLoss: { key: 'largestLoss', label: 'Largest Loss', category: 'Profitability', value: `$${largestLoss.toFixed(2)}`, changeType: 'neutral' },
+
+        winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'neutral' },
+        profitFactor: { key: 'profitFactor', label: 'Profit Factor', category: 'Ratios & Efficiency', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: 'neutral' },
+        expectancy: { key: 'expectancy', label: 'Expectancy', category: 'Ratios & Efficiency', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
+        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
+        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
+
+        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
+
+        trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(tradeCount), changeType: 'neutral' },
+        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(maxConsecutiveWins), changeType: 'neutral' },
+        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', category: 'Consistency', value: String(maxConsecutiveLosses), changeType: 'neutral' },
+
+        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
+      };
+    },
+
+    calendarDataByMonth() {
+      const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
+        acc[entry.date] = {
+          totalPnl: entry.pnl,
+          tradeCount: entry.trade_count,
+          winningTrades: entry.winning_trades_count,
+        };
+        return acc;
+      }, {});
+
+      const filterStore = useFilterStore();
+      const viewDate = new Date(filterStore.endDate);
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDayOfWeek = new Date(year, month, 1).getDay();
+      const calendarDays = [];
+      const offset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1; // Lunedì = 0, Domenica = 6
+
+      // Aggiungi giorni placeholder all'inizio
+      for (let i = 0; i < offset; i++) {
+        calendarDays.push({ isPlaceholder: true, key: `ph-start-${i}` });
+      }
+
+      // Aggiungi i giorni del mese
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        calendarDays.push({
+          date: i,
+          fullDate: dateStr,
+          dailyData: dailyDataFromBackend[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
+          isPlaceholder: false,
+          key: dateStr,
+        });
+      }
+
+      // Completa l'ultima settimana con placeholder
+      while (calendarDays.length % 7 !== 0) {
+        calendarDays.push({ isPlaceholder: true, key: `ph-end-${calendarDays.length}` });
+      }
+
+      const weeksOfDays = [];
+      const weeklySummaries = [];
+      for (let i = 0; i < calendarDays.length; i += 7) {
+        const weekChunk = calendarDays.slice(i, i + 7);
+        weeksOfDays.push(weekChunk);
+
+        const weeklyPnl = weekChunk.reduce((sum, day) => sum + (day.dailyData?.totalPnl || 0), 0);
+        const tradingDaysCount = weekChunk.filter(day => !day.isPlaceholder && day.dailyData.tradeCount > 0).length;
+
+        weeklySummaries.push({
+          weekNumber: (i / 7) + 1,
+          totalPnl: weeklyPnl,
+          tradingDaysCount: tradingDaysCount,
+        });
+      }
+
+      return { weeksOfDays, weeklySummaries };
+    },
+
+    strategyPerformanceData() {
+      const rawData = this.processedData.performanceByStrategy;
+      if (Object.keys(rawData).length === 0) return [];
+      const maxPnl = Math.max(...Object.values(rawData).map(stat => Math.abs(stat.totalPnl)));
+      return Object.entries(rawData).map(([strategy, stats]) => {
+        const winRate = stats.tradeCount > 0 ? (stats.winningTrades / stats.tradeCount) * 100 : 0;
+        return {
+          label: strategy,
+          value: `${stats.tradeCount} trades | ${winRate.toFixed(0)}% WR | $${stats.totalPnl.toFixed(2)}`,
+          barWidth: maxPnl > 0 ? `${(Math.abs(stats.totalPnl) / maxPnl) * 100}%` : '0%',
+          isPositive: stats.totalPnl >= 0,
+        };
+      });
+    },
+
+    performanceByDayOfWeek() {
+        return this.processedData.performanceByDayOfWeek;
+    },
+
+    winLossDays(state) {
+      if (!this.processedData.winLossDaysStats) {
+        return { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
+      }
+      return this.processedData.winLossDaysStats;
+    },
+
+    equityCurveData(state) {
+      if (this.filteredTrades.length === 0) return { labels: [], data: [] };
+      const sortedTrades = [...this.filteredTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let cumulativePnl = 0;
+      const dataPoints = sortedTrades.map(trade => {
+        cumulativePnl += trade.pnl;
+        return { date: trade.date, pnl: cumulativePnl };
+      });
+      return { labels: dataPoints.map(p => p.date), data: dataPoints.map(p => p.pnl) };
+    },
+
     tradeHeaders: () => [
-        { key: 'symbol', text: 'Ticker' },
-        { key: 'direction', text: 'Side' },
-        { key: 'p_l', text: 'Net P&L' },
-        { key: 'entry_timestamp', text: 'Date' },
+      { key: 'symbol', text: 'Ticker' },
+      { key: 'direction', text: 'Side' },
+      { key: 'p_l', text: 'Net P&L' },
+      { key: 'entry_timestamp', text: 'Date' },
     ],
+
+    calendarControlsData() {
+      const filterStore = useFilterStore();
+      const viewDate = new Date(filterStore.endDate);
+
+      if (isNaN(viewDate.getTime())) return { monthLabel: 'Invalid Date', monthlyPnl: 0 };
+
+      const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      let monthlyPnl = 0;
+      for (const trade of this.filteredTrades) {
+        const tradeDate = new Date(trade.date);
+        if (tradeDate.getFullYear() === viewDate.getFullYear() && tradeDate.getMonth() === viewDate.getMonth()) {
+          monthlyPnl += trade.pnl;
+        }
+      }
+      return { monthLabel, monthlyPnl };
+    }
   },
 
   actions: {
@@ -233,25 +399,27 @@ export const useTradesStore = defineStore('trades', {
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        // Optionally, set an error state here
       }
     },
 
     async fetchCalendarData() {
-        const authStore = useAuthStore();
-        const userId = authStore.user?.id;
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
 
-        if (!userId) {
-          console.error('User not authenticated, cannot fetch calendar data.');
-          return;
-        }
+      if (!userId) {
+        console.error('User not authenticated, cannot fetch calendar data.');
+        return;
+      }
 
-        try {
-          const response = await apiClient.get(`/api/v1/trades/calendar/data?user_id=${userId}`);
-          this.calendarData = response.data;
-        } catch (error) {
-          console.error('Error fetching calendar data:', error);
-        }
-      },
+      try {
+        const response = await apiClient.get(`/api/v1/trades/calendar/data?user_id=${userId}`);
+        this.calendarData = response.data;
+      } catch (error) {
+        console.error('Error fetching calendar data:', error);
+        // Optionally, set an error state here
+      }
+    },
 
     async addTrade(tradeData) {
       this.isLoading = true;
@@ -260,23 +428,54 @@ export const useTradesStore = defineStore('trades', {
         const userId = authStore.user?.id;
 
         if (!userId) {
+          console.error('User not authenticated, cannot add trade.');
           throw new Error('User not authenticated');
         }
 
-        const payload = { ...tradeData };
-        // Qui la mappatura è da frontend a backend, se necessaria
-        // Esempio: payload.p_l = tradeData.pnl; delete payload.pnl;
+        // Mappa i dati dal form al payload atteso dal backend
+        const payload = {
+          symbol: tradeData.ticker,
+          p_l: tradeData.pnl,
+          setup: tradeData.setup,
+          direction: tradeData.direction,
+          entry_price: tradeData.entry_price,
+          exit_price: tradeData.exit_price,
+          stop_loss_price: tradeData.stop_loss_price,
+          take_profit_price: tradeData.take_profit_price,
+          position_size: tradeData.position_size,
+          lowest_price_during_trade: tradeData.lowest_price_during_trade,
+          highest_price_during_trade: tradeData.highest_price_during_trade,
+          entry_timestamp: tradeData.entry_timestamp,
+          exit_timestamp: tradeData.exit_timestamp,
+          notes: tradeData.notes,
+          notes_pre_trade: tradeData.notes_pre_trade,
+          notes_post_trade: tradeData.notes_post_trade,
+          emotional_state: tradeData.emotional_state,
+          mistakes: tradeData.mistakes,
+          tags: tradeData.tags,
+        };
 
-        const response = await apiClient.post(`/api/v1/trades/?user_id=${userId}`, payload);
-        const newTrade = mapBackendTradeToFrontend(response.data);
-        this.trades.unshift(newTrade);
+        // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === null || payload[key] === undefined || payload[key] === '') {
+            delete payload[key];
+          }
+        });
 
-        // Aggiorna le statistiche correlate
+        // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
+        const response = await apiClient.post(
+          `/api/v1/trades/?user_id=${userId}`,
+          payload
+        );
+
+        const newTradeFromServer = mapBackendTradeToFrontend(response.data);
+        this.trades.unshift(newTradeFromServer);
+
+        // Aggiorna le statistiche
         await this.fetchDashboardStats();
         await this.fetchCalendarData();
-        // Potrebbe essere utile anche ri-filtrare o aggiornare la vista
 
-        return newTrade;
+        return newTradeFromServer;
       } catch (error) {
         console.error('Error adding trade:', error);
         throw error;

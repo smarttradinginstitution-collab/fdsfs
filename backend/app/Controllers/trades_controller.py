@@ -175,12 +175,12 @@ class TradesController:
         trade_id: UUID,
         user_id: UUID = Query(..., description="ID utente proprietario del trade"),
         db: AsyncSession = Depends(get_db),
-    ) -> dict:
+    ) -> None:
         repo = TradeRepository(db)
         ok = await repo.delete(user_id, trade_id)
         if not ok:
             raise HTTPException(status_code=404, detail="Trade non trovato")
-        return {"deleted": True}
+        return None
 
     # --------------------------
     # DISTINCT SETUPS
