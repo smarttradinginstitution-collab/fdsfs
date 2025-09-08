@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
 
@@ -49,11 +50,15 @@ def _make_ssl_context() -> dict:
         return {"ssl": True}
 
 
+# In ambienti con un pooler esterno come pgBouncer (comune in Supabase),
+# è raccomandato disabilitare il pooling di SQLAlchemy per evitare conflitti.
+# NullPool crea e distrugge le connessioni per ogni operazione.
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
     pool_pre_ping=True,
     connect_args=_make_ssl_context(),
+    poolclass=NullPool,
 )
 
 SessionLocal = async_sessionmaker(

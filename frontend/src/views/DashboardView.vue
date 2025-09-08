@@ -28,9 +28,14 @@ const uiStore = useUiStore();
 const isAddTradeModalOpen = ref(false);
 const isSettingsModalOpen = ref(false);
 
-const handleNewTrade = (tradeData) => {
-  tradesStore.addTrade(tradeData);
-  isAddTradeModalOpen.value = false;
+const handleNewTrade = async (tradeData) => {
+  try {
+    await tradesStore.addTrade(tradeData);
+    isAddTradeModalOpen.value = false; // Chiudi la modale solo se il trade è stato aggiunto con successo
+  } catch (error) {
+    // Qui si potrebbe mostrare una notifica di errore all'utente
+    console.error('Failed to add trade:', error);
+  }
 };
 
 const visibleStats = computed(() => {

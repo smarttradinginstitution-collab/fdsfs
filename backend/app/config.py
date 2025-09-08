@@ -43,13 +43,23 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> List[str]:
         """
-        Converte la stringa CORS_ORIGINS in una lista.
-        - Supporta singolo valore o valori separati da virgola.
-        - Ignora spazi e valori vuoti.
+        Converte la stringa CORS_ORIGINS in una lista e aggiunge origini di sviluppo comuni.
         """
-        if not self.CORS_ORIGINS:
-            return []
-        return [x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()]
+        # Set di base per lo sviluppo, per garantire che funzioni localmente
+        # a prescindere dal file .env
+        origins = {
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        }
+
+        if self.CORS_ORIGINS:
+            # Aggiunge le origini definite nell'ambiente
+            custom_origins = {x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()}
+            origins.update(custom_origins)
+
+        return list(origins)
 
 settings = Settings()
 settings.DATABASE_URL = settings.assemble_db_url()

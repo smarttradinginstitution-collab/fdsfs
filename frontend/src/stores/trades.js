@@ -383,21 +383,38 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
-    addTrade(newTrade) {
-      const fullTrade = {
-        ...newTrade,
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        openTime: new Date().toLocaleTimeString(),
-        instrument: 'Stocks',
-        commission: 5.00,
-        netROI: Math.random() * 2,
-        rMultiple: Math.random() * 3,
-        ticks: Math.floor(Math.random() * 100),
-        bestExit: newTrade.pnl * 1.1,
-        volume: Math.floor(Math.random() * 1000) + 100,
+    async addTrade(tradeData) {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error('User not authenticated, cannot add trade.');
+        throw new Error('User not authenticated');
+      }
+
+      // Mappa i dati dal form al payload atteso dal backend
+      const payload = {
+        symbol: tradeData.ticker,
+        p_l: tradeData.pnl,
+        setup: tradeData.setup,
       };
-      this.trades.unshift(fullTrade);
+
+      try {
+        // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
+        const response = await apiClient.post(
+          `/api/v1/trades/?user_id=${userId}`,
+          payload
+        );
+
+        const newTradeFromServer = response.data;
+        this.trades.unshift(newTradeFromServer);
+
+        // Aggiorna le statistiche
+        await this.fetchDashboardStats();
+      } catch (error) {
+        console.error('Error adding trade:', error);
+        throw error;
+      }
     },
   },
 });
