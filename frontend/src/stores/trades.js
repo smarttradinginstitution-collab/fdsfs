@@ -25,6 +25,7 @@ export const useTradesStore = defineStore('trades', {
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
+    recentTrades: [],
   }),
 
   getters: {
@@ -116,23 +117,29 @@ export const useTradesStore = defineStore('trades', {
         else winLossDaysStats.breakEvenDays++;
       }
 
-      return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats, recentTrades: trades.slice(0, 4) };
-    },
-
-    recentTrades() {
-      return this.processedData.recentTrades;
+      return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats };
     },
 
     allDashboardStats() {
       if (!this.dashboardStats) {
+        const emptyStat = (key, label, value = 'N/A') => ({ key, label, value, changeType: 'neutral' });
         return {
-          netPnl: { key: 'netPnl', label: 'Net P&L', value: '$0.00', changeType: 'neutral' },
+          netPnl: emptyStat('netPnl', 'Net P&L', '$0.00'),
           winRate: { key: 'winRate', label: 'Win Rate', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
-          trades: { key: 'trades', label: 'Trades', value: '0', changeType: 'neutral' },
-          profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: 'N/A', changeType: 'neutral' },
-          avgWin: { key: 'avgWin', label: 'Avg. Win', value: '$0.00', changeType: 'neutral' },
-          avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: '$0.00', changeType: 'neutral' },
-          expectancy: { key: 'expectancy', label: 'Expectancy', value: '$0.00', changeType: 'neutral' },
+          trades: emptyStat('trades', 'Trades', '0'),
+          profitFactor: emptyStat('profitFactor', 'Profit Factor'),
+          avgWin: emptyStat('avgWin', 'Avg. Win', '$0.00'),
+          avgLoss: emptyStat('avgLoss', 'Avg. Loss', '$0.00'),
+          expectancy: emptyStat('expectancy', 'Expectancy', '$0.00'),
+          avgTradePnl: emptyStat('avgTradePnl', 'Avg. Trade P&L', '$0.00'),
+          largestProfit: emptyStat('largestProfit', 'Largest Profit', '$0.00'),
+          largestLoss: emptyStat('largestLoss', 'Largest Loss', '$0.00'),
+          maxConsecutiveWins: emptyStat('maxConsecutiveWins', 'Max Consec. Wins', '0'),
+          maxConsecutiveLosses: emptyStat('maxConsecutiveLosses', 'Max Consec. Losses', '0'),
+          avgRealizedRr: emptyStat('avgRealizedRr', 'Avg. Realized R:R'),
+          maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', '$0.00'),
+          sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio'),
+          averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', '0 min'),
         };
       }
 
@@ -147,15 +154,33 @@ export const useTradesStore = defineStore('trades', {
       const avgWin = parseFloat(stats.avg_win);
       const avgLoss = parseFloat(stats.avg_loss);
       const expectancy = parseFloat(stats.expectancy);
+      const avgTradePnl = parseFloat(stats.average_trade_pnl);
+      const largestProfit = parseFloat(stats.largest_profit);
+      const largestLoss = parseFloat(stats.largest_loss);
+      const maxConsecutiveWins = stats.max_consecutive_wins;
+      const maxConsecutiveLosses = stats.max_consecutive_losses;
+      const avgRealizedRr = parseFloat(stats.avg_realized_rr);
+      const maxDrawdownAbs = parseFloat(stats.max_drawdown_abs);
+      const sharpeRatio = parseFloat(stats.sharpe_ratio);
+      const averageHoldTime = parseFloat(stats.average_hold_time);
 
       return {
         netPnl: { key: 'netPnl', label: 'Net P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
-        winRate: { key: 'winRate', label: 'Win Rate', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'positive' },
+        winRate: { key: 'winRate', label: 'Win Rate', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'neutral' },
         trades: { key: 'trades', label: 'Trades', value: String(tradeCount), changeType: 'neutral' },
-        profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: profitFactor > 1 ? 'positive' : 'negative' },
-        avgWin: { key: 'avgWin', label: 'Avg. Win', value: `$${avgWin.toFixed(2)}`, changeType: 'positive' },
-        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: `$${avgLoss.toFixed(2)}`, changeType: 'negative' },
-        expectancy: { key: 'expectancy', label: 'Expectancy', value: `$${expectancy.toFixed(2)}`, changeType: expectancy > 0 ? 'positive' : 'negative' },
+        profitFactor: { key: 'profitFactor', label: 'Profit Factor', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: 'neutral' },
+        avgWin: { key: 'avgWin', label: 'Avg. Win', value: `$${avgWin.toFixed(2)}`, changeType: 'neutral' },
+        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', value: `$${avgLoss.toFixed(2)}`, changeType: 'neutral' },
+        expectancy: { key: 'expectancy', label: 'Expectancy', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
+        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', value: `$${avgTradePnl.toFixed(2)}`, changeType: 'neutral' },
+        largestProfit: { key: 'largestProfit', label: 'Largest Profit', value: `$${largestProfit.toFixed(2)}`, changeType: 'neutral' },
+        largestLoss: { key: 'largestLoss', label: 'Largest Loss', value: `$${largestLoss.toFixed(2)}`, changeType: 'neutral' },
+        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', value: String(maxConsecutiveWins), changeType: 'neutral' },
+        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', value: String(maxConsecutiveLosses), changeType: 'neutral' },
+        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
+        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
+        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
+        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
       };
     },
 
@@ -258,10 +283,10 @@ export const useTradesStore = defineStore('trades', {
     },
 
     tradeHeaders: () => [
-      { key: 'ticker', text: 'Ticker' },
-      { key: 'type', text: 'Type' },
-      { key: 'pnl', text: 'Net P&L' },
-      { key: 'date', text: 'Date' },
+      { key: 'symbol', text: 'Ticker' },
+      { key: 'direction', text: 'Side' },
+      { key: 'p_l', text: 'Net P&L' },
+      { key: 'entry_timestamp', text: 'Date' },
     ],
 
     calendarControlsData() {
@@ -359,6 +384,25 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    async fetchRecentTrades() {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) {
+        console.error("User not authenticated for recent trades fetch.");
+        return;
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/', {
+          params: { user_id: userId },
+        });
+        this.recentTrades = response.data.slice(0, 5);
+      } catch (error) {
+        console.error('Error fetching recent trades:', error);
+      }
+    },
+
     async fetchDashboardStats() {
       const authStore = useAuthStore();
       const userId = authStore.user?.id;
@@ -448,6 +492,7 @@ export const useTradesStore = defineStore('trades', {
         // Aggiorna le statistiche
         await this.fetchDashboardStats();
         await this.fetchCalendarData();
+        await this.fetchRecentTrades();
 
         return newTradeFromServer;
       } catch (error) {

@@ -32,11 +32,13 @@ const headers = tradesStore.tradeHeaders;
     verrà automaticamente riflessa qui.
     -->
     <BaseTable :headers="headers" :items="tradesStore.recentTrades">
-      <!-- La personalizzazione dello slot per il P&L rimane invariata. -->
-      <template #pnl="{ item }">
-        <span :class="item.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'">
-          {{ item.pnl >= 0 ? '+' : '' }}${{ Math.abs(item.pnl).toFixed(2) }}
+      <template #p_l="{ item }">
+        <span :class="item.p_l >= 0 ? 'pnl-positive' : 'pnl-negative'">
+          {{ item.p_l >= 0 ? '+' : '' }}${{ Math.abs(item.p_l).toFixed(2) }}
         </span>
+      </template>
+      <template #entry_timestamp="{ item }">
+        {{ new Date(item.entry_timestamp).toLocaleDateString() }}
       </template>
     </BaseTable>
   </div>
