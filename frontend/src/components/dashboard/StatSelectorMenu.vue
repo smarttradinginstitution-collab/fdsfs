@@ -68,7 +68,7 @@ const handleCheckboxChange = (statKey) => {
 }
 
 .category-group {
-  border-bottom: 1px solid var(--semantic-color-border-subtle);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
 }
 .category-group:last-child {
   border-bottom: none;
@@ -79,20 +79,21 @@ const handleCheckboxChange = (statKey) => {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: var(--semantic-size-inset-md);
-  font: var(--semantic-font-style-body-md-semibold);
+  padding: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-label-md);
   cursor: pointer;
   background-color: transparent;
   border: none;
   color: var(--semantic-color-text-primary);
+  border-radius: var(--semantic-border-radius-md);
 }
 .category-header:hover {
   background-color: var(--semantic-color-surface-secondary-hover);
 }
 
 .category-header svg {
-  width: 16px;
-  height: 16px;
+  width: var(--base-size-spacing-4);
+  height: var(--base-size-spacing-4);
   transition: transform 0.2s ease-in-out;
 }
 .category-header .rotate-180 {
