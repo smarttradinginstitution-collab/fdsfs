@@ -9,10 +9,13 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useTradesStore } from '@/stores/trades';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import BaseSelect from '../ui/BaseSelect.vue';
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
+const tradesStore = useTradesStore();
 const emit = defineEmits(['submit']);
 
 const getInitialFormState = () => ({
@@ -118,7 +121,10 @@ const handleSubmit = () => {
     </fieldset>
 
     <div class="form-actions">
-      <BaseButton type="submit">Save Trade</BaseButton>
+      <BaseButton type="submit" :disabled="tradesStore.isLoading">
+        <LoadingSpinner v-if="tradesStore.isLoading" />
+        <span v-else>Save Trade</span>
+      </BaseButton>
     </div>
   </form>
 </template>
