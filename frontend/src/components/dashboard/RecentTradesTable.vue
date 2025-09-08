@@ -1,74 +1,109 @@
 <!--
 // =============================================================================
 // FILE: components/dashboard/RecentTradesTable.vue
-// DESCRIZIONE: Questo componente visualizza una tabella di trade recenti.
-// È stato rifattorizzato per leggere i dati direttamente dallo store Pinia,
-// rendendolo reattivo ai cambiamenti dello stato centrale.
+// DESCRIZIONE: Questo componente visualizza una tabella degli ultimi trade
+// basandosi sui filtri attualmente attivi nella dashboard.
 // =============================================================================
 -->
-
 <script setup>
-// --- IMPORTAZIONI ---
+import { computed } from 'vue';
 import BaseTable from '../ui/BaseTable.vue';
-// 1. Importiamo lo store dei trade.
 import { useTradesStore } from '../../stores/trades';
 
-// --- LOGICA DEL COMPONENTE ---
-// 2. Creiamo un'istanza dello store.
 const tradesStore = useTradesStore();
 
-// 3. I dati finti locali (`recentTrades`) sono stati rimossi.
-//    Useremo direttamente i getters dello store nel template.
-//    Anche le intestazioni le prendiamo dallo store per coerenza.
-const headers = tradesStore.tradeHeaders;
+// Le intestazioni sono ora definite direttamente qui per maggiore chiarezza,
+// ma potrebbero anche venire dallo store se fossero usate in più posti.
+const headers = [
+  { key: 'ticker', text: 'Ticker' },
+  { key: 'type', text: 'Side' },
+  { key: 'pnl', text: 'Net P&L' },
+  { key: 'date', text: 'Date' },
+];
+
+// Proprietà calcolata per ottenere solo i trade più recenti *filtrati*.
+// Questo risolve il warning e rende la tabella reattiva ai filtri.
+const recentFilteredTrades = computed(() => {
+  // .slice(0, 7) prende al massimo i primi 7 trade più recenti.
+  return tradesStore.filteredTrades.slice(0, 7);
+});
 </script>
 
 <template>
-  <div class="recent-trades-card">
-    <h2 class="card-title">Recent Trades</h2>
-    <!--
-    Ora `:items` è collegato al getter `recentTrades` dello store.
-    Qualsiasi modifica alla lista dei trade nello store (es. un nuovo trade aggiunto)
-    verrà automaticamente riflessa qui.
-    -->
-    <BaseTable :headers="headers" :items="tradesStore.recentTrades">
-      <template #p_l="{ item }">
-        <span :class="item.p_l >= 0 ? 'pnl-positive' : 'pnl-negative'">
-          {{ item.p_l >= 0 ? '+' : '' }}${{ Math.abs(item.p_l).toFixed(2) }}
-        </span>
-      </template>
-      <template #entry_timestamp="{ item }">
-        {{ new Date(item.entry_timestamp).toLocaleDateString() }}
-      </template>
-    </BaseTable>
+  <div class="recent-trades-widget">
+    <div class="widget-header">
+      <h2 class="widget-title">Recent Trades</h2>
+      <span class="widget-subtitle">Last 7 filtered trades</span>
+    </div>
+    <div class="table-container">
+      <BaseTable :headers="headers" :items="recentFilteredTrades">
+        <!-- Slot per formattare la colonna P&L -->
+        <template #pnl="{ item }">
+          <span :class="item.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'">
+            {{ item.pnl >= 0 ? '+' : '' }}${{ Math.abs(item.pnl).toFixed(2) }}
+          </span>
+        </template>
+        <!-- Slot per formattare la data -->
+        <template #date="{ item }">
+          {{ new Date(item.date).toLocaleDateString() }}
+        </template>
+      </BaseTable>
+      <div v-if="recentFilteredTrades.length === 0" class="no-trades-message">
+        <p>No recent trades match the current filters.</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Stili specifici per questo componente. */
-.recent-trades-card {
+.recent-trades-widget {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  padding: var(--semantic-size-inset-lg);
+  overflow: hidden; /* Nasconde il contenuto che esce dai bordi arrotondati */
 }
-.card-title {
+
+.widget-header {
+  padding: var(--semantic-size-inset-lg);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-subtle); /* Sfondo leggero per l'header */
+}
+
+.widget-title {
   font-family: var(--semantic-font-style-heading-xl-font-family);
   font-size: var(--semantic-font-style-heading-xl-font-size);
   font-weight: var(--semantic-font-style-heading-xl-font-weight);
   color: var(--semantic-color-text-primary);
+  margin: 0;
+}
+
+.widget-subtitle {
+  font-family: var(--semantic-font-style-body-sm-font-family);
+  font-size: var(--semantic-font-style-body-sm-font-size);
+  color: var(--semantic-color-text-subtle);
+}
+
+.table-container {
+  padding: var(--semantic-size-inset-lg);
 }
 
 .pnl-positive {
   color: var(--semantic-color-feedback-positive-text);
   font-family: var(--semantic-font-style-data-numeric-font-family);
 }
+
 .pnl-negative {
   color: var(--semantic-color-feedback-negative-text);
   font-family: var(--semantic-font-style-data-numeric-font-family);
+}
+
+.no-trades-message {
+  text-align: center;
+  padding: var(--semantic-size-inset-xl);
+  font-family: var(--semantic-font-style-body-md-font-family);
+  color: var(--semantic-color-text-subtle);
 }
 </style>

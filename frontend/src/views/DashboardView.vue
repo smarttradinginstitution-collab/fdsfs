@@ -63,11 +63,13 @@ onMounted(() => {
   tradesStore.fetchCalendarData();
 });
 
-// Watch for filter changes and refetch trades
+// Watch for filter changes and refetch all dashboard data
 watch(
   () => [filterStore.selectedStrategy, filterStore.endDate],
   () => {
     tradesStore.fetchTrades();
+    tradesStore.fetchDashboardStats();
+    tradesStore.fetchCalendarData();
   },
   { deep: true }
 );

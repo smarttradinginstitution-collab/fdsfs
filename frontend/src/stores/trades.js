@@ -387,6 +387,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchDashboardStats() {
       const authStore = useAuthStore();
+      const filterStore = useFilterStore();
       const userId = authStore.user?.id;
 
       if (!userId) {
@@ -394,17 +395,27 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy !== 'All') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
       try {
-        const response = await apiClient.get(`/api/v1/trades/performance/metrics?user_id=${userId}`);
+        const response = await apiClient.get('/api/v1/trades/performance/metrics', { params });
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        // Optionally, set an error state here
       }
     },
 
     async fetchCalendarData() {
       const authStore = useAuthStore();
+      const filterStore = useFilterStore();
       const userId = authStore.user?.id;
 
       if (!userId) {
@@ -412,12 +423,17 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+
       try {
-        const response = await apiClient.get(`/api/v1/trades/calendar/data?user_id=${userId}`);
+        const response = await apiClient.get('/api/v1/trades/calendar/data', { params });
         this.calendarData = response.data;
       } catch (error) {
         console.error('Error fetching calendar data:', error);
-        // Optionally, set an error state here
       }
     },
 

@@ -200,10 +200,14 @@ class TradesController:
     async def calendar_data(
         self,
         user_id: UUID = Query(..., description="ID utente"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         db: AsyncSession = Depends(get_db),
     ) -> list[dict]:
         repo = TradeRepository(db)
-        return await repo.get_calendar_data(user_id)
+        return await repo.get_calendar_data(
+            user_id=user_id, start_date=start_date, end_date=end_date
+        )
 
     # --------------------------
     # PERFORMANCE METRICS
@@ -211,10 +215,15 @@ class TradesController:
     async def get_performance_metrics(
         self,
         user_id: UUID = Query(..., description="ID utente"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        setups: Optional[List[str]] = Query(None, description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
         repo = TradeRepository(db)
-        rows = await repo.list_with_filters(user_id)
+        rows = await repo.list_with_filters(
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+        )
 
         # trasformiamo le tuple (Trade, tag_names) in dizionari flat per il calcolatore
         trades_as_dicts = []
