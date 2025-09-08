@@ -25,52 +25,77 @@ watch(isDesktop, (isNowDesktop) => {
 
 <template>
   <div class="settings-menu">
-    <h4 class="settings-title">Calendar Settings</h4>
-    <div class="settings-list">
-      <template v-if="isDesktop">
-        <div class="settings-item">
-          <BaseCheckbox
-            label="Show Weekly Summary"
-            :model-value="uiStore.isWeeklySummaryVisible"
-            @update:modelValue="uiStore.toggleWeeklySummary()"
-          />
+    <div class="category-group">
+      <h4 class="category-header">Weekly</h4>
+      <div class="settings-list">
+        <template v-if="isDesktop">
+          <div class="settings-item">
+            <BaseCheckbox
+              label="Show Weekly Summary"
+              :model-value="uiStore.isWeeklySummaryVisible"
+              @update:modelValue="uiStore.toggleWeeklySummary()"
+            />
+          </div>
+        </template>
+         <div v-else class="settings-item-disabled">
+          Weekly summary is available on desktop only.
         </div>
-      </template>
-      <div class="settings-item">
-        <BaseCheckbox
-          label="Show Trade Count"
-          :model-value="uiStore.isCalendarTradeCountVisible"
-          @update:modelValue="uiStore.toggleCalendarTradeCount()"
-        />
       </div>
-      <template v-if="isDesktop">
+    </div>
+    <div class="category-group">
+      <h4 class="category-header">Daily</h4>
+      <div class="settings-list">
         <div class="settings-item">
           <BaseCheckbox
-            label="Show Win Rate %"
-            :model-value="uiStore.isCalendarWinRateVisible"
-            @update:modelValue="uiStore.toggleCalendarWinRate()"
+            label="Show Trade Count"
+            :model-value="uiStore.isCalendarTradeCountVisible"
+            @update:modelValue="uiStore.toggleCalendarTradeCount()"
           />
         </div>
-      </template>
+        <template v-if="isDesktop">
+          <div class="settings-item">
+            <BaseCheckbox
+              label="Show Win Rate %"
+              :model-value="uiStore.isCalendarWinRateVisible"
+              @update:modelValue="uiStore.toggleCalendarWinRate()"
+            />
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .settings-menu {
+  padding: var(--semantic-size-inset-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
-  padding: var(--base-size-spacing-2);
+  gap: var(--semantic-size-stack-xs);
+  min-width: 240px;
 }
-.settings-title {
+.category-group {
+  padding-bottom: var(--semantic-size-stack-sm);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+}
+.category-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.category-header {
   font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-tertiary);
-  margin-bottom: var(--base-size-spacing-1);
+  color: var(--semantic-color-text-secondary);
+  padding: var(--semantic-size-inset-xs) 0;
 }
 .settings-list {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-sm);
+  padding-top: var(--semantic-size-stack-xs);
+}
+.settings-item-disabled {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-disabled);
+  padding: var(--semantic-size-inset-sm) 0;
 }
 </style>
