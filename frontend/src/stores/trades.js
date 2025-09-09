@@ -328,6 +328,7 @@ export const useTradesStore = defineStore('trades', {
       this.activeSummary = null;
 
       const authStore = useAuthStore();
+      const filterStore = useFilterStore();
       const userId = authStore.user?.id;
       if (!userId) {
         console.error("Utente non autenticato per il riepilogo.");
@@ -348,6 +349,10 @@ export const useTradesStore = defineStore('trades', {
         end_date: toYYYYMMDD(dateRange.endDate),
         user_timezone: userTimezone,
       };
+
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
 
       try {
         // Eseguiamo le due chiamate in parallelo per efficienza
