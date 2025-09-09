@@ -328,10 +328,12 @@ export const useTradesStore = defineStore('trades', {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       };
 
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = {
         user_id: userId,
         start_date: toYYYYMMDD(dateRange.startDate),
         end_date: toYYYYMMDD(dateRange.endDate),
+        user_timezone: userTimezone,
       };
 
       try {
