@@ -21,11 +21,11 @@ const headers = [
   { key: 'date', text: 'Date' },
 ];
 
-// Proprietà calcolata per ottenere solo i trade più recenti *filtrati*.
-// Questo risolve il warning e rende la tabella reattiva ai filtri.
-const recentFilteredTrades = computed(() => {
-  // .slice(0, 7) prende al massimo i primi 7 trade più recenti.
-  return tradesStore.filteredTrades.slice(0, 7);
+// Proprietà calcolata per ottenere solo i trade più recenti.
+// La lista dei trade nello store è già filtrata dal backend.
+const recentTrades = computed(() => {
+  // .slice(0, 7) prende al massimo i primi 7 trade.
+  return tradesStore.trades.slice(0, 7);
 });
 </script>
 
@@ -36,7 +36,7 @@ const recentFilteredTrades = computed(() => {
       <span class="widget-subtitle">Last 7 filtered trades</span>
     </div>
     <div class="table-container">
-      <BaseTable :headers="headers" :items="recentFilteredTrades">
+      <BaseTable :headers="headers" :items="recentTrades">
         <!-- Slot per formattare la colonna P&L -->
         <template #pnl="{ item }">
           <span :class="item.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'">
@@ -48,7 +48,7 @@ const recentFilteredTrades = computed(() => {
           {{ new Date(item.date).toLocaleDateString() }}
         </template>
       </BaseTable>
-      <div v-if="recentFilteredTrades.length === 0" class="no-trades-message">
+      <div v-if="recentTrades.length === 0" class="no-trades-message">
         <p>No recent trades match the current filters.</p>
       </div>
     </div>
