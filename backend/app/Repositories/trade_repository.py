@@ -162,6 +162,7 @@ class TradeRepository:
         tags: Optional[List[str]] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        timezone: str = "UTC",
     ) -> List[Tuple[Trade, List[str]]]:
         """
         Ritorna una lista di tuple (Trade, [tag_names]) filtrate per user_id e criteri opzionali.
@@ -171,10 +172,10 @@ class TradeRepository:
           - direction: ==
           - setups: IN
           - mistakes: array contiene tutti? (qui usiamo "contains" Postgres -> @>, basta che contenga l'insieme passato)
-          - days_of_week: func.extract('isodow', entry_timestamp).in_(days_of_week)
+          - days_of_week: func.extract('isodow', entry_timestamp AT TIME ZONE timezone).in_(days_of_week)
           - min/max_size: range su position_size
           - tags: deve contenere TUTTI i tag passati (subquery con count(distinct) == len(tags))
-          - start_date/end_date: range su func.date(entry_timestamp)
+          - start_date/end_date: range su func.date(entry_timestamp AT TIME ZONE timezone)
         """
         base = select(Trade).where(Trade.user_id == user_id)
 
@@ -188,17 +189,18 @@ class TradeRepository:
             # Postgres ARRAY contains
             base = base.where(Trade.mistakes.contains(mistakes))
         if days_of_week:
-            base = base.where(
-                func.extract("isodow", Trade.entry_timestamp).in_(days_of_week)
-            )
+            entry_in_tz = Trade.entry_timestamp.op("AT TIME ZONE")(timezone)
+            base = base.where(func.extract("isodow", entry_in_tz).in_(days_of_week))
         if min_size is not None:
             base = base.where(Trade.position_size >= min_size)
         if max_size is not None:
             base = base.where(Trade.position_size <= max_size)
         if start_date:
-            base = base.where(func.date(Trade.entry_timestamp) >= start_date)
+            entry_in_tz = Trade.entry_timestamp.op("AT TIME ZONE")(timezone)
+            base = base.where(func.date(entry_in_tz) >= start_date)
         if end_date:
-            base = base.where(func.date(Trade.entry_timestamp) <= end_date)
+            entry_in_tz = Trade.entry_timestamp.op("AT TIME ZONE")(timezone)
+            base = base.where(func.date(entry_in_tz) <= end_date)
 
 
         # Filtra per TAGS (tutti presenti) con subquery:
@@ -368,13 +370,17 @@ class TradeRepository:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         setups: Optional[List[str]] = None,
+        timezone: str = "UTC",
     ) -> List[dict]:
         """
         Restituisce dati aggregati per giorno per il calendario.
         Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
         Filtra per un intervallo di date e per setup, se forniti.
+        Usa il timezone specificato per raggruppare i trade nel giorno corretto.
         """
-        day_alias = func.date_trunc("day", Trade.entry_timestamp).label("day")
+        entry_in_tz = Trade.entry_timestamp.op("AT TIME ZONE")(timezone)
+        day_alias = func.date_trunc("day", entry_in_tz).label("day")
+
         q = (
             select(
                 day_alias,
@@ -387,9 +393,9 @@ class TradeRepository:
         )
 
         if start_date:
-            q = q.where(func.date(Trade.entry_timestamp) >= start_date)
+            q = q.where(func.date(entry_in_tz) >= start_date)
         if end_date:
-            q = q.where(func.date(Trade.entry_timestamp) <= end_date)
+            q = q.where(func.date(entry_in_tz) <= end_date)
         if setups:
             q = q.where(Trade.setup.in_(setups))
 

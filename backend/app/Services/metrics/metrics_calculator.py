@@ -2,12 +2,19 @@
 
 from decimal import Decimal
 import numpy as np
+import pytz
 from dateutil.parser import parse
 from scipy.stats import skew, kurtosis
 
 class MetricsCalculator:
-    def __init__(self, trades):
+    def __init__(self, trades, timezone="UTC"):
         self.all_trades = trades
+        self.timezone = timezone
+        try:
+            self.pytz_timezone = pytz.timezone(self.timezone)
+        except pytz.UnknownTimeZoneError:
+            self.pytz_timezone = pytz.utc
+
         if self.all_trades:
             self._prepare_trades()
 
@@ -76,13 +83,16 @@ class MetricsCalculator:
             cost = entry_price * position_size
             trade['net_roi'] = float((pnl / cost) * 100) if cost != 0 else 0.0
 
-            # Conversione date
-            if isinstance(trade.get('created_at'), str):
-                trade['created_at'] = parse(trade['created_at'])
-            if isinstance(trade.get('entry_timestamp'), str):
-                 trade['entry_timestamp'] = parse(trade['entry_timestamp'])
-            if isinstance(trade.get('exit_timestamp'), str):
-                 trade['exit_timestamp'] = parse(trade['exit_timestamp'])
+            # Conversione e localizzazione date
+            for key in ["created_at", "entry_timestamp", "exit_timestamp"]:
+                if isinstance(trade.get(key), str):
+                    trade[key] = parse(trade[key])
+
+                # Aggiungi versione localizzata per calcoli dipendenti da TZ
+                if trade.get(key) and trade.get(key).tzinfo:
+                    trade[f"{key}_local"] = trade[key].astimezone(self.pytz_timezone)
+                else:
+                    trade[f"{key}_local"] = trade.get(key)
 
     def _get_empty_response(self):
         """Struttura di default quando non ci sono trade."""
@@ -214,9 +224,9 @@ class MetricsCalculator:
                 if initial_dollar_risk > 0:
                     realized_rrs.append(pnl / initial_dollar_risk)
 
-        self.all_trades.sort(key=lambda x: x['created_at'])
+        self.all_trades.sort(key=lambda x: x['created_at_local'])
         safe_pnl_floats = [float(pnl) for pnl in base_stats['pnl_data']]
-        equity_curve_data = [{'date': t['created_at'].strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
+        equity_curve_data = [{'date': t['created_at_local'].strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
 
         equity_points = [0] + [p['pl'] for p in equity_curve_data]
         peak_array = np.maximum.accumulate(equity_points)
@@ -239,7 +249,7 @@ class MetricsCalculator:
         max_dd_values = [max(dd) for dd in all_drawdowns if dd]
         average_drawdown = np.mean(max_dd_values) if max_dd_values else Decimal(0)
 
-        # Temporal metrics
+        # Temporal metrics (basate su timezone locale)
         hold_times_minutes = []
         pnl_by_day_of_week = {i: Decimal(0) for i in range(7)}
         pnl_by_hour = {i: Decimal(0) for i in range(24)}
@@ -247,9 +257,11 @@ class MetricsCalculator:
             entry, exit_ts = trade.get('entry_timestamp'), trade.get('exit_timestamp')
             if entry and exit_ts:
                 hold_times_minutes.append((exit_ts - entry).total_seconds() / 60)
-            if entry:
-                pnl_by_day_of_week[entry.weekday()] += Decimal(trade.get('p_l', 0))
-                pnl_by_hour[entry.hour] += Decimal(trade.get('p_l', 0))
+
+            entry_local = trade.get("entry_timestamp_local")
+            if entry_local:
+                pnl_by_day_of_week[entry_local.weekday()] += Decimal(trade.get('p_l', 0))
+                pnl_by_hour[entry_local.hour] += Decimal(trade.get('p_l', 0))
 
         average_hold_time = np.mean(hold_times_minutes) if hold_times_minutes else 0
         longest_trade_duration = max(hold_times_minutes) if hold_times_minutes else 0
@@ -257,10 +269,14 @@ class MetricsCalculator:
         performance_by_day_of_week = {day_names[i]: pnl for i, pnl in pnl_by_day_of_week.items()}
         performance_by_hour = {f"{h:02d}:00": pnl for h, pnl in pnl_by_hour.items()}
 
-        # Daily aggregates
+        # Daily aggregates (basati su timezone locale)
         daily_pnl, daily_volume = {}, {}
         for trade in self.all_trades:
-            trade_date = trade['created_at'].date()
+            entry_local = trade.get("entry_timestamp_local")
+            if not entry_local:
+                continue
+
+            trade_date = entry_local.date()
             daily_pnl.setdefault(trade_date, Decimal(0))
             daily_volume.setdefault(trade_date, Decimal(0))
             pnl = Decimal(trade.get('p_l') or 0)
@@ -519,7 +535,7 @@ class MetricsCalculator:
             final_stats.pop(k, None)
 
         final_payload = {
-            'trades': sorted(self.all_trades, key=lambda x: x['created_at'], reverse=True),
+            'trades': sorted(self.all_trades, key=lambda x: x['created_at_local'], reverse=True),
             'stats': final_stats,
             'equity_curve_data': advanced_stats['equity_curve_data'],
             **chart_data
