@@ -67,23 +67,6 @@ const formatDuration = (minutes) => {
   const secs = Math.round((minutes - mins) * 60);
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
-
-/**
- * Estrae l'orario da una stringa timestamp ISO (es. "2023-10-27T14:30:00")
- * senza applicare alcuna conversione di fuso orario.
- * @param {string} timestamp - La stringa del timestamp.
- * @returns {string} L'orario formattato come HH:mm.
- */
-const getLocalTimeFromISO = (timestamp) => {
-  if (!timestamp || typeof timestamp !== 'string') {
-    return 'N/A';
-  }
-  const parts = timestamp.split('T');
-  if (parts.length < 2) {
-    return 'N/A'; // Formato non valido
-  }
-  return parts[1].substring(0, 5); // Estrae HH:mm
-};
 </script>
 
 <template>
@@ -136,7 +119,7 @@ const getLocalTimeFromISO = (timestamp) => {
               <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
             </template>
             <template #entry_timestamp="{ item }">
-              {{ getLocalTimeFromISO(item.entry_timestamp) }}
+              {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
             </template>
             <template #duration_minutes="{ item }">
               {{ formatDuration(item.duration_minutes) }}
