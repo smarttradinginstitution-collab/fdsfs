@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
-from app.Schemas.stats import ProcessedStats, EquityCurveData
+from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 
 
@@ -305,3 +305,31 @@ class TradesController:
         curve_data = calc.calculate_equity_curve()
         # Validiamo l'output con il nostro schema Pydantic
         return EquityCurveData.model_validate(curve_data)
+
+    # --------------------------
+    # TRADE SUMMARY
+    # --------------------------
+    async def get_trade_summary(
+        self,
+        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        db: AsyncSession = Depends(get_db),
+    ) -> TradeSummary:
+        """
+        Ritorna un riepilogo di un periodo specifico, con statistiche
+        e dati per la curva del P&L cumulativo.
+        """
+        repo = TradeRepository(db)
+        rows = await repo.list_with_filters(
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+        )
+
+        trades_as_dicts = []
+        for trade, tag_names in rows:
+            trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
+
+        calc = MetricsCalculator(trades_as_dicts)
+        summary_data = calc.calculate_trade_summary()
+        return TradeSummary.model_validate(summary_data)

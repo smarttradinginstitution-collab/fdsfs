@@ -36,6 +36,7 @@ class ProcessedStats(BaseModel):
     by_strategy: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per strategia")
     by_day_of_week: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per giorno della settimana (es. 'Lunedì')")
     win_loss_days: WinLossDaysStats = Field(..., description="Conteggio dei giorni di profitto/perdita")
+    monthly_totals: Dict[str, float] = Field(..., description="Dati aggregati per mese (chiave: YYYY-MM)")
 
 # --- Schema for Equity Curve Endpoint ---
 
@@ -43,3 +44,22 @@ class EquityCurveData(BaseModel):
     """Schema di risposta per l'endpoint della equity curve."""
     labels: List[str] = Field(..., description="Etichette per l'asse X del grafico (es. date o ID trade)")
     data: List[float] = Field(..., description="Valori del P&L cumulativo per l'asse Y")
+
+
+# --- Schemas for Trade Summary Endpoint ---
+
+class SummaryStats(BaseModel):
+    """Statistiche essenziali per un riepilogo di periodo."""
+    net_pnl: float = Field(..., description="Profitto e perdita netti del periodo")
+    trade_count: int = Field(..., description="Numero di trade nel periodo")
+    winning_trades: int = Field(..., description="Numero di trade in profitto")
+    losing_trades: int = Field(..., description="Numero di trade in perdita")
+    breakeven_trades: int = Field(..., description="Numero di trade a zero")
+    gross_profit: float = Field(..., description="Profitto lordo totale")
+    gross_loss: float = Field(..., description="Perdita lorda totale")
+    profit_factor: float = Field(..., description="Fattore di profitto (Gross Profit / Gross Loss)")
+
+class TradeSummary(BaseModel):
+    """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""
+    stats: SummaryStats
+    cumulative_pnl_series: EquityCurveData

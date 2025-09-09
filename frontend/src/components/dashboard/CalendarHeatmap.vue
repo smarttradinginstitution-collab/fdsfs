@@ -41,7 +41,8 @@ function formatCellPnl(pnl) {
 const handleDayClick = (day) => {
   if (day.isPlaceholder || day.dailyData.tradeCount === 0) return;
   const date = new Date(day.fullDate);
-  tradesStore.fetchTrades({ startDate: date, endDate: date });
+  // Usa la nuova azione specifica per il riepilogo
+  tradesStore.fetchTradeSummary({ startDate: date, endDate: date });
   uiStore.openDailySummaryModal();
 };
 
@@ -51,7 +52,8 @@ const handleWeekClick = (weekIndex) => {
   if (weekDates.length > 0) {
     const startDate = new Date(weekDates[0]);
     const endDate = new Date(weekDates[weekDates.length - 1]);
-    tradesStore.fetchTrades({ startDate, endDate });
+    // Usa la nuova azione specifica per il riepilogo
+    tradesStore.fetchTradeSummary({ startDate, endDate });
     uiStore.openWeeklySummaryModal();
   }
 };

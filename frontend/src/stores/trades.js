@@ -223,7 +223,7 @@ export const useTradesStore = defineStore('trades', {
       const filterStore = useFilterStore();
       const viewDate = new Date(filterStore.endDate);
 
-      if (isNaN(viewDate.getTime()) || !this.processedStats?.daily_data) {
+      if (isNaN(viewDate.getTime())) {
         return { monthLabel: 'Invalid Date', monthlyPnl: 0 };
       }
 
@@ -231,12 +231,8 @@ export const useTradesStore = defineStore('trades', {
       const month = viewDate.getMonth() + 1; // 1-based
       const monthStr = `${year}-${String(month).padStart(2, '0')}`;
 
-      let monthlyPnl = 0;
-      for (const [dateStr, dailyStats] of Object.entries(this.processedStats.daily_data)) {
-        if (dateStr.startsWith(monthStr)) {
-          monthlyPnl += dailyStats.total_pnl;
-        }
-      }
+      // Legge il P&L mensile direttamente dai totali pre-calcolati dal backend
+      const monthlyPnl = this.processedStats?.monthly_totals?.[monthStr] || 0;
 
       const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
       return { monthLabel, monthlyPnl };
@@ -264,14 +260,8 @@ export const useTradesStore = defineStore('trades', {
     /**
      * Azione unificata per recuperare i trade dal backend con filtri.
      */
-    async fetchTrades(dateRange = null) {
-      // Se è una richiesta per un intervallo specifico, usa isSummaryLoading, altrimenti isLoading.
-      if (dateRange) {
-        this.isSummaryLoading = true;
-        this.activeSummary = null;
-      } else {
-        this.isLoading = true;
-      }
+    async fetchTrades() {
+      this.isLoading = true;
 
       const authStore = useAuthStore();
       const filterStore = useFilterStore();
@@ -280,16 +270,13 @@ export const useTradesStore = defineStore('trades', {
       if (!userId) {
         console.error("Utente non autenticato.");
         this.isLoading = false;
-        this.isSummaryLoading = false;
         return;
       }
 
-      // Determina quali filtri usare: quelli passati come argomento o quelli globali
-      const _startDate = dateRange ? dateRange.startDate : filterStore.startDate;
-      const _endDate = dateRange ? dateRange.endDate : filterStore.endDate;
-
-      // Applica il filtro per strategia solo se non stiamo chiedendo un intervallo di date specifico
-      const _strategy = dateRange ? null : filterStore.selectedStrategy;
+      // Usa sempre i filtri globali dello store
+      const _startDate = filterStore.startDate;
+      const _endDate = filterStore.endDate;
+      const _strategy = filterStore.selectedStrategy;
 
       const toYYYYMMDD = (date) => {
         if (!date) return null;
@@ -315,63 +302,60 @@ export const useTradesStore = defineStore('trades', {
 
       try {
         const response = await apiClient.get('/api/v1/trades/', { params });
-        const fetchedTrades = response.data.map(mapBackendTradeToFrontend);
-
-        if (dateRange) {
-          // Se la richiesta era per un intervallo specifico, calcola il riepilogo per quel periodo.
-          const summary = {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-            trades: fetchedTrades,
-            stats: {
-              netPnl: 0,
-              tradeCount: 0,
-              winningTrades: 0,
-              losingTrades: 0,
-              profitFactor: 0,
-              grossProfit: 0,
-              grossLoss: 0,
-            },
-            cumulativePnlForChart: { labels: ['Start'], data: [0] }
-          };
-
-          if (fetchedTrades.length > 0) {
-            let cumulativePnl = 0;
-            for (const trade of fetchedTrades) {
-              const pnl = trade.pnl || 0;
-              summary.stats.netPnl += pnl;
-              summary.stats.tradeCount++;
-              if (pnl > 0) {
-                summary.stats.winningTrades++;
-                summary.stats.grossProfit += pnl;
-              } else if (pnl < 0) {
-                summary.stats.losingTrades++;
-                summary.stats.grossLoss += Math.abs(pnl);
-              }
-              cumulativePnl += pnl;
-              summary.cumulativePnlForChart.data.push(cumulativePnl);
-              summary.cumulativePnlForChart.labels.push(trade.ticker);
-            }
-            summary.stats.profitFactor = summary.stats.grossLoss > 0
-              ? summary.stats.grossProfit / summary.stats.grossLoss
-              : (summary.stats.grossProfit > 0 ? Infinity : 0);
-          }
-          this.activeSummary = summary;
-
-        } else {
-          // Altrimenti, aggiorna la lista principale dei trade per la dashboard
-          this.trades = fetchedTrades;
-        }
-
+        this.trades = response.data.map(mapBackendTradeToFrontend);
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
-        if (dateRange) {
-          this.activeSummary = { error: 'Failed to load summary.' };
-        } else {
-          this.trades = [];
-        }
+        this.trades = [];
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async fetchTradeSummary(dateRange) {
+      this.isSummaryLoading = true;
+      this.activeSummary = null;
+
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+      if (!userId) {
+        console.error("Utente non autenticato per il riepilogo.");
+        this.isSummaryLoading = false;
+        return;
+      }
+
+      const toYYYYMMDD = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      };
+
+      const params = {
+        user_id: userId,
+        start_date: toYYYYMMDD(dateRange.startDate),
+        end_date: toYYYYMMDD(dateRange.endDate),
+      };
+
+      try {
+        // Eseguiamo le due chiamate in parallelo per efficienza
+        const [summaryResponse, tradesResponse] = await Promise.all([
+          apiClient.get('/api/v1/trades/summary', { params }),
+          apiClient.get('/api/v1/trades/', { params })
+        ]);
+
+        const fetchedTrades = tradesResponse.data.map(mapBackendTradeToFrontend);
+
+        this.activeSummary = {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+          trades: fetchedTrades,
+          stats: summaryResponse.data.stats,
+          cumulativePnlForChart: summaryResponse.data.cumulative_pnl_series,
+        };
+
+      } catch (error) {
+        console.error('Errore nel recupero del riepilogo del trade:', error);
+        this.activeSummary = { error: 'Failed to load summary.' };
+      } finally {
         this.isSummaryLoading = false;
       }
     },

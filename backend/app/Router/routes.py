@@ -23,7 +23,7 @@ from app.Schemas.auth_user import AuthUserRead
 from app.Schemas.role import RoleRead
 from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse
 from app.Schemas.trade import TradeRead
-from app.Schemas.stats import ProcessedStats, EquityCurveData
+from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
 
 # Repo per diagnostica ruoli
 from app.Repositories.user_role_repository import UserRoleRepository
@@ -152,6 +152,7 @@ router_trades.get("/calendar/data")(trades.calendar_data)
 router_trades.get("/performance/metrics")(trades.get_performance_metrics)
 router_trades.get("/processed-stats", response_model=ProcessedStats)(trades.get_processed_stats)
 router_trades.get("/equity-curve", response_model=EquityCurveData)(trades.get_equity_curve)
+router_trades.get("/summary", response_model=TradeSummary)(trades.get_trade_summary)
 router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
 router_trades.post("/", response_model=TradeRead, status_code=201)(trades.create_trade)
 router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
