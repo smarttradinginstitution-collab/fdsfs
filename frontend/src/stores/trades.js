@@ -197,7 +197,8 @@ export const useTradesStore = defineStore('trades', {
       if (!this.processedStats?.by_strategy) return [];
 
       const rawData = this.processedStats.by_strategy;
-      const maxPnl = Math.max(...Object.values(rawData).map(stat => Math.abs(stat.total_pnl)));
+      // Usa il valore pre-calcolato dal backend.
+      const maxPnl = this.processedStats.max_abs_pnl_by_strategy || 0;
 
       return Object.entries(rawData).map(([strategy, stats]) => {
         const winRate = stats.win_rate || 0;

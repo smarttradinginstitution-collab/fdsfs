@@ -704,6 +704,12 @@ class MetricsCalculator:
             else:
                 breakeven_days += 1
 
+        # Calcola max_abs_pnl_by_strategy
+        max_abs_pnl_by_strategy = 0.0
+        if by_strategy:
+            # Calcoliamo il massimo P&L assoluto PRIMA di convertire i valori in float
+            max_abs_pnl_by_strategy = float(max(abs(s['total_pnl']) for s in by_strategy.values()))
+
         # Calcola win rate e converte Decimal in float per tutti i gruppi
         for group in [by_strategy, daily_data, by_day_of_week]:
             for stats in group.values():
@@ -725,6 +731,7 @@ class MetricsCalculator:
             },
             "daily_data": daily_data,
             "by_strategy": by_strategy,
+            "max_abs_pnl_by_strategy": max_abs_pnl_by_strategy,
             "by_day_of_week": by_day_of_week,
             "win_loss_days": {"winning_days": winning_days, "losing_days": losing_days, "breakeven_days": breakeven_days},
             "monthly_totals": monthly_totals,
