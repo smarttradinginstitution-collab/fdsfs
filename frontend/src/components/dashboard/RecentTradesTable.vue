@@ -45,7 +45,16 @@ const recentFilteredTrades = computed(() => {
         </template>
         <!-- Slot per formattare la data -->
         <template #date="{ item }">
-          {{ new Date(item.date).toLocaleDateString() }}
+          {{
+            new Date(item.date).toLocaleString('it-IT', {
+              year: '2-digit',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            })
+          }}
         </template>
       </BaseTable>
       <div v-if="recentFilteredTrades.length === 0" class="no-trades-message">
