@@ -206,64 +206,15 @@ export const useTradesStore = defineStore('trades', {
     },
 
     calendarDataByMonth() {
-      const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
-        acc[entry.date] = {
-          totalPnl: entry.pnl,
-          tradeCount: entry.trade_count,
-          winningTrades: entry.winning_trades_count,
-        };
-        return acc;
-      }, {});
-
-      const filterStore = useFilterStore();
-      const viewDate = new Date(filterStore.endDate);
-      const year = viewDate.getFullYear();
-      const month = viewDate.getMonth();
-
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const firstDayOfWeek = new Date(year, month, 1).getDay();
-      const calendarDays = [];
-      const offset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1; // Lunedì = 0, Domenica = 6
-
-      // Aggiungi giorni placeholder all'inizio
-      for (let i = 0; i < offset; i++) {
-        calendarDays.push({ isPlaceholder: true, key: `ph-start-${i}` });
+      // La logica è stata spostata nel backend. Il frontend ora riceve
+      // la struttura completa e la usa direttamente.
+      if (!this.calendarData || !this.calendarData.weeksOfDays) {
+        return { weeksOfDays: [], weeklySummaries: [] };
       }
-
-      // Aggiungi i giorni del mese
-      for (let i = 1; i <= daysInMonth; i++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        calendarDays.push({
-          date: i,
-          fullDate: dateStr,
-          dailyData: dailyDataFromBackend[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
-          isPlaceholder: false,
-          key: dateStr,
-        });
-      }
-
-      // Completa l'ultima settimana con placeholder
-      while (calendarDays.length % 7 !== 0) {
-        calendarDays.push({ isPlaceholder: true, key: `ph-end-${calendarDays.length}` });
-      }
-
-      const weeksOfDays = [];
-      const weeklySummaries = [];
-      for (let i = 0; i < calendarDays.length; i += 7) {
-        const weekChunk = calendarDays.slice(i, i + 7);
-        weeksOfDays.push(weekChunk);
-
-        const weeklyPnl = weekChunk.reduce((sum, day) => sum + (day.dailyData?.totalPnl || 0), 0);
-        const tradingDaysCount = weekChunk.filter(day => !day.isPlaceholder && day.dailyData.tradeCount > 0).length;
-
-        weeklySummaries.push({
-          weekNumber: (i / 7) + 1,
-          totalPnl: weeklyPnl,
-          tradingDaysCount: tradingDaysCount,
-        });
-      }
-
-      return { weeksOfDays, weeklySummaries };
+      return {
+        weeksOfDays: this.calendarData.weeksOfDays,
+        weeklySummaries: this.calendarData.weeklySummaries,
+      };
     },
 
     strategyPerformanceData() {
@@ -311,20 +262,11 @@ export const useTradesStore = defineStore('trades', {
     ],
 
     calendarControlsData() {
-      const filterStore = useFilterStore();
-      const viewDate = new Date(filterStore.endDate);
-
-      if (isNaN(viewDate.getTime())) return { monthLabel: 'Invalid Date', monthlyPnl: 0 };
-
-      const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-      let monthlyPnl = 0;
-      for (const trade of this.filteredTrades) {
-        const tradeDate = new Date(trade.date);
-        if (tradeDate.getFullYear() === viewDate.getFullYear() && tradeDate.getMonth() === viewDate.getMonth()) {
-          monthlyPnl += trade.pnl;
-        }
+      // Anche questa logica è stata spostata nel backend.
+      if (!this.calendarData || !this.calendarData.controlsData) {
+        return { monthLabel: 'Loading...', monthlyPnl: 0 };
       }
-      return { monthLabel, monthlyPnl };
+      return this.calendarData.controlsData;
     }
   },
 
@@ -378,12 +320,8 @@ export const useTradesStore = defineStore('trades', {
 
       const params = {
         user_id: userId,
-        start_date: typeof _startDate === 'string'
-          ? _startDate
-          : _startDate?.toISOString().split('T')[0],
-        end_date: typeof _endDate === 'string'
-          ? _endDate
-          : _endDate?.toISOString().split('T')[0],
+        start_date: _startDate?.toISOString().split('T')[0],
+        end_date: _endDate?.toISOString().split('T')[0],
       };
 
       if (_strategy && _strategy.toLowerCase() !== 'all') {

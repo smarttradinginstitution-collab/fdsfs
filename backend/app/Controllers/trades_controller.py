@@ -24,6 +24,7 @@ from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Services.metrics.metrics_calculator import MetricsCalculator
+from app.Utils.calendar_builder import build_calendar_structure
 
 
 class TradesController:
@@ -207,15 +208,39 @@ class TradesController:
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
         timezone: str = Header("UTC", description="Timezone IANA (es. Europe/Rome)"),
         db: AsyncSession = Depends(get_db),
-    ) -> list[dict]:
+    ) -> dict:
+        # Il frontend deve fornire una data per definire il mese del calendario
+        if not end_date:
+            raise HTTPException(
+                status_code=400,
+                detail="Il parametro 'end_date' è obbligatorio per definire il mese del calendario."
+            )
+
         repo = TradeRepository(db)
-        return await repo.get_calendar_data(
+        # 1. Ottieni i dati giornalieri grezzi dal repository
+        daily_data = await repo.get_calendar_data(
             user_id=user_id,
             start_date=start_date,
             end_date=end_date,
             setups=setups,
             timezone=timezone,
         )
+
+        # 2. Costruisci la struttura completa del calendario
+        year = end_date.year
+        month = end_date.month
+        calendar_structure = build_calendar_structure(year, month, daily_data)
+
+        # 3. Aggiungi i dati del P&L mensile per i controlli
+        monthly_pnl = sum(day.get("dailyData", {}).get("totalPnl", 0) for week in calendar_structure["weeksOfDays"] for day in week)
+        month_label = end_date.strftime("%B %Y")
+
+        calendar_structure["controlsData"] = {
+            "monthLabel": month_label,
+            "monthlyPnl": monthly_pnl,
+        }
+
+        return calendar_structure
 
     # --------------------------
     # PERFORMANCE METRICS

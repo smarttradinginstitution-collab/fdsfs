@@ -40,12 +40,8 @@ function formatCellPnl(pnl) {
 // --- CLICK HANDLERS ---
 const handleDayClick = (day) => {
   if (day.isPlaceholder || day.dailyData.tradeCount === 0) return;
-  // Passa la stringa YYYY-MM-DD direttamente allo store per evitare
-  // conversioni di fuso orario involontarie con `new Date()`.
-  tradesStore.fetchTrades({
-    startDate: day.fullDate,
-    endDate: day.fullDate
-  });
+  const date = new Date(day.fullDate);
+  tradesStore.fetchTrades({ startDate: date, endDate: date });
   uiStore.openDailySummaryModal();
 };
 
