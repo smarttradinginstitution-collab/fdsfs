@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Schemas.stats import ProcessedStats, EquityCurveData
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 
 
@@ -244,3 +245,63 @@ class TradesController:
 
         calc = MetricsCalculator(trades_as_dicts)
         return calc.calculate_all_metrics()
+
+    # --------------------------
+    # PROCESSED STATS (for Dashboard)
+    # --------------------------
+    async def get_processed_stats(
+        self,
+        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        db: AsyncSession = Depends(get_db),
+    ) -> ProcessedStats:
+        """
+        Ritorna una serie di statistiche aggregate e processate,
+        ottimizzate per la visualizzazione nella dashboard del frontend.
+        """
+        repo = TradeRepository(db)
+        rows = await repo.list_with_filters(
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+        )
+
+        trades_as_dicts = []
+        for trade, tag_names in rows:
+            trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
+
+        calc = MetricsCalculator(trades_as_dicts)
+        # Usiamo il nuovo metodo specifico del calcolatore
+        stats_data = calc.calculate_processed_stats()
+        # Validiamo l'output con il nostro schema Pydantic
+        return ProcessedStats.model_validate(stats_data)
+
+    # --------------------------
+    # EQUITY CURVE DATA
+    # --------------------------
+    async def get_equity_curve(
+        self,
+        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        db: AsyncSession = Depends(get_db),
+    ) -> EquityCurveData:
+        """
+        Ritorna i dati necessari per costruire il grafico della equity curve,
+        filtrati per il periodo e i setup specificati.
+        """
+        repo = TradeRepository(db)
+        rows = await repo.list_with_filters(
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+        )
+
+        trades_as_dicts = []
+        for trade, tag_names in rows:
+            trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
+
+        calc = MetricsCalculator(trades_as_dicts)
+        # Usiamo il nuovo metodo specifico del calcolatore
+        curve_data = calc.calculate_equity_curve()
+        # Validiamo l'output con il nostro schema Pydantic
+        return EquityCurveData.model_validate(curve_data)

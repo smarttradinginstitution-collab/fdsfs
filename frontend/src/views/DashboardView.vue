@@ -57,19 +57,14 @@ const visibleStats = computed(() => {
 
 // --- Data Fetching ---
 onMounted(() => {
-  tradesStore.fetchSetups();
-  tradesStore.fetchTrades();
-  tradesStore.fetchDashboardStats();
-  tradesStore.fetchCalendarData();
+  tradesStore.fetchAllDataForDashboard();
 });
 
 // Watch for filter changes and refetch all dashboard data
 watch(
   () => [filterStore.selectedStrategy, filterStore.endDate],
   () => {
-    tradesStore.fetchTrades();
-    tradesStore.fetchDashboardStats();
-    tradesStore.fetchCalendarData();
+    tradesStore.fetchAllDataForDashboard();
   },
   { deep: true }
 );

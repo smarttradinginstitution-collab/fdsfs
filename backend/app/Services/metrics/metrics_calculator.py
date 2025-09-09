@@ -505,6 +505,132 @@ class MetricsCalculator:
             }
         }
 
+    def calculate_equity_curve(self):
+        """
+        Calcola e formatta i dati per la equity curve.
+        """
+        if not self.all_trades:
+            return {'labels': [], 'data': []}
+
+        # Ordinamento per data di entrata, non di creazione, per la curva
+        self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or parse('1970-01-01'))
+
+        pnl_data = [Decimal(t.get('p_l', 0)) for t in self.all_trades]
+        cumulative_pnl = np.cumsum([float(p) for p in pnl_data])
+
+        # Usa la data di entrata come etichetta
+        labels = [t['entry_timestamp'].strftime('%Y-%m-%d %H:%M') for t in self.all_trades if t.get('entry_timestamp')]
+
+        return {'labels': labels, 'data': list(cumulative_pnl)}
+
+    def calculate_processed_stats(self):
+        """
+        Calcola le statistiche aggregate necessarie per la dashboard del frontend.
+        """
+        if not self.all_trades:
+            return {
+                "general_stats": {"total_pnl": 0, "trade_count": 0, "winning_trades": 0, "losing_trades": 0, "breakeven_trades": 0, "gross_profit": 0, "gross_loss": 0, "total_risk": 0},
+                "daily_data": {},
+                "by_strategy": {},
+                "by_day_of_week": {},
+                "win_loss_days": {"winning_days": 0, "losing_days": 0, "breakeven_days": 0}
+            }
+
+        # --- Dati di base ---
+        total_pnl = Decimal(0)
+        trade_count = len(self.all_trades)
+        winning_trades = 0
+        losing_trades = 0
+        breakeven_trades = 0
+        gross_profit = Decimal(0)
+        gross_loss = Decimal(0)
+        total_risk = Decimal(0)
+
+        # --- Dati aggregati ---
+        daily_data = {}
+        by_strategy = {}
+        days_of_week_map = {0: 'Lunedì', 1: 'Martedì', 2: 'Mercoledì', 3: 'Giovedì', 4: 'Venerdì', 5: 'Sabato', 6: 'Domenica'}
+        by_day_of_week = {name: {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0} for name in days_of_week_map.values()}
+
+        for trade in self.all_trades:
+            pnl = Decimal(trade.get('p_l', 0))
+            # Il campo 'risk' non è nel modello DB, quindi lo calcoliamo se possibile
+            # o lo assumiamo a 0 se non calcolabile.
+            risk = Decimal(0)
+            entry = Decimal(trade.get('entry_price') or 0)
+            sl = Decimal(trade.get('stop_loss_price') or 0)
+            size = Decimal(trade.get('position_size') or 1)
+            if entry > 0 and sl > 0:
+                risk = abs(entry - sl) * size
+
+            # Aggiorna statistiche generali
+            total_pnl += pnl
+            total_risk += risk
+            if pnl > 0:
+                winning_trades += 1
+                gross_profit += pnl
+            elif pnl < 0:
+                losing_trades += 1
+                gross_loss += abs(pnl)
+            else:
+                breakeven_trades += 1
+
+            # Aggrega per giorno
+            if trade.get('entry_timestamp'):
+                day_key = trade['entry_timestamp'].strftime('%Y-%m-%d')
+                if day_key not in daily_data:
+                    daily_data[day_key] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0}
+                daily_data[day_key]['total_pnl'] += pnl
+                daily_data[day_key]['trade_count'] += 1
+                if pnl > 0:
+                    daily_data[day_key]['winning_trades'] += 1
+
+            # Aggrega per strategia
+            strategy = trade.get('setup', 'N/A')
+            if strategy not in by_strategy:
+                by_strategy[strategy] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0}
+            by_strategy[strategy]['total_pnl'] += pnl
+            by_strategy[strategy]['trade_count'] += 1
+            if pnl > 0:
+                by_strategy[strategy]['winning_trades'] += 1
+
+            # Aggrega per giorno della settimana
+            if trade.get('entry_timestamp'):
+                day_name = days_of_week_map[trade['entry_timestamp'].weekday()]
+                by_day_of_week[day_name]['total_pnl'] += pnl
+                by_day_of_week[day_name]['trade_count'] += 1
+                if pnl > 0:
+                    by_day_of_week[day_name]['winning_trades'] += 1
+
+        # Calcola giorni di vincita/perdita
+        winning_days = 0
+        losing_days = 0
+        breakeven_days = 0
+        for day_stats in daily_data.values():
+            if day_stats['total_pnl'] > 0:
+                winning_days += 1
+            elif day_stats['total_pnl'] < 0:
+                losing_days += 1
+            else:
+                breakeven_days += 1
+
+        # Converte Decimal in float per la serializzazione JSON
+        for stats_dict in [daily_data, by_strategy, by_day_of_week]:
+            for key, value in stats_dict.items():
+                value['total_pnl'] = float(value['total_pnl'])
+
+        return {
+            "general_stats": {
+                "total_pnl": float(total_pnl), "trade_count": trade_count, "winning_trades": winning_trades,
+                "losing_trades": losing_trades, "breakeven_trades": breakeven_trades,
+                "gross_profit": float(gross_profit), "gross_loss": float(gross_loss), "total_risk": float(total_risk)
+            },
+            "daily_data": daily_data,
+            "by_strategy": by_strategy,
+            "by_day_of_week": by_day_of_week,
+            "win_loss_days": {"winning_days": winning_days, "losing_days": losing_days, "breakeven_days": breakeven_days}
+        }
+
     def calculate_all_metrics(self):
         """Pacchetto completo di metriche + grafici."""
         if not self.all_trades:
