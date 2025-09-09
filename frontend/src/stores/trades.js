@@ -50,39 +50,9 @@ export const useTradesStore = defineStore('trades', {
       return ['All', ...state.setups];
     },
 
-    filteredTrades: (state) => {
-      const filterStore = useFilterStore();
-      let trades = state.trades;
-
-      // Helper per formattare una data in YYYY-MM-DD per un confronto stringa affidabile
-      const toYYYYMMDD = (date) => {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
-      if (filterStore.startDate && filterStore.endDate) {
-        const startStr = toYYYYMMDD(filterStore.startDate);
-        const endStr = toYYYYMMDD(filterStore.endDate);
-
-        trades = trades.filter(trade => {
-          // Estrae la parte YYYY-MM-DD dal timestamp del trade (es. "2023-10-27T10:00:00")
-          const tradeDateStr = trade.date.substring(0, 10);
-          return tradeDateStr >= startStr && tradeDateStr <= endStr;
-        });
-      }
-
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        trades = trades.filter(trade => trade.strategy === filterStore.selectedStrategy);
-      }
-      return trades;
-    },
-
     processedData(state) {
-      const trades = this.filteredTrades;
       const filterStore = useFilterStore();
+      const trades = state.trades;
       const viewDateForCalendar = new Date(filterStore.endDate);
 
       const stats = { totalPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, breakEvenTrades: 0, grossProfit: 0, grossLoss: 0, totalRisk: 0 };
@@ -307,8 +277,8 @@ export const useTradesStore = defineStore('trades', {
     },
 
     equityCurveData(state) {
-      if (this.filteredTrades.length === 0) return { labels: [], data: [] };
-      const sortedTrades = [...this.filteredTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (state.trades.length === 0) return { labels: [], data: [] };
+      const sortedTrades = [...state.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
       let cumulativePnl = 0;
       const dataPoints = sortedTrades.map(trade => {
         cumulativePnl += trade.pnl;
@@ -332,7 +302,7 @@ export const useTradesStore = defineStore('trades', {
 
       const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
       let monthlyPnl = 0;
-      for (const trade of this.filteredTrades) {
+      for (const trade of this.trades) {
         const tradeDate = new Date(trade.date);
         if (tradeDate.getFullYear() === viewDate.getFullYear() && tradeDate.getMonth() === viewDate.getMonth()) {
           monthlyPnl += trade.pnl;
