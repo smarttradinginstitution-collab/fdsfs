@@ -80,7 +80,7 @@ td {
 
 /* Stili per la dimensione piccola */
 .table--small th {
-    font: var(--semantic-font-style-label-sm);
+    font: var(--semantic-font-style-label-md);
     padding-top: var(--semantic-size-inset-sm);
     padding-bottom: var(--semantic-size-inset-sm);
 }
