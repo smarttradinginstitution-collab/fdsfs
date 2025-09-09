@@ -19,15 +19,19 @@ export function setAuthToken(token) {
   }
 }
 
-// --- Interceptor richiesta: garantisce Authorization anche se mancasse ---
-// (pesca dal localStorage se non è già presente sui defaults)
+// --- Interceptor richiesta: garantisce Authorization e Timezone ---
 apiClient.interceptors.request.use((config) => {
+  // 1. Aggiungi il token di autenticazione se non è già presente
   if (!config.headers.Authorization) {
     const stored = localStorage.getItem('token');
     if (stored) {
       config.headers.Authorization = `Bearer ${stored}`;
     }
   }
+  // 2. Aggiungi il fuso orario del browser a ogni richiesta
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  config.headers['X-Timezone'] = timezone;
+
   return config;
 });
 
