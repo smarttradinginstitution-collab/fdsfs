@@ -586,7 +586,7 @@ class MetricsCalculator:
                     daily_data[day_key]['winning_trades'] += 1
 
             # Aggrega per strategia
-            strategy = trade.get('setup', 'N/A')
+            strategy = trade.get('setup') or 'N/A'
             if strategy not in by_strategy:
                 by_strategy[strategy] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0}
             by_strategy[strategy]['total_pnl'] += pnl
