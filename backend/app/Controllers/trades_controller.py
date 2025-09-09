@@ -81,7 +81,7 @@ class TradesController:
         user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
         symbol: Optional[str] = Query(None),
         direction: Optional[str] = Query(None),
-        setups: Optional[List[str]] = Query(None),
+        setups: Optional[List[str]] = Query(None, alias="setups[]"),
         mistakes: Optional[List[str]] = Query(None),
         days_of_week: Optional[List[int]] = Query(
             None, description="ISO day of week 1..7"
