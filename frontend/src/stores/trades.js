@@ -378,8 +378,12 @@ export const useTradesStore = defineStore('trades', {
 
       const params = {
         user_id: userId,
-        start_date: _startDate?.toISOString().split('T')[0],
-        end_date: _endDate?.toISOString().split('T')[0],
+        start_date: typeof _startDate === 'string'
+          ? _startDate
+          : _startDate?.toISOString().split('T')[0],
+        end_date: typeof _endDate === 'string'
+          ? _endDate
+          : _endDate?.toISOString().split('T')[0],
       };
 
       if (_strategy && _strategy.toLowerCase() !== 'all') {
