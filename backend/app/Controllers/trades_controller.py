@@ -202,12 +202,19 @@ class TradesController:
         user_id: UUID = Query(..., description="ID utente"),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
-        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        setups: Optional[List[str]] = Query(None, description="Filtra per setup specifici"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> list[dict]:
         repo = TradeRepository(db)
         return await repo.get_calendar_data(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            setups=setups,
+            user_timezone=user_timezone,
         )
 
     # --------------------------

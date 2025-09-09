@@ -501,10 +501,14 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
+      // Rileva il fuso orario IANA del browser dell'utente.
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       const params = {
         user_id: userId,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
+        user_timezone: userTimezone, // Aggiungi il fuso orario alla richiesta
       };
 
       if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {

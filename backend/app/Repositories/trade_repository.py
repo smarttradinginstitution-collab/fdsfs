@@ -374,14 +374,17 @@ class TradeRepository:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         setups: Optional[List[str]] = None,
+        user_timezone: str = "UTC",
     ) -> List[dict]:
         """
         Restituisce dati aggregati per giorno per il calendario.
         Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
         Filtra per un intervallo di date e per setup, se forniti.
+        Usa il fuso orario dell'utente per il raggruppamento.
         """
+        tz = user_timezone or "UTC"
         day_alias = func.date_trunc(
-            "day", Trade.entry_timestamp.op("AT TIME ZONE")("UTC")
+            "day", Trade.entry_timestamp.op("AT TIME ZONE")(tz)
         ).label("day")
         q = (
             select(
@@ -396,11 +399,11 @@ class TradeRepository:
 
         if start_date:
             q = q.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) >= start_date
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) >= start_date
             )
         if end_date:
             q = q.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) <= end_date
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) <= end_date
             )
         if setups:
             q = q.where(Trade.setup.in_(setups))
