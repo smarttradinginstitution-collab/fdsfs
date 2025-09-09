@@ -56,6 +56,7 @@ const tableClass = computed(() => {
 <style scoped>
 .table-container {
   width: 100%;
+  overflow-x: auto; /* Aggiunge lo scroll orizzontale se la tabella è troppo larga */
 }
 .table {
   width: 100%;
@@ -80,7 +81,7 @@ td {
 
 /* Stili per la dimensione piccola */
 .table--small th {
-    font: var(--semantic-font-style-label-md);
+    font: var(--semantic-font-style-label-sm);
     padding-top: var(--semantic-size-inset-sm);
     padding-bottom: var(--semantic-size-inset-sm);
 }

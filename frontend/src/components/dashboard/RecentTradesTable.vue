@@ -33,7 +33,6 @@ const recentTrades = computed(() => {
   <div class="recent-trades-widget">
     <div class="widget-header">
       <h2 class="widget-title">Recent Trades</h2>
-      <span class="widget-subtitle">Last 7 filtered trades</span>
     </div>
     <div class="table-container">
       <BaseTable :headers="headers" :items="recentTrades">
@@ -67,9 +66,15 @@ const recentTrades = computed(() => {
 }
 
 .widget-header {
-  padding: var(--semantic-size-inset-lg);
+  /* Padding: block (vertical) inline (horizontal) */
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
   background-color: var(--semantic-color-surface-subtle); /* Sfondo leggero per l'header */
+  display: flex;
+  align-items: center;
+  /* Impostiamo un'altezza minima per allinearci con l'header del calendario,
+     che ha un'altezza guidata dal suo contenuto (es. pulsanti e titolo) */
+  min-height: 68px; /* Valore basato sull'altezza tipica dell'header del calendario. Potrebbe richiedere un token. */
 }
 
 .widget-title {
@@ -78,12 +83,6 @@ const recentTrades = computed(() => {
   font-weight: var(--semantic-font-style-heading-xl-font-weight);
   color: var(--semantic-color-text-primary);
   margin: 0;
-}
-
-.widget-subtitle {
-  font-family: var(--semantic-font-style-body-sm-font-family);
-  font-size: var(--semantic-font-style-body-sm-font-size);
-  color: var(--semantic-color-text-subtle);
 }
 
 .table-container {
