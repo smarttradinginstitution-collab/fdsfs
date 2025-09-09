@@ -56,6 +56,7 @@ const tableClass = computed(() => {
 <style scoped>
 .table-container {
   width: 100%;
+  overflow-x: auto; /* Aggiunge lo scroll orizzontale se la tabella è troppo larga */
 }
 .table {
   width: 100%;

@@ -40,6 +40,7 @@ class ProcessedStats(BaseModel):
     general_stats: GeneralStats = Field(..., description="Statistiche generali")
     daily_data: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per giorno (chiave: YYYY-MM-DD)")
     by_strategy: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per strategia")
+    max_abs_pnl_by_strategy: float = Field(0.0, description="Il massimo P&L in valore assoluto tra tutte le strategie, per la normalizzazione dei grafici.")
     by_day_of_week: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per giorno della settimana (es. 'Lunedì')")
     win_loss_days: WinLossDaysStats = Field(..., description="Conteggio dei giorni di profitto/perdita")
     monthly_totals: Dict[str, float] = Field(..., description="Dati aggregati per mese (chiave: YYYY-MM)")
