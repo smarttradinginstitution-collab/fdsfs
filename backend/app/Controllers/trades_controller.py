@@ -274,6 +274,8 @@ class TradesController:
         # Usiamo il nuovo metodo specifico del calcolatore
         stats_data = calc.calculate_processed_stats()
         # Validiamo l'output con il nostro schema Pydantic
+        stats_data.setdefault("monthly_totals", {})
+        stats_data.setdefault("weekly_totals", {})
         return ProcessedStats.model_validate(stats_data)
 
     # --------------------------
