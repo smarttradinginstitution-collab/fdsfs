@@ -27,9 +27,17 @@ const pnlStyle = (pnl) => {
 };
 
 const formattedDate = computed(() => {
-  if (!summaryData.value) return '';
-  const date = new Date(summaryData.value.startDate + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  if (!summaryData.value || !summaryData.value.startDate) return '';
+  // The startDate is a 'YYYY-MM-DD' string. Appending 'T00:00:00' ensures
+  // it's parsed as a local date, not UTC, preventing timezone shifts.
+  const date = new Date(`${summaryData.value.startDate}T00:00:00`);
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  }).format(date);
 });
 
 const formattedPnl = (pnl) => {
@@ -119,7 +127,13 @@ const formatDuration = (minutes) => {
               <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
             </template>
             <template #entry_timestamp="{ item }">
-              {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
+              {{
+                new Intl.DateTimeFormat('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                }).format(new Date(item.entry_timestamp))
+              }}
             </template>
             <template #duration_minutes="{ item }">
               {{ formatDuration(item.duration_minutes) }}
