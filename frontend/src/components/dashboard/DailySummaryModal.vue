@@ -42,13 +42,13 @@ const statsGrid = computed(() => {
     if (!summaryData.value || !summaryData.value.stats) return null;
     const stats = summaryData.value.stats;
     return {
-        col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${(stats.winning_trades / (stats.trade_count || 1) * 100).toFixed(1)}%` }, ],
+        col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${stats.win_rate.toFixed(1)}%` } ],
         col2: [ { label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }, ],
         col3: [
           { label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
           { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true },
         ],
-        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label }, ]
+        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
     };
 });
 

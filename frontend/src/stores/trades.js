@@ -139,12 +139,10 @@ export const useTradesStore = defineStore('trades', {
       const calendarDays = [];
       const offset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1; // Lunedì = 0, Domenica = 6
 
-      // Aggiungi giorni placeholder all'inizio
       for (let i = 0; i < offset; i++) {
         calendarDays.push({ isPlaceholder: true, key: `ph-start-${i}` });
       }
 
-      // Aggiungi i giorni del mese
       for (let i = 1; i <= daysInMonth; i++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         calendarDays.push({
@@ -156,10 +154,18 @@ export const useTradesStore = defineStore('trades', {
         });
       }
 
-      // Completa l'ultima settimana con placeholder
       while (calendarDays.length % 7 !== 0) {
         calendarDays.push({ isPlaceholder: true, key: `ph-end-${calendarDays.length}` });
       }
+
+      const getISOWeekString = (date) => {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+      };
 
       const weeksOfDays = [];
       const weeklySummaries = [];
@@ -167,14 +173,21 @@ export const useTradesStore = defineStore('trades', {
         const weekChunk = calendarDays.slice(i, i + 7);
         weeksOfDays.push(weekChunk);
 
-        const weeklyPnl = weekChunk.reduce((sum, day) => sum + (day.dailyData?.totalPnl || 0), 0);
-        const tradingDaysCount = weekChunk.filter(day => !day.isPlaceholder && day.dailyData.tradeCount > 0).length;
+        const firstDayOfWeek = weekChunk.find(d => !d.isPlaceholder);
+        let summary = { weekNumber: (i / 7) + 1, totalPnl: 0, tradingDaysCount: 0 }; // Default
 
-        weeklySummaries.push({
-          weekNumber: (i / 7) + 1,
-          totalPnl: weeklyPnl,
-          tradingDaysCount: tradingDaysCount,
-        });
+        if (firstDayOfWeek && this.processedStats?.weekly_totals) {
+          const isoWeekKey = getISOWeekString(new Date(firstDayOfWeek.fullDate));
+          const backendSummary = this.processedStats.weekly_totals[isoWeekKey];
+          if (backendSummary) {
+            summary = {
+              weekNumber: parseInt(isoWeekKey.split('-W')[1], 10),
+              totalPnl: backendSummary.total_pnl,
+              tradingDaysCount: backendSummary.trading_days,
+            };
+          }
+        }
+        weeklySummaries.push(summary);
       }
 
       return { weeksOfDays, weeklySummaries };
@@ -187,7 +200,7 @@ export const useTradesStore = defineStore('trades', {
       const maxPnl = Math.max(...Object.values(rawData).map(stat => Math.abs(stat.total_pnl)));
 
       return Object.entries(rawData).map(([strategy, stats]) => {
-        const winRate = stats.trade_count > 0 ? (stats.winning_trades / stats.trade_count) * 100 : 0;
+        const winRate = stats.win_rate || 0;
         return {
           label: strategy,
           value: `${stats.trade_count} trades | ${winRate.toFixed(0)}% WR | $${stats.total_pnl.toFixed(2)}`,

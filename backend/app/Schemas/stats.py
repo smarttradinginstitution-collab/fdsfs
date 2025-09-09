@@ -22,12 +22,18 @@ class AggregatedStats(BaseModel):
     total_pnl: float = Field(..., description="Profitto e perdita totali per questo gruppo")
     trade_count: int = Field(..., description="Numero di trade per questo gruppo")
     winning_trades: int = Field(..., description="Numero di trade in profitto per questo gruppo")
+    win_rate: float = Field(..., description="Percentuale di trade vincenti (0-100)")
 
 class WinLossDaysStats(BaseModel):
     """Statistiche sui giorni di trading."""
     winning_days: int = Field(..., description="Numero di giorni con P&L > 0")
     losing_days: int = Field(..., description="Numero di giorni con P&L < 0")
     breakeven_days: int = Field(..., description="Numero di giorni con P&L = 0")
+
+class WeeklySummaryStats(BaseModel):
+    """Statistiche di riepilogo per una settimana."""
+    total_pnl: float = Field(..., description="P&L totale della settimana")
+    trading_days: int = Field(..., description="Numero di giorni con almeno un trade nella settimana")
 
 class ProcessedStats(BaseModel):
     """Schema di risposta per l'endpoint delle statistiche processate."""
@@ -37,6 +43,7 @@ class ProcessedStats(BaseModel):
     by_day_of_week: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per giorno della settimana (es. 'Lunedì')")
     win_loss_days: WinLossDaysStats = Field(..., description="Conteggio dei giorni di profitto/perdita")
     monthly_totals: Dict[str, float] = Field(..., description="Dati aggregati per mese (chiave: YYYY-MM)")
+    weekly_totals: Dict[str, WeeklySummaryStats] = Field(..., description="Dati aggregati per settimana ISO (chiave: YYYY-Www)")
 
 # --- Schema for Equity Curve Endpoint ---
 
@@ -59,6 +66,7 @@ class SummaryStats(BaseModel):
     gross_loss: float = Field(..., description="Perdita lorda totale")
     profit_factor: Optional[float] = Field(..., description="Valore numerico del Profit Factor (può essere nullo)")
     profit_factor_label: str = Field(..., description="Etichetta testuale per il Profit Factor (es. '2.61' o '∞')")
+    win_rate: float = Field(..., description="Percentuale di trade vincenti (0-100)")
 
 class TradeSummary(BaseModel):
     """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""
