@@ -62,7 +62,7 @@ onMounted(() => {
 
 // Watch for filter changes and refetch all dashboard data
 watch(
-  () => [filterStore.selectedStrategy, filterStore.endDate],
+  () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
     tradesStore.fetchAllDataForDashboard();
   },
