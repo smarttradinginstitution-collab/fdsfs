@@ -86,7 +86,8 @@ const recentTrades = computed(() => {
 }
 
 .table-container {
-  padding: var(--semantic-size-inset-lg);
+  /* top | horizontal | bottom */
+  padding: 0 var(--semantic-size-inset-lg) var(--semantic-size-inset-xl);
 }
 
 .pnl-positive {
