@@ -190,7 +190,7 @@ class TradeRepository:
             base = base.where(Trade.mistakes.contains(mistakes))
         if days_of_week:
             base = base.where(
-                func.extract("isodow", Trade.entry_timestamp.expression.at_time_zone(timezone)).in_(days_of_week)
+                func.extract("isodow", Trade.entry_timestamp.op('AT TIME ZONE')(timezone)).in_(days_of_week)
             )
         if min_size is not None:
             base = base.where(Trade.position_size >= min_size)
@@ -375,7 +375,7 @@ class TradeRepository:
         Restituisce dati aggregati per giorno per il calendario, tenendo conto del fuso orario.
         """
         # Converte il timestamp UTC in un timestamp locale prima di troncarlo al giorno
-        day_alias = func.date_trunc("day", Trade.entry_timestamp.expression.at_time_zone(timezone)).label("day")
+        day_alias = func.date_trunc("day", Trade.entry_timestamp.op('AT TIME ZONE')(timezone)).label("day")
         q = (
             select(
                 day_alias,
