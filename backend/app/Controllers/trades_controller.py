@@ -90,6 +90,9 @@ class TradesController:
         tags: Optional[List[str]] = Query(None),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
         repo = TradeRepository(db)
@@ -105,6 +108,7 @@ class TradesController:
             tags=tags,
             start_date=start_date,
             end_date=end_date,
+            user_timezone=user_timezone,
         )
         out: List[TradeRead] = []
         for trade, tag_names in rows:

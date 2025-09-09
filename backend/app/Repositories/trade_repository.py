@@ -162,6 +162,7 @@ class TradeRepository:
         tags: Optional[List[str]] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        user_timezone: str = "UTC",
     ) -> List[Tuple[Trade, List[str]]]:
         """
         Ritorna una lista di tuple (Trade, [tag_names]) filtrate per user_id e criteri opzionali.
@@ -176,6 +177,7 @@ class TradeRepository:
           - tags: deve contenere TUTTI i tag passati (subquery con count(distinct) == len(tags))
           - start_date/end_date: range su func.date(entry_timestamp)
         """
+        tz = user_timezone or "UTC"
         base = select(Trade).where(Trade.user_id == user_id)
 
         if symbol:
@@ -189,7 +191,7 @@ class TradeRepository:
             base = base.where(Trade.mistakes.contains(mistakes))
         if days_of_week:
             base = base.where(
-                func.extract("isodow", Trade.entry_timestamp.op("AT TIME ZONE")("UTC")).in_(
+                func.extract("isodow", Trade.entry_timestamp.op("AT TIME ZONE")(tz)).in_(
                     days_of_week
                 )
             )
@@ -199,11 +201,11 @@ class TradeRepository:
             base = base.where(Trade.position_size <= max_size)
         if start_date:
             base = base.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) >= start_date
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) >= start_date
             )
         if end_date:
             base = base.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) <= end_date
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) <= end_date
             )
 
 

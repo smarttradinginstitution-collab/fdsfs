@@ -390,10 +390,22 @@ export const useTradesStore = defineStore('trades', {
       // Applica il filtro per strategia solo se non stiamo chiedendo un intervallo di date specifico
       const _strategy = dateRange ? null : filterStore.selectedStrategy;
 
+      const toYYYYMMDD = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       const params = {
         user_id: userId,
-        start_date: _startDate?.toISOString().split('T')[0],
-        end_date: _endDate?.toISOString().split('T')[0],
+        start_date: toYYYYMMDD(_startDate),
+        end_date: toYYYYMMDD(_endDate),
+        user_timezone: userTimezone,
       };
 
       if (_strategy && _strategy.toLowerCase() !== 'all') {
