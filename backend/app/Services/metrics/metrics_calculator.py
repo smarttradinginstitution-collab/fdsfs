@@ -523,6 +523,49 @@ class MetricsCalculator:
 
         return {'labels': labels, 'data': list(cumulative_pnl)}
 
+    def calculate_trade_summary(self):
+        """
+        Calcola un riepilogo per un set di trade, includendo
+        statistiche di base e la curva del P&L cumulativo.
+        """
+        if not self.all_trades:
+            return {
+                "stats": {
+                    "net_pnl": 0, "trade_count": 0, "winning_trades": 0,
+                    "losing_trades": 0, "breakeven_trades": 0, "gross_profit": 0,
+                    "gross_loss": 0, "profit_factor": 0
+                },
+                "cumulative_pnl_series": {"labels": [], "data": []}
+            }
+
+        base_stats = self._calculate_base_stats()
+        equity_curve = self.calculate_equity_curve()
+
+        # _calculate_base_stats non ritorna total_win/total_loss, quindi li ricalcoliamo qui
+        # in modo efficiente dai pnl_data già calcolati.
+        winning_pnls = [p for p in base_stats['pnl_data'] if p > 0]
+        losing_pnls = [p for p in base_stats['pnl_data'] if p < 0]
+        gross_profit = sum(winning_pnls)
+        gross_loss = abs(sum(losing_pnls))
+
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf') if gross_profit > 0 else 0
+
+        summary_stats = {
+            "net_pnl": float(base_stats['total_pl']),
+            "trade_count": base_stats['trade_count'],
+            "winning_trades": base_stats['winning_trades_count'],
+            "losing_trades": base_stats['losing_trades_count'],
+            "breakeven_trades": base_stats['breakeven_trades_count'],
+            "gross_profit": float(gross_profit),
+            "gross_loss": float(gross_loss),
+            "profit_factor": float(profit_factor)
+        }
+
+        return {
+            "stats": summary_stats,
+            "cumulative_pnl_series": equity_curve
+        }
+
     def calculate_processed_stats(self):
         """
         Calcola le statistiche aggregate necessarie per la dashboard del frontend.
@@ -549,6 +592,7 @@ class MetricsCalculator:
         # --- Dati aggregati ---
         daily_data = {}
         by_strategy = {}
+        monthly_totals = {}
         days_of_week_map = {0: 'Lunedì', 1: 'Martedì', 2: 'Mercoledì', 3: 'Giovedì', 4: 'Venerdì', 5: 'Sabato', 6: 'Domenica'}
         by_day_of_week = {name: {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0} for name in days_of_week_map.values()}
 
@@ -602,6 +646,13 @@ class MetricsCalculator:
                 if pnl > 0:
                     by_day_of_week[day_name]['winning_trades'] += 1
 
+            # Aggrega per mese
+            if trade.get('entry_timestamp'):
+                month_key = trade['entry_timestamp'].strftime('%Y-%m')
+                if month_key not in monthly_totals:
+                    monthly_totals[month_key] = Decimal(0)
+                monthly_totals[month_key] += pnl
+
         # Calcola giorni di vincita/perdita
         winning_days = 0
         losing_days = 0
@@ -619,6 +670,9 @@ class MetricsCalculator:
             for key, value in stats_dict.items():
                 value['total_pnl'] = float(value['total_pnl'])
 
+        for key, value in monthly_totals.items():
+            monthly_totals[key] = float(value)
+
         return {
             "general_stats": {
                 "total_pnl": float(total_pnl), "trade_count": trade_count, "winning_trades": winning_trades,
@@ -628,7 +682,8 @@ class MetricsCalculator:
             "daily_data": daily_data,
             "by_strategy": by_strategy,
             "by_day_of_week": by_day_of_week,
-            "win_loss_days": {"winning_days": winning_days, "losing_days": losing_days, "breakeven_days": breakeven_days}
+            "win_loss_days": {"winning_days": winning_days, "losing_days": losing_days, "breakeven_days": breakeven_days},
+            "monthly_totals": monthly_totals
         }
 
     def calculate_all_metrics(self):
