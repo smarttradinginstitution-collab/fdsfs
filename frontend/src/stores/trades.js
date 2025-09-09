@@ -40,7 +40,7 @@ export const useTradesStore = defineStore('trades', {
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
     setups: [], // Elenco dei setup/strategie per i filtri
     dashboardStats: null,
-    calendarData: [],
+    // calendarData: [], // No longer needed, it's derived from the main trades list.
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
@@ -214,14 +214,9 @@ export const useTradesStore = defineStore('trades', {
     },
 
     calendarDataByMonth() {
-      const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
-        acc[entry.date] = {
-          totalPnl: entry.pnl,
-          tradeCount: entry.trade_count,
-          winningTrades: entry.winning_trades_count,
-        };
-        return acc;
-      }, {});
+      // This getter now uses the `dailyDataForCalendar` computed property from
+      // the `processedData` getter, which correctly aggregates trades by local day.
+      const dailyDataForCalendar = this.processedData.dailyDataForCalendar;
 
       const filterStore = useFilterStore();
       const viewDate = new Date(filterStore.endDate);
@@ -244,7 +239,7 @@ export const useTradesStore = defineStore('trades', {
         calendarDays.push({
           date: i,
           fullDate: dateStr,
-          dailyData: dailyDataFromBackend[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
+          dailyData: dailyDataForCalendar[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
           isPlaceholder: false,
           key: dateStr,
         });
@@ -384,6 +379,7 @@ export const useTradesStore = defineStore('trades', {
       // Applica il filtro per strategia solo se non stiamo chiedendo un intervallo di date specifico
       const _strategy = dateRange ? null : filterStore.selectedStrategy;
 
+      // The backend now supports full datetime, so we send the full ISO string.
       const params = {
         user_id: userId,
         start_date: _startDate?.toISOString(),
@@ -486,31 +482,21 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchCalendarData() {
-      const authStore = useAuthStore();
+      // This action is now responsible for ensuring the main `trades` array
+      // contains all trades for the currently viewed month in the calendar.
+      // The aggregation logic is handled by the getters.
       const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
+      const viewDate = new Date(filterStore.endDate);
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
 
-      if (!userId) {
-        console.error('User not authenticated, cannot fetch calendar data.');
-        return;
-      }
+      // Define the start and end of the month to fetch.
+      const startDate = new Date(year, month, 1, 0, 0, 0);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
 
-      const params = {
-        user_id: userId,
-        start_date: filterStore.startDate?.toISOString(),
-        end_date: filterStore.endDate?.toISOString(),
-      };
-
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        params.setups = [filterStore.selectedStrategy];
-      }
-
-      try {
-        const response = await apiClient.get('/api/v1/trades/calendar/data', { params });
-        this.calendarData = response.data;
-      } catch (error) {
-        console.error('Error fetching calendar data:', error);
-      }
+      // We only need to fetch all trades, not a separate summary.
+      // The main `fetchTrades` action will populate `this.trades`.
+      await this.fetchTrades({ startDate, endDate });
     },
 
     async addTrade(tradeData) {

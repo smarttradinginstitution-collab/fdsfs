@@ -195,22 +195,6 @@ class TradesController:
         return await repo.get_distinct_setups(user_id)
 
     # --------------------------
-    # CALENDAR DATA
-    # --------------------------
-    async def calendar_data(
-        self,
-        user_id: UUID = Query(..., description="ID utente"),
-        start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
-        end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
-        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
-        db: AsyncSession = Depends(get_db),
-    ) -> list[dict]:
-        repo = TradeRepository(db)
-        return await repo.get_calendar_data(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
-        )
-
-    # --------------------------
     # PERFORMANCE METRICS
     # --------------------------
     async def get_performance_metrics(
