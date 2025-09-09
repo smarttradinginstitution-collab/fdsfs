@@ -98,7 +98,14 @@ export const useTradesStore = defineStore('trades', {
         }
 
         const tradeDate = new Date(trade.date);
-        const dayKey = tradeDate.toISOString().split('T')[0];
+        // Usiamo i componenti della data locale per creare la chiave,
+        // in modo che un trade delle 00:05 del 9 settembre (ora locale)
+        // venga correttamente raggruppato sotto il 9 settembre, anche se in UTC
+        // potrebbe essere ancora l'8 settembre.
+        const year = tradeDate.getFullYear();
+        const month = String(tradeDate.getMonth() + 1).padStart(2, '0');
+        const day = String(tradeDate.getDate()).padStart(2, '0');
+        const dayKey = `${year}-${month}-${day}`;
 
         if (!pnlByDay[dayKey]) pnlByDay[dayKey] = 0;
         pnlByDay[dayKey] += trade.pnl;
