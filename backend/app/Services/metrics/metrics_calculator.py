@@ -4,10 +4,16 @@ from decimal import Decimal
 import numpy as np
 from dateutil.parser import parse
 from scipy.stats import skew, kurtosis
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 class MetricsCalculator:
-    def __init__(self, trades):
+    def __init__(self, trades, timezone: str = "UTC"):
         self.all_trades = trades
+        try:
+            self.timezone = ZoneInfo(timezone)
+        except ZoneInfoNotFoundError:
+            self.timezone = ZoneInfo("UTC")
+
         if self.all_trades:
             self._prepare_trades()
 
@@ -248,8 +254,10 @@ class MetricsCalculator:
             if entry and exit_ts:
                 hold_times_minutes.append((exit_ts - entry).total_seconds() / 60)
             if entry:
-                pnl_by_day_of_week[entry.weekday()] += Decimal(trade.get('p_l', 0))
-                pnl_by_hour[entry.hour] += Decimal(trade.get('p_l', 0))
+                # Convert to local time before extracting weekday/hour
+                local_entry = entry.astimezone(self.timezone)
+                pnl_by_day_of_week[local_entry.weekday()] += Decimal(trade.get('p_l', 0))
+                pnl_by_hour[local_entry.hour] += Decimal(trade.get('p_l', 0))
 
         average_hold_time = np.mean(hold_times_minutes) if hold_times_minutes else 0
         longest_trade_duration = max(hold_times_minutes) if hold_times_minutes else 0
@@ -260,7 +268,11 @@ class MetricsCalculator:
         # Daily aggregates
         daily_pnl, daily_volume = {}, {}
         for trade in self.all_trades:
-            trade_date = trade['created_at'].date()
+            # Use entry_timestamp and convert to local date for aggregation
+            entry_ts = trade.get('entry_timestamp')
+            if not entry_ts:
+                continue
+            trade_date = entry_ts.astimezone(self.timezone).date()
             daily_pnl.setdefault(trade_date, Decimal(0))
             daily_volume.setdefault(trade_date, Decimal(0))
             pnl = Decimal(trade.get('p_l') or 0)

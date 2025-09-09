@@ -162,6 +162,7 @@ class TradeRepository:
         tags: Optional[List[str]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        timezone: str = "UTC",
     ) -> List[Tuple[Trade, List[str]]]:
         """
         Ritorna una lista di tuple (Trade, [tag_names]) filtrate per user_id e criteri opzionali.
@@ -189,7 +190,7 @@ class TradeRepository:
             base = base.where(Trade.mistakes.contains(mistakes))
         if days_of_week:
             base = base.where(
-                func.extract("isodow", Trade.entry_timestamp).in_(days_of_week)
+                func.extract("isodow", Trade.entry_timestamp.at_time_zone(timezone)).in_(days_of_week)
             )
         if min_size is not None:
             base = base.where(Trade.position_size >= min_size)
@@ -360,3 +361,51 @@ class TradeRepository:
         return res.scalars().all()
 
     # ──────────────────────────────────────────────────────────────────────
+    # CALENDAR DATA
+    # ──────────────────────────────────────────────────────────────────────
+    async def get_calendar_data(
+        self,
+        user_id: UUID,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        setups: Optional[List[str]] = None,
+        timezone: str = "UTC",
+    ) -> List[dict]:
+        """
+        Restituisce dati aggregati per giorno per il calendario, tenendo conto del fuso orario.
+        """
+        # Converte il timestamp UTC in un timestamp locale prima di troncarlo al giorno
+        day_alias = func.date_trunc("day", Trade.entry_timestamp.at_time_zone(timezone)).label("day")
+        q = (
+            select(
+                day_alias,
+                func.sum(Trade.p_l).label("daily_pnl"),
+                func.count(Trade.id).label("trade_count"),
+                func.count().filter(Trade.p_l > 0).label("winning_trades_count"),
+            )
+            .where(Trade.user_id == user_id)
+            .where(Trade.entry_timestamp.is_not(None))
+        )
+
+        if start_date:
+            q = q.where(Trade.entry_timestamp >= start_date)
+        if end_date:
+            q = q.where(Trade.entry_timestamp <= end_date)
+        if setups:
+            q = q.where(Trade.setup.in_(setups))
+
+        q = q.group_by(day_alias).order_by(day_alias.asc())
+        res = await self.db.execute(q)
+        rows = res.all()
+
+        out = []
+        for day, pnl, trade_count, winning_trades_count in rows:
+            out.append(
+                {
+                    "date": day.date().isoformat(),
+                    "pnl": float(pnl or 0),
+                    "trade_count": trade_count,
+                    "winning_trades_count": winning_trades_count,
+                }
+            )
+        return out

@@ -7,7 +7,6 @@ import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
 import { useAuthStore } from './auth';
 import apiClient from '../services/api';
-import { localDateTimeStringToUTCISO } from '@/utils/date.js';
 
 /**
  * Helper per mappare un trade dal formato del backend a quello del frontend.
@@ -40,7 +39,7 @@ export const useTradesStore = defineStore('trades', {
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
     setups: [], // Elenco dei setup/strategie per i filtri
     dashboardStats: null,
-    // calendarData: [], // No longer needed, it's derived from the main trades list.
+    calendarData: [],
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
@@ -99,14 +98,7 @@ export const useTradesStore = defineStore('trades', {
         }
 
         const tradeDate = new Date(trade.date);
-        // Usiamo i componenti della data locale per creare la chiave,
-        // in modo che un trade delle 00:05 del 9 settembre (ora locale)
-        // venga correttamente raggruppato sotto il 9 settembre, anche se in UTC
-        // potrebbe essere ancora l'8 settembre.
-        const year = tradeDate.getFullYear();
-        const month = String(tradeDate.getMonth() + 1).padStart(2, '0');
-        const day = String(tradeDate.getDate()).padStart(2, '0');
-        const dayKey = `${year}-${month}-${day}`;
+        const dayKey = tradeDate.toISOString().split('T')[0];
 
         if (!pnlByDay[dayKey]) pnlByDay[dayKey] = 0;
         pnlByDay[dayKey] += trade.pnl;
@@ -214,9 +206,14 @@ export const useTradesStore = defineStore('trades', {
     },
 
     calendarDataByMonth() {
-      // This getter now uses the `dailyDataForCalendar` computed property from
-      // the `processedData` getter, which correctly aggregates trades by local day.
-      const dailyDataForCalendar = this.processedData.dailyDataForCalendar;
+      const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
+        acc[entry.date] = {
+          totalPnl: entry.pnl,
+          tradeCount: entry.trade_count,
+          winningTrades: entry.winning_trades_count,
+        };
+        return acc;
+      }, {});
 
       const filterStore = useFilterStore();
       const viewDate = new Date(filterStore.endDate);
@@ -239,7 +236,7 @@ export const useTradesStore = defineStore('trades', {
         calendarDays.push({
           date: i,
           fullDate: dateStr,
-          dailyData: dailyDataForCalendar[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
+          dailyData: dailyDataFromBackend[dateStr] || { totalPnl: 0, tradeCount: 0, winningTrades: 0 },
           isPlaceholder: false,
           key: dateStr,
         });
@@ -379,11 +376,10 @@ export const useTradesStore = defineStore('trades', {
       // Applica il filtro per strategia solo se non stiamo chiedendo un intervallo di date specifico
       const _strategy = dateRange ? null : filterStore.selectedStrategy;
 
-      // The backend now supports full datetime, so we send the full ISO string.
       const params = {
         user_id: userId,
-        start_date: _startDate?.toISOString(),
-        end_date: _endDate?.toISOString(),
+        start_date: _startDate?.toISOString().split('T')[0],
+        end_date: _endDate?.toISOString().split('T')[0],
       };
 
       if (_strategy && _strategy.toLowerCase() !== 'all') {
@@ -465,8 +461,8 @@ export const useTradesStore = defineStore('trades', {
 
       const params = {
         user_id: userId,
-        start_date: filterStore.startDate?.toISOString(),
-        end_date: filterStore.endDate?.toISOString(),
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
 
       if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
@@ -482,21 +478,31 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchCalendarData() {
-      // This action is now responsible for ensuring the main `trades` array
-      // contains all trades for the currently viewed month in the calendar.
-      // The aggregation logic is handled by the getters.
+      const authStore = useAuthStore();
       const filterStore = useFilterStore();
-      const viewDate = new Date(filterStore.endDate);
-      const year = viewDate.getFullYear();
-      const month = viewDate.getMonth();
+      const userId = authStore.user?.id;
 
-      // Define the start and end of the month to fetch.
-      const startDate = new Date(year, month, 1, 0, 0, 0);
-      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+      if (!userId) {
+        console.error('User not authenticated, cannot fetch calendar data.');
+        return;
+      }
 
-      // We only need to fetch all trades, not a separate summary.
-      // The main `fetchTrades` action will populate `this.trades`.
-      await this.fetchTrades({ startDate, endDate });
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/calendar/data', { params });
+        this.calendarData = response.data;
+      } catch (error) {
+        console.error('Error fetching calendar data:', error);
+      }
     },
 
     async addTrade(tradeData) {
@@ -523,8 +529,8 @@ export const useTradesStore = defineStore('trades', {
           position_size: tradeData.position_size,
           lowest_price_during_trade: tradeData.lowest_price_during_trade,
           highest_price_during_trade: tradeData.highest_price_during_trade,
-          entry_timestamp: localDateTimeStringToUTCISO(tradeData.entry_timestamp),
-          exit_timestamp: localDateTimeStringToUTCISO(tradeData.exit_timestamp),
+          entry_timestamp: tradeData.entry_timestamp,
+          exit_timestamp: tradeData.exit_timestamp,
           notes: tradeData.notes,
           notes_pre_trade: tradeData.notes_pre_trade,
           notes_post_trade: tradeData.notes_post_trade,

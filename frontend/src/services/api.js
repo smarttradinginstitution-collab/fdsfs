@@ -19,9 +19,13 @@ export function setAuthToken(token) {
   }
 }
 
-// --- Interceptor richiesta: garantisce Authorization anche se mancasse ---
-// (pesca dal localStorage se non è già presente sui defaults)
+// --- Interceptor richiesta: garantisce Authorization e aggiunge il Timezone ---
 apiClient.interceptors.request.use((config) => {
+  // Aggiunge il fuso orario IANA dell'utente (es. "Europe/Rome") a ogni richiesta.
+  // Il backend lo userà per i calcoli timezone-aware.
+  config.headers['X-Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Garantisce che il token di autorizzazione sia presente se disponibile.
   if (!config.headers.Authorization) {
     const stored = localStorage.getItem('token');
     if (stored) {

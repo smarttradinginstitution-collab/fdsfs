@@ -40,15 +40,8 @@ function formatCellPnl(pnl) {
 // --- CLICK HANDLERS ---
 const handleDayClick = (day) => {
   if (day.isPlaceholder || day.dailyData.tradeCount === 0) return;
-
-  // Create a precise datetime range for the selected local day.
-  // The backend now supports datetime ranges, so we can be exact.
-  const startDate = new Date(`${day.fullDate}T00:00:00`);
-  const endDate = new Date(`${day.fullDate}T23:59:59`);
-
-  // Fetch trades for the precise local day range.
-  tradesStore.fetchTrades({ startDate, endDate });
-
+  const date = new Date(day.fullDate);
+  tradesStore.fetchTrades({ startDate: date, endDate: date });
   uiStore.openDailySummaryModal();
 };
 

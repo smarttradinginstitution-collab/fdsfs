@@ -17,7 +17,7 @@ from datetime import date, datetime
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Query, Response
+from fastapi import Depends, HTTPException, Query, Response, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
@@ -90,6 +90,7 @@ class TradesController:
         tags: Optional[List[str]] = Query(None),
         start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
         end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
+        timezone: str = Header("UTC", alias="X-Timezone", description="Timezone IANA (es. Europe/Rome)"),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
         repo = TradeRepository(db)
@@ -105,6 +106,7 @@ class TradesController:
             tags=tags,
             start_date=start_date,
             end_date=end_date,
+            timezone=timezone,
         )
         out: List[TradeRead] = []
         for trade, tag_names in rows:
@@ -195,6 +197,23 @@ class TradesController:
         return await repo.get_distinct_setups(user_id)
 
     # --------------------------
+    # CALENDAR DATA
+    # --------------------------
+    async def calendar_data(
+        self,
+        user_id: UUID = Query(..., description="ID utente"),
+        start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
+        end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        timezone: str = Header("UTC", alias="X-Timezone", description="Timezone IANA (es. Europe/Rome)"),
+        db: AsyncSession = Depends(get_db),
+    ) -> list[dict]:
+        repo = TradeRepository(db)
+        return await repo.get_calendar_data(
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups, timezone=timezone
+        )
+
+    # --------------------------
     # PERFORMANCE METRICS
     # --------------------------
     async def get_performance_metrics(
@@ -203,17 +222,17 @@ class TradesController:
         start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
         end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        timezone: str = Header("UTC", alias="X-Timezone", description="Timezone IANA (es. Europe/Rome)"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups, timezone=timezone
         )
 
-        # trasformiamo le tuple (Trade, tag_names) in dizionari flat per il calcolatore
         trades_as_dicts = []
         for trade, tag_names in rows:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
-        calc = MetricsCalculator(trades_as_dicts)
+        calc = MetricsCalculator(trades_as_dicts, timezone=timezone)
         return calc.calculate_all_metrics()
