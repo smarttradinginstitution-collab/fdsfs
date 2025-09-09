@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
 
@@ -160,8 +160,8 @@ class TradeRepository:
         min_size: Optional[float] = None,
         max_size: Optional[float] = None,
         tags: Optional[List[str]] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> List[Tuple[Trade, List[str]]]:
         """
         Ritorna una lista di tuple (Trade, [tag_names]) filtrate per user_id e criteri opzionali.
@@ -196,9 +196,9 @@ class TradeRepository:
         if max_size is not None:
             base = base.where(Trade.position_size <= max_size)
         if start_date:
-            base = base.where(func.date(Trade.entry_timestamp) >= start_date)
+            base = base.where(Trade.entry_timestamp >= start_date)
         if end_date:
-            base = base.where(func.date(Trade.entry_timestamp) <= end_date)
+            base = base.where(Trade.entry_timestamp <= end_date)
 
 
         # Filtra per TAGS (tutti presenti) con subquery:
@@ -365,8 +365,8 @@ class TradeRepository:
     async def get_calendar_data(
         self,
         user_id: UUID,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
         setups: Optional[List[str]] = None,
     ) -> List[dict]:
         """
@@ -387,9 +387,9 @@ class TradeRepository:
         )
 
         if start_date:
-            q = q.where(func.date(Trade.entry_timestamp) >= start_date)
+            q = q.where(Trade.entry_timestamp >= start_date)
         if end_date:
-            q = q.where(func.date(Trade.entry_timestamp) <= end_date)
+            q = q.where(Trade.entry_timestamp <= end_date)
         if setups:
             q = q.where(Trade.setup.in_(setups))
 

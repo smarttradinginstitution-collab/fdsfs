@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -88,8 +88,8 @@ class TradesController:
         min_size: Optional[float] = Query(None),
         max_size: Optional[float] = Query(None),
         tags: Optional[List[str]] = Query(None),
-        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
-        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
+        end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
         repo = TradeRepository(db)
@@ -200,8 +200,8 @@ class TradesController:
     async def calendar_data(
         self,
         user_id: UUID = Query(..., description="ID utente"),
-        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
-        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
+        end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> list[dict]:
@@ -216,8 +216,8 @@ class TradesController:
     async def get_performance_metrics(
         self,
         user_id: UUID = Query(..., description="ID utente"),
-        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
-        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        start_date: Optional[datetime] = Query(None, description="Data inizio (YYYY-MM-DDTHH:mm:ss)"),
+        end_date: Optional[datetime] = Query(None, description="Data fine (YYYY-MM-DDTHH:mm:ss)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:

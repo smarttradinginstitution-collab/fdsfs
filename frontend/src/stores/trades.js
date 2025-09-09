@@ -386,8 +386,8 @@ export const useTradesStore = defineStore('trades', {
 
       const params = {
         user_id: userId,
-        start_date: _startDate?.toISOString().split('T')[0],
-        end_date: _endDate?.toISOString().split('T')[0],
+        start_date: _startDate?.toISOString(),
+        end_date: _endDate?.toISOString(),
       };
 
       if (_strategy && _strategy.toLowerCase() !== 'all') {
@@ -469,8 +469,8 @@ export const useTradesStore = defineStore('trades', {
 
       const params = {
         user_id: userId,
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
+        start_date: filterStore.startDate?.toISOString(),
+        end_date: filterStore.endDate?.toISOString(),
       };
 
       if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
@@ -497,8 +497,8 @@ export const useTradesStore = defineStore('trades', {
 
       const params = {
         user_id: userId,
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
+        start_date: filterStore.startDate?.toISOString(),
+        end_date: filterStore.endDate?.toISOString(),
       };
 
       if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {

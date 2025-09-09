@@ -28,8 +28,8 @@ const pnlStyle = (pnl) => {
 
 const formattedDate = computed(() => {
   if (!summaryData.value || !summaryData.value.startDate) return '';
-  // Directly use the Date object from the store, which is more reliable
-  // than converting it to a string and back.
+  // The backend now returns the correct trades for the selected day,
+  // so we can reliably use the startDate from the summary for the title.
   const date = new Date(summaryData.value.startDate);
   return date.toLocaleDateString('it-IT', {
     weekday: 'long',
