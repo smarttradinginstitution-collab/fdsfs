@@ -147,6 +147,7 @@ router_trades = APIRouter(prefix="/api/v1/trades", tags=["Trades"])
 # --- Ordine corretto: prima le rotte specifiche, poi quelle con parametri ---
 router_trades.get("/", response_model=list[TradeRead])(trades.list_trades)
 router_trades.get("/setups", response_model=List[str])(trades.list_setups)
+router_trades.get("/calendar/data")(trades.calendar_data)
 router_trades.get("/performance/metrics")(trades.get_performance_metrics)
 router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
 router_trades.post("/", response_model=TradeRead, status_code=201)(trades.create_trade)
