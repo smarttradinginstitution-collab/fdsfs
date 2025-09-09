@@ -27,9 +27,16 @@ const pnlStyle = (pnl) => {
 };
 
 const formattedDate = computed(() => {
-  if (!summaryData.value) return '';
-  const date = new Date(summaryData.value.startDate + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  if (!summaryData.value || !summaryData.value.startDate) return '';
+  // Directly use the Date object from the store, which is more reliable
+  // than converting it to a string and back.
+  const date = new Date(summaryData.value.startDate);
+  return date.toLocaleDateString('it-IT', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 });
 
 const formattedPnl = (pnl) => {
@@ -119,7 +126,14 @@ const formatDuration = (minutes) => {
               <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
             </template>
             <template #entry_timestamp="{ item }">
-              {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
+              {{
+                new Date(item.entry_timestamp).toLocaleString('it-IT', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                })
+              }}
             </template>
             <template #duration_minutes="{ item }">
               {{ formatDuration(item.duration_minutes) }}
