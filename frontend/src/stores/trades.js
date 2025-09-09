@@ -7,6 +7,7 @@ import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
 import { useAuthStore } from './auth';
 import apiClient from '../services/api';
+import { localDateTimeStringToUTCISO } from '@/utils/date.js';
 
 /**
  * Helper per mappare un trade dal formato del backend a quello del frontend.
@@ -536,8 +537,8 @@ export const useTradesStore = defineStore('trades', {
           position_size: tradeData.position_size,
           lowest_price_during_trade: tradeData.lowest_price_during_trade,
           highest_price_during_trade: tradeData.highest_price_during_trade,
-          entry_timestamp: tradeData.entry_timestamp ? new Date(tradeData.entry_timestamp).toISOString() : null,
-          exit_timestamp: tradeData.exit_timestamp ? new Date(tradeData.exit_timestamp).toISOString() : null,
+          entry_timestamp: localDateTimeStringToUTCISO(tradeData.entry_timestamp),
+          exit_timestamp: localDateTimeStringToUTCISO(tradeData.exit_timestamp),
           notes: tradeData.notes,
           notes_pre_trade: tradeData.notes_pre_trade,
           notes_post_trade: tradeData.notes_post_trade,
