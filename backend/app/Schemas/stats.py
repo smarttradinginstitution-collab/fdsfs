@@ -66,6 +66,7 @@ class SummaryStats(BaseModel):
     gross_loss: float = Field(..., description="Perdita lorda totale")
     profit_factor: Optional[float] = Field(..., description="Valore numerico del Profit Factor (può essere nullo)")
     profit_factor_label: str = Field(..., description="Etichetta testuale per il Profit Factor (es. '2.61' o '∞')")
+    win_rate: float = Field(..., description="Percentuale di trade vincenti (0-100)")
 
 class TradeSummary(BaseModel):
     """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""

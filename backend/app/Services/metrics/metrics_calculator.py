@@ -567,6 +567,8 @@ class MetricsCalculator:
             profit_factor = None # JSON non supporta Inf
             profit_factor_label = "∞"
 
+        win_rate = (base_stats['winning_trades_count'] / base_stats['trade_count']) * 100 if base_stats['trade_count'] > 0 else 0
+
         summary_stats = {
             "net_pnl": float(base_stats['total_pl']),
             "trade_count": base_stats['trade_count'],
@@ -576,7 +578,8 @@ class MetricsCalculator:
             "gross_profit": float(gross_profit),
             "gross_loss": float(gross_loss),
             "profit_factor": profit_factor,
-            "profit_factor_label": profit_factor_label
+            "profit_factor_label": profit_factor_label,
+            "win_rate": win_rate
         }
 
         return {
@@ -615,7 +618,7 @@ class MetricsCalculator:
         # Usato per contare i giorni di trading unici per settimana
         seen_days_per_week = {}
         days_of_week_map = {0: 'Lunedì', 1: 'Martedì', 2: 'Mercoledì', 3: 'Giovedì', 4: 'Venerdì', 5: 'Sabato', 6: 'Domenica'}
-        by_day_of_week = {name: {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0} for name in days_of_week_map.values()}
+        by_day_of_week = {name: {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0, 'win_rate': 0} for name in days_of_week_map.values()}
 
         for trade in self.all_trades:
             pnl = Decimal(trade.get('p_l', 0))
@@ -644,7 +647,7 @@ class MetricsCalculator:
             if trade.get('entry_timestamp'):
                 day_key = trade['entry_timestamp'].strftime('%Y-%m-%d')
                 if day_key not in daily_data:
-                    daily_data[day_key] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0}
+                    daily_data[day_key] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0, 'win_rate': 0}
                 daily_data[day_key]['total_pnl'] += pnl
                 daily_data[day_key]['trade_count'] += 1
                 if pnl > 0:
@@ -701,16 +704,12 @@ class MetricsCalculator:
             else:
                 breakeven_days += 1
 
-        # Calcola win rate per strategia e converte Decimal in float
-        for stats in by_strategy.values():
-            if stats['trade_count'] > 0:
-                stats['win_rate'] = (stats['winning_trades'] / stats['trade_count']) * 100
-            stats['total_pnl'] = float(stats['total_pnl'])
-
-        # Converte Decimal in float per la serializzazione JSON
-        for stats_dict in [daily_data, by_day_of_week]:
-            for key, value in stats_dict.items():
-                value['total_pnl'] = float(value['total_pnl'])
+        # Calcola win rate e converte Decimal in float per tutti i gruppi
+        for group in [by_strategy, daily_data, by_day_of_week]:
+            for stats in group.values():
+                if stats['trade_count'] > 0:
+                    stats['win_rate'] = (stats['winning_trades'] / stats['trade_count']) * 100
+                stats['total_pnl'] = float(stats['total_pnl'])
 
         for key, value in monthly_totals.items():
             monthly_totals[key] = float(value)
