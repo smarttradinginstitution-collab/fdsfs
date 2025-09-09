@@ -137,7 +137,15 @@ class MetricsCalculator:
         avg_loss = total_loss / loss_count if loss_count > 0 else Decimal(0)
         avg_trade_pnl = total_pl / trade_count if trade_count > 0 else Decimal(0)
         avg_win_loss_ratio = avg_win / avg_loss if avg_loss > 0 else Decimal('inf')
-        profit_factor = total_win / total_loss if total_loss > 0 else Decimal('inf')
+
+        profit_factor_val = None
+        profit_factor_label = "0.00"
+        if total_loss > 0:
+            pf_decimal = total_win / total_loss
+            profit_factor_val = pf_decimal
+            profit_factor_label = f"{pf_decimal:.2f}"
+        elif total_win > 0:
+            profit_factor_label = "∞"
 
         win_rate = Decimal(win_count) / trade_count if trade_count > 0 else Decimal(0)
         expectancy = (win_rate * avg_win) - ((1-win_rate) * avg_loss)
@@ -153,7 +161,8 @@ class MetricsCalculator:
             'breakeven_trades_count': breakeven_trades_count,
             'winning_trades': winning_trades,
             'avg_win': avg_win, 'avg_loss': avg_loss,
-            'profit_factor': profit_factor,
+            'profit_factor': profit_factor_val,
+            'profit_factor_label': profit_factor_label,
             'expectancy': expectancy,
             'win_rate': win_rate * 100,
             'average_trade_pnl': avg_trade_pnl,
@@ -548,7 +557,15 @@ class MetricsCalculator:
         gross_profit = sum(winning_pnls)
         gross_loss = abs(sum(losing_pnls))
 
-        profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf') if gross_profit > 0 else 0
+        profit_factor = None
+        profit_factor_label = "0.00"
+        if gross_loss > 0:
+            pf_val = gross_profit / gross_loss
+            profit_factor = float(pf_val)
+            profit_factor_label = f"{pf_val:.2f}"
+        elif gross_profit > 0:
+            profit_factor = None # JSON non supporta Inf
+            profit_factor_label = "∞"
 
         summary_stats = {
             "net_pnl": float(base_stats['total_pl']),
@@ -558,7 +575,8 @@ class MetricsCalculator:
             "breakeven_trades": base_stats['breakeven_trades_count'],
             "gross_profit": float(gross_profit),
             "gross_loss": float(gross_loss),
-            "profit_factor": float(profit_factor)
+            "profit_factor": profit_factor,
+            "profit_factor_label": profit_factor_label
         }
 
         return {

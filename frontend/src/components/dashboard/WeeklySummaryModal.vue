@@ -47,16 +47,16 @@ const formattedPnl = (pnl) => {
 };
 
 const statsGrid = computed(() => {
-    if (!summaryData.value) return null;
+    if (!summaryData.value || !summaryData.value.stats) return null;
     const stats = summaryData.value.stats;
     return {
-        col1: [ { label: 'Total Trades', value: stats.tradeCount }, { label: 'Winrate', value: `${(stats.winningTrades / (stats.tradeCount || 1) * 100).toFixed(1)}%` }, ],
-        col2: [ { label: 'Winners', value: stats.winningTrades }, { label: 'Losers', value: stats.losingTrades }, ],
+        col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${(stats.winning_trades / (stats.trade_count || 1) * 100).toFixed(1)}%` }, ],
+        col2: [ { label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }, ],
         col3: [
-          { label: 'Gross Profit', value: formattedPnl(stats.grossProfit), rawValue: stats.grossProfit, isPnl: true },
-          { label: 'Gross Loss', value: formattedPnl(stats.grossLoss), rawValue: stats.grossLoss, isPnl: true },
+          { label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
+          { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true },
         ],
-        col4: [ { label: 'Net P&L', value: formattedPnl(stats.netPnl), rawValue: stats.netPnl, isPnl: true }, { label: 'Profit Factor', value: stats.profitFactor.toFixed(2) }, ]
+        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label }, ]
     };
 });
 
@@ -86,11 +86,11 @@ const formatDuration = (minutes) => {
     class="weekly-summary-modal"
   >
     <template #header>
-      <div v-if="summaryData && !isLoading" class="header-content">
+      <div v-if="summaryData && summaryData.stats && !isLoading" class="header-content">
         <div class="header-left">
           <div class="header-info">
             <span class="date">{{ formattedDateRange }}</span>
-            <span :style="pnlStyle(summaryData.stats.netPnl)">Net P&L {{ formattedPnl(summaryData.stats.netPnl) }}</span>
+            <span :style="pnlStyle(summaryData.stats.net_pnl)">Net P&L {{ formattedPnl(summaryData.stats.net_pnl) }}</span>
           </div>
           <BaseButton variant="secondary" size="small">Add Note</BaseButton>
         </div>
@@ -105,7 +105,7 @@ const formatDuration = (minutes) => {
 
     <template #default>
       <div v-if="isLoading" class="loading-state">Loading data...</div>
-      <div v-else-if="summaryData && summaryData.trades.length > 0" class="modal-body-content">
+      <div v-else-if="summaryData && summaryData.stats" class="modal-body-content">
         <div class="top-section">
           <div class="chart-section"><DailyPnlChart :chart-data="summaryData.cumulativePnlForChart" /></div>
           <div class="stats-section">
@@ -138,6 +138,10 @@ const formatDuration = (minutes) => {
             </template>
           </BaseTable>
         </div>
+      </div>
+      <div v-else-if="summaryData && summaryData.error" class="loading-state">
+        <p>Error loading summary:</p>
+        <p>{{ summaryData.error }}</p>
       </div>
       <div v-else class="loading-state">No trades for this week.</div>
     </template>
