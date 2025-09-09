@@ -45,6 +45,16 @@ const form = ref(getInitialFormState());
 const handleSubmit = () => {
   const tradeData = { ...form.value };
 
+  // Converte i timestamp locali in stringhe ISO UTC.
+  // new Date('YYYY-MM-DDTHH:mm') crea una data nel fuso orario del browser.
+  // .toISOString() la converte in una stringa UTC standard.
+  if (tradeData.entry_timestamp) {
+    tradeData.entry_timestamp = new Date(tradeData.entry_timestamp).toISOString();
+  }
+  if (tradeData.exit_timestamp) {
+    tradeData.exit_timestamp = new Date(tradeData.exit_timestamp).toISOString();
+  }
+
   // Converte le stringhe di 'mistakes' e 'tags' in array
   if (tradeData.mistakes) {
     tradeData.mistakes = tradeData.mistakes.split(',').map(s => s.trim()).filter(Boolean);

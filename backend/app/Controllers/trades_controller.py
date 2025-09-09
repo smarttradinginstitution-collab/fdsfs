@@ -90,6 +90,9 @@ class TradesController:
         tags: Optional[List[str]] = Query(None),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
         repo = TradeRepository(db)
@@ -105,6 +108,7 @@ class TradesController:
             tags=tags,
             start_date=start_date,
             end_date=end_date,
+            user_timezone=user_timezone,
         )
         out: List[TradeRead] = []
         for trade, tag_names in rows:
@@ -202,12 +206,19 @@ class TradesController:
         user_id: UUID = Query(..., description="ID utente"),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
-        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        setups: Optional[List[str]] = Query(None, description="Filtra per setup specifici"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> list[dict]:
         repo = TradeRepository(db)
         return await repo.get_calendar_data(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            setups=setups,
+            user_timezone=user_timezone,
         )
 
     # --------------------------

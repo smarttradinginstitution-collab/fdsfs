@@ -70,6 +70,11 @@ SessionLocal = async_sessionmaker(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
+        # Forza il fuso orario della sessione a UTC.
+        # Questo garantisce che i timestamp "naive" inviati da Python (che non hanno fuso orario)
+        # vengano interpretati come UTC quando inseriti in una colonna TIMESTAMPTZ,
+        # e che le funzioni del database operino in modo coerente.
+        await session.execute(text("SET TIME ZONE 'UTC'"))
         yield session
 
 
