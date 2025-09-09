@@ -189,16 +189,22 @@ class TradeRepository:
             base = base.where(Trade.mistakes.contains(mistakes))
         if days_of_week:
             base = base.where(
-                func.extract("isodow", Trade.entry_timestamp).in_(days_of_week)
+                func.extract("isodow", Trade.entry_timestamp.op("AT TIME ZONE")("UTC")).in_(
+                    days_of_week
+                )
             )
         if min_size is not None:
             base = base.where(Trade.position_size >= min_size)
         if max_size is not None:
             base = base.where(Trade.position_size <= max_size)
         if start_date:
-            base = base.where(func.date(Trade.entry_timestamp) >= start_date)
+            base = base.where(
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) >= start_date
+            )
         if end_date:
-            base = base.where(func.date(Trade.entry_timestamp) <= end_date)
+            base = base.where(
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) <= end_date
+            )
 
 
         # Filtra per TAGS (tutti presenti) con subquery:
@@ -374,7 +380,9 @@ class TradeRepository:
         Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
         Filtra per un intervallo di date e per setup, se forniti.
         """
-        day_alias = func.date_trunc("day", Trade.entry_timestamp).label("day")
+        day_alias = func.date_trunc(
+            "day", Trade.entry_timestamp.op("AT TIME ZONE")("UTC")
+        ).label("day")
         q = (
             select(
                 day_alias,
@@ -387,9 +395,13 @@ class TradeRepository:
         )
 
         if start_date:
-            q = q.where(func.date(Trade.entry_timestamp) >= start_date)
+            q = q.where(
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) >= start_date
+            )
         if end_date:
-            q = q.where(func.date(Trade.entry_timestamp) <= end_date)
+            q = q.where(
+                func.date(Trade.entry_timestamp.op("AT TIME ZONE")("UTC")) <= end_date
+            )
         if setups:
             q = q.where(Trade.setup.in_(setups))
 

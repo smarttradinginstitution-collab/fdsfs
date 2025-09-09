@@ -76,6 +76,25 @@ const formatDuration = (minutes) => {
   const secs = Math.round((minutes - mins) * 60);
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
+
+const getLocalTimeFromISO = (timestamp) => {
+  if (!timestamp || typeof timestamp !== 'string') return 'N/A';
+  const parts = timestamp.split('T');
+  if (parts.length < 2) return 'N/A';
+  return parts[1].substring(0, 5); // Estrae HH:mm
+};
+
+const getDayOfWeekFromISO = (timestamp) => {
+  if (!timestamp) return '';
+  // Usare getUTCDay() per evitare che il fuso orario del browser cambi il giorno della settimana.
+  // new Date() con una stringa ISO senza Z la interpreta come locale, ma per getUTCDay va bene
+  // perché l'offset non cambia il giorno a meno che non si attraversi la mezzanotte UTC.
+  // Per coerenza con l'input dell'utente, creiamo la data come se fosse UTC.
+  const date = new Date(timestamp.includes('Z') ? timestamp : timestamp + 'Z');
+  const dayIndex = date.getUTCDay();
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  return days[dayIndex];
+};
 </script>
 
 <template>
@@ -128,13 +147,13 @@ const formatDuration = (minutes) => {
               <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
             </template>
             <template #entry_timestamp="{ item }">
-              {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
+              {{ getLocalTimeFromISO(item.entry_timestamp) }}
             </template>
             <template #duration_minutes="{ item }">
               {{ formatDuration(item.duration_minutes) }}
             </template>
             <template #dayOfWeek="{ item }">
-              {{ new Date(item.entry_timestamp).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() }}
+              {{ getDayOfWeekFromISO(item.entry_timestamp) }}
             </template>
           </BaseTable>
         </div>
