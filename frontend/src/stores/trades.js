@@ -39,6 +39,8 @@ export const useTradesStore = defineStore('trades', {
     setups: [], // Elenco dei setup/strategie per i filtri
     dashboardStats: null,
     calendarData: [],
+    processedStats: null,
+    equityCurve: null,
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
@@ -48,77 +50,6 @@ export const useTradesStore = defineStore('trades', {
     allStrategies(state) {
       // Ora usa l'elenco dei setup caricato dal backend.
       return ['All', ...state.setups];
-    },
-
-    processedData(state) {
-      const filterStore = useFilterStore();
-      const trades = state.trades;
-      const viewDateForCalendar = new Date(filterStore.endDate);
-
-      const stats = { totalPnl: 0, tradeCount: 0, winningTrades: 0, losingTrades: 0, breakEvenTrades: 0, grossProfit: 0, grossLoss: 0, totalRisk: 0 };
-      const dailyDataForCalendar = {};
-      const performanceByStrategy = {};
-      const performanceByDayOfWeek = {};
-      const pnlByDay = {};
-      const daysOfWeek = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
-      daysOfWeek.forEach(day => {
-        performanceByDayOfWeek[day] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
-      });
-
-      for (const trade of trades) {
-        stats.totalPnl += trade.pnl;
-        stats.tradeCount++;
-        stats.totalRisk += trade.risk;
-        if (trade.pnl > 0) {
-          stats.winningTrades++;
-          stats.grossProfit += trade.pnl;
-        } else if (trade.pnl < 0) {
-          stats.losingTrades++;
-          stats.grossLoss += Math.abs(trade.pnl);
-        } else {
-          stats.breakEvenTrades++;
-        }
-
-        // Estrae la chiave del giorno (YYYY-MM-DD) direttamente dalla stringa per evitare problemi di fuso orario.
-        const dayKey = trade.date.substring(0, 10);
-
-        if (!pnlByDay[dayKey]) pnlByDay[dayKey] = 0;
-        pnlByDay[dayKey] += trade.pnl;
-
-        const tradeDate = new Date(trade.date); // Mantenuto per il calcolo del giorno della settimana
-
-        if (tradeDate.getFullYear() === viewDateForCalendar.getFullYear() && tradeDate.getMonth() === viewDateForCalendar.getMonth()) {
-          if (!dailyDataForCalendar[dayKey]) {
-            dailyDataForCalendar[dayKey] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
-          }
-          dailyDataForCalendar[dayKey].totalPnl += trade.pnl;
-          dailyDataForCalendar[dayKey].tradeCount++;
-          if (trade.pnl > 0) dailyDataForCalendar[dayKey].winningTrades++;
-        }
-
-        if (trade.strategy) {
-          if (!performanceByStrategy[trade.strategy]) {
-            performanceByStrategy[trade.strategy] = { totalPnl: 0, tradeCount: 0, winningTrades: 0 };
-          }
-          performanceByStrategy[trade.strategy].totalPnl += trade.pnl;
-          performanceByStrategy[trade.strategy].tradeCount++;
-          if (trade.pnl > 0) performanceByStrategy[trade.strategy].winningTrades++;
-        }
-
-        const dayName = daysOfWeek[tradeDate.getDay()];
-        performanceByDayOfWeek[dayName].totalPnl += trade.pnl;
-        performanceByDayOfWeek[dayName].tradeCount++;
-        if (trade.pnl > 0) performanceByDayOfWeek[dayName].winningTrades++;
-      }
-
-      const winLossDaysStats = { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
-      for (const dayPnl of Object.values(pnlByDay)) {
-        if (dayPnl > 0) winLossDaysStats.winningDays++;
-        else if (dayPnl < 0) winLossDaysStats.losingDays++;
-        else winLossDaysStats.breakEvenDays++;
-      }
-
-      return { stats, dailyDataForCalendar, performanceByStrategy, performanceByDayOfWeek, winLossDaysStats };
     },
 
     allDashboardStats() {
@@ -251,40 +182,34 @@ export const useTradesStore = defineStore('trades', {
     },
 
     strategyPerformanceData() {
-      const rawData = this.processedData.performanceByStrategy;
-      if (Object.keys(rawData).length === 0) return [];
-      const maxPnl = Math.max(...Object.values(rawData).map(stat => Math.abs(stat.totalPnl)));
+      if (!this.processedStats?.by_strategy) return [];
+
+      const rawData = this.processedStats.by_strategy;
+      const maxPnl = Math.max(...Object.values(rawData).map(stat => Math.abs(stat.total_pnl)));
+
       return Object.entries(rawData).map(([strategy, stats]) => {
-        const winRate = stats.tradeCount > 0 ? (stats.winningTrades / stats.tradeCount) * 100 : 0;
+        const winRate = stats.trade_count > 0 ? (stats.winning_trades / stats.trade_count) * 100 : 0;
         return {
           label: strategy,
-          value: `${stats.tradeCount} trades | ${winRate.toFixed(0)}% WR | $${stats.totalPnl.toFixed(2)}`,
-          barWidth: maxPnl > 0 ? `${(Math.abs(stats.totalPnl) / maxPnl) * 100}%` : '0%',
-          isPositive: stats.totalPnl >= 0,
+          value: `${stats.trade_count} trades | ${winRate.toFixed(0)}% WR | $${stats.total_pnl.toFixed(2)}`,
+          barWidth: maxPnl > 0 ? `${(Math.abs(stats.total_pnl) / maxPnl) * 100}%` : '0%',
+          isPositive: stats.total_pnl >= 0,
         };
       });
     },
 
     performanceByDayOfWeek() {
-        return this.processedData.performanceByDayOfWeek;
+      return this.processedStats?.by_day_of_week || {};
     },
 
     winLossDays(state) {
-      if (!this.processedData.winLossDaysStats) {
-        return { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
-      }
-      return this.processedData.winLossDaysStats;
+      return state.processedStats?.win_loss_days || { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
     },
 
     equityCurveData(state) {
-      if (state.trades.length === 0) return { labels: [], data: [] };
-      const sortedTrades = [...state.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
-      let cumulativePnl = 0;
-      const dataPoints = sortedTrades.map(trade => {
-        cumulativePnl += trade.pnl;
-        return { date: trade.date, pnl: cumulativePnl };
-      });
-      return { labels: dataPoints.map(p => p.date), data: dataPoints.map(p => p.pnl) };
+      // Restituisce direttamente i dati pre-calcolati dal backend.
+      // Fornisce un default per evitare errori nel rendering iniziale.
+      return state.equityCurve || { labels: [], data: [] };
     },
 
     tradeHeaders: () => [
@@ -298,16 +223,22 @@ export const useTradesStore = defineStore('trades', {
       const filterStore = useFilterStore();
       const viewDate = new Date(filterStore.endDate);
 
-      if (isNaN(viewDate.getTime())) return { monthLabel: 'Invalid Date', monthlyPnl: 0 };
+      if (isNaN(viewDate.getTime()) || !this.processedStats?.daily_data) {
+        return { monthLabel: 'Invalid Date', monthlyPnl: 0 };
+      }
 
-      const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth() + 1; // 1-based
+      const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+
       let monthlyPnl = 0;
-      for (const trade of this.trades) {
-        const tradeDate = new Date(trade.date);
-        if (tradeDate.getFullYear() === viewDate.getFullYear() && tradeDate.getMonth() === viewDate.getMonth()) {
-          monthlyPnl += trade.pnl;
+      for (const [dateStr, dailyStats] of Object.entries(this.processedStats.daily_data)) {
+        if (dateStr.startsWith(monthStr)) {
+          monthlyPnl += dailyStats.total_pnl;
         }
       }
+
+      const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
       return { monthLabel, monthlyPnl };
     }
   },
@@ -563,6 +494,73 @@ export const useTradesStore = defineStore('trades', {
       } catch (error) {
         console.error('Error adding trade:', error);
         throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchProcessedStats() {
+      const authStore = useAuthStore();
+      const filterStore = useFilterStore();
+      const userId = authStore.user?.id;
+      if (!userId) return;
+
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/processed-stats', { params });
+        this.processedStats = response.data;
+      } catch (error) {
+        console.error('Error fetching processed stats:', error);
+        this.processedStats = null;
+      }
+    },
+
+    async fetchEquityCurve() {
+      const authStore = useAuthStore();
+      const filterStore = useFilterStore();
+      const userId = authStore.user?.id;
+      if (!userId) return;
+
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/equity-curve', { params });
+        this.equityCurve = response.data;
+      } catch (error) {
+        console.error('Error fetching equity curve:', error);
+        this.equityCurve = null;
+      }
+    },
+
+    /**
+     * Azione master per caricare tutti i dati della dashboard in parallelo.
+     */
+    async fetchAllDataForDashboard() {
+      this.isLoading = true;
+      try {
+        await Promise.allSettled([
+          this.fetchTrades(),
+          this.fetchDashboardStats(),
+          this.fetchCalendarData(),
+          this.fetchProcessedStats(),
+          this.fetchEquityCurve(),
+          this.fetchSetups(),
+        ]);
       } finally {
         this.isLoading = false;
       }
