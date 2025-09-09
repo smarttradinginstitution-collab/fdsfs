@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 # --- Schemas for Processed Stats Endpoint ---
 
@@ -57,7 +57,8 @@ class SummaryStats(BaseModel):
     breakeven_trades: int = Field(..., description="Numero di trade a zero")
     gross_profit: float = Field(..., description="Profitto lordo totale")
     gross_loss: float = Field(..., description="Perdita lorda totale")
-    profit_factor: float = Field(..., description="Fattore di profitto (Gross Profit / Gross Loss)")
+    profit_factor: Optional[float] = Field(..., description="Valore numerico del Profit Factor (può essere nullo)")
+    profit_factor_label: str = Field(..., description="Etichetta testuale per il Profit Factor (es. '2.61' o '∞')")
 
 class TradeSummary(BaseModel):
     """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""

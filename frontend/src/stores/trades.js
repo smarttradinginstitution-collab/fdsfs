@@ -82,7 +82,6 @@ export const useTradesStore = defineStore('trades', {
       const losingTrades = stats.losing_trades_count;
       const breakEvenTrades = stats.breakeven_trades_count;
       const winRate = parseFloat(stats.win_rate);
-      const profitFactor = parseFloat(stats.profit_factor);
       const avgWin = parseFloat(stats.avg_win);
       const avgLoss = parseFloat(stats.avg_loss);
       const expectancy = parseFloat(stats.expectancy);
@@ -105,7 +104,7 @@ export const useTradesStore = defineStore('trades', {
         largestLoss: { key: 'largestLoss', label: 'Largest Loss', category: 'Profitability', value: `$${largestLoss.toFixed(2)}`, changeType: 'neutral' },
 
         winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'neutral' },
-        profitFactor: { key: 'profitFactor', label: 'Profit Factor', category: 'Ratios & Efficiency', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), changeType: 'neutral' },
+        profitFactor: { key: 'profitFactor', label: 'Profit Factor', category: 'Ratios & Efficiency', value: stats.profit_factor_label, changeType: 'neutral' },
         expectancy: { key: 'expectancy', label: 'Expectancy', category: 'Ratios & Efficiency', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
         avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
         sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
