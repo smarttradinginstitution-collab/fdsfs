@@ -22,7 +22,6 @@ const mapBackendTradeToFrontend = (trade) => ({
   date: trade.entry_timestamp,
   strategy: trade.setup, // Mapping cruciale: 'setup' (backend) -> 'strategy' (frontend)
   risk: trade.risk, // Assumendo che 'risk' esista o venga calcolato
-  openTime: new Date(trade.entry_timestamp).toLocaleTimeString(),
   instrument: 'Stocks', // Da rendere dinamico se necessario
   commission: trade.commission, // Assumendo che esista
   netROI: trade.net_roi, // Assumendo che esista
@@ -54,15 +53,28 @@ export const useTradesStore = defineStore('trades', {
     filteredTrades: (state) => {
       const filterStore = useFilterStore();
       let trades = state.trades;
+
+      // Helper per formattare una data in YYYY-MM-DD per un confronto stringa affidabile
+      const toYYYYMMDD = (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       if (filterStore.startDate && filterStore.endDate) {
-        const start = new Date(filterStore.startDate).setHours(0, 0, 0, 0);
-        const end = new Date(filterStore.endDate).setHours(23, 59, 59, 999);
+        const startStr = toYYYYMMDD(filterStore.startDate);
+        const endStr = toYYYYMMDD(filterStore.endDate);
+
         trades = trades.filter(trade => {
-          const tradeDate = new Date(trade.date);
-          return tradeDate >= start && tradeDate <= end;
+          // Estrae la parte YYYY-MM-DD dal timestamp del trade (es. "2023-10-27T10:00:00")
+          const tradeDateStr = trade.date.substring(0, 10);
+          return tradeDateStr >= startStr && tradeDateStr <= endStr;
         });
       }
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy !== 'all') {
+
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
         trades = trades.filter(trade => trade.strategy === filterStore.selectedStrategy);
       }
       return trades;
@@ -97,11 +109,13 @@ export const useTradesStore = defineStore('trades', {
           stats.breakEvenTrades++;
         }
 
-        const tradeDate = new Date(trade.date);
-        const dayKey = tradeDate.toISOString().split('T')[0];
+        // Estrae la chiave del giorno (YYYY-MM-DD) direttamente dalla stringa per evitare problemi di fuso orario.
+        const dayKey = trade.date.substring(0, 10);
 
         if (!pnlByDay[dayKey]) pnlByDay[dayKey] = 0;
         pnlByDay[dayKey] += trade.pnl;
+
+        const tradeDate = new Date(trade.date); // Mantenuto per il calcolo del giorno della settimana
 
         if (tradeDate.getFullYear() === viewDateForCalendar.getFullYear() && tradeDate.getMonth() === viewDateForCalendar.getMonth()) {
           if (!dailyDataForCalendar[dayKey]) {
