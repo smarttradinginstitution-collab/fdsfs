@@ -9,6 +9,41 @@
 <script setup>
 import { computed } from 'vue';
 
+/**
+ * Formats a cell value for display. If the value is an ISO date string,
+ * it's converted to a localized, user-friendly format. Otherwise, it's
+ * returned as is.
+ * @param {*} value The cell value.
+ * @returns {string} The formatted value.
+ */
+function formatCell(value) {
+  // Regex to check for a string that looks like an ISO 8601 timestamp (ending in Z)
+  const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
+
+  if (typeof value === 'string' && isoDateRegex.test(value)) {
+    const date = new Date(value);
+    // Check if the created date is valid
+    if (isNaN(date)) {
+      return value; // Return original string if date is invalid
+    }
+    // Format the date and time according to the user's local timezone and conventions.
+    // Using 'it-IT' as a specific locale for consistency.
+    const options = {
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false, // Use 24-hour format
+    };
+    return date.toLocaleString('it-IT', options);
+  }
+
+  // For any other type of value, return it without modification.
+  return value;
+}
+
+
 // --- PROPS ---
 const props = defineProps({
   headers: {
@@ -44,7 +79,7 @@ const tableClass = computed(() => {
         <tr v-for="item in items" :key="item.id">
           <td v-for="header in headers" :key="header.key" :data-label="header.text">
             <slot :name="header.key" :item="item">
-              {{ item[header.key] }}
+              {{ formatCell(item[header.key]) }}
             </slot>
           </td>
         </tr>
