@@ -596,10 +596,12 @@ class MetricsCalculator:
                 "general_stats": {"total_pnl": 0, "trade_count": 0, "winning_trades": 0, "losing_trades": 0, "breakeven_trades": 0, "gross_profit": 0, "gross_loss": 0, "total_risk": 0},
                 "daily_data": {},
                 "by_strategy": {},
+                "max_abs_pnl_by_strategy": 0.0,
                 "by_day_of_week": {},
-                "win_loss_days": {"winning_days": 0, "losing_days": 0, "breakeven_days": 0}
+                "win_loss_days": {"winning_days": 0, "losing_days": 0, "breakeven_days": 0},
+                "monthly_totals": {},
+                "weekly_totals": {}
             }
-
         # --- Dati di base ---
         total_pnl = Decimal(0)
         trade_count = len(self.all_trades)

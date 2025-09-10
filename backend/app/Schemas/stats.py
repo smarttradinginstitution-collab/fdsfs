@@ -38,13 +38,13 @@ class WeeklySummaryStats(BaseModel):
 class ProcessedStats(BaseModel):
     """Schema di risposta per l'endpoint delle statistiche processate."""
     general_stats: GeneralStats = Field(..., description="Statistiche generali")
-    daily_data: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per giorno (chiave: YYYY-MM-DD)")
-    by_strategy: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per strategia")
+    daily_data: Dict[str, AggregatedStats] = Field(default_factory=dict, description="Dati aggregati per giorno (chiave: YYYY-MM-DD)")
+    by_strategy: Dict[str, AggregatedStats] = Field(default_factory=dict, description="Dati aggregati per strategia")
     max_abs_pnl_by_strategy: float = Field(0.0, description="Il massimo P&L in valore assoluto tra tutte le strategie, per la normalizzazione dei grafici.")
-    by_day_of_week: Dict[str, AggregatedStats] = Field(..., description="Dati aggregati per giorno della settimana (es. 'Lunedì')")
+    by_day_of_week: Dict[str, AggregatedStats] = Field(default_factory=dict, description="Dati aggregati per giorno della settimana (es. 'Lunedì')")
     win_loss_days: WinLossDaysStats = Field(..., description="Conteggio dei giorni di profitto/perdita")
-    monthly_totals: Dict[str, float] = Field(..., description="Dati aggregati per mese (chiave: YYYY-MM)")
-    weekly_totals: Dict[str, WeeklySummaryStats] = Field(..., description="Dati aggregati per settimana ISO (chiave: YYYY-Www)")
+    monthly_totals: Dict[str, float] = Field(default_factory=dict, description="Dati aggregati per mese (chiave: YYYY-MM)")
+    weekly_totals: Dict[str, WeeklySummaryStats] = Field(default_factory=dict, description="Dati aggregati per settimana ISO (chiave: YYYY-Www)")
 
 # --- Schema for Equity Curve Endpoint ---
 
@@ -65,10 +65,16 @@ class SummaryStats(BaseModel):
     breakeven_trades: int = Field(..., description="Numero di trade a zero")
     gross_profit: float = Field(..., description="Profitto lordo totale")
     gross_loss: float = Field(..., description="Perdita lorda totale")
-    profit_factor: Optional[float] = Field(..., description="Valore numerico del Profit Factor (può essere nullo)")
-    profit_factor_label: str = Field(..., description="Etichetta testuale per il Profit Factor (es. '2.61' o '∞')")
-    win_rate: float = Field(..., description="Percentuale di trade vincenti (0-100)")
-
+    # ↓↓↓ cambi essenziali ↓↓↓
+    profit_factor: Optional[float] = Field(
+        None, description="Valore numerico del Profit Factor (può essere nullo)"
+    )
+    profit_factor_label: str = Field(
+        "N/A", description="Etichetta testuale per il Profit Factor (es. '2.61' o '∞')"
+    )
+    win_rate: float = Field(
+        0.0, description="Percentuale di trade vincenti (0-100)"
+    )
 class TradeSummary(BaseModel):
     """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""
     stats: SummaryStats

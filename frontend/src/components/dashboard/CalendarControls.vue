@@ -31,7 +31,8 @@ function formatPnl(pnl) {
           <ArrowLeftIcon />
         </IconButton>
         <span class="month-label">{{ monthLabel }}</span>
-        <IconButton variant="tertiary" aria-label="Next month" @click="filterStore.changeMonth(1)">
+        <IconButton variant="tertiary" aria-label="Next month" :disabled="!filterStore.canGoNext"
+          @click="filterStore.changeMonth(1)">
           <ArrowRightIcon />
         </IconButton>
       </div>
@@ -44,8 +45,12 @@ function formatPnl(pnl) {
         </span>
       </div>
       <DropdownButton data-testid="calendar-settings-dropdown" :icon-only="true">
-        <template #icon><SettingsIcon /></template>
-        <template #content><CalendarSettings /></template>
+        <template #icon>
+          <SettingsIcon />
+        </template>
+        <template #content>
+          <CalendarSettings />
+        </template>
       </DropdownButton>
       <IconButton variant="tertiary" aria-label="Take screenshot">
         <CameraIcon />
@@ -64,50 +69,65 @@ function formatPnl(pnl) {
   margin-bottom: var(--semantic-size-stack-sm);
   border-bottom: 1px solid var(--semantic-color-border-default);
   flex-shrink: 0;
-  gap: var(--semantic-size-stack-sm); /* Add gap for wrapping */
+  gap: var(--semantic-size-stack-sm);
+  /* Add gap for wrapping */
 }
-.controls-left, .controls-right, .month-selector {
+
+.controls-left,
+.controls-right,
+.month-selector {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-calendar-controls-gap-mobile);
 }
+
 .month-label {
   font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
   white-space: nowrap;
 }
+
 .monthly-stats {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
 }
+
 .stats-value {
   color: var(--semantic-color-text-primary);
   font-weight: var(--semantic-font-weight-medium);
   margin-left: var(--semantic-size-stack-xxs);
 }
+
 .stats-value.positive {
   color: var(--semantic-color-feedback-positive-text);
 }
+
 .stats-value.negative {
   color: var(--semantic-color-feedback-negative-text);
 }
 
 @media (min-width: 768px) {
-    .controls-left, .controls-right, .month-selector {
-        gap: var(--semantic-size-calendar-controls-gap-tablet);
-    }
+
+  .controls-left,
+  .controls-right,
+  .month-selector {
+    gap: var(--semantic-size-calendar-controls-gap-tablet);
+  }
 }
 
 @media (min-width: 1024px) {
-    .controls-left, .controls-right, .month-selector {
-        gap: var(--semantic-size-calendar-controls-gap-desktop);
-    }
+
+  .controls-left,
+  .controls-right,
+  .month-selector {
+    gap: var(--semantic-size-calendar-controls-gap-desktop);
+  }
 }
 
 @media (max-width: 768px) {
-    .monthly-stats {
-        display: none;
-    }
+  .monthly-stats {
+    display: none;
+  }
 }
 </style>
