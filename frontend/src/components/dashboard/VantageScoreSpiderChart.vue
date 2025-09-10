@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { useChartColors } from '../../composables/useChartColors';
 
 ChartJS.register(
   RadialLinearScale,
@@ -35,6 +36,17 @@ const props = defineProps({
   },
 });
 
+const { colors, isReady } = useChartColors();
+
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex || typeof hex !== 'string') return `rgba(0,0,0,${alpha})`;
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const chartData = computed(() => {
   const labels = Object.keys(props.scores);
   const data = Object.values(props.scores);
@@ -45,18 +57,18 @@ const chartData = computed(() => {
       {
         label: 'Vantage Score',
         data,
-        backgroundColor: 'rgba(37, 99, 235, 0.2)',
-        borderColor: 'var(--semantic-color-interactive-primary-default)',
-        pointBackgroundColor: 'var(--semantic-color-interactive-primary-default)',
+        backgroundColor: hexToRgba(colors.value.neutral, 0.2),
+        borderColor: colors.value.neutral,
+        pointBackgroundColor: colors.value.neutral,
         pointBorderColor: '#fff',
         pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'var(--semantic-color-interactive-primary-default)',
+        pointHoverBorderColor: colors.value.neutral,
       },
     ],
   };
 });
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -67,13 +79,13 @@ const chartOptions = {
   scales: {
     r: {
       angleLines: {
-        color: 'var(--semantic-color-border-default)',
+        color: hexToRgba(colors.value.textTertiary, 0.2),
       },
       grid: {
-        color: 'var(--semantic-color-border-default)',
+        color: hexToRgba(colors.value.textTertiary, 0.2),
       },
       pointLabels: {
-        color: 'var(--semantic-color-text-secondary)',
+        color: colors.value.textTertiary,
         font: {
           size: 12,
         },
@@ -86,12 +98,12 @@ const chartOptions = {
       suggestedMax: 100,
     },
   },
-};
+}));
 </script>
 
 <template>
   <div class="radar-chart-container">
-    <Radar :data="chartData" :options="chartOptions" />
+    <Radar v-if="isReady" :data="chartData" :options="chartOptions" />
   </div>
 </template>
 
