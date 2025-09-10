@@ -6,28 +6,44 @@
 import apiClient from './api';
 
 /**
- * Simula il recupero dei dati per il grafico "Daily Net Cumulative P&L".
- * In una implementazione reale, questa funzione farebbe una chiamata al backend
- * con apiClient.get('/api/analytics/daily-net-cumulative-pl').
+ * Recupera i dati per il grafico della curva di equity (Daily Net Cumulative P&L)
+ * dal backend, con la possibilità di applicare filtri.
  *
+ * @param {Object} [filters={}] - Un oggetto contenente i filtri da applicare.
+ * @param {Date} [filters.startDate] - La data di inizio del periodo.
+ * @param {Date} [filters.endDate] - La data di fine del periodo.
+ * @param {string} [filters.strategy] - La strategia da filtrare.
  * @returns {Promise<Object>} Una promessa che risolve con i dati del grafico.
  */
-export const fetchDailyNetCumulativePL = () => {
-  console.log('Fetching mock data for Daily Net Cumulative P&L...');
+export const fetchDailyNetCumulativePL = async (filters = {}) => {
+  const { startDate, endDate, strategy } = filters;
 
-  // Dati di esempio che simulano una risposta dal backend
-  const mockData = {
-    labels: ['05/01', '05/02', '05/03', '05/04', '05/05', '05/06', '05/07', '05/08'],
-    data: [15200, 15350, 15300, 15500, 15650, 15800, 15750, 16050],
-  };
+  // Costruiamo dinamicamente i parametri per la richiesta
+  const params = new URLSearchParams();
+  if (startDate) {
+    params.append('start_date', startDate.toISOString().split('T')[0]); // Formato YYYY-MM-DD
+  }
+  if (endDate) {
+    params.append('end_date', endDate.toISOString().split('T')[0]); // Formato YYYY-MM-DD
+  }
+  if (strategy && strategy !== 'all') {
+    params.append('strategy', strategy);
+  }
 
-  // Simulo un ritardo di rete di 1.5 secondi
-  return new Promise(resolve => {
-    setTimeout(() => {
-      console.log('Mock data fetched.');
-      resolve(mockData);
-    }, 1500);
-  });
+  try {
+    const endpoint = `/api/v1/trades/equity-curve?${params.toString()}`;
+    console.log(`Fetching data for Equity Curve from ${endpoint}`);
+
+    const response = await apiClient.get('/api/v1/trades/equity-curve', { params });
+
+    console.log('Equity Curve data fetched successfully.');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch equity curve data:', error);
+    // In caso di errore, restituiamo un oggetto vuoto per evitare che il
+    // componente del grafico vada in errore. Il placeholder verrà mostrato.
+    return { labels: [], data: [] };
+  }
 };
 
 // Qui potrebbero essere aggiunte altre funzioni per altri grafici...

@@ -68,14 +68,23 @@ const isLoadingChart = ref(true);
 
 
 // --- Data Fetching ---
+
+// Funzione per caricare i dati del grafico in base ai filtri correnti
+const loadChartData = async () => {
+  isLoadingChart.value = true;
+  const filters = {
+    startDate: filterStore.startDate,
+    endDate: filterStore.endDate,
+    strategy: filterStore.selectedStrategy,
+  };
+  const data = await fetchDailyNetCumulativePL(filters);
+  dailyPnlData.value = data;
+  isLoadingChart.value = false;
+};
+
 onMounted(() => {
   tradesStore.fetchAllDataForDashboard();
-
-  // Fetch dei dati per il grafico
-  fetchDailyNetCumulativePL().then(data => {
-    dailyPnlData.value = data;
-    isLoadingChart.value = false;
-  });
+  loadChartData(); // Carica i dati del grafico al montaggio
 });
 
 // Watch for filter changes and refetch all dashboard data
@@ -83,7 +92,7 @@ watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
     tradesStore.fetchAllDataForDashboard();
-    // Qui potremmo voler ricaricare anche i dati dei grafici
+    loadChartData(); // Ricarica i dati del grafico quando i filtri cambiano
   },
   { deep: true }
 );
