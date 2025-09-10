@@ -23,12 +23,6 @@ import { useFilterStore } from '../stores/filterStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 
-// Nuovi import per i grafici
-import ChartWidget from '../components/dashboard/ChartWidget.vue';
-import EquityCurveChart from '../components/dashboard/EquityCurveChart.vue';
-import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
-
-
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
@@ -61,15 +55,8 @@ const visibleStats = computed(() => {
   return visibleKeys.map(key => allStats[key]).filter(Boolean);
 });
 
-// I dati del grafico vengono ora presi direttamente dallo store,
-// che ha la sua logica di caricamento.
-const equityCurveData = computed(() => tradesStore.equityCurveData);
-
-
 // --- Data Fetching ---
 onMounted(() => {
-  // Questa singola azione carica TUTTI i dati necessari per la dashboard,
-  // inclusa la equity curve.
   tradesStore.fetchAllDataForDashboard();
 });
 
@@ -77,7 +64,6 @@ onMounted(() => {
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
-    // La stessa azione viene richiamata quando i filtri cambiano.
     tradesStore.fetchAllDataForDashboard();
   },
   { deep: true }
@@ -86,6 +72,17 @@ watch(
 
 <template>
   <div class="dashboard-view">
+
+    <!-- Esempio di visualizzazione dati dal backend -->
+    <!-- <div v-if="fetchError" class="error-box">
+      <h3>Backend Connection Error</h3>
+      <p>{{ fetchError }}</p>
+    </div>
+    <div v-if="backendData" class="data-box">
+      <h3>Data from Backend (for testing):</h3>
+      <pre>{{ JSON.stringify(backendData, null, 2) }}</pre>
+    </div> -->
+
 
     <div class="action-bar">
       <PopoverMenu ref="popoverRef">
@@ -113,18 +110,6 @@ watch(
         :stat="stat"
       />
     </div>
-
-    <!-- Sezione per i nuovi grafici -->
-    <div class="charts-grid">
-      <div v-if="tradesStore.isLoading" class="loading-container">
-        <LoadingSpinner />
-      </div>
-      <ChartWidget v-else title="Daily Net Cumulative P&L">
-        <EquityCurveChart :chart-data="equityCurveData" />
-      </ChartWidget>
-      <!-- Qui possono essere aggiunti altri ChartWidget -->
-    </div>
-
 
     <div class="main-content-grid">
       <CalendarHeatmap />
@@ -170,22 +155,6 @@ watch(
   */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--semantic-size-stack-md);
-}
-
-.charts-grid {
-  display: grid;
-  /* Per ora un solo grafico, ma la griglia è pronta per ospitarne altri */
-  grid-template-columns: 1fr;
-  gap: var(--semantic-size-stack-lg);
-}
-
-.loading-container {
-  display: grid;
-  place-items: center;
-  min-height: 300px; /* Altezza simile a quella del grafico */
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
 }
 
 .main-content-grid {
