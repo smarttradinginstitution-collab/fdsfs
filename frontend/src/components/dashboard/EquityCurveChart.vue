@@ -63,8 +63,11 @@ const hexToRgba = (hex, alpha = 1) => {
 
 // Usiamo una computed property per formattare i dati per Chart.js
 const dataForChart = computed(() => {
-  // Rimuoviamo l'orario dalle etichette dell'asse X per una visualizzazione più pulita
-  const formattedLabels = props.chartData.labels.map(label => label.split(' ')[0]);
+  // Rimuoviamo l'orario e l'anno dalle etichette dell'asse X per una visualizzazione più pulita
+  const formattedLabels = props.chartData.labels.map(label => {
+    const datePart = label.split(' ')[0]; // Prende 'YYYY-MM-DD'
+    return datePart.substring(5); // Prende 'MM-DD'
+  });
 
   return {
     labels: formattedLabels,
