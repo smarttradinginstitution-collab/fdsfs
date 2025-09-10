@@ -725,7 +725,10 @@ class MetricsCalculator:
         for key, value in weekly_totals.items():
             value['total_pnl'] = float(value['total_pnl'])
 
-        return {
+        # Calcola il Vantage Score e i suoi componenti
+        vantage_score_data = self.calculate_vantage_score()
+
+        response = {
             "general_stats": {
                 "total_pnl": float(total_pnl), "trade_count": trade_count, "winning_trades": winning_trades,
                 "losing_trades": losing_trades, "breakeven_trades": breakeven_trades,
@@ -737,8 +740,11 @@ class MetricsCalculator:
             "by_day_of_week": by_day_of_week,
             "win_loss_days": {"winning_days": winning_days, "losing_days": losing_days, "breakeven_days": breakeven_days},
             "monthly_totals": monthly_totals,
-            "weekly_totals": weekly_totals
+            "weekly_totals": weekly_totals,
         }
+        # Aggiunge i dati del vantage score alla risposta
+        response.update(vantage_score_data)
+        return response
 
     def calculate_all_metrics(self):
         """Pacchetto completo di metriche + grafici."""

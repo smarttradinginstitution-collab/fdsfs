@@ -46,6 +46,15 @@ class ProcessedStats(BaseModel):
     monthly_totals: Dict[str, float] = Field(default_factory=dict, description="Dati aggregati per mese (chiave: YYYY-MM)")
     weekly_totals: Dict[str, WeeklySummaryStats] = Field(default_factory=dict, description="Dati aggregati per settimana ISO (chiave: YYYY-Www)")
 
+    # Campi per il Vantage Score
+    vantage_score: float = Field(0.0, description="Punteggio Vantage Score complessivo")
+    profit_factor_score: float = Field(0.0, description="Sotto-punteggio: Profit Factor")
+    avg_win_loss_score: float = Field(0.0, description="Sotto-punteggio: Avg Win/Loss Ratio")
+    max_drawdown_score: float = Field(0.0, description="Sotto-punteggio: Max Drawdown")
+    win_rate_score: float = Field(0.0, description="Sotto-punteggio: Win Rate")
+    consistency_score: float = Field(0.0, description="Sotto-punteggio: Consistenza")
+    recovery_factor_score: float = Field(0.0, description="Sotto-punteggio: Recovery Factor")
+
 # --- Schema for Equity Curve Endpoint ---
 
 class EquityCurveData(BaseModel):
