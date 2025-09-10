@@ -23,6 +23,24 @@ export const useAuthStore = defineStore('auth', () => {
 
   // --- ACTIONS ---
   // Le azioni sono metodi che possono essere chiamati per modificare lo stato.
+  // (AGGIUNTA) Carica il nome del ruolo e lo salva in user.roleName
+  async function loadCurrentRoleName() {
+    try {
+      const userId = user.value?.id;
+      if (!userId) return;
+      // ✅ Endpoint corretto: /api/v1/users/{user_id}/roles
+      const { data } = await apiClient.get(`/api/v1/users/${userId}/roles`);
+      // Può tornare un oggetto singolo o una lista: gestiamo entrambi i casi
+      const roleObj = Array.isArray(data) ? data[0] : data;
+      const name = roleObj?.name ?? null;
+      if (name) {
+        user.value = { ...user.value, roleName: name };
+        localStorage.setItem('user', JSON.stringify(user.value));
+      }
+    } catch (err) {
+      console.error('Errore caricamento ruolo:', err);
+    }
+  }
 
   /**
    * Esegue il login dell'utente.
@@ -51,6 +69,9 @@ export const useAuthStore = defineStore('auth', () => {
       // Imposta il token nell'header di apiClient per le richieste future
       // (AGGIUNTA) Usa l'helper centralizzato per coerenza con gli interceptor
       setAuthToken(access_token);
+
+      // (AGGIUNTA) Popola user.roleName tramite /users/{id}/roles
+      await loadCurrentRoleName();
 
       // Reindirizza al dashboard dopo il login
       router.push('/');

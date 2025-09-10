@@ -69,9 +69,9 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
     <div class="header-right">
       <!-- 👇 qui stampo i dati dell’utente corrente -->
       <div v-if="authStore.isAuthenticated && authStore.user" class="user-info">
-        <span class="user-name">{{ authStore.user.name }}</span>--
+        <span class="user-name">{{ authStore.user.id }}</span>--
         <span class="user-email">{{ authStore.user.email }}</span>--
-        <span class="user-role" v-if="authStore.user.role">({{ authStore.user.role }})</span>
+        <span class="user-role" v-if="authStore.user.roleName">({{ authStore.user.roleName }})</span>
       </div>
       <!-- Mostra info utenti se disponibili -->
       <div v-if="authStore.isAuthenticated" class="users-info">
