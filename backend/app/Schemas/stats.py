@@ -79,3 +79,16 @@ class TradeSummary(BaseModel):
     """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""
     stats: SummaryStats
     cumulative_pnl_series: EquityCurveData
+
+
+# --- Schema for Vantage Score Endpoint ---
+
+class VantageScore(BaseModel):
+    """Schema di risposta per l'endpoint del Vantage Score."""
+    vantage_score: float = Field(..., description="Punteggio complessivo (0-100)")
+    profit_factor_score: float = Field(..., description="Punteggio del Profit Factor (0-100)")
+    avg_win_loss_score: float = Field(..., description="Punteggio del rapporto medio vincite/perdite (0-100)")
+    max_drawdown_score: float = Field(..., description="Punteggio del Max Drawdown (0-100, più alto è meglio)")
+    win_rate_score: float = Field(..., description="Punteggio della Win Rate (0-100)")
+    consistency_score: float = Field(..., description="Punteggio di consistenza (0-100)")
+    recovery_factor_score: float = Field(..., description="Punteggio del Recovery Factor (0-100)")

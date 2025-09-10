@@ -22,6 +22,7 @@ import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
+import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
@@ -112,6 +113,7 @@ watch(
     </div>
 
     <div class="main-content-grid">
+      <VantageScoreWidget />
       <CalendarHeatmap />
       <RecentTradesTable />
     </div>

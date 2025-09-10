@@ -740,6 +740,83 @@ class MetricsCalculator:
             "weekly_totals": weekly_totals
         }
 
+    def calculate_vantage_score(self):
+        """
+        Calcola il Vantage Score e i suoi componenti individuali.
+        """
+        if not self.all_trades:
+            return {
+                'vantage_score': 0,
+                'profit_factor_score': 0,
+                'avg_win_loss_score': 0,
+                'max_drawdown_score': 0,
+                'win_rate_score': 0,
+                'consistency_score': 0,
+                'recovery_factor_score': 0
+            }
+
+        base_stats = self._calculate_base_stats()
+        advanced_stats = self._calculate_advanced_stats(base_stats)
+        stats = {**base_stats, **advanced_stats}
+
+        # Scoring
+        pf = stats.get('profit_factor', 0)
+        if pf == float('inf') or pf >= 2.6: pf_score = 100
+        elif pf >= 2.2: pf_score = 80
+        elif pf >= 1.8: pf_score = 60
+        elif pf >= 1.5: pf_score = 40
+        elif pf > 1.0: pf_score = 20
+        else: pf_score = 0
+
+        awl = stats.get('average_win_loss_ratio', 0)
+        if awl == float('inf') or awl >= 2.6: awl_score = 100
+        elif awl >= 2.2: awl_score = 80
+        elif awl >= 1.8: awl_score = 60
+        elif awl >= 1.5: awl_score = 40
+        elif awl > 1.0: awl_score = 20
+        else: awl_score = 0
+
+        max_dd_pct = float(stats.get('max_drawdown_pct', 100))
+        mdd_score = max(0, 100 - max_dd_pct)
+
+        win_rate = float(stats.get('win_rate', 0))
+        wr_score = min(100, (win_rate / 60.0) * 100) if 60.0 > 0 else 0
+
+        total_profit = float(stats.get('total_pl', 0))
+        daily_std = float(stats.get('consistency_score', 0))
+        consistency_score = 0
+        if total_profit > 0 and daily_std > 0:
+            variation = (daily_std / total_profit) * 100
+            consistency_score = max(0, 100 - variation)
+        elif total_profit > 0:
+            consistency_score = 100
+
+        rf = float(stats.get('recovery_factor', 0))
+        if rf == float('inf') or rf >= 3.5: rf_score = 100
+        elif rf >= 2.5: rf_score = 80
+        elif rf >= 1.8: rf_score = 60
+        elif rf >= 1.0: rf_score = 40
+        else: rf_score = 0
+
+        vantage_score = (
+            (pf_score * 0.25) +
+            (awl_score * 0.20) +
+            (mdd_score * 0.20) +
+            (wr_score * 0.15) +
+            (consistency_score * 0.10) +
+            (rf_score * 0.10)
+        )
+
+        return {
+            'vantage_score': round(vantage_score, 2),
+            'profit_factor_score': round(pf_score, 2),
+            'avg_win_loss_score': round(awl_score, 2),
+            'max_drawdown_score': round(mdd_score, 2),
+            'win_rate_score': round(wr_score, 2),
+            'consistency_score': round(consistency_score, 2),
+            'recovery_factor_score': round(rf_score, 2)
+        }
+
     def calculate_all_metrics(self):
         """Pacchetto completo di metriche + grafici."""
         if not self.all_trades:
