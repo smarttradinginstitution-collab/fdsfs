@@ -26,6 +26,7 @@ import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 // Import per i grafici
 import ChartWidget from '../components/dashboard/ChartWidget.vue';
 import EquityCurveChart from '../components/dashboard/EquityCurveChart.vue';
+import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
 
 
@@ -61,15 +62,31 @@ const visibleStats = computed(() => {
   return visibleKeys.map(key => allStats[key]).filter(Boolean);
 });
 
-// I dati del grafico vengono ora presi direttamente dallo store,
-// che ha la sua logica di caricamento.
+// Dati per i grafici, presi direttamente dallo store
 const equityCurveData = computed(() => tradesStore.equityCurveData);
+
+const vantageScoreSubScores = computed(() => {
+  const stats = tradesStore.processedStats;
+  if (!stats) {
+    return { 'Win %': 0, 'Profit factor': 0, 'Avg win/loss': 0, 'Recovery factor': 0, 'Max drawdown': 0, 'Consistency': 0 };
+  }
+  return {
+    'Win %': stats.win_rate_score || 0,
+    'Profit factor': stats.profit_factor_score || 0,
+    'Avg win/loss': stats.avg_win_loss_score || 0,
+    'Recovery factor': stats.recovery_factor_score || 0,
+    'Max drawdown': stats.max_drawdown_score || 0,
+    'Consistency': stats.consistency_score || 0,
+  };
+});
+
+const vantageFinalScore = computed(() => {
+    return tradesStore.processedStats?.vantage_score || 0;
+});
 
 
 // --- Data Fetching ---
 onMounted(() => {
-  // Questa singola azione carica TUTTI i dati necessari per la dashboard,
-  // inclusa la equity curve.
   tradesStore.fetchAllDataForDashboard();
 });
 
@@ -77,7 +94,6 @@ onMounted(() => {
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
-    // La stessa azione viene richiamata quando i filtri cambiano.
     tradesStore.fetchAllDataForDashboard();
   },
   { deep: true }
@@ -114,7 +130,7 @@ watch(
       />
     </div>
 
-    <!-- Sezione per il grafico P&L -->
+    <!-- Sezione per i grafici -->
     <div class="charts-grid">
       <div v-if="tradesStore.isLoading" class="loading-container">
         <LoadingSpinner />
@@ -123,6 +139,10 @@ watch(
         <ChartWidget title="Daily Net Cumulative P&L">
           <EquityCurveChart :chart-data="equityCurveData" />
         </ChartWidget>
+        <VantageScoreWidget
+          :scores="vantageScoreSubScores"
+          :final-score="vantageFinalScore"
+        />
       </template>
     </div>
 
@@ -162,13 +182,6 @@ watch(
 
 .stats-grid {
   display: grid;
-  /*
-    BEST PRACTICE: Griglia Responsiva
-    - `repeat(auto-fit, ...)`: Crea tante colonne quante ce ne stanno nello spazio disponibile.
-    - `minmax(200px, 1fr)`: Ogni colonna deve essere larga almeno 200px. Se c'è più spazio,
-      `1fr` le fa espandere equamente per riempire la larghezza.
-    Questo crea una griglia fluida su desktop e tablet.
-  */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--semantic-size-stack-md);
 }
@@ -176,23 +189,20 @@ watch(
 .charts-grid {
   display: grid;
   gap: var(--semantic-size-stack-lg);
-  /* Default a una colonna per mobile. Potrebbe essere modificato se si aggiungono altri grafici. */
   grid-template-columns: 1fr;
 }
 
-/* Su schermi medi e grandi, passa a una griglia a 3 colonne, ma solo se ci sono più elementi */
-/* Per ora, con un solo grafico, questa regola non cambierà molto, ma è pronta per il futuro. */
 @media (min-width: 1024px) {
   .charts-grid {
-    /* Se si vuole che un singolo elemento occupi solo 1/3, si può usare questa riga: */
-    /* grid-template-columns: repeat(3, 1fr); */
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 .loading-container {
+  grid-column: 1 / -1; /* Span all columns */
   display: grid;
   place-items: center;
-  min-height: 300px; /* Altezza simile a quella del grafico */
+  min-height: 300px;
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
@@ -207,38 +217,5 @@ watch(
 
 .main-content-grid > * {
   min-width: 0;
-}
-
-.error-box, .data-box {
-  padding: var(--semantic-size-inset-lg);
-  border-radius: var(--semantic-border-radius-lg);
-  background-color: var(--color-background-muted);
-  border: 1px solid var(--color-border-subtle);
-}
-
-.error-box {
-  background-color: var(--color-background-negative-subtle);
-  border-color: var(--color-border-negative);
-  color: var(--color-text-negative);
-}
-
-.data-box pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  background-color: var(--color-background-subtle);
-  padding: var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-md);
-}
-
-@media (max-width: 1280px) {
-  .main-content-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) { /* sm breakpoint */
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 </style>
