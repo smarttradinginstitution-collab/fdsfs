@@ -21,6 +21,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import { useChartColors } from '../../composables/useChartColors';
 
 // Registriamo i componenti di Chart.js che useremo.
 ChartJS.register(
@@ -43,6 +44,23 @@ const props = defineProps({
   },
 });
 
+// Recuperiamo i colori risolti dal DOM
+const { colors, isReady } = useChartColors();
+
+/**
+ * Converte un colore HEX in formato RGBA.
+ * @param {string} hex - Il colore in formato esadecimale (es. #RRGGBB).
+ * @param {number} alpha - Il valore del canale alpha (0-1).
+ * @returns {string} Il colore in formato rgba().
+ */
+const hexToRgba = (hex, alpha = 1) => {
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 // Usiamo una computed property per formattare i dati per Chart.js
 const dataForChart = computed(() => {
   return {
@@ -50,9 +68,8 @@ const dataForChart = computed(() => {
     datasets: [
       {
         label: 'Cumulative P&L',
-        // Colori che usano i token semantici come da blueprint
-        backgroundColor: 'var(--semantic-color-feedback-positive-surface)',
-        borderColor: 'var(--semantic-color-feedback-positive-text)',
+        backgroundColor: hexToRgba(colors.value.positive, 0.1), // Usiamo il colore risolto con opacità
+        borderColor: colors.value.positive, // Usiamo il colore risolto
         data: props.chartData.data,
         tension: 0.1,
         fill: true,
@@ -77,20 +94,19 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       grid: {
-        color: 'var(--semantic-color-border-default)',
+        color: hexToRgba(colors.value.textTertiary, 0.2),
       },
       ticks: {
-        color: 'var(--semantic-color-text-tertiary)',
+        color: colors.value.textTertiary,
       },
     },
     y: {
       grid: {
-        color: 'var(--semantic-color-border-default)',
+        color: hexToRgba(colors.value.textTertiary, 0.2),
       },
       ticks: {
-        color: 'var(--semantic-color-text-tertiary)',
+        color: colors.value.textTertiary,
         callback: function(value) {
-          // Potremmo voler rendere la valuta dinamica in futuro
           return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
         }
       },
@@ -106,8 +122,9 @@ const hasData = computed(() => {
 
 <template>
   <div class="chart-container">
-    <Line v-if="hasData" :data="dataForChart" :options="chartOptions" />
+    <Line v-if="hasData && isReady" :data="dataForChart" :options="chartOptions" />
     <div v-else class="chart-placeholder">
+      <!-- Potremmo mostrare uno spinner qui se i dati ci sono ma i colori non sono pronti -->
       <p class="placeholder-text">No trading data available for the selected period.</p>
     </div>
   </div>
