@@ -27,7 +27,6 @@ import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 import ChartWidget from '../components/dashboard/ChartWidget.vue';
 import EquityCurveChart from '../components/dashboard/EquityCurveChart.vue';
 import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
-import { fetchDailyNetCumulativePL } from '../services/analyticsService.js';
 
 
 const tradesStore = useTradesStore();
@@ -62,37 +61,24 @@ const visibleStats = computed(() => {
   return visibleKeys.map(key => allStats[key]).filter(Boolean);
 });
 
-// --- State per i nuovi grafici ---
-const dailyPnlData = ref(null);
-const isLoadingChart = ref(true);
+// I dati del grafico vengono ora presi direttamente dallo store,
+// che ha la sua logica di caricamento.
+const equityCurveData = computed(() => tradesStore.equityCurveData);
 
 
 // --- Data Fetching ---
-
-// Funzione per caricare i dati del grafico in base ai filtri correnti
-const loadChartData = async () => {
-  isLoadingChart.value = true;
-  const filters = {
-    startDate: filterStore.startDate,
-    endDate: filterStore.endDate,
-    strategy: filterStore.selectedStrategy,
-  };
-  const data = await fetchDailyNetCumulativePL(filters);
-  dailyPnlData.value = data;
-  isLoadingChart.value = false;
-};
-
 onMounted(() => {
+  // Questa singola azione carica TUTTI i dati necessari per la dashboard,
+  // inclusa la equity curve.
   tradesStore.fetchAllDataForDashboard();
-  loadChartData(); // Carica i dati del grafico al montaggio
 });
 
 // Watch for filter changes and refetch all dashboard data
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
+    // La stessa azione viene richiamata quando i filtri cambiano.
     tradesStore.fetchAllDataForDashboard();
-    loadChartData(); // Ricarica i dati del grafico quando i filtri cambiano
   },
   { deep: true }
 );
@@ -130,11 +116,11 @@ watch(
 
     <!-- Sezione per i nuovi grafici -->
     <div class="charts-grid">
-      <div v-if="isLoadingChart" class="loading-container">
+      <div v-if="tradesStore.isLoading" class="loading-container">
         <LoadingSpinner />
       </div>
       <ChartWidget v-else title="Daily Net Cumulative P&L">
-        <EquityCurveChart :chart-data="dailyPnlData" />
+        <EquityCurveChart :chart-data="equityCurveData" />
       </ChartWidget>
       <!-- Qui possono essere aggiunti altri ChartWidget -->
     </div>
