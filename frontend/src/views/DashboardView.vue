@@ -26,6 +26,8 @@ import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 // Nuovi import per i grafici
 import ChartWidget from '../components/dashboard/ChartWidget.vue';
 import EquityCurveChart from '../components/dashboard/EquityCurveChart.vue';
+import VantageScoreGauge from '../components/dashboard/VantageScoreGauge.vue';
+import AverageRrChart from '../components/dashboard/AverageRrChart.vue';
 import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
 
 
@@ -64,6 +66,19 @@ const visibleStats = computed(() => {
 // I dati del grafico vengono ora presi direttamente dallo store,
 // che ha la sua logica di caricamento.
 const equityCurveData = computed(() => tradesStore.equityCurveData);
+
+const vantageScore = computed(() => {
+  return tradesStore.dashboardStats?.stats?.vantage_score || 0;
+});
+
+const averageRr = computed(() => {
+  // Planned RR non sembra essere disponibile, usiamo solo realized per ora.
+  const realized = tradesStore.dashboardStats?.stats?.avg_realized_rr || 0;
+  return {
+    planned: 0, // Placeholder
+    realized: parseFloat(realized) || 0,
+  };
+});
 
 
 // --- Data Fetching ---
@@ -119,10 +134,17 @@ watch(
       <div v-if="tradesStore.isLoading" class="loading-container">
         <LoadingSpinner />
       </div>
-      <ChartWidget v-else title="Daily Net Cumulative P&L">
-        <EquityCurveChart :chart-data="equityCurveData" />
-      </ChartWidget>
-      <!-- Qui possono essere aggiunti altri ChartWidget -->
+      <template v-else>
+        <ChartWidget title="Daily Net Cumulative P&L">
+          <EquityCurveChart :chart-data="equityCurveData" />
+        </ChartWidget>
+        <ChartWidget title="Vantage Score">
+          <VantageScoreGauge :score="vantageScore" />
+        </ChartWidget>
+        <ChartWidget title="Average R:R">
+          <AverageRrChart :planned-rr="averageRr.planned" :realized-rr="averageRr.realized" />
+        </ChartWidget>
+      </template>
     </div>
 
 
@@ -170,6 +192,29 @@ watch(
   */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--semantic-size-stack-md);
+}
+
+.charts-grid {
+  display: grid;
+  gap: var(--semantic-size-stack-lg);
+  /* Default a una colonna per mobile */
+  grid-template-columns: 1fr;
+}
+
+/* Su schermi medi e grandi, passa a una griglia a 3 colonne */
+@media (min-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.loading-container {
+  display: grid;
+  place-items: center;
+  min-height: 300px; /* Altezza simile a quella del grafico */
+  background-color: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-surface);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
 }
 
 .main-content-grid {
