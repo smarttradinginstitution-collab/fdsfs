@@ -18,6 +18,17 @@ const gridStyle = computed(() => ({
     : 'repeat(7, 1fr)',
 }));
 
+// 👇 Aggiunta: helper per disabilitare settimane future
+function isFutureWeek(week) {
+  const today = new Date();
+  const weekDates = week.filter(d => !d.isPlaceholder).map(d => new Date(d.fullDate));
+  if (weekDates.length === 0) return false;
+
+  const firstDay = weekDates[0];
+  return firstDay > today; // solo se tutta la settimana è dopo oggi
+}
+
+
 // Funzione helper per il colore di sfondo
 function getPnlColor(pnl) {
   if (pnl === 0) return {};
@@ -48,6 +59,9 @@ const handleDayClick = (day) => {
 
 const handleWeekClick = (weekIndex) => {
   const week = calendarData.value.weeksOfDays[weekIndex];
+  // 👇 Aggiunta: blocca settimane future
+  if (isFutureWeek(week)) return;
+
   const weekDates = week.filter(day => !day.isPlaceholder).map(day => day.fullDate);
   if (weekDates.length > 0) {
     const startDate = new Date(weekDates[0]);
@@ -61,10 +75,7 @@ const handleWeekClick = (weekIndex) => {
 
 <template>
   <div class="calendar-card">
-    <CalendarControls
-      :month-label="controlsData.monthLabel"
-      :monthly-pnl="controlsData.monthlyPnl"
-    />
+    <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
     <div class="calendar-grid" :style="gridStyle">
       <div class="day-header">Mon</div>
       <div class="day-header">Tue</div>
@@ -78,22 +89,17 @@ const handleWeekClick = (weekIndex) => {
       <template v-for="(week, weekIndex) in calendarData.weeksOfDays" :key="`week-${weekIndex}`">
         <!-- Loop per i giorni di ogni settimana -->
         <template v-for="day in week" :key="day.key">
-          <div
-            v-if="!day.isPlaceholder"
-            class="day-cell"
-            :class="{ 'no-trade': day.dailyData.tradeCount === 0 }"
-            :style="getPnlColor(day.dailyData.totalPnl)"
-            @click="handleDayClick(day)"
-          >
+          <div v-if="!day.isPlaceholder" class="day-cell" :class="{ 'no-trade': day.dailyData.tradeCount === 0 }"
+            :style="getPnlColor(day.dailyData.totalPnl)" @click="handleDayClick(day)">
             <span class="day-number">{{ day.date }}</span>
             <div v-if="day.dailyData.tradeCount > 0" class="day-details">
               <span class="day-pnl" :class="day.dailyData.totalPnl >= 0 ? 'positive' : 'negative'">
                 {{ formatCellPnl(day.dailyData.totalPnl) }}
               </span>
-            <span v-if="uiStore.isCalendarTradeCountVisible" class="day-trade-count">
+              <span v-if="uiStore.isCalendarTradeCountVisible" class="day-trade-count">
                 {{ day.dailyData.tradeCount }} {{ day.dailyData.tradeCount === 1 ? 'trade' : 'trades' }}
               </span>
-            <span v-if="uiStore.isCalendarWinRateVisible" class="day-extra-stats">
+              <span v-if="uiStore.isCalendarWinRateVisible" class="day-extra-stats">
                 {{ ((day.dailyData.winningTrades / day.dailyData.tradeCount) * 100).toFixed(0) }}% WR
               </span>
             </div>
@@ -102,16 +108,13 @@ const handleWeekClick = (weekIndex) => {
         </template>
 
         <!-- Riepilogo Settimanale - renderizzato una volta per riga della griglia -->
-        <div
-          v-if="uiStore.isWeeklySummaryVisible"
-          class="week-summary-card"
-          @click="handleWeekClick(weekIndex)"
-        >
+        <div v-if="uiStore.isWeeklySummaryVisible" class="week-summary-card" @click="handleWeekClick(weekIndex)"
+          :class="{ disabled: isFutureWeek(week) }">
           <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
           <span class="week-pnl" :class="{
-              'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
-              'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
-            }">
+            'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
+            'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
+          }">
             {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
           </span>
           <span class="week-days">
@@ -134,11 +137,13 @@ const handleWeekClick = (weekIndex) => {
   display: flex;
   flex-direction: column;
 }
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr) auto;
   gap: var(--semantic-size-calendar-grid-gap-mobile);
 }
+
 .day-header {
   text-align: center;
   color: var(--semantic-color-text-secondary);
@@ -147,9 +152,11 @@ const handleWeekClick = (weekIndex) => {
   border-radius: var(--base-border-radius-sm);
   margin-bottom: var(--base-size-spacing-xs);
 }
+
 .week-summary-header {
   font-weight: var(--base-font-weight-bold);
 }
+
 .day-cell {
   position: relative;
   aspect-ratio: 1 / 1;
@@ -162,16 +169,20 @@ const handleWeekClick = (weekIndex) => {
   justify-content: center;
   overflow: hidden;
 }
+
 .day-cell:not(.placeholder):hover {
-    transform: scale(1.05);
-    outline: 2px solid var(--semantic-color-border-focus);
+  transform: scale(1.05);
+  outline: 2px solid var(--semantic-color-border-focus);
 }
+
 .placeholder {
   background-color: transparent;
 }
+
 .no-trade {
   background-color: var(--semantic-color-surface-secondary);
 }
+
 .day-number {
   position: absolute;
   top: 0.1rem;
@@ -179,10 +190,12 @@ const handleWeekClick = (weekIndex) => {
   font: var(--semantic-font-style-calendar-day-number);
   color: var(--semantic-color-text-secondary);
 }
+
 .day-cell:not(.no-trade) .day-number {
   color: var(--semantic-color-text-secondary);
   opacity: 0.7;
 }
+
 .day-details {
   display: flex;
   flex-direction: column;
@@ -192,32 +205,30 @@ const handleWeekClick = (weekIndex) => {
   color: var(--semantic-color-text-on-brand);
   width: 100%;
 }
+
 .day-pnl {
   font-weight: var(--base-font-weight-bold);
   color: var(--semantic-color-text-secondary);
-  font-size: clamp(
-    var(--base-font-fluid-size-lg-min),
-    var(--base-font-fluid-size-lg-ideal),
-    var(--base-font-fluid-size-lg-max)
-  );
+  font-size: clamp(var(--base-font-fluid-size-lg-min),
+      var(--base-font-fluid-size-lg-ideal),
+      var(--base-font-fluid-size-lg-max));
 }
+
 .day-trade-count {
   color: var(--semantic-color-text-secondary);
-  font-size: clamp(
-    var(--base-font-fluid-size-xxs-min),
-    var(--base-font-fluid-size-xxs-ideal),
-    var(--base-font-fluid-size-xxs-max)
-  );
+  font-size: clamp(var(--base-font-fluid-size-xxs-min),
+      var(--base-font-fluid-size-xxs-ideal),
+      var(--base-font-fluid-size-xxs-max));
 }
+
 .day-extra-stats {
   color: var(--semantic-color-text-secondary);
   opacity: 0.8;
-  font-size: clamp(
-    var(--base-font-fluid-size-xxs-min),
-    var(--base-font-fluid-size-xxs-ideal),
-    var(--base-font-fluid-size-xxs-max)
-  );
+  font-size: clamp(var(--base-font-fluid-size-xxs-min),
+      var(--base-font-fluid-size-xxs-ideal),
+      var(--base-font-fluid-size-xxs-max));
 }
+
 /* --- Stili per il riepilogo settimanale --- */
 .week-summary-card {
   display: flex;
@@ -234,10 +245,18 @@ const handleWeekClick = (weekIndex) => {
   cursor: pointer;
   /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
 }
+
 .week-summary-card:hover {
   transform: scale(1.03);
   border-color: var(--semantic-color-border-focus);
   background-color: var(--semantic-color-surface-secondary);
+}
+
+/* 👇 Aggiunta: stato disabilitato per settimane future */
+.week-summary-card.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .week-title {
@@ -281,9 +300,11 @@ const handleWeekClick = (weekIndex) => {
     padding-block: var(--semantic-size-calendar-card-padding-block-tablet);
     padding-inline: var(--semantic-size-calendar-card-padding-inline-tablet);
   }
+
   .calendar-grid {
     gap: var(--semantic-size-calendar-grid-gap-tablet);
   }
+
   .day-cell {
     padding: var(--semantic-size-calendar-day-cell-padding-tablet);
   }
@@ -294,31 +315,39 @@ const handleWeekClick = (weekIndex) => {
     padding-block: var(--semantic-size-calendar-card-padding-block-desktop);
     padding-inline: var(--semantic-size-calendar-card-padding-inline-desktop);
   }
+
   .calendar-grid {
     gap: var(--semantic-size-calendar-grid-gap-desktop);
   }
+
   .day-cell {
     padding: var(--semantic-size-calendar-day-cell-padding-desktop);
   }
+
   .day-extra-stats {
     display: block;
   }
 }
 
 @media (max-width: 1024px) {
-  .day-extra-stats { display: none; }
+  .day-extra-stats {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
-    .calendar-grid {
-      grid-template-columns: repeat(7, 1fr);
-    }
-    .week-summary-header,
-    .week-summary-card { /* Aggiornato da .week-summary-cell */
-      display: none;
-    }
-    .day-details {
-        line-height: 1.1;
-    }
+  .calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .week-summary-header,
+  .week-summary-card {
+    /* Aggiornato da .week-summary-cell */
+    display: none;
+  }
+
+  .day-details {
+    line-height: 1.1;
+  }
 }
 </style>
