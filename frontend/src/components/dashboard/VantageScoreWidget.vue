@@ -184,7 +184,7 @@ onMounted(() => {
 .gauge-bar {
   width: 100%;
   height: 8px;
-  background: linear-gradient(to right, red, yellow, green);
+  background: linear-gradient(90deg, #f87171, #facc15, #4ade80);
   border-radius: 4px;
   position: relative;
 }
@@ -193,11 +193,12 @@ onMounted(() => {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
-  background-color: var(--semantic-color-surface-primary);
-  border: 2px solid var(--semantic-color-border-default);
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border: 4px solid var(--semantic-color-interactive-primary-default);
   border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .gauge-labels {
