@@ -23,6 +23,9 @@ export const useFilterStore = defineStore('filters', () => {
   // Nuovo stato per il filtro per strategia
   const selectedStrategy = ref('all'); // 'all' indica nessun filtro
 
+  // Disabilitazione del passaggio al mese successivo quando si è nel mese corrente
+  const canGoNext = ref(true);
+
   // --- AZIONI (Actions) ---
 
   // `setStrategyFilter` aggiorna la strategia selezionata.
@@ -30,14 +33,41 @@ export const useFilterStore = defineStore('filters', () => {
     selectedStrategy.value = strategy;
   }
 
-  // `setDateRangeFromPreset` aggiorna l'intervallo di date in base a un preset.
+  // `changeMonth` aggiorna l'intervallo al mese precedente/successivo.
+  // Se il mese risultante è quello corrente -> end = adesso e blocca "mese successivo".
   function changeMonth(direction) {
+    const now = new Date();
+
     const currentDate = new Date(endDate.value);
     currentDate.setDate(1);
     currentDate.setMonth(currentDate.getMonth() + direction);
 
+    // Evita di andare nel futuro
+    const isFuture =
+      currentDate.getFullYear() > now.getFullYear() ||
+      (currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() > now.getMonth());
+
+    if (isFuture) {
+      currentDate.setFullYear(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    // Inizio mese selezionato
     startDate.value = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    endDate.value = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+    // Se è il mese corrente, fine = adesso e disabilita "next"
+    const isCurrentMonth =
+      currentDate.getFullYear() === now.getFullYear() &&
+      currentDate.getMonth() === now.getMonth();
+
+    if (isCurrentMonth) {
+      endDate.value = new Date(now);
+      canGoNext.value = false;
+    } else {
+      // Mese passato, fine = ultimo giorno del mese
+      endDate.value = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      canGoNext.value = true;
+    }
+
     selectedPreset.value = null;
   }
 
@@ -85,6 +115,7 @@ export const useFilterStore = defineStore('filters', () => {
     startDate,
     endDate,
     selectedStrategy,
+    canGoNext,
     setDateRangeFromPreset,
     setStrategyFilter,
     changeMonth,
