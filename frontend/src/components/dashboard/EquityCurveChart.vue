@@ -61,21 +61,16 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// Usiamo una computed property per formattare i dati per Chart.js
+// Usiamo una computed property per passare i dati originali a Chart.js
+// La formattazione avverrà a livello di opzioni di visualizzazione.
 const dataForChart = computed(() => {
-  // Rimuoviamo l'orario e l'anno dalle etichette dell'asse X per una visualizzazione più pulita
-  const formattedLabels = props.chartData.labels.map(label => {
-    const datePart = label.split(' ')[0]; // Prende 'YYYY-MM-DD'
-    return datePart.substring(5); // Prende 'MM-DD'
-  });
-
   return {
-    labels: formattedLabels,
+    labels: props.chartData.labels, // Passiamo le etichette complete
     datasets: [
       {
         label: 'Cumulative P&L',
-        backgroundColor: hexToRgba(colors.value.positive, 0.1), // Usiamo il colore risolto con opacità
-        borderColor: colors.value.positive, // Usiamo il colore risolto
+        backgroundColor: hexToRgba(colors.value.positive, 0.1),
+        borderColor: colors.value.positive,
         data: props.chartData.data,
         tension: 0.1,
         fill: true,
@@ -95,6 +90,7 @@ const chartOptions = computed(() => ({
     tooltip: {
       mode: 'index',
       intersect: false,
+      // I tooltip ora useranno le etichette complete passate in `dataForChart`
     },
   },
   scales: {
@@ -104,6 +100,12 @@ const chartOptions = computed(() => ({
       },
       ticks: {
         color: colors.value.textTertiary,
+        // Usiamo un callback per formattare le etichette SOLO sull'asse
+        callback: function(index) {
+          const label = this.getLabelForValue(index); // Prende l'etichetta originale
+          const datePart = label.split(' ')[0]; // Es. "YYYY-MM-DD"
+          return datePart.substring(5); // Es. "MM-DD"
+        }
       },
     },
     y: {
