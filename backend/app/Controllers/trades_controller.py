@@ -11,6 +11,30 @@
 # convertiamo l'oggetto Trade in un dict “piatto” ed aggiungiamo i tag già
 # caricati dal repository. Poi validiamo il dict con TradeRead.
 
+# === MODIFICA DI SICUREZZA (Jules, 10/09/2025) ===
+# L'intero controller è stato refattorizzato per essere "user-aware".
+#
+# 1. RIMOZIONE DELLO `user_id` DALLE QUERY:
+#    Nessuna funzione accetta più `user_id` come parametro `Query(...)`.
+#    Questo elimina la vulnerabilità che permetteva a un client di richiedere
+#    dati per conto di un altro utente.
+#
+# 2. INIEZIONE DEI "CLAIMS" DEL TOKEN:
+#    Ogni funzione ora dipende da `get_current_claims`. Questa dipendenza,
+#    protetta a livello di router, garantisce che la funzione venga eseguita
+#    solo se è presente un token JWT valido. Il token decodificato (claims)
+#    viene iniettato nella funzione.
+#
+# 3. ESTRAZIONE SICURA DELLO `user_id`:
+#    Lo `user_id` viene estratto in modo sicuro dal claim "sub" del token.
+#    Questo ID è garantito dal sistema di autenticazione e non può essere
+#    manipolato dal client. È l'ID dell'utente che ha effettuato il login.
+#
+# 4. SCOPING DELLE QUERY:
+#    Lo `user_id` estratto viene passato al repository per filtrare
+#    le query a livello di database. Questo assicura che un utente possa
+#    operare *solo ed esclusivamente* sui propri dati.
+
 from __future__ import annotations
 
 from datetime import date
@@ -20,6 +44,8 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# MODIFICA: Aggiunta dipendenza per ottenere i claims dal token
+from app.Router.auth import get_current_claims
 from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
@@ -78,7 +104,8 @@ class TradesController:
     # --------------------------
     async def list_trades(
         self,
-        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        # MODIFICA: Rimosso user_id da Query, aggiunto claims da Depends
+        claims: dict = Depends(get_current_claims),
         symbol: Optional[str] = Query(None),
         direction: Optional[str] = Query(None),
         setups: Optional[List[str]] = Query(None, alias="setups[]"),
@@ -96,6 +123,8 @@ class TradesController:
         ),
         db: AsyncSession = Depends(get_db),
     ) -> List[TradeRead]:
+        # MODIFICA: user_id estratto in modo sicuro dal token
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id,
@@ -118,17 +147,21 @@ class TradesController:
         return out
 
     # --------------------------
-    # GET by ID (senza user_id)
+    # GET by ID (ora richiede ownership)
     # --------------------------
     async def get_trade(
         self,
         trade_id: UUID,
+        claims: dict = Depends(get_current_claims),
         db: AsyncSession = Depends(get_db),
     ) -> TradeRead:
+        # MODIFICA: user_id estratto in modo sicuro per verificare la proprietà
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
-        row = await repo.get_by_trade_id_with_tags(trade_id)
+        # MODIFICA: La query ora verifica anche lo user_id
+        row = await repo.get_by_id_with_tags(user_id, trade_id)
         if not row:
-            raise HTTPException(status_code=404, detail="Trade non trovato")
+            raise HTTPException(status_code=404, detail="Trade non trovato o non appartenente all'utente")
         trade, tag_names = row
         payload = self._to_trade_read_dict(trade, tag_names)
         return TradeRead.model_validate(payload)
@@ -139,9 +172,11 @@ class TradesController:
     async def create_trade(
         self,
         payload: TradeCreate,
-        user_id: UUID = Query(..., description="ID utente proprietario del nuovo trade"),
+        claims: dict = Depends(get_current_claims),
         db: AsyncSession = Depends(get_db),
     ) -> TradeRead:
+        # MODIFICA: user_id estratto in modo sicuro per l'assegnazione
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         data = payload.model_dump()
         tag_names = data.pop("tags", None) or []
@@ -158,15 +193,17 @@ class TradesController:
         self,
         trade_id: UUID,
         payload: TradeUpdate,
-        user_id: UUID = Query(..., description="ID utente proprietario del trade"),
+        claims: dict = Depends(get_current_claims),
         db: AsyncSession = Depends(get_db),
     ) -> TradeRead:
+        # MODIFICA: user_id estratto in modo sicuro per la verifica
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         patch = payload.model_dump(exclude_none=True)
         tag_names = patch.pop("tags", None)
         trade = await repo.update_with_tags(user_id, trade_id, patch, tag_names)
         if not trade:
-            raise HTTPException(status_code=404, detail="Trade non trovato")
+            raise HTTPException(status_code=404, detail="Trade non trovato o non appartenente all'utente")
 
         _, tags_now = await repo.get_by_id_with_tags(user_id, trade_id)  # type: ignore[arg-type]
         payload_dict = self._to_trade_read_dict(trade, tags_now)
@@ -178,13 +215,15 @@ class TradesController:
     async def delete_trade(
         self,
         trade_id: UUID,
-        user_id: UUID = Query(..., description="ID utente proprietario del trade"),
+        claims: dict = Depends(get_current_claims),
         db: AsyncSession = Depends(get_db),
     ) -> Response:
+        # MODIFICA: user_id estratto in modo sicuro per la verifica
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         ok = await repo.delete(user_id, trade_id)
         if not ok:
-            raise HTTPException(status_code=404, detail="Trade non trovato")
+            raise HTTPException(status_code=404, detail="Trade non trovato o non appartenente all'utente")
         return Response(status_code=204)
 
     # --------------------------
@@ -192,10 +231,12 @@ class TradesController:
     # --------------------------
     async def list_setups(
         self,
-        user_id: UUID = Query(..., description="ID utente"),
+        claims: dict = Depends(get_current_claims),
         db: AsyncSession = Depends(get_db),
     ) -> List[str]:
         """Ritorna la lista di setup univoci per l'utente."""
+        # MODIFICA: user_id estratto in modo sicuro
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         return await repo.get_distinct_setups(user_id)
 
@@ -204,7 +245,7 @@ class TradesController:
     # --------------------------
     async def calendar_data(
         self,
-        user_id: UUID = Query(..., description="ID utente"),
+        claims: dict = Depends(get_current_claims),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
@@ -213,6 +254,8 @@ class TradesController:
         ),
         db: AsyncSession = Depends(get_db),
     ) -> list[dict]:
+        # MODIFICA: user_id estratto in modo sicuro
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         return await repo.get_calendar_data(
             user_id=user_id,
@@ -227,12 +270,14 @@ class TradesController:
     # --------------------------
     async def get_performance_metrics(
         self,
-        user_id: UUID = Query(..., description="ID utente"),
+        claims: dict = Depends(get_current_claims),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
+        # MODIFICA: user_id estratto in modo sicuro
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
@@ -251,7 +296,7 @@ class TradesController:
     # --------------------------
     async def get_processed_stats(
         self,
-        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        claims: dict = Depends(get_current_claims),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
@@ -261,6 +306,8 @@ class TradesController:
         Ritorna una serie di statistiche aggregate e processate,
         ottimizzate per la visualizzazione nella dashboard del frontend.
         """
+        # MODIFICA: user_id estratto in modo sicuro
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
@@ -283,7 +330,7 @@ class TradesController:
     # --------------------------
     async def get_equity_curve(
         self,
-        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        claims: dict = Depends(get_current_claims),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
@@ -293,6 +340,8 @@ class TradesController:
         Ritorna i dati necessari per costruire il grafico della equity curve,
         filtrati per il periodo e i setup specificati.
         """
+        # MODIFICA: user_id estratto in modo sicuro
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
@@ -313,7 +362,7 @@ class TradesController:
     # --------------------------
     async def get_trade_summary(
         self,
-        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        claims: dict = Depends(get_current_claims),
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
@@ -324,6 +373,8 @@ class TradesController:
         Ritorna un riepilogo di un periodo specifico, con statistiche
         e dati per la curva del P&L cumulativo.
         """
+        # MODIFICA: user_id estratto in modo sicuro
+        user_id = UUID(claims.get("sub"))
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id, start_date=start_date, end_date=end_date, setups=setups, user_timezone=user_timezone

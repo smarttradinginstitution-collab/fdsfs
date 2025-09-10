@@ -257,12 +257,16 @@ export const useTradesStore = defineStore('trades', {
      * Recupera l'elenco di tutti i setup/strategie univoci per l'utente.
      */
     async fetchSetups() {
+      // === MODIFICA DI SICUREZZA (Jules, 10/09/2025) ===
+      // Rimosso l'invio manuale di `user_id` come query parameter.
+      // L'autenticazione ora avviene tramite il token JWT inviato
+      // automaticamente nell'header Authorization dall'interceptor di Axios.
       const authStore = useAuthStore();
       const userId = authStore.user?.id;
       if (!userId) return;
 
       try {
-        const response = await apiClient.get(`/api/v1/trades/setups?user_id=${userId}`);
+        const response = await apiClient.get(`/api/v1/trades/setups`);
         this.setups = response.data;
       } catch (error) {
         console.error('Errore nel recupero dei setup:', error);
@@ -303,7 +307,6 @@ export const useTradesStore = defineStore('trades', {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const params = {
-        user_id: userId,
         start_date: toYYYYMMDD(_startDate),
         end_date: toYYYYMMDD(_endDate),
         user_timezone: userTimezone,
@@ -345,7 +348,6 @@ export const useTradesStore = defineStore('trades', {
 
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = {
-        user_id: userId,
         start_date: toYYYYMMDD(dateRange.startDate),
         end_date: toYYYYMMDD(dateRange.endDate),
         user_timezone: userTimezone,
@@ -391,7 +393,6 @@ export const useTradesStore = defineStore('trades', {
       }
 
       const params = {
-        user_id: userId,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -422,7 +423,6 @@ export const useTradesStore = defineStore('trades', {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const params = {
-        user_id: userId,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
         user_timezone: userTimezone, // Aggiungi il fuso orario alla richiesta
@@ -481,9 +481,11 @@ export const useTradesStore = defineStore('trades', {
           }
         });
 
-        // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
+        // === MODIFICA DI SICUREZZA (Jules, 10/09/2025) ===
+        // Rimosso l'invio manuale di `user_id` come query parameter.
+        // L'autenticazione ora avviene tramite il token JWT.
         const response = await apiClient.post(
-          `/api/v1/trades/?user_id=${userId}`,
+          `/api/v1/trades/`,
           payload
         );
 
@@ -510,7 +512,6 @@ export const useTradesStore = defineStore('trades', {
       if (!userId) return;
 
       const params = {
-        user_id: userId,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -534,7 +535,6 @@ export const useTradesStore = defineStore('trades', {
       if (!userId) return;
 
       const params = {
-        user_id: userId,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };

@@ -249,20 +249,21 @@ class TradeRepository:
         tag_map = await self._load_tags_for_trades([trade_id])
         return trade, tag_map.get(trade_id, [])
 
-    async def get_by_trade_id_with_tags(
-        self, trade_id: UUID
-    ) -> Optional[Tuple[Trade, List[str]]]:
-        """
-        Ritorna (Trade, [tag_names]) cercando SOLO per trade_id (senza filtro su user_id).
-        """
-        q = select(Trade).where(Trade.id == trade_id).limit(1)
-        res = await self.db.execute(q)
-        trade = res.scalars().first()
-        if not trade:
-            return None
-
-        tag_map = await self._load_tags_for_trades([trade_id])
-        return trade, tag_map.get(trade_id, [])
+    # === MODIFICA DI SICUREZZA (Jules, 10/09/2025) ===
+    # La funzione `get_by_trade_id_with_tags` è stata rimossa.
+    #
+    # MOTIVAZIONE:
+    # Questa funzione recuperava un trade usando solo il suo ID, senza verificare
+    # a quale utente appartenesse. Questo rappresentava un potenziale rischio di
+    # sicurezza se fosse stata usata accidentalmente nel controller.
+    #
+    # Dopo aver refattorizzato il `TradesController` per usare sempre la funzione
+    # sicura `get_by_id_with_tags(user_id, trade_id)`, questa funzione non solo
+    # è diventata inutile, ma anche un rischio latente.
+    #
+    # La sua rimozione rafforza la sicurezza garantendo che ogni accesso a un
+    # trade singolo debba passare obbligatoriamente attraverso un controllo di
+    # proprietà (ownership check).
 
     # ──────────────────────────────────────────────────────────────────────
     # CREATE

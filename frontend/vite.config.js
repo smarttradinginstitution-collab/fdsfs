@@ -8,11 +8,15 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    // Disabilita i devtools durante i test (VITEST=true) per evitare errori.
+    !process.env.VITEST && vueDevTools(),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
+  },
+  test: {
+    environment: 'jsdom',
   },
 })

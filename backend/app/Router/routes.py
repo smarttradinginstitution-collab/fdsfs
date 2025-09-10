@@ -140,10 +140,26 @@ router_user_roles.delete(
 router.include_router(router_user_roles)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 💹 TRADES (pubblici a livello router; user_id via query per swagger)
-#    → se vuoi proteggerli con token in futuro, aggiungi get_current_claims
+# 💹 TRADES (PROTETTI DA TOKEN; user_id estratto dal token)
 # ──────────────────────────────────────────────────────────────────────────────
-router_trades = APIRouter(prefix="/api/v1/trades", tags=["Trades"])
+#
+# === MODIFICA DI SICUREZZA (Jules, 10/09/2025) ===
+# Il router dei trade è ora protetto.
+# Abbiamo aggiunto `dependencies=[Depends(get_current_claims)]`.
+# Questo significa che ogni endpoint definito in `router_trades` richiederà un
+# token JWT valido nell'header `Authorization: Bearer <token>`.
+# FastAPI (tramite la dipendenza `get_current_claims`) si occuperà di:
+# 1. Estrarre il token.
+# 2. Validarlo (scadenza, firma, etc.).
+# 3. Restituire un errore 401 Unauthorized se il token è mancante o non valido.
+# Questo è il primo passo per rendere l'API sicura. Il passo successivo
+# sarà usare l'ID utente contenuto nel token per filtrare i dati.
+#
+router_trades = APIRouter(
+    prefix="/api/v1/trades",
+    tags=["Trades"],
+    dependencies=[Depends(get_current_claims)],
+)
 
 # --- Ordine corretto: prima le rotte specifiche, poi quelle con parametri ---
 router_trades.get("/", response_model=list[TradeRead])(trades.list_trades)
