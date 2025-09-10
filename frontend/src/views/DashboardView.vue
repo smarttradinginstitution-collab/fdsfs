@@ -26,7 +26,7 @@ import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 // Nuovi import per i grafici
 import ChartWidget from '../components/dashboard/ChartWidget.vue';
 import EquityCurveChart from '../components/dashboard/EquityCurveChart.vue';
-import VantageScoreGauge from '../components/dashboard/VantageScoreGauge.vue';
+import VantageScoreSpiderChart from '../components/dashboard/VantageScoreSpiderChart.vue';
 import AverageRrChart from '../components/dashboard/AverageRrChart.vue';
 import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
 
@@ -67,9 +67,30 @@ const visibleStats = computed(() => {
 // che ha la sua logica di caricamento.
 const equityCurveData = computed(() => tradesStore.equityCurveData);
 
-const vantageScore = computed(() => {
-  return tradesStore.dashboardStats?.stats?.vantage_score || 0;
+const vantageScoreData = computed(() => {
+  // Estraiamo l'intero oggetto delle sotto-metriche per lo spider chart
+  const stats = tradesStore.dashboardStats?.stats;
+  if (!stats) {
+    // Return a default structure if stats are not available
+    return {
+      profit_factor_score: 0,
+      avg_win_loss_score: 0,
+      max_drawdown_score: 0,
+      win_rate_score: 0,
+      consistency_score: 0,
+      recovery_factor_score: 0,
+    };
+  }
+  return {
+    profit_factor_score: stats.profit_factor_score || 0,
+    avg_win_loss_score: stats.avg_win_loss_score || 0,
+    max_drawdown_score: stats.max_drawdown_score || 0,
+    win_rate_score: stats.win_rate_score || 0,
+    consistency_score: stats.consistency_score || 0,
+    recovery_factor_score: stats.recovery_factor_score || 0,
+  };
 });
+
 
 const averageRr = computed(() => {
   // Planned RR non sembra essere disponibile, usiamo solo realized per ora.
@@ -139,7 +160,7 @@ watch(
           <EquityCurveChart :chart-data="equityCurveData" />
         </ChartWidget>
         <ChartWidget title="Vantage Score">
-          <VantageScoreGauge :score="vantageScore" />
+          <VantageScoreSpiderChart :scores="vantageScoreData" />
         </ChartWidget>
         <ChartWidget title="Average R:R">
           <AverageRrChart :planned-rr="averageRr.planned" :realized-rr="averageRr.realized" />
