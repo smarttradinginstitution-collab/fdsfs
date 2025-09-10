@@ -63,8 +63,11 @@ const hexToRgba = (hex, alpha = 1) => {
 
 // Usiamo una computed property per formattare i dati per Chart.js
 const dataForChart = computed(() => {
+  // Rimuoviamo l'orario dalle etichette dell'asse X per una visualizzazione più pulita
+  const formattedLabels = props.chartData.labels.map(label => label.split(' ')[0]);
+
   return {
-    labels: props.chartData.labels,
+    labels: formattedLabels,
     datasets: [
       {
         label: 'Cumulative P&L',
@@ -107,7 +110,14 @@ const chartOptions = computed(() => ({
       ticks: {
         color: colors.value.textTertiary,
         callback: function(value) {
-          return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+          // Formattatore per abbreviare i numeri grandi
+          if (Math.abs(value) >= 1e6) {
+            return '$' + (value / 1e6).toFixed(1) + 'M';
+          }
+          if (Math.abs(value) >= 1e3) {
+            return '$' + (value / 1e3).toFixed(1) + 'k';
+          }
+          return '$' + value;
         }
       },
     },

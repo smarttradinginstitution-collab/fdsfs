@@ -23,11 +23,9 @@ import { useFilterStore } from '../stores/filterStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 
-// Nuovi import per i grafici
+// Import per i grafici
 import ChartWidget from '../components/dashboard/ChartWidget.vue';
 import EquityCurveChart from '../components/dashboard/EquityCurveChart.vue';
-import VantageScoreSpiderChart from '../components/dashboard/VantageScoreSpiderChart.vue';
-import AverageRrChart from '../components/dashboard/AverageRrChart.vue';
 import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
 
 
@@ -66,40 +64,6 @@ const visibleStats = computed(() => {
 // I dati del grafico vengono ora presi direttamente dallo store,
 // che ha la sua logica di caricamento.
 const equityCurveData = computed(() => tradesStore.equityCurveData);
-
-const vantageScoreData = computed(() => {
-  // Estraiamo l'intero oggetto delle sotto-metriche per lo spider chart
-  const stats = tradesStore.dashboardStats?.stats;
-  if (!stats) {
-    // Return a default structure if stats are not available
-    return {
-      profit_factor_score: 0,
-      avg_win_loss_score: 0,
-      max_drawdown_score: 0,
-      win_rate_score: 0,
-      consistency_score: 0,
-      recovery_factor_score: 0,
-    };
-  }
-  return {
-    profit_factor_score: stats.profit_factor_score || 0,
-    avg_win_loss_score: stats.avg_win_loss_score || 0,
-    max_drawdown_score: stats.max_drawdown_score || 0,
-    win_rate_score: stats.win_rate_score || 0,
-    consistency_score: stats.consistency_score || 0,
-    recovery_factor_score: stats.recovery_factor_score || 0,
-  };
-});
-
-
-const averageRr = computed(() => {
-  // Planned RR non sembra essere disponibile, usiamo solo realized per ora.
-  const realized = tradesStore.dashboardStats?.stats?.avg_realized_rr || 0;
-  return {
-    planned: 0, // Placeholder
-    realized: parseFloat(realized) || 0,
-  };
-});
 
 
 // --- Data Fetching ---
@@ -150,7 +114,7 @@ watch(
       />
     </div>
 
-    <!-- Sezione per i nuovi grafici -->
+    <!-- Sezione per il grafico P&L -->
     <div class="charts-grid">
       <div v-if="tradesStore.isLoading" class="loading-container">
         <LoadingSpinner />
@@ -158,12 +122,6 @@ watch(
       <template v-else>
         <ChartWidget title="Daily Net Cumulative P&L">
           <EquityCurveChart :chart-data="equityCurveData" />
-        </ChartWidget>
-        <ChartWidget title="Vantage Score">
-          <VantageScoreSpiderChart :scores="vantageScoreData" />
-        </ChartWidget>
-        <ChartWidget title="Average R:R">
-          <AverageRrChart :planned-rr="averageRr.planned" :realized-rr="averageRr.realized" />
         </ChartWidget>
       </template>
     </div>
@@ -218,14 +176,16 @@ watch(
 .charts-grid {
   display: grid;
   gap: var(--semantic-size-stack-lg);
-  /* Default a una colonna per mobile */
+  /* Default a una colonna per mobile. Potrebbe essere modificato se si aggiungono altri grafici. */
   grid-template-columns: 1fr;
 }
 
-/* Su schermi medi e grandi, passa a una griglia a 3 colonne */
+/* Su schermi medi e grandi, passa a una griglia a 3 colonne, ma solo se ci sono più elementi */
+/* Per ora, con un solo grafico, questa regola non cambierà molto, ma è pronta per il futuro. */
 @media (min-width: 1024px) {
   .charts-grid {
-    grid-template-columns: repeat(3, 1fr);
+    /* Se si vuole che un singolo elemento occupi solo 1/3, si può usare questa riga: */
+    /* grid-template-columns: repeat(3, 1fr); */
   }
 }
 
