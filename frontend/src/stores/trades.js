@@ -41,6 +41,7 @@ export const useTradesStore = defineStore('trades', {
     calendarData: [],
     processedStats: null,
     equityCurve: null,
+    vantageScore: null, // Dati per il VantageScoreWidget
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
@@ -116,6 +117,69 @@ export const useTradesStore = defineStore('trades', {
         maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', category: 'Consistency', value: String(maxConsecutiveLosses), changeType: 'neutral' },
 
         averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
+      };
+    },
+
+    getVantageScoreData(state) {
+      if (!state.vantageScore) {
+        // Ritorna una struttura dati vuota/default se i dati non sono ancora stati caricati
+        return {
+          score: 0,
+          metrics: {
+            'Win Rate': 0,
+            'Profit Factor': 0,
+            'Avg Win/Loss': 0,
+            'Recovery Factor': 0,
+            'Max Drawdown': 0,
+            'Consistency': 0,
+          },
+        };
+      }
+      // Mappa i dati del backend alle etichette del frontend
+      return {
+        score: state.vantageScore.vantage_score,
+        metrics: {
+          'Win Rate': state.vantageScore.win_rate_score,
+          'Profit Factor': state.vantageScore.profit_factor_score,
+          'Avg Win/Loss': state.vantageScore.avg_win_loss_score,
+          'Recovery Factor': state.vantageScore.recovery_factor_score,
+          'Max Drawdown': state.vantageScore.max_drawdown_score,
+          'Consistency': state.vantageScore.consistency_score,
+        },
+      };
+    },
+
+    getRrDistributionData(state) {
+      const labels = ['<-2R', '-2R to -1R', '-1R to 0R', '0R to 1R', '1R to 2R', '>2R'];
+      const data = Array(6).fill(0);
+
+      if (!state.trades || state.trades.length === 0) {
+        return { labels, datasets: [{ data }] };
+      }
+
+      for (const trade of state.trades) {
+        const rMultiple = trade.rMultiple ?? 0;
+
+        if (rMultiple < -2) {
+          data[0]++;
+        } else if (rMultiple >= -2 && rMultiple < -1) {
+          data[1]++;
+        } else if (rMultiple >= -1 && rMultiple < 0) {
+          data[2]++;
+        } else if (rMultiple >= 0 && rMultiple < 1) {
+          data[3]++;
+        } else if (rMultiple >= 1 && rMultiple < 2) {
+          data[4]++;
+        } else if (rMultiple >= 2) {
+          data[5]++;
+        }
+      }
+
+      return {
+        labels,
+        datasets: [{
+          data,
+        }]
       };
     },
 
@@ -440,6 +504,30 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    async fetchVantageScore() {
+      const authStore = useAuthStore();
+      const filterStore = useFilterStore();
+      const userId = authStore.user?.id;
+      if (!userId) return;
+
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/vantage-score', { params });
+        this.vantageScore = response.data;
+      } catch (error) {
+        console.error('Error fetching vantage score:', error);
+        this.vantageScore = null;
+      }
+    },
+
     async addTrade(tradeData) {
       this.isLoading = true;
       try {
@@ -564,6 +652,7 @@ export const useTradesStore = defineStore('trades', {
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
           this.fetchSetups(),
+          this.fetchVantageScore(),
         ]);
       } finally {
         this.isLoading = false;

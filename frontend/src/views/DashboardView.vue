@@ -8,6 +8,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '../components/dashboard/StatCard.vue';
+import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
+import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
+import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
@@ -111,6 +114,12 @@ watch(
       />
     </div>
 
+    <div class="complex-widgets-grid">
+      <VantageScoreWidget />
+      <RrDistributionWidget />
+      <CumulativePnlWidget />
+    </div>
+
     <div class="main-content-grid">
       <CalendarHeatmap />
       <RecentTradesTable />
@@ -157,6 +166,12 @@ watch(
   gap: var(--semantic-size-stack-md);
 }
 
+.complex-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--semantic-size-stack-lg);
+}
+
 .main-content-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -190,7 +205,8 @@ watch(
 }
 
 @media (max-width: 1280px) {
-  .main-content-grid {
+  .main-content-grid,
+  .complex-widgets-grid {
     grid-template-columns: 1fr;
   }
 }

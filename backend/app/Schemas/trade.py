@@ -76,6 +76,7 @@ class TradeRead(BaseModel):
     entry_timestamp: Optional[datetime] = None
     exit_timestamp: Optional[datetime] = None
     duration_minutes: Optional[float] = None
+    r_multiple: Optional[float] = None
 
     tags: List[str] = []
 
