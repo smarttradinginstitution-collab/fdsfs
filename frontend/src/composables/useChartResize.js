@@ -1,30 +1,38 @@
 // =============================================================================
 // FILE: composables/useChartResize.js
 // DESCRIZIONE: Composable di Vue per gestire il ridimensionamento di un'istanza
-// di Chart.js in risposta al collasso della sidebar.
+// di Chart.js utilizzando un ResizeObserver per rilevare cambiamenti di
+// dimensione del suo contenitore.
 // =============================================================================
 import { watch } from 'vue';
-import { useUiStore } from '../stores/uiStore';
-import { useDebounceFn } from '@vueuse/core';
+import { useResizeObserver, useDebounceFn } from '@vueuse/core';
 
 /**
- * Gestisce il ridimensionamento di un grafico Chart.js quando la sidebar cambia stato.
+ * Gestisce il ridimensionamento di un grafico Chart.js osservando il suo contenitore.
  * @param {import('vue').Ref<any>} chartRef - Il ref del componente vue-chartjs.
  */
 export function useChartResize(chartRef) {
-  const uiStore = useUiStore();
-
-  // La transizione CSS della sidebar dura 300ms. Aspettiamo un po' di più
-  // per essere sicuri che l'animazione sia finita prima di ridisegnare il grafico.
-  // Usiamo useDebounceFn per evitare chiamate multiple e garantire performance.
+  // Creiamo una funzione di ridimensionamento "debounced" per evitare di chiamarla
+  // troppe volte in rapida successione durante un'animazione, ottimizzando le performance.
   const debouncedResize = useDebounceFn(() => {
     if (chartRef.value?.chart) {
       chartRef.value.chart.resize();
     }
-  }, 350); // 300ms (transizione) + 50ms (margine)
+  }, 100);
 
-  // Osserviamo lo stato di collasso della sidebar.
-  watch(() => uiStore.isSidebarCollapsed, () => {
-    debouncedResize();
+  // Osserviamo il ref del grafico. Non appena il componente del grafico
+  // viene montato e il ref è disponibile...
+  watch(chartRef, (newChartRef) => {
+    if (newChartRef) {
+      // ...identifichiamo l'elemento contenitore del grafico.
+      // `newChartRef.$el` è l'elemento <canvas> stesso. Vogliamo osservare
+      // il suo genitore diretto, che è il <div> con classe "chart-container".
+      const chartContainer = newChartRef.$el?.parentElement;
+      if (chartContainer) {
+        // ...e iniziamo a osservare quel contenitore. Ogni volta che la sua
+        // dimensione cambia, la nostra funzione `debouncedResize` verrà chiamata.
+        useResizeObserver(chartContainer, debouncedResize);
+      }
+    }
   });
 }
