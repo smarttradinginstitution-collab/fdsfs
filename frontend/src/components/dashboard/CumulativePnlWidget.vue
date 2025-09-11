@@ -14,7 +14,7 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
-import PopoverMenu from '../ui/PopoverMenu.vue';
+import HoverPopover from '../ui/HoverPopover.vue';
 import IconButton from '../ui/IconButton.vue';
 import InfoIcon from '../icons/InfoIcon.vue';
 
@@ -106,20 +106,22 @@ const chartOptions = computed(() => ({
 <template>
   <div class="widget-card">
     <div class="widget-header">
-      <h3 class="widget-title">Daily net cumulative P&L</h3>
-      <PopoverMenu>
-        <template #trigger="{ toggle }">
-          <IconButton @click="toggle" class="info-button">
-            <InfoIcon />
-          </IconButton>
-        </template>
-        <template #content>
-          <div class="info-popover-content">
-            <p>This chart shows the daily running total of your net profit and loss.</p>
-            <p>It provides a visual representation of your trading performance over time.</p>
-          </div>
-        </template>
-      </PopoverMenu>
+      <div class="widget-title-container">
+        <h3 class="widget-title">Daily net cumulative P&L</h3>
+        <HoverPopover>
+          <template #trigger>
+            <IconButton class="info-button">
+              <InfoIcon />
+            </IconButton>
+          </template>
+          <template #content>
+            <div class="info-popover-content">
+              <p>This chart shows the daily running total of your net profit and loss.</p>
+              <p>It provides a visual representation of your trading performance over time.</p>
+            </div>
+          </template>
+        </HoverPopover>
+      </div>
     </div>
     <div class="widget-content">
       <div class="chart-container">
@@ -145,10 +147,15 @@ const chartOptions = computed(() => ({
 
 .widget-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding-bottom: var(--semantic-size-stack-md);
   border-bottom: 1px solid var(--semantic-color-border-default);
+}
+
+.widget-title-container {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
 }
 
 .widget-title {
@@ -175,6 +182,10 @@ const chartOptions = computed(() => ({
 .info-button:hover {
   color: var(--semantic-color-text-secondary);
 }
+.info-button:deep(svg) {
+  width: 16px;
+  height: 16px;
+}
 
 .info-popover-content {
   padding: var(--semantic-size-inset-md);
@@ -183,5 +194,6 @@ const chartOptions = computed(() => ({
   gap: var(--semantic-size-stack-sm);
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>
