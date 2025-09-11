@@ -17,7 +17,8 @@
       },
       "interactive": {
         "primary":   { "default": { "$value": "{base.color.blue.600}", "$type": "color", "$comment": "Sfondo per bottoni e azioni primarie." },
-                       "hover":   { "$value": "{base.color.blue.500}", "$type": "color", "$comment": "Stato hover per azioni primarie." } },
+                       "hover":   { "$value": "{base.color.blue.500}", "$type": "color", "$comment": "Stato hover per azioni primarie." },
+                       "rgb":     { "$value": "{base.color.blue.600-rgb}", "$type": "color", "$comment": "Valore RGB per il colore primario interattivo." } },
         "secondary": { "default": { "$value": "{base.color.gray.100}", "$type": "color", "$comment": "Sfondo per bottoni e azioni secondarie." },
                        "hover":   { "$value": "{base.color.gray.200}", "$type": "color", "$comment": "Stato hover per azioni secondarie." } }
       },

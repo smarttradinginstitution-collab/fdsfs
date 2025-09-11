@@ -27,6 +27,7 @@
   --semantic-color-text-interactive: var(--base-color-blue-600);
   --semantic-color-interactive-primary-default: var(--base-color-blue-600);
   --semantic-color-interactive-primary-hover: var(--base-color-blue-500);
+  --semantic-color-interactive-primary-rgb: var(--base-color-blue-600-rgb);
   --semantic-color-interactive-secondary-default: var(--base-color-gray-100);
   --semantic-color-interactive-secondary-hover: var(--base-color-gray-200);
   --semantic-color-feedback-positive-text: var(--base-color-green-600);

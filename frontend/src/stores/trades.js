@@ -119,6 +119,21 @@ export const useTradesStore = defineStore('trades', {
       };
     },
 
+    getVantageScoreData() {
+      // Dati mockati finché il backend non li fornisce
+      return {
+        score: 80.67,
+        metrics: {
+          'Win %': 75,
+          'Profit factor': 60,
+          'Avg win/loss': 85,
+          'Recovery factor': 90,
+          'Max drawdown': 50,
+          'Consistency': 70,
+        },
+      };
+    },
+
     calendarDataByMonth() {
       const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
         acc[entry.date] = {
