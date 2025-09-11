@@ -20,6 +20,10 @@ export function useChartColors() {
     feedback: {
         positive: '#16a34a',
         negative: '#dc2626',
+    },
+    grid: {
+        line: '#d8d8d9',
+        ticks: '#909093',
     }
   });
 
@@ -50,6 +54,10 @@ export function useChartColors() {
           feedback: {
             positive: fetchedColors.feedbackPositive,
             negative: fetchedColors.feedbackNegative,
+          },
+          grid: {
+            line: fetchedColors.borderSubtle,
+            ticks: fetchedColors.textTertiary,
           }
         };
       }
@@ -61,12 +69,15 @@ export function useChartColors() {
     }
   });
 
-  // Restituiamo un computed ref per accedere direttamente ai colori del radar
-  // Questo semplifica l'utilizzo nel componente.
+  // Restituiamo computed ref per accedere direttamente ai gruppi di colori.
   const radarColors = computed(() => colors.value.radar);
+  const feedbackColors = computed(() => colors.value.feedback);
+  const gridColors = computed(() => colors.value.grid);
 
   return {
     radarColors,
+    feedbackColors,
+    gridColors,
     isReady,
   };
 }

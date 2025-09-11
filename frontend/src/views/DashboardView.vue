@@ -9,6 +9,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '../components/dashboard/StatCard.vue';
 import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
+import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
@@ -114,6 +115,7 @@ watch(
 
     <div class="complex-widgets-grid">
       <VantageScoreWidget />
+      <RrDistributionWidget />
     </div>
 
     <div class="main-content-grid">

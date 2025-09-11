@@ -134,6 +134,40 @@ export const useTradesStore = defineStore('trades', {
       };
     },
 
+    getRrDistributionData(state) {
+      const labels = ['<-2R', '-2R to -1R', '-1R to 0R', '0R to 1R', '1R to 2R', '>2R'];
+      const data = Array(6).fill(0);
+
+      if (!state.trades || state.trades.length === 0) {
+        return { labels, datasets: [{ data }] };
+      }
+
+      for (const trade of state.trades) {
+        const rMultiple = trade.rMultiple ?? 0;
+
+        if (rMultiple < -2) {
+          data[0]++;
+        } else if (rMultiple >= -2 && rMultiple < -1) {
+          data[1]++;
+        } else if (rMultiple >= -1 && rMultiple < 0) {
+          data[2]++;
+        } else if (rMultiple >= 0 && rMultiple < 1) {
+          data[3]++;
+        } else if (rMultiple >= 1 && rMultiple < 2) {
+          data[4]++;
+        } else if (rMultiple >= 2) {
+          data[5]++;
+        }
+      }
+
+      return {
+        labels,
+        datasets: [{
+          data,
+        }]
+      };
+    },
+
     calendarDataByMonth() {
       const dailyDataFromBackend = this.calendarData.reduce((acc, entry) => {
         acc[entry.date] = {
