@@ -12,6 +12,7 @@ export function useChartColors() {
   const allColors = ref({
     // Feedback
     positive: '#16a34a',
+    positiveRgb: '22, 163, 74',
     negative: '#dc2626',
     // Neutri e di testo
     neutral: '#3b82f6',
@@ -31,6 +32,7 @@ export function useChartColors() {
 
       const fetchedColors = {
         positive: style.getPropertyValue('--semantic-color-feedback-positive-text').trim(),
+        positiveRgb: style.getPropertyValue('--semantic-color-feedback-positive-background-rgb').trim(),
         negative: style.getPropertyValue('--semantic-color-feedback-negative-text').trim(),
         neutral: style.getPropertyValue('--semantic-color-text-interactive').trim(),
         textTertiary: style.getPropertyValue('--semantic-color-text-tertiary').trim(),
@@ -41,8 +43,6 @@ export function useChartColors() {
         interactivePrimaryDefault: style.getPropertyValue('--semantic-color-interactive-primary-default').trim(),
       };
 
-      // Se il recupero ha successo, aggiorniamo i valori.
-      // Usiamo 'neutral' come indicatore che i colori sono stati caricati.
       if (fetchedColors.neutral) {
         allColors.value = fetchedColors;
       }
@@ -54,7 +54,6 @@ export function useChartColors() {
   });
 
   // --- Exports per compatibilità ---
-  // Esporta l'oggetto flat per i componenti vecchi (es. GaugeChart)
   const colors = computed(() => ({
     positive: allColors.value.positive,
     negative: allColors.value.negative,
@@ -74,6 +73,7 @@ export function useChartColors() {
 
   const feedbackColors = computed(() => ({
     positive: allColors.value.positive,
+    positiveRgb: allColors.value.positiveRgb,
     negative: allColors.value.negative,
   }));
 
