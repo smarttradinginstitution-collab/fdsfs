@@ -11,7 +11,10 @@ class MetricsCalculator:
     def __init__(self, trades, user_timezone: str = "UTC"):
         self.all_trades = trades
         self.user_timezone = user_timezone
-        self.tz = pytz.timezone(self.user_timezone)
+        try:
+            self.tz = pytz.timezone(self.user_timezone)
+        except pytz.UnknownTimeZoneError:
+            self.tz = pytz.utc
 
         if self.all_trades:
             self._prepare_trades()
@@ -26,12 +29,16 @@ class MetricsCalculator:
         if isinstance(dt_obj, str):
             dt_obj = parse(dt_obj)
 
-        # Se il datetime è naive (senza tzinfo), lo localizziamo a UTC
-        if dt_obj.tzinfo is None:
-            dt_obj = pytz.utc.localize(dt_obj)
+        # Rimuove il tzinfo se presente (es. da Z in ISO string), per trattarlo come naive
+        # e poi localizzarlo correttamente a UTC.
+        if dt_obj.tzinfo:
+            dt_obj = dt_obj.replace(tzinfo=None)
+
+        # Ora è sicuramente naive, lo localizziamo a UTC
+        dt_obj_utc = pytz.utc.localize(dt_obj)
 
         # Converte al fuso orario dell'utente
-        return dt_obj.astimezone(self.tz)
+        return dt_obj_utc.astimezone(self.tz)
 
     @staticmethod
     def filter_trades(trades, filters):
@@ -242,9 +249,11 @@ class MetricsCalculator:
                 if initial_dollar_risk > 0:
                     realized_rrs.append(pnl / initial_dollar_risk)
 
-        self.all_trades.sort(key=lambda x: x['created_at'])
+        # Ordinamento per data di entrata per coerenza
+        fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
+        self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or fallback_date)
         safe_pnl_floats = [float(pnl) for pnl in base_stats['pnl_data']]
-        equity_curve_data = [{'date': t['created_at'].strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
+        equity_curve_data = [{'date': (t.get('entry_timestamp') or fallback_date).strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
 
         equity_points = [0] + [p['pl'] for p in equity_curve_data]
         peak_array = np.maximum.accumulate(equity_points)
@@ -288,13 +297,14 @@ class MetricsCalculator:
         # Daily aggregates
         daily_pnl, daily_volume = {}, {}
         for trade in self.all_trades:
-            trade_date = trade['created_at'].date()
-            daily_pnl.setdefault(trade_date, Decimal(0))
-            daily_volume.setdefault(trade_date, Decimal(0))
-            pnl = Decimal(trade.get('p_l') or 0)
-            volume = Decimal(trade.get('position_size') or 0)
-            daily_pnl[trade_date] += pnl
-            daily_volume[trade_date] += volume
+            if trade.get('entry_timestamp'):
+                trade_date = trade['entry_timestamp'].date()
+                daily_pnl.setdefault(trade_date, Decimal(0))
+                daily_volume.setdefault(trade_date, Decimal(0))
+                pnl = Decimal(trade.get('p_l') or 0)
+                volume = Decimal(trade.get('position_size') or 0)
+                daily_pnl[trade_date] += pnl
+                daily_volume[trade_date] += volume
 
         daily_pnl_values = list(daily_pnl.values())
         winning_days_pnl = [p for p in daily_pnl_values if p > 0]
@@ -773,8 +783,16 @@ class MetricsCalculator:
         for k in ('winning_trades', 'realized_rrs_list', 'losing_trades_pnl', 'pnl_data'):
             final_stats.pop(k, None)
 
+        # Per la visualizzazione, i trade sono ordinati dal più recente al meno recente
+        fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
+        display_trades = sorted(
+            self.all_trades,
+            key=lambda x: x.get('entry_timestamp') or fallback_date,
+            reverse=True
+        )
+
         final_payload = {
-            'trades': sorted(self.all_trades, key=lambda x: x['created_at'], reverse=True),
+            'trades': display_trades,
             'stats': final_stats,
             'equity_curve_data': advanced_stats['equity_curve_data'],
             **chart_data
