@@ -78,6 +78,14 @@ const chartOptions = computed(() => ({
       beginAtZero: false,
       ticks: {
         color: gridColors.value?.ticks,
+        callback: function(value) {
+          if (value >= 1000 || value <= -1000) {
+            const thousands = value / 1000;
+            // Format to max 2 decimal places, and remove trailing .00 or .0
+            return thousands.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + 'k';
+          }
+          return value;
+        }
       },
       grid: {
         color: gridColors.value?.line,
@@ -86,6 +94,15 @@ const chartOptions = computed(() => ({
     x: {
       ticks: {
         color: gridColors.value?.ticks,
+        callback: function(value) {
+          // 'this' refers to the scale instance
+          const label = this.getLabelForValue(value);
+          if (typeof label === 'string') {
+            // Assuming label format is 'YYYY-MM-DD HH:MM'
+            return label.slice(5, 10); // Extracts 'MM-DD'
+          }
+          return label;
+        }
       },
       grid: {
         display: false,
