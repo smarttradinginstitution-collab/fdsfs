@@ -32,6 +32,16 @@
           "$type": "typography",
           "$comment": "Stile per i titoli delle card o dei widget."
         },
+        "heading-lg": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "{base.font.size.lg}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per i sottotitoli dei widget o titoli di sezione."
+        },
         "body-base": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",

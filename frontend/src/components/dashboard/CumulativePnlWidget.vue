@@ -14,6 +14,9 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
+import HoverPopover from '../ui/HoverPopover.vue';
+import IconButton from '../ui/IconButton.vue';
+import InfoIcon from '../icons/InfoIcon.vue';
 
 ChartJS.register(
   CategoryScale,
@@ -75,6 +78,14 @@ const chartOptions = computed(() => ({
       beginAtZero: false,
       ticks: {
         color: gridColors.value?.ticks,
+        callback: function(value) {
+          if (value >= 1000 || value <= -1000) {
+            const thousands = value / 1000;
+            // Format to max 2 decimal places, and remove trailing .00 or .0
+            return thousands.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + 'k';
+          }
+          return value;
+        }
       },
       grid: {
         color: gridColors.value?.line,
@@ -83,6 +94,15 @@ const chartOptions = computed(() => ({
     x: {
       ticks: {
         color: gridColors.value?.ticks,
+        callback: function(value) {
+          // 'this' refers to the scale instance
+          const label = this.getLabelForValue(value);
+          if (typeof label === 'string') {
+            // Assuming label format is 'YYYY-MM-DD HH:MM'
+            return label.slice(5, 10); // Extracts 'MM-DD'
+          }
+          return label;
+        }
       },
       grid: {
         display: false,
@@ -97,14 +117,32 @@ const chartOptions = computed(() => ({
       enabled: true,
     },
   },
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
 }));
 </script>
 
 <template>
   <div class="widget-card">
     <div class="widget-header">
-      <h3 class="widget-title">Daily net cumulative P&L</h3>
-      <!-- IconButton placeholder -->
+      <div class="widget-title-container">
+        <h3 class="widget-title">Daily net cumulative P&L</h3>
+        <HoverPopover>
+          <template #trigger>
+            <IconButton class="info-button">
+              <InfoIcon />
+            </IconButton>
+          </template>
+          <template #content>
+            <div class="info-popover-content">
+              <p>This chart shows the daily running total of your net profit and loss.</p>
+              <p>It provides a visual representation of your trading performance over time.</p>
+            </div>
+          </template>
+        </HoverPopover>
+      </div>
     </div>
     <div class="widget-content">
       <div class="chart-container">
@@ -130,12 +168,19 @@ const chartOptions = computed(() => ({
 
 .widget-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  padding-bottom: var(--semantic-size-stack-xs);
+  border-bottom: 1px solid var(--semantic-color-border-default);
+}
+
+.widget-title-container {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
 }
 
 .widget-title {
-  font: var(--semantic-font-style-heading-xl);
+  font: var(--semantic-font-style-heading-sm);
   color: var(--semantic-color-text-primary);
 }
 
@@ -150,5 +195,26 @@ const chartOptions = computed(() => ({
   width: 100%;
   flex-grow: 1;
   min-height: 250px;
+}
+
+.info-button {
+  color: var(--semantic-color-text-tertiary);
+}
+.info-button:hover {
+  color: var(--semantic-color-text-secondary);
+}
+.info-button:deep(svg) {
+  width: 16px;
+  height: 16px;
+}
+
+.info-popover-content {
+  padding: var(--semantic-size-inset-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>
