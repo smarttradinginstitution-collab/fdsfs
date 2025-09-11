@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 
@@ -48,6 +49,30 @@ class TradesController:
             duration = trade.exit_timestamp - trade.entry_timestamp
             duration_minutes = duration.total_seconds() / 60
 
+        # Calcolo R-Multiple
+        r_multiple = None
+        try:
+            entry_price = Decimal(trade.entry_price)
+            stop_loss_price = Decimal(trade.stop_loss_price)
+            exit_price = Decimal(trade.exit_price)
+            direction = trade.direction
+
+            risk_points = abs(entry_price - stop_loss_price)
+
+            if risk_points > 0:
+                if direction == 'Long':
+                    pnl_points = exit_price - entry_price
+                elif direction == 'Short':
+                    pnl_points = entry_price - exit_price
+                else:
+                    pnl_points = 0
+
+                r_multiple = float(pnl_points / risk_points)
+
+        except (TypeError, AttributeError):
+            # Se i prezzi non sono validi o mancano, r_multiple rimane None
+            r_multiple = None
+
         return {
             "id": trade.id,
             "created_at": trade.created_at,
@@ -71,6 +96,7 @@ class TradesController:
             "entry_timestamp": trade.entry_timestamp,
             "exit_timestamp": trade.exit_timestamp,
             "duration_minutes": duration_minutes,
+            "r_multiple": r_multiple,
             "tags": tag_names or [],
         }
 
