@@ -14,6 +14,9 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
+import PopoverMenu from '../ui/PopoverMenu.vue';
+import IconButton from '../ui/IconButton.vue';
+import InfoIcon from '../icons/InfoIcon.vue';
 
 ChartJS.register(
   CategoryScale,
@@ -104,7 +107,19 @@ const chartOptions = computed(() => ({
   <div class="widget-card">
     <div class="widget-header">
       <h3 class="widget-title">Daily net cumulative P&L</h3>
-      <!-- IconButton placeholder -->
+      <PopoverMenu>
+        <template #trigger="{ toggle }">
+          <IconButton @click="toggle" class="info-button">
+            <InfoIcon />
+          </IconButton>
+        </template>
+        <template #content>
+          <div class="info-popover-content">
+            <p>This chart shows the daily running total of your net profit and loss.</p>
+            <p>It provides a visual representation of your trading performance over time.</p>
+          </div>
+        </template>
+      </PopoverMenu>
     </div>
     <div class="widget-content">
       <div class="chart-container">
@@ -152,5 +167,21 @@ const chartOptions = computed(() => ({
   width: 100%;
   flex-grow: 1;
   min-height: 250px;
+}
+
+.info-button {
+  color: var(--semantic-color-text-tertiary);
+}
+.info-button:hover {
+  color: var(--semantic-color-text-secondary);
+}
+
+.info-popover-content {
+  padding: var(--semantic-size-inset-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
 }
 </style>
