@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Radar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -11,6 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import { useTradesStore } from '../../stores/trades';
+import { useUiStore } from '../../stores/uiStore';
 import { useChartColors } from '../../composables/useChartColors';
 
 ChartJS.register(
@@ -21,6 +22,13 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
+const uiStore = useUiStore();
+const chartKey = ref(0);
+
+watch(() => uiStore.isSidebarCollapsed, () => {
+  chartKey.value++;
+});
 
 const tradesStore = useTradesStore();
 const { radarColors } = useChartColors();
@@ -101,7 +109,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
     </div>
     <div class="widget-content">
       <div class="chart-container">
-        <Radar :data="chartData" :options="chartOptions" />
+        <Radar :data="chartData" :options="chartOptions" :key="chartKey" />
       </div>
       <div class="score-container">
         <span class="score-label">Your Zella Score</span>

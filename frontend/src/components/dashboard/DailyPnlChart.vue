@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -11,6 +11,7 @@ import {
   Filler,
   Legend,
 } from 'chart.js';
+import { useUiStore } from '../../stores/uiStore';
 
 ChartJS.register(
   CategoryScale,
@@ -21,6 +22,13 @@ ChartJS.register(
   Filler,
   Legend
 );
+
+const uiStore = useUiStore();
+const chartKey = ref(0);
+
+watch(() => uiStore.isSidebarCollapsed, () => {
+  chartKey.value++;
+});
 
 const props = defineProps({
   chartData: {
@@ -118,7 +126,7 @@ const hasData = computed(() => {
 
 <template>
   <div class="chart-container">
-    <Line v-if="hasData" :data="data" :options="chartOptions" />
+    <Line v-if="hasData" :data="data" :options="chartOptions" :key="chartKey" />
     <div v-else class="chart-placeholder">
       <p>No trades to display.</p>
     </div>

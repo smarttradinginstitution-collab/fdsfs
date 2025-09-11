@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -11,6 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import { useTradesStore } from '../../stores/trades';
+import { useUiStore } from '../../stores/uiStore';
 import { useChartColors } from '../../composables/useChartColors';
 
 ChartJS.register(
@@ -21,6 +22,13 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
+const uiStore = useUiStore();
+const chartKey = ref(0);
+
+watch(() => uiStore.isSidebarCollapsed, () => {
+  chartKey.value++;
+});
 
 const tradesStore = useTradesStore();
 const { feedbackColors, gridColors, isReady } = useChartColors();
@@ -114,7 +122,7 @@ const chartOptions = computed(() => ({
     </div>
     <div class="widget-content">
       <div class="chart-container">
-        <Bar v-if="isReady" :data="chartData" :options="chartOptions" />
+        <Bar v-if="isReady" :data="chartData" :options="chartOptions" :key="chartKey" />
       </div>
     </div>
   </div>

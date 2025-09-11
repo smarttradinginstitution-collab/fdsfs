@@ -1,10 +1,18 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useChartColors } from '../../composables/useChartColors';
+import { useUiStore } from '../../stores/uiStore';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
+
+const uiStore = useUiStore();
+const chartKey = ref(0);
+
+watch(() => uiStore.isSidebarCollapsed, () => {
+  chartKey.value++;
+});
 
 const props = defineProps({
   value: {
@@ -61,7 +69,7 @@ const chartOptions = computed(() => ({
 
 <template>
   <div class="gauge-chart-container">
-    <Doughnut v-if="isReady" :data="chartData" :options="chartOptions" />
+    <Doughnut v-if="isReady" :data="chartData" :options="chartOptions" :key="chartKey" />
   </div>
 </template>
 

@@ -1,10 +1,18 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useChartColors } from '../../composables/useChartColors';
+import { useUiStore } from '../../stores/uiStore';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
+
+const uiStore = useUiStore();
+const chartKey = ref(0);
+
+watch(() => uiStore.isSidebarCollapsed, () => {
+  chartKey.value++;
+});
 
 // ✅ default a 0 per evitare undefined/NaN
 const props = defineProps({
@@ -60,7 +68,7 @@ const chartOptions = computed(() => ({
 <template>
   <div class="donut-chart-container">
     <!-- ✅ niente NaN: renderizza solo se pronto e c'è almeno 1 valore // evitato errore props in console-->
-    <Doughnut v-if="isReady && total > 0" :data="chartData" :options="chartOptions" />
+    <Doughnut v-if="isReady && total > 0" :data="chartData" :options="chartOptions" :key="chartKey" />
   </div>
 </template>
 

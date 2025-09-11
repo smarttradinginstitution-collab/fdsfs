@@ -8,7 +8,7 @@
 -->
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -22,6 +22,7 @@ import {
   Filler, // Importato per poter colorare l'area sotto la linea
 } from 'chart.js';
 import { useTradesStore } from '../../stores/trades';
+import { useUiStore } from '../../stores/uiStore';
 
 // Registriamo i componenti di Chart.js che useremo.
 ChartJS.register(
@@ -34,6 +35,13 @@ ChartJS.register(
   Legend,
   Filler
 );
+
+const uiStore = useUiStore();
+const chartKey = ref(0);
+
+watch(() => uiStore.isSidebarCollapsed, () => {
+  chartKey.value++;
+});
 
 const tradesStore = useTradesStore();
 
@@ -105,7 +113,7 @@ const hasData = computed(() => {
       <h2 class="chart-title">Equity Curve</h2>
     </div>
     <div class="chart-container">
-      <Line v-if="hasData" :data="chartData" :options="chartOptions" />
+      <Line v-if="hasData" :data="chartData" :options="chartOptions" :key="chartKey" />
       <div v-else class="chart-placeholder">
         <p class="placeholder-text">No trading data available for the selected period.</p>
       </div>
