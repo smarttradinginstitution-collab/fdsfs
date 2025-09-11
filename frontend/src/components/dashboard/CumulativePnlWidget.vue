@@ -127,7 +127,7 @@ const chartOptions = computed(() => ({
     <div class="widget-header">
       <div class="widget-title-container">
         <h3 class="widget-title">Daily net cumulative P&L</h3>
-        <InfoPopover>
+        <InfoPopover aria-label="View information about the Daily net cumulative P&L chart">
           <p>This chart shows the daily running total of your net profit and loss.</p>
           <p>It provides a visual representation of your trading performance over time.</p>
         </InfoPopover>

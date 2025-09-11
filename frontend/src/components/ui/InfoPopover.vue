@@ -1,61 +1,58 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import HoverPopover from './HoverPopover.vue';
-import PopoverMenu from './PopoverMenu.vue'; // The click-based popover
+import PopoverMenu from './PopoverMenu.vue';
 import IconButton from './IconButton.vue';
 import InfoIcon from '../icons/InfoIcon.vue';
+
+defineProps({
+  ariaLabel: {
+    type: String,
+    required: true,
+  },
+});
 
 const isTouchDevice = ref(false);
 
 onMounted(() => {
-  // Simple and effective check for touch capabilities.
   isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 });
 </script>
 
 <template>
-  <div>
-    <!-- RENDER FOR TOUCH DEVICES (Click-based) -->
-    <PopoverMenu v-if="isTouchDevice">
-      <template #trigger="{ toggle }">
-        <IconButton @click="toggle" class="info-button">
-          <InfoIcon />
-        </IconButton>
-      </template>
-      <template #content>
-        <div class="info-popover-content">
-          <slot></slot>
-        </div>
-      </template>
-    </PopoverMenu>
+  <PopoverMenu v-if="isTouchDevice">
+    <template #trigger="{ toggle }">
+      <IconButton @click="toggle" :aria-label="ariaLabel" size="small" class="info-button">
+        <InfoIcon />
+      </IconButton>
+    </template>
+    <template #content>
+      <div class="info-popover-content">
+        <slot></slot>
+      </div>
+    </template>
+  </PopoverMenu>
 
-    <!-- RENDER FOR NON-TOUCH DEVICES (Hover-based) -->
-    <HoverPopover v-else>
-      <template #trigger>
-        <IconButton class="info-button">
-          <InfoIcon />
-        </IconButton>
-      </template>
-      <template #content>
-        <div class="info-popover-content">
-          <slot></slot>
-        </div>
-      </template>
-    </HoverPopover>
-  </div>
+  <HoverPopover v-else>
+    <template #trigger>
+      <IconButton :aria-label="ariaLabel" size="small" class="info-button" tabindex="-1">
+        <InfoIcon />
+      </IconButton>
+    </template>
+    <template #content>
+      <div class="info-popover-content">
+        <slot></slot>
+      </div>
+    </template>
+  </HoverPopover>
 </template>
 
 <style scoped>
-/* These styles apply to both versions, keeping the look consistent. */
 .info-button {
   color: var(--semantic-color-text-tertiary);
 }
 .info-button:hover {
   color: var(--semantic-color-text-secondary);
-}
-.info-button:deep(svg) {
-  width: 16px;
-  height: 16px;
 }
 
 .info-popover-content {
