@@ -3,8 +3,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useTradesStore } from '../../stores/trades';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend } from 'chart.js';
-import IconButton from '../ui/IconButton.vue';
-import InfoIcon from '../icons/InfoIcon.vue';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend);
 
@@ -105,9 +103,6 @@ const chartOptions = {
   <div class="cumulative-pnl-widget card">
     <div class="card-header">
       <h3 class="widget-title">Daily Net Cumulative P&L</h3>
-      <IconButton>
-        <InfoIcon />
-      </IconButton>
     </div>
     <div class="chart-container">
       <Line v-if="equityCurve?.data?.length > 0" ref="chartRef" :data="chartData" :options="chartOptions" />

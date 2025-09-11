@@ -3,8 +3,6 @@ import { computed } from 'vue';
 import { useTradesStore } from '../../stores/trades';
 import { Radar } from 'vue-chartjs';
 import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js';
-import IconButton from '../ui/IconButton.vue';
-import InfoIcon from '../icons/InfoIcon.vue';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -85,9 +83,6 @@ const progressStyle = computed(() => ({
   <div class="vantage-score-widget card">
     <div class="card-header">
       <h3 class="widget-title">Vantage Score</h3>
-      <IconButton>
-        <InfoIcon />
-      </IconButton>
     </div>
     <div class="chart-container">
       <Radar v-if="vantageScore.metrics.length" :data="chartData" :options="chartOptions" />

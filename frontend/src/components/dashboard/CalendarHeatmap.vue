@@ -3,8 +3,6 @@ import { computed } from 'vue';
 import { useTradesStore } from '../../stores/trades';
 import { useUiStore } from '../../stores/uiStore';
 import CalendarControls from './CalendarControls.vue';
-import IconButton from '../ui/IconButton.vue';
-import InfoIcon from '../icons/InfoIcon.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
@@ -92,9 +90,6 @@ const handleWeekClick = (weekIndex) => {
       <h3 class="widget-title">Progress tracker</h3>
       <div>
         <span class="view-more-link">View more</span>
-        <IconButton>
-          <InfoIcon />
-        </IconButton>
       </div>
     </div>
 
