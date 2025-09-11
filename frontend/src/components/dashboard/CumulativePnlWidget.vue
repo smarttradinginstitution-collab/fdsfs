@@ -100,6 +100,10 @@ const chartOptions = computed(() => ({
       enabled: true,
     },
   },
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
 }));
 </script>
 
