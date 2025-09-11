@@ -14,9 +14,7 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
-import HoverPopover from '../ui/HoverPopover.vue';
-import IconButton from '../ui/IconButton.vue';
-import InfoIcon from '../icons/InfoIcon.vue';
+import InfoPopover from '../ui/InfoPopover.vue';
 
 ChartJS.register(
   CategoryScale,
@@ -129,19 +127,10 @@ const chartOptions = computed(() => ({
     <div class="widget-header">
       <div class="widget-title-container">
         <h3 class="widget-title">Daily net cumulative P&L</h3>
-        <HoverPopover>
-          <template #trigger>
-            <IconButton class="info-button">
-              <InfoIcon />
-            </IconButton>
-          </template>
-          <template #content>
-            <div class="info-popover-content">
-              <p>This chart shows the daily running total of your net profit and loss.</p>
-              <p>It provides a visual representation of your trading performance over time.</p>
-            </div>
-          </template>
-        </HoverPopover>
+        <InfoPopover>
+          <p>This chart shows the daily running total of your net profit and loss.</p>
+          <p>It provides a visual representation of your trading performance over time.</p>
+        </InfoPopover>
       </div>
     </div>
     <div class="widget-content">
@@ -197,24 +186,4 @@ const chartOptions = computed(() => ({
   min-height: 250px;
 }
 
-.info-button {
-  color: var(--semantic-color-text-tertiary);
-}
-.info-button:hover {
-  color: var(--semantic-color-text-secondary);
-}
-.info-button:deep(svg) {
-  width: 16px;
-  height: 16px;
-}
-
-.info-popover-content {
-  padding: var(--semantic-size-inset-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
-  line-height: var(--base-font-line-height-tight);
-}
 </style>
