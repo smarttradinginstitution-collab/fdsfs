@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
+import { useChartResize } from '../../composables/useChartResize';
 
 ChartJS.register(
   CategoryScale,
@@ -27,6 +28,9 @@ ChartJS.register(
 const tradesStore = useTradesStore();
 const { feedbackColors, gridColors, isReady } = useChartColors();
 const chartRef = ref(null);
+
+// Applica la logica di ridimensionamento al nostro grafico
+useChartResize(chartRef);
 
 const equityCurveData = computed(() => tradesStore.equityCurveData);
 
@@ -121,6 +125,7 @@ const chartOptions = computed(() => ({
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
   height: 100%;
+  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
 }
 
 .widget-header {

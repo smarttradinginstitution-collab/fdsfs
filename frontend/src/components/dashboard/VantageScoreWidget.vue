@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Radar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
+import { useChartResize } from '../../composables/useChartResize';
 
 ChartJS.register(
   RadialLinearScale,
@@ -24,6 +25,10 @@ ChartJS.register(
 
 const tradesStore = useTradesStore();
 const { radarColors } = useChartColors();
+const chartRef = ref(null);
+
+// Applica la logica di ridimensionamento al nostro grafico
+useChartResize(chartRef);
 
 const vantageScoreData = computed(() => tradesStore.getVantageScoreData);
 
@@ -101,7 +106,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
     </div>
     <div class="widget-content">
       <div class="chart-container">
-        <Radar :data="chartData" :options="chartOptions" />
+        <Radar ref="chartRef" :data="chartData" :options="chartOptions" />
       </div>
       <div class="score-container">
         <span class="score-label">Your Zella Score</span>
@@ -125,6 +130,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
   height: 100%;
+  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
 }
 
 .widget-header {
