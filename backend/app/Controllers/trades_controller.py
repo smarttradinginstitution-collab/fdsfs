@@ -22,6 +22,7 @@ from fastapi import Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
+from app.Models.trade import TradeDirectionEnum
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
@@ -60,9 +61,9 @@ class TradesController:
             risk_points = abs(entry_price - stop_loss_price)
 
             if risk_points > 0:
-                if direction == 'Long':
+                if direction == TradeDirectionEnum.Long:
                     pnl_points = exit_price - entry_price
-                elif direction == 'Short':
+                elif direction == TradeDirectionEnum.Short:
                     pnl_points = entry_price - exit_price
                 else:
                     pnl_points = 0
