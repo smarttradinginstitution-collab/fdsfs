@@ -44,7 +44,7 @@ const chartData = computed(() => {
   let gradient = 'rgba(22, 163, 74, 0.1)';
   if (ctx && feedbackColors.value.positiveRgb) {
     gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, `rgba(${feedbackColors.value.positiveRgb}, 0.5)`);
+    gradient.addColorStop(0, `rgba(${feedbackColors.value.positiveRgb}, 0.25)`);
     gradient.addColorStop(1, `rgba(${feedbackColors.value.positiveRgb}, 0)`);
   }
   return {
@@ -151,7 +151,7 @@ const chartOptions = computed(() => ({
 }
 
 .widget-title {
-  font: var(--semantic-font-style-heading-sm);
+  font: var(--semantic-font-style-heading-md);
   color: var(--semantic-color-text-primary);
 }
 

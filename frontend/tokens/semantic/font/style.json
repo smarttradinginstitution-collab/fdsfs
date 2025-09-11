@@ -42,6 +42,16 @@
           "$type": "typography",
           "$comment": "Stile per i sottotitoli dei widget o titoli di sezione."
         },
+        "heading-md": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "{base.font.size.base}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per i titoli di widget di medie dimensioni."
+        },
         "body-base": {
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
