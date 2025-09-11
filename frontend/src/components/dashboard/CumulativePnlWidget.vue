@@ -169,7 +169,7 @@ const chartOptions = computed(() => ({
 .widget-header {
   display: flex;
   align-items: center;
-  padding-bottom: var(--semantic-size-stack-md);
+  padding-bottom: var(--semantic-size-stack-xs);
   border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
