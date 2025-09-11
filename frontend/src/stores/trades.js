@@ -219,6 +219,75 @@ export const useTradesStore = defineStore('trades', {
       return state.processedStats?.win_loss_days || { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
     },
 
+    // Aggiunto per il Vantage Score Widget
+    vantageScoreData(state) {
+      if (!state.dashboardStats?.stats) {
+        return {
+          score: 0,
+          metrics: [
+            { label: 'Win %', value: 0 },
+            { label: 'Profit factor', value: 0 },
+            { label: 'Avg win/loss', value: 0 },
+            { label: 'Recovery factor', value: 0 },
+            { label: 'Max drawdown', value: 0 },
+            { label: 'Consistency', value: 0 },
+          ],
+        };
+      }
+
+      const stats = state.dashboardStats.stats;
+
+      // Funzioni di normalizzazione (da 0 a 100)
+      // Queste sono stime e potrebbero necessitare di aggiustamenti
+      const normalize = (value, min, max) => {
+        if (value <= min) return 0;
+        if (value >= max) return 100;
+        return ((value - min) / (max - min)) * 100;
+      };
+
+      const winRate = stats.win_rate || 0; // Già in %
+      const profitFactor = stats.profit_factor || 0;
+      const avgWinLossRatio = (stats.avg_loss > 0) ? (stats.avg_win / stats.avg_loss) : (stats.avg_win > 0 ? 5 : 0); // Evita divisione per zero
+
+      // Valori mancanti: Recovery Factor e Consistency. Uso dei placeholder.
+      // Questi andrebbero aggiunti al backend. Per ora, uso valori statici/derivati.
+      const recoveryFactor = stats.recovery_factor || 1; // Placeholder
+      const consistency = Math.min(100, (stats.winning_trades_count / (stats.trade_count - stats.breakeven_trades_count)) * 100) || 0; // Placeholder basato su winrate
+
+      // Normalizzazione dei valori per il grafico radar
+      const metrics = [
+        { label: 'Win %', value: winRate },
+        { label: 'Profit factor', value: normalize(profitFactor, 0, 4) }, // PF > 4 è eccellente
+        { label: 'Avg win/loss', value: normalize(avgWinLossRatio, 0, 5) }, // Ratio > 5 è eccellente
+        { label: 'Recovery factor', value: normalize(recoveryFactor, 0, 3) }, // RF > 3 è eccellente
+        // Per Max Drawdown, un valore più basso è migliore. La normalizzazione è inversa.
+        // Assumiamo che il drawdown sia un valore assoluto. Il backend lo fornisce come positivo.
+        // Dobbiamo conoscere un drawdown "massimo" di riferimento. Usiamo una stima.
+        { label: 'Max drawdown', value: 100 - normalize(stats.max_drawdown_abs || 0, 0, 5000) }, // Invertito: 0 drawdown = 100
+        { label: 'Consistency', value: consistency }, // Placeholder
+      ];
+
+      // Calcolo del punteggio finale come media dei valori normalizzati
+      const totalScore = metrics.reduce((acc, metric) => acc + metric.value, 0);
+      const score = Math.round(totalScore / metrics.length);
+
+      return {
+        score,
+        metrics,
+      };
+    },
+
+    // Placeholder per i dati del footer del Progress Tracker
+    progressTrackerFooterData() {
+      // In un'implementazione reale, questi dati verrebbero dal backend
+      return {
+        todayScore: {
+          current: 1,
+          max: 5,
+        },
+      };
+    },
+
     equityCurveData(state) {
       // Restituisce direttamente i dati pre-calcolati dal backend.
       // Fornisce un default per evitare errori nel rendering iniziale.

@@ -3,20 +3,33 @@ import { computed } from 'vue';
 import { useTradesStore } from '../../stores/trades';
 import { useUiStore } from '../../stores/uiStore';
 import CalendarControls from './CalendarControls.vue';
+import IconButton from '../ui/IconButton.vue';
+import InfoIcon from '../icons/InfoIcon.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 
 // Dati per il corpo del calendario (heatmap)
 const calendarData = computed(() => tradesStore.calendarDataByMonth);
-// Dati per l'header con i controlli
+// Dati per i controlli del calendario (es. mese, pnl mensile)
 const controlsData = computed(() => tradesStore.calendarControlsData);
+// Dati per il footer
+const footerData = computed(() => tradesStore.progressTrackerFooterData);
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: uiStore.isWeeklySummaryVisible
     ? 'repeat(7, 1fr) auto'
     : 'repeat(7, 1fr)',
 }));
+
+const circularProgressStyle = computed(() => {
+  const score = footerData.value.todayScore;
+  const percentage = (score.current / score.max) * 100;
+  // Usiamo un conic-gradient per creare l'effetto di progresso circolare
+  return {
+    background: `radial-gradient(white 60%, transparent 61%), conic-gradient(var(--color-background-positive-strong) ${percentage}%, var(--color-background-interactive-secondary-disabled) 0)`,
+  };
+});
 
 // 👇 Aggiunta: helper per disabilitare settimane future
 function isFutureWeek(week) {
@@ -74,9 +87,20 @@ const handleWeekClick = (weekIndex) => {
 </script>
 
 <template>
-  <div class="calendar-card">
-    <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
-    <div class="calendar-grid" :style="gridStyle">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="widget-title">Progress tracker</h3>
+      <div>
+        <span class="view-more-link">View more</span>
+        <IconButton>
+          <InfoIcon />
+        </IconButton>
+      </div>
+    </div>
+
+    <div class="calendar-content">
+      <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
+      <div class="calendar-grid" :style="gridStyle">
       <div class="day-header">Mon</div>
       <div class="day-header">Tue</div>
       <div class="day-header">Wed</div>
@@ -123,19 +147,61 @@ const handleWeekClick = (weekIndex) => {
           </span>
         </div>
       </template>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-left">
+        <div class="circular-progress" :style="circularProgressStyle">
+          <span class="progress-text">{{ footerData.todayScore.current }}/{{ footerData.todayScore.max }}</span>
+        </div>
+        <span class="footer-title">Today's score</span>
+      </div>
+      <a href="#" class="daily-checklist-link">Daily checklist</a>
     </div>
   </div>
 </template>
 
 <style scoped>
-.calendar-card {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  padding-block: var(--semantic-size-calendar-card-padding-block-mobile);
-  padding-inline: var(--semantic-size-calendar-card-padding-inline-mobile);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+/* Stili generali della card, presi dagli altri widget per coerenza */
+.card {
+  background-color: var(--color-background-card-primary);
+  border: 1px solid var(--color-border-card-primary);
+  border-radius: var(--semantic-border-radius-lg);
+  box-shadow: var(--effect-shadow-small);
+  padding: var(--semantic-size-inset-lg);
   display: flex;
   flex-direction: column;
+  gap: var(--semantic-size-stack-md);
+  color: var(--color-text-primary);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widget-title {
+  font: var(--typography-style-heading-h5);
+}
+
+.card-header > div {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
+}
+
+.view-more-link {
+  font: var(--typography-style-link-small);
+  color: var(--color-text-interactive-primary-strong);
+  cursor: pointer;
+}
+
+.calendar-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-md);
 }
 
 .calendar-grid {
@@ -295,8 +361,50 @@ const handleWeekClick = (weekIndex) => {
   color: var(--semantic-color-feedback-negative-text);
 }
 
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: var(--semantic-size-stack-md);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
+}
+
+.circular-progress {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.progress-text {
+  font: var(--typography-style-label-small);
+  color: var(--color-text-primary);
+  z-index: 1;
+}
+
+.footer-title {
+  font: var(--typography-style-body-medium);
+  color: var(--color-text-secondary);
+}
+
+.daily-checklist-link {
+  font: var(--typography-style-link-small);
+  color: var(--color-text-interactive-primary-strong);
+  text-decoration: none;
+}
+
+
 @media (min-width: 768px) {
-  .calendar-card {
+  .card {
     padding-block: var(--semantic-size-calendar-card-padding-block-tablet);
     padding-inline: var(--semantic-size-calendar-card-padding-inline-tablet);
   }

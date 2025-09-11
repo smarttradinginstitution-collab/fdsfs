@@ -9,6 +9,8 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '../components/dashboard/StatCard.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
+import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
+import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
@@ -111,9 +113,17 @@ watch(
       />
     </div>
 
-    <div class="main-content-grid">
+    <!-- Griglia per i widget principali (riga centrale) -->
+    <div class="middle-row-grid">
+      <VantageScoreWidget />
       <CalendarHeatmap />
+      <CumulativePnlWidget />
+    </div>
+
+    <!-- Griglia per i contenuti inferiori -->
+    <div class="bottom-row-grid">
       <RecentTradesTable />
+      <!-- Altri widget della riga inferiore possono essere aggiunti qui -->
     </div>
 
     <!-- Modale per Aggiungere un Trade -->
@@ -157,15 +167,23 @@ watch(
   gap: var(--semantic-size-stack-md);
 }
 
-.main-content-grid {
+.middle-row-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  /* La prima colonna è leggermente più piccola, le altre due si dividono lo spazio rimanente */
+  grid-template-columns: 1fr 1.5fr 1.5fr;
   gap: var(--semantic-size-stack-lg);
-  grid-auto-flow: dense;
 }
 
-.main-content-grid > * {
-  min-width: 0;
+.bottom-row-grid {
+  display: grid;
+  /* Layout per la riga inferiore, potrebbe essere diverso */
+  grid-template-columns: 1fr;
+  gap: var(--semantic-size-stack-lg);
+}
+
+.middle-row-grid > *,
+.bottom-row-grid > * {
+  min-width: 0; /* Previene l'overflow dei contenuti flessibili come i grafici */
 }
 
 .error-box, .data-box {
@@ -190,7 +208,8 @@ watch(
 }
 
 @media (max-width: 1280px) {
-  .main-content-grid {
+  .middle-row-grid {
+    /* Su schermi più piccoli, i widget vanno in colonna */
     grid-template-columns: 1fr;
   }
 }
