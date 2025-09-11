@@ -130,6 +130,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
   height: 100%;
+  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
 }
 
 .widget-header {
