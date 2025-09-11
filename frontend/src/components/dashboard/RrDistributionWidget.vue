@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
+import { useChartResize } from '../../composables/useChartResize';
 
 ChartJS.register(
   CategoryScale,
@@ -24,6 +25,10 @@ ChartJS.register(
 
 const tradesStore = useTradesStore();
 const { feedbackColors, gridColors, isReady } = useChartColors();
+const chartRef = ref(null);
+
+// Applica la logica di ridimensionamento al nostro grafico
+useChartResize(chartRef);
 
 const rrDistributionData = computed(() => tradesStore.getRrDistributionData);
 
@@ -114,7 +119,7 @@ const chartOptions = computed(() => ({
     </div>
     <div class="widget-content">
       <div class="chart-container">
-        <Bar v-if="isReady" :data="chartData" :options="chartOptions" />
+        <Bar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
       </div>
     </div>
   </div>
