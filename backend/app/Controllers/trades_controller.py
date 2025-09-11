@@ -231,11 +231,18 @@ class TradesController:
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> dict:
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            setups=setups,
+            user_timezone=user_timezone,
         )
 
         # trasformiamo le tuple (Trade, tag_names) in dizionari flat per il calcolatore
@@ -243,7 +250,7 @@ class TradesController:
         for trade, tag_names in rows:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
-        calc = MetricsCalculator(trades_as_dicts)
+        calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
         return calc.calculate_all_metrics()
 
     # --------------------------
@@ -255,6 +262,9 @@ class TradesController:
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> ProcessedStats:
         """
@@ -263,14 +273,18 @@ class TradesController:
         """
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            setups=setups,
+            user_timezone=user_timezone,
         )
 
         trades_as_dicts = []
         for trade, tag_names in rows:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
-        calc = MetricsCalculator(trades_as_dicts)
+        calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
         # Usiamo il nuovo metodo specifico del calcolatore
         stats_data = calc.calculate_processed_stats()
         # Validiamo l'output con il nostro schema Pydantic
@@ -287,6 +301,9 @@ class TradesController:
         start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
         setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
         db: AsyncSession = Depends(get_db),
     ) -> EquityCurveData:
         """
@@ -295,14 +312,18 @@ class TradesController:
         """
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
-            user_id=user_id, start_date=start_date, end_date=end_date, setups=setups
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            setups=setups,
+            user_timezone=user_timezone,
         )
 
         trades_as_dicts = []
         for trade, tag_names in rows:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
-        calc = MetricsCalculator(trades_as_dicts)
+        calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
         # Usiamo il nuovo metodo specifico del calcolatore
         curve_data = calc.calculate_equity_curve()
         # Validiamo l'output con il nostro schema Pydantic
@@ -333,6 +354,6 @@ class TradesController:
         for trade, tag_names in rows:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
-        calc = MetricsCalculator(trades_as_dicts)
+        calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
         summary_data = calc.calculate_trade_summary()
         return TradeSummary.model_validate(summary_data)

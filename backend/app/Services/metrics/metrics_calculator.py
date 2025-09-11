@@ -4,12 +4,34 @@ from decimal import Decimal
 import numpy as np
 from dateutil.parser import parse
 from scipy.stats import skew, kurtosis
+from datetime import datetime
+import pytz
 
 class MetricsCalculator:
-    def __init__(self, trades):
+    def __init__(self, trades, user_timezone: str = "UTC"):
         self.all_trades = trades
+        self.user_timezone = user_timezone
+        self.tz = pytz.timezone(self.user_timezone)
+
         if self.all_trades:
             self._prepare_trades()
+
+    def _convert_to_local_tz(self, dt_obj: datetime | str | None) -> datetime | None:
+        """
+        Converte un oggetto datetime (o una stringa parsabile) da UTC al fuso orario
+        dell'utente. Assume che i datetime naive siano in UTC.
+        """
+        if dt_obj is None:
+            return None
+        if isinstance(dt_obj, str):
+            dt_obj = parse(dt_obj)
+
+        # Se il datetime è naive (senza tzinfo), lo localizziamo a UTC
+        if dt_obj.tzinfo is None:
+            dt_obj = pytz.utc.localize(dt_obj)
+
+        # Converte al fuso orario dell'utente
+        return dt_obj.astimezone(self.tz)
 
     @staticmethod
     def filter_trades(trades, filters):
@@ -76,13 +98,10 @@ class MetricsCalculator:
             cost = entry_price * position_size
             trade['net_roi'] = float((pnl / cost) * 100) if cost != 0 else 0.0
 
-            # Conversione date
-            if isinstance(trade.get('created_at'), str):
-                trade['created_at'] = parse(trade['created_at'])
-            if isinstance(trade.get('entry_timestamp'), str):
-                 trade['entry_timestamp'] = parse(trade['entry_timestamp'])
-            if isinstance(trade.get('exit_timestamp'), str):
-                 trade['exit_timestamp'] = parse(trade['exit_timestamp'])
+            # Conversione e localizzazione delle date
+            trade['created_at'] = self._convert_to_local_tz(trade.get('created_at'))
+            trade['entry_timestamp'] = self._convert_to_local_tz(trade.get('entry_timestamp'))
+            trade['exit_timestamp'] = self._convert_to_local_tz(trade.get('exit_timestamp'))
 
     def _get_empty_response(self):
         """Struttura di default quando non ci sono trade."""
@@ -522,7 +541,8 @@ class MetricsCalculator:
             return {'labels': [], 'data': []}
 
         # Ordinamento per data di entrata, non di creazione, per la curva
-        self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or parse('1970-01-01'))
+        fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
+        self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or fallback_date)
 
         pnl_data = [Decimal(t.get('p_l', 0)) for t in self.all_trades]
         cumulative_pnl = np.cumsum([float(p) for p in pnl_data])
