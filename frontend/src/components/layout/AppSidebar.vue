@@ -83,7 +83,7 @@ const navLinks = [
   top: 0;
   left: 0;
   z-index: var(--base-layer-z-index-sticky);
-  width: var(--base-size-component-sidebar-width-expanded); /* Usa il nuovo token */
+  width: var(--semantic-size-component-sidebar-width-expanded); /* Usa il nuovo token */
   height: 100vh;
   background-color: var(--base-color-gray-900);
   border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
@@ -203,7 +203,7 @@ const navLinks = [
     transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
 
     /* Su mobile, non vogliamo mai la versione "collassata", ma sempre quella estesa */
-    width: var(--base-size-component-sidebar-width-expanded) !important;
+    width: var(--semantic-size-component-sidebar-width-expanded) !important;
   }
 
   /* Quando il menu mobile è aperto, la facciamo apparire */
