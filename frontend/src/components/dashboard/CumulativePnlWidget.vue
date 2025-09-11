@@ -132,10 +132,12 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: var(--semantic-size-stack-md);
+  border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
 .widget-title {
-  font: var(--semantic-font-style-heading-xl);
+  font: var(--semantic-font-style-heading-lg);
   color: var(--semantic-color-text-primary);
 }
 
