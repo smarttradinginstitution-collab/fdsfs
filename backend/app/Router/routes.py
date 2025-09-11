@@ -24,6 +24,7 @@ from app.Schemas.role import RoleRead
 from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse
 from app.Schemas.trade import TradeRead
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
+from app.Schemas.vantage_score import VantageScoreData
 
 # Repo per diagnostica ruoli
 from app.Repositories.user_role_repository import UserRoleRepository
@@ -147,6 +148,7 @@ router_trades = APIRouter(prefix="/api/v1/trades", tags=["Trades"])
 
 # --- Ordine corretto: prima le rotte specifiche, poi quelle con parametri ---
 router_trades.get("/", response_model=list[TradeRead])(trades.list_trades)
+router_trades.get("/vantage-score", response_model=VantageScoreData)(trades.get_vantage_score)
 router_trades.get("/setups", response_model=List[str])(trades.list_setups)
 router_trades.get("/calendar/data")(trades.calendar_data)
 router_trades.get("/performance/metrics")(trades.get_performance_metrics)

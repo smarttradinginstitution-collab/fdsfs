@@ -41,6 +41,7 @@ export const useTradesStore = defineStore('trades', {
     calendarData: [],
     processedStats: null,
     equityCurve: null,
+    vantageScore: null, // Dati per il VantageScoreWidget
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
@@ -119,17 +120,31 @@ export const useTradesStore = defineStore('trades', {
       };
     },
 
-    getVantageScoreData() {
-      // Dati mockati finché il backend non li fornisce
+    getVantageScoreData(state) {
+      if (!state.vantageScore) {
+        // Ritorna una struttura dati vuota/default se i dati non sono ancora stati caricati
+        return {
+          score: 0,
+          metrics: {
+            'Win Rate': 0,
+            'Profit Factor': 0,
+            'Avg Win/Loss': 0,
+            'Recovery Factor': 0,
+            'Max Drawdown': 0,
+            'Consistency': 0,
+          },
+        };
+      }
+      // Mappa i dati del backend alle etichette del frontend
       return {
-        score: 80.67,
+        score: state.vantageScore.vantage_score,
         metrics: {
-          'Win %': 75,
-          'Profit factor': 60,
-          'Avg win/loss': 85,
-          'Recovery factor': 90,
-          'Max drawdown': 50,
-          'Consistency': 70,
+          'Win Rate': state.vantageScore.win_rate_score,
+          'Profit Factor': state.vantageScore.profit_factor_score,
+          'Avg Win/Loss': state.vantageScore.avg_win_loss_score,
+          'Recovery Factor': state.vantageScore.recovery_factor_score,
+          'Max Drawdown': state.vantageScore.max_drawdown_score,
+          'Consistency': state.vantageScore.consistency_score,
         },
       };
     },
@@ -489,6 +504,30 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    async fetchVantageScore() {
+      const authStore = useAuthStore();
+      const filterStore = useFilterStore();
+      const userId = authStore.user?.id;
+      if (!userId) return;
+
+      const params = {
+        user_id: userId,
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+        params.setups = [filterStore.selectedStrategy];
+      }
+
+      try {
+        const response = await apiClient.get('/api/v1/trades/vantage-score', { params });
+        this.vantageScore = response.data;
+      } catch (error) {
+        console.error('Error fetching vantage score:', error);
+        this.vantageScore = null;
+      }
+    },
+
     async addTrade(tradeData) {
       this.isLoading = true;
       try {
@@ -613,6 +652,7 @@ export const useTradesStore = defineStore('trades', {
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
           this.fetchSetups(),
+          this.fetchVantageScore(),
         ]);
       } finally {
         this.isLoading = false;

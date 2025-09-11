@@ -24,6 +24,7 @@ from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
+from app.Schemas.vantage_score import VantageScoreData
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 
 
@@ -252,6 +253,37 @@ class TradesController:
 
         calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
         return calc.calculate_all_metrics()
+
+    # --------------------------
+    # VANTAGE SCORE
+    # --------------------------
+    async def get_vantage_score(
+        self,
+        user_id: UUID = Query(..., description="ID utente"),
+        start_date: Optional[date] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+        end_date: Optional[date] = Query(None, description="Data fine (YYYY-MM-DD)"),
+        setups: Optional[List[str]] = Query(None, alias="setups[]", description="Filtra per setup specifici"),
+        user_timezone: Optional[str] = Query(
+            "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
+        ),
+        db: AsyncSession = Depends(get_db),
+    ) -> VantageScoreData:
+        repo = TradeRepository(db)
+        rows = await repo.list_with_filters(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            setups=setups,
+            user_timezone=user_timezone,
+        )
+
+        trades_as_dicts = []
+        for trade, tag_names in rows:
+            trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
+
+        calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
+        score_data = calc.calculate_vantage_score()
+        return VantageScoreData.model_validate(score_data)
 
     # --------------------------
     # PROCESSED STATS (for Dashboard)
