@@ -17,12 +17,14 @@ from app.Controllers.users_controller import UsersController
 from app.Controllers.roles_controller import RolesController
 from app.Controllers.user_roles_controller import UserRolesController
 from app.Controllers.trades_controller import TradesController
+from app.Controllers.user_dashboard_layout_controller import UserDashboardLayoutController
 
 # 📦 Schemi response (opzionali ma utili in Swagger)
 from app.Schemas.auth_user import AuthUserRead
 from app.Schemas.role import RoleRead
 from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse
 from app.Schemas.trade import TradeRead
+from app.Schemas.user_dashboard_layout import UserDashboardLayoutRead, UserDashboardLayoutUpdate
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
 from app.Schemas.vantage_score import VantageScoreData
 
@@ -38,6 +40,7 @@ users = UsersController()
 roles = RolesController()
 user_roles = UserRolesController()
 trades = TradesController()
+dashboard_layout = UserDashboardLayoutController()
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Router principale aggregatore
@@ -139,6 +142,25 @@ router_user_roles.delete(
 )(user_roles.unassign_role)
 
 router.include_router(router_user_roles)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 📊 DASHBOARD (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+router_dashboard = APIRouter(
+    prefix="/api/v1/dashboard",
+    tags=["Dashboard"],
+    dependencies=[Depends(get_current_claims)],
+)
+
+router_dashboard.get("/layout", response_model=UserDashboardLayoutRead)(
+    dashboard_layout.get_user_layout
+)
+router_dashboard.put("/layout", response_model=UserDashboardLayoutRead)(
+    dashboard_layout.save_user_layout
+)
+
+router.include_router(router_dashboard)
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 💹 TRADES (pubblici a livello router; user_id via query per swagger)
