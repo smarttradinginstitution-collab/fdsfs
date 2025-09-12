@@ -1,28 +1,18 @@
 <!--
 // =============================================================================
 // FILE: views/DashboardView.vue
-// DESCRIZIONE: Vista della Dashboard, refattorizzata per usare un layout a griglia dinamico.
+// DESCRIZIONE: Vista della Dashboard, ora con i bottoni di azione principali
+// posizionati in una loro sezione dedicata.
 // =============================================================================
 -->
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { GridLayout, GridItem } from 'vue-grid-layout';
-
-// Stores
-import { useDashboardLayoutStore } from '../stores/dashboardLayout';
-import { useTradesStore } from '../stores/trades';
-import { useUiStore } from '../stores/uiStore';
-import { useFilterStore } from '../stores/filterStore';
-
-// Import all possible widget components
+import StatCard from '../components/dashboard/StatCard.vue';
 import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
-// StatCard will be handled differently in a future phase.
-
-// UI Components
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
 import PopoverMenu from '../components/ui/PopoverMenu.vue';
@@ -30,24 +20,17 @@ import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
+import { useTradesStore } from '../stores/trades';
+import { useUiStore } from '../stores/uiStore';
+import { useFilterStore } from '../stores/filterStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
-
-// Map string keys from layout config to actual imported Vue components
-const widgetMap = {
-  VantageScoreWidget,
-  RrDistributionWidget,
-  CumulativePnlWidget,
-  CalendarHeatmap,
-  RecentTradesTable,
-};
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
-const dashboardLayoutStore = useDashboardLayoutStore();
 
-const layout = computed(() => dashboardLayoutStore.layout);
+const popoverRef = ref(null);
 
 const handleNewTrade = async (tradeData) => {
   try {
@@ -69,12 +52,15 @@ const handleNewTrade = async (tradeData) => {
   }
 };
 
+const visibleStats = computed(() => {
+  const visibleKeys = uiStore.visibleStatKeys;
+  const allStats = tradesStore.allDashboardStats;
+  return visibleKeys.map(key => allStats[key]).filter(Boolean);
+});
+
 // --- Data Fetching ---
 onMounted(() => {
-  // Fetch data for widgets
   tradesStore.fetchAllDataForDashboard();
-  // Fetch the layout configuration
-  dashboardLayoutStore.fetchLayout();
 });
 
 // Watch for filter changes and refetch all dashboard data
@@ -89,8 +75,20 @@ watch(
 
 <template>
   <div class="dashboard-view">
+
+    <!-- Esempio di visualizzazione dati dal backend -->
+    <!-- <div v-if="fetchError" class="error-box">
+      <h3>Backend Connection Error</h3>
+      <p>{{ fetchError }}</p>
+    </div>
+    <div v-if="backendData" class="data-box">
+      <h3>Data from Backend (for testing):</h3>
+      <pre>{{ JSON.stringify(backendData, null, 2) }}</pre>
+    </div> -->
+
+
     <div class="action-bar">
-      <PopoverMenu>
+      <PopoverMenu ref="popoverRef">
         <template #trigger="{ toggle }">
           <BaseButton variant="secondary" @click="toggle">
             <SettingsIcon />
@@ -108,42 +106,34 @@ watch(
       </BaseButton>
     </div>
 
-    <grid-layout
-        v-if="layout.length"
-        :layout.sync="layout"
-        :col-num="12"
-        :row-height="100"
-        :is-draggable="false"
-        :is-resizable="false"
-        :vertical-compact="true"
-        :use-css-transforms="true"
-    >
-        <grid-item
-            v-for="item in layout"
-            :key="item.i"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :i="item.i"
-        >
-            <component :is="widgetMap[item.i]" v-if="widgetMap[item.i]" />
-            <div v-else class="widget-placeholder">
-              Widget '{{ item.i }}' not found.
-            </div>
-        </grid-item>
-    </grid-layout>
-    <div v-else class="loading-placeholder">
-      Loading dashboard...
+    <div class="stats-grid">
+      <StatCard
+        v-for="stat in visibleStats"
+        :key="stat.key"
+        :stat="stat"
+      />
     </div>
 
-    <!-- Modals remain the same -->
+    <div class="complex-widgets-grid">
+      <VantageScoreWidget />
+      <RrDistributionWidget />
+      <CumulativePnlWidget />
+    </div>
+
+    <div class="main-content-grid">
+      <CalendarHeatmap />
+      <RecentTradesTable />
+    </div>
+
+    <!-- Modale per Aggiungere un Trade -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
       <template #header><h3>Log New Trade</h3></template>
       <NewTradeForm @submit="handleNewTrade" />
     </BaseModal>
 
+    <!-- Modale per il Riepilogo Giornaliero -->
     <DailySummaryModal />
+    <!-- Modale per il Riepilogo Settimanale -->
     <WeeklySummaryModal />
   </div>
 </template>
@@ -163,25 +153,67 @@ watch(
   gap: var(--semantic-size-stack-sm);
 }
 
-.widget-placeholder {
-  padding: 1rem;
-  text-align: center;
-  color: var(--semantic-color-text-secondary);
-  background-color: var(--semantic-color-surface-secondary);
-  border: 1px dashed var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.stats-grid {
+  display: grid;
+  /*
+    BEST PRACTICE: Griglia Responsiva
+    - `repeat(auto-fit, ...)`: Crea tante colonne quante ce ne stanno nello spazio disponibile.
+    - `minmax(200px, 1fr)`: Ogni colonna deve essere larga almeno 200px. Se c'è più spazio,
+      `1fr` le fa espandere equamente per riempire la larghezza.
+    Questo crea una griglia fluida su desktop e tablet.
+  */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--semantic-size-stack-md);
 }
 
-.loading-placeholder {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--semantic-color-text-secondary);
-  font-size: 1.2rem;
+.complex-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--semantic-size-stack-lg);
+}
+
+.main-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--semantic-size-stack-lg);
+  grid-auto-flow: dense;
+}
+
+.main-content-grid > * {
+  min-width: 0;
+}
+
+.error-box, .data-box {
+  padding: var(--semantic-size-inset-lg);
+  border-radius: var(--semantic-border-radius-lg);
+  background-color: var(--color-background-muted);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.error-box {
+  background-color: var(--color-background-negative-subtle);
+  border-color: var(--color-border-negative);
+  color: var(--color-text-negative);
+}
+
+.data-box pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background-color: var(--color-background-subtle);
+  padding: var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-md);
+}
+
+@media (max-width: 1280px) {
+  .main-content-grid,
+  .complex-widgets-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) { /* sm breakpoint */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

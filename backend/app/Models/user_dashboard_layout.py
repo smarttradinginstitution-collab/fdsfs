@@ -5,7 +5,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as pgUUID, JSONB, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..Infrastructure.db import Base
-# from .auth_user import AuthUser # This import is not needed because of __future__.annotations
 
 class UserDashboardLayout(Base):
     __tablename__ = 'user_dashboard_layouts'

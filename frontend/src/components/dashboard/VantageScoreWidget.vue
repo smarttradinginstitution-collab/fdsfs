@@ -13,8 +13,6 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
-import BaseWidget from '../layout/BaseWidget.vue';
-import HeaderInfoOverlay from '../ui/HeaderInfoOverlay.vue';
 
 ChartJS.register(
   RadialLinearScale,
@@ -26,15 +24,16 @@ ChartJS.register(
 );
 
 const tradesStore = useTradesStore();
-const { radarColors, isReady } = useChartColors();
+const { radarColors } = useChartColors();
 const chartRef = ref(null);
 
+// Applica la logica di ridimensionamento al nostro grafico
 useChartResize(chartRef);
 
 const vantageScoreData = computed(() => tradesStore.getVantageScoreData);
 
 const chartData = computed(() => {
-  if (!vantageScoreData.value || !isReady.value) return { labels: [], datasets: [] };
+  if (!vantageScoreData.value) return { labels: [], datasets: [] };
 
   const labels = Object.keys(vantageScoreData.value.metrics);
   const data = Object.values(vantageScoreData.value.metrics);
@@ -100,54 +99,63 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 </script>
 
 <template>
-  <BaseWidget>
-    <template #header>
-      <HeaderInfoOverlay aria-label="View information about the Zella Score">
-        <template #title>
-          <h3 class="widget-title">Zella Score</h3>
-        </template>
-        <template #content>
-          <h4 class="info-overlay-title">About this Chart</h4>
-          <p class="info-overlay-text">
-            The Zella Score is a proprietary metric that evaluates your trading performance across five key dimensions: Profitability, Consistency, Risk Management, Win Rate, and Asset Allocation. A higher score indicates a more balanced and effective trading strategy.
-          </p>
-        </template>
-      </HeaderInfoOverlay>
-    </template>
-
-    <div class="vantage-score-content">
+  <div class="widget-card">
+    <div class="widget-header">
+      <h3 class="widget-title">Zella score</h3>
+      <!-- IconButton placeholder -->
+    </div>
+    <div class="widget-content">
       <div class="chart-container">
-          <Radar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
+        <Radar ref="chartRef" :data="chartData" :options="chartOptions" />
       </div>
       <div class="score-container">
-          <span class="score-label">Your Zella Score</span>
-          <span class="score-value">{{ score.toFixed(2) }}</span>
-          <div class="progress-bar-container">
-            <div class="progress-bar" :style="{ width: `${score}%` }"></div>
-          </div>
+        <span class="score-label">Your Zella Score</span>
+        <span class="score-value">{{ score.toFixed(2) }}</span>
+        <div class="progress-bar-container">
+          <div class="progress-bar" :style="{ width: `${score}%` }"></div>
+        </div>
       </div>
     </div>
-  </BaseWidget>
+  </div>
 </template>
 
 <style scoped>
+.widget-card {
+  background-color: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-surface);
+  border: 1px solid var(--semantic-color-border-default);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
+  padding: var(--semantic-size-inset-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-md);
+  height: 100%;
+  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .widget-title {
-  font: var(--semantic-font-style-heading-md);
+  font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
 }
 
-.vantage-score-content {
+.widget-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Crucial for allowing content to shrink correctly in a flex container */
+  justify-content: space-between;
 }
 
 .chart-container {
   position: relative;
-  flex-grow: 1; /* Allow the chart to take up available vertical space */
   width: 100%;
-  min-height: 0; /* Override the previous min-height to prevent overflow */
+  flex-grow: 1;
+  min-height: 200px;
 }
 
 .score-container {
@@ -159,7 +167,6 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   align-items: baseline;
   gap: var(--semantic-size-stack-xs) var(--semantic-size-stack-sm);
   margin-top: var(--semantic-size-stack-md);
-  flex-shrink: 0; /* Prevent the score section from shrinking */
 }
 
 .score-label {
@@ -189,15 +196,5 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   background-color: var(--semantic-color-interactive-primary-default);
   border-radius: var(--semantic-border-radius-pill);
   transition: width 0.5s ease-in-out;
-}
-.info-overlay-title {
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-primary);
-}
-
-.info-overlay-text {
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
-  line-height: var(--base-font-line-height-tight);
 }
 </style>
