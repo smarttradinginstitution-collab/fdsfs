@@ -109,7 +109,7 @@ const chartOptions = computed(() => ({
 <template>
   <div class="widget-card">
     <div class="widget-header">
-      <HeaderInfoOverlay>
+      <HeaderInfoOverlay aria-label="View information about the Daily net cumulative P&L chart">
         <template #title>
           <h3 class="widget-title">Daily net cumulative P&L</h3>
         </template>

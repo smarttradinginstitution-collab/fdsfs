@@ -1,6 +1,14 @@
 <script setup>
 import { ref } from 'vue';
 import InfoIcon from '../icons/InfoIcon.vue';
+import IconButton from './IconButton.vue';
+
+defineProps({
+  ariaLabel: {
+    type: String,
+    required: true,
+  },
+});
 
 const isOverlayVisible = ref(false);
 let hideTimeout = null;
@@ -13,7 +21,7 @@ const showOverlay = () => {
 const startHideTimeout = () => {
   hideTimeout = setTimeout(() => {
     isOverlayVisible.value = false;
-  }, 100); // A small delay to allow moving the mouse between icon and panel
+  }, 100);
 };
 </script>
 
@@ -21,13 +29,15 @@ const startHideTimeout = () => {
   <div class="header-info-container">
     <div class="title-container" :class="{ 'is-hidden': isOverlayVisible }">
       <slot name="title"></slot>
-      <div
-        class="icon-wrapper"
+      <IconButton
+        :aria-label="ariaLabel"
+        size="small"
+        class="info-button"
         @mouseenter="showOverlay"
         @mouseleave="startHideTimeout"
       >
-        <InfoIcon class="title-icon" />
-      </div>
+        <InfoIcon />
+      </IconButton>
     </div>
 
     <div
@@ -63,16 +73,12 @@ const startHideTimeout = () => {
   opacity: 0;
 }
 
-.icon-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-.title-icon {
-  width: 16px;
-  height: 16px;
+.info-button {
   color: var(--semantic-color-text-tertiary);
   flex-shrink: 0;
+}
+.info-button:hover {
+  color: var(--semantic-color-text-secondary);
 }
 
 .info-overlay {
@@ -80,7 +86,6 @@ const startHideTimeout = () => {
   top: 0;
   left: 0;
   width: 100%;
-  /* Use min-height to ensure it's at least as tall as the header */
   min-height: 100%;
   height: auto;
   background-color: var(--semantic-color-surface-primary);
