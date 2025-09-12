@@ -70,6 +70,10 @@ watch(
   { deep: true }
 );
 
+const onLayoutUpdated = (newLayout) => {
+  dashboardLayoutStore.saveLayout(newLayout);
+};
+
 // Map widget keys to components
 const widgetComponents = {
   stats: StatsGridWidget,
@@ -107,11 +111,12 @@ const widgetComponents = {
       :layout.sync="layout"
       :col-num="12"
       :row-height="30"
-      :is-draggable="false"
-      :is-resizable="false"
+      :is-draggable="true"
+      :is-resizable="true"
       :vertical-compact="true"
       :use-css-transforms="true"
       class="dashboard-grid"
+      @layout-updated="onLayoutUpdated"
     >
       <grid-item
         v-for="item in layout"

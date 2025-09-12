@@ -3,6 +3,7 @@
 import { defineStore } from 'pinia';
 import apiClient from '../services/api';
 import { useAuthStore } from './auth';
+import { useUiStore } from './uiStore';
 
 export const useDashboardLayoutStore = defineStore('dashboardLayout', {
   state: () => ({
@@ -62,8 +63,26 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     /**
      * Saves the user's current layout to the backend.
      */
-    async saveLayout() {
-      // This will be implemented in a future phase.
+    async saveLayout(newLayout) {
+      this.layout = newLayout;
+
+      const authStore = useAuthStore();
+      if (!authStore.user) {
+        console.error('User not authenticated, cannot save layout.');
+        return;
+      }
+
+      const uiStore = useUiStore();
+
+      try {
+        await apiClient.put('/api/v1/dashboard/layout', { layout: this.layout });
+      } catch (error) {
+        console.error('Error saving dashboard layout:', error);
+        uiStore.showNotification({
+          message: 'Failed to save dashboard layout.',
+          type: 'error',
+        });
+      }
     },
   },
 });
