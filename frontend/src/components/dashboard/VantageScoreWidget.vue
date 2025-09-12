@@ -139,10 +139,8 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   border-radius: var(--semantic-border-radius-surface);
   border: 1px solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  padding: var(--semantic-size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
   height: 100%;
   min-width: 0;
 }
@@ -166,8 +164,8 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Centra il grafico */
-  min-height: 200px; /* Assicura che il grafico abbia spazio */
+  padding: var(--semantic-size-inset-lg);
+  padding-top: 0;
 }
 
 .chart-container {
@@ -177,6 +175,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 }
 
 .widget-footer {
+  padding: var(--semantic-size-inset-lg);
   padding-top: var(--semantic-size-inset-md);
 }
 
