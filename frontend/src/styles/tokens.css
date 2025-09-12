@@ -46,6 +46,7 @@
   --semantic-font-style-heading-2xl: var(--base-font-weight-bold) var(--base-font-size-2xl)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-font-style-heading-xl: var(--base-font-weight-semibold) clamp(var(--base-font-fluid-size-fluid-heading-xl-min), var(--base-font-fluid-size-fluid-heading-xl-ideal), var(--base-font-fluid-size-fluid-heading-xl-max))/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-heading-lg: var(--base-font-weight-semibold) var(--base-font-size-lg)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
+  --semantic-font-style-heading-md: var(--base-font-weight-semibold) var(--base-font-size-base)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-body-base: var(--base-font-weight-regular) var(--base-font-size-base)/var(--base-font-line-height-loose) var(--base-font-family-palette-sans);
   --semantic-font-style-body-sm: var(--base-font-weight-regular) clamp(var(--base-font-fluid-size-fluid-body-sm-min), var(--base-font-fluid-size-fluid-body-sm-ideal), var(--base-font-fluid-size-fluid-body-sm-max))/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-body-xs: var(--base-font-weight-regular) var(--base-font-size-xs)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);

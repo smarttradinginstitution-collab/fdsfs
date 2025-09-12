@@ -14,7 +14,7 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
-import InfoPopover from '../ui/InfoPopover.vue';
+import HeaderInfoOverlay from '../ui/HeaderInfoOverlay.vue';
 
 ChartJS.register(
   CategoryScale,
@@ -30,7 +30,6 @@ const tradesStore = useTradesStore();
 const { feedbackColors, gridColors, isReady } = useChartColors();
 const chartRef = ref(null);
 
-// Applica la logica di ridimensionamento al nostro grafico
 useChartResize(chartRef);
 
 const equityCurveData = computed(() => tradesStore.equityCurveData);
@@ -39,18 +38,15 @@ const chartData = computed(() => {
   if (!equityCurveData.value || !chartRef.value || !isReady.value) {
     return { labels: [], datasets: [] };
   }
-
   const labels = equityCurveData.value.labels || [];
   const data = equityCurveData.value.data || [];
   const ctx = chartRef.value?.chart?.ctx;
-
-  let gradient = 'rgba(22, 163, 74, 0.1)'; // Fallback
+  let gradient = 'rgba(22, 163, 74, 0.1)';
   if (ctx && feedbackColors.value.positiveRgb) {
     gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, `rgba(${feedbackColors.value.positiveRgb}, 0.5)`);
+    gradient.addColorStop(0, `rgba(${feedbackColors.value.positiveRgb}, 0.25)`);
     gradient.addColorStop(1, `rgba(${feedbackColors.value.positiveRgb}, 0)`);
   }
-
   return {
     labels,
     datasets: [
@@ -78,42 +74,30 @@ const chartOptions = computed(() => ({
         color: gridColors.value?.ticks,
         callback: function(value) {
           if (value >= 1000 || value <= -1000) {
-            const thousands = value / 1000;
-            // Format to max 2 decimal places, and remove trailing .00 or .0
-            return thousands.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + 'k';
+            return (value / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + 'k';
           }
           return value;
         }
       },
-      grid: {
-        color: gridColors.value?.line,
-      },
+      grid: { color: gridColors.value?.line },
     },
     x: {
       ticks: {
         color: gridColors.value?.ticks,
         callback: function(value) {
-          // 'this' refers to the scale instance
           const label = this.getLabelForValue(value);
           if (typeof label === 'string') {
-            // Assuming label format is 'YYYY-MM-DD HH:MM'
-            return label.slice(5, 10); // Extracts 'MM-DD'
+            return label.slice(5, 10);
           }
           return label;
         }
       },
-      grid: {
-        display: false,
-      },
+      grid: { display: false },
     },
   },
   plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      enabled: true,
-    },
+    legend: { display: false },
+    tooltip: { enabled: true },
   },
   interaction: {
     mode: 'index',
@@ -125,13 +109,17 @@ const chartOptions = computed(() => ({
 <template>
   <div class="widget-card">
     <div class="widget-header">
-      <div class="widget-title-container">
-        <h3 class="widget-title">Daily net cumulative P&L</h3>
-        <InfoPopover aria-label="View information about the Daily net cumulative P&L chart">
-          <p>This chart shows the daily running total of your net profit and loss.</p>
-          <p>It provides a visual representation of your trading performance over time.</p>
-        </InfoPopover>
-      </div>
+      <HeaderInfoOverlay aria-label="View information about the Daily net cumulative P&L chart">
+        <template #title>
+          <h3 class="widget-title">Daily net cumulative P&L</h3>
+        </template>
+        <template #content>
+          <h4 class="info-overlay-title">About this Chart</h4>
+          <p class="info-overlay-text">
+            The Cumulative P&L chart tracks the running total of your net profit and loss over the selected period. Each point on the line represents the sum of all previous profits and losses, providing a clear visual trend of your trading performance.
+          </p>
+        </template>
+      </HeaderInfoOverlay>
     </div>
     <div class="widget-content">
       <div class="chart-container">
@@ -147,29 +135,23 @@ const chartOptions = computed(() => ({
   border-radius: var(--semantic-border-radius-surface);
   border: 1px solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  padding: var(--semantic-size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
   height: 100%;
-  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
+  min-width: 0;
 }
 
 .widget-header {
+  position: relative;
   display: flex;
   align-items: center;
-  padding-bottom: var(--semantic-size-stack-xs);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   border-bottom: 1px solid var(--semantic-color-border-default);
-}
-
-.widget-title-container {
-  display: flex;
-  align-items: center;
-  gap: var(--semantic-size-stack-sm);
+  min-height: 68px; /* Match RecentTradesTable header height */
 }
 
 .widget-title {
-  font: var(--semantic-font-style-heading-sm);
+  font: var(--semantic-font-style-heading-md);
   color: var(--semantic-color-text-primary);
 }
 
@@ -177,6 +159,8 @@ const chartOptions = computed(() => ({
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  padding: var(--semantic-size-inset-lg);
+  padding-top: 0;
 }
 
 .chart-container {
@@ -186,4 +170,15 @@ const chartOptions = computed(() => ({
   min-height: 250px;
 }
 
+/* These styles are for the content passed into the HeaderInfoOverlay */
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
+}
 </style>
