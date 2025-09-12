@@ -7,9 +7,10 @@ from typing import Any
 
 from sqlalchemy import String, Boolean, SmallInteger, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
+from .user_dashboard_layout import UserDashboardLayout
 
 
 class AuthUser(Base):
@@ -50,3 +51,11 @@ class AuthUser(Base):
     is_sso_user: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted_at: Mapped[Any | None] = mapped_column(TIMESTAMP(timezone=True))
     is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Relationship to UserDashboardLayout
+    dashboard_layout: Mapped[UserDashboardLayout] = relationship(
+        "UserDashboardLayout",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False # One-to-one
+    )

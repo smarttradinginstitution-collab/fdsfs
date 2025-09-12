@@ -17,6 +17,7 @@ from app.Controllers.users_controller import UsersController
 from app.Controllers.roles_controller import RolesController
 from app.Controllers.user_roles_controller import UserRolesController
 from app.Controllers.trades_controller import TradesController
+from app.Controllers.user_dashboard_layout_controller import router as layout_router
 
 # 📦 Schemi response (opzionali ma utili in Swagger)
 from app.Schemas.auth_user import AuthUserRead
@@ -139,6 +140,13 @@ router_user_roles.delete(
 )(user_roles.unassign_role)
 
 router.include_router(router_user_roles)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 📊 DASHBOARD LAYOUT (protetto: utente autenticato)
+# ──────────────────────────────────────────────────────────────────────────────
+router.include_router(layout_router, prefix="/api/v1")
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 💹 TRADES (pubblici a livello router; user_id via query per swagger)
