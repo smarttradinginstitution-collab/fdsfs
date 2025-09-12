@@ -152,7 +152,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 }
 
 .widget-title {
-  font: var(--semantic-font-style-heading-xl);
+  font: var(--semantic-font-style-heading-md);
   color: var(--semantic-color-text-primary);
 }
 
