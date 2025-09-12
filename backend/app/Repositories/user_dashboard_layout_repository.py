@@ -1,6 +1,7 @@
 # app/Repositories/user_dashboard_layout_repository.py
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -31,17 +32,18 @@ class UserDashboardLayoutRepository:
         Crea o aggiorna il layout per un utente.
         Usa INSERT ... ON CONFLICT per un'operazione atomica.
         """
-        stmt = insert(UserDashboardLayout).values(
-            user_id=user_id,
-            layout=payload.layout,
-        )
+        insert_data = {
+            "user_id": user_id,
+            "layout": payload.layout,
+        }
+        stmt = insert(UserDashboardLayout).values(**insert_data)
 
         # Su conflitto (stesso user_id), aggiorna il campo 'layout' e 'updated_at'
         stmt = stmt.on_conflict_do_update(
             index_elements=[UserDashboardLayout.user_id],
             set_={
                 "layout": stmt.excluded.layout,
-                "updated_at": func.now(),
+                "updated_at": datetime.now(timezone.utc),
             },
         ).returning(UserDashboardLayout)
 
