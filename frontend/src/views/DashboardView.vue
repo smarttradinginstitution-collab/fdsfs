@@ -1,18 +1,30 @@
 <!--
 // =============================================================================
 // FILE: views/DashboardView.vue
-// DESCRIZIONE: Vista della Dashboard, ora con i bottoni di azione principali
-// posizionati in una loro sezione dedicata.
+// DESCRIZIONE: Vista della Dashboard, refactored per usare un layout a griglia
+// dinamico caricato dal backend, gestendo sia widget complessi che StatCards.
 // =============================================================================
 -->
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { useTradesStore } from '../stores/trades';
+import { useUiStore } from '../stores/uiStore';
+import { useFilterStore } from '../stores/filterStore';
+import { useAuthStore } from '../stores/auth';
+import { useDashboardLayoutStore } from '../stores/dashboardLayout';
+
+// Importa i componenti di vue-grid-layout
+import { GridLayout, GridItem } from 'vue-grid-layout-v3';
+
+// Importa i componenti dei widget
 import StatCard from '../components/dashboard/StatCard.vue';
 import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
+
+// Importa componenti UI e icone
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
 import PopoverMenu from '../components/ui/PopoverMenu.vue';
@@ -20,18 +32,31 @@ import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
-import { useTradesStore } from '../stores/trades';
-import { useUiStore } from '../stores/uiStore';
-import { useFilterStore } from '../stores/filterStore';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 
+// Inizializzazione degli store
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
+const authStore = useAuthStore();
+const dashboardLayoutStore = useDashboardLayoutStore();
 
 const popoverRef = ref(null);
 
+// Mappa per risolvere dinamicamente i componenti dei widget COMPLESSI
+const widgetMap = {
+  VantageScore: VantageScoreWidget,
+  RrDistribution: RrDistributionWidget,
+  CumulativePnlChart: CumulativePnlWidget,
+  CalendarHeatmap: CalendarHeatmap,
+  RecentTrades: RecentTradesTable,
+};
+
+// Getter per accedere facilmente alle statistiche calcolate
+const allStats = computed(() => tradesStore.allDashboardStats);
+
+// Handler per la creazione di un nuovo trade
 const handleNewTrade = async (tradeData) => {
   try {
     const newTrade = await tradesStore.addTrade(tradeData);
@@ -52,18 +77,15 @@ const handleNewTrade = async (tradeData) => {
   }
 };
 
-const visibleStats = computed(() => {
-  const visibleKeys = uiStore.visibleStatKeys;
-  const allStats = tradesStore.allDashboardStats;
-  return visibleKeys.map(key => allStats[key]).filter(Boolean);
-});
-
 // --- Data Fetching ---
 onMounted(() => {
   tradesStore.fetchAllDataForDashboard();
+  if (authStore.user?.id) {
+    dashboardLayoutStore.fetchLayout(authStore.user.id);
+  }
 });
 
-// Watch for filter changes and refetch all dashboard data
+// Watch per i filtri
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
@@ -71,22 +93,21 @@ watch(
   },
   { deep: true }
 );
+
+// Watch per il login dell'utente
+watch(
+  () => authStore.user,
+  (newUser) => {
+    if (newUser?.id && dashboardLayoutStore.layout.length === 0) {
+      dashboardLayoutStore.fetchLayout(newUser.id);
+    }
+  },
+  { immediate: true } // immediate: true per eseguirlo al mount se l'utente è già loggato
+);
 </script>
 
 <template>
   <div class="dashboard-view">
-
-    <!-- Esempio di visualizzazione dati dal backend -->
-    <!-- <div v-if="fetchError" class="error-box">
-      <h3>Backend Connection Error</h3>
-      <p>{{ fetchError }}</p>
-    </div>
-    <div v-if="backendData" class="data-box">
-      <h3>Data from Backend (for testing):</h3>
-      <pre>{{ JSON.stringify(backendData, null, 2) }}</pre>
-    </div> -->
-
-
     <div class="action-bar">
       <PopoverMenu ref="popoverRef">
         <template #trigger="{ toggle }">
@@ -106,34 +127,54 @@ watch(
       </BaseButton>
     </div>
 
-    <div class="stats-grid">
-      <StatCard
-        v-for="stat in visibleStats"
-        :key="stat.key"
-        :stat="stat"
-      />
+    <!-- Layout a Griglia Dinamico -->
+    <div v-if="dashboardLayoutStore.isLoading" class="loading-spinner">
+      Caricamento layout...
     </div>
-
-    <div class="complex-widgets-grid">
-      <VantageScoreWidget />
-      <RrDistributionWidget />
-      <CumulativePnlWidget />
+    <div v-else-if="dashboardLayoutStore.error" class="error-box">
+      <h3>Layout Error</h3>
+      <p>{{ dashboardLayoutStore.error }}</p>
     </div>
+    <grid-layout
+      v-else
+      v-model:layout="dashboardLayoutStore.layout"
+      :col-num="12"
+      :row-height="30"
+      :is-draggable="false"
+      :is-resizable="false"
+      :vertical-compact="true"
+      :use-css-transforms="true"
+    >
+      <grid-item
+        v-for="item in dashboardLayoutStore.layout"
+        :key="item.i"
+        :x="item.x"
+        :y="item.y"
+        :w="item.w"
+        :h="item.h"
+        :i="item.i"
+        class="widget-container"
+      >
+        <!-- Logica di rendering condizionale -->
+        <div v-if="widgetMap[item.component]" class="widget-content">
+          <component :is="widgetMap[item.component]" />
+        </div>
+        <div v-else-if="item.component === 'StatCard'" class="widget-content">
+          <StatCard v-if="allStats[item.i]" :stat="allStats[item.i]" />
+          <div v-else class="placeholder">Stat '{{ item.i }}' not found</div>
+        </div>
+        <div v-else class="placeholder">
+          Widget '{{ item.component }}' non riconosciuto.
+        </div>
+      </grid-item>
+    </grid-layout>
 
-    <div class="main-content-grid">
-      <CalendarHeatmap />
-      <RecentTradesTable />
-    </div>
-
-    <!-- Modale per Aggiungere un Trade -->
+    <!-- Modali -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
       <template #header><h3>Log New Trade</h3></template>
       <NewTradeForm @submit="handleNewTrade" />
     </BaseModal>
-
-    <!-- Modale per il Riepilogo Giornaliero -->
     <DailySummaryModal />
-    <!-- Modale per il Riepilogo Settimanale -->
     <WeeklySummaryModal />
   </div>
 </template>
@@ -153,67 +194,40 @@ watch(
   gap: var(--semantic-size-stack-sm);
 }
 
-.stats-grid {
-  display: grid;
-  /*
-    BEST PRACTICE: Griglia Responsiva
-    - `repeat(auto-fit, ...)`: Crea tante colonne quante ce ne stanno nello spazio disponibile.
-    - `minmax(200px, 1fr)`: Ogni colonna deve essere larga almeno 200px. Se c'è più spazio,
-      `1fr` le fa espandere equamente per riempire la larghezza.
-    Questo crea una griglia fluida su desktop e tablet.
-  */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--semantic-size-stack-md);
-}
-
-.complex-widgets-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--semantic-size-stack-lg);
-}
-
-.main-content-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--semantic-size-stack-lg);
-  grid-auto-flow: dense;
-}
-
-.main-content-grid > * {
-  min-width: 0;
-}
-
-.error-box, .data-box {
-  padding: var(--semantic-size-inset-lg);
+.widget-container {
+  background-color: var(--color-background-subtle);
   border-radius: var(--semantic-border-radius-lg);
-  background-color: var(--color-background-muted);
-  border: 1px solid var(--color-border-subtle);
+  padding: var(--semantic-size-inset-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-content {
+  width: 100%;
+  height: 100%;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text-subtle);
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
 }
 
 .error-box {
+  padding: var(--semantic-size-inset-lg);
+  border-radius: var(--semantic-border-radius-lg);
   background-color: var(--color-background-negative-subtle);
-  border-color: var(--color-border-negative);
+  border: 1px solid var(--color-border-negative);
   color: var(--color-text-negative);
-}
-
-.data-box pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  background-color: var(--color-background-subtle);
-  padding: var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-md);
-}
-
-@media (max-width: 1280px) {
-  .main-content-grid,
-  .complex-widgets-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) { /* sm breakpoint */
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 </style>
