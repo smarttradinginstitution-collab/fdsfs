@@ -136,8 +136,8 @@ watch(
       <p>{{ dashboardLayoutStore.error }}</p>
     </div>
     <grid-layout
-      v-else
-      v-model:layout="dashboardLayoutStore.layout"
+      v-if="plainLayout.length > 0"
+      :layout="plainLayout"
       :col-num="12"
       :row-height="30"
       :is-draggable="false"
