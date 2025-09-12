@@ -103,9 +103,12 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   <div class="widget-card">
     <div class="widget-header">
       <HeaderInfoOverlay
-        title="Vantage Score"
         infoText="The Vantage Score is a proprietary score that measures your trading performance based on a variety of factors."
-      />
+      >
+        <template #title>
+          <h3 class="widget-title">Vantage Score</h3>
+        </template>
+      </HeaderInfoOverlay>
     </div>
     <div class="widget-content">
       <div class="chart-container">
@@ -139,12 +142,13 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 }
 
 .widget-header {
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding-bottom: var(--semantic-size-inset-md);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   border-bottom: 1px solid var(--semantic-color-border-default);
-  min-height: 48px; /* Altezza standard per l'header */
+  min-height: 68px;
+  flex-shrink: 0;
 }
 
 .widget-title {

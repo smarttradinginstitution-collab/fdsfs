@@ -4,10 +4,6 @@ import InfoIcon from '../icons/InfoIcon.vue';
 import PopoverMenu from '../ui/PopoverMenu.vue';
 
 const props = defineProps({
-  title: {
-    type: String,
-    required: true,
-  },
   infoText: {
     type: String,
     required: true,
@@ -17,7 +13,7 @@ const props = defineProps({
 
 <template>
   <div class="header-info-overlay">
-    <h3 class="widget-title">{{ title }}</h3>
+    <slot name="title"></slot>
     <PopoverMenu>
       <template #trigger="{ toggle }">
         <InfoIcon class="info-icon" @click="toggle" />
