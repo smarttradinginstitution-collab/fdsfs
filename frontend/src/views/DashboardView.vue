@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue';
-import { GridLayout, GridItem } from 'vue-grid-layout';
+import { GridLayout, GridItem } from 'vue-grid-layout-v3';
 
 // Import all widgets
 import StatsGridWidget from '../components/dashboard/StatsGridWidget.vue';
