@@ -23,6 +23,7 @@ import { setAuthToken } from '@/services/api'; // (AGGIUNTA) helper per impostar
 */
 import '@/styles/index.css';
 import '@/assets/main.css';
+import 'vue-grid-layout/dist/style.css';
 
 // --- CREAZIONE E CONFIGURAZIONE DELL'APP ---
 
