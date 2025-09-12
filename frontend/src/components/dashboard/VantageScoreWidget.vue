@@ -13,6 +13,7 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
+import HeaderInfoOverlay from './HeaderInfoOverlay.vue';
 
 ChartJS.register(
   RadialLinearScale,
@@ -101,15 +102,19 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 <template>
   <div class="widget-card">
     <div class="widget-header">
-      <h3 class="widget-title">Zella score</h3>
-      <!-- IconButton placeholder -->
+      <HeaderInfoOverlay
+        title="Vantage Score"
+        infoText="The Vantage Score is a proprietary score that measures your trading performance based on a variety of factors."
+      />
     </div>
     <div class="widget-content">
       <div class="chart-container">
         <Radar ref="chartRef" :data="chartData" :options="chartOptions" />
       </div>
+    </div>
+    <div class="widget-footer">
       <div class="score-container">
-        <span class="score-label">Your Zella Score</span>
+        <span class="score-label">Your Vantage Score</span>
         <span class="score-value">{{ score.toFixed(2) }}</span>
         <div class="progress-bar-container">
           <div class="progress-bar" :style="{ width: `${score}%` }"></div>
@@ -128,15 +133,18 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   padding: var(--semantic-size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--semantic-size-stack-xs);
   height: 100%;
-  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
+  min-width: 0;
 }
 
 .widget-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: var(--semantic-size-inset-md);
+  border-bottom: 1px solid var(--semantic-color-border-default);
+  min-height: 48px; /* Altezza standard per l'header */
 }
 
 .widget-title {
@@ -148,14 +156,18 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center; /* Centra il grafico */
+  min-height: 200px; /* Assicura che il grafico abbia spazio */
 }
 
 .chart-container {
   position: relative;
   width: 100%;
-  flex-grow: 1;
-  min-height: 200px;
+  height: 100%;
+}
+
+.widget-footer {
+  padding-top: var(--semantic-size-inset-md);
 }
 
 .score-container {
@@ -166,7 +178,6 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   grid-template-columns: auto 1fr;
   align-items: baseline;
   gap: var(--semantic-size-stack-xs) var(--semantic-size-stack-sm);
-  margin-top: var(--semantic-size-stack-md);
 }
 
 .score-label {
