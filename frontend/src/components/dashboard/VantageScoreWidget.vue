@@ -115,17 +115,17 @@ const score = computed(() => vantageScoreData.value?.score || 0);
       </HeaderInfoOverlay>
     </template>
 
-    <div class="content-wrapper">
-        <div class="chart-container">
-            <Radar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
-        </div>
-        <div class="score-container">
-            <span class="score-label">Your Zella Score</span>
-            <span class="score-value">{{ score.toFixed(2) }}</span>
-            <div class="progress-bar-container">
+    <div class="vantage-score-content">
+      <div class="chart-container">
+          <Radar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
+      </div>
+      <div class="score-container">
+          <span class="score-label">Your Zella Score</span>
+          <span class="score-value">{{ score.toFixed(2) }}</span>
+          <div class="progress-bar-container">
             <div class="progress-bar" :style="{ width: `${score}%` }"></div>
-            </div>
-        </div>
+          </div>
+      </div>
     </div>
   </BaseWidget>
 </template>
@@ -136,24 +136,18 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   color: var(--semantic-color-text-primary);
 }
 
-.content-wrapper {
+.vantage-score-content {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  flex-grow: 1;
-  width: 100%;
-  height: 100%;
-  /* The parent .widget-content in BaseWidget provides padding, but we want to override it for this specific layout */
-  padding: 0;
+  min-height: 0; /* Crucial for allowing content to shrink correctly in a flex container */
 }
 
 .chart-container {
   position: relative;
+  flex-grow: 1; /* Allow the chart to take up available vertical space */
   width: 100%;
-  flex-grow: 1;
-  min-height: 200px;
-  padding: var(--semantic-size-inset-lg);
-  padding-bottom: 0;
+  min-height: 0; /* Override the previous min-height to prevent overflow */
 }
 
 .score-container {
@@ -165,7 +159,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   align-items: baseline;
   gap: var(--semantic-size-stack-xs) var(--semantic-size-stack-sm);
   margin-top: var(--semantic-size-stack-md);
-  padding: 0 var(--semantic-size-inset-lg) var(--semantic-size-inset-lg);
+  flex-shrink: 0; /* Prevent the score section from shrinking */
 }
 
 .score-label {
