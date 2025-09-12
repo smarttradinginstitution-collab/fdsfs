@@ -13,6 +13,8 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
+import BaseWidget from '../layout/BaseWidget.vue';
+import HeaderInfoOverlay from '../ui/HeaderInfoOverlay.vue';
 
 ChartJS.register(
   CategoryScale,
@@ -27,7 +29,6 @@ const tradesStore = useTradesStore();
 const { feedbackColors, gridColors, isReady } = useChartColors();
 const chartRef = ref(null);
 
-// Applica la logica di ridimensionamento al nostro grafico
 useChartResize(chartRef);
 
 const rrDistributionData = computed(() => tradesStore.getRrDistributionData);
@@ -40,7 +41,6 @@ const chartData = computed(() => {
   const data = rrDistributionData.value.datasets[0].data;
   const labels = rrDistributionData.value.labels;
 
-  // I primi 3 bucket sono negativi, gli altri positivi
   const backgroundColors = [
     ...Array(3).fill(feedbackColors.value.negative),
     ...Array(3).fill(feedbackColors.value.positive),
@@ -67,12 +67,10 @@ const chartOptions = computed(() => ({
     y: {
       beginAtZero: true,
       ticks: {
-        // Mostra solo interi sull'asse Y
         precision: 0,
         color: gridColors.value?.ticks || '#909093',
       },
       grid: {
-        // Disegna solo le griglie orizzontali
         drawOnChartArea: true,
         drawTicks: false,
         color: gridColors.value?.line || '#d8d8d9',
@@ -83,7 +81,6 @@ const chartOptions = computed(() => ({
         color: gridColors.value?.ticks || '#909093',
       },
       grid: {
-        // Nasconde le griglie verticali
         display: false,
       },
     },
@@ -112,54 +109,48 @@ const chartOptions = computed(() => ({
 </script>
 
 <template>
-  <div class="widget-card">
-    <div class="widget-header">
-      <h3 class="widget-title">RR Distribution</h3>
-      <!-- IconButton placeholder -->
+  <BaseWidget>
+    <template #header>
+      <HeaderInfoOverlay aria-label="View information about the RR Distribution chart">
+        <template #title>
+          <h3 class="widget-title">RR Distribution</h3>
+        </template>
+        <template #content>
+          <h4 class="info-overlay-title">About this Chart</h4>
+          <p class="info-overlay-text">
+            The Risk/Reward (RR) Distribution chart shows the number of trades taken at different RR ratios. It helps you understand if you are respecting your strategy's risk management rules.
+          </p>
+        </template>
+      </HeaderInfoOverlay>
+    </template>
+
+    <div class="chart-container">
+      <Bar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
     </div>
-    <div class="widget-content">
-      <div class="chart-container">
-        <Bar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
-      </div>
-    </div>
-  </div>
+  </BaseWidget>
 </template>
 
 <style scoped>
-.widget-card {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  border: 1px solid var(--semantic-color-border-default);
-  box-shadow: var(--semantic-effect-shadow-elevation-low);
-  padding: var(--semantic-size-inset-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-md);
-  height: 100%;
-  min-width: 0; /*  CRUCIALE: Permette al flex item di restringersi oltre la larghezza del suo contenuto. */
-}
-
-.widget-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .widget-title {
-  font: var(--semantic-font-style-heading-xl);
+  font: var(--semantic-font-style-heading-md);
   color: var(--semantic-color-text-primary);
-}
-
-.widget-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
 }
 
 .chart-container {
   position: relative;
   width: 100%;
-  flex-grow: 1;
-  min-height: 250px; /* Altezza minima per garantire leggibilità */
+  height: 100%;
+  min-height: 250px;
+}
+
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>
