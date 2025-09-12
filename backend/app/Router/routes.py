@@ -17,6 +17,7 @@ from app.Controllers.users_controller import UsersController
 from app.Controllers.roles_controller import RolesController
 from app.Controllers.user_roles_controller import UserRolesController
 from app.Controllers.trades_controller import TradesController
+from app.Controllers.user_dashboard_layout_controller import router as dashboard_layout_router
 
 # 📦 Schemi response (opzionali ma utili in Swagger)
 from app.Schemas.auth_user import AuthUserRead
@@ -161,3 +162,14 @@ router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
 router_trades.delete("/{trade_id}")(trades.delete_trade)
 
 router.include_router(router_trades)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 📊 DASHBOARD LAYOUT (user_id via query)
+# ──────────────────────────────────────────────────────────────────────────────
+# The prefix is already defined in the controller's router (/dashboard),
+# so we add a new top-level prefix here.
+# The full path will be /api/v1/dashboard/layout
+router_dashboard = APIRouter(prefix="/api/v1")
+router_dashboard.include_router(dashboard_layout_router)
+router.include_router(router_dashboard)
