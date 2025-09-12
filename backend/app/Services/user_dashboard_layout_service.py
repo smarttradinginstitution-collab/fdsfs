@@ -9,11 +9,18 @@ from app.Models.user_dashboard_layout import UserDashboardLayout
 
 # A default layout for new users or users who haven't saved a layout yet.
 # This provides a consistent starting point for everyone.
+# For StatCards, the `i` property MUST match a key in the `allDashboardStats` getter in the frontend's `trades.js` store.
 DEFAULT_LAYOUT = [
-    {"x": 0, "y": 0, "w": 4, "h": 4, "i": "0", "component": "VantageScore"},
-    {"x": 4, "y": 0, "w": 4, "h": 4, "i": "1", "component": "WinRate"},
-    {"x": 8, "y": 0, "w": 4, "h": 4, "i": "2", "component": "TotalPnl"},
-    {"x": 0, "y": 4, "w": 12, "h": 6, "i": "3", "component": "CumulativePnlChart"},
+    # Complex Widgets
+    {"x": 0, "y": 0, "w": 4, "h": 4, "i": "VantageScore", "component": "VantageScore"},
+    {"x": 0, "y": 4, "w": 12, "h": 6, "i": "CumulativePnlChart", "component": "CumulativePnlChart"},
+    
+    # StatCard Widgets
+    # The `i` here is the key for the stat data.
+    {"x": 4, "y": 0, "w": 2, "h": 2, "i": "winRate", "component": "StatCard"},
+    {"x": 6, "y": 0, "w": 2, "h": 2, "i": "netPnl", "component": "StatCard"},
+    {"x": 8, "y": 0, "w": 2, "h": 2, "i": "trades", "component": "StatCard"},
+    {"x": 10, "y": 0, "w": 2, "h": 2, "i": "profitFactor", "component": "StatCard"},
 ]
 
 class UserDashboardLayoutService:
