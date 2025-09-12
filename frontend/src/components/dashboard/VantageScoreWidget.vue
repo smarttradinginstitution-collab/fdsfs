@@ -104,12 +104,12 @@ const score = computed(() => vantageScoreData.value?.score || 0);
     <template #header>
       <HeaderInfoOverlay aria-label="View information about the Zella Score">
         <template #title>
-          <h3 class="widget-title">Zella Score</h3>
+          <h3 class="widget-title">Vantage Score</h3>
         </template>
         <template #content>
           <h4 class="info-overlay-title">About this Chart</h4>
           <p class="info-overlay-text">
-            The Zella Score is a proprietary metric that evaluates your trading performance across five key dimensions: Profitability, Consistency, Risk Management, Win Rate, and Asset Allocation. A higher score indicates a more balanced and effective trading strategy.
+            The Vantage Score is a proprietary metric that evaluates your trading performance across five key dimensions: Profitability, Consistency, Risk Management, Win Rate, and Asset Allocation. A higher score indicates a more balanced and effective trading strategy.
           </p>
         </template>
       </HeaderInfoOverlay>
@@ -120,7 +120,7 @@ const score = computed(() => vantageScoreData.value?.score || 0);
           <Radar v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
       </div>
       <div class="score-container">
-          <span class="score-label">Your Zella Score</span>
+          <span class="score-label">Your Score</span>
           <span class="score-value">{{ score.toFixed(2) }}</span>
           <div class="progress-bar-container">
             <div class="progress-bar" :style="{ width: `${score}%` }"></div>
