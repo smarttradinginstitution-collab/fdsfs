@@ -15,6 +15,7 @@ import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
 import HeaderInfoOverlay from '../ui/HeaderInfoOverlay.vue';
+import BaseWidget from '../layout/BaseWidget.vue';
 
 ChartJS.register(
   CategoryScale,
@@ -107,8 +108,8 @@ const chartOptions = computed(() => ({
 </script>
 
 <template>
-  <div class="widget-card">
-    <div class="widget-header">
+  <BaseWidget>
+    <template #header>
       <HeaderInfoOverlay aria-label="View information about the Daily net cumulative P&L chart">
         <template #title>
           <h3 class="widget-title">Daily net cumulative P&L</h3>
@@ -120,53 +121,25 @@ const chartOptions = computed(() => ({
           </p>
         </template>
       </HeaderInfoOverlay>
+    </template>
+
+    <div class="chart-container">
+      <Line v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
     </div>
-    <div class="widget-content">
-      <div class="chart-container">
-        <Line v-if="isReady" ref="chartRef" :data="chartData" :options="chartOptions" />
-      </div>
-    </div>
-  </div>
+  </BaseWidget>
 </template>
 
 <style scoped>
-.widget-card {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  border: 1px solid var(--semantic-color-border-default);
-  box-shadow: var(--semantic-effect-shadow-elevation-low);
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-width: 0;
-}
-
-.widget-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
-  border-bottom: 1px solid var(--semantic-color-border-default);
-  min-height: 68px; /* Match RecentTradesTable header height */
-}
-
+/* Only styles specific to this widget's internal content remain. */
 .widget-title {
   font: var(--semantic-font-style-heading-md);
   color: var(--semantic-color-text-primary);
 }
 
-.widget-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  padding: var(--semantic-size-inset-lg);
-  padding-top: 0;
-}
-
 .chart-container {
   position: relative;
   width: 100%;
-  flex-grow: 1;
+  height: 100%; /* Take up all available space in the content slot */
   min-height: 250px;
 }
 
