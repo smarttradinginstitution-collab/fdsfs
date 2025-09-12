@@ -1,18 +1,16 @@
-<!--
-// =============================================================================
-// FILE: views/DashboardView.vue
-// DESCRIZIONE: Vista della Dashboard, ora con i bottoni di azione principali
-// posizionati in una loro sezione dedicata.
-// =============================================================================
--->
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import StatCard from '../components/dashboard/StatCard.vue';
+import { computed, onMounted, watch } from 'vue';
+import { GridLayout, GridItem } from 'vue-grid-layout';
+
+// Import all widgets
+import StatsGridWidget from '../components/dashboard/StatsGridWidget.vue';
 import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
+
+// Import UI components
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
 import PopoverMenu from '../components/ui/PopoverMenu.vue';
@@ -20,17 +18,19 @@ import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
+import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
+import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
+
+// Import stores
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
-import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
-import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
+import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
-
-const popoverRef = ref(null);
+const dashboardLayoutStore = useDashboardLayoutStore();
 
 const handleNewTrade = async (tradeData) => {
   try {
@@ -52,15 +52,13 @@ const handleNewTrade = async (tradeData) => {
   }
 };
 
-const visibleStats = computed(() => {
-  const visibleKeys = uiStore.visibleStatKeys;
-  const allStats = tradesStore.allDashboardStats;
-  return visibleKeys.map(key => allStats[key]).filter(Boolean);
-});
+// Get layout from the store
+const layout = computed(() => dashboardLayoutStore.layout);
 
 // --- Data Fetching ---
 onMounted(() => {
   tradesStore.fetchAllDataForDashboard();
+  dashboardLayoutStore.fetchLayout();
 });
 
 // Watch for filter changes and refetch all dashboard data
@@ -71,24 +69,22 @@ watch(
   },
   { deep: true }
 );
+
+// Map widget keys to components
+const widgetComponents = {
+  stats: StatsGridWidget,
+  vantageScore: VantageScoreWidget,
+  rrDistribution: RrDistributionWidget,
+  cumulativePnl: CumulativePnlWidget,
+  calendar: CalendarHeatmap,
+  recentTrades: RecentTradesTable,
+};
 </script>
 
 <template>
   <div class="dashboard-view">
-
-    <!-- Esempio di visualizzazione dati dal backend -->
-    <!-- <div v-if="fetchError" class="error-box">
-      <h3>Backend Connection Error</h3>
-      <p>{{ fetchError }}</p>
-    </div>
-    <div v-if="backendData" class="data-box">
-      <h3>Data from Backend (for testing):</h3>
-      <pre>{{ JSON.stringify(backendData, null, 2) }}</pre>
-    </div> -->
-
-
     <div class="action-bar">
-      <PopoverMenu ref="popoverRef">
+      <PopoverMenu>
         <template #trigger="{ toggle }">
           <BaseButton variant="secondary" @click="toggle">
             <SettingsIcon />
@@ -106,34 +102,40 @@ watch(
       </BaseButton>
     </div>
 
-    <div class="stats-grid">
-      <StatCard
-        v-for="stat in visibleStats"
-        :key="stat.key"
-        :stat="stat"
-      />
+    <grid-layout
+      v-if="layout.length"
+      :layout.sync="layout"
+      :col-num="12"
+      :row-height="30"
+      :is-draggable="false"
+      :is-resizable="false"
+      :vertical-compact="true"
+      :use-css-transforms="true"
+      class="dashboard-grid"
+    >
+      <grid-item
+        v-for="item in layout"
+        :key="item.i"
+        :x="item.x"
+        :y="item.y"
+        :w="item.w"
+        :h="item.h"
+        :i="item.i"
+        class="widget-container"
+      >
+        <component :is="widgetComponents[item.i]" />
+      </grid-item>
+    </grid-layout>
+    <div v-else class="loading-placeholder">
+      Loading dashboard...
     </div>
 
-    <div class="complex-widgets-grid">
-      <VantageScoreWidget />
-      <RrDistributionWidget />
-      <CumulativePnlWidget />
-    </div>
-
-    <div class="main-content-grid">
-      <CalendarHeatmap />
-      <RecentTradesTable />
-    </div>
-
-    <!-- Modale per Aggiungere un Trade -->
+    <!-- Modals -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
       <template #header><h3>Log New Trade</h3></template>
       <NewTradeForm @submit="handleNewTrade" />
     </BaseModal>
-
-    <!-- Modale per il Riepilogo Giornaliero -->
     <DailySummaryModal />
-    <!-- Modale per il Riepilogo Settimanale -->
     <WeeklySummaryModal />
   </div>
 </template>
@@ -153,67 +155,75 @@ watch(
   gap: var(--semantic-size-stack-sm);
 }
 
-.stats-grid {
-  display: grid;
-  /*
-    BEST PRACTICE: Griglia Responsiva
-    - `repeat(auto-fit, ...)`: Crea tante colonne quante ce ne stanno nello spazio disponibile.
-    - `minmax(200px, 1fr)`: Ogni colonna deve essere larga almeno 200px. Se c'è più spazio,
-      `1fr` le fa espandere equamente per riempire la larghezza.
-    Questo crea una griglia fluida su desktop e tablet.
-  */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--semantic-size-stack-md);
+.dashboard-grid {
+  width: 100%;
 }
 
-.complex-widgets-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--semantic-size-stack-lg);
-}
-
-.main-content-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--semantic-size-stack-lg);
-  grid-auto-flow: dense;
-}
-
-.main-content-grid > * {
-  min-width: 0;
-}
-
-.error-box, .data-box {
-  padding: var(--semantic-size-inset-lg);
-  border-radius: var(--semantic-border-radius-lg);
+.widget-container {
   background-color: var(--color-background-muted);
+  border-radius: var(--semantic-border-radius-lg);
+  padding: var(--semantic-size-inset-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure content respects the container boundaries */
+}
+
+.loading-placeholder {
+  width: 100%;
+  height: 500px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-subtle);
+}
+</style>
+<style>
+/* vue-grid-layout-v3 optional styles */
+.vue-grid-layout {
+  background: transparent;
+}
+.vue-grid-item:not(.vue-grid-placeholder) {
+  background: var(--color-background-muted);
   border: 1px solid var(--color-border-subtle);
+  border-radius: var(--semantic-border-radius-lg);
 }
-
-.error-box {
-  background-color: var(--color-background-negative-subtle);
-  border-color: var(--color-border-negative);
-  color: var(--color-text-negative);
+.vue-grid-item .resizing {
+  opacity: 0.9;
 }
-
-.data-box pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  background-color: var(--color-background-subtle);
-  padding: var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-md);
+.vue-grid-item .static {
+  background: #cce;
 }
-
-@media (max-width: 1280px) {
-  .main-content-grid,
-  .complex-widgets-grid {
-    grid-template-columns: 1fr;
-  }
+.vue-grid-item .text {
+  font-size: 24px;
+  text-align: center;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  height: 100%;
+  width: 100%;
 }
-
-@media (max-width: 640px) { /* sm breakpoint */
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.vue-grid-item .minMax {
+  font-size: 12px;
+}
+.vue-grid-item .add {
+  cursor: pointer;
+}
+.vue-draggable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 0;
+  left: 0;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><circle cx='5' cy='5' r='5' fill='#999999'/></svg>") no-repeat;
+  background-position: bottom right;
+  padding: 0 8px 8px 0;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 </style>
