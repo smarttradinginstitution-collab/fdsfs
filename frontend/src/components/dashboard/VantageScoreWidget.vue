@@ -13,7 +13,7 @@ import {
 import { useTradesStore } from '../../stores/trades';
 import { useChartColors } from '../../composables/useChartColors';
 import { useChartResize } from '../../composables/useChartResize';
-import HeaderInfoOverlay from './HeaderInfoOverlay.vue';
+import HeaderInfoOverlay from '../ui/HeaderInfoOverlay.vue';
 
 ChartJS.register(
   RadialLinearScale,
@@ -103,10 +103,16 @@ const score = computed(() => vantageScoreData.value?.score || 0);
   <div class="widget-card">
     <div class="widget-header">
       <HeaderInfoOverlay
-        infoText="The Vantage Score is a proprietary score that measures your trading performance based on a variety of factors."
+        aria-label="View information about the Vantage Score"
       >
         <template #title>
           <h3 class="widget-title">Vantage Score</h3>
+        </template>
+        <template #content>
+          <h4 class="info-overlay-title">About this Chart</h4>
+          <p class="info-overlay-text">
+            The Vantage Score is a proprietary score that measures your trading performance based on a variety of factors.
+          </p>
         </template>
       </HeaderInfoOverlay>
     </div>
