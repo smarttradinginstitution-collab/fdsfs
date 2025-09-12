@@ -26,6 +26,17 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       { x: 0, y: 7, w: 8, h: 7, i: 'calendar' },
       { x: 8, y: 7, w: 4, h: 7, i: 'recentTrades' },
     ],
+    /**
+     * A list of all available widgets that can be added to the dashboard.
+     */
+    availableWidgets: [
+      { i: 'stats', name: 'Statistics Cards', w: 12, h: 2 },
+      { i: 'vantageScore', name: 'Vantage Score', w: 4, h: 5 },
+      { i: 'rrDistribution', name: 'R:R Distribution', w: 4, h: 5 },
+      { i: 'cumulativePnl', name: 'Cumulative P&L', w: 4, h: 5 },
+      { i: 'calendar', name: 'Trading Calendar', w: 8, h: 7 },
+      { i: 'recentTrades', name: 'Recent Trades', w: 4, h: 7 },
+    ],
   }),
 
   actions: {
@@ -63,6 +74,30 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     /**
      * Saves the user's current layout to the backend.
      */
+    addWidget(widgetId) {
+      const widgetToAdd = this.availableWidgets.find(w => w.i === widgetId);
+      if (!widgetToAdd || this.layout.some(w => w.i === widgetId)) {
+        return; // Widget not found or already in layout
+      }
+
+      // Find the bottom of the grid to place the new widget
+      const y = Math.max(0, ...this.layout.map(w => w.y + w.h));
+
+      const newWidget = {
+        ...widgetToAdd,
+        x: 0, // Place at the left edge
+        y: y,
+      };
+
+      const newLayout = [...this.layout, newWidget];
+      this.saveLayout(newLayout);
+    },
+
+    removeWidget(widgetId) {
+      const newLayout = this.layout.filter(w => w.i !== widgetId);
+      this.saveLayout(newLayout);
+    },
+
     async saveLayout(newLayout) {
       this.layout = newLayout;
 

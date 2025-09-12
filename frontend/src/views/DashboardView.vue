@@ -14,7 +14,7 @@ import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
 import PopoverMenu from '../components/ui/PopoverMenu.vue';
-import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
+import WidgetSelector from '../components/dashboard/WidgetSelector.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
@@ -95,8 +95,11 @@ const widgetComponents = {
             <span>Modifica Widget</span>
           </BaseButton>
         </template>
-        <template #content="{ close }">
-          <StatSelectorMenu @close="close" />
+        <template #content>
+          <WidgetSelector
+            @add-widget="dashboardLayoutStore.addWidget"
+            @remove-widget="dashboardLayoutStore.removeWidget"
+          />
         </template>
       </PopoverMenu>
 
