@@ -165,11 +165,12 @@ router.include_router(router_trades)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 📊 DASHBOARD LAYOUT (user_id via query)
+# 📊 DASHBOARD LAYOUT
 # ──────────────────────────────────────────────────────────────────────────────
-# The prefix is already defined in the controller's router (/dashboard),
-# so we add a new top-level prefix here.
-# The full path will be /api/v1/dashboard/layout
-router_dashboard = APIRouter(prefix="/api/v1")
-router_dashboard.include_router(dashboard_layout_router)
-router.include_router(router_dashboard)
+# The controller's router already has the /dashboard prefix.
+# We add the /api/v1 prefix here, so the full path will be /api/v1/dashboard/layout
+router.include_router(
+    dashboard_layout_router,
+    prefix="/api/v1"
+    # The "Dashboard Layout" tag is defined in the controller's router.
+)
