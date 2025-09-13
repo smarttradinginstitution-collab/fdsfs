@@ -10,12 +10,6 @@ class LoginInput(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
 
-class MfaLoginInput(LoginInput):
-    code: str = Field(..., min_length=6, max_length=6)
-
-class RefreshTokenInput(BaseModel):
-    refresh_token: str
-
 class RegisterInput(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
