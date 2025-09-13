@@ -60,6 +60,13 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
           charts: savedLayout.charts || this.defaultLayout.charts,
           main: savedLayout.main || this.defaultLayout.main,
         };
+
+        // Also update the uiStore with the stats layout
+        const uiStore = useUiStore();
+        if (savedLayout.stats && Array.isArray(savedLayout.stats)) {
+          const statKeys = savedLayout.stats.map(widget => widget.i);
+          uiStore.setVisibleStatKeys(statKeys);
+        }
       } catch (error) {
         console.log('No saved layout found, using default.');
         this.layout = JSON.parse(JSON.stringify(this.defaultLayout));
