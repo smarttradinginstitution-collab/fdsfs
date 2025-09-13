@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from app.Models.role import Role
 from app.Models.user_role import UserRole
 
+
 class UserRoleRepository:
     """Repository per la tabella ponte user_roles e query correlate ai ruoli utente."""
 
@@ -30,20 +31,33 @@ class UserRoleRepository:
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
+    async def list_role_names(self, user_id: UUID) -> List[str]:
+        """
+        Ritorna i nomi dei ruoli dell'utente (case esatto come a DB).
+        """
+        stmt = (
+            select(Role.name)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == user_id)
+        )
+        res = await self.db.execute(stmt)
+        return [row[0] for row in res.all()]
+
     async def user_has_role(self, user_id: UUID, role_name: str) -> bool:
         """
-        Verifica se l'utente ha un ruolo con il nome specificato.
+        True se l'utente ha un ruolo con quel nome (match case-insensitive e trim).
         """
-        # Semplificata: cerchiamo una riga qualunque che soddisfi le condizioni.
-        # Se esiste → True, altrimenti False.
         stmt = (
-            select(UserRole.id)
-            .join(Role, Role.id == UserRole.role_id)
-            .where(UserRole.user_id == user_id, Role.name == role_name)
+            select(Role.id)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(
+                UserRole.user_id == user_id,
+                func.lower(func.trim(Role.name)) == func.lower(func.trim(role_name)),
+            )
             .limit(1)
         )
         res = await self.db.execute(stmt)
-        return res.scalar_one_or_none() is not None
+        return res.scalar() is not None
 
     async def assign(self, user_id: UUID, role_id: UUID) -> UserRole:
         """
@@ -74,30 +88,3 @@ class UserRoleRepository:
         res = await self.db.execute(stmt)
         await self.db.commit()
         return (res.rowcount or 0) > 0
-async def list_role_names(self, user_id: UUID) -> List[str]:
-        """
-        Ritorna i nomi dei ruoli dell'utente (case esatto come a DB).
-        """
-        stmt = (
-            select(Role.name)
-            .join(UserRole, UserRole.role_id == Role.id)
-            .where(UserRole.user_id == user_id)
-        )
-        res = await self.db.execute(stmt)
-        return [row[0] for row in res.all()]
-
-async def user_has_role(self, user_id: UUID, role_name: str) -> bool:
-    """
-    True se l'utente ha un ruolo con quel nome (match case-insensitive e trim).
-    """
-    stmt = (
-        select(Role.id)
-        .join(UserRole, UserRole.role_id == Role.id)
-        .where(
-            UserRole.user_id == user_id,
-            func.lower(func.trim(Role.name)) == func.lower(func.trim(role_name)),
-        )
-        .limit(1)
-    )
-    res = await self.db.execute(stmt)
-    return res.scalar() is not None
