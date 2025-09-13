@@ -74,32 +74,20 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     /**
      * Saves the user's current layout to the backend.
      */
-    addWidget(widgetId, coordinates = null) {
+    addWidget(widgetId) {
       const widgetToAdd = this.availableWidgets.find(w => w.i === widgetId);
       if (!widgetToAdd || this.layout.some(w => w.i === widgetId)) {
         return; // Widget not found or already in layout
       }
 
-      let newWidget;
-      if (coordinates) {
-        // We need to find an empty spot near the coordinates
-        // For now, just place it at the coordinates.
-        // The empty slot is 1x1, but the widget can be larger.
-        // The grid layout will handle overlapping items if vertical-compact is true.
-        newWidget = {
-          ...widgetToAdd,
-          x: coordinates.x,
-          y: coordinates.y,
-        };
-      } else {
-        // Find the bottom of the grid to place the new widget
-        const y = Math.max(0, ...this.layout.map(w => w.y + w.h));
-        newWidget = {
-          ...widgetToAdd,
-          x: 0, // Place at the left edge
-          y: y,
-        };
-      }
+      // Find the bottom of the grid to place the new widget
+      const y = Math.max(0, ...this.layout.map(w => w.y + w.h));
+
+      const newWidget = {
+        ...widgetToAdd,
+        x: 0, // Place at the left edge
+        y: y,
+      };
 
       const newLayout = [...this.layout, newWidget];
       this.saveLayout(newLayout);
