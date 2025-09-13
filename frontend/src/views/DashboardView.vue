@@ -146,24 +146,24 @@ watch(
       </draggable>
     </div>
 
-    <!-- Complex Widgets Grid -->
+    <!-- Charts Zone -->
     <div class="grid-zone-wrapper">
-        <h3 class="zone-title">Widget Complessi</h3>
-        <draggable :list="layout.complex" item-key="i" tag="div" class="complex-widgets-grid" ghost-class="ghost" @end="onLayoutDragEnd('complex', $event)" :disabled="!uiStore.isLayoutEditing">
+        <h3 class="zone-title">Grafici</h3>
+        <draggable :list="layout.charts" item-key="i" tag="div" class="complex-widgets-grid" ghost-class="ghost" @end="onLayoutDragEnd('charts', $event)" :disabled="!uiStore.isLayoutEditing">
             <template #item="{ element: widget }">
                 <div class="widget-wrapper">
                     <component :is="widgetComponents[widget.i]" />
-                    <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="dashboardLayoutStore.removeWidget({ zone: 'complex', widgetId: widget.i })">&times;</button>
+                    <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="dashboardLayoutStore.removeWidget({ zone: 'charts', widgetId: widget.i })">&times;</button>
                 </div>
             </template>
              <template #footer>
-                <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.complex.length < dashboardLayoutStore.widgetConfig.complex.max">
+                <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.charts.length < dashboardLayoutStore.widgetConfig.charts.max">
                     <PopoverMenu>
                         <template #trigger="{ toggle }">
                             <button @click="toggle" class="add-widget-button"><PlusIcon /> Aggiungi Widget</button>
                         </template>
                         <template #content="{ close }">
-                            <WidgetSelector zone="complex" :allowed-widgets="dashboardLayoutStore.widgetConfig.complex.allowed" @add-widget="dashboardLayoutStore.addWidget($event); close()" />
+                            <WidgetSelector zone="charts" :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed" @add-widget="dashboardLayoutStore.addWidget($event); close()" />
                         </template>
                     </PopoverMenu>
                 </div>

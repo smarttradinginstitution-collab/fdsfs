@@ -10,12 +10,12 @@ import { useUiStore } from './uiStore';
 export const useDashboardLayoutStore = defineStore('dashboardLayout', {
   state: () => ({
     layout: {
-      complex: [],
+      charts: [],
       main: [],
     },
     isLoading: false,
     defaultLayout: {
-      complex: [
+      charts: [
         { i: 'vantageScore' },
         { i: 'rrDistribution' },
         { i: 'cumulativePnl' },
@@ -26,7 +26,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       ],
     },
     widgetConfig: {
-      complex: {
+      charts: {
         max: 3,
         allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
       },
@@ -57,7 +57,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         const response = await apiClient.get('/api/v1/dashboard/layout');
         const savedLayout = response.data.layout || {};
         this.layout = {
-          complex: savedLayout.complex || this.defaultLayout.complex,
+          charts: savedLayout.charts || this.defaultLayout.charts,
           main: savedLayout.main || this.defaultLayout.main,
         };
       } catch (error) {
