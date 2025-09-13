@@ -5,43 +5,43 @@ import apiClient from '../services/api';
 import { useAuthStore } from './auth';
 import { useUiStore } from './uiStore';
 
+// This store now only manages the layout for the 'complex' and 'main' widget zones.
+// The 'stats' grid is managed directly in uiStore.
 export const useDashboardLayoutStore = defineStore('dashboardLayout', {
   state: () => ({
     layout: {
-      stats: [],
+      complex: [],
       main: [],
-      charts: [],
     },
     isLoading: false,
     defaultLayout: {
-      stats: [
-        { i: 'stats' }, // This will be a special component that renders multiple stat cards
+      complex: [
+        { i: 'vantageScore' },
+        { i: 'rrDistribution' },
+        { i: 'cumulativePnl' },
       ],
       main: [
         { i: 'calendar' },
         { i: 'recentTrades' },
       ],
-      charts: [
-        { i: 'vantageScore' },
-        { i: 'rrDistribution' },
-        { i: 'cumulativePnl' },
-      ],
     },
-    // We can define which widgets are allowed in which zone
     widgetConfig: {
-      stats: {
-        max: 1, // Only one 'stats' group widget
-        allowed: ['stats'],
+      complex: {
+        max: 3,
+        allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
       },
       main: {
         max: 2,
         allowed: ['calendar', 'recentTrades'],
       },
-      charts: {
-        max: 3,
-        allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
-      },
     },
+    availableWidgets: [
+        { i: 'vantageScore', name: 'Vantage Score' },
+        { i: 'rrDistribution', name: 'R:R Distribution' },
+        { i: 'cumulativePnl', name: 'Cumulative P&L' },
+        { i: 'calendar', name: 'Trading Calendar' },
+        { i: 'recentTrades', name: 'Recent Trades' },
+    ],
   }),
 
   actions: {
@@ -49,28 +49,20 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       this.isLoading = true;
       const authStore = useAuthStore();
       if (!authStore.user) {
-        console.warn('User not authenticated. Cannot fetch layout. Using default.');
         this.layout = JSON.parse(JSON.stringify(this.defaultLayout));
         this.isLoading = false;
         return;
       }
-
       try {
         const response = await apiClient.get('/api/v1/dashboard/layout');
-        // Ensure all zones exist, even if the saved layout is partial or old
+        const savedLayout = response.data.layout || {};
         this.layout = {
-          ...JSON.parse(JSON.stringify(this.defaultLayout)),
-          ...response.data.layout,
+          complex: savedLayout.complex || this.defaultLayout.complex,
+          main: savedLayout.main || this.defaultLayout.main,
         };
       } catch (error) {
-        if (error.response && error.response.status === 404) {
-          console.log('No saved layout found for user. Using default layout.');
-          this.layout = JSON.parse(JSON.stringify(this.defaultLayout));
-        } else {
-          console.error('Error fetching dashboard layout:', error);
-          console.log('Falling back to default layout due to error.');
-          this.layout = JSON.parse(JSON.stringify(this.defaultLayout));
-        }
+        console.log('No saved layout found, using default.');
+        this.layout = JSON.parse(JSON.stringify(this.defaultLayout));
       } finally {
         this.isLoading = false;
       }
@@ -78,22 +70,17 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
 
     addWidget({ zone, widgetId }) {
       const zoneConfig = this.widgetConfig[zone];
-      if (!zoneConfig || this.layout[zone].length >= zoneConfig.max) {
-        return; // Zone is full or invalid
-      }
-      if (!zoneConfig.allowed.includes(widgetId)) {
-        return; // Widget not allowed in this zone
-      }
-      // Prevent duplicates in the same zone
-      if (this.layout[zone].some(w => w.i === widgetId)) {
-        return;
-      }
+      if (!zoneConfig || this.layout[zone].length >= zoneConfig.max) return;
+      if (!zoneConfig.allowed.includes(widgetId)) return;
+      if (this.layout[zone].some(w => w.i === widgetId)) return;
+
       this.layout[zone].push({ i: widgetId });
       this.saveLayout();
     },
 
     removeWidget({ zone, widgetId }) {
       const zoneLayout = this.layout[zone];
+      if (!zoneLayout) return;
       const index = zoneLayout.findIndex(w => w.i === widgetId);
       if (index !== -1) {
         zoneLayout.splice(index, 1);
@@ -103,6 +90,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
 
     moveWidget({ zone, oldIndex, newIndex }) {
         const zoneLayout = this.layout[zone];
+        if (!zoneLayout) return;
         const [removed] = zoneLayout.splice(oldIndex, 1);
         zoneLayout.splice(newIndex, 0, removed);
         this.saveLayout();
@@ -110,17 +98,19 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
 
     async saveLayout() {
       const authStore = useAuthStore();
-      if (!authStore.user) {
-        console.error('User not authenticated, cannot save layout.');
-        return;
-      }
-
+      if (!authStore.user) return;
       const uiStore = useUiStore();
 
+      // We need to merge this layout with the stats layout from uiStore
+      // to create the complete layout object for the backend.
+      const fullLayout = {
+        stats: uiStore.visibleStatKeys.map(key => ({ i: key })),
+        ...this.layout
+      };
+
       try {
-        await apiClient.put('/api/v1/dashboard/layout', { layout: this.layout });
-      } catch (error) {
-        console.error('Error saving dashboard layout:', error);
+        await apiClient.put('/api/v1/dashboard/layout', { layout: fullLayout });
+      } catch (error)
         uiStore.showNotification({
           message: 'Failed to save dashboard layout.',
           type: 'error',

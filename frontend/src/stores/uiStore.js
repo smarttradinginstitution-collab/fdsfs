@@ -92,6 +92,11 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
+  function moveStat({ oldIndex, newIndex }) {
+    const [item] = visibleStatKeys.value.splice(oldIndex, 1);
+    visibleStatKeys.value.splice(newIndex, 0, item);
+  }
+
   // --- NOTIFICATION ACTIONS ---
   let notificationTimeout = null;
 
@@ -177,6 +182,7 @@ export const useUiStore = defineStore('ui', () => {
     toggleMobileMenu,
     closeMobileMenu,
     toggleStatVisibility,
+    moveStat,
     toggleWeeklySummary,
     toggleCalendarTradeCount,
     toggleCalendarWinRate,

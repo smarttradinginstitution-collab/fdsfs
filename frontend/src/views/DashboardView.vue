@@ -1,37 +1,87 @@
+<!--
+// =============================================================================
+// FILE: views/DashboardView.vue
+// DESCRIZIONE: Vista della Dashboard, ora con i bottoni di azione principali
+// posizionati in una loro sezione dedicata.
+// =============================================================================
+-->
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import draggable from 'vuedraggable';
-
-// Import all widgets
-import StatsGridWidget from '../components/dashboard/StatsGridWidget.vue';
+import StatCard from '../components/dashboard/StatCard.vue';
 import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
-
-// Import UI components
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
+import PopoverMenu from '../components/ui/PopoverMenu.vue';
+import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
+import WidgetSelector from '../components/dashboard/WidgetSelector.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
-import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
-import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
-import PopoverMenu from '../components/ui/PopoverMenu.vue';
-import WidgetSelector from '../components/dashboard/WidgetSelector.vue';
-
-
-// Import stores
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
+import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
+import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
+
+const handleNewTrade = async (tradeData) => {
+  try {
+    const newTrade = await tradesStore.addTrade(tradeData);
+    if (newTrade) {
+      uiStore.closeAddTradeModal();
+      uiStore.showNotification({
+        message: 'Trade successfully created!',
+        type: 'success',
+      });
+    }
+  } catch (error) {
+    console.error('Failed to add trade:', error);
+    const errorMessage = error.response?.data?.detail || 'An unknown error occurred.';
+    uiStore.showNotification({
+      message: `Error: ${errorMessage}`,
+      type: 'error',
+    });
+  }
+};
+
+const layout = computed(() => dashboardLayoutStore.layout);
+
+const widgetComponents = {
+  'vantageScore': VantageScoreWidget,
+  'rrDistribution': RrDistributionWidget,
+  'cumulativePnl': CumulativePnlWidget,
+  'calendar': CalendarHeatmap,
+  'recentTrades': RecentTradesTable,
+};
+
+const onLayoutDragEnd = (zone, event) => {
+  dashboardLayoutStore.moveWidget({
+    zone,
+    oldIndex: event.oldIndex,
+    newIndex: event.newIndex,
+  });
+};
+
+const onStatsDragEnd = (event) => {
+  uiStore.moveStat({
+    oldIndex: event.oldIndex,
+    newIndex: event.newIndex,
+  });
+};
+
+const editButtonText = computed(() => {
+  return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
+});
 
 // --- Data Fetching ---
 onMounted(() => {
@@ -47,34 +97,10 @@ watch(
   },
   { deep: true }
 );
-
-const layout = computed(() => dashboardLayoutStore.layout);
-
-const editButtonText = computed(() => {
-  return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
-});
-
-function onDragEnd(zone, event) {
-  dashboardLayoutStore.moveWidget({
-    zone,
-    oldIndex: event.oldIndex,
-    newIndex: event.newIndex,
-  });
-}
-
-// Map widget keys to components
-const widgetComponents = {
-  stats: StatsGridWidget,
-  vantageScore: VantageScoreWidget,
-  rrDistribution: RrDistributionWidget,
-  cumulativePnl: CumulativePnlWidget,
-  calendar: CalendarHeatmap,
-  recentTrades: RecentTradesTable,
-};
 </script>
 
 <template>
-  <div class="dashboard-view">
+  <div class="dashboard-view" :class="{ 'is-editing': uiStore.isLayoutEditing }">
     <div class="action-bar">
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
@@ -87,110 +113,87 @@ const widgetComponents = {
       </BaseButton>
     </div>
 
-    <div v-if="layout" class="dashboard-zones">
-      <!-- Stats Zone -->
-      <div class="dashboard-zone zone-stats">
-        <div v-for="widget in layout.stats" :key="widget.i" class="widget-wrapper">
-          <component
-            :is="widgetComponents[widget.i]"
-            class="widget-container"
-          />
-          <!-- No remove button for the main stats group, by design -->
-        </div>
-      </div>
-
-      <!-- Main Zone -->
+    <!-- Stats Grid -->
+    <div class="grid-zone-wrapper">
+      <h3 class="zone-title">Statistiche</h3>
       <draggable
-        :list="layout.main"
-        item-key="i"
+        :list="uiStore.visibleStatKeys"
+        item-key="key"
         tag="div"
-        class="dashboard-zone zone-main"
+        class="stats-grid"
         ghost-class="ghost"
-        @end="onDragEnd('main', $event)"
+        @end="onStatsDragEnd"
         :disabled="!uiStore.isLayoutEditing"
       >
-        <template #item="{ element: widget }">
+        <template #item="{ element: statKey }">
           <div class="widget-wrapper">
-            <component
-              :is="widgetComponents[widget.i]"
-              class="widget-container"
-            />
-            <button
-              v-if="uiStore.isLayoutEditing"
-              class="remove-widget-btn"
-              @click="dashboardLayoutStore.removeWidget({ zone: 'main', widgetId: widget.i })"
-            >
-              &times;
-            </button>
+            <StatCard :stat="tradesStore.allDashboardStats[statKey]" />
+            <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="uiStore.toggleStatVisibility(statKey)">&times;</button>
           </div>
         </template>
         <template #footer>
-          <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.main.length < dashboardLayoutStore.widgetConfig.main.max">
-            <PopoverMenu>
-              <template #trigger="{ toggle }">
-                <BaseButton @click="toggle" variant="secondary" size="small">
-                  <PlusIcon /> Aggiungi Widget
-                </BaseButton>
-              </template>
-              <template #content="{ close }">
-                <WidgetSelector
-                  zone="main"
-                  :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed"
-                  @add-widget="dashboardLayoutStore.addWidget($event); close()"
-                />
-              </template>
+            <PopoverMenu v-if="uiStore.isLayoutEditing">
+                <template #trigger="{ toggle }">
+                    <button @click="toggle" class="add-widget-button">
+                        <PlusIcon /> Aggiungi o Rimuovi Stat
+                    </button>
+                </template>
+                <template #content="{ close }">
+                    <StatSelectorMenu @close="close" />
+                </template>
             </PopoverMenu>
-          </div>
-        </template>
-      </draggable>
-
-      <!-- Charts Zone -->
-      <draggable
-        :list="layout.charts"
-        item-key="i"
-        tag="div"
-        class="dashboard-zone zone-charts"
-        ghost-class="ghost"
-        @end="onDragEnd('charts', $event)"
-        :disabled="!uiStore.isLayoutEditing"
-      >
-        <template #item="{ element: widget }">
-          <div class="widget-wrapper">
-            <component
-              :is="widgetComponents[widget.i]"
-              class="widget-container"
-            />
-            <button
-              v-if="uiStore.isLayoutEditing"
-              class="remove-widget-btn"
-              @click="dashboardLayoutStore.removeWidget({ zone: 'charts', widgetId: widget.i })"
-            >
-              &times;
-            </button>
-          </div>
-        </template>
-        <template #footer>
-          <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.charts.length < dashboardLayoutStore.widgetConfig.charts.max">
-            <PopoverMenu>
-              <template #trigger="{ toggle }">
-                <BaseButton @click="toggle" variant="secondary" size="small">
-                  <PlusIcon /> Aggiungi Widget
-                </BaseButton>
-              </template>
-              <template #content="{ close }">
-                <WidgetSelector
-                  zone="charts"
-                  :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed"
-                  @add-widget="dashboardLayoutStore.addWidget($event); close()"
-                />
-              </template>
-            </PopoverMenu>
-          </div>
         </template>
       </draggable>
     </div>
-    <div v-else class="loading-placeholder">
-      Loading dashboard...
+
+    <!-- Complex Widgets Grid -->
+    <div class="grid-zone-wrapper">
+        <h3 class="zone-title">Widget Complessi</h3>
+        <draggable :list="layout.complex" item-key="i" tag="div" class="complex-widgets-grid" ghost-class="ghost" @end="onLayoutDragEnd('complex', $event)" :disabled="!uiStore.isLayoutEditing">
+            <template #item="{ element: widget }">
+                <div class="widget-wrapper">
+                    <component :is="widgetComponents[widget.i]" />
+                    <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="dashboardLayoutStore.removeWidget({ zone: 'complex', widgetId: widget.i })">&times;</button>
+                </div>
+            </template>
+             <template #footer>
+                <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.complex.length < dashboardLayoutStore.widgetConfig.complex.max">
+                    <PopoverMenu>
+                        <template #trigger="{ toggle }">
+                            <button @click="toggle" class="add-widget-button"><PlusIcon /> Aggiungi Widget</button>
+                        </template>
+                        <template #content="{ close }">
+                            <WidgetSelector zone="complex" :allowed-widgets="dashboardLayoutStore.widgetConfig.complex.allowed" @add-widget="dashboardLayoutStore.addWidget($event); close()" />
+                        </template>
+                    </PopoverMenu>
+                </div>
+            </template>
+        </draggable>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid-zone-wrapper">
+        <h3 class="zone-title">Contenuto Principale</h3>
+        <draggable :list="layout.main" item-key="i" tag="div" class="main-content-grid" ghost-class="ghost" @end="onLayoutDragEnd('main', $event)" :disabled="!uiStore.isLayoutEditing">
+            <template #item="{ element: widget }">
+                <div class="widget-wrapper">
+                    <component :is="widgetComponents[widget.i]" />
+                    <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="dashboardLayoutStore.removeWidget({ zone: 'main', widgetId: widget.i })">&times;</button>
+                </div>
+            </template>
+            <template #footer>
+                <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.main.length < dashboardLayoutStore.widgetConfig.main.max">
+                    <PopoverMenu>
+                        <template #trigger="{ toggle }">
+                            <button @click="toggle" class="add-widget-button"><PlusIcon /> Aggiungi Widget</button>
+                        </template>
+                        <template #content="{ close }">
+                            <WidgetSelector zone="main" :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed" @add-widget="dashboardLayoutStore.addWidget($event); close()" />
+                        </template>
+                    </PopoverMenu>
+                </div>
+            </template>
+        </draggable>
     </div>
 
     <!-- Modals -->
@@ -211,50 +214,50 @@ const widgetComponents = {
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
 }
-
 .action-bar {
   display: flex;
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
 }
-
-.dashboard-zones {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: auto;
-  gap: var(--semantic-size-stack-lg);
+.grid-zone-wrapper {
+    /* Styles for the wrapper if needed */
 }
-
-.dashboard-zone {
-  display: flex;
-  gap: var(--semantic-size-stack-lg);
+.zone-title {
+    margin-bottom: var(--semantic-size-stack-sm);
 }
-
-.zone-stats {
-  grid-column: span 12;
+.stats-grid, .complex-widgets-grid, .main-content-grid {
+    display: grid;
+    gap: var(--semantic-size-stack-lg);
 }
-
-.zone-main {
-  grid-column: span 8;
+.stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
-
-.zone-charts {
-  grid-column: span 4;
-  flex-direction: column;
+.complex-widgets-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
-
+.main-content-grid {
+  grid-template-columns: 2fr 1fr;
+}
+.ghost {
+    opacity: 0.5;
+    background: #c8ebfb;
+}
 .widget-wrapper {
   position: relative;
-  flex-grow: 1;
 }
-
+.dashboard-view.is-editing .widget-wrapper > * {
+    cursor: grab;
+}
+.dashboard-view.is-editing .widget-wrapper:active > * {
+    cursor: grabbing;
+}
 .remove-widget-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  background-color: rgba(0,0,0,0.3);
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background-color: rgba(0,0,0,0.5);
   color: white;
   border: none;
   border-radius: 50%;
@@ -262,37 +265,42 @@ const widgetComponents = {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
   transition: background-color 0.2s;
+  z-index: 10;
 }
-
 .remove-widget-btn:hover {
-  background-color: rgba(0,0,0,0.6);
+  background-color: rgba(0,0,0,0.8);
+}
+.add-widget-button {
+    background-color: transparent;
+    border: 2px dashed var(--semantic-color-border-default);
+    color: var(--semantic-color-text-secondary);
+    border-radius: var(--semantic-border-radius-lg);
+    padding: var(--semantic-size-inset-lg);
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--semantic-size-stack-sm);
+    transition: all 0.2s;
+}
+.add-widget-button:hover {
+    background-color: var(--semantic-color-surface-secondary);
+    color: var(--semantic-color-text-primary);
 }
 
-.widget-container {
-  background-color: var(--color-background-muted);
-  border-radius: var(--semantic-border-radius-lg);
-  padding: var(--semantic-size-inset-lg);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
+@media (max-width: 1280px) {
+  .main-content-grid,
+  .complex-widgets-grid {
+    grid-template-columns: 1fr;
+  }
 }
-
-.ghost {
-    opacity: 0.5;
-    background: #c8ebfb;
-}
-
-.add-widget-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: var(--semantic-size-inset-md);
-  border: 2px dashed var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-lg);
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>
