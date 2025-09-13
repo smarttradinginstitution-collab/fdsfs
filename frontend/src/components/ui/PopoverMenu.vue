@@ -1,16 +1,35 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 
-const isOpen = ref(false);
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const emit = defineEmits(['close']);
+
+const isOpen = ref(props.show);
 const popoverRef = ref(null);
+
+watch(() => props.show, (newValue) => {
+  isOpen.value = newValue;
+});
 
 const toggle = () => {
   isOpen.value = !isOpen.value;
+  if (!isOpen.value) {
+    emit('close');
+  }
 };
 
 const close = () => {
-  isOpen.value = false;
+  if (isOpen.value) {
+    isOpen.value = false;
+    emit('close');
+  }
 };
 
 onClickOutside(popoverRef, close);

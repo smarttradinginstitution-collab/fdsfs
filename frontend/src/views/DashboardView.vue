@@ -20,6 +20,7 @@ import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
+import EmptyWidgetSlot from '../components/dashboard/EmptyWidgetSlot.vue';
 
 // Import stores
 import { useTradesStore } from '../stores/trades';
@@ -31,6 +32,9 @@ const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
+
+const selectedEmptySlot = ref(null);
+const isWidgetSelectorVisible = ref(false);
 
 const handleNewTrade = async (tradeData) => {
   try {
@@ -55,6 +59,44 @@ const handleNewTrade = async (tradeData) => {
 // Get layout from the store
 const layout = computed(() => dashboardLayoutStore.layout);
 
+const gridHeight = computed(() => {
+  if (!layout.value || layout.value.length === 0) {
+    return 10; // Default height when no widgets are present
+  }
+  return Math.max(...layout.value.map(item => item.y + item.h));
+});
+
+const emptySlots = computed(() => {
+  if (!uiStore.isLayoutEditing) {
+    return [];
+  }
+
+  const occupied = new Set();
+  if (layout.value) {
+    layout.value.forEach(item => {
+      for (let y = item.y; y < item.y + item.h; y++) {
+        for (let x = item.x; x < item.x + item.w; x++) {
+          occupied.add(`${x},${y}`);
+        }
+      }
+    });
+  }
+
+  const slots = [];
+  const totalRows = gridHeight.value;
+  const totalCols = 12;
+
+  for (let y = 0; y < totalRows; y++) {
+    for (let x = 0; x < totalCols; x++) {
+      if (!occupied.has(`${x},${y}`)) {
+        slots.push({ x, y, w: 1, h: 1, i: `empty-${x}-${y}` });
+      }
+    }
+  }
+  return slots;
+});
+
+
 // --- Data Fetching ---
 onMounted(() => {
   tradesStore.fetchAllDataForDashboard();
@@ -74,6 +116,30 @@ const onLayoutUpdated = (newLayout) => {
   dashboardLayoutStore.saveLayout(newLayout);
 };
 
+const handleEmptySlotClick = (item) => {
+  selectedEmptySlot.value = item;
+  isWidgetSelectorVisible.value = true;
+};
+
+const closeWidgetSelector = () => {
+  isWidgetSelectorVisible.value = false;
+  selectedEmptySlot.value = null;
+};
+
+const handleAddWidget = (widgetId) => {
+  if (selectedEmptySlot.value) {
+    dashboardLayoutStore.addWidget(widgetId, {
+      x: selectedEmptySlot.value.x,
+      y: selectedEmptySlot.value.y,
+    });
+  }
+  closeWidgetSelector();
+};
+
+const editButtonText = computed(() => {
+  return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
+});
+
 // Map widget keys to components
 const widgetComponents = {
   stats: StatsGridWidget,
@@ -88,20 +154,10 @@ const widgetComponents = {
 <template>
   <div class="dashboard-view">
     <div class="action-bar">
-      <PopoverMenu>
-        <template #trigger="{ toggle }">
-          <BaseButton variant="secondary" @click="toggle">
-            <SettingsIcon />
-            <span>Modifica Widget</span>
-          </BaseButton>
-        </template>
-        <template #content>
-          <WidgetSelector
-            @add-widget="dashboardLayoutStore.addWidget"
-            @remove-widget="dashboardLayoutStore.removeWidget"
-          />
-        </template>
-      </PopoverMenu>
+      <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
+        <SettingsIcon />
+        <span>{{ editButtonText }}</span>
+      </BaseButton>
 
       <BaseButton variant="primary" @click="uiStore.openAddTradeModal">
         <PlusIcon />
@@ -114,11 +170,12 @@ const widgetComponents = {
       :layout.sync="layout"
       :col-num="12"
       :row-height="30"
-      :is-draggable="true"
-      :is-resizable="true"
+      :is-draggable="uiStore.isLayoutEditing"
+      :is-resizable="uiStore.isLayoutEditing"
       :vertical-compact="true"
       :use-css-transforms="true"
       class="dashboard-grid"
+      :class="{ 'is-editing': uiStore.isLayoutEditing }"
       @layout-updated="onLayoutUpdated"
     >
       <grid-item
@@ -132,6 +189,30 @@ const widgetComponents = {
         class="widget-container"
       >
         <component :is="widgetComponents[item.i]" />
+      </grid-item>
+      <grid-item
+        v-for="item in emptySlots"
+        :key="item.i"
+        :x="item.x"
+        :y="item.y"
+        :w="item.w"
+        :h="item.h"
+        :i="item.i"
+        class="empty-widget-container"
+      >
+        <EmptyWidgetSlot @click="handleEmptySlotClick(item)" />
+        <PopoverMenu
+          :show="selectedEmptySlot && selectedEmptySlot.i === item.i && isWidgetSelectorVisible"
+          @close="closeWidgetSelector"
+          class="widget-selector-popover"
+        >
+          <template #content>
+            <WidgetSelector
+              @add-widget="handleAddWidget"
+              @remove-widget="dashboardLayoutStore.removeWidget"
+            />
+          </template>
+        </PopoverMenu>
       </grid-item>
     </grid-layout>
     <div v-else class="loading-placeholder">
@@ -185,11 +266,21 @@ const widgetComponents = {
   font-size: var(--font-size-xl);
   color: var(--color-text-subtle);
 }
+
+.empty-widget-container {
+  overflow: hidden;
+}
 </style>
 <style>
 /* vue-grid-layout-v3 optional styles */
 .vue-grid-layout {
   background: transparent;
+}
+.vue-grid-layout.is-editing {
+  background-image: linear-gradient(to right, var(--color-border-default) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--color-border-default) 1px, transparent 1px);
+  /* row-height is 30, margin is 10. col-num is 12, margin is 10 */
+  background-size: calc((100% - 110px) / 12) 40px;
 }
 .vue-grid-item:not(.vue-grid-placeholder) {
   background: var(--color-background-muted);
