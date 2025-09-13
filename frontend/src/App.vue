@@ -5,6 +5,7 @@ import AppSidebar from './components/layout/AppSidebar.vue';
 import DashboardHeader from './components/layout/DashboardHeader.vue';
 import MainLayout from './components/layout/MainLayout.vue';
 import ToastNotification from './components/ui/ToastNotification.vue';
+import SettingsModal from './components/settings/SettingsModal.vue';
 import { useUiStore } from './stores/uiStore';
 
 const uiStore = useUiStore();
@@ -44,6 +45,8 @@ const isPublicRoute = computed(() => route.meta.public);
 
     <!-- Toast Notification -->
     <ToastNotification />
+    <!-- Global Modals -->
+    <SettingsModal />
   </div>
 </template>
 

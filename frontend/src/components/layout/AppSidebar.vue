@@ -9,66 +9,77 @@
 <script setup>
 // --- IMPORTAZIONI ---
 import { RouterLink } from 'vue-router';
-// Importiamo lo store per la UI per controllare lo stato della sidebar.
 import { useUiStore } from '../../stores/uiStore';
+import { useAuthStore } from '../../stores/auth';
+import { computed } from 'vue';
 
 // --- STORE ---
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 
 // --- DATI DEL COMPONENTE ---
-const user = {
-  name: 'Mario Rossi',
-  initials: 'MR',
-  email: 'mario.rossi@example.com',
-};
+const user = computed(() => {
+  if (!authStore.user) {
+    return { name: 'Guest', initials: 'G', email: '' };
+  }
+  const email = authStore.user.email || '';
+  const name = authStore.user.user_metadata?.full_name || email.split('@')[0];
+  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  return { name, initials, email };
+});
 
 // Dati per i link di navigazione.
-// Usare un array rende più facile gestire l'aggiunta di icone in futuro.
 const navLinks = [
-  { to: '/', text: 'Dashboard', icon: 'D' },
-  { to: '/trades', text: 'Trades', icon: 'T' },
-  { to: '/analytics', text: 'Analytics', icon: 'A' },
-  { to: '#', text: 'Settings', icon: 'S' },
+  { to: '/', text: 'Dashboard', icon: 'D', type: 'link' },
+  { to: '/trades', text: 'Trades', icon: 'T', type: 'link' },
+  { to: '/analytics', text: 'Analytics', icon: 'A', type: 'link' },
+  { to: '#', text: 'Settings', icon: 'S', type: 'button', action: () => uiStore.openSettingsModal() },
 ];
+
+function handleItemClick(item) {
+  if (item.action) {
+    item.action();
+  }
+  uiStore.closeMobileMenu();
+}
 </script>
 
 <template>
-  <!--
-  Oltre a `is-collapsed` per desktop, aggiungiamo `is-mobile-open` per gestire
-  la visibilità su schermi piccoli come un overlay.
-  -->
   <aside class="sidebar" :class="{ 'is-collapsed': uiStore.isSidebarCollapsed, 'is-mobile-open': uiStore.isMobileMenuOpen }">
     <div class="sidebar-header">
       <span v-if="!uiStore.isSidebarCollapsed">TRZ</span>
       <span v-else>T</span>
-      <!-- Questo pulsante ora è nascosto su mobile, dove usiamo l'hamburger. -->
       <button @click="uiStore.toggleSidebar" class="toggle-button">
         &lt;
       </button>
     </div>
 
     <nav class="sidebar-nav">
-      <!--
-      Aggiungiamo un evento @click per chiudere il menu mobile quando si
-      seleziona un link, migliorando l'esperienza utente su mobile.
-      -->
-      <RouterLink
-        v-for="link in navLinks"
-        :key="link.text"
-        :to="link.to"
-        class="nav-item"
-        @click="uiStore.closeMobileMenu"
-      >
-        <span class="nav-icon">{{ link.icon }}</span>
-        <span v-if="!uiStore.isSidebarCollapsed" class="nav-text">{{ link.text }}</span>
-      </RouterLink>
+      <template v-for="link in navLinks" :key="link.text">
+        <RouterLink
+          v-if="link.type === 'link'"
+          :to="link.to"
+          class="nav-item"
+          @click="handleItemClick(link)"
+        >
+          <span class="nav-icon">{{ link.icon }}</span>
+          <span v-if="!uiStore.isSidebarCollapsed" class="nav-text">{{ link.text }}</span>
+        </RouterLink>
+        <button
+          v-else-if="link.type === 'button'"
+          class="nav-item"
+          @click="handleItemClick(link)"
+        >
+          <span class="nav-icon">{{ link.icon }}</span>
+          <span v-if="!uiStore.isSidebarCollapsed" class="nav-text">{{ link.text }}</span>
+        </button>
+      </template>
     </nav>
 
     <div class="sidebar-footer">
       <div class="avatar">
         {{ user.initials }}
       </div>
-      <!-- Le info dell'utente vengono mostrate solo se la sidebar non è collassata -->
       <div v-if="!uiStore.isSidebarCollapsed" class="user-info">
         <p class="user-name">{{ user.name }}</p>
         <p class="user-email">{{ user.email }}</p>

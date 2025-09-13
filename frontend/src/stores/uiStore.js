@@ -29,19 +29,8 @@ export const useUiStore = defineStore('ui', () => {
   });
 
   // --- LOGICA RESPONSIVE ---
-  /*
-    BEST PRACTICE: Sincronizzazione JS e CSS tramite Token
-    Per la logica responsiva in JavaScript (es. per sapere se siamo su mobile),
-    è fondamentale usare la stessa identica soglia (breakpoint) del nostro CSS.
-    Invece di scrivere un valore fisso (es. 768px), importiamo direttamente il
-    file JSON dei token e usiamo il valore del breakpoint `md`.
-    Questo garantisce che se un giorno modificheremo il token, la logica JS
-    si aggiornerà automaticamente insieme al CSS.
-  */
   const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
 
-  // Chiudiamo automaticamente il menu mobile se l'utente allarga la finestra
-  // passando dalla visuale mobile a quella desktop.
   watch(isMobile, (isNowMobile) => {
     if (!isNowMobile && isMobileMenuOpen.value) {
       closeMobileMenu();
@@ -64,7 +53,6 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   function toggleSidebar() {
-    // La sidebar collassabile funziona solo su schermi grandi.
     if (!isMobile.value) {
       isSidebarCollapsed.value = !isSidebarCollapsed.value;
     }
@@ -97,7 +85,7 @@ export const useUiStore = defineStore('ui', () => {
     notification.value = { show: true, message, type };
     notificationTimeout = setTimeout(() => {
       hideNotification();
-    }, 4000); // Hide after 4 seconds
+    }, 4000);
   }
 
   function hideNotification() {
@@ -109,8 +97,8 @@ export const useUiStore = defineStore('ui', () => {
   const isDailySummaryModalOpen = ref(false);
   const isWeeklySummaryModalOpen = ref(false);
   const isAddTradeModalOpen = ref(false);
+  const isSettingsModalOpen = ref(false);
 
-  // Salviamo lo stato della sidebar prima di aprire un modale
   let sidebarStateBeforeModal = false;
 
   function _openModal(modalStateRef) {
@@ -152,12 +140,20 @@ export const useUiStore = defineStore('ui', () => {
     _closeModal(isWeeklySummaryModalOpen);
   }
 
+  function openSettingsModal() {
+    _openModal(isSettingsModalOpen);
+  }
+
+  function closeSettingsModal() {
+    _closeModal(isSettingsModalOpen);
+  }
+
 
   // --- ESPORTAZIONE ---
   return {
     isSidebarCollapsed,
     isMobileMenuOpen,
-    isMobile, // Esportiamo lo stato reattivo
+    isMobile,
     visibleStatKeys,
     isWeeklySummaryVisible,
     isCalendarTradeCountVisible,
@@ -165,6 +161,7 @@ export const useUiStore = defineStore('ui', () => {
     isDailySummaryModalOpen,
     isWeeklySummaryModalOpen,
     isAddTradeModalOpen,
+    isSettingsModalOpen,
 
     toggleSidebar,
     toggleMobileMenu,
@@ -179,6 +176,8 @@ export const useUiStore = defineStore('ui', () => {
     closeWeeklySummaryModal,
     openAddTradeModal,
     closeAddTradeModal,
+    openSettingsModal,
+    closeSettingsModal,
 
     // Notifications
     notification,
