@@ -202,7 +202,7 @@ const widgetComponents = {
   background: transparent;
 }
 .vue-grid-layout.is-editing {
-  border: 2px dashed var(--color-border-default);
+  border: 2px dashed var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-lg);
   padding: var(--base-size-spacing-2);
 }
