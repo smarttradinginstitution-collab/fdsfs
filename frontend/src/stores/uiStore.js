@@ -9,6 +9,7 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import { useMediaQuery } from '@vueuse/core';
 import breakpointTokens from '../../tokens/base/layout/breakpoint.json';
+import { useDashboardLayoutStore } from './dashboardLayout';
 
 // Definiamo lo store usando la sintassi "Setup Store"
 export const useUiStore = defineStore('ui', () => {
@@ -84,22 +85,28 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   function toggleStatVisibility(key) {
+    const dashboardLayoutStore = useDashboardLayoutStore();
     const index = visibleStatKeys.value.indexOf(key);
     if (index === -1) {
       visibleStatKeys.value.push(key);
     } else {
       visibleStatKeys.value.splice(index, 1);
     }
+    dashboardLayoutStore.setDirty(true);
   }
 
   function moveStat({ oldIndex, newIndex }) {
+    const dashboardLayoutStore = useDashboardLayoutStore();
     const [item] = visibleStatKeys.value.splice(oldIndex, 1);
     visibleStatKeys.value.splice(newIndex, 0, item);
+    dashboardLayoutStore.setDirty(true);
   }
 
   function setVisibleStatKeys(keys) {
+    const dashboardLayoutStore = useDashboardLayoutStore();
     if (Array.isArray(keys)) {
       visibleStatKeys.value = keys;
+      dashboardLayoutStore.setDirty(true);
     }
   }
 

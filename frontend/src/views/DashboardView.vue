@@ -91,15 +91,14 @@ watch(
   { deep: true }
 );
 
-// Watch for changes in visible stats to trigger a layout save
+// Watch for the user finishing layout editing
 watch(
-  () => uiStore.visibleStatKeys,
-  (newValue, oldValue) => {
-    if (oldValue.length > 0) {
+  () => uiStore.isLayoutEditing,
+  (isEditing) => {
+    if (!isEditing && dashboardLayoutStore.isDirty) {
       dashboardLayoutStore.saveLayout();
     }
-  },
-  { deep: true }
+  }
 );
 </script>
 
