@@ -1,92 +1,48 @@
 # app/Infrastructure/db.py
 from __future__ import annotations
 
-import os
 import ssl
-import logging
-from pathlib import Path
-from typing import AsyncGenerator, Dict, Any
 import traceback
+from pathlib import Path
+from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
-from sqlalchemy.pool import NullPool
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
 Base = declarative_base()
-logger = logging.getLogger(__name__)
-
-# Base dir del progetto "backend" (db.py è in backend/app/Infrastructure/db.py)
-BACKEND_DIR = Path(__file__).resolve().parents[2]
-CERTS_DIR = BACKEND_DIR / "certs"
-
-
-def _resolve_path(p: str | None) -> Path | None:
-    if not p:
-        return None
-    path = Path(p)
-    return path if path.is_absolute() else (BACKEND_DIR / path)
-
-
-def _combine_bundles(certifi_path: Path, extra_path: Path, out_path: Path) -> Path:
-    """
-    Crea un bundle combinato: bundle di certifi + certificato/i extra (PEM).
-    Evita duplicati banali concatenando solo se il contenuto extra non è già presente.
-    """
-    data = certifi_path.read_bytes()
-    extra = extra_path.read_bytes()
-    if extra not in data:
-        data += b"\n" + extra
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_bytes(data)
-    return out_path
 
 
 def _make_ssl_context() -> dict:
     """
-    Per asyncpg serve connect_args={'ssl': <SSLContext|bool>}.
+    Costruisce il contesto SSL per asyncpg.
+    Modalità supportate (DB_SSL_CA_MODE):
+      - system         -> trust store di sistema (Windows/OS)
+      - certifi        -> solo bundle certifi
+      - custom         -> solo PEM indicato da SSL_CERT_FILE
+      - merge          -> certifi + custom
+      - system+custom  -> sistema + custom (utile in reti aziendali)
 
-    Modalità (via env):
-      - DB_SSL_VERIFY=false  -> disabilita verifica (solo test, MAI in prod)
-      - DB_SSL_CA_MODE=certifi -> usa solo certifi
-      - DB_SSL_CA_MODE=custom  -> usa solo SSL_CERT_FILE (percorso assoluto)
-      - DB_SSL_CA_MODE=merge   -> certifi + SSL_CERT_FILE
-
-    Logghiamo a stdout quali CA vengono caricati per debuggare facilmente.
+    Nota: usiamo sempre SSLContext(PROTOCOL_TLS_CLIENT) e abilitiamo TLS1.2+.
     """
-    from pathlib import Path
-
     if "+asyncpg" not in settings.DATABASE_URL:
         return {}
 
-    # bypass (solo per test locali)
+    # Dev bypass solo se non-prod e DB_SSL_VERIFY=false
     if settings.ENV != "prod" and not settings.DB_SSL_VERIFY:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-        print("[db] SSL: VERIFY DISABLED (solo dev)")
+        print("[db] SSL: VERIFY DISABLED (dev)")
         return {"ssl": ctx}
 
-    mode = (getattr(settings, "DB_SSL_CA_MODE", "certifi") or "certifi").lower()
-    custom_path = getattr(settings, "SSL_CERT_FILE", "") or ""
-    custom_abs = None
-
-    # Risolvi percorso del PEM relativo al progetto (backend/certs/corp-root.pem)
-    if custom_path:
-        base_dir = Path(__file__).resolve().parent.parent  # .../backend/app
-        # prova: se è relativo, riferisciti alla root del backend
-        p = Path(custom_path)
-        custom_abs = (base_dir.parent / p) if not p.is_absolute() else p
-        custom_abs = custom_abs.resolve()
+    mode = settings.DB_SSL_CA_MODE
+    custom_path = settings.resolve_path(settings.SSL_CERT_FILE) if settings.SSL_CERT_FILE else None
 
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    # forza TLS 1.2+
     if hasattr(ssl, "TLSVersion"):
         ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ctx.check_hostname = True
@@ -94,37 +50,51 @@ def _make_ssl_context() -> dict:
 
     loaded = []
 
-    # carica certifi
-    if mode in ("certifi", "merge"):
-        try:
-            import certifi  # type: ignore
-            cafile = certifi.where()
-            ctx.load_verify_locations(cafile=cafile)
-            loaded.append(f"certifi={cafile}")
-        except Exception as e:
-            print(f"[db] SSL: ERRORE nel caricare certifi: {e!r}")
+    def load_system():
+        # Store nativo (Windows/Mac/Linux)
+        ctx.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+        loaded.append("system")
 
-    # carica il tuo PEM
-    if mode in ("custom", "merge") and custom_abs:
-        if custom_abs.exists():
-            try:
-                ctx.load_verify_locations(cafile=str(custom_abs))
-                loaded.append(f"custom={custom_abs}")
-            except Exception as e:
-                print(f"[db] SSL: ERRORE nel caricare custom CA '{custom_abs}': {e!r}")
+    def load_certifi():
+        import certifi  # type: ignore
+        ctx.load_verify_locations(cafile=certifi.where())
+        loaded.append(f"certifi={certifi.where()}")
+
+    def load_custom(p: Path):
+        if not p.exists():
+            print(f"[db] SSL: custom CA NON TROVATO: {p}")
+            return
+        ctx.load_verify_locations(cafile=str(p))
+        loaded.append(f"custom={p}")
+
+    if mode == "system":
+        load_system()
+    elif mode == "certifi":
+        load_certifi()
+    elif mode == "custom":
+        if custom_path:
+            load_custom(custom_path)
         else:
-            print(f"[db] SSL: custom CA NON TROVATO: {custom_abs}")
+            print("[db] SSL: custom selezionato, ma SSL_CERT_FILE non impostato")
+    elif mode == "merge":
+        # storicamente: certifi + custom
+        load_certifi()
+        if custom_path:
+            load_custom(custom_path)
+    elif mode == "system+custom":
+        load_system()
+        if custom_path:
+            load_custom(custom_path)
 
     if not loaded:
-        # fallback di sicurezza: almeno il trust store di sistema
-        print("[db] SSL: nessun CA esplicito caricato, fallback store di sistema")
+        # Fallback sicuro
         ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+        print("[db] SSL: fallback a create_default_context() (nessun CA esplicito caricato)")
 
     print(f"[db] SSL: verify=ON, mode={mode}, loaded=({', '.join(loaded)})")
     return {"ssl": ctx}
 
 
-# Engine: con pool pre-ping e NullPool (compatibile con pooler esterni tipo pgBouncer/Supabase)
 engine = create_async_engine(
     str(settings.DATABASE_URL),
     echo=False,
@@ -133,21 +103,14 @@ engine = create_async_engine(
     poolclass=NullPool,
 )
 
-SessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
-        # Normalizza il fuso orario a UTC per coerenza lato DB
         await session.execute(text("SET TIME ZONE 'UTC'"))
         yield session
 
-
-# Utility opzionali
 
 async def check_connection() -> bool:
     try:
@@ -155,10 +118,10 @@ async def check_connection() -> bool:
             await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
-        # LOG verboso: mostra tipo, messaggio e stack
         print("[db:check_connection] ERROR:", repr(e))
         traceback.print_exc()
         return False
+
 
 async def dispose_engine() -> None:
     await engine.dispose()
