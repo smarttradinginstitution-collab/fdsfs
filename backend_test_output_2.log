@@ -1,0 +1,22 @@
+ImportError while loading conftest '/app/backend/conftest.py'.
+backend/conftest.py:6: in <module>
+    from app.main import app
+backend/app/main.py:7: in <module>
+    from app.Router.routes import router
+backend/app/Router/routes.py:11: in <module>
+    from app.Router.auth import require_roles, get_current_claims
+backend/app/Router/auth.py:9: in <module>
+    from app.Infrastructure.db import get_db
+backend/app/Infrastructure/db.py:17: in <module>
+    from app.config import settings
+backend/app/config.py:61: in <module>
+    settings = Settings()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic_settings/main.py:188: in __init__
+    super().__init__(
+E   pydantic_core._pydantic_core.ValidationError: 2 validation errors for Settings
+E   SUPABASE_PROJECT_URL
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.11/v/missing
+E   SUPABASE_KEY
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.11/v/missing

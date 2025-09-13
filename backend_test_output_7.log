@@ -1,0 +1,228 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.2.2, pluggy-1.6.0
+rootdir: /app
+plugins: asyncio-0.23.8, cov-5.0.0, anyio-4.10.0, mock-3.14.0
+asyncio: mode=Mode.STRICT
+collected 10 items
+
+backend/tests/controllers/test_trades_controller.py .                    [ 10%]
+backend/tests/controllers/test_user_dashboard_layout_controller.py FFFFF [ 60%]
+F                                                                        [ 70%]
+backend/tests/services/metrics/test_metrics_calculator.py ...            [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_get_layout_success ____________________________
+
+async_client = <async_generator object async_client at 0x7face1b42b20>
+authenticated_user = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7face25bae10>
+
+    @pytest.mark.asyncio
+    async def test_get_layout_success(async_client: AsyncClient, authenticated_user, mocker):
+        """Test successful retrieval of a dashboard layout."""
+        mock_response = UserDashboardLayoutRead(
+            id=uuid4(),
+            user_id=FAKE_USER_ID,
+            layout=FAKE_LAYOUT_DATA,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        mock_service = mocker.patch(
+            "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
+        )
+        mock_service.return_value.get_layout.return_value = mock_response
+
+>       response = await async_client.get("/api/v1/dashboard/layout")
+E       AttributeError: 'async_generator' object has no attribute 'get'
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:51: AttributeError
+__________________________ test_get_layout_not_found ___________________________
+
+async_client = <async_generator object async_client at 0x7face1bf04a0>
+authenticated_user = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7face1b55a00>
+
+    @pytest.mark.asyncio
+    async def test_get_layout_not_found(async_client: AsyncClient, authenticated_user, mocker):
+        """Test case where the layout is not found for the user (404)."""
+        mock_service = mocker.patch(
+            "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
+        )
+        mock_service.return_value.get_layout.return_value = None
+
+>       response = await async_client.get("/api/v1/dashboard/layout")
+E       AttributeError: 'async_generator' object has no attribute 'get'
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:67: AttributeError
+_______________________ test_get_layout_unauthenticated ________________________
+
+async_client = <async_generator object async_client at 0x7face1bf0e40>
+
+    @pytest.mark.asyncio
+    async def test_get_layout_unauthenticated(async_client: AsyncClient):
+        """Test that GET /layout requires authentication."""
+>       response = await async_client.get("/api/v1/dashboard/layout")
+E       AttributeError: 'async_generator' object has no attribute 'get'
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:74: AttributeError
+___________________________ test_save_layout_success ___________________________
+
+async_client = <async_generator object async_client at 0x7face1bf19a0>
+authenticated_user = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7face1a04590>
+
+    @pytest.mark.asyncio
+    async def test_save_layout_success(async_client: AsyncClient, authenticated_user, mocker):
+        """Test successful creation/update of a dashboard layout."""
+        mock_response = UserDashboardLayoutRead(
+            id=uuid4(),
+            user_id=FAKE_USER_ID,
+            layout=FAKE_LAYOUT_DATA,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        mock_service = mocker.patch(
+            "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
+        )
+        mock_service.return_value.save_layout.return_value = mock_response
+
+        payload = {"layout": FAKE_LAYOUT_DATA}
+>       response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+E       AttributeError: 'async_generator' object has no attribute 'put'
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:98: AttributeError
+_______________________ test_save_layout_invalid_payload _______________________
+
+async_client = <async_generator object async_client at 0x7face1bf2960>
+authenticated_user = None
+
+    @pytest.mark.asyncio
+    async def test_save_layout_invalid_payload(async_client: AsyncClient, authenticated_user):
+        """Test saving a layout with an invalid payload (422)."""
+        # Payload is invalid because `layout` should be a list of objects, not a string.
+        payload = {"layout": "invalid data"}
+>       response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+E       AttributeError: 'async_generator' object has no attribute 'put'
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:111: AttributeError
+_______________________ test_save_layout_unauthenticated _______________________
+
+async_client = <async_generator object async_client at 0x7face1bf33e0>
+
+    @pytest.mark.asyncio
+    async def test_save_layout_unauthenticated(async_client: AsyncClient):
+        """Test that PUT /layout requires authentication."""
+        payload = {"layout": FAKE_LAYOUT_DATA}
+>       response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+E       AttributeError: 'async_generator' object has no attribute 'put'
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:118: AttributeError
+=============================== warnings summary ===============================
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+  /home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success
+  /home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pytest_asyncio/plugin.py:761: DeprecationWarning: The event_loop fixture provided by pytest-asyncio has been redefined in
+  /app/backend/conftest.py:8
+  Replacing the event_loop fixture with a custom implementation is deprecated
+  and will lead to errors in the future.
+  If you want to request an asyncio event loop with a scope other than function
+  scope, use the "scope" argument to the asyncio mark when marking the tests.
+  If you want to return different types of event loops, use the event_loop_policy
+  fixture.
+
+    warnings.warn(
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:43: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:44: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    updated_at=datetime.utcnow(),
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:89: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:90: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    updated_at=datetime.utcnow(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Name                                                                 Stmts   Miss  Cover
+----------------------------------------------------------------------------------------
+backend/app/Controllers/__init__.py                                      0      0   100%
+backend/app/Controllers/auth_controller.py                              67     50    25%
+backend/app/Controllers/roles_controller.py                             33     21    36%
+backend/app/Controllers/trades_controller.py                           130     81    38%
+backend/app/Controllers/user_dashboard_layout_controller.py             21     10    52%
+backend/app/Controllers/user_roles_controller.py                        25     14    44%
+backend/app/Controllers/users_controller.py                             35     23    34%
+backend/app/Infrastructure/__init__.py                                   0      0   100%
+backend/app/Infrastructure/db.py                                        42     17    60%
+backend/app/Infrastructure/supabase_client.py                           11      5    55%
+backend/app/Infrastructure/supabase_service.py                          73     57    22%
+backend/app/Middleware/security_headers.py                              12      0   100%
+backend/app/Models/__init__.py                                           0      0   100%
+backend/app/Models/auth_user.py                                         44      0   100%
+backend/app/Models/role.py                                              13      0   100%
+backend/app/Models/tag.py                                               16      0   100%
+backend/app/Models/trade.py                                             37      0   100%
+backend/app/Models/trades_tags.py                                       15      0   100%
+backend/app/Models/user_dashboard_layout.py                             15      0   100%
+backend/app/Models/user_role.py                                         13      0   100%
+backend/app/Repositories/__init__.py                                     0      0   100%
+backend/app/Repositories/auth_user_repository.py                        35     21    40%
+backend/app/Repositories/role_repository.py                             35     23    34%
+backend/app/Repositories/tag_repository.py                              27     27     0%
+backend/app/Repositories/trade_repository.py                           148    124    16%
+backend/app/Repositories/user_dashboard_layout_repository.py            23     10    57%
+backend/app/Repositories/user_role_repository.py                        38     23    39%
+backend/app/Router/__init__.py                                           0      0   100%
+backend/app/Router/auth.py                                              35     22    37%
+backend/app/Router/routes.py                                            79      5    94%
+backend/app/Schemas/__init__.py                                          0      0   100%
+backend/app/Schemas/auth_session.py                                     25      0   100%
+backend/app/Schemas/auth_user.py                                        25      0   100%
+backend/app/Schemas/role.py                                             14      0   100%
+backend/app/Schemas/stats.py                                            50      0   100%
+backend/app/Schemas/tag.py                                              17     17     0%
+backend/app/Schemas/trade.py                                            81      0   100%
+backend/app/Schemas/trades_tags.py                                      15     15     0%
+backend/app/Schemas/user_dashboard_layout.py                            30      0   100%
+backend/app/Schemas/user_role.py                                        10      0   100%
+backend/app/Schemas/vantage_score.py                                    11      0   100%
+backend/app/Services/__init__.py                                         0      0   100%
+backend/app/Services/metrics/metrics_calculator.py                     464    170    63%
+backend/app/Services/role_service.py                                    17      5    71%
+backend/app/Services/user_dashboard_layout_service.py                   19      9    53%
+backend/app/Services/user_service.py                                    29     15    48%
+backend/app/Utils/__init__.py                                            0      0   100%
+backend/app/Utils/pagination.py                                          2      2     0%
+backend/app/__init__.py                                                  0      0   100%
+backend/app/config.py                                                   38      2    95%
+backend/app/main.py                                                     19      1    95%
+backend/conftest.py                                                     15      2    87%
+backend/tests/controllers/test_trades_controller.py                     43      1    98%
+backend/tests/controllers/test_user_dashboard_layout_controller.py      59     14    76%
+backend/tests/services/metrics/test_metrics_calculator.py               44      0   100%
+----------------------------------------------------------------------------------------
+TOTAL                                                                 2049    786    62%
+
+=========================== short test summary info ============================
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_not_found
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_unauthenticated
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_invalid_payload
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_unauthenticated
+=================== 6 failed, 4 passed, 11 warnings in 0.78s ===================

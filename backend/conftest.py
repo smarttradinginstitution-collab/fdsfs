@@ -13,7 +13,7 @@ def event_loop():
     yield loop
     loop.close()
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """
     Fixture for an async client to make requests to the app.
