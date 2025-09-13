@@ -244,11 +244,9 @@ export const useTradesStore = defineStore('trades', {
           const isoWeekKey = getISOWeekString(new Date(firstDayOfWeek.fullDate));
           const backendSummary = this.processedStats.weekly_totals[isoWeekKey];
           if (backendSummary) {
-            summary = {
-              weekNumber: parseInt(isoWeekKey.split('-W')[1], 10),
-              totalPnl: backendSummary.total_pnl,
-              tradingDaysCount: backendSummary.trading_days,
-            };
+            // Mantieni il weekNumber calcolato localmente, aggiorna solo i dati dal backend.
+            summary.totalPnl = backendSummary.total_pnl;
+            summary.tradingDaysCount = backendSummary.trading_days;
           }
         }
         weeklySummaries.push(summary);
