@@ -27,7 +27,8 @@ const visibleStats = computed(() => {
 <style scoped>
 .stats-grid-widget {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* This creates a 5-column grid with equal-width columns, matching the design */
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--semantic-size-stack-md);
   width: 100%;
   height: 100%;

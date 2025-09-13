@@ -19,23 +19,23 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
      * The `i` property is a unique identifier for each widget.
      */
     defaultLayout: [
-      { x: 0, y: 0, w: 12, h: 2, i: 'stats' },
-      { x: 0, y: 2, w: 4, h: 5, i: 'vantageScore' },
-      { x: 4, y: 2, w: 4, h: 5, i: 'rrDistribution' },
-      { x: 8, y: 2, w: 4, h: 5, i: 'cumulativePnl' },
-      { x: 0, y: 7, w: 8, h: 7, i: 'calendar' },
-      { x: 8, y: 7, w: 4, h: 7, i: 'recentTrades' },
+      { x: 0, y: 0, w: 12, h: 4, i: 'stats' },
+      { x: 0, y: 4, w: 3, h: 9, i: 'vantageScore' },
+      { x: 3, y: 4, w: 5, h: 9, i: 'cumulativePnl' },
+      { x: 8, y: 4, w: 4, h: 9, i: 'rrDistribution' },
+      { x: 0, y: 13, w: 4, h: 12, i: 'recentTrades' },
+      { x: 4, y: 13, w: 8, h: 12, i: 'calendar' },
     ],
     /**
      * A list of all available widgets that can be added to the dashboard.
      */
     availableWidgets: [
-      { i: 'stats', name: 'Statistics Cards', w: 12, h: 2 },
-      { i: 'vantageScore', name: 'Vantage Score', w: 4, h: 5 },
-      { i: 'rrDistribution', name: 'R:R Distribution', w: 4, h: 5 },
-      { i: 'cumulativePnl', name: 'Cumulative P&L', w: 4, h: 5 },
-      { i: 'calendar', name: 'Trading Calendar', w: 8, h: 7 },
-      { i: 'recentTrades', name: 'Recent Trades', w: 4, h: 7 },
+      { i: 'stats', name: 'Statistics Cards', w: 12, h: 4 },
+      { i: 'vantageScore', name: 'Vantage Score', w: 3, h: 9 },
+      { i: 'cumulativePnl', name: 'Cumulative P&L', w: 5, h: 9 },
+      { i: 'rrDistribution', name: 'R:R Distribution', w: 4, h: 9 },
+      { i: 'recentTrades', name: 'Recent Trades', w: 4, h: 12 },
+      { i: 'calendar', name: 'Trading Calendar', w: 8, h: 12 },
     ],
   }),
 
