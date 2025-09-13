@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, watch, ref } from 'vue';
 import { GridLayout, GridItem } from 'vue-grid-layout-v3';
 
 // Import all widgets
