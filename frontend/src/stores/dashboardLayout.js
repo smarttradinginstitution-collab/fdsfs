@@ -110,7 +110,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
 
       try {
         await apiClient.put('/api/v1/dashboard/layout', { layout: fullLayout });
-      } catch (error)
+      } catch (error) {
         uiStore.showNotification({
           message: 'Failed to save dashboard layout.',
           type: 'error',
