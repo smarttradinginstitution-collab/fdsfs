@@ -202,10 +202,9 @@ const widgetComponents = {
   background: transparent;
 }
 .vue-grid-layout.is-editing {
-  background-image: linear-gradient(to right, var(--color-border-default) 1px, transparent 1px),
-                    linear-gradient(to bottom, var(--color-border-default) 1px, transparent 1px);
-  /* row-height is 30, margin is 10. col-num is 12, margin is 10 */
-  background-size: calc((100% - 110px) / 12) 40px;
+  border: 2px dashed var(--color-border-default);
+  border-radius: var(--semantic-border-radius-lg);
+  padding: var(--base-size-spacing-2);
 }
 .vue-grid-item:not(.vue-grid-placeholder) {
   background: var(--color-background-muted);
