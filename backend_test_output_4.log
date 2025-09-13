@@ -1,0 +1,89 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.2.2, pluggy-1.6.0
+rootdir: /app
+plugins: asyncio-0.23.8, cov-5.0.0, anyio-4.10.0, mock-3.14.0
+asyncio: mode=Mode.STRICT
+collected 4 items / 1 error
+
+==================================== ERRORS ====================================
+_ ERROR collecting backend/tests/controllers/test_user_dashboard_layout_controller.py _
+backend/tests/controllers/test_user_dashboard_layout_controller.py:21: in <module>
+    async def authenticated_client() -> AsyncGenerator[AsyncClient, None]:
+E   NameError: name 'AsyncGenerator' is not defined
+=============================== warnings summary ===============================
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+  /home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Name                                                                 Stmts   Miss  Cover
+----------------------------------------------------------------------------------------
+backend/app/Controllers/__init__.py                                      0      0   100%
+backend/app/Controllers/auth_controller.py                              67     50    25%
+backend/app/Controllers/roles_controller.py                             33     21    36%
+backend/app/Controllers/trades_controller.py                           130    101    22%
+backend/app/Controllers/user_dashboard_layout_controller.py             21     10    52%
+backend/app/Controllers/user_roles_controller.py                        25     14    44%
+backend/app/Controllers/users_controller.py                             35     23    34%
+backend/app/Infrastructure/__init__.py                                   0      0   100%
+backend/app/Infrastructure/db.py                                        42     17    60%
+backend/app/Infrastructure/supabase_client.py                           11      5    55%
+backend/app/Infrastructure/supabase_service.py                          73     57    22%
+backend/app/Middleware/security_headers.py                              12      6    50%
+backend/app/Models/__init__.py                                           0      0   100%
+backend/app/Models/auth_user.py                                         44      0   100%
+backend/app/Models/role.py                                              13      0   100%
+backend/app/Models/tag.py                                               16      0   100%
+backend/app/Models/trade.py                                             37      0   100%
+backend/app/Models/trades_tags.py                                       15      0   100%
+backend/app/Models/user_dashboard_layout.py                             15      0   100%
+backend/app/Models/user_role.py                                         13      0   100%
+backend/app/Repositories/__init__.py                                     0      0   100%
+backend/app/Repositories/auth_user_repository.py                        35     21    40%
+backend/app/Repositories/role_repository.py                             35     23    34%
+backend/app/Repositories/tag_repository.py                              27     27     0%
+backend/app/Repositories/trade_repository.py                           148    125    16%
+backend/app/Repositories/user_dashboard_layout_repository.py            23     10    57%
+backend/app/Repositories/user_role_repository.py                        38     23    39%
+backend/app/Router/__init__.py                                           0      0   100%
+backend/app/Router/auth.py                                              35     22    37%
+backend/app/Router/routes.py                                            79      5    94%
+backend/app/Schemas/__init__.py                                          0      0   100%
+backend/app/Schemas/auth_session.py                                     25      0   100%
+backend/app/Schemas/auth_user.py                                        25      0   100%
+backend/app/Schemas/role.py                                             14      0   100%
+backend/app/Schemas/stats.py                                            50      0   100%
+backend/app/Schemas/tag.py                                              17     17     0%
+backend/app/Schemas/trade.py                                            81      0   100%
+backend/app/Schemas/trades_tags.py                                      15     15     0%
+backend/app/Schemas/user_dashboard_layout.py                            21      0   100%
+backend/app/Schemas/user_role.py                                        10      0   100%
+backend/app/Schemas/vantage_score.py                                    11      0   100%
+backend/app/Services/__init__.py                                         0      0   100%
+backend/app/Services/metrics/metrics_calculator.py                     464    442     5%
+backend/app/Services/role_service.py                                    17      5    71%
+backend/app/Services/user_dashboard_layout_service.py                   19      9    53%
+backend/app/Services/user_service.py                                    29     15    48%
+backend/app/Utils/__init__.py                                            0      0   100%
+backend/app/Utils/pagination.py                                          2      2     0%
+backend/app/__init__.py                                                  0      0   100%
+backend/app/config.py                                                   38      2    95%
+backend/app/main.py                                                     19      1    95%
+backend/conftest.py                                                     15      6    60%
+backend/tests/controllers/test_trades_controller.py                     43     25    42%
+backend/tests/controllers/test_user_dashboard_layout_controller.py      69     57    17%
+backend/tests/services/metrics/test_metrics_calculator.py               44     36    18%
+----------------------------------------------------------------------------------------
+TOTAL                                                                 2050   1192    42%
+
+=========================== short test summary info ============================
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py - Na...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+========================= 6 warnings, 1 error in 0.77s =========================

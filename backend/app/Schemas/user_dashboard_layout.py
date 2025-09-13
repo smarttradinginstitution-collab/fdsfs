@@ -7,8 +7,18 @@ from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
 
+from pydantic import Field
+
 class WidgetItem(BaseModel):
     i: str
+    x: int
+    y: int
+    w: int
+    h: int
+    component: str
+    isDraggable: bool | None = Field(default=None)
+    isResizable: bool | None = Field(default=None)
+    static: bool | None = Field(default=None)
 
 class ZonedLayout(BaseModel):
     stats: List[WidgetItem]

@@ -1,0 +1,2483 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.2.2, pluggy-1.6.0
+rootdir: /app
+configfile: pytest.ini
+plugins: asyncio-0.23.8, cov-5.0.0, anyio-4.10.0, mock-3.14.0
+asyncio: mode=Mode.STRICT
+collected 16 items
+
+backend/tests/controllers/test_trades_controller.py .                    [  6%]
+backend/tests/controllers/test_user_dashboard_layout_controller.py FF.FF [ 37%]
+.EEEEEE                                                                  [ 81%]
+backend/tests/services/metrics/test_metrics_calculator.py ...            [100%]
+
+==================================== ERRORS ====================================
+_______________ ERROR at setup of test_get_layout_success[trio] ________________
+
+asynclib_name = 'trio'
+
+    def get_async_backend(asynclib_name: str | None = None) -> type[AsyncBackend]:
+        if asynclib_name is None:
+            asynclib_name = sniffio.current_async_library()
+
+        # We use our own dict instead of sys.modules to get the already imported back-end
+        # class because the appropriate modules in sys.modules could potentially be only
+        # partially initialized
+        try:
+>           return loaded_backends[asynclib_name]
+E           KeyError: 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:162: KeyError
+
+During handling of the above exception, another exception occurred:
+
+anyio_backend = 'trio'
+request = <SubRequest 'async_client' for <Function test_get_layout_success[trio]>>
+args = (), kwargs = {}, local_func = <function async_client at 0x7f6cc3821e40>
+backend_name = 'trio', backend_options = {}
+
+    def wrapper(
+        *args: Any, anyio_backend: Any, request: SubRequest, **kwargs: Any
+    ) -> Any:
+        # Rebind any fixture methods to the request instance
+        if (
+            request.instance
+            and ismethod(func)
+            and type(func.__self__) is type(request.instance)
+        ):
+            local_func = func.__func__.__get__(request.instance)
+        else:
+            local_func = func
+
+        backend_name, backend_options = extract_backend_and_options(anyio_backend)
+        if has_backend_arg:
+            kwargs["anyio_backend"] = anyio_backend
+
+        if has_request_arg:
+            kwargs["request"] = request
+
+>       with get_runner(backend_name, backend_options) as runner:
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:43: in get_runner
+    asynclib = get_async_backend(backend_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:164: in get_async_backend
+    module = import_module(f"anyio._backends._{asynclib_name}")
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+
+    import array
+    import math
+    import os
+    import socket
+    import sys
+    import types
+    import weakref
+    from collections.abc import (
+        AsyncGenerator,
+        AsyncIterator,
+        Awaitable,
+        Callable,
+        Collection,
+        Coroutine,
+        Iterable,
+        Sequence,
+    )
+    from concurrent.futures import Future
+    from contextlib import AbstractContextManager
+    from dataclasses import dataclass
+    from functools import partial
+    from io import IOBase
+    from os import PathLike
+    from signal import Signals
+    from socket import AddressFamily, SocketKind
+    from types import TracebackType
+    from typing import (
+        IO,
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        NoReturn,
+        TypeVar,
+        cast,
+        overload,
+    )
+
+>   import trio.from_thread
+E   ModuleNotFoundError: No module named 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_trio.py:40: ModuleNotFoundError
+______________ ERROR at setup of test_get_layout_not_found[trio] _______________
+
+asynclib_name = 'trio'
+
+    def get_async_backend(asynclib_name: str | None = None) -> type[AsyncBackend]:
+        if asynclib_name is None:
+            asynclib_name = sniffio.current_async_library()
+
+        # We use our own dict instead of sys.modules to get the already imported back-end
+        # class because the appropriate modules in sys.modules could potentially be only
+        # partially initialized
+        try:
+>           return loaded_backends[asynclib_name]
+E           KeyError: 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:162: KeyError
+
+During handling of the above exception, another exception occurred:
+
+anyio_backend = 'trio'
+request = <SubRequest 'async_client' for <Function test_get_layout_not_found[trio]>>
+args = (), kwargs = {}, local_func = <function async_client at 0x7f6cc3821e40>
+backend_name = 'trio', backend_options = {}
+
+    def wrapper(
+        *args: Any, anyio_backend: Any, request: SubRequest, **kwargs: Any
+    ) -> Any:
+        # Rebind any fixture methods to the request instance
+        if (
+            request.instance
+            and ismethod(func)
+            and type(func.__self__) is type(request.instance)
+        ):
+            local_func = func.__func__.__get__(request.instance)
+        else:
+            local_func = func
+
+        backend_name, backend_options = extract_backend_and_options(anyio_backend)
+        if has_backend_arg:
+            kwargs["anyio_backend"] = anyio_backend
+
+        if has_request_arg:
+            kwargs["request"] = request
+
+>       with get_runner(backend_name, backend_options) as runner:
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:43: in get_runner
+    asynclib = get_async_backend(backend_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:164: in get_async_backend
+    module = import_module(f"anyio._backends._{asynclib_name}")
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+
+    import array
+    import math
+    import os
+    import socket
+    import sys
+    import types
+    import weakref
+    from collections.abc import (
+        AsyncGenerator,
+        AsyncIterator,
+        Awaitable,
+        Callable,
+        Collection,
+        Coroutine,
+        Iterable,
+        Sequence,
+    )
+    from concurrent.futures import Future
+    from contextlib import AbstractContextManager
+    from dataclasses import dataclass
+    from functools import partial
+    from io import IOBase
+    from os import PathLike
+    from signal import Signals
+    from socket import AddressFamily, SocketKind
+    from types import TracebackType
+    from typing import (
+        IO,
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        NoReturn,
+        TypeVar,
+        cast,
+        overload,
+    )
+
+>   import trio.from_thread
+E   ModuleNotFoundError: No module named 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_trio.py:40: ModuleNotFoundError
+___________ ERROR at setup of test_get_layout_unauthenticated[trio] ____________
+
+asynclib_name = 'trio'
+
+    def get_async_backend(asynclib_name: str | None = None) -> type[AsyncBackend]:
+        if asynclib_name is None:
+            asynclib_name = sniffio.current_async_library()
+
+        # We use our own dict instead of sys.modules to get the already imported back-end
+        # class because the appropriate modules in sys.modules could potentially be only
+        # partially initialized
+        try:
+>           return loaded_backends[asynclib_name]
+E           KeyError: 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:162: KeyError
+
+During handling of the above exception, another exception occurred:
+
+anyio_backend = 'trio'
+request = <SubRequest 'async_client' for <Function test_get_layout_unauthenticated[trio]>>
+args = (), kwargs = {}, local_func = <function async_client at 0x7f6cc3821e40>
+backend_name = 'trio', backend_options = {}
+
+    def wrapper(
+        *args: Any, anyio_backend: Any, request: SubRequest, **kwargs: Any
+    ) -> Any:
+        # Rebind any fixture methods to the request instance
+        if (
+            request.instance
+            and ismethod(func)
+            and type(func.__self__) is type(request.instance)
+        ):
+            local_func = func.__func__.__get__(request.instance)
+        else:
+            local_func = func
+
+        backend_name, backend_options = extract_backend_and_options(anyio_backend)
+        if has_backend_arg:
+            kwargs["anyio_backend"] = anyio_backend
+
+        if has_request_arg:
+            kwargs["request"] = request
+
+>       with get_runner(backend_name, backend_options) as runner:
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:43: in get_runner
+    asynclib = get_async_backend(backend_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:164: in get_async_backend
+    module = import_module(f"anyio._backends._{asynclib_name}")
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+
+    import array
+    import math
+    import os
+    import socket
+    import sys
+    import types
+    import weakref
+    from collections.abc import (
+        AsyncGenerator,
+        AsyncIterator,
+        Awaitable,
+        Callable,
+        Collection,
+        Coroutine,
+        Iterable,
+        Sequence,
+    )
+    from concurrent.futures import Future
+    from contextlib import AbstractContextManager
+    from dataclasses import dataclass
+    from functools import partial
+    from io import IOBase
+    from os import PathLike
+    from signal import Signals
+    from socket import AddressFamily, SocketKind
+    from types import TracebackType
+    from typing import (
+        IO,
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        NoReturn,
+        TypeVar,
+        cast,
+        overload,
+    )
+
+>   import trio.from_thread
+E   ModuleNotFoundError: No module named 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_trio.py:40: ModuleNotFoundError
+_______________ ERROR at setup of test_save_layout_success[trio] _______________
+
+asynclib_name = 'trio'
+
+    def get_async_backend(asynclib_name: str | None = None) -> type[AsyncBackend]:
+        if asynclib_name is None:
+            asynclib_name = sniffio.current_async_library()
+
+        # We use our own dict instead of sys.modules to get the already imported back-end
+        # class because the appropriate modules in sys.modules could potentially be only
+        # partially initialized
+        try:
+>           return loaded_backends[asynclib_name]
+E           KeyError: 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:162: KeyError
+
+During handling of the above exception, another exception occurred:
+
+anyio_backend = 'trio'
+request = <SubRequest 'async_client' for <Function test_save_layout_success[trio]>>
+args = (), kwargs = {}, local_func = <function async_client at 0x7f6cc3821e40>
+backend_name = 'trio', backend_options = {}
+
+    def wrapper(
+        *args: Any, anyio_backend: Any, request: SubRequest, **kwargs: Any
+    ) -> Any:
+        # Rebind any fixture methods to the request instance
+        if (
+            request.instance
+            and ismethod(func)
+            and type(func.__self__) is type(request.instance)
+        ):
+            local_func = func.__func__.__get__(request.instance)
+        else:
+            local_func = func
+
+        backend_name, backend_options = extract_backend_and_options(anyio_backend)
+        if has_backend_arg:
+            kwargs["anyio_backend"] = anyio_backend
+
+        if has_request_arg:
+            kwargs["request"] = request
+
+>       with get_runner(backend_name, backend_options) as runner:
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:43: in get_runner
+    asynclib = get_async_backend(backend_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:164: in get_async_backend
+    module = import_module(f"anyio._backends._{asynclib_name}")
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+
+    import array
+    import math
+    import os
+    import socket
+    import sys
+    import types
+    import weakref
+    from collections.abc import (
+        AsyncGenerator,
+        AsyncIterator,
+        Awaitable,
+        Callable,
+        Collection,
+        Coroutine,
+        Iterable,
+        Sequence,
+    )
+    from concurrent.futures import Future
+    from contextlib import AbstractContextManager
+    from dataclasses import dataclass
+    from functools import partial
+    from io import IOBase
+    from os import PathLike
+    from signal import Signals
+    from socket import AddressFamily, SocketKind
+    from types import TracebackType
+    from typing import (
+        IO,
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        NoReturn,
+        TypeVar,
+        cast,
+        overload,
+    )
+
+>   import trio.from_thread
+E   ModuleNotFoundError: No module named 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_trio.py:40: ModuleNotFoundError
+___________ ERROR at setup of test_save_layout_invalid_payload[trio] ___________
+
+asynclib_name = 'trio'
+
+    def get_async_backend(asynclib_name: str | None = None) -> type[AsyncBackend]:
+        if asynclib_name is None:
+            asynclib_name = sniffio.current_async_library()
+
+        # We use our own dict instead of sys.modules to get the already imported back-end
+        # class because the appropriate modules in sys.modules could potentially be only
+        # partially initialized
+        try:
+>           return loaded_backends[asynclib_name]
+E           KeyError: 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:162: KeyError
+
+During handling of the above exception, another exception occurred:
+
+anyio_backend = 'trio'
+request = <SubRequest 'async_client' for <Function test_save_layout_invalid_payload[trio]>>
+args = (), kwargs = {}, local_func = <function async_client at 0x7f6cc3821e40>
+backend_name = 'trio', backend_options = {}
+
+    def wrapper(
+        *args: Any, anyio_backend: Any, request: SubRequest, **kwargs: Any
+    ) -> Any:
+        # Rebind any fixture methods to the request instance
+        if (
+            request.instance
+            and ismethod(func)
+            and type(func.__self__) is type(request.instance)
+        ):
+            local_func = func.__func__.__get__(request.instance)
+        else:
+            local_func = func
+
+        backend_name, backend_options = extract_backend_and_options(anyio_backend)
+        if has_backend_arg:
+            kwargs["anyio_backend"] = anyio_backend
+
+        if has_request_arg:
+            kwargs["request"] = request
+
+>       with get_runner(backend_name, backend_options) as runner:
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:43: in get_runner
+    asynclib = get_async_backend(backend_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:164: in get_async_backend
+    module = import_module(f"anyio._backends._{asynclib_name}")
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+
+    import array
+    import math
+    import os
+    import socket
+    import sys
+    import types
+    import weakref
+    from collections.abc import (
+        AsyncGenerator,
+        AsyncIterator,
+        Awaitable,
+        Callable,
+        Collection,
+        Coroutine,
+        Iterable,
+        Sequence,
+    )
+    from concurrent.futures import Future
+    from contextlib import AbstractContextManager
+    from dataclasses import dataclass
+    from functools import partial
+    from io import IOBase
+    from os import PathLike
+    from signal import Signals
+    from socket import AddressFamily, SocketKind
+    from types import TracebackType
+    from typing import (
+        IO,
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        NoReturn,
+        TypeVar,
+        cast,
+        overload,
+    )
+
+>   import trio.from_thread
+E   ModuleNotFoundError: No module named 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_trio.py:40: ModuleNotFoundError
+___________ ERROR at setup of test_save_layout_unauthenticated[trio] ___________
+
+asynclib_name = 'trio'
+
+    def get_async_backend(asynclib_name: str | None = None) -> type[AsyncBackend]:
+        if asynclib_name is None:
+            asynclib_name = sniffio.current_async_library()
+
+        # We use our own dict instead of sys.modules to get the already imported back-end
+        # class because the appropriate modules in sys.modules could potentially be only
+        # partially initialized
+        try:
+>           return loaded_backends[asynclib_name]
+E           KeyError: 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:162: KeyError
+
+During handling of the above exception, another exception occurred:
+
+anyio_backend = 'trio'
+request = <SubRequest 'async_client' for <Function test_save_layout_unauthenticated[trio]>>
+args = (), kwargs = {}, local_func = <function async_client at 0x7f6cc3821e40>
+backend_name = 'trio', backend_options = {}
+
+    def wrapper(
+        *args: Any, anyio_backend: Any, request: SubRequest, **kwargs: Any
+    ) -> Any:
+        # Rebind any fixture methods to the request instance
+        if (
+            request.instance
+            and ismethod(func)
+            and type(func.__self__) is type(request.instance)
+        ):
+            local_func = func.__func__.__get__(request.instance)
+        else:
+            local_func = func
+
+        backend_name, backend_options = extract_backend_and_options(anyio_backend)
+        if has_backend_arg:
+            kwargs["anyio_backend"] = anyio_backend
+
+        if has_request_arg:
+            kwargs["request"] = request
+
+>       with get_runner(backend_name, backend_options) as runner:
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py:43: in get_runner
+    asynclib = get_async_backend(backend_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_core/_eventloop.py:164: in get_async_backend
+    module = import_module(f"anyio._backends._{asynclib_name}")
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+
+    import array
+    import math
+    import os
+    import socket
+    import sys
+    import types
+    import weakref
+    from collections.abc import (
+        AsyncGenerator,
+        AsyncIterator,
+        Awaitable,
+        Callable,
+        Collection,
+        Coroutine,
+        Iterable,
+        Sequence,
+    )
+    from concurrent.futures import Future
+    from contextlib import AbstractContextManager
+    from dataclasses import dataclass
+    from functools import partial
+    from io import IOBase
+    from os import PathLike
+    from signal import Signals
+    from socket import AddressFamily, SocketKind
+    from types import TracebackType
+    from typing import (
+        IO,
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        NoReturn,
+        TypeVar,
+        cast,
+        overload,
+    )
+
+>   import trio.from_thread
+E   ModuleNotFoundError: No module named 'trio'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_trio.py:40: ModuleNotFoundError
+=================================== FAILURES ===================================
+_______________________ test_get_layout_success[asyncio] _______________________
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 183, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 341, in from_call
+    |     result: Optional[TResult] = func()
+    |                                 ^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 241, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 87, in pytest_runtest_call
+    |     yield from thread_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 63, in thread_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 90, in pytest_runtest_call
+    |     yield from unraisable_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 65, in unraisable_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 850, in pytest_runtest_call
+    |     yield from self._runtest_for(item, "call")
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 833, in _runtest_for
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/capture.py", line 878, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/skipping.py", line 257, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 183, in pytest_runtest_call
+    |     raise e
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 173, in pytest_runtest_call
+    |     item.runtest()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py", line 1632, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py", line 160, in pytest_pyfunc_call
+    |     runner.run_test(pyfuncitem.obj, testargs)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2285, in run_test
+    |     self._raise_async_exceptions()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2189, in _raise_async_exceptions
+    |     raise exceptions[0]
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2279, in run_test
+    |     self.get_loop().run_until_complete(
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    |     return future.result()
+    |            ^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2239, in _call_in_runner_task
+    |     return await future
+    |            ^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2206, in _run_tests_and_fixtures
+    |     retval = await coro
+    |              ^^^^^^^^^^
+    |   File "/app/backend/tests/controllers/test_user_dashboard_layout_controller.py", line 51, in test_get_layout_success
+    |     response = await async_client.get("/api/v1/dashboard/layout")
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1814, in get
+    |     return await self.request(
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1585, in request
+    |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1674, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1702, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1739, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1776, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py", line 157, in handle_async_request
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 182, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Middleware/security_headers.py", line 10, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py", line 292, in app
+    |     solved_result = await solve_dependencies(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 634, in solve_dependencies
+    |     solved = await solve_generator(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 560, in solve_generator
+    |     return await stack.enter_async_context(cm)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 659, in enter_async_context
+    |     result = await _enter(cm)
+    |              ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 210, in __aenter__
+    |     return await anext(self.gen)
+    |            ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Infrastructure/db.py", line 77, in get_db
+    |     await session.execute(text("SET TIME ZONE 'UTC'"))
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    |     result = await greenlet_spawn(
+    |              ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 190, in greenlet_spawn
+    |     result = context.switch(*args, **kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    |     return self._execute_internal(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    |     conn = self._connection_for_bind(bind)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    |     return trans._connection_for_bind(engine, execution_options)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in _connection_for_bind
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    |     conn = bind.connect()
+    |            ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3277, in connect
+    |     return self._connection_cls(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    |     self._dbapi_connection = engine.raw_connection()
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+    |     return self.pool.connect()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+    |     return _ConnectionFairy._checkout(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    |     fairy = _ConnectionRecord.checkout(pool)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+    |     rec = pool._do_get()
+    |           ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 306, in _do_get
+    |     return self._create_connection()
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+    |     return _ConnectionRecord(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+    |     self.__connect()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+    |     with util.safe_reraise():
+    |          ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    |     raise exc_value.with_traceback(exc_tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+    |     self.dbapi_connection = connection = pool._invoke_creator(self)
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+    |     return dialect.connect(*cargs, **cparams)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+    |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 964, in connect
+    |     await_only(creator_fn(*arg, **kw)),
+    |                ^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: connect() got an unexpected keyword argument 'sslmode'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+async_client = <httpx.AsyncClient object at 0x7f6cc377f320>
+authenticated_user = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f6cc2d554c0>
+
+    @pytest.mark.anyio
+    async def test_get_layout_success(async_client: AsyncClient, authenticated_user, mocker):
+        """Test successful retrieval of a dashboard layout."""
+        mock_response = UserDashboardLayoutRead(
+            id=uuid4(),
+            user_id=FAKE_USER_ID,
+            layout=FAKE_LAYOUT_DATA,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        mock_service = mocker.patch(
+            "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
+        )
+        mock_service.return_value.get_layout.return_value = mock_response
+
+>       response = await async_client.get("/api/v1/dashboard/layout")
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:51:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1814: in get
+    return await self.request(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1585: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1674: in send
+    response = await self._send_handling_auth(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1702: in _send_handling_auth
+    response = await self._send_handling_redirects(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1739: in _send_handling_redirects
+    response = await self._send_single_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1776: in _send_single_request
+    response = await transport.handle_async_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py:157: in handle_async_request
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:182: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:158: in __exit__
+    self.gen.throw(value)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py:85: in collapse_excgroups
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:184: in __call__
+    response = await self.dispatch_func(request, call_next)
+backend/app/Middleware/security_headers.py:10: in dispatch
+    response = await call_next(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:159: in call_next
+    raise app_exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:78: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:75: in app
+    response = await f(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py:292: in app
+    solved_result = await solve_dependencies(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:634: in solve_dependencies
+    solved = await solve_generator(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:560: in solve_generator
+    return await stack.enter_async_context(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:659: in enter_async_context
+    result = await _enter(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+backend/app/Infrastructure/db.py:77: in get_db
+    await session.execute(text("SET TIME ZONE 'UTC'"))
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:463: in execute
+    result = await greenlet_spawn(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2241: in _execute_internal
+    conn = self._connection_for_bind(bind)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2110: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+<string>:2: in _connection_for_bind
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1189: in _connection_for_bind
+    conn = bind.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3277: in connect
+    return self._connection_cls(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3301: in raw_connection
+    return self.pool.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py:306: in _do_get
+    return self._create_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py:629: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi object at 0x7f6cdebe68d0>
+arg = ()
+kw = {'database': 'test_db', 'host': 'localhost', 'password': 'test_password', 'port': 5432, ...}
+async_fallback = False, creator_fn = <function connect at 0x7f6cde9f3600>
+prepared_statement_cache_size = 100, prepared_statement_name_func = None
+
+    def connect(self, *arg, **kw):
+        async_fallback = kw.pop("async_fallback", False)
+        creator_fn = kw.pop("async_creator_fn", self.asyncpg.connect)
+        prepared_statement_cache_size = kw.pop(
+            "prepared_statement_cache_size", 100
+        )
+        prepared_statement_name_func = kw.pop(
+            "prepared_statement_name_func", None
+        )
+
+        if util.asbool(async_fallback):
+            return AsyncAdaptFallback_asyncpg_connection(
+                self,
+                await_fallback(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+        else:
+            return AsyncAdapt_asyncpg_connection(
+                self,
+>               await_only(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+E           TypeError: connect() got an unexpected keyword argument 'sslmode'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:964: TypeError
+______________________ test_get_layout_not_found[asyncio] ______________________
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 183, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 341, in from_call
+    |     result: Optional[TResult] = func()
+    |                                 ^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 241, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 87, in pytest_runtest_call
+    |     yield from thread_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 63, in thread_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 90, in pytest_runtest_call
+    |     yield from unraisable_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 65, in unraisable_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 850, in pytest_runtest_call
+    |     yield from self._runtest_for(item, "call")
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 833, in _runtest_for
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/capture.py", line 878, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/skipping.py", line 257, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 183, in pytest_runtest_call
+    |     raise e
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 173, in pytest_runtest_call
+    |     item.runtest()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py", line 1632, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py", line 160, in pytest_pyfunc_call
+    |     runner.run_test(pyfuncitem.obj, testargs)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2285, in run_test
+    |     self._raise_async_exceptions()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2189, in _raise_async_exceptions
+    |     raise exceptions[0]
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2279, in run_test
+    |     self.get_loop().run_until_complete(
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    |     return future.result()
+    |            ^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2239, in _call_in_runner_task
+    |     return await future
+    |            ^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2206, in _run_tests_and_fixtures
+    |     retval = await coro
+    |              ^^^^^^^^^^
+    |   File "/app/backend/tests/controllers/test_user_dashboard_layout_controller.py", line 67, in test_get_layout_not_found
+    |     response = await async_client.get("/api/v1/dashboard/layout")
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1814, in get
+    |     return await self.request(
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1585, in request
+    |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1674, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1702, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1739, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1776, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py", line 157, in handle_async_request
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 182, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Middleware/security_headers.py", line 10, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py", line 292, in app
+    |     solved_result = await solve_dependencies(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 634, in solve_dependencies
+    |     solved = await solve_generator(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 560, in solve_generator
+    |     return await stack.enter_async_context(cm)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 659, in enter_async_context
+    |     result = await _enter(cm)
+    |              ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 210, in __aenter__
+    |     return await anext(self.gen)
+    |            ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Infrastructure/db.py", line 77, in get_db
+    |     await session.execute(text("SET TIME ZONE 'UTC'"))
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    |     result = await greenlet_spawn(
+    |              ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 190, in greenlet_spawn
+    |     result = context.switch(*args, **kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    |     return self._execute_internal(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    |     conn = self._connection_for_bind(bind)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    |     return trans._connection_for_bind(engine, execution_options)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in _connection_for_bind
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    |     conn = bind.connect()
+    |            ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3277, in connect
+    |     return self._connection_cls(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    |     self._dbapi_connection = engine.raw_connection()
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+    |     return self.pool.connect()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+    |     return _ConnectionFairy._checkout(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    |     fairy = _ConnectionRecord.checkout(pool)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+    |     rec = pool._do_get()
+    |           ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 306, in _do_get
+    |     return self._create_connection()
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+    |     return _ConnectionRecord(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+    |     self.__connect()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+    |     with util.safe_reraise():
+    |          ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    |     raise exc_value.with_traceback(exc_tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+    |     self.dbapi_connection = connection = pool._invoke_creator(self)
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+    |     return dialect.connect(*cargs, **cparams)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+    |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 964, in connect
+    |     await_only(creator_fn(*arg, **kw)),
+    |                ^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: connect() got an unexpected keyword argument 'sslmode'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+async_client = <httpx.AsyncClient object at 0x7f6cc2db2e40>
+authenticated_user = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f6cc2db3260>
+
+    @pytest.mark.anyio
+    async def test_get_layout_not_found(async_client: AsyncClient, authenticated_user, mocker):
+        """Test case where the layout is not found for the user (404)."""
+        mock_service = mocker.patch(
+            "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
+        )
+        mock_service.return_value.get_layout.return_value = None
+
+>       response = await async_client.get("/api/v1/dashboard/layout")
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:67:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1814: in get
+    return await self.request(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1585: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1674: in send
+    response = await self._send_handling_auth(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1702: in _send_handling_auth
+    response = await self._send_handling_redirects(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1739: in _send_handling_redirects
+    response = await self._send_single_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1776: in _send_single_request
+    response = await transport.handle_async_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py:157: in handle_async_request
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:182: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:158: in __exit__
+    self.gen.throw(value)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py:85: in collapse_excgroups
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:184: in __call__
+    response = await self.dispatch_func(request, call_next)
+backend/app/Middleware/security_headers.py:10: in dispatch
+    response = await call_next(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:159: in call_next
+    raise app_exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:78: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:75: in app
+    response = await f(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py:292: in app
+    solved_result = await solve_dependencies(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:634: in solve_dependencies
+    solved = await solve_generator(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:560: in solve_generator
+    return await stack.enter_async_context(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:659: in enter_async_context
+    result = await _enter(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+backend/app/Infrastructure/db.py:77: in get_db
+    await session.execute(text("SET TIME ZONE 'UTC'"))
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:463: in execute
+    result = await greenlet_spawn(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2241: in _execute_internal
+    conn = self._connection_for_bind(bind)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2110: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+<string>:2: in _connection_for_bind
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1189: in _connection_for_bind
+    conn = bind.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3277: in connect
+    return self._connection_cls(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3301: in raw_connection
+    return self.pool.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py:306: in _do_get
+    return self._create_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py:629: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi object at 0x7f6cdebe68d0>
+arg = ()
+kw = {'database': 'test_db', 'host': 'localhost', 'password': 'test_password', 'port': 5432, ...}
+async_fallback = False, creator_fn = <function connect at 0x7f6cde9f3600>
+prepared_statement_cache_size = 100, prepared_statement_name_func = None
+
+    def connect(self, *arg, **kw):
+        async_fallback = kw.pop("async_fallback", False)
+        creator_fn = kw.pop("async_creator_fn", self.asyncpg.connect)
+        prepared_statement_cache_size = kw.pop(
+            "prepared_statement_cache_size", 100
+        )
+        prepared_statement_name_func = kw.pop(
+            "prepared_statement_name_func", None
+        )
+
+        if util.asbool(async_fallback):
+            return AsyncAdaptFallback_asyncpg_connection(
+                self,
+                await_fallback(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+        else:
+            return AsyncAdapt_asyncpg_connection(
+                self,
+>               await_only(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+E           TypeError: connect() got an unexpected keyword argument 'sslmode'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:964: TypeError
+______________________ test_save_layout_success[asyncio] _______________________
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 183, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 341, in from_call
+    |     result: Optional[TResult] = func()
+    |                                 ^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 241, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 87, in pytest_runtest_call
+    |     yield from thread_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 63, in thread_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 90, in pytest_runtest_call
+    |     yield from unraisable_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 65, in unraisable_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 850, in pytest_runtest_call
+    |     yield from self._runtest_for(item, "call")
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 833, in _runtest_for
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/capture.py", line 878, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/skipping.py", line 257, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 183, in pytest_runtest_call
+    |     raise e
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 173, in pytest_runtest_call
+    |     item.runtest()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py", line 1632, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py", line 160, in pytest_pyfunc_call
+    |     runner.run_test(pyfuncitem.obj, testargs)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2285, in run_test
+    |     self._raise_async_exceptions()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2189, in _raise_async_exceptions
+    |     raise exceptions[0]
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2279, in run_test
+    |     self.get_loop().run_until_complete(
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    |     return future.result()
+    |            ^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2239, in _call_in_runner_task
+    |     return await future
+    |            ^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2206, in _run_tests_and_fixtures
+    |     retval = await coro
+    |              ^^^^^^^^^^
+    |   File "/app/backend/tests/controllers/test_user_dashboard_layout_controller.py", line 98, in test_save_layout_success
+    |     response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1942, in put
+    |     return await self.request(
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1585, in request
+    |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1674, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1702, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1739, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1776, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py", line 157, in handle_async_request
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 182, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Middleware/security_headers.py", line 10, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py", line 292, in app
+    |     solved_result = await solve_dependencies(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 634, in solve_dependencies
+    |     solved = await solve_generator(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 560, in solve_generator
+    |     return await stack.enter_async_context(cm)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 659, in enter_async_context
+    |     result = await _enter(cm)
+    |              ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 210, in __aenter__
+    |     return await anext(self.gen)
+    |            ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Infrastructure/db.py", line 77, in get_db
+    |     await session.execute(text("SET TIME ZONE 'UTC'"))
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    |     result = await greenlet_spawn(
+    |              ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 190, in greenlet_spawn
+    |     result = context.switch(*args, **kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    |     return self._execute_internal(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    |     conn = self._connection_for_bind(bind)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    |     return trans._connection_for_bind(engine, execution_options)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in _connection_for_bind
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    |     conn = bind.connect()
+    |            ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3277, in connect
+    |     return self._connection_cls(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    |     self._dbapi_connection = engine.raw_connection()
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+    |     return self.pool.connect()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+    |     return _ConnectionFairy._checkout(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    |     fairy = _ConnectionRecord.checkout(pool)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+    |     rec = pool._do_get()
+    |           ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 306, in _do_get
+    |     return self._create_connection()
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+    |     return _ConnectionRecord(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+    |     self.__connect()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+    |     with util.safe_reraise():
+    |          ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    |     raise exc_value.with_traceback(exc_tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+    |     self.dbapi_connection = connection = pool._invoke_creator(self)
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+    |     return dialect.connect(*cargs, **cparams)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+    |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 964, in connect
+    |     await_only(creator_fn(*arg, **kw)),
+    |                ^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: connect() got an unexpected keyword argument 'sslmode'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+async_client = <httpx.AsyncClient object at 0x7f6cc2dfd760>
+authenticated_user = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f6cc2dfdf40>
+
+    @pytest.mark.anyio
+    async def test_save_layout_success(async_client: AsyncClient, authenticated_user, mocker):
+        """Test successful creation/update of a dashboard layout."""
+        mock_response = UserDashboardLayoutRead(
+            id=uuid4(),
+            user_id=FAKE_USER_ID,
+            layout=FAKE_LAYOUT_DATA,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        mock_service = mocker.patch(
+            "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
+        )
+        mock_service.return_value.save_layout.return_value = mock_response
+
+        payload = {"layout": FAKE_LAYOUT_DATA}
+>       response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:98:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1942: in put
+    return await self.request(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1585: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1674: in send
+    response = await self._send_handling_auth(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1702: in _send_handling_auth
+    response = await self._send_handling_redirects(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1739: in _send_handling_redirects
+    response = await self._send_single_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1776: in _send_single_request
+    response = await transport.handle_async_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py:157: in handle_async_request
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:182: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:158: in __exit__
+    self.gen.throw(value)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py:85: in collapse_excgroups
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:184: in __call__
+    response = await self.dispatch_func(request, call_next)
+backend/app/Middleware/security_headers.py:10: in dispatch
+    response = await call_next(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:159: in call_next
+    raise app_exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:78: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:75: in app
+    response = await f(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py:292: in app
+    solved_result = await solve_dependencies(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:634: in solve_dependencies
+    solved = await solve_generator(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:560: in solve_generator
+    return await stack.enter_async_context(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:659: in enter_async_context
+    result = await _enter(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+backend/app/Infrastructure/db.py:77: in get_db
+    await session.execute(text("SET TIME ZONE 'UTC'"))
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:463: in execute
+    result = await greenlet_spawn(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2241: in _execute_internal
+    conn = self._connection_for_bind(bind)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2110: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+<string>:2: in _connection_for_bind
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1189: in _connection_for_bind
+    conn = bind.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3277: in connect
+    return self._connection_cls(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3301: in raw_connection
+    return self.pool.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py:306: in _do_get
+    return self._create_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py:629: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi object at 0x7f6cdebe68d0>
+arg = ()
+kw = {'database': 'test_db', 'host': 'localhost', 'password': 'test_password', 'port': 5432, ...}
+async_fallback = False, creator_fn = <function connect at 0x7f6cde9f3600>
+prepared_statement_cache_size = 100, prepared_statement_name_func = None
+
+    def connect(self, *arg, **kw):
+        async_fallback = kw.pop("async_fallback", False)
+        creator_fn = kw.pop("async_creator_fn", self.asyncpg.connect)
+        prepared_statement_cache_size = kw.pop(
+            "prepared_statement_cache_size", 100
+        )
+        prepared_statement_name_func = kw.pop(
+            "prepared_statement_name_func", None
+        )
+
+        if util.asbool(async_fallback):
+            return AsyncAdaptFallback_asyncpg_connection(
+                self,
+                await_fallback(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+        else:
+            return AsyncAdapt_asyncpg_connection(
+                self,
+>               await_only(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+E           TypeError: connect() got an unexpected keyword argument 'sslmode'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:964: TypeError
+__________________ test_save_layout_invalid_payload[asyncio] ___________________
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 183, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 341, in from_call
+    |     result: Optional[TResult] = func()
+    |                                 ^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 241, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 87, in pytest_runtest_call
+    |     yield from thread_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/threadexception.py", line 63, in thread_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 90, in pytest_runtest_call
+    |     yield from unraisable_exception_runtest_hook()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/unraisableexception.py", line 65, in unraisable_exception_runtest_hook
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 850, in pytest_runtest_call
+    |     yield from self._runtest_for(item, "call")
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/logging.py", line 833, in _runtest_for
+    |     yield
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/capture.py", line 878, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/skipping.py", line 257, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 183, in pytest_runtest_call
+    |     raise e
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/runner.py", line 173, in pytest_runtest_call
+    |     item.runtest()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py", line 1632, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    |     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 167, in _multicall
+    |     raise exception
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 139, in _multicall
+    |     teardown.throw(exception)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    |     return result.get_result()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_result.py", line 103, in get_result
+    |     raise exc.with_traceback(tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    |     res = yield
+    |           ^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/pytest_plugin.py", line 160, in pytest_pyfunc_call
+    |     runner.run_test(pyfuncitem.obj, testargs)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2285, in run_test
+    |     self._raise_async_exceptions()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2189, in _raise_async_exceptions
+    |     raise exceptions[0]
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2279, in run_test
+    |     self.get_loop().run_until_complete(
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    |     return future.result()
+    |            ^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2239, in _call_in_runner_task
+    |     return await future
+    |            ^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2206, in _run_tests_and_fixtures
+    |     retval = await coro
+    |              ^^^^^^^^^^
+    |   File "/app/backend/tests/controllers/test_user_dashboard_layout_controller.py", line 111, in test_save_layout_invalid_payload
+    |     response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1942, in put
+    |     return await self.request(
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1585, in request
+    |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1674, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1702, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1739, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py", line 1776, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py", line 157, in handle_async_request
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 182, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Middleware/security_headers.py", line 10, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py", line 292, in app
+    |     solved_result = await solve_dependencies(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 634, in solve_dependencies
+    |     solved = await solve_generator(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 560, in solve_generator
+    |     return await stack.enter_async_context(cm)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 659, in enter_async_context
+    |     result = await _enter(cm)
+    |              ^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py", line 210, in __aenter__
+    |     return await anext(self.gen)
+    |            ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/app/backend/app/Infrastructure/db.py", line 77, in get_db
+    |     await session.execute(text("SET TIME ZONE 'UTC'"))
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    |     result = await greenlet_spawn(
+    |              ^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 190, in greenlet_spawn
+    |     result = context.switch(*args, **kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    |     return self._execute_internal(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    |     conn = self._connection_for_bind(bind)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    |     return trans._connection_for_bind(engine, execution_options)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in _connection_for_bind
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    |     conn = bind.connect()
+    |            ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3277, in connect
+    |     return self._connection_cls(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    |     self._dbapi_connection = engine.raw_connection()
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+    |     return self.pool.connect()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+    |     return _ConnectionFairy._checkout(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    |     fairy = _ConnectionRecord.checkout(pool)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+    |     rec = pool._do_get()
+    |           ^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 306, in _do_get
+    |     return self._create_connection()
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+    |     return _ConnectionRecord(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+    |     self.__connect()
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+    |     with util.safe_reraise():
+    |          ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    |     raise exc_value.with_traceback(exc_tb)
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+    |     self.dbapi_connection = connection = pool._invoke_creator(self)
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+    |     return dialect.connect(*cargs, **cparams)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+    |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 964, in connect
+    |     await_only(creator_fn(*arg, **kw)),
+    |                ^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: connect() got an unexpected keyword argument 'sslmode'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+async_client = <httpx.AsyncClient object at 0x7f6cc1ef2060>
+authenticated_user = None
+
+    @pytest.mark.anyio
+    async def test_save_layout_invalid_payload(async_client: AsyncClient, authenticated_user):
+        """Test saving a layout with an invalid payload (422)."""
+        # Payload is invalid because `layout` should be a list of objects, not a string.
+        payload = {"layout": "invalid data"}
+>       response = await async_client.put("/api/v1/dashboard/layout", json=payload)
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py:111:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1942: in put
+    return await self.request(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1585: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1674: in send
+    response = await self._send_handling_auth(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1702: in _send_handling_auth
+    response = await self._send_handling_redirects(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1739: in _send_handling_redirects
+    response = await self._send_single_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1776: in _send_single_request
+    response = await transport.handle_async_request(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_transports/asgi.py:157: in handle_async_request
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:182: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:158: in __exit__
+    self.gen.throw(value)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_utils.py:85: in collapse_excgroups
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:184: in __call__
+    response = await self.dispatch_func(request, call_next)
+backend/app/Middleware/security_headers.py:10: in dispatch
+    response = await call_next(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:159: in call_next
+    raise app_exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:78: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/starlette/routing.py:75: in app
+    response = await f(request)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/routing.py:292: in app
+    solved_result = await solve_dependencies(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:634: in solve_dependencies
+    solved = await solve_generator(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/fastapi/dependencies/utils.py:560: in solve_generator
+    return await stack.enter_async_context(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:659: in enter_async_context
+    result = await _enter(cm)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+backend/app/Infrastructure/db.py:77: in get_db
+    await session.execute(text("SET TIME ZONE 'UTC'"))
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:463: in execute
+    result = await greenlet_spawn(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2241: in _execute_internal
+    conn = self._connection_for_bind(bind)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:2110: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+<string>:2: in _connection_for_bind
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1189: in _connection_for_bind
+    conn = bind.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3277: in connect
+    return self._connection_cls(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/base.py:3301: in raw_connection
+    return self.pool.connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/impl.py:306: in _do_get
+    return self._create_connection()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/engine/default.py:629: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi object at 0x7f6cdebe68d0>
+arg = ()
+kw = {'database': 'test_db', 'host': 'localhost', 'password': 'test_password', 'port': 5432, ...}
+async_fallback = False, creator_fn = <function connect at 0x7f6cde9f3600>
+prepared_statement_cache_size = 100, prepared_statement_name_func = None
+
+    def connect(self, *arg, **kw):
+        async_fallback = kw.pop("async_fallback", False)
+        creator_fn = kw.pop("async_creator_fn", self.asyncpg.connect)
+        prepared_statement_cache_size = kw.pop(
+            "prepared_statement_cache_size", 100
+        )
+        prepared_statement_name_func = kw.pop(
+            "prepared_statement_name_func", None
+        )
+
+        if util.asbool(async_fallback):
+            return AsyncAdaptFallback_asyncpg_connection(
+                self,
+                await_fallback(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+        else:
+            return AsyncAdapt_asyncpg_connection(
+                self,
+>               await_only(creator_fn(*arg, **kw)),
+                prepared_statement_cache_size=prepared_statement_cache_size,
+                prepared_statement_name_func=prepared_statement_name_func,
+            )
+E           TypeError: connect() got an unexpected keyword argument 'sslmode'
+
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:964: TypeError
+=============================== warnings summary ===============================
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+  /home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydantic/_internal/_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+../home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/config/__init__.py:1448
+  /home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/config/__init__.py:1448: PytestConfigWarning: Unknown config option: anyio_backends
+
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success[asyncio]
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_not_found[asyncio]
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_unauthenticated[asyncio]
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success[asyncio]
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_invalid_payload[asyncio]
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_unauthenticated[asyncio]
+  /home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/httpx/_client.py:1437: DeprecationWarning: The 'app' shortcut is now deprecated. Use the explicit style 'transport=ASGITransport(app=...)' instead.
+    warnings.warn(message, DeprecationWarning)
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success[asyncio]
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:43: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success[asyncio]
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:44: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    updated_at=datetime.utcnow(),
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success[asyncio]
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:89: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success[asyncio]
+  /app/backend/tests/controllers/test_user_dashboard_layout_controller.py:90: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    updated_at=datetime.utcnow(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Name                                                                 Stmts   Miss  Cover
+----------------------------------------------------------------------------------------
+backend/app/Controllers/__init__.py                                      0      0   100%
+backend/app/Controllers/auth_controller.py                              67     50    25%
+backend/app/Controllers/roles_controller.py                             33     21    36%
+backend/app/Controllers/trades_controller.py                           130     81    38%
+backend/app/Controllers/user_dashboard_layout_controller.py             21     10    52%
+backend/app/Controllers/user_roles_controller.py                        25     14    44%
+backend/app/Controllers/users_controller.py                             35     23    34%
+backend/app/Infrastructure/__init__.py                                   0      0   100%
+backend/app/Infrastructure/db.py                                        42     15    64%
+backend/app/Infrastructure/supabase_client.py                           11      5    55%
+backend/app/Infrastructure/supabase_service.py                          73     57    22%
+backend/app/Middleware/security_headers.py                              12      0   100%
+backend/app/Models/__init__.py                                           0      0   100%
+backend/app/Models/auth_user.py                                         44      0   100%
+backend/app/Models/role.py                                              13      0   100%
+backend/app/Models/tag.py                                               16      0   100%
+backend/app/Models/trade.py                                             37      0   100%
+backend/app/Models/trades_tags.py                                       15      0   100%
+backend/app/Models/user_dashboard_layout.py                             15      0   100%
+backend/app/Models/user_role.py                                         13      0   100%
+backend/app/Repositories/__init__.py                                     0      0   100%
+backend/app/Repositories/auth_user_repository.py                        35     21    40%
+backend/app/Repositories/role_repository.py                             35     23    34%
+backend/app/Repositories/tag_repository.py                              27     27     0%
+backend/app/Repositories/trade_repository.py                           148    124    16%
+backend/app/Repositories/user_dashboard_layout_repository.py            23     10    57%
+backend/app/Repositories/user_role_repository.py                        38     23    39%
+backend/app/Router/__init__.py                                           0      0   100%
+backend/app/Router/auth.py                                              35     22    37%
+backend/app/Router/routes.py                                            79      5    94%
+backend/app/Schemas/__init__.py                                          0      0   100%
+backend/app/Schemas/auth_session.py                                     25      0   100%
+backend/app/Schemas/auth_user.py                                        25      0   100%
+backend/app/Schemas/role.py                                             14      0   100%
+backend/app/Schemas/stats.py                                            50      0   100%
+backend/app/Schemas/tag.py                                              17     17     0%
+backend/app/Schemas/trade.py                                            81      0   100%
+backend/app/Schemas/trades_tags.py                                      15     15     0%
+backend/app/Schemas/user_dashboard_layout.py                            30      0   100%
+backend/app/Schemas/user_role.py                                        10      0   100%
+backend/app/Schemas/vantage_score.py                                    11      0   100%
+backend/app/Services/__init__.py                                         0      0   100%
+backend/app/Services/metrics/metrics_calculator.py                     464    170    63%
+backend/app/Services/role_service.py                                    17      5    71%
+backend/app/Services/user_dashboard_layout_service.py                   19      9    53%
+backend/app/Services/user_service.py                                    29     15    48%
+backend/app/Utils/__init__.py                                            0      0   100%
+backend/app/Utils/pagination.py                                          2      2     0%
+backend/app/__init__.py                                                  0      0   100%
+backend/app/config.py                                                   38      2    95%
+backend/app/main.py                                                     19      1    95%
+backend/conftest.py                                                     15      4    73%
+backend/tests/controllers/test_trades_controller.py                     43      1    98%
+backend/tests/controllers/test_user_dashboard_layout_controller.py      59     11    81%
+backend/tests/services/metrics/test_metrics_calculator.py               44      0   100%
+----------------------------------------------------------------------------------------
+TOTAL                                                                 2049    783    62%
+
+=========================== short test summary info ============================
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success[asyncio]
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_not_found[asyncio]
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success[asyncio]
+FAILED backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_invalid_payload[asyncio]
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_success[trio]
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_not_found[trio]
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py::test_get_layout_unauthenticated[trio]
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_success[trio]
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_invalid_payload[trio]
+ERROR backend/tests/controllers/test_user_dashboard_layout_controller.py::test_save_layout_unauthenticated[trio]
+============== 4 failed, 6 passed, 17 warnings, 6 errors in 9.19s ==============

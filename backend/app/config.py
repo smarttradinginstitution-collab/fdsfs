@@ -38,7 +38,7 @@ class Settings(BaseSettings):
         user = self.DB_USER
         from urllib.parse import quote_plus
         pwd = quote_plus(self.DB_PASS)
-        return f"postgresql+asyncpg://{user}:{pwd}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?sslmode=require"
+        return f"postgresql+asyncpg://{user}:{pwd}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def cors_origins_list(self) -> List[str]:
