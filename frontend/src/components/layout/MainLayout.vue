@@ -10,7 +10,22 @@
 </template>
 
 <script setup>
-// Questo componente non ha bisogno di logica, è puramente strutturale e stilistico.
+import { watch, nextTick } from 'vue';
+import { useUiStore } from '../../stores/uiStore';
+
+const uiStore = useUiStore();
+
+// When the sidebar collapses or expands, the width of the main content area changes.
+// Charting libraries often need to be explicitly told to redraw when their container
+// size changes. Dispatching a global 'resize' event is a standard way to trigger this.
+watch(() => uiStore.isSidebarCollapsed, () => {
+  // We wait for the next DOM update cycle. This ensures that the CSS transition
+  // for the sidebar has started and the new dimensions of the main content
+  // are being calculated before we tell the charts to resize.
+  nextTick(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+});
 </script>
 
 <style scoped>

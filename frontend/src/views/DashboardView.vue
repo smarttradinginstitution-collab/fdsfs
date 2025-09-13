@@ -240,6 +240,7 @@ watch(
 .stats-grid, .complex-widgets-grid, .main-content-grid {
     display: grid;
     gap: var(--semantic-size-stack-lg);
+    min-width: 0; /* Fix for grid inside flexbox overflow */
 }
 .stats-grid {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

@@ -57,6 +57,7 @@ const isPublicRoute = computed(() => route.meta.public);
 
 .content-wrapper {
   flex-grow: 1;
+  min-width: 0; /* Prevents the container from overflowing when its content is too wide */
   /*
     BEST PRACTICE: Layout con Sidebar Fissa
     La sidebar ha `position: fixed`, quindi è rimossa dal flusso del layout.
