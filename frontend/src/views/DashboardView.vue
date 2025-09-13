@@ -97,6 +97,18 @@ watch(
   },
   { deep: true }
 );
+
+// Watch for changes in visible stats to trigger a layout save
+watch(
+  () => uiStore.visibleStatKeys,
+  (newValue, oldValue) => {
+    // Only save if the component is mounted and it's not the initial setup
+    if (oldValue.length > 0) {
+      dashboardLayoutStore.saveLayout();
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <template>
