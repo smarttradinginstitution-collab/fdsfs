@@ -21,7 +21,7 @@ def _service_headers() -> dict[str, str]:
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "apikey": k,                  # <-- obbligatorio per Supabase
+        "apikey": k,  # obbligatorio per Supabase
     }
 
 async def _request(
@@ -60,7 +60,8 @@ async def _request(
     data["error"] = None
     return data
 
-# ----------------- Flussi admin già esistenti -----------------
+
+# ----------------- Flussi "user" (ok solo apikey) -----------------
 
 async def sign_up(email: str, password: str, user_meta: Optional[dict] = None) -> Dict[str, Any]:
     payload = {"email": email, "password": password}
@@ -72,16 +73,33 @@ async def sign_in(email: str, password: str) -> Dict[str, Any]:
     payload = {"email": email, "password": password}
     return await _request("POST", "/auth/v1/token?grant_type=password", payload)
 
+
+# ----------------- Flussi "admin" (SERVE Authorization Bearer service_role) -----------------
+
+def _admin_auth_headers() -> dict[str, str]:
+    return {"Authorization": f"Bearer {settings.SUPABASE_KEY}"}
+
 async def update_user(user_id: str, patch: dict) -> Dict[str, Any]:
-    return await _request("PUT", f"/auth/v1/admin/users/{user_id}", patch)
+    return await _request(
+        "PUT",
+        f"/auth/v1/admin/users/{user_id}",
+        patch,
+        extra_headers=_admin_auth_headers(),
+    )
 
 async def admin_logout_user(user_id: str) -> Dict[str, Any]:
-    return await _request("POST", f"/auth/v1/admin/users/{user_id}/logout", json={})
+    return await _request(
+        "POST",
+        f"/auth/v1/admin/users/{user_id}/logout",
+        json={},
+        extra_headers=_admin_auth_headers(),
+    )
 
 async def admin_confirm_user(user_id: str) -> Dict[str, Any]:
     now_iso = datetime.now(timezone.utc).isoformat()
     patch = {"email_confirmed_at": now_iso}
     return await update_user(user_id, patch)
+
 
 async def register_user(
     email: str,
@@ -120,19 +138,20 @@ async def register_user(
 
     return res
 
-# ----------------- NUOVO: get user da access token -----------------
+
+# ----------------- Utente corrente da access token (client) -----------------
 
 async def get_user_from_access_token(access_token: str) -> Dict[str, Any]:
     """
-    Chiama Supabase /auth/v1/user con:
+    /auth/v1/user:
       - Authorization: Bearer <access_token>
-      - apikey: <SERVICE_KEY o ANON_KEY>
-    Se valido → ritorna { error: None, user: {...}, http_status: 200 }
-    Se non valido → ritorna { error: 'auth', message: ..., http_status: 401/403/... }
+      - apikey: <SUPABASE_KEY>
     """
     if not access_token:
         return {"error": "auth", "message": "missing token", "http_status": 401}
-
-    extra = {"Authorization": f"Bearer {access_token}"}
-    # GET /auth/v1/user non richiede body
-    return await _request("GET", "/auth/v1/user", json=None, extra_headers=extra)
+    return await _request(
+        "GET",
+        "/auth/v1/user",
+        json=None,
+        extra_headers={"Authorization": f"Bearer {access_token}"},
+    )
