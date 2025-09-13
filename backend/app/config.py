@@ -16,7 +16,10 @@ class Settings(BaseSettings):
     #   CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
     CORS_ORIGINS: Optional[str] = Field(default="http://localhost:5173")
 
-    DB_SSL_VERIFY: bool = True
+    DB_SSL_VERIFY: bool = Field(default=True)
+    DB_SSL_CA_MODE: str = Field(default="certifi")  # 'certifi' | 'merge' | 'system'
+    SSL_CERT_FILE: str | None = None
+
 
     DATABASE_URL: Optional[str] = Field(default=None)
     DB_HOST: Optional[str] = None

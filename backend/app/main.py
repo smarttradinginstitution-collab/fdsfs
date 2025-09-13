@@ -18,5 +18,13 @@ app.add_middleware(
 @app.get("/", tags=["health"])
 async def health():
     return {"status": "ok"}
+# dove vuoi (es. in un router /healthz)
+from fastapi import APIRouter
+from app.Infrastructure.db import check_connection
 
+router = APIRouter()
+@router.get("/healthz/db")
+async def healthz_db():
+    ok = await check_connection()
+    return {"db": "ok" if ok else "fail"}
 app.include_router(router)
