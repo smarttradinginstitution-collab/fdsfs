@@ -27,8 +27,8 @@ const pnlStyle = (pnl) => {
 };
 
 const formattedDate = computed(() => {
-  if (!summaryData.value) return '';
-  const date = new Date(summaryData.value.startDate + 'T00:00:00');
+  if (!summaryData.value || !summaryData.value.startDate) return '';
+  const date = new Date(summaryData.value.startDate);
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 });
 

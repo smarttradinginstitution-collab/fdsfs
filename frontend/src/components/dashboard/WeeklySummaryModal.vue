@@ -28,8 +28,8 @@ const pnlStyle = (pnl) => {
 
 const formattedDateRange = computed(() => {
   if (!summaryData.value || !summaryData.value.startDate || !summaryData.value.endDate) return '';
-  const start = new Date(summaryData.value.startDate + 'T00:00:00');
-  const end = new Date(summaryData.value.endDate + 'T00:00:00');
+  const start = new Date(summaryData.value.startDate);
+  const end = new Date(summaryData.value.endDate);
   const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
   const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
 
