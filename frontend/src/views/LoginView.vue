@@ -3,11 +3,11 @@
 // FILE: src/views/LoginView.vue
 // DESCRIZIONE: La pagina di login dell'applicazione.
 // Fornisce un'interfaccia per gli utenti per inserire le loro credenziali
-// e accedere al sistema.
+// e accedere al sistema. Gestisce anche il flusso di login a due fattori (MFA).
 // =============================================================================
 -->
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
@@ -15,20 +15,36 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 const authStore = useAuthStore();
 const email = ref('');
 const password = ref('');
+const mfaCode = ref('');
 const errorMessage = ref('');
+const isLoading = ref(false);
 
-async function handleLogin() {
+// La UI mostra il campo MFA se lo store lo richiede
+const showMfaField = computed(() => authStore.mfaRequired);
+
+async function handleSubmit() {
   errorMessage.value = '';
+  isLoading.value = true;
   try {
-    await authStore.login(email.value, password.value);
-    // La redirezione avviene all'interno dell'azione `login` dello store
-  } catch (error) {
-    if (error.response && error.response.data && error.response.data.detail) {
-      errorMessage.value = error.response.data.detail;
+    if (showMfaField.value) {
+      // Se il campo MFA è visibile, chiama la verifica con MFA
+      await authStore.loginWithMfa(email.value, password.value, mfaCode.value);
     } else {
-      errorMessage.value = 'Si è verificato un errore inatteso.';
+      // Altrimenti, tenta il login normale
+      await authStore.login(email.value, password.value);
+    }
+    // La redirezione avviene all'interno dello store se il login ha successo
+  } catch (error) {
+    if (error.response?.data?.detail) {
+      const detail = error.response.data.detail;
+      // Gestisce sia stringhe di errore semplici che oggetti
+      errorMessage.value = typeof detail === 'object' ? detail.message : detail;
+    } else {
+      errorMessage.value = 'An unexpected error occurred.';
     }
     console.error(error);
+  } finally {
+    isLoading.value = false;
   }
 }
 </script>
@@ -41,13 +57,15 @@ async function handleLogin() {
         <p class="login-subtitle">Accedi al tuo trading journal</p>
       </div>
 
-      <form class="login-form" @submit.prevent="handleLogin">
+      <form class="login-form" @submit.prevent="handleSubmit">
         <div class="form-fields">
+          <!-- I campi email e password sono disabilitati durante la fase MFA -->
           <BaseInput
             v-model="email"
             label="Email"
             type="email"
             placeholder="iltuoindirizzo@email.com"
+            :disabled="showMfaField"
             required
           />
           <BaseInput
@@ -55,7 +73,20 @@ async function handleLogin() {
             label="Password"
             type="password"
             placeholder="••••••••"
+            :disabled="showMfaField"
             required
+          />
+          <!-- Campo per il codice MFA, mostrato solo quando necessario -->
+          <BaseInput
+            v-if="showMfaField"
+            v-model="mfaCode"
+            label="Codice di Autenticazione (6 cifre)"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            required
+            autocomplete="one-time-code"
           />
         </div>
 
@@ -63,8 +94,8 @@ async function handleLogin() {
           {{ errorMessage }}
         </div>
 
-        <BaseButton type="submit" variant="primary" size="medium">
-          Accedi
+        <BaseButton type="submit" variant="primary" size="medium" :disabled="isLoading">
+          {{ isLoading ? 'Accesso in corso...' : (showMfaField ? 'Verifica Codice' : 'Accedi') }}
         </BaseButton>
       </form>
     </div>

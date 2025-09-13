@@ -11,11 +11,9 @@ import router from '@/router';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
-  // Usiamo ref per definire lo stato reattivo.
-  // Lo stato viene inizializzato dal localStorage per mantenere l'utente
-  // loggato tra le sessioni.
   const user = ref(JSON.parse(localStorage.getItem('user')) || null);
   const token = ref(localStorage.getItem('token') || null);
+  const mfaRequired = ref(false); // Nuovo stato per gestire il flusso MFA
 
   // --- GETTERS ---
   // I getters sono come le computed properties per gli store.
@@ -47,37 +45,46 @@ export const useAuthStore = defineStore('auth', () => {
    * @param {string} email - L'email dell'utente.
    * @param {string} password - La password dell'utente.
    */
+  function setSession(sessionData) {
+    const { access_token, user: userData } = sessionData;
+    token.value = access_token;
+    user.value = userData;
+    mfaRequired.value = false; // Reset MFA state on successful login
+    localStorage.setItem('token', access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setAuthToken(access_token);
+    loadCurrentRoleName();
+    router.push('/');
+  }
+
   async function login(email, password) {
+    mfaRequired.value = false;
     try {
       const response = await apiClient.post('/api/v1/auth/login', {
         email,
         password,
       });
-
-      // (AGGIUNTA) La API può restituire anche token_type/expires_in.
-      // Qui ci servono solo access_token e user.
-      const { access_token, user: userData } = response.data;
-
-      // Aggiorna lo stato dello store
-      token.value = access_token;
-      user.value = userData;
-
-      // Salva il token e i dati utente nel localStorage
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Imposta il token nell'header di apiClient per le richieste future
-      // (AGGIUNTA) Usa l'helper centralizzato per coerenza con gli interceptor
-      setAuthToken(access_token);
-
-      // (AGGIUNTA) Popola user.roleName tramite /users/{id}/roles
-      await loadCurrentRoleName();
-
-      // Reindirizza al dashboard dopo il login
-      router.push('/');
+      setSession(response.data);
     } catch (error) {
-      console.error('Errore durante il login:', error);
-      // Rilancia l'errore per poterlo gestire nel componente UI
+      if (error.response?.data?.detail?.mfa_required) {
+        mfaRequired.value = true;
+      } else {
+        console.error('Errore durante il login:', error);
+        throw error;
+      }
+    }
+  }
+
+  async function loginWithMfa(email, password, code) {
+    try {
+      const response = await apiClient.post('/api/v1/auth/mfa/login/verify', {
+        email,
+        password,
+        code,
+      });
+      setSession(response.data);
+    } catch (error) {
+      console.error('Errore durante il login con MFA:', error);
       throw error;
     }
   }
@@ -133,13 +140,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // --- EXPORT ---
-  // Esponiamo lo stato e le azioni per renderli accessibili
-  // ai componenti che useranno questo store.
   return {
     user,
     token,
     isAuthenticated,
+    mfaRequired,
     login,
+    loginWithMfa,
     logout,
     initAuth,
   };

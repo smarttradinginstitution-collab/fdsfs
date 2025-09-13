@@ -109,6 +109,7 @@ export const useUiStore = defineStore('ui', () => {
   const isDailySummaryModalOpen = ref(false);
   const isWeeklySummaryModalOpen = ref(false);
   const isAddTradeModalOpen = ref(false);
+  const isSettingsModalOpen = ref(false);
 
   // Salviamo lo stato della sidebar prima di aprire un modale
   let sidebarStateBeforeModal = false;
@@ -152,6 +153,14 @@ export const useUiStore = defineStore('ui', () => {
     _closeModal(isWeeklySummaryModalOpen);
   }
 
+  function openSettingsModal() {
+    _openModal(isSettingsModalOpen);
+  }
+
+  function closeSettingsModal() {
+    _closeModal(isSettingsModalOpen);
+  }
+
 
   // --- ESPORTAZIONE ---
   return {
@@ -165,6 +174,7 @@ export const useUiStore = defineStore('ui', () => {
     isDailySummaryModalOpen,
     isWeeklySummaryModalOpen,
     isAddTradeModalOpen,
+    isSettingsModalOpen,
 
     toggleSidebar,
     toggleMobileMenu,
@@ -179,6 +189,8 @@ export const useUiStore = defineStore('ui', () => {
     closeWeeklySummaryModal,
     openAddTradeModal,
     closeAddTradeModal,
+    openSettingsModal,
+    closeSettingsModal,
 
     // Notifications
     notification,
