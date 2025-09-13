@@ -146,15 +146,16 @@ class TradesController:
         return out
 
     # --------------------------
-    # GET by ID (senza user_id)
+    # GET by ID (con user_id)
     # --------------------------
     async def get_trade(
         self,
         trade_id: UUID,
+        user_id: UUID = Query(..., description="ID utente proprietario del trade"),
         db: AsyncSession = Depends(get_db),
     ) -> TradeRead:
         repo = TradeRepository(db)
-        row = await repo.get_by_trade_id_with_tags(trade_id)
+        row = await repo.get_by_id_with_tags(user_id, trade_id)
         if not row:
             raise HTTPException(status_code=404, detail="Trade non trovato")
         trade, tag_names = row
