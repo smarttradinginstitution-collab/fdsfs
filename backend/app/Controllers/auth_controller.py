@@ -1,9 +1,7 @@
 # app/Controllers/auth_controller.py
 
 from __future__ import annotations
-
 from uuid import UUID
-
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +14,8 @@ from app.Repositories.user_role_repository import UserRoleRepository
 from app.Models.role import Role
 from app.Schemas.auth_session import (
     LoginInput,
+    MfaLoginInput,
+    RefreshTokenInput,
     LoginResponse,
     RegisterInput,
     RegisterResponse,
@@ -45,26 +45,30 @@ class AuthController:
         Effettua il login con email + password:
         - chiama Supabase /auth/v1/token (grant_type=password).
         - se credenziali errate → 401.
+        - se MFA è richiesto → 401 con detail speciale.
         - ritorna access_token + refresh_token + user info.
         """
         res = await supabase_service.sign_in(payload.email, payload.password)
 
         if res.get("error"):
-            # messaggio base
-            msg = res.get("message") or "Credenziali non valide"
+            # Controlla se l'errore è dovuto a MFA richiesto
+            raw_msg = (res.get("raw") or {}).get("error_description", "").lower()
+            if "multi-factor authentication" in raw_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail={"mfa_required": True, "message": "MFA code is required."},
+                )
 
-            # in dev arricchiamo con dettagli utili al debug
+            # Altrimenti, gestisci come errore di credenziali standard
+            msg = res.get("message") or "Credenziali non valide"
             if settings.ENV == "dev":
                 bits: list[str] = []
                 if "http_status" in res:
                     bits.append(f"http_status={res['http_status']}")
                 if "error_code" in res:
                     bits.append(f"error_code={res['error_code']}")
-                raw = res.get("raw")
-                if isinstance(raw, dict):
-                    raw_msg = raw.get("message") or raw.get("error_description")
-                    if raw_msg and raw_msg != msg:
-                        bits.append(f"raw='{raw_msg}'")
+                if raw_msg and raw_msg != msg.lower():
+                    bits.append(f"raw='{raw_msg}'")
                 if bits:
                     msg = f"{msg} ({', '.join(bits)})"
 
@@ -75,6 +79,74 @@ class AuthController:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Login upstream senza access_token",
+            )
+
+        return LoginResponse(
+            access_token=res.get("access_token"),
+            token_type=res.get("token_type") or "bearer",
+            expires_in=res.get("expires_in"),
+            refresh_token=res.get("refresh_token"),
+            user=res.get("user") or {},
+        )
+
+    # ------------------------------
+    # MFA LOGIN VERIFICATION
+    # ------------------------------
+    async def mfa_login_verify(
+        self,
+        payload: MfaLoginInput,
+        db: AsyncSession = Depends(get_db),
+    ) -> LoginResponse:
+        """
+        Completa il login per un utente con MFA, fornendo il codice TOTP.
+        """
+        res = await supabase_service.sign_in(
+            payload.email, payload.password, otp=payload.code
+        )
+
+        if res.get("error"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=res.get("message") or "Codice MFA non valido o credenziali errate.",
+            )
+
+        if not res.get("access_token"):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Login MFA upstream senza access_token",
+            )
+
+        return LoginResponse(
+            access_token=res.get("access_token"),
+            token_type=res.get("token_type") or "bearer",
+            expires_in=res.get("expires_in"),
+            refresh_token=res.get("refresh_token"),
+            user=res.get("user") or {},
+        )
+
+    # ------------------------------
+    # REFRESH TOKEN
+    # ------------------------------
+    async def refresh(
+        self,
+        payload: RefreshTokenInput,
+    ) -> LoginResponse:
+        """
+        Ottiene una nuova sessione (access_token + refresh_token)
+        utilizzando un refresh_token valido.
+        """
+        res = await supabase_service.refresh_session(payload.refresh_token)
+
+        if res.get("error"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=res.get("message") or "Refresh token non valido o scaduto.",
+            )
+
+        if not res.get("access_token"):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Refresh upstream senza access_token",
             )
 
         return LoginResponse(

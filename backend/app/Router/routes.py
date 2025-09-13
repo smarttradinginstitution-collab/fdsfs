@@ -13,6 +13,7 @@ from app.Infrastructure.db import get_db
 
 # 📦 Controller applicativi
 from app.Controllers.auth_controller import AuthController
+from app.Controllers.mfa_controller import MfaController
 from app.Controllers.users_controller import UsersController
 from app.Controllers.roles_controller import RolesController
 from app.Controllers.user_roles_controller import UserRolesController
@@ -36,6 +37,7 @@ from app.Repositories.user_role_repository import UserRoleRepository
 # Istanze controller (stateless)
 # ──────────────────────────────────────────────────────────────────────────────
 auth = AuthController()
+mfa = MfaController()
 users = UsersController()
 roles = RolesController()
 user_roles = UserRolesController()
@@ -52,9 +54,12 @@ router = APIRouter()
 # ──────────────────────────────────────────────────────────────────────────────
 router_auth = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
-# LOGIN/REGISTER pubblici
+# LOGIN/REGISTER/REFRESH pubblici
 router_auth.post("/login", response_model=LoginResponse)(auth.login)
 router_auth.post("/register", response_model=RegisterResponse)(auth.register)
+router_auth.post("/mfa/login/verify", response_model=LoginResponse)(auth.mfa_login_verify)
+router_auth.post("/refresh", response_model=LoginResponse)(auth.refresh)
+
 
 # LOGOUT protetto: richiede un token valido
 router_auth.post(
@@ -62,6 +67,19 @@ router_auth.post(
     response_model=LogoutResponse,
     dependencies=[Depends(get_current_claims)],
 )(auth.logout)
+
+# MFA Enrollment (protetto)
+router_auth.post(
+    "/mfa/enroll",
+    dependencies=[Depends(get_current_claims)],
+)(mfa.enroll)
+
+# MFA Enrollment Verification (protetto)
+router_auth.post(
+    "/mfa/verify",
+    dependencies=[Depends(get_current_claims)],
+)(mfa.verify_enrollment)
+
 
 # (Facoltativo ma utile) Rotte diagnostiche per capire rapidamente chi è l'utente e i suoi ruoli
 @router_auth.get("/me", tags=["Auth"])

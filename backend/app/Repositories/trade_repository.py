@@ -181,7 +181,7 @@ class TradeRepository:
         base = select(Trade).where(Trade.user_id == user_id)
 
         if symbol:
-            base = base.where(Trade.symbol.contains(symbol, autoescape=True))
+            base = base.where(Trade.symbol.ilike(f"%{symbol}%"))
         if direction:
             base = base.where(Trade.direction == direction)
         if setups:
@@ -249,6 +249,20 @@ class TradeRepository:
         tag_map = await self._load_tags_for_trades([trade_id])
         return trade, tag_map.get(trade_id, [])
 
+    async def get_by_trade_id_with_tags(
+        self, trade_id: UUID
+    ) -> Optional[Tuple[Trade, List[str]]]:
+        """
+        Ritorna (Trade, [tag_names]) cercando SOLO per trade_id (senza filtro su user_id).
+        """
+        q = select(Trade).where(Trade.id == trade_id).limit(1)
+        res = await self.db.execute(q)
+        trade = res.scalars().first()
+        if not trade:
+            return None
+
+        tag_map = await self._load_tags_for_trades([trade_id])
+        return trade, tag_map.get(trade_id, [])
 
     # ──────────────────────────────────────────────────────────────────────
     # CREATE
