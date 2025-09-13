@@ -1,10 +1,3 @@
-<!--
-// =============================================================================
-// FILE: views/DashboardView.vue
-// DESCRIZIONE: Vista della Dashboard, ora con i bottoni di azione principali
-// posizionati in una loro sezione dedicata.
-// =============================================================================
--->
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import draggable from 'vuedraggable';
@@ -102,7 +95,6 @@ watch(
 watch(
   () => uiStore.visibleStatKeys,
   (newValue, oldValue) => {
-    // Only save if the component is mounted and it's not the initial setup
     if (oldValue.length > 0) {
       dashboardLayoutStore.saveLayout();
     }
@@ -236,6 +228,8 @@ watch(
 }
 .zone-title {
     margin-bottom: var(--semantic-size-stack-sm);
+    font: var(--semantic-font-style-heading-lg);
+    color: var(--semantic-color-text-primary);
 }
 .stats-grid, .complex-widgets-grid, .main-content-grid {
     display: grid;
@@ -246,10 +240,21 @@ watch(
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 .complex-widgets-grid {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 .main-content-grid {
   grid-template-columns: 2fr 1fr;
+}
+@media (max-width: 1280px) {
+  .main-content-grid,
+  .complex-widgets-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
 }
 .ghost {
     opacity: 0.5;
@@ -258,19 +263,19 @@ watch(
 .widget-wrapper {
   position: relative;
 }
-.dashboard-view.is-editing .widget-wrapper > * {
+.dashboard-view.is-editing .widget-wrapper {
     cursor: grab;
 }
-.dashboard-view.is-editing .widget-wrapper:active > * {
+.dashboard-view.is-editing .widget-wrapper:active {
     cursor: grabbing;
 }
 .remove-widget-btn {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  background-color: rgba(0,0,0,0.5);
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(0,0,0,0.4);
   color: white;
   border: none;
   border-radius: 50%;
@@ -278,22 +283,23 @@ watch(
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
   transition: background-color 0.2s;
   z-index: 10;
 }
 .remove-widget-btn:hover {
-  background-color: rgba(0,0,0,0.8);
+  background-color: rgba(0,0,0,0.7);
 }
 .add-widget-button {
-    background-color: transparent;
+    background-color: var(--semantic-color-surface-primary);
     border: 2px dashed var(--semantic-color-border-default);
     color: var(--semantic-color-text-secondary);
     border-radius: var(--semantic-border-radius-lg);
     padding: var(--semantic-size-inset-lg);
     cursor: pointer;
     width: 100%;
+    min-height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -303,17 +309,6 @@ watch(
 .add-widget-button:hover {
     background-color: var(--semantic-color-surface-secondary);
     color: var(--semantic-color-text-primary);
-}
-
-@media (max-width: 1280px) {
-  .main-content-grid,
-  .complex-widgets-grid {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+    border-color: var(--semantic-color-border-focus);
 }
 </style>
