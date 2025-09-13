@@ -14,7 +14,8 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       main: [],
     },
     isLoading: false,
-    isDirty: false,
+    originalLayout: null,
+    originalStats: null,
     defaultLayout: {
       charts: [
         { i: 'vantageScore' },
@@ -45,9 +46,23 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     ],
   }),
 
+  getters: {
+    isDirty(state) {
+      if (!state.originalLayout || !state.originalStats) {
+        return false; // Not in edit mode or no snapshot taken
+      }
+      const uiStore = useUiStore();
+      const statsChanged = JSON.stringify(state.originalStats) !== JSON.stringify(uiStore.visibleStatKeys);
+      const layoutChanged = JSON.stringify(state.originalLayout) !== JSON.stringify(state.layout);
+      return statsChanged || layoutChanged;
+    }
+  },
+
   actions: {
-    setDirty(status) {
-      this.isDirty = status;
+    snapshotLayout() {
+      const uiStore = useUiStore();
+      this.originalLayout = JSON.parse(JSON.stringify(this.layout));
+      this.originalStats = [...uiStore.visibleStatKeys];
     },
     async fetchLayout() {
       this.isLoading = true;
@@ -86,7 +101,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       if (this.layout[zone].some(w => w.i === widgetId)) return;
 
       this.layout[zone].push({ i: widgetId });
-      this.setDirty(true);
     },
 
     removeWidget({ zone, widgetId }) {
@@ -95,7 +109,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       const index = zoneLayout.findIndex(w => w.i === widgetId);
       if (index !== -1) {
         zoneLayout.splice(index, 1);
-        this.setDirty(true);
       }
     },
 
@@ -104,7 +117,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         if (!zoneLayout) return;
         const [removed] = zoneLayout.splice(oldIndex, 1);
         zoneLayout.splice(newIndex, 0, removed);
-        this.setDirty(true);
     },
 
     async saveLayout() {
@@ -125,7 +137,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
           message: 'Layout salvato con successo!',
           type: 'success',
         });
-        this.setDirty(false);
       } catch (error) {
         uiStore.showNotification({
           message: 'Failed to save dashboard layout.',

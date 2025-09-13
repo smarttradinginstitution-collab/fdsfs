@@ -95,8 +95,14 @@ watch(
 watch(
   () => uiStore.isLayoutEditing,
   (isEditing) => {
-    if (!isEditing && dashboardLayoutStore.isDirty) {
-      dashboardLayoutStore.saveLayout();
+    if (isEditing) {
+      // User just entered edit mode, take a snapshot of the current layout
+      dashboardLayoutStore.snapshotLayout();
+    } else {
+      // User just finished editing, check if dirty and save
+      if (dashboardLayoutStore.isDirty) {
+        dashboardLayoutStore.saveLayout();
+      }
     }
   }
 );
