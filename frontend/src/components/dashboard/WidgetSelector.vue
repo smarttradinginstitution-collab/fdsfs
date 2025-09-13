@@ -3,34 +3,51 @@ import { computed } from 'vue';
 import { useDashboardLayoutStore } from '../../stores/dashboardLayout';
 import BaseButton from '../ui/BaseButton.vue';
 
-const dashboardLayoutStore = useDashboardLayoutStore();
-
-const emit = defineEmits(['addWidget', 'removeWidget']);
-
-const widgets = computed(() => {
-  return dashboardLayoutStore.availableWidgets.map(widget => ({
-    ...widget,
-    isActive: dashboardLayoutStore.layout.some(layoutWidget => layoutWidget.i === widget.i),
-  }));
+const props = defineProps({
+  zone: {
+    type: String,
+    required: true,
+  },
+  allowedWidgets: {
+    type: Array,
+    required: true,
+  },
 });
 
-const toggleWidget = (widget) => {
-  if (widget.isActive) {
-    emit('removeWidget', widget.i);
-  } else {
-    emit('addWidget', widget.i);
-  }
+const dashboardLayoutStore = useDashboardLayoutStore();
+const emit = defineEmits(['addWidget']);
+
+const availableWidgets = computed(() => {
+  // Get the full widget details from the store's master list
+  const allWidgets = dashboardLayoutStore.availableWidgets;
+
+  return props.allowedWidgets.map(widgetKey => {
+    const widgetDetails = allWidgets.find(w => w.i === widgetKey);
+    const isActive = dashboardLayoutStore.layout[props.zone]?.some(w => w.i === widgetKey);
+    return {
+      ...widgetDetails,
+      isActive: !!isActive,
+    };
+  });
+});
+
+const handleAddWidget = (widgetId) => {
+  emit('addWidget', { zone: props.zone, widgetId });
 };
 </script>
 
 <template>
   <div class="widget-selector">
-    <h4>Available Widgets</h4>
+    <h4>Aggiungi Widget</h4>
     <ul>
-      <li v-for="widget in widgets" :key="widget.i">
+      <li v-for="widget in availableWidgets" :key="widget.i">
         <span>{{ widget.name }}</span>
-        <BaseButton @click="toggleWidget(widget)" :variant="widget.isActive ? 'secondary' : 'primary'">
-          {{ widget.isActive ? 'Remove' : 'Add' }}
+        <BaseButton
+          @click="handleAddWidget(widget.i)"
+          :disabled="widget.isActive"
+          size="small"
+        >
+          Aggiungi
         </BaseButton>
       </li>
     </ul>

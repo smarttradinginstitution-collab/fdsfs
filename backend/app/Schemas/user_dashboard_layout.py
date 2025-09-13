@@ -7,17 +7,24 @@ from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
 
+class WidgetItem(BaseModel):
+    i: str
+
+class ZonedLayout(BaseModel):
+    stats: List[WidgetItem]
+    main: List[WidgetItem]
+    charts: List[WidgetItem]
 
 class UserDashboardLayoutUpdate(BaseModel):
     """Schema for updating a user's dashboard layout."""
-    layout: List[Dict[str, Any]]
+    layout: ZonedLayout
 
 
 class UserDashboardLayoutRead(BaseModel):
     """Schema for reading a user's dashboard layout."""
     id: UUID
     user_id: UUID
-    layout: List[Dict[str, Any]]
+    layout: ZonedLayout
     created_at: datetime
     updated_at: datetime
 

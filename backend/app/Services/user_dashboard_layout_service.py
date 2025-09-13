@@ -19,11 +19,16 @@ class UserDashboardLayoutService:
     async def get_layout(self, user_id: UUID) -> Optional[UserDashboardLayoutRead]:
         """
         Retrieves the dashboard layout for a specific user.
-        Returns the layout or None if not found.
+        If the layout is in the old list format, it's treated as invalid to force a reset.
         """
         layout_model = await self.repo.get_by_user_id(user_id)
         if layout_model:
-            return UserDashboardLayoutRead.model_validate(layout_model)
+            # Check if the layout is a dictionary (new format) or a list (old format)
+            if isinstance(layout_model.layout, dict):
+                return UserDashboardLayoutRead.model_validate(layout_model)
+            else:
+                # It's the old list format, treat as not found to force a reset.
+                return None
         return None
 
     async def save_layout(

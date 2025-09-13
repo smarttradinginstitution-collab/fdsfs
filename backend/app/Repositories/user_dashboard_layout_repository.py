@@ -34,7 +34,7 @@ class UserDashboardLayoutRepository:
         """
         insert_data = {
             "user_id": user_id,
-            "layout": payload.layout,
+            "layout": payload.layout.model_dump(),
         }
         stmt = insert(UserDashboardLayout).values(**insert_data)
 
