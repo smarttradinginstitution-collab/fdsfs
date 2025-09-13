@@ -1,11 +1,11 @@
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import RequestResponseFunction
 from starlette.requests import Request
 from starlette.responses import Response
+from typing import Callable, Awaitable
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(
-        self, request: Request, call_next: RequestResponseFunction
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         response = await call_next(request)
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
