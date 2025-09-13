@@ -14,6 +14,8 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       main: [],
     },
     isLoading: false,
+    originalLayout: null,
+    originalStats: null,
     defaultLayout: {
       charts: [
         { i: 'vantageScore' },
@@ -44,7 +46,24 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     ],
   }),
 
+  getters: {
+    isDirty(state) {
+      if (!state.originalLayout || !state.originalStats) {
+        return false; // Not in edit mode or no snapshot taken
+      }
+      const uiStore = useUiStore();
+      const statsChanged = JSON.stringify(state.originalStats) !== JSON.stringify(uiStore.visibleStatKeys);
+      const layoutChanged = JSON.stringify(state.originalLayout) !== JSON.stringify(state.layout);
+      return statsChanged || layoutChanged;
+    }
+  },
+
   actions: {
+    snapshotLayout() {
+      const uiStore = useUiStore();
+      this.originalLayout = JSON.parse(JSON.stringify(this.layout));
+      this.originalStats = [...uiStore.visibleStatKeys];
+    },
     async fetchLayout() {
       this.isLoading = true;
       const authStore = useAuthStore();
@@ -82,7 +101,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       if (this.layout[zone].some(w => w.i === widgetId)) return;
 
       this.layout[zone].push({ i: widgetId });
-      this.saveLayout();
     },
 
     removeWidget({ zone, widgetId }) {
@@ -91,7 +109,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       const index = zoneLayout.findIndex(w => w.i === widgetId);
       if (index !== -1) {
         zoneLayout.splice(index, 1);
-        this.saveLayout();
       }
     },
 
@@ -100,7 +117,6 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         if (!zoneLayout) return;
         const [removed] = zoneLayout.splice(oldIndex, 1);
         zoneLayout.splice(newIndex, 0, removed);
-        this.saveLayout();
     },
 
     async saveLayout() {
