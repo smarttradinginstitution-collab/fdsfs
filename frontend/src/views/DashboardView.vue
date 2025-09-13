@@ -124,7 +124,6 @@ watch(
 
     <!-- Stats Grid -->
     <div class="grid-zone-wrapper">
-      <h3 class="zone-title">Statistiche</h3>
       <draggable
         :list="uiStore.visibleStatKeys"
         item-key="key"
@@ -157,7 +156,6 @@ watch(
 
     <!-- Charts Zone -->
     <div class="grid-zone-wrapper">
-        <h3 class="zone-title">Grafici</h3>
         <draggable :list="layout.charts" item-key="i" tag="div" class="complex-widgets-grid" ghost-class="ghost" @end="onLayoutDragEnd('charts', $event)" :disabled="!uiStore.isLayoutEditing">
             <template #item="{ element: widget }">
                 <div class="widget-wrapper">
@@ -182,7 +180,6 @@ watch(
 
     <!-- Main Content Grid -->
     <div class="grid-zone-wrapper">
-        <h3 class="zone-title">Contenuto Principale</h3>
         <draggable :list="layout.main" item-key="i" tag="div" class="main-content-grid" ghost-class="ghost" @end="onLayoutDragEnd('main', $event)" :disabled="!uiStore.isLayoutEditing">
             <template #item="{ element: widget }">
                 <div class="widget-wrapper">
