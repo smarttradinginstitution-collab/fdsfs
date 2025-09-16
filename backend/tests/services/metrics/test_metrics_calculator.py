@@ -321,3 +321,58 @@ def test_max_consecutive_wins_losses():
     adv_stats = calc._calculate_advanced_stats(base_stats)
     assert adv_stats['max_consecutive_wins'] == 3
     assert adv_stats['max_consecutive_losses'] == 2
+
+def test_sell_efficiency_standard():
+    # Standard case, efficiency should be 75%
+    trade = {
+        'p_l': '75', 'entry_price': '100', 'exit_price': '115',
+        'highest_price_during_trade': '120', 'lowest_price_during_trade': '99',
+        'direction': 'Long'
+    }
+    calc = MetricsCalculator([trade])
+    stats = calc._calculate_advanced_stats(calc._calculate_base_stats())
+    assert stats['avg_sell_efficiency'] == pytest.approx(75.0)
+
+def test_sell_efficiency_capped():
+    # Exit price is higher than highest price, should be capped at 100%
+    trade = {
+        'p_l': '150', 'entry_price': '100', 'exit_price': '130',
+        'highest_price_during_trade': '120', 'lowest_price_during_trade': '99',
+        'direction': 'Long'
+    }
+    calc = MetricsCalculator([trade])
+    stats = calc._calculate_advanced_stats(calc._calculate_base_stats())
+    assert stats['avg_sell_efficiency'] == pytest.approx(100.0)
+
+def test_sell_efficiency_zero_mfe():
+    # MFE is 0, should be ignored
+    trade = {
+        'p_l': '0', 'entry_price': '100', 'exit_price': '100',
+        'highest_price_during_trade': '100', 'lowest_price_during_trade': '99',
+        'direction': 'Long'
+    }
+    calc = MetricsCalculator([trade])
+    stats = calc._calculate_advanced_stats(calc._calculate_base_stats())
+    assert stats['avg_sell_efficiency'] == 0
+
+def test_sell_efficiency_negative_mfe():
+    # Bad data, MFE is negative, should be ignored
+    trade = {
+        'p_l': '10', 'entry_price': '100', 'exit_price': '101',
+        'highest_price_during_trade': '90', 'lowest_price_during_trade': '80',
+        'direction': 'Long'
+    }
+    calc = MetricsCalculator([trade])
+    stats = calc._calculate_advanced_stats(calc._calculate_base_stats())
+    assert stats['avg_sell_efficiency'] == 0
+
+def test_sell_efficiency_missing_data():
+    # Missing exit_price, should be ignored
+    trade = {
+        'p_l': '10', 'entry_price': '100',
+        'highest_price_during_trade': '110', 'lowest_price_during_trade': '99',
+        'direction': 'Long'
+    }
+    calc = MetricsCalculator([trade])
+    stats = calc._calculate_advanced_stats(calc._calculate_base_stats())
+    assert stats['avg_sell_efficiency'] == 0
