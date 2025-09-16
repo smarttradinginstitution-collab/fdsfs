@@ -19,7 +19,7 @@ export default {
             selector: '[data-theme="dark"]',
             outputReferences: true,
           },
-          filter: (token) => token.filePath.endsWith('dark.json')
+          filter: (token) => token.filePath.startsWith('tokens/semantic/')
         }
       ]
     }

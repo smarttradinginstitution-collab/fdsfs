@@ -16,7 +16,7 @@ export default {
           destination: 'tokens-light.css',
           format: 'css/variables',
           options: { selector: ':root', outputReferences: true },
-          filter: (token) => token.filePath.endsWith('light.json')
+          filter: (token) => token.filePath.startsWith('tokens/semantic/')
         }
       ]
     }
