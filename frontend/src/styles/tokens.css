@@ -3,8 +3,6 @@
  */
 
 :root {
-  --semantic-color-feedback-positive-surface: rgba(22, 163, 74, 0.1);
-  --semantic-color-feedback-negative-surface: rgba(220, 38, 38, 0.1);
   --semantic-size-component-stat-card-min-width: 200px;
   --semantic-size-component-stat-card-chart-width-desktop: 60px;
   --semantic-size-component-stat-card-chart-width-tablet: 48px;
@@ -31,8 +29,10 @@
   --semantic-color-interactive-secondary-default: var(--base-color-gray-100);
   --semantic-color-interactive-secondary-hover: var(--base-color-gray-200);
   --semantic-color-feedback-positive-text: var(--base-color-green-600);
+  --semantic-color-feedback-positive-background: var(--base-color-green-600);
   --semantic-color-feedback-positive-background-rgb: var(--base-color-green-600-rgb);
   --semantic-color-feedback-negative-text: var(--base-color-red-600);
+  --semantic-color-feedback-negative-background: var(--base-color-red-600);
   --semantic-color-feedback-negative-background-rgb: var(--base-color-red-600-rgb);
   --semantic-color-border-default: var(--base-color-gray-200);
   --semantic-color-border-subtle: var(--base-color-gray-100);

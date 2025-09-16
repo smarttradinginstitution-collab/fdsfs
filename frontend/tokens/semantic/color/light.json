@@ -25,12 +25,12 @@
       "feedback": {
         "positive": {
           "text": { "$value": "{base.color.green.600}", "$type": "color", "$comment": "Testo per indicare profitto o successo." },
-          "surface": { "$value": "rgba(22, 163, 74, 0.1)", "$type": "color", "$comment": "Sfondo leggero per evidenziare aree di profitto." },
+          "background": { "$value": "{base.color.green.600}", "$type": "color", "$comment": "Sfondo solido per elementi di feedback positivo (es. Toast)." },
           "background-rgb": { "$value": "{base.color.green.600-rgb}", "$type": "color", "$comment": "Token RGB per il colore di feedback positivo. Da usare con rgba() in JS." }
         },
         "negative": {
           "text": { "$value": "{base.color.red.600}", "$type": "color", "$comment": "Testo per indicare perdita o errore." },
-          "surface": { "$value": "rgba(220, 38, 38, 0.1)", "$type": "color", "$comment": "Sfondo leggero per evidenziare aree di perdita." },
+          "background": { "$value": "{base.color.red.600}", "$type": "color", "$comment": "Sfondo solido per elementi di feedback negativo (es. Toast)." },
           "background-rgb": { "$value": "{base.color.red.600-rgb}", "$type": "color", "$comment": "Token RGB per il colore di feedback negativo. Da usare con rgba() in JS." }
         }
       },

@@ -52,11 +52,13 @@ const notificationClass = computed(() => {
 }
 
 .toast-notification--success {
-  background-color: #28a745; /* Green */
+  background-color: var(--semantic-color-feedback-positive-background);
+  color: var(--semantic-color-text-on-brand);
 }
 
 .toast-notification--error {
-  background-color: #dc3545; /* Red */
+  background-color: var(--semantic-color-feedback-negative-background);
+  color: var(--semantic-color-text-on-brand);
 }
 
 .toast-notification__icon {
@@ -69,7 +71,7 @@ const notificationClass = computed(() => {
   width: 24px;
   height: 24px;
   fill: none;
-  stroke: white;
+  stroke: currentColor;
 }
 
 .toast-notification__message {
