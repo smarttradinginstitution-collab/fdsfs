@@ -4,4 +4,5 @@
  * L'applicazione dovrebbe importare solo questo file per accedere ai token.
  */
 @import "./_base.css";
-@import "./tokens.css";
+@import "./tokens-light.css";
+@import "./tokens-dark.css";

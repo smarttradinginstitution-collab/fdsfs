@@ -1,0 +1,31 @@
+/**
+ * Do not edit directly, this file was auto-generated.
+ */
+
+[data-theme="dark"] {
+  --semantic-color-feedback-positive-surface: rgba(74, 222, 128, 0.1);
+  --semantic-color-feedback-negative-surface: rgba(248, 113, 113, 0.1);
+  --semantic-color-surface-page: var(--base-color-gray-950);
+  --semantic-color-surface-primary: var(--base-color-gray-900);
+  --semantic-color-surface-secondary: var(--base-color-gray-800);
+  --semantic-color-surface-disabled: var(--base-color-gray-800);
+  --semantic-color-text-primary: var(--base-color-gray-100);
+  --semantic-color-text-secondary: var(--base-color-gray-400);
+  --semantic-color-text-tertiary: var(--base-color-gray-600);
+  --semantic-color-text-disabled: var(--base-color-gray-600);
+  --semantic-color-text-on-brand: var(--base-color-white);
+  --semantic-color-text-interactive: var(--base-color-blue-400);
+  --semantic-color-interactive-primary-default: var(--base-color-blue-500);
+  --semantic-color-interactive-primary-hover: var(--base-color-blue-400);
+  --semantic-color-interactive-primary-rgb: var(--base-color-blue-600-rgb);
+  --semantic-color-interactive-secondary-default: var(--base-color-gray-700);
+  --semantic-color-interactive-secondary-hover: var(--base-color-gray-600);
+  --semantic-color-feedback-positive-text: var(--base-color-green-400);
+  --semantic-color-feedback-positive-background-rgb: var(--base-color-green-600-rgb);
+  --semantic-color-feedback-negative-text: var(--base-color-red-400);
+  --semantic-color-feedback-negative-background-rgb: var(--base-color-red-600-rgb);
+  --semantic-color-border-default: var(--base-color-gray-700);
+  --semantic-color-border-subtle: var(--base-color-gray-800);
+  --semantic-color-border-focus: var(--base-color-blue-400);
+  --semantic-color-overlay-background: var(--base-color-black-alpha-50);
+}

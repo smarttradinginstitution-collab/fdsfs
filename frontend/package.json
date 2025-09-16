@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "tokens:build": "style-dictionary build --config ./sd.config.js",
+    "tokens:build": "style-dictionary build --config ./sd.base.config.js && style-dictionary build --config ./sd.light.config.js && style-dictionary build --config ./sd.dark.config.js",
     "build": "npm run tokens:build && vite build",
     "preview": "vite preview"
   },

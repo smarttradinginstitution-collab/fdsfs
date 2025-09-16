@@ -45,8 +45,8 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Cumulative P&L',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)', // Colore dell'area sotto la linea, useremo token
-        borderColor: 'rgb(75, 192, 192)', // Colore della linea, useremo token
+        backgroundColor: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--semantic-color-interactive-primary-rgb').trim()}, 0.2)`,
+        borderColor: `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--semantic-color-interactive-primary-rgb').trim()})`,
         data: equityData.data,
         tension: 0.1, // Rende la linea leggermente curva
         fill: true, // Abilita il riempimento dell'area
