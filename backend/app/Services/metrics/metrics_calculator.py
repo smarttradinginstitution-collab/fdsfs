@@ -214,6 +214,8 @@ class MetricsCalculator:
 
             if mfe_points and mfe_points > 0 and entry_price is not None and exit_price is not None:
                 pnl_in_points = abs(exit_price - entry_price)
+                # Cap the realized profit at the maximum favorable excursion to prevent efficiency > 100%
+                pnl_in_points = min(pnl_in_points, mfe_points)
                 if mfe_points > 0:
                     sell_efficiencies.append(pnl_in_points / mfe_points)
 
