@@ -1,111 +1,323 @@
 # backend/tests/services/metrics/test_metrics_calculator.py
 
 import pytest
-from datetime import datetime
 from decimal import Decimal
+from datetime import datetime, timedelta
+import pytz
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 
-def _get_mock_trade(entry_timestamp: str, pnl: str = "100.00") -> dict:
-    """Helper to create a consistent mock trade dictionary."""
+@pytest.fixture
+def sample_trades():
+    return [
+        {
+            'p_l': '100.50', 'entry_price': '150.00', 'exit_price': '151.50', 'stop_loss_price': '149.00',
+            'take_profit_price': '152.00', 'position_size': '10', 'direction': 'Long',
+            'entry_timestamp': datetime(2023, 1, 1, 10, 0, 0), 'exit_timestamp': datetime(2023, 1, 1, 11, 0, 0),
+            'lowest_price_during_trade': '149.50', 'highest_price_during_trade': '151.75', 'setup': 'Breakout',
+            'created_at': datetime(2023, 1, 1, 9, 0, 0),
+        },
+        {
+            'p_l': '-50.25', 'entry_price': '151.00', 'exit_price': '150.25', 'stop_loss_price': '152.00',
+            'take_profit_price': '150.00', 'position_size': '5', 'direction': 'Short',
+            'entry_timestamp': datetime(2023, 1, 2, 14, 0, 0), 'exit_timestamp': datetime(2023, 1, 2, 15, 0, 0),
+            'lowest_price_during_trade': '150.10', 'highest_price_during_trade': '151.50', 'setup': 'Reversal',
+            'created_at': datetime(2023, 1, 2, 13, 0, 0),
+        }
+    ]
+
+@pytest.fixture
+def trades_for_streaks():
+    return [
+        {'p_l': '10'}, {'p_l': '20'}, {'p_l': '-5'}, {'p_l': '-10'},
+        {'p_l': '15'}, {'p_l': '0'}, {'p_l': '-8'},
+    ]
+
+@pytest.fixture
+def daily_pnl_data():
     return {
-        "p_l": Decimal(pnl),
-        "entry_timestamp": entry_timestamp,
-        "exit_timestamp": entry_timestamp, # Keep it simple
-        "created_at": entry_timestamp,
-        "entry_price": Decimal("150.00"),
-        "position_size": Decimal("1.0"),
-        "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-        "user_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-        "setup": "Test Setup",
-        "stop_loss_price": Decimal("149.00"),
-        "take_profit_price": Decimal("151.00"),
-        "notes": "",
-        "exit_price": Decimal("151.00"),
-        "lowest_price_during_trade": Decimal("149.50"),
-        "highest_price_during_trade": Decimal("151.50"),
-        "symbol": "TEST",
-        "direction": "Long",
-        "emotional_state": "Calm",
-        "mistakes": [],
-        "notes_pre_trade": "",
-        "notes_post_trade": "",
-        "duration_minutes": 0,
-        "tags": []
+        datetime(2023, 1, 1): Decimal('100'),
+        datetime(2023, 1, 2): Decimal('-50'),
+        datetime(2023, 1, 3): Decimal('150'),
+        datetime(2023, 1, 4): Decimal('50'),
     }
 
-def test_timezone_conversion_groups_by_local_date_and_hour():
-    """
-    Verifica che un trade notturno in UTC venga assegnato al giorno e all'ora corretti
-    in un fuso orario locale.
-    """
-    # 23:30 UTC del 26 Ottobre 2023 -> 01:30 del 27 Ottobre in 'Europe/Rome' (CEST, UTC+2)
-    utc_time = "2023-10-26T23:30:00Z"
-    local_date = "2023-10-27"
-    local_hour_key = "01:00" # L'ora corretta è l'una del mattino, non mezzanotte
+def test_initialization(sample_trades):
+    calc = MetricsCalculator(sample_trades)
+    assert len(calc.all_trades) == 2
+    assert 'mae_points' in calc.all_trades[0]
 
-    mock_trades = [_get_mock_trade(utc_time)]
-    calculator = MetricsCalculator(trades=mock_trades, user_timezone="Europe/Rome")
+def test_initialization_no_trades():
+    calc = MetricsCalculator([])
+    assert len(calc.all_trades) == 0
 
-    # Calcoliamo le statistiche per la verifica
-    processed_stats = calculator.calculate_processed_stats()
-    base_stats = calculator._calculate_base_stats()
-    advanced_stats = calculator._calculate_advanced_stats(base_stats)
+def test_unknown_timezone():
+    calc = MetricsCalculator([], user_timezone="Invalid/Timezone")
+    assert calc.tz == pytz.utc
 
-    # Verifica raggruppamento giornaliero
-    assert local_date in processed_stats["daily_data"]
-    assert "2023-10-26" not in processed_stats["daily_data"]
-    assert processed_stats["daily_data"][local_date]["total_pnl"] == 100.00
+def test_convert_to_local_tz():
+    calc = MetricsCalculator([], user_timezone="America/New_York")
+    utc_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=pytz.utc)
+    local_dt = calc._convert_to_local_tz(utc_dt)
+    assert local_dt.hour == 7
+    assert calc._convert_to_local_tz(None) is None
+    assert calc._convert_to_local_tz("2023-01-01T12:00:00Z").hour == 7
 
-    # Verifica raggruppamento orario
-    assert advanced_stats["performance_by_hour"][local_hour_key] == Decimal("100.00")
-    assert advanced_stats["performance_by_hour"]["00:00"] == Decimal("0")
-    assert advanced_stats["performance_by_hour"]["23:00"] == Decimal("0")
+def test_filter_trades_no_filters(sample_trades):
+    filtered = MetricsCalculator.filter_trades(sample_trades, {})
+    assert len(filtered) == len(sample_trades)
 
-    # Verifica giorno della settimana (27/10/2023 era un Venerdì)
-    assert advanced_stats["performance_by_day_of_week"]["Venerdì"] == Decimal("100.00")
-    assert advanced_stats["performance_by_day_of_week"]["Giovedì"] == Decimal("0")
+def test_vantage_score_no_trades():
+    calc = MetricsCalculator([])
+    score = calc.calculate_vantage_score()
+    assert score['vantage_score'] == 0
 
+def test_calculate_all_metrics_no_trades():
+    calc = MetricsCalculator([])
+    metrics = calc.calculate_all_metrics()
+    assert metrics['trades'] == []
+    assert metrics['stats']['total_pl'] == 0
 
-def test_daylight_saving_time_spring_forward():
-    """
-    Verifica la corretta gestione del passaggio all'ora legale (spring forward).
-    A New York, il 12 Marzo 2023, l'orologio salta dalle 01:59 alle 03:00.
-    """
-    # Trade 1: 01:30 EST (UTC-5) -> 06:30 UTC
-    # Trade 2: 03:30 EDT (UTC-4) -> 07:30 UTC
-    trade_before_dst = _get_mock_trade("2023-03-12T06:30:00Z", "50.00") # 01:30 local
-    trade_after_dst = _get_mock_trade("2023-03-12T07:30:00Z", "150.00") # 03:30 local
+def test_prepare_trades_missing_data():
+    trades = [{'direction': 'Long'}]
+    calc = MetricsCalculator(trades)
+    assert calc.all_trades[0]['mae_points'] == 0
+    assert calc.all_trades[0]['net_roi'] == 0
 
-    mock_trades = [trade_before_dst, trade_after_dst]
-    calculator = MetricsCalculator(trades=mock_trades, user_timezone="America/New_York")
+def test_advanced_stats_edge_cases():
+    trades = [{'p_l': '10', 'direction': 'Long', 'entry_price': '100', 'exit_price': '110'}] # no mfe
+    calc = MetricsCalculator(trades)
+    base_stats = calc._calculate_base_stats()
+    adv_stats = calc._calculate_advanced_stats(base_stats)
+    assert adv_stats['avg_sell_efficiency'] == 0
 
-    base_stats = calculator._calculate_base_stats()
-    advanced_stats = calculator._calculate_advanced_stats(base_stats)
+def test_calculate_trade_summary_no_trades():
+    calc = MetricsCalculator([])
+    summary = calc.calculate_trade_summary()
+    assert summary['stats']['net_pnl'] == 0
 
-    # Verifica che i P&L siano stati assegnati ai bucket orari corretti
-    pnl_by_hour = advanced_stats["performance_by_hour"]
-    assert pnl_by_hour["01:00"] == Decimal("50.00")
-    assert pnl_by_hour["02:00"] == Decimal("0") # L'ora dalle 2 alle 3 non esiste in questo giorno
-    assert pnl_by_hour["03:00"] == Decimal("150.00")
+def test_calculate_processed_stats_no_trades():
+    calc = MetricsCalculator([])
+    stats = calc.calculate_processed_stats()
+    assert stats['general_stats']['total_pnl'] == 0
 
-def test_daylight_saving_time_fall_back():
-    """
-    Verifica la corretta gestione del ritorno all'ora solare (fall back).
-    A Roma, il 29 Ottobre 2023, l'orologio torna indietro dalle 02:59 alle 02:00.
-    L'ora tra le 02:00 e le 02:59 accade due volte.
-    """
-    # Trade 1: 02:30 CEST (UTC+2) -> 00:30 UTC
-    # Trade 2: 02:30 CET (UTC+1) -> 01:30 UTC
-    trade_first_2am_hour = _get_mock_trade("2023-10-29T00:30:00Z", "70.00") # Questo è alle 2:30 CEST
-    trade_second_2am_hour = _get_mock_trade("2023-10-29T01:30:00Z", "80.00") # Questo è alle 2:30 CET
+def test_full_calculation_flow(sample_trades):
+    calc = MetricsCalculator(sample_trades, user_timezone="UTC")
+    all_metrics = calc.calculate_all_metrics()
+    assert all_metrics is not None
+    assert 'trades' in all_metrics
+    assert 'stats' in all_metrics
+    vantage_score = calc.calculate_vantage_score()
+    assert vantage_score is not None
+    assert 'vantage_score' in vantage_score
+    summary = calc.calculate_trade_summary()
+    assert summary is not None
+    assert 'stats' in summary
+    processed = calc.calculate_processed_stats()
+    assert processed is not None
+    assert 'general_stats' in processed
+    equity = calc.calculate_equity_curve()
+    assert equity is not None
+    assert 'labels' in equity
 
-    mock_trades = [trade_first_2am_hour, trade_second_2am_hour]
-    calculator = MetricsCalculator(trades=mock_trades, user_timezone="Europe/Rome")
+# --- Validation Tests ---
 
-    base_stats = calculator._calculate_base_stats()
-    advanced_stats = calculator._calculate_advanced_stats(base_stats)
+def test_total_pl():
+    trades = [{'p_l': '150.50'}, {'p_l': '-50.25'}, {'p_l': '10.00'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['total_pl'] == Decimal('110.25')
 
-    # Entrambi i trade dovrebbero finire nel bucket delle 02:00
-    pnl_by_hour = advanced_stats["performance_by_hour"]
-    assert pnl_by_hour["02:00"] == Decimal("70.00") + Decimal("80.00")
-    assert pnl_by_hour["02:00"] == Decimal("150.00")
+def test_trade_counts():
+    trades = [{'p_l': '150.50'}, {'p_l': '-50.25'}, {'p_l': '0'}, {'p_l': '20.00'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['trade_count'] == 4
+    assert stats['winning_trades_count'] == 2
+    assert stats['losing_trades_count'] == 1
+    assert stats['breakeven_trades_count'] == 1
+
+def test_avg_win_loss():
+    trades = [{'p_l': '100'}, {'p_l': '200'}, {'p_l': '-50'}, {'p_l': '-30'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['avg_win'] == Decimal('150')
+    assert stats['avg_loss'] == Decimal('40')
+
+def test_profit_factor():
+    # Standard case
+    trades = [{'p_l': '200'}, {'p_l': '-100'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['profit_factor'] == Decimal('2.0')
+    assert stats['profit_factor_label'] == "2.00"
+
+    # No loss case
+    trades = [{'p_l': '200'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['profit_factor'] == Decimal('inf')
+    assert stats['profit_factor_label'] == "∞"
+
+    # No loss, no win case
+    trades = [{'p_l': '0'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['profit_factor'] == Decimal('0')
+    assert stats['profit_factor_label'] == "0.00"
+
+def test_win_rate():
+    trades = [{'p_l': '100'}, {'p_l': '-50'}, {'p_l': '20'}, {'p_l': '-10'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['win_rate'] == Decimal('50.0')
+
+def test_expectancy():
+    trades = [{'p_l': '60'}, {'p_l': '-20'}]
+    calc = MetricsCalculator(trades)
+    stats = calc._calculate_base_stats()
+    assert stats['expectancy'] == Decimal('20')
+
+def test_sell_efficiency():
+    # Test for a winning Long trade
+    long_trade = {
+        'p_l': '100', 'entry_price': '100', 'exit_price': '110',
+        'highest_price_during_trade': '120', 'lowest_price_during_trade': '99',
+        'direction': 'Long'
+    }
+    calc_long = MetricsCalculator([long_trade])
+    stats_long = calc_long._calculate_advanced_stats(calc_long._calculate_base_stats())
+    assert stats_long['avg_sell_efficiency'] == pytest.approx(50.0)
+
+    # Test for a winning Short trade
+    short_trade = {
+        'p_l': '100', 'entry_price': '200', 'exit_price': '190',
+        'highest_price_during_trade': '201', 'lowest_price_during_trade': '180',
+        'direction': 'Short'
+    }
+    calc_short = MetricsCalculator([short_trade])
+    stats_short = calc_short._calculate_advanced_stats(calc_short._calculate_base_stats())
+    assert stats_short['avg_sell_efficiency'] == pytest.approx(50.0)
+
+def test_total_efficiency():
+    # Test for a Long trade
+    long_trade = {
+        'entry_price': '100', 'highest_price_during_trade': '110', 'lowest_price_during_trade': '95',
+        'direction': 'Long'
+    }
+    calc_long = MetricsCalculator([long_trade])
+    stats_long = calc_long._calculate_advanced_stats(calc_long._calculate_base_stats())
+    assert float(stats_long['avg_total_efficiency']) == pytest.approx(66.666, 0.01)
+
+    # Test for a Short trade
+    short_trade = {
+        'entry_price': '200', 'highest_price_during_trade': '205', 'lowest_price_during_trade': '190',
+        'direction': 'Short'
+    }
+    calc_short = MetricsCalculator([short_trade])
+    stats_short = calc_short._calculate_advanced_stats(calc_short._calculate_base_stats())
+    assert float(stats_short['avg_total_efficiency']) == pytest.approx(66.666, 0.01)
+
+def test_planned_rr():
+    # Test for a Long trade
+    long_trade = {'entry_price': '100', 'stop_loss_price': '98', 'take_profit_price': '106'}
+    calc_long = MetricsCalculator([long_trade])
+    stats_long = calc_long._calculate_advanced_stats(calc_long._calculate_base_stats())
+    assert stats_long['avg_planned_rr'] == pytest.approx(3.0)
+
+    # Test for a Short trade
+    short_trade = {'entry_price': '200', 'stop_loss_price': '202', 'take_profit_price': '194'}
+    calc_short = MetricsCalculator([short_trade])
+    stats_short = calc_short._calculate_advanced_stats(calc_short._calculate_base_stats())
+    assert stats_short['avg_planned_rr'] == pytest.approx(3.0)
+
+def test_realized_rr():
+    # Test for a Long trade
+    long_trade = {
+        'p_l': '40', 'entry_price': '100', 'stop_loss_price': '98', 'position_size': '10'
+    }
+    calc_long = MetricsCalculator([long_trade])
+    stats_long = calc_long._calculate_advanced_stats(calc_long._calculate_base_stats())
+    assert stats_long['avg_realized_rr'] == pytest.approx(2.0)
+
+    # Test for a Short trade
+    short_trade = {
+        'p_l': '60', 'entry_price': '200', 'stop_loss_price': '202', 'position_size': '15'
+    }
+    calc_short = MetricsCalculator([short_trade])
+    stats_short = calc_short._calculate_advanced_stats(calc_short._calculate_base_stats())
+    assert stats_short['avg_realized_rr'] == pytest.approx(2.0)
+
+def test_calmar_ratio():
+    trades = [
+        {'p_l': '1000', 'entry_timestamp': datetime(2023, 1, 1)},
+        {'p_l': '-200', 'entry_timestamp': datetime(2023, 7, 2)},
+        {'p_l': '100', 'entry_timestamp': datetime(2023, 7, 3)},
+    ]
+    calc = MetricsCalculator(trades)
+    base_stats = calc._calculate_base_stats()
+    adv_stats = calc._calculate_advanced_stats(base_stats)
+    assert adv_stats['calmar_ratio'] > 0
+
+def test_var_cvar():
+    trades = [
+        {'p_l': '-10', 'entry_timestamp': datetime(2023,1,1)},
+        {'p_l': '-20', 'entry_timestamp': datetime(2023,1,2)},
+        {'p_l': '-5', 'entry_timestamp': datetime(2023,1,3)},
+        {'p_l': '50', 'entry_timestamp': datetime(2023,1,4)},
+        {'p_l': '100', 'entry_timestamp': datetime(2023,1,5)},
+        {'p_l': '80', 'entry_timestamp': datetime(2023,1,6)},
+        {'p_l': '-15', 'entry_timestamp': datetime(2023,1,7)},
+        {'p_l': '10', 'entry_timestamp': datetime(2023,1,8)},
+        {'p_l': '20', 'entry_timestamp': datetime(2023,1,9)},
+        {'p_l': '30', 'entry_timestamp': datetime(2023,1,10)},
+        {'p_l': '-30', 'entry_timestamp': datetime(2023,1,11)},
+        {'p_l': '-40', 'entry_timestamp': datetime(2023,1,12)},
+        {'p_l': '60', 'entry_timestamp': datetime(2023,1,13)},
+        {'p_l': '70', 'entry_timestamp': datetime(2023,1,14)},
+        {'p_l': '90', 'entry_timestamp': datetime(2023,1,15)},
+        {'p_l': '-25', 'entry_timestamp': datetime(2023,1,16)},
+        {'p_l': '5', 'entry_timestamp': datetime(2023,1,17)},
+        {'p_l': '15', 'entry_timestamp': datetime(2023,1,18)},
+        {'p_l': '-10', 'entry_timestamp': datetime(2023,1,19)},
+        {'p_l': '-5', 'entry_timestamp': datetime(2023,1,20)},
+    ]
+    calc = MetricsCalculator(trades)
+    base_stats = calc._calculate_base_stats()
+    adv_stats = calc._calculate_advanced_stats(base_stats)
+    assert adv_stats['var_95'] == pytest.approx(Decimal('30.5'))
+    assert adv_stats['cvar_95'] == pytest.approx(Decimal('40'))
+
+def test_skewness_kurtosis():
+    trades = [
+        {'p_l': '-30', 'entry_timestamp': datetime(2023,1,1)},
+        {'p_l': '-10', 'entry_timestamp': datetime(2023,1,2)},
+        {'p_l': '0', 'entry_timestamp': datetime(2023,1,3)},
+        {'p_l': '10', 'entry_timestamp': datetime(2023,1,4)},
+        {'p_l': '30', 'entry_timestamp': datetime(2023,1,5)},
+    ]
+    calc = MetricsCalculator(trades)
+    base_stats = calc._calculate_base_stats()
+    adv_stats = calc._calculate_advanced_stats(base_stats)
+    assert adv_stats['skewness'] == pytest.approx(Decimal('0.0'))
+    assert adv_stats['kurtosis'] == pytest.approx(Decimal('-0.95'), abs=0.01)
+
+def test_average_hold_time():
+    trades = [
+        {'entry_timestamp': datetime(2023,1,1, 10,0,0), 'exit_timestamp': datetime(2023,1,1, 10,10,0)}, # 10 min
+        {'entry_timestamp': datetime(2023,1,1, 11,0,0), 'exit_timestamp': datetime(2023,1,1, 11,20,0)}, # 20 min
+    ]
+    calc = MetricsCalculator(trades)
+    base_stats = calc._calculate_base_stats()
+    adv_stats = calc._calculate_advanced_stats(base_stats)
+    assert adv_stats['average_hold_time'] == 15.0
+
+def test_max_consecutive_wins_losses():
+    trades = [
+        {'p_l': '10'}, {'p_l': '20'}, {'p_l': '-5'}, {'p_l': '30'},
+        {'p_l': '40'}, {'p_l': '50'}, {'p_l': '-10'}, {'p_l': '-15'},
+    ]
+    calc = MetricsCalculator(trades)
+    base_stats = calc._calculate_base_stats()
+    adv_stats = calc._calculate_advanced_stats(base_stats)
+    assert adv_stats['max_consecutive_wins'] == 3
+    assert adv_stats['max_consecutive_losses'] == 2

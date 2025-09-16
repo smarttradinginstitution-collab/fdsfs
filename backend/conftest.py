@@ -1,9 +1,32 @@
+# backend/conftest.py
+
 import pytest
 import asyncio
 from typing import AsyncGenerator
 from httpx import AsyncClient
 
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy import JSON, Text
+from sqlalchemy.ext.compiler import compiles
+
 from app.main import app
+from app.Infrastructure.db import Base
+# Import all models to ensure they are registered with Base
+from app.Models import auth_user, role, tag, trade, trades_tags, user_dashboard_layout, user_role
+
+# This is a hack to make the tests work with SQLite
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+@compiles(ARRAY, "sqlite")
+def compile_array_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -12,6 +35,31 @@ def event_loop():
     loop = policy.new_event_loop()
     yield loop
     loop.close()
+
+@pytest.fixture(scope="session")
+async def engine():
+    return create_async_engine(TEST_DATABASE_URL, echo=True)
+
+@pytest.fixture(scope="session")
+async def tables(engine):
+    # Remove schema for sqlite
+    for table in Base.metadata.tables.values():
+        table.schema = None
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+@pytest.fixture(scope="function")
+async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
+    """Fixture for a db session."""
+    async_session_factory = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+    async with async_session_factory() as session:
+        yield session
+
 
 @pytest.fixture(scope="function")
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
