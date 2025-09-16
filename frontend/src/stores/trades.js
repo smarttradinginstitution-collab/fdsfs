@@ -73,6 +73,10 @@ export const useTradesStore = defineStore('trades', {
           maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', 'Risk Management', '$0.00'),
           sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio', 'Ratios & Efficiency'),
           averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', 'Other', '0 min'),
+          recoveryFactor: emptyStat('recoveryFactor', 'Recovery Factor', 'Risk Management'),
+          sortinoRatio: emptyStat('sortinoRatio', 'Sortino Ratio', 'Ratios & Efficiency'),
+          calmarRatio: emptyStat('calmarRatio', 'Calmar Ratio', 'Ratios & Efficiency'),
+          maxDrawdownPct: emptyStat('maxDrawdownPct', 'Max Drawdown %', 'Risk Management', '0.00%'),
         };
       }
 
@@ -95,6 +99,10 @@ export const useTradesStore = defineStore('trades', {
       const maxDrawdownAbs = parseFloat(stats.max_drawdown_abs);
       const sharpeRatio = parseFloat(stats.sharpe_ratio);
       const averageHoldTime = parseFloat(stats.average_hold_time);
+      const recoveryFactor = parseFloat(stats.recovery_factor);
+      const sortinoRatio = parseFloat(stats.sortino_ratio);
+      const calmarRatio = parseFloat(stats.calmar_ratio);
+      const maxDrawdownPct = parseFloat(stats.max_drawdown_pct);
 
       return {
         netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
@@ -109,8 +117,12 @@ export const useTradesStore = defineStore('trades', {
         expectancy: { key: 'expectancy', label: 'Expectancy', category: 'Ratios & Efficiency', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
         avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
         sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
+        sortinoRatio: { key: 'sortinoRatio', label: 'Sortino Ratio', category: 'Ratios & Efficiency', value: `${sortinoRatio.toFixed(2)}`, changeType: 'neutral' },
+        calmarRatio: { key: 'calmarRatio', label: 'Calmar Ratio', category: 'Ratios & Efficiency', value: `${calmarRatio.toFixed(2)}`, changeType: 'neutral' },
 
         maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
+        maxDrawdownPct: { key: 'maxDrawdownPct', label: 'Max Drawdown %', category: 'Risk Management', value: `${maxDrawdownPct.toFixed(2)}%`, changeType: 'neutral' },
+        recoveryFactor: { key: 'recoveryFactor', label: 'Recovery Factor', category: 'Risk Management', value: `${recoveryFactor.toFixed(2)}`, changeType: 'neutral' },
 
         trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(tradeCount), changeType: 'neutral' },
         maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(maxConsecutiveWins), changeType: 'neutral' },
