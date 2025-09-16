@@ -164,13 +164,14 @@ class MetricsCalculator:
         avg_trade_pnl = total_pl / trade_count if trade_count > 0 else Decimal(0)
         avg_win_loss_ratio = avg_win / avg_loss if avg_loss > 0 else Decimal('inf')
 
-        profit_factor_val = None
+        profit_factor_val = Decimal(0)
         profit_factor_label = "0.00"
         if total_loss > 0:
             pf_decimal = total_win / total_loss
             profit_factor_val = pf_decimal
             profit_factor_label = f"{pf_decimal:.2f}"
         elif total_win > 0:
+            profit_factor_val = Decimal('inf')
             profit_factor_label = "∞"
 
         win_rate = Decimal(win_count) / trade_count if trade_count > 0 else Decimal(0)
