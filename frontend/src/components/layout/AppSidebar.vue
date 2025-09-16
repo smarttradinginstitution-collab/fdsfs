@@ -9,8 +9,8 @@
 <script setup>
 // --- IMPORTAZIONI ---
 import { RouterLink } from 'vue-router';
-// Importiamo lo store per la UI per controllare lo stato della sidebar.
 import { useUiStore } from '../../stores/uiStore';
+import ThemeToggle from '../ui/ThemeToggle.vue';
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -65,14 +65,17 @@ const navLinks = [
     </nav>
 
     <div class="sidebar-footer">
-      <div class="avatar">
-        {{ user.initials }}
+      <div class="user-profile">
+        <div class="avatar">
+          {{ user.initials }}
+        </div>
+        <!-- Le info dell'utente vengono mostrate solo se la sidebar non è collassata -->
+        <div v-if="!uiStore.isSidebarCollapsed" class="user-info">
+          <p class="user-name">{{ user.name }}</p>
+          <p class="user-email">{{ user.email }}</p>
+        </div>
       </div>
-      <!-- Le info dell'utente vengono mostrate solo se la sidebar non è collassata -->
-      <div v-if="!uiStore.isSidebarCollapsed" class="user-info">
-        <p class="user-name">{{ user.name }}</p>
-        <p class="user-email">{{ user.email }}</p>
-      </div>
+      <ThemeToggle v-if="!uiStore.isSidebarCollapsed" />
     </div>
   </aside>
 </template>
@@ -165,6 +168,14 @@ const navLinks = [
 }
 
 .sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-size-stack-sm);
+  overflow: hidden;
+}
+
+.user-profile {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-stack-sm);

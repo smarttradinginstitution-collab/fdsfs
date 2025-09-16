@@ -169,8 +169,41 @@ export const useUiStore = defineStore('ui', () => {
   }
 
 
+  // --- THEME MANAGEMENT ---
+  const theme = ref('light');
+
+  function setTheme(newTheme) {
+    theme.value = newTheme;
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
+
+  function toggleTheme() {
+    const newTheme = theme.value === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  }
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (userPrefersDark) {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+  }
+
+  // Initialize the theme when the store is created
+  initTheme();
+
+
   // --- ESPORTAZIONE ---
   return {
+    theme, // Export theme state
+    toggleTheme, // Export theme action
     isSidebarCollapsed,
     isMobileMenuOpen,
     isLayoutEditing,
