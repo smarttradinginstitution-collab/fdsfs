@@ -77,6 +77,18 @@ export const useTradesStore = defineStore('trades', {
           sortinoRatio: emptyStat('sortinoRatio', 'Sortino Ratio', 'Ratios & Efficiency'),
           calmarRatio: emptyStat('calmarRatio', 'Calmar Ratio', 'Ratios & Efficiency'),
           maxDrawdownPct: emptyStat('maxDrawdownPct', 'Max Drawdown %', 'Risk Management', '0.00%'),
+          avgSellEfficiency: emptyStat('avgSellEfficiency', 'Avg. Sell Efficiency', 'Ratios & Efficiency', '0.0%'),
+          avgTotalEfficiency: emptyStat('avgTotalEfficiency', 'Avg. Total Efficiency', 'Ratios & Efficiency', '0.0%'),
+          avgPlannedRr: emptyStat('avgPlannedRr', 'Avg. Planned R:R', 'Ratios & Efficiency'),
+          skewness: emptyStat('skewness', 'Skewness', 'Ratios & Efficiency'),
+          kurtosis: emptyStat('kurtosis', 'Kurtosis', 'Ratios & Efficiency'),
+          var95: emptyStat('var95', 'VaR 95%', 'Risk Management'),
+          cvar95: emptyStat('cvar95', 'CVaR 95%', 'Risk Management'),
+          averageDrawdown: emptyStat('averageDrawdown', 'Avg. Drawdown', 'Risk Management'),
+          longestTradeDuration: emptyStat('longestTradeDuration', 'Longest Trade', 'Other'),
+          currentTradeStreak: emptyStat('currentTradeStreak', 'Current Streak', 'Consistency'),
+          longsWinPercentage: emptyStat('longsWinPercentage', 'Longs Win %', 'Ratios & Efficiency'),
+          shortsWinPercentage: emptyStat('shortsWinPercentage', 'Shorts Win %', 'Ratios & Efficiency'),
         };
       }
 
@@ -103,6 +115,17 @@ export const useTradesStore = defineStore('trades', {
       const sortinoRatio = parseFloat(stats.sortino_ratio);
       const calmarRatio = parseFloat(stats.calmar_ratio);
       const maxDrawdownPct = parseFloat(stats.max_drawdown_pct);
+      const avgSellEfficiency = parseFloat(stats.avg_sell_efficiency);
+      const avgTotalEfficiency = parseFloat(stats.avg_total_efficiency);
+      const avgPlannedRr = parseFloat(stats.avg_planned_rr);
+      const skewness = parseFloat(stats.skewness);
+      const kurtosis = parseFloat(stats.kurtosis);
+      const var95 = parseFloat(stats.var_95);
+      const cvar95 = parseFloat(stats.cvar_95);
+      const averageDrawdown = parseFloat(stats.average_drawdown);
+      const longestTradeDuration = parseFloat(stats.longest_trade_duration);
+      const longsWinPercentage = parseFloat(stats.longs_win_percentage);
+      const shortsWinPercentage = parseFloat(stats.shorts_win_percentage);
 
       return {
         netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
@@ -119,16 +142,28 @@ export const useTradesStore = defineStore('trades', {
         sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
         sortinoRatio: { key: 'sortinoRatio', label: 'Sortino Ratio', category: 'Ratios & Efficiency', value: `${sortinoRatio.toFixed(2)}`, changeType: 'neutral' },
         calmarRatio: { key: 'calmarRatio', label: 'Calmar Ratio', category: 'Ratios & Efficiency', value: `${calmarRatio.toFixed(2)}`, changeType: 'neutral' },
+        avgSellEfficiency: { key: 'avgSellEfficiency', label: 'Avg. Sell Efficiency', category: 'Ratios & Efficiency', value: `${avgSellEfficiency.toFixed(1)}%`, changeType: 'neutral' },
+        avgTotalEfficiency: { key: 'avgTotalEfficiency', label: 'Avg. Total Efficiency', category: 'Ratios & Efficiency', value: `${avgTotalEfficiency.toFixed(1)}%`, changeType: 'neutral' },
+        avgPlannedRr: { key: 'avgPlannedRr', label: 'Avg. Planned R:R', category: 'Ratios & Efficiency', value: `${avgPlannedRr.toFixed(2)}`, changeType: 'neutral' },
+        skewness: { key: 'skewness', label: 'Skewness', category: 'Ratios & Efficiency', value: `${skewness.toFixed(2)}`, changeType: 'neutral' },
+        kurtosis: { key: 'kurtosis', label: 'Kurtosis', category: 'Ratios & Efficiency', value: `${kurtosis.toFixed(2)}`, changeType: 'neutral' },
+        longsWinPercentage: { key: 'longsWinPercentage', label: 'Longs Win %', category: 'Ratios & Efficiency', value: `${longsWinPercentage.toFixed(1)}%`, changeType: 'neutral' },
+        shortsWinPercentage: { key: 'shortsWinPercentage', label: 'Shorts Win %', category: 'Ratios & Efficiency', value: `${shortsWinPercentage.toFixed(1)}%`, changeType: 'neutral' },
 
         maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
         maxDrawdownPct: { key: 'maxDrawdownPct', label: 'Max Drawdown %', category: 'Risk Management', value: `${maxDrawdownPct.toFixed(2)}%`, changeType: 'neutral' },
         recoveryFactor: { key: 'recoveryFactor', label: 'Recovery Factor', category: 'Risk Management', value: `${recoveryFactor.toFixed(2)}`, changeType: 'neutral' },
+        var95: { key: 'var95', label: 'VaR 95%', category: 'Risk Management', value: `$${var95.toFixed(2)}`, changeType: 'neutral' },
+        cvar95: { key: 'cvar95', label: 'CVaR 95%', category: 'Risk Management', value: `$${cvar95.toFixed(2)}`, changeType: 'neutral' },
+        averageDrawdown: { key: 'averageDrawdown', label: 'Avg. Drawdown', category: 'Risk Management', value: `$${averageDrawdown.toFixed(2)}`, changeType: 'neutral' },
 
         trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(tradeCount), changeType: 'neutral' },
         maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(maxConsecutiveWins), changeType: 'neutral' },
         maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', category: 'Consistency', value: String(maxConsecutiveLosses), changeType: 'neutral' },
+        currentTradeStreak: { key: 'currentTradeStreak', label: 'Current Streak', category: 'Consistency', value: String(stats.current_trade_streak), changeType: 'neutral' },
 
         averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
+        longestTradeDuration: { key: 'longestTradeDuration', label: 'Longest Trade', category: 'Other', value: `${longestTradeDuration.toFixed(0)} min`, changeType: 'neutral' },
       };
     },
 
