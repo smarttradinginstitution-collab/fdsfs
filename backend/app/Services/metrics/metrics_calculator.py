@@ -1,11 +1,14 @@
 # app/Services/metrics/metrics_calculator.py
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import numpy as np
 from dateutil.parser import parse
 from scipy.stats import skew, kurtosis
 from datetime import datetime
 import pytz
+
+from app.Schemas.stats import PerformanceStats, PerformanceMetricsResponse, ChartData, RMultipleData, SetupChartData
+from app.Schemas.trade import TradeRead
 
 class MetricsCalculator:
     def __init__(self, trades, user_timezone: str = "UTC"):
@@ -255,10 +258,14 @@ class MetricsCalculator:
         # Ordinamento per data di entrata per coerenza
         fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
         self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or fallback_date)
-        safe_pnl_floats = [float(pnl) for pnl in base_stats['pnl_data']]
-        equity_curve_data = [{'date': (t.get('entry_timestamp') or fallback_date).strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
 
-        equity_points = [0] + [p['pl'] for p in equity_curve_data]
+        # Equity Curve Calculation
+        pnl_data = [Decimal(t.get('p_l', 0)) for t in self.all_trades]
+        cumulative_pnl = np.cumsum([float(p) for p in pnl_data])
+        equity_curve_labels = [(t.get('entry_timestamp') or fallback_date).strftime('%Y-%m-%d %H:%M') for t in self.all_trades]
+        equity_curve_data = {'labels': equity_curve_labels, 'data': list(cumulative_pnl)}
+
+        equity_points = [0] + list(cumulative_pnl)
         peak_array = np.maximum.accumulate(equity_points)
         drawdown = peak_array - equity_points
         max_drawdown_abs = Decimal(np.max(drawdown))
@@ -359,7 +366,7 @@ class MetricsCalculator:
             'avg_realized_rr': np.mean(realized_rrs) if realized_rrs else Decimal(0),
             'equity_curve_data': equity_curve_data,
             'max_drawdown_abs': max_drawdown_abs,
-            'max_drawdown_pct': (max_drawdown_abs / Decimal(peak_array[-1])) * 100 if (peak_array := np.maximum.accumulate([0] + [p['pl'] for p in equity_curve_data]))[-1] > 0 else Decimal(0),
+            'max_drawdown_pct': (max_drawdown_abs / Decimal(peak_array[-1])) * 100 if peak_array[-1] > 0 else Decimal(0),
             'sharpe_ratio': sharpe, 'sortino_ratio': sortino, 'calmar_ratio': calmar,
             'skewness': Decimal(skewness_val), 'kurtosis': Decimal(kurtosis_val),
             'var_95': abs(var_95), 'cvar_95': abs(cvar_95),
@@ -773,20 +780,75 @@ class MetricsCalculator:
             "weekly_totals": weekly_totals
         }
 
-    def calculate_all_metrics(self):
-        """Pacchetto completo di metriche + grafici."""
+    def calculate_all_metrics(self) -> PerformanceMetricsResponse:
+        """
+        Calculates a comprehensive package of metrics and constructs a Pydantic
+        model for a validated, correctly-typed response.
+        """
         if not self.all_trades:
-            return self._get_empty_response()
+            return PerformanceMetricsResponse(
+                stats=PerformanceStats(),  # Pydantic will use default values
+                trades=[],
+                equity_curve_data=ChartData(labels=[], data=[]),
+                setup_chart_data=[],
+                r_multiple_data=RMultipleData(labels=[], data=[]),
+                performance_by_day=ChartData(labels=[], data=[]),
+                performance_by_hour=ChartData(labels=[], data=[])
+            )
 
         base_stats = self._calculate_base_stats()
         advanced_stats = self._calculate_advanced_stats(base_stats)
         chart_data = self._prepare_chart_data(advanced_stats)
+        all_stats_raw = {**base_stats, **advanced_stats}
 
-        final_stats = {**base_stats, **advanced_stats}
-        for k in ('winning_trades', 'realized_rrs_list', 'losing_trades_pnl', 'pnl_data'):
-            final_stats.pop(k, None)
+        # Helper to safely convert Decimal to float, handling infinity
+        def to_float(value: Decimal, is_nullable: bool = False) -> float | None:
+            if value.is_infinite():
+                return None if is_nullable else 999999.0
+            try:
+                return float(value)
+            except (ValueError, TypeError, InvalidOperation):
+                return 0.0
 
-        # Per la visualizzazione, i trade sono ordinati dal più recente al meno recente
+        # Map raw calculation results directly to the Pydantic model fields
+        stats_model = PerformanceStats(
+            total_pl=to_float(all_stats_raw.get('total_pl', Decimal(0))),
+            trade_count=all_stats_raw.get('trade_count', 0),
+            winning_trades_count=all_stats_raw.get('winning_trades_count', 0),
+            losing_trades_count=all_stats_raw.get('losing_trades_count', 0),
+            breakeven_trades_count=all_stats_raw.get('breakeven_trades_count', 0),
+            win_rate=to_float(all_stats_raw.get('win_rate', Decimal(0))),
+            avg_win=to_float(all_stats_raw.get('avg_win', Decimal(0))),
+            avg_loss=to_float(all_stats_raw.get('avg_loss', Decimal(0))),
+            expectancy=to_float(all_stats_raw.get('expectancy', Decimal(0))),
+            average_trade_pnl=to_float(all_stats_raw.get('average_trade_pnl', Decimal(0))),
+            largest_profit=to_float(all_stats_raw.get('largest_profit', Decimal(0))),
+            largest_loss=to_float(all_stats_raw.get('largest_loss', Decimal(0))),
+            max_consecutive_wins=all_stats_raw.get('max_consecutive_wins', 0),
+            max_consecutive_losses=all_stats_raw.get('max_consecutive_losses', 0),
+            avg_realized_rr=to_float(all_stats_raw.get('avg_realized_rr', Decimal(0))),
+            max_drawdown_abs=to_float(all_stats_raw.get('max_drawdown_abs', Decimal(0))),
+            max_drawdown_percent=to_float(all_stats_raw.get('max_drawdown_pct', Decimal(0))),
+            sharpe_ratio=to_float(all_stats_raw.get('sharpe_ratio', Decimal(0))),
+            sortino_ratio=to_float(all_stats_raw.get('sortino_ratio', Decimal(0))),
+            calmar_ratio=to_float(all_stats_raw.get('calmar_ratio', Decimal(0))),
+            recovery_factor=to_float(all_stats_raw.get('recovery_factor', Decimal(0)), is_nullable=True),
+            average_hold_time=all_stats_raw.get('average_hold_time', 0.0),
+            profit_factor_label=all_stats_raw.get('profit_factor_label', "N/A"),
+            var_95=to_float(all_stats_raw.get('var_95', Decimal(0))),
+            cvar_95=to_float(all_stats_raw.get('cvar_95', Decimal(0))),
+            total_pnl_longs=to_float(sum(Decimal(t.get('p_l', 0)) for t in self.all_trades if t.get('direction') == 'Long')),
+            total_pnl_shorts=to_float(sum(Decimal(t.get('p_l', 0)) for t in self.all_trades if t.get('direction') == 'Short')),
+            longs_count=all_stats_raw.get('long_trades_analysis', {}).get('total', 0),
+            shorts_count=all_stats_raw.get('short_trades_analysis', {}).get('total', 0),
+            sell_efficiency=to_float(all_stats_raw.get('avg_sell_efficiency', Decimal(0))),
+            total_efficiency=to_float(all_stats_raw.get('avg_total_efficiency', Decimal(0))),
+            planned_rr=to_float(all_stats_raw.get('avg_planned_rr', Decimal(0))),
+            skewness=to_float(all_stats_raw.get('skewness', Decimal(0))),
+            kurtosis=to_float(all_stats_raw.get('kurtosis', Decimal(0))),
+        )
+
+        # Sort trades for display
         fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
         display_trades = sorted(
             self.all_trades,
@@ -794,10 +856,12 @@ class MetricsCalculator:
             reverse=True
         )
 
-        final_payload = {
-            'trades': display_trades,
-            'stats': final_stats,
-            'equity_curve_data': advanced_stats['equity_curve_data'],
-            **chart_data
-        }
-        return final_payload
+        return PerformanceMetricsResponse(
+            stats=stats_model,
+            trades=[TradeRead.model_validate(t) for t in display_trades],
+            equity_curve_data=ChartData(**advanced_stats.get('equity_curve_data', {'labels': [], 'data': []})),
+            setup_chart_data=[SetupChartData(**d) for d in chart_data.get('setup_chart_data', [])],
+            r_multiple_data=RMultipleData(**chart_data.get('r_multiple_data', {'labels': [], 'data': []})),
+            performance_by_day=ChartData(**chart_data.get('performance_by_day', {'labels': [], 'data': []})),
+            performance_by_hour=ChartData(**chart_data.get('performance_by_hour', {'labels': [], 'data': []})),
+        )

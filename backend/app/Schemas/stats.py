@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
+from .trade import TradeRead
 
 # --- Schemas for Processed Stats Endpoint ---
 
@@ -79,3 +80,66 @@ class TradeSummary(BaseModel):
     """Schema di risposta per l'endpoint di riepilogo di un periodo specifico."""
     stats: SummaryStats
     cumulative_pnl_series: EquityCurveData
+
+
+# --- Schema for Performance Metrics Endpoint ---
+
+class PerformanceStats(BaseModel):
+    """Schema for the 'stats' object in the performance metrics response."""
+    total_pl: float = 0.0
+    trade_count: int = 0
+    winning_trades_count: int = 0
+    losing_trades_count: int = 0
+    breakeven_trades_count: int = 0
+    win_rate: float = 0.0
+    avg_win: float = 0.0
+    avg_loss: float = 0.0
+    expectancy: float = 0.0
+    average_trade_pnl: float = 0.0
+    largest_profit: float = 0.0
+    largest_loss: float = 0.0
+    max_consecutive_wins: int = 0
+    max_consecutive_losses: int = 0
+    avg_realized_rr: float = 0.0
+    max_drawdown_abs: float = 0.0
+    max_drawdown_percent: float = 0.0
+    sharpe_ratio: float = 0.0
+    sortino_ratio: float = 0.0
+    calmar_ratio: float = 0.0
+    recovery_factor: Optional[float] = 0.0 # Can be inf
+    average_hold_time: float = 0.0
+    profit_factor_label: str = "N/A"
+    var_95: float = 0.0
+    cvar_95: float = 0.0
+    total_pnl_longs: float = 0.0
+    total_pnl_shorts: float = 0.0
+    longs_count: int = 0
+    shorts_count: int = 0
+    sell_efficiency: float = 0.0
+    total_efficiency: float = 0.0
+    planned_rr: float = 0.0
+    skewness: float = 0.0
+    kurtosis: float = 0.0
+
+
+class ChartData(BaseModel):
+    labels: List[str]
+    data: List[float]
+
+class RMultipleData(BaseModel):
+    labels: List[str]
+    data: List[int]
+
+class SetupChartData(BaseModel):
+    setup: str
+    total_pl: float
+
+class PerformanceMetricsResponse(BaseModel):
+    """Schema di risposta per l'endpoint delle performance metrics."""
+    stats: PerformanceStats
+    trades: List[TradeRead]
+    equity_curve_data: ChartData
+    setup_chart_data: List[SetupChartData]
+    r_multiple_data: RMultipleData
+    performance_by_day: ChartData
+    performance_by_hour: ChartData

@@ -25,7 +25,7 @@ from app.Infrastructure.db import get_db
 from app.Models.trade import TradeDirectionEnum
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
-from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
+from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary, PerformanceMetricsResponse
 from app.Schemas.vantage_score import VantageScoreData
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 
@@ -264,7 +264,7 @@ class TradesController:
             "UTC", description="Fuso orario IANA dell'utente (es. Europe/Rome)"
         ),
         db: AsyncSession = Depends(get_db),
-    ) -> dict:
+    ) -> PerformanceMetricsResponse:
         repo = TradeRepository(db)
         rows = await repo.list_with_filters(
             user_id=user_id,
@@ -280,6 +280,7 @@ class TradesController:
             trades_as_dicts.append(self._to_trade_read_dict(trade, tag_names))
 
         calc = MetricsCalculator(trades_as_dicts, user_timezone=user_timezone)
+        # Il metodo ora ritorna direttamente un'istanza di PerformanceMetricsResponse
         return calc.calculate_all_metrics()
 
     # --------------------------

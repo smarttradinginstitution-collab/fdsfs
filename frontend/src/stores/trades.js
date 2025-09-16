@@ -103,86 +103,90 @@ export const useTradesStore = defineStore('trades', {
         };
       }
 
+      // The backend now returns a fully-formed object that matches the Pydantic schema.
+      // this.dashboardStats is the full response, and this.dashboardStats.stats has the metrics.
       const stats = this.dashboardStats.stats;
-      const {
-        total_pl,
-        trade_count,
-        winning_trades_count,
-        losing_trades_count,
-        breakeven_trades_count,
-        win_rate,
-        avg_win,
-        avg_loss,
-        expectancy,
-        average_trade_pnl,
-        largest_profit,
-        largest_loss,
-        max_consecutive_wins,
-        max_consecutive_losses,
-        avg_realized_rr,
-        max_drawdown_abs,
-        max_drawdown_percent,
-        sharpe_ratio,
-        sortino_ratio,
-        calmar_ratio,
-        recovery_factor,
-        average_hold_time,
-        profit_factor_label,
-        var_95,
-        cvar_95,
-        total_pnl_longs,
-        total_pnl_shorts,
-        longs_count,
-        shorts_count,
-        sell_efficiency,
-        total_efficiency,
-        planned_rr,
-        skewness,
-        kurtosis
-      } = stats;
+
+      // The keys in the 'stats' object from the backend now directly match what we need.
+      // For example, 'stats.total_pl' is now 'stats.total_pl'.
+      // We can create local variables for convenience.
+      const totalPnl = stats.total_pl;
+      const tradeCount = stats.trade_count;
+      const winningTrades = stats.winning_trades_count;
+      const losingTrades = stats.losing_trades_count;
+      const breakEvenTrades = stats.breakeven_trades_count;
+      const winRate = stats.win_rate;
+      const avgWin = stats.avg_win;
+      const avgLoss = stats.avg_loss;
+      const expectancy = stats.expectancy;
+      const avgTradePnl = stats.average_trade_pnl;
+      const largestProfit = stats.largest_profit;
+      const largestLoss = stats.largest_loss;
+      const maxConsecutiveWins = stats.max_consecutive_wins;
+      const maxConsecutiveLosses = stats.max_consecutive_losses;
+      const avgRealizedRr = stats.avg_realized_rr;
+      const maxDrawdownAbs = stats.max_drawdown_abs;
+      const maxDrawdownPercent = stats.max_drawdown_percent;
+      const sharpeRatio = stats.sharpe_ratio;
+      const sortinoRatio = stats.sortino_ratio;
+      const calmarRatio = stats.calmar_ratio;
+      const recoveryFactor = stats.recovery_factor;
+      const averageHoldTime = stats.average_hold_time;
+      const profitFactorLabel = stats.profit_factor_label;
+      const var95 = stats.var_95;
+      const cvar95 = stats.cvar_95;
+      const totalPnlLongs = stats.total_pnl_longs;
+      const totalPnlShorts = stats.total_pnl_shorts;
+      const longsCount = stats.longs_count;
+      const shortsCount = stats.shorts_count;
+      const sellEfficiency = stats.sell_efficiency;
+      const totalEfficiency = stats.total_efficiency;
+      const plannedRr = stats.planned_rr;
+      const skewness = stats.skewness;
+      const kurtosis = stats.kurtosis;
 
       return {
         // Profitability
-        netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${total_pl >= 0 ? '+' : ''}$${total_pl.toFixed(2)}`, changeType: total_pl >= 0 ? 'positive' : 'negative' },
-        avgWin: { key: 'avgWin', label: 'Avg. Win', category: 'Profitability', value: `$${avg_win.toFixed(2)}`, changeType: 'neutral' },
-        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', category: 'Profitability', value: `$${avg_loss.toFixed(2)}`, changeType: 'neutral' },
-        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', category: 'Profitability', value: `$${average_trade_pnl.toFixed(2)}`, changeType: 'neutral' },
-        largestProfit: { key: 'largestProfit', label: 'Largest Profit', category: 'Profitability', value: `$${largest_profit.toFixed(2)}`, changeType: 'neutral' },
-        largestLoss: { key: 'largestLoss', label: 'Largest Loss', category: 'Profitability', value: `$${largest_loss.toFixed(2)}`, changeType: 'neutral' },
-        totalPnlLongs: { key: 'totalPnlLongs', label: 'Total P&L Longs', category: 'Profitability', value: `$${total_pnl_longs.toFixed(2)}`, changeType: 'neutral' },
-        totalPnlShorts: { key: 'totalPnlShorts', label: 'Total P&L Shorts', category: 'Profitability', value: `$${total_pnl_shorts.toFixed(2)}`, changeType: 'neutral' },
+        netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
+        avgWin: { key: 'avgWin', label: 'Avg. Win', category: 'Profitability', value: `$${avgWin.toFixed(2)}`, changeType: 'neutral' },
+        avgLoss: { key: 'avgLoss', label: 'Avg. Loss', category: 'Profitability', value: `$${avgLoss.toFixed(2)}`, changeType: 'neutral' },
+        avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', category: 'Profitability', value: `$${avgTradePnl.toFixed(2)}`, changeType: 'neutral' },
+        largestProfit: { key: 'largestProfit', label: 'Largest Profit', category: 'Profitability', value: `$${largestProfit.toFixed(2)}`, changeType: 'neutral' },
+        largestLoss: { key: 'largestLoss', label: 'Largest Loss', category: 'Profitability', value: `$${largestLoss.toFixed(2)}`, changeType: 'neutral' },
+        totalPnlLongs: { key: 'totalPnlLongs', label: 'Total P&L Longs', category: 'Profitability', value: `$${totalPnlLongs.toFixed(2)}`, changeType: 'neutral' },
+        totalPnlShorts: { key: 'totalPnlShorts', label: 'Total P&L Shorts', category: 'Profitability', value: `$${totalPnlShorts.toFixed(2)}`, changeType: 'neutral' },
 
         // Ratios & Efficiency
-        winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: `${win_rate.toFixed(1)}%`, wins: winning_trades_count, losses: losing_trades_count, breakevens: breakeven_trades_count, changeType: 'neutral' },
-        profitFactor: { key: 'profitFactor', label: 'Profit Factor', category: 'Ratios & Efficiency', value: profit_factor_label, changeType: 'neutral' },
+        winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: `${winRate.toFixed(1)}%`, wins: winningTrades, losses: losingTrades, breakevens: breakEvenTrades, changeType: 'neutral' },
+        profitFactor: { key: 'profitFactor', label: 'Profit Factor', category: 'Ratios & Efficiency', value: profitFactorLabel, changeType: 'neutral' },
         expectancy: { key: 'expectancy', label: 'Expectancy', category: 'Ratios & Efficiency', value: `$${expectancy.toFixed(2)}`, changeType: 'neutral' },
-        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avg_realized_rr.toFixed(2)}`, changeType: 'neutral' },
-        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpe_ratio.toFixed(2)}`, changeType: 'neutral' },
-        sortinoRatio: { key: 'sortinoRatio', label: 'Sortino Ratio', category: 'Ratios & Efficiency', value: `${sortino_ratio.toFixed(2)}`, changeType: 'neutral' },
-        calmarRatio: { key: 'calmarRatio', label: 'Calmar Ratio', category: 'Ratios & Efficiency', value: `${calmar_ratio.toFixed(2)}`, changeType: 'neutral' },
-        sellEfficiency: { key: 'sellEfficiency', label: 'Sell Efficiency', category: 'Ratios & Efficiency', value: `${(sell_efficiency * 100).toFixed(1)}%`, changeType: 'neutral' },
-        totalEfficiency: { key: 'totalEfficiency', label: 'Total Efficiency', category: 'Ratios & Efficiency', value: `${(total_efficiency * 100).toFixed(1)}%`, changeType: 'neutral' },
-        plannedRr: { key: 'plannedRr', label: 'Planned R:R', category: 'Ratios & Efficiency', value: `${planned_rr.toFixed(2)}`, changeType: 'neutral' },
+        avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
+        sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
+        sortinoRatio: { key: 'sortinoRatio', label: 'Sortino Ratio', category: 'Ratios & Efficiency', value: `${sortinoRatio.toFixed(2)}`, changeType: 'neutral' },
+        calmarRatio: { key: 'calmarRatio', label: 'Calmar Ratio', category: 'Ratios & Efficiency', value: `${calmarRatio.toFixed(2)}`, changeType: 'neutral' },
+        sellEfficiency: { key: 'sellEfficiency', label: 'Sell Efficiency', category: 'Ratios & Efficiency', value: `${(sellEfficiency).toFixed(1)}%`, changeType: 'neutral' },
+        totalEfficiency: { key: 'totalEfficiency', label: 'Total Efficiency', category: 'Ratios & Efficiency', value: `${(totalEfficiency).toFixed(1)}%`, changeType: 'neutral' },
+        plannedRr: { key: 'plannedRr', label: 'Planned R:R', category: 'Ratios & Efficiency', value: `${plannedRr.toFixed(2)}`, changeType: 'neutral' },
 
         // Risk Management
-        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${max_drawdown_abs.toFixed(2)}`, changeType: 'neutral' },
-        maxDrawdownPercent: { key: 'maxDrawdownPercent', label: 'Max Drawdown %', category: 'Risk Management', value: `${max_drawdown_percent.toFixed(2)}%`, changeType: 'neutral' },
-        recoveryFactor: { key: 'recoveryFactor', label: 'Recovery Factor', 'category': 'Risk Management', value: `${recovery_factor.toFixed(2)}`, changeType: 'neutral' },
-        var95: { key: 'var95', label: 'Value at Risk (95%)', category: 'Risk Management', value: `$${var_95.toFixed(2)}`, changeType: 'neutral' },
-        cvar95: { key: 'cvar95', label: 'Cond. VaR (95%)', category: 'Risk Management', value: `$${cvar_95.toFixed(2)}`, changeType: 'neutral' },
+        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
+        maxDrawdownPercent: { key: 'maxDrawdownPercent', label: 'Max Drawdown %', category: 'Risk Management', value: `${maxDrawdownPercent.toFixed(2)}%`, changeType: 'neutral' },
+        recoveryFactor: { key: 'recoveryFactor', label: 'Recovery Factor', category: 'Risk Management', value: recoveryFactor ? recoveryFactor.toFixed(2) : '∞', changeType: 'neutral' },
+        var95: { key: 'var95', label: 'Value at Risk (95%)', category: 'Risk Management', value: `$${var95.toFixed(2)}`, changeType: 'neutral' },
+        cvar95: { key: 'cvar95', label: 'Cond. VaR (95%)', category: 'Risk Management', value: `$${cvar95.toFixed(2)}`, changeType: 'neutral' },
 
         // Consistency
-        trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(trade_count), changeType: 'neutral' },
-        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(max_consecutive_wins), changeType: 'neutral' },
-        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', 'label': 'Max Consec. Losses', 'category': 'Consistency', value: String(max_consecutive_losses), changeType: 'neutral' },
-        winningTradesCount: { key: 'winningTradesCount', label: 'Winning Trades', category: 'Consistency', value: String(winning_trades_count), changeType: 'neutral' },
-        losingTradesCount: { key: 'losingTradesCount', label: 'Losing Trades', category: 'Consistency', value: String(losing_trades_count), changeType: 'neutral' },
-        breakevenTradesCount: { key: 'breakevenTradesCount', label: 'Breakeven Trades', category: 'Consistency', value: String(breakeven_trades_count), changeType: 'neutral' },
-        longsCount: { key: 'longsCount', label: 'Longs', category: 'Consistency', value: String(longs_count), changeType: 'neutral' },
-        shortsCount: { key: 'shortsCount', label: 'Shorts', category: 'Consistency', value: String(shorts_count), changeType: 'neutral' },
+        trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(tradeCount), changeType: 'neutral' },
+        maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(maxConsecutiveWins), changeType: 'neutral' },
+        maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', category: 'Consistency', value: String(maxConsecutiveLosses), changeType: 'neutral' },
+        winningTradesCount: { key: 'winningTradesCount', label: 'Winning Trades', category: 'Consistency', value: String(winningTrades), changeType: 'neutral' },
+        losingTradesCount: { key: 'losingTradesCount', label: 'Losing Trades', category: 'Consistency', value: String(losingTrades), changeType: 'neutral' },
+        breakevenTradesCount: { key: 'breakevenTradesCount', label: 'Breakeven Trades', category: 'Consistency', value: String(breakEvenTrades), changeType: 'neutral' },
+        longsCount: { key: 'longsCount', label: 'Longs', category: 'Consistency', value: String(longsCount), changeType: 'neutral' },
+        shortsCount: { key: 'shortsCount', label: 'Shorts', category: 'Consistency', value: String(shortsCount), changeType: 'neutral' },
 
         // Other
-        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${average_hold_time.toFixed(0)} min`, changeType: 'neutral' },
+        averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
         skewness: { key: 'skewness', label: 'Skewness', category: 'Other', value: `${skewness.toFixed(2)}`, changeType: 'neutral' },
         kurtosis: { key: 'kurtosis', label: 'Kurtosis', category: 'Other', value: `${kurtosis.toFixed(2)}`, changeType: 'neutral' },
       };
