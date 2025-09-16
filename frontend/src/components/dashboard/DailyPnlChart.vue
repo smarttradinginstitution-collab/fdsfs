@@ -33,8 +33,11 @@ const props = defineProps({
 const data = computed(() => {
   const isPositive = props.chartData.data.length > 0 ? props.chartData.data[props.chartData.data.length - 1] >= 0 : true;
 
-  const positiveBorder = 'rgb(16, 185, 129)';
-  const negativeBorder = 'rgb(239, 68, 68)';
+const rootStyles = getComputedStyle(document.documentElement);
+const positiveColorRgb = rootStyles.getPropertyValue('--semantic-color-feedback-positive-background-rgb').trim();
+const negativeColorRgb = rootStyles.getPropertyValue('--semantic-color-feedback-negative-background-rgb').trim();
+const positiveBorder = `rgb(${positiveColorRgb})`;
+const negativeBorder = `rgb(${negativeColorRgb})`;
 
   // This function will be executed by Chart.js, which provides the chart context.
   const getGradient = (context) => {

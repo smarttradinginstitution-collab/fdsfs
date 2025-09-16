@@ -260,7 +260,7 @@ watch(
 }
 .ghost {
     opacity: 0.5;
-    background: #c8ebfb;
+    background-color: var(--semantic-color-surface-secondary);
 }
 .widget-wrapper {
   position: relative;

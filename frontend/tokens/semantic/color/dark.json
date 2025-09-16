@@ -1,0 +1,47 @@
+{
+  "semantic": {
+    "color": {
+      "surface": {
+        "page":    { "$value": "{base.color.gray.950}", "$type": "color" },
+        "primary": { "$value": "{base.color.gray.900}", "$type": "color" },
+        "secondary": { "$value": "{base.color.gray.800}", "$type": "color" },
+        "disabled":{ "$value": "{base.color.gray.800}", "$type": "color" }
+      },
+      "text": {
+        "primary":   { "$value": "{base.color.gray.100}", "$type": "color" },
+        "secondary": { "$value": "{base.color.gray.400}", "$type": "color" },
+        "tertiary":  { "$value": "{base.color.gray.600}", "$type": "color" },
+        "disabled":  { "$value": "{base.color.gray.600}", "$type": "color" },
+        "on-brand":  { "$value": "{base.color.white}", "$type": "color" },
+        "interactive": { "$value": "{base.color.blue.400}", "$type": "color" }
+      },
+      "interactive": {
+        "primary":   { "default": { "$value": "{base.color.blue.500}", "$type": "color" },
+                       "hover":   { "$value": "{base.color.blue.400}", "$type": "color" },
+                       "rgb":     { "$value": "{base.color.blue.600-rgb}", "$type": "color" } },
+        "secondary": { "default": { "$value": "{base.color.gray.700}", "$type": "color" },
+                       "hover":   { "$value": "{base.color.gray.600}", "$type": "color" } }
+      },
+      "feedback": {
+        "positive": {
+          "text": { "$value": "{base.color.green.400}", "$type": "color" },
+          "surface": { "$value": "rgba(74, 222, 128, 0.1)", "$type": "color" },
+          "background-rgb": { "$value": "{base.color.green.600-rgb}", "$type": "color" }
+        },
+        "negative": {
+          "text": { "$value": "{base.color.red.400}", "$type": "color" },
+          "surface": { "$value": "rgba(248, 113, 113, 0.1)", "$type": "color" },
+          "background-rgb": { "$value": "{base.color.red.600-rgb}", "$type": "color" }
+        }
+      },
+      "border": {
+        "default":  { "$value": "{base.color.gray.700}", "$type": "color" },
+        "subtle":   { "$value": "{base.color.gray.800}", "$type": "color" },
+        "focus":    { "$value": "{base.color.blue.400}", "$type": "color" }
+      },
+      "overlay": {
+        "background": { "$value": "{base.color.black-alpha-50}", "$type": "color" }
+      }
+    }
+  }
+}

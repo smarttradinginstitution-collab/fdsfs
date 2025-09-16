@@ -350,4 +350,16 @@ const handleWeekClick = (weekIndex) => {
     line-height: 1.1;
   }
 }
+
+/* --- DARK THEME OVERRIDE --- */
+/* The user requested that the text inside colored calendar cells be black for readability. */
+[data-theme='dark'] .day-cell:not(.no-trade) .day-details,
+[data-theme='dark'] .day-cell:not(.no-trade) .day-details span {
+  color: #131316; /* Using a very dark gray from the palette for consistency */
+}
+
+[data-theme='dark'] .day-cell:not(.no-trade) .day-number {
+  color: #131316;
+  opacity: 0.6;
+}
 </style>
