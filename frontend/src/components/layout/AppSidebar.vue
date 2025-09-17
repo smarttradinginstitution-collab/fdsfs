@@ -7,51 +7,62 @@
 -->
 
 <script setup>
-// --- IMPORTAZIONI ---
+import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useUiStore } from '../../stores/uiStore';
+import { useAuthStore } from '../../stores/auth';
+import apiClient from '@/services/api';
 import ThemeToggle from '../ui/ThemeToggle.vue';
+import BaseButton from '../ui/BaseButton.vue';
 
-// --- STORE ---
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 
-// --- DATI DEL COMPONENTE ---
-const user = {
-  name: 'Mario Rossi',
-  initials: 'MR',
-  email: 'mario.rossi@example.com',
-};
-
-// Dati per i link di navigazione.
-// Usare un array rende più facile gestire l'aggiunta di icone in futuro.
 const navLinks = [
   { to: '/', text: 'Dashboard', icon: 'D' },
   { to: '/trades', text: 'Trades', icon: 'T' },
   { to: '/analytics', text: 'Analytics', icon: 'A' },
   { to: '#', text: 'Settings', icon: 'S' },
 ];
+
+// Logic moved from DashboardHeader
+const users = ref([]);
+const loadingUsers = ref(false);
+const errorUsers = ref(null);
+
+async function fetchUsers() {
+  if (!authStore.isAuthenticated) return;
+  loadingUsers.value = true;
+  errorUsers.value = null;
+  try {
+    const res = await apiClient.get('/api/v1/users/');
+    users.value = res.data;
+  } catch (err) {
+    console.error('Errore caricamento utenti:', err);
+    errorUsers.value = 'Impossibile caricare gli utenti';
+  } finally {
+    loadingUsers.value = false;
+  }
+}
+
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    fetchUsers();
+  }
+});
 </script>
 
 <template>
-  <!--
-  Oltre a `is-collapsed` per desktop, aggiungiamo `is-mobile-open` per gestire
-  la visibilità su schermi piccoli come un overlay.
-  -->
   <aside class="sidebar" :class="{ 'is-collapsed': uiStore.isSidebarCollapsed, 'is-mobile-open': uiStore.isMobileMenuOpen }">
     <div class="sidebar-header">
       <span v-if="!uiStore.isSidebarCollapsed">TRZ</span>
       <span v-else>T</span>
-      <!-- Questo pulsante ora è nascosto su mobile, dove usiamo l'hamburger. -->
       <button @click="uiStore.toggleSidebar" class="toggle-button">
         &lt;
       </button>
     </div>
 
     <nav class="sidebar-nav">
-      <!--
-      Aggiungiamo un evento @click per chiudere il menu mobile quando si
-      seleziona un link, migliorando l'esperienza utente su mobile.
-      -->
       <RouterLink
         v-for="link in navLinks"
         :key="link.text"
@@ -64,18 +75,31 @@ const navLinks = [
       </RouterLink>
     </nav>
 
+    <!-- New footer with dynamic data, pushed to the bottom -->
     <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="avatar">
-          {{ user.initials }}
+      <div v-if="!uiStore.isSidebarCollapsed">
+        <ThemeToggle />
+
+        <div v-if="authStore.isAuthenticated" class="users-info footer-block">
+          <span v-if="loadingUsers">Caricamento...</span>
+          <span v-else-if="errorUsers">{{ errorUsers }}</span>
+          <span v-else>Utenti totali: {{ users.length }}</span>
         </div>
-        <!-- Le info dell'utente vengono mostrate solo se la sidebar non è collassata -->
-        <div v-if="!uiStore.isSidebarCollapsed" class="user-info">
-          <p class="user-name">{{ user.name }}</p>
-          <p class="user-email">{{ user.email }}</p>
+
+        <div v-if="authStore.isAuthenticated && authStore.user" class="user-profile footer-block">
+          <div class="avatar">
+            {{ authStore.user.email.substring(0, 2).toUpperCase() }}
+          </div>
+          <div class="user-details">
+            <p class="user-email">{{ authStore.user.email }}</p>
+            <p class="user-role" v-if="authStore.user.roleName">({{ authStore.user.roleName }})</p>
+          </div>
         </div>
+
+        <BaseButton v-if="authStore.isAuthenticated" variant="secondary" size="small" @click="authStore.logout" class="logout-button">
+          Logout
+        </BaseButton>
       </div>
-      <ThemeToggle v-if="!uiStore.isSidebarCollapsed" />
     </div>
   </aside>
 </template>
@@ -168,11 +192,23 @@ const navLinks = [
 }
 
 .sidebar-footer {
+  margin-top: auto; /* Pushes the footer to the bottom */
+  padding-top: var(--semantic-size-stack-lg);
+  border-top: 1px solid var(--semantic-color-border-default);
+}
+
+.sidebar-footer > div {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--semantic-size-stack-sm);
-  overflow: hidden;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-md);
+}
+
+.footer-block {
+  padding: var(--semantic-size-inset-sm);
+  background-color: var(--semantic-color-surface-secondary);
+  border-radius: var(--semantic-border-radius-interactive);
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
 }
 
 .user-profile {
@@ -194,11 +230,30 @@ const navLinks = [
   flex-shrink: 0;
 }
 
-.user-info, .nav-text {
+.user-details {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.user-email {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-primary);
+}
+
+.user-role {
+  font: var(--semantic-font-style-body-xs);
+  color: var(--semantic-color-text-secondary);
+}
+
+.logout-button {
+  width: 100%;
+}
+
+.nav-text {
   /* Effetto di dissolvenza per il testo */
   transition: opacity var(--base-animation-duration-fast);
 }
-.sidebar.is-collapsed .user-info,
+.sidebar.is-collapsed .sidebar-footer > div,
 .sidebar.is-collapsed .nav-text {
   opacity: 0;
 }

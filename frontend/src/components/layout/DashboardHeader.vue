@@ -5,54 +5,24 @@ DESCRIZIONE: Header con dati da /api/v1/users (per admin).
 =============================================================================
 -->
 <script setup>
-import { ref, onMounted } from 'vue';
 import { useMediaQuery } from '@vueuse/core';
 import HamburgerButton from '../ui/HamburgerButton.vue';
 import DropdownButton from '../ui/DropdownButton.vue';
 import StrategyFilter from '../dashboard/filters/StrategyFilter.vue';
 import DateRangeFilter from '../dashboard/filters/DateRangeFilter.vue';
 import { useUiStore } from '../../stores/uiStore';
-import { useAuthStore } from '../../stores/auth';
-import BaseButton from '../ui/BaseButton.vue';
-import apiClient from '@/services/api'; // 👈 client axios configurato
 
 // Import the icon components
 import FilterIcon from '../icons/FilterIcon.vue';
 import CalendarIcon from '../icons/CalendarIcon.vue';
 
 const uiStore = useUiStore();
-const authStore = useAuthStore();
 
 defineProps({
   title: {
     type: String,
     required: true,
   },
-});
-
-// Stato per gli utenti
-const users = ref([]);
-const loadingUsers = ref(false);
-const errorUsers = ref(null);
-
-async function fetchUsers() {
-  if (!authStore.isAuthenticated) return;
-  loadingUsers.value = true;
-  errorUsers.value = null;
-  try {
-    const res = await apiClient.get('/api/v1/users/');
-    users.value = res.data;
-  } catch (err) {
-    console.error('Errore caricamento utenti:', err);
-    errorUsers.value = 'Impossibile caricare gli utenti';
-  } finally {
-    loadingUsers.value = false;
-  }
-}
-
-// carica utenti al mount (solo se loggato e admin)
-onMounted(() => {
-  fetchUsers();
 });
 
 // Logica responsive con VueUse
@@ -67,19 +37,6 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
     </div>
 
     <div class="header-right">
-      <!-- 👇 qui stampo i dati dell’utente corrente -->
-      <div v-if="authStore.isAuthenticated && authStore.user" class="user-info">
-        <span class="user-name">{{ authStore.user.id }}</span>--
-        <span class="user-email">{{ authStore.user.email }}</span>--
-        <span class="user-role" v-if="authStore.user.roleName">({{ authStore.user.roleName }})</span>
-      </div>
-      <!-- Mostra info utenti se disponibili -->
-      <div v-if="authStore.isAuthenticated" class="users-info">
-        <span v-if="loadingUsers">Caricamento utenti...</span>
-        <span v-else-if="errorUsers">{{ errorUsers }}</span>
-        <span v-else>Utenti totali: {{ users.length }}</span>
-      </div>
-
       <!-- Filtri per Desktop (v-if) -->
       <div v-if="isDesktop" class="header-controls">
         <DropdownButton>
@@ -117,10 +74,6 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
           </template>
         </DropdownButton>
       </div>
-
-      <BaseButton v-if="authStore.isAuthenticated" variant="secondary" size="small" @click="authStore.logout">
-        Logout
-      </BaseButton>
     </div>
   </header>
 </template>
