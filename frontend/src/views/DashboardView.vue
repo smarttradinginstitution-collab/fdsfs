@@ -194,6 +194,11 @@ watch(
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
 
 @media (max-width: 400px) {
   .action-bar .button-text {
