@@ -92,7 +92,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
      Manteniamo il testo su una sola riga per preservare il layout a 2 colonne.
      Questo ci costringe a essere molto attenti con le spaziature e le dimensioni
      dei font su schermi piccoli. */
-  white-space: nowrap;
+  white-space: normal;
 }
 .stat-label {
   font: var(--semantic-font-style-body-sm);

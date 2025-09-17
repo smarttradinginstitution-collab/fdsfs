@@ -67,19 +67,6 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
     </div>
 
     <div class="header-right">
-      <!-- 👇 qui stampo i dati dell’utente corrente -->
-      <div v-if="authStore.isAuthenticated && authStore.user" class="user-info">
-        <span class="user-name">{{ authStore.user.id }}</span>--
-        <span class="user-email">{{ authStore.user.email }}</span>--
-        <span class="user-role" v-if="authStore.user.roleName">({{ authStore.user.roleName }})</span>
-      </div>
-      <!-- Mostra info utenti se disponibili -->
-      <div v-if="authStore.isAuthenticated" class="users-info">
-        <span v-if="loadingUsers">Caricamento utenti...</span>
-        <span v-else-if="errorUsers">{{ errorUsers }}</span>
-        <span v-else>Utenti totali: {{ users.length }}</span>
-      </div>
-
       <!-- Filtri per Desktop (v-if) -->
       <div v-if="isDesktop" class="header-controls">
         <DropdownButton>
@@ -108,7 +95,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
           <template #icon>
             <FilterIcon />
           </template>
-          <template #text>Filters</template>
+          <template #text><span class="button-text">Filters</span></template>
           <template #content>
             <div class="mobile-filters">
               <StrategyFilter />
@@ -169,6 +156,12 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
 
   .title {
     font: var(--semantic-font-style-heading-xl);
+  }
+}
+
+@media (max-width: 400px) {
+  .header-controls .button-text {
+    display: none;
   }
 }
 </style>

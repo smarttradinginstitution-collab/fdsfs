@@ -10,17 +10,16 @@
 // --- IMPORTAZIONI ---
 import { RouterLink } from 'vue-router';
 import { useUiStore } from '../../stores/uiStore';
+import { useAuthStore } from '../../stores/auth';
 import ThemeToggle from '../ui/ThemeToggle.vue';
+import { computed } from 'vue';
 
 // --- STORE ---
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 
 // --- DATI DEL COMPONENTE ---
-const user = {
-  name: 'Mario Rossi',
-  initials: 'MR',
-  email: 'mario.rossi@example.com',
-};
+const user = computed(() => authStore.user);
 
 // Dati per i link di navigazione.
 // Usare un array rende più facile gestire l'aggiunta di icone in futuro.
@@ -65,16 +64,18 @@ const navLinks = [
     </nav>
 
     <div class="sidebar-footer">
-      <div class="user-profile">
+      <div class="user-profile" v-if="authStore.isAuthenticated && user">
         <div class="avatar">
-          {{ user.initials }}
+          {{ user.email ? user.email.charAt(0).toUpperCase() : 'U' }}
         </div>
-        <!-- Le info dell'utente vengono mostrate solo se la sidebar non è collassata -->
         <div v-if="!uiStore.isSidebarCollapsed" class="user-info">
-          <p class="user-name">{{ user.name }}</p>
-          <p class="user-email">{{ user.email }}</p>
+          <p class="user-name">{{ user.email }}</p>
+          <p class="user-role">{{ user.roleName }}</p>
         </div>
       </div>
+      <button v-if="!uiStore.isSidebarCollapsed" @click="authStore.logout" class="logout-button">
+        Logout
+      </button>
       <ThemeToggle v-if="!uiStore.isSidebarCollapsed" />
     </div>
   </aside>
@@ -201,6 +202,30 @@ const navLinks = [
 .sidebar.is-collapsed .user-info,
 .sidebar.is-collapsed .nav-text {
   opacity: 0;
+}
+
+.user-name {
+  font-weight: bold;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: var(--semantic-color-text-secondary);
+}
+
+.logout-button {
+  background: none;
+  border: 1px solid var(--semantic-color-border-default);
+  color: var(--semantic-color-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--semantic-border-radius-interactive);
+  transition: all var(--base-animation-duration-fast);
+}
+
+.logout-button:hover {
+  background-color: var(--semantic-color-surface-secondary);
+  color: var(--semantic-color-text-primary);
 }
 
 
