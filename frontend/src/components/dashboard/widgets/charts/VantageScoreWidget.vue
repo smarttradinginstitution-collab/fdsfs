@@ -10,11 +10,11 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useTradesStore } from '../../stores/trades';
-import { useChartColors } from '../../composables/useChartColors';
-import { useChartResize } from '../../composables/useChartResize';
-import BaseWidget from '../layout/BaseWidget.vue';
-import HeaderInfoOverlay from '../ui/HeaderInfoOverlay.vue';
+import { useTradesStore } from '../../../../stores/trades';
+import { useChartColors } from '../../../../composables/useChartColors';
+import { useChartResize } from '../../../../composables/useChartResize';
+import BaseWidget from '../../../layout/BaseWidget.vue';
+import HeaderInfoOverlay from '../../../ui/HeaderInfoOverlay.vue';
 
 ChartJS.register(
   RadialLinearScale,

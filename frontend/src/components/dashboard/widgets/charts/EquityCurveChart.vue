@@ -21,7 +21,7 @@ import {
   Legend,
   Filler, // Importato per poter colorare l'area sotto la linea
 } from 'chart.js';
-import { useTradesStore } from '../../stores/trades';
+import { useTradesStore } from '../../../../stores/trades';
 
 // Registriamo i componenti di Chart.js che useremo.
 ChartJS.register(

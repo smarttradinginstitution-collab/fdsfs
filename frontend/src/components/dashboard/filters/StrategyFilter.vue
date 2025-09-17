@@ -7,8 +7,8 @@
 -->
 <script setup>
 import { computed } from 'vue';
-import { useTradesStore } from '../../stores/trades';
-import { useFilterStore } from '../../stores/filterStore';
+import { useTradesStore } from '../../../stores/trades';
+import { useFilterStore } from '../../../stores/filterStore';
 
 const tradesStore = useTradesStore();
 const filterStore = useFilterStore();

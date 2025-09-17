@@ -1,6 +1,6 @@
 <script setup>
-import { useUiStore } from '../../stores/uiStore';
-import BaseCheckbox from '../ui/BaseCheckbox.vue';
+import { useUiStore } from '../../../../stores/uiStore';
+import BaseCheckbox from '../../../ui/BaseCheckbox.vue';
 import { useMediaQuery } from '@vueuse/core';
 import { watch } from 'vue';
 

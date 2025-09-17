@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { useChartColors } from '../../composables/useChartColors';
+import { useChartColors } from '../../../../composables/useChartColors';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

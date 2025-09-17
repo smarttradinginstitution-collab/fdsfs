@@ -6,7 +6,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import SparkleIcon from '@/components/icons/SparkleIcon.vue';
-import DailyPnlChart from './DailyPnlChart.vue';
+import DailyPnlChart from '../charts/DailyPnlChart.vue';
 import BasePill from '@/components/ui/BasePill.vue';
 import BaseTable from '@/components/ui/BaseTable.vue'; // Import BaseTable
 
