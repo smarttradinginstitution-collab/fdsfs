@@ -11,7 +11,7 @@ import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
 import PopoverMenu from '../components/ui/PopoverMenu.vue';
 import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
-import WidgetSelector from '../components/dashboard/WidgetSelector.vue';
+import DashboardZone from '../components/dashboard/DashboardZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
@@ -57,7 +57,7 @@ const widgetComponents = {
   'recentTrades': RecentTradesTable,
 };
 
-const onLayoutDragEnd = (zone, event) => {
+const onLayoutDragEnd = ({ zone, event }) => {
   dashboardLayoutStore.moveWidget({
     zone,
     oldIndex: event.oldIndex,
@@ -155,52 +155,30 @@ watch(
     </div>
 
     <!-- Charts Zone -->
-    <div class="grid-zone-wrapper">
-        <draggable :list="layout.charts" item-key="i" tag="div" class="complex-widgets-grid" ghost-class="ghost" @end="onLayoutDragEnd('charts', $event)" :disabled="!uiStore.isLayoutEditing">
-            <template #item="{ element: widget }">
-                <div class="widget-wrapper">
-                    <component :is="widgetComponents[widget.i]" />
-                    <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="dashboardLayoutStore.removeWidget({ zone: 'charts', widgetId: widget.i })">&times;</button>
-                </div>
-            </template>
-             <template #footer>
-                <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.charts.length < dashboardLayoutStore.widgetConfig.charts.max">
-                    <PopoverMenu>
-                        <template #trigger="{ toggle }">
-                            <button @click="toggle" class="add-widget-button"><PlusIcon /> Aggiungi Widget</button>
-                        </template>
-                        <template #content="{ close }">
-                            <WidgetSelector zone="charts" :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed" @add-widget="dashboardLayoutStore.addWidget($event); close()" />
-                        </template>
-                    </PopoverMenu>
-                </div>
-            </template>
-        </draggable>
-    </div>
+    <DashboardZone
+      zone-id="charts"
+      :widgets="layout.charts"
+      :widget-components="widgetComponents"
+      grid-class="complex-widgets-grid"
+      :max-items="dashboardLayoutStore.widgetConfig.charts.max"
+      :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed"
+      @drag-end="onLayoutDragEnd"
+      @add-widget="dashboardLayoutStore.addWidget($event)"
+      @remove-widget="dashboardLayoutStore.removeWidget($event)"
+    />
 
     <!-- Main Content Grid -->
-    <div class="grid-zone-wrapper">
-        <draggable :list="layout.main" item-key="i" tag="div" class="main-content-grid" ghost-class="ghost" @end="onLayoutDragEnd('main', $event)" :disabled="!uiStore.isLayoutEditing">
-            <template #item="{ element: widget }">
-                <div class="widget-wrapper">
-                    <component :is="widgetComponents[widget.i]" />
-                    <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="dashboardLayoutStore.removeWidget({ zone: 'main', widgetId: widget.i })">&times;</button>
-                </div>
-            </template>
-            <template #footer>
-                <div class="add-widget-wrapper" v-if="uiStore.isLayoutEditing && layout.main.length < dashboardLayoutStore.widgetConfig.main.max">
-                    <PopoverMenu>
-                        <template #trigger="{ toggle }">
-                            <button @click="toggle" class="add-widget-button"><PlusIcon /> Aggiungi Widget</button>
-                        </template>
-                        <template #content="{ close }">
-                            <WidgetSelector zone="main" :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed" @add-widget="dashboardLayoutStore.addWidget($event); close()" />
-                        </template>
-                    </PopoverMenu>
-                </div>
-            </template>
-        </draggable>
-    </div>
+    <DashboardZone
+      zone-id="main"
+      :widgets="layout.main"
+      :widget-components="widgetComponents"
+      grid-class="main-content-grid"
+      :max-items="dashboardLayoutStore.widgetConfig.main.max"
+      :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed"
+      @drag-end="onLayoutDragEnd"
+      @add-widget="dashboardLayoutStore.addWidget($event)"
+      @remove-widget="dashboardLayoutStore.removeWidget($event)"
+    />
 
     <!-- Modals -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
@@ -233,7 +211,9 @@ watch(
     font: var(--semantic-font-style-heading-lg);
     color: var(--semantic-color-text-primary);
 }
-.stats-grid, .complex-widgets-grid, .main-content-grid {
+.stats-grid,
+:deep(.complex-widgets-grid),
+:deep(.main-content-grid) {
     display: grid;
     gap: var(--semantic-size-stack-lg);
     min-width: 0; /* Fix for grid inside flexbox overflow */
@@ -241,15 +221,15 @@ watch(
 .stats-grid {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
-.complex-widgets-grid {
+:deep(.complex-widgets-grid) {
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
-.main-content-grid {
+:deep(.main-content-grid) {
   grid-template-columns: 2fr 1fr;
 }
 @media (max-width: 1280px) {
-  .main-content-grid,
-  .complex-widgets-grid {
+  :deep(.main-content-grid),
+  :deep(.complex-widgets-grid) {
     grid-template-columns: 1fr;
   }
 }
@@ -258,10 +238,8 @@ watch(
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
-.ghost {
-    opacity: 0.5;
-    background-color: var(--semantic-color-surface-secondary);
-}
+/* The styles for ghost, widget-wrapper, remove-widget-btn, and add-widget-button
+   have been moved to the DashboardZone.vue and StatsZone components */
 .widget-wrapper {
   position: relative;
 }
@@ -312,5 +290,9 @@ watch(
     background-color: var(--semantic-color-surface-secondary);
     color: var(--semantic-color-text-primary);
     border-color: var(--semantic-color-border-focus);
+}
+.ghost {
+  opacity: 0.5;
+  background-color: var(--semantic-color-surface-secondary);
 }
 </style>
