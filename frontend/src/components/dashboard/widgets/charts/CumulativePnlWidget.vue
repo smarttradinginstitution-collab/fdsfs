@@ -139,7 +139,8 @@ const chartOptions = computed(() => ({
 .chart-container {
   position: relative;
   width: 100%;
-  height: 250px;
+  height: 100%;
+  min-height: 250px;
 }
 
 /* These styles are for the content passed into the HeaderInfoOverlay */
