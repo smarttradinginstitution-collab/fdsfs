@@ -1,7 +1,5 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue';
-import draggable from 'vuedraggable';
-import StatCard from '../components/dashboard/StatCard.vue';
 import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
@@ -9,9 +7,8 @@ import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
-import PopoverMenu from '../components/ui/PopoverMenu.vue';
-import StatSelectorMenu from '../components/dashboard/StatSelectorMenu.vue';
 import DashboardZone from '../components/dashboard/DashboardZone.vue';
+import StatsZone from '../components/dashboard/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
@@ -60,13 +57,6 @@ const widgetComponents = {
 const onLayoutDragEnd = ({ zone, event }) => {
   dashboardLayoutStore.moveWidget({
     zone,
-    oldIndex: event.oldIndex,
-    newIndex: event.newIndex,
-  });
-};
-
-const onStatsDragEnd = (event) => {
-  uiStore.moveStat({
     oldIndex: event.oldIndex,
     newIndex: event.newIndex,
   });
@@ -123,36 +113,7 @@ watch(
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid-zone-wrapper">
-      <draggable
-        :list="uiStore.visibleStatKeys"
-        item-key="key"
-        tag="div"
-        class="stats-grid"
-        ghost-class="ghost"
-        @end="onStatsDragEnd"
-        :disabled="!uiStore.isLayoutEditing"
-      >
-        <template #item="{ element: statKey }">
-          <div class="widget-wrapper">
-            <StatCard :stat="tradesStore.allDashboardStats[statKey]" />
-            <button v-if="uiStore.isLayoutEditing" class="remove-widget-btn" @click="uiStore.toggleStatVisibility(statKey)">&times;</button>
-          </div>
-        </template>
-        <template #footer>
-            <PopoverMenu v-if="uiStore.isLayoutEditing">
-                <template #trigger="{ toggle }">
-                    <button @click="toggle" class="add-widget-button">
-                        <PlusIcon /> Aggiungi o Rimuovi Stat
-                    </button>
-                </template>
-                <template #content="{ close }">
-                    <StatSelectorMenu @close="close" />
-                </template>
-            </PopoverMenu>
-        </template>
-      </draggable>
-    </div>
+    <StatsZone />
 
     <!-- Charts Zone -->
     <DashboardZone
@@ -238,61 +199,5 @@ watch(
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
-/* The styles for ghost, widget-wrapper, remove-widget-btn, and add-widget-button
-   have been moved to the DashboardZone.vue and StatsZone components */
-.widget-wrapper {
-  position: relative;
-}
-.dashboard-view.is-editing .widget-wrapper {
-    cursor: grab;
-}
-.dashboard-view.is-editing .widget-wrapper:active {
-    cursor: grabbing;
-}
-.remove-widget-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  background-color: rgba(0,0,0,0.4);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 16px;
-  line-height: 1;
-  transition: background-color 0.2s;
-  z-index: 10;
-}
-.remove-widget-btn:hover {
-  background-color: rgba(0,0,0,0.7);
-}
-.add-widget-button {
-    background-color: var(--semantic-color-surface-primary);
-    border: 2px dashed var(--semantic-color-border-default);
-    color: var(--semantic-color-text-secondary);
-    border-radius: var(--semantic-border-radius-lg);
-    padding: var(--semantic-size-inset-lg);
-    cursor: pointer;
-    width: 100%;
-    min-height: 100px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: var(--semantic-size-stack-sm);
-    transition: all 0.2s;
-}
-.add-widget-button:hover {
-    background-color: var(--semantic-color-surface-secondary);
-    color: var(--semantic-color-text-primary);
-    border-color: var(--semantic-color-border-focus);
-}
-.ghost {
-  opacity: 0.5;
-  background-color: var(--semantic-color-surface-secondary);
-}
+/* Common widget styles are now encapsulated in their respective zone components */
 </style>
