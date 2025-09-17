@@ -104,7 +104,6 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
           </template>
         </DropdownButton>
       </div>
-
     </div>
   </header>
 </template>

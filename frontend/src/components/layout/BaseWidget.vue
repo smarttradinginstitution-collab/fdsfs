@@ -25,9 +25,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-lg);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   border-bottom: 1px solid var(--semantic-color-border-default);
-  min-height: 60px;
+  min-height: 68px; /* Match RecentTradesTable header height */
   flex-shrink: 0; /* Prevent header from shrinking */
 }
 
