@@ -41,6 +41,7 @@ watch(() => uiStore.isSidebarCollapsed, () => {
   padding: var(--semantic-size-stack-sm); /* Modificato come da richiesta */
   border-bottom: 1px solid var(--semantic-color-border-default); /* Modificato come da richiesta */
   width: 100%;
+  box-sizing: border-box; /* Ensures padding is included in the total width */
 }
 
 .layout-main {

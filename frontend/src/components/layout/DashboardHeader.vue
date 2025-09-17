@@ -87,7 +87,13 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
 }
 
 .header-left,
-.header-right,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
+  min-width: 0; /* Allow flex items to shrink below their content size */
+}
+
 .header-controls {
   display: flex;
   align-items: center;
@@ -97,6 +103,9 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
 .title {
   font: var(--semantic-font-style-heading-2xl);
   color: var(--semantic-color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .users-info {

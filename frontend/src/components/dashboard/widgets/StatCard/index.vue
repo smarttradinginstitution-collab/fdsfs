@@ -173,6 +173,16 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     }
 }
 
+@media (max-width: 380px) {
+    .text-content {
+        white-space: normal; /* Allow text to wrap on very small cards */
+    }
+    .stat-value {
+        /* Override fluid typography with a smaller fixed size to prevent overflow */
+        font-size: 1.5rem;
+    }
+}
+
 @media (max-width: 365px) { /* xxs breakpoint */
     .stat-card {
         gap: var(--semantic-size-gap-xs);
