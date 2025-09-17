@@ -11,11 +11,11 @@ from pydantic import Field
 
 class WidgetItem(BaseModel):
     i: str
-    x: int
-    y: int
-    w: int
-    h: int
-    component: str
+    x: int | None = None
+    y: int | None = None
+    w: int | None = None
+    h: int | None = None
+    component: str | None = None
     isDraggable: bool | None = Field(default=None)
     isResizable: bool | None = Field(default=None)
     static: bool | None = Field(default=None)
