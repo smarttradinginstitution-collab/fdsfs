@@ -1,12 +1,12 @@
 <script setup>
-import ArrowLeftIcon from '../icons/ArrowLeftIcon.vue';
-import ArrowRightIcon from '../icons/ArrowRightIcon.vue';
-import SettingsIcon from '../icons/SettingsIcon.vue';
-import CameraIcon from '../icons/CameraIcon.vue';
-import IconButton from '../ui/IconButton.vue';
-import DropdownButton from '../ui/DropdownButton.vue';
+import ArrowLeftIcon from '../../../icons/ArrowLeftIcon.vue';
+import ArrowRightIcon from '../../../icons/ArrowRightIcon.vue';
+import SettingsIcon from '../../../icons/SettingsIcon.vue';
+import CameraIcon from '../../../icons/CameraIcon.vue';
+import IconButton from '../../../ui/IconButton.vue';
+import DropdownButton from '../../../ui/DropdownButton.vue';
 import CalendarSettings from './CalendarSettings.vue';
-import { useFilterStore } from '../../stores/filterStore';
+import { useFilterStore } from '../../../../stores/filterStore';
 
 const filterStore = useFilterStore();
 

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { useTradesStore } from '../../stores/trades';
-import { useUiStore } from '../../stores/uiStore';
+import { useTradesStore } from '../../../../stores/trades';
+import { useUiStore } from '../../../../stores/uiStore';
 import CalendarControls from './CalendarControls.vue';
 
 const tradesStore = useTradesStore();

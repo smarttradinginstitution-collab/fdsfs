@@ -1,14 +1,14 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue';
-import VantageScoreWidget from '../components/dashboard/VantageScoreWidget.vue';
-import RrDistributionWidget from '../components/dashboard/RrDistributionWidget.vue';
-import CumulativePnlWidget from '../components/dashboard/CumulativePnlWidget.vue';
-import CalendarHeatmap from '../components/dashboard/CalendarHeatmap.vue';
-import RecentTradesTable from '../components/dashboard/RecentTradesTable.vue';
+import VantageScoreWidget from '../components/dashboard/widgets/charts/VantageScoreWidget.vue';
+import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistributionWidget.vue';
+import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
+import CalendarHeatmap from '../components/dashboard/widgets/Calendar/CalendarHeatmap.vue';
+import RecentTradesTable from '../components/dashboard/widgets/Table/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
 import NewTradeForm from '../components/trades/NewTradeForm.vue';
-import DashboardZone from '../components/dashboard/DashboardZone.vue';
-import StatsZone from '../components/dashboard/StatsZone.vue';
+import DashboardZone from '../components/dashboard/zones/DashboardZone.vue';
+import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
@@ -16,8 +16,8 @@ import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
-import DailySummaryModal from '../components/dashboard/DailySummaryModal.vue';
-import WeeklySummaryModal from '../components/dashboard/WeeklySummaryModal.vue';
+import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
+import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();

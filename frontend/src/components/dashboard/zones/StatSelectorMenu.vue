@@ -1,9 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { useTradesStore } from '../../stores/trades';
-import { useUiStore } from '../../stores/uiStore';
-import BaseCheckbox from '../ui/BaseCheckbox.vue';
-import ChevronDownIcon from '../icons/ChevronDownIcon.vue';
+import { useTradesStore } from '../../../stores/trades';
+import { useUiStore } from '../../../stores/uiStore';
+import BaseCheckbox from '../../ui/BaseCheckbox.vue';
+import ChevronDownIcon from '../../icons/ChevronDownIcon.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();

@@ -1,118 +1,77 @@
 <script setup>
 import { computed } from 'vue';
 import draggable from 'vuedraggable';
-import { useUiStore } from '../../stores/uiStore';
-import PopoverMenu from '../ui/PopoverMenu.vue';
-import WidgetSelector from './WidgetSelector.vue';
-import PlusIcon from '../icons/PlusIcon.vue';
-
-const props = defineProps({
-  zoneId: {
-    type: String,
-    required: true,
-  },
-  widgets: {
-    type: Array,
-    required: true,
-  },
-  widgetComponents: {
-    type: Object,
-    required: true,
-  },
-  gridClass: {
-    type: String,
-    default: '',
-  },
-  maxItems: {
-    type: Number,
-    default: Infinity,
-  },
-  allowedWidgets: {
-    type: Array,
-    default: () => [],
-  },
-});
-
-const emit = defineEmits(['update:widgets', 'add-widget', 'remove-widget', 'drag-end']);
+import { useUiStore } from '../../../stores/uiStore';
+import { useTradesStore } from '../../../stores/trades';
+import StatCard from '../widgets/StatCard/index.vue';
+import PopoverMenu from '../../ui/PopoverMenu.vue';
+import StatSelectorMenu from './StatSelectorMenu.vue';
+import PlusIcon from '../../icons/PlusIcon.vue';
 
 const uiStore = useUiStore();
-
-const draggableList = computed({
-  get: () => props.widgets,
-  set: (value) => {
-    emit('update:widgets', value);
-  },
-});
+const tradesStore = useTradesStore();
 
 const isEditing = computed(() => uiStore.isLayoutEditing);
 
-const handleDragEnd = (event) => {
-  emit('drag-end', { zone: props.zoneId, event });
-};
-
-const handleAddWidget = (payload) => {
-  emit('add-widget', payload);
-};
-
-const handleRemoveWidget = (widgetId) => {
-  emit('remove-widget', { zone: props.zoneId, widgetId });
+const onStatsDragEnd = (event) => {
+  uiStore.moveStat({
+    oldIndex: event.oldIndex,
+    newIndex: event.newIndex,
+  });
 };
 </script>
 
 <template>
   <div class="grid-zone-wrapper">
     <draggable
-      v-model="draggableList"
-      item-key="i"
+      :list="uiStore.visibleStatKeys"
+      item-key="key"
       tag="div"
-      :class="['widget-grid', gridClass]"
+      class="stats-grid"
       ghost-class="ghost"
-      @end="handleDragEnd"
+      @end="onStatsDragEnd"
       :disabled="!isEditing"
     >
-      <template #item="{ element: widget }">
+      <template #item="{ element: statKey }">
         <div class="widget-wrapper" :class="{ 'is-editing': isEditing }">
-          <component :is="widgetComponents[widget.i]" />
+          <StatCard :stat="tradesStore.allDashboardStats[statKey]" />
           <button
             v-if="isEditing"
             class="remove-widget-btn"
-            @click="handleRemoveWidget(widget.i)"
+            @click="uiStore.toggleStatVisibility(statKey)"
           >
             &times;
           </button>
         </div>
       </template>
       <template #footer>
-        <div
-          class="add-widget-wrapper"
-          v-if="isEditing && widgets.length < maxItems"
-        >
-          <PopoverMenu>
-            <template #trigger="{ toggle }">
-              <button @click="toggle" class="add-widget-button">
-                <PlusIcon /> Aggiungi Widget
-              </button>
-            </template>
-            <template #content="{ close }">
-              <WidgetSelector
-                :zone="zoneId"
-                :allowed-widgets="allowedWidgets"
-                @add-widget="handleAddWidget($event); close()"
-              />
-            </template>
-          </PopoverMenu>
-        </div>
+        <PopoverMenu v-if="isEditing">
+          <template #trigger="{ toggle }">
+            <button @click="toggle" class="add-widget-button">
+              <PlusIcon /> Aggiungi o Rimuovi Stat
+            </button>
+          </template>
+          <template #content="{ close }">
+            <StatSelectorMenu @close="close" />
+          </template>
+        </PopoverMenu>
       </template>
     </draggable>
   </div>
 </template>
 
 <style scoped>
-/* Styles are intentionally kept minimal as they will be inherited from the parent or global styles */
-.widget-grid {
+.stats-grid {
   display: grid;
   gap: var(--semantic-size-stack-lg);
   min-width: 0; /* Fix for grid inside flexbox overflow */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
 }
 
 .ghost {

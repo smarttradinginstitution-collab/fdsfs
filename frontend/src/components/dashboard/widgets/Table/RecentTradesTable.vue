@@ -7,8 +7,8 @@
 -->
 <script setup>
 import { computed } from 'vue';
-import BaseTable from '../ui/BaseTable.vue';
-import { useTradesStore } from '../../stores/trades';
+import BaseTable from '../../../ui/BaseTable.vue';
+import { useTradesStore } from '../../../../stores/trades';
 
 const tradesStore = useTradesStore();
 
