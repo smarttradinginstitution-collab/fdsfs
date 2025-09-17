@@ -70,7 +70,14 @@ const onStatsDragEnd = (event) => {
 
 @media (max-width: 640px) {
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--semantic-size-stack-sm);
   }
 }
 

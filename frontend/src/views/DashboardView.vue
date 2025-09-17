@@ -103,12 +103,12 @@ watch(
     <div class="action-bar">
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
-        <span>{{ editButtonText }}</span>
+        <span class="button-text">{{ editButtonText }}</span>
       </BaseButton>
 
       <BaseButton variant="primary" @click="uiStore.openAddTradeModal">
         <PlusIcon />
-        <span>Nuovo Trade</span>
+        <span class="button-text">Nuovo Trade</span>
       </BaseButton>
     </div>
 
@@ -194,9 +194,10 @@ watch(
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+@media (max-width: 400px) {
+  .action-bar .button-text {
+    display: none;
   }
 }
 /* Common widget styles are now encapsulated in their respective zone components */
