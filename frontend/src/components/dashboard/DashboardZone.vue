@@ -149,7 +149,6 @@ const handleRemoveWidget = (widgetId) => {
   font-size: 16px;
   line-height: 1;
   transition: background-color 0.2s;
-  z-index: 10;
 }
 
 .remove-widget-btn:hover {
