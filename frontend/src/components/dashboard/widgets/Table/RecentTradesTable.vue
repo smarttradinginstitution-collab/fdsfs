@@ -7,13 +7,12 @@
 -->
 <script setup>
 import { computed } from 'vue';
+import { useMediaQuery } from '@vueuse/core';
 import BaseTable from '../../../ui/BaseTable.vue';
 import { useTradesStore } from '../../../../stores/trades';
 
 const tradesStore = useTradesStore();
 
-// Le intestazioni sono ora definite direttamente qui per maggiore chiarezza,
-// ma potrebbero anche venire dallo store se fossero usate in più posti.
 const headers = [
   { key: 'ticker', text: 'Ticker' },
   { key: 'type', text: 'Side' },
@@ -21,12 +20,12 @@ const headers = [
   { key: 'date', text: 'Date' },
 ];
 
-// Proprietà calcolata per ottenere solo i trade più recenti.
-// La lista dei trade nello store è già filtrata dal backend.
 const recentTrades = computed(() => {
-  // .slice(0, 7) prende al massimo i primi 7 trade.
   return tradesStore.trades.slice(0, 7);
 });
+
+const isSmallScreen = useMediaQuery('(max-width: 768px)');
+const tableSize = computed(() => (isSmallScreen.value ? 'small' : 'medium'));
 </script>
 
 <template>
@@ -35,7 +34,7 @@ const recentTrades = computed(() => {
       <h2 class="widget-title">Recent Trades</h2>
     </div>
     <div class="table-container">
-      <BaseTable :headers="headers" :items="recentTrades">
+      <BaseTable :headers="headers" :items="recentTrades" :size="tableSize">
         <!-- Slot per formattare la colonna P&L -->
         <template #pnl="{ item }">
           <span :class="item.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'">

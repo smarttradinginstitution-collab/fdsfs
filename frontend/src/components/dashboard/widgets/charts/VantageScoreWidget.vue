@@ -145,9 +145,8 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 
 .chart-container {
   position: relative;
-  flex-grow: 1; /* Allow the chart to take up available vertical space */
   width: 100%;
-  min-height: 0; /* Override the previous min-height to prevent overflow */
+  height: 250px;
 }
 
 .score-container {
