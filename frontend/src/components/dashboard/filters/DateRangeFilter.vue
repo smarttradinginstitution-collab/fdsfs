@@ -9,7 +9,7 @@
 
 <script setup>
 // --- IMPORTAZIONI ---
-import { useFilterStore } from '../../stores/filterStore';
+import { useFilterStore } from '../../../stores/filterStore';
 
 // --- LOGICA DEL COMPONENTE ---
 // Creiamo un'istanza dello store dei filtri.
