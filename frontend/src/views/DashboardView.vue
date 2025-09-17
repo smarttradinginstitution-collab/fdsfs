@@ -172,15 +172,11 @@ watch(
     font: var(--semantic-font-style-heading-lg);
     color: var(--semantic-color-text-primary);
 }
-.stats-grid,
 :deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
     display: grid;
     gap: var(--semantic-size-stack-lg);
     min-width: 0; /* Fix for grid inside flexbox overflow */
-}
-.stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 :deep(.complex-widgets-grid) {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -196,10 +192,6 @@ watch(
 @media (max-width: 640px) {
   .action-bar .button-text {
     display: none;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 /* Common widget styles are now encapsulated in their respective zone components */
