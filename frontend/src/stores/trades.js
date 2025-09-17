@@ -48,6 +48,10 @@ export const useTradesStore = defineStore('trades', {
   }),
 
   getters: {
+    netPnl(state) {
+      return state.trades.reduce((sum, trade) => sum + trade.pnl, 0);
+    },
+
     allStrategies(state) {
       // Ora usa l'elenco dei setup caricato dal backend.
       return ['All', ...state.setups];
