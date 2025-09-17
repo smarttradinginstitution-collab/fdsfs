@@ -105,9 +105,6 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
         </DropdownButton>
       </div>
 
-      <BaseButton v-if="authStore.isAuthenticated" variant="secondary" size="small" @click="authStore.logout">
-        Logout
-      </BaseButton>
     </div>
   </header>
 </template>

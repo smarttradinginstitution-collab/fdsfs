@@ -73,10 +73,12 @@ const navLinks = [
           <p class="user-role">{{ user.roleName }}</p>
         </div>
       </div>
-      <button v-if="!uiStore.isSidebarCollapsed" @click="authStore.logout" class="logout-button">
-        Logout
-      </button>
-      <ThemeToggle v-if="!uiStore.isSidebarCollapsed" />
+      <div class="footer-actions" v-if="!uiStore.isSidebarCollapsed">
+        <button @click="authStore.logout" class="logout-button">
+          Logout
+        </button>
+        <ThemeToggle />
+      </div>
     </div>
   </aside>
 </template>
@@ -170,10 +172,16 @@ const navLinks = [
 
 .sidebar-footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--semantic-size-stack-sm);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--semantic-size-stack-md);
   overflow: hidden;
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .user-profile {
