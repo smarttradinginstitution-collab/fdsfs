@@ -77,10 +77,9 @@ const handleWeekClick = (weekIndex) => {
 <template>
   <BaseWidget>
     <template #header>
-      <h3 class="widget-title">Trading Calendar</h3>
+      <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
     </template>
     <div class="calendar-container">
-      <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
       <div class="calendar-grid" :style="gridStyle">
         <div class="day-header">Mon</div>
         <div class="day-header">Tue</div>
@@ -141,14 +140,15 @@ const handleWeekClick = (weekIndex) => {
 .calendar-container {
   display: flex;
   flex-direction: column;
-  flex-grow: 0; /* Do not allow the container to grow */
-  align-self: start; /* Align to top of the widget content area */
+  height: 100%; /* Allow the container to fill the widget content area */
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr) auto;
   gap: var(--semantic-size-calendar-grid-gap-mobile);
+  height: 100%;
+  grid-auto-rows: minmax(0, 1fr);
 }
 
 .day-header {
