@@ -159,7 +159,7 @@ const handleWeekClick = (weekIndex) => {
 
 .day-cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1.5;
   border-radius: var(--base-border-radius-sm);
   padding: var(--semantic-size-calendar-day-cell-padding-mobile);
   transition: transform 150ms;
