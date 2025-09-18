@@ -33,8 +33,8 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
       },
       main: {
-        max: 3,
-        allowed: ['calendar', 'recentTrades', 'vantageScore', 'rrDistribution', 'cumulativePnl'],
+        max: 2,
+        allowed: ['calendar', 'recentTrades'],
       },
     },
     availableWidgets: [

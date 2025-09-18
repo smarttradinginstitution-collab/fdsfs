@@ -15,7 +15,7 @@ const controlsData = computed(() => tradesStore.calendarControlsData);
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: uiStore.isWeeklySummaryVisible
-    ? 'repeat(7, 1fr) auto'
+    ? 'repeat(7, 1fr) 1.5fr'
     : 'repeat(7, 1fr)',
 }));
 
@@ -154,7 +154,8 @@ const handleWeekClick = (weekIndex) => {
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-calendar-day-header);
   font-size: 0.75rem; /* Explicitly set a smaller font size */
-  padding-bottom: var(--semantic-size-stack-xs);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--base-border-radius-sm);
 }
 
 .week-summary-header {
@@ -163,7 +164,7 @@ const handleWeekClick = (weekIndex) => {
 
 .day-cell {
   position: relative;
-  aspect-ratio: 1 / 1; /* Re-adding aspect ratio to prevent distortion */
+  aspect-ratio: 1 / 1.5; /* Re-adding aspect ratio to prevent distortion */
   border-radius: var(--base-border-radius-sm);
   transition: transform 150ms;
   display: flex;
@@ -239,13 +240,14 @@ const handleWeekClick = (weekIndex) => {
 .week-summary-card {
   display: flex;
   flex-direction: column;
-  justify-content: start;
+  justify-content: space-between;
   align-items: start;
   line-height: 1.15;
   gap: var(--base-size-spacing-1);
   padding: var(--semantic-size-inset-sm);
   background-color: var(--semantic-color-surface-primary);
-  border-left: 1px solid var(--semantic-color-border-default);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--base-border-radius-sm);
   transition: all 150ms ease-in-out;
   cursor: pointer;
 }
@@ -266,7 +268,6 @@ const handleWeekClick = (weekIndex) => {
   font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
   line-height: 1.2;
-  white-space: nowrap;
 }
 
 .week-days {
@@ -274,7 +275,6 @@ const handleWeekClick = (weekIndex) => {
   font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
   line-height: 1.2;
-  white-space: nowrap;
   background-color: var(--semantic-color-surface-secondary);
   padding: 0.1rem var(--base-size-spacing-1-5);
   border-radius: var(--semantic-border-radius-tag);
@@ -285,7 +285,6 @@ const handleWeekClick = (weekIndex) => {
   font-family: var(--semantic-font-style-data-numeric-font-family);
   font-weight: var(--base-font-weight-semibold);
   line-height: 1.2;
-  white-space: nowrap;
 }
 
 .week-pnl.positive {

@@ -178,7 +178,7 @@ watch(
     display: grid;
     gap: var(--semantic-size-stack-lg);
     min-width: 0; /* Fix for grid inside flexbox overflow */
-    align-items: stretch;
+    align-items: start;
 }
 
 /* Allow widgets in the main grid to shrink and scroll if their content is too wide */
@@ -198,21 +198,7 @@ watch(
 
 @media (min-width: 768px) {
   :deep(.main-content-grid) {
-    grid-template-columns: 65fr 35fr;
-    grid-template-rows: auto auto;
-    grid-template-areas:
-      "main-left main-right-top"
-      "main-left main-right-bottom";
-  }
-
-  :deep(.main-content-grid .widget-wrapper:nth-child(1)) {
-    grid-area: main-left;
-  }
-  :deep(.main-content-grid .widget-wrapper:nth-child(2)) {
-    grid-area: main-right-top;
-  }
-  :deep(.main-content-grid .widget-wrapper:nth-child(3)) {
-    grid-area: main-right-bottom;
+    grid-template-columns: 65% 1fr;
   }
 }
 
