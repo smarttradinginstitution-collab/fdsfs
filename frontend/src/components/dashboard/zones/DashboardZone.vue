@@ -20,7 +20,7 @@ const props = defineProps({
     required: true,
   },
   gridClass: {
-    type: String,
+    type: [String, Array, Object],
     default: '',
   },
   maxItems: {
@@ -30,6 +30,10 @@ const props = defineProps({
   allowedWidgets: {
     type: Array,
     default: () => [],
+  },
+  isTemplateActive: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -45,6 +49,17 @@ const draggableList = computed({
 });
 
 const isEditing = computed(() => uiStore.isLayoutEditing);
+const isDraggable = computed(() => isEditing.value && !props.isTemplateActive);
+
+const getWidgetStyle = (widget) => {
+  if (props.isTemplateActive) {
+    return {
+      gridColumn: `${widget.x + 1} / span ${widget.w}`,
+      gridRow: `${widget.y + 1} / span ${widget.h}`,
+    };
+  }
+  return {};
+};
 
 const handleDragEnd = (event) => {
   emit('drag-end', { zone: props.zoneId, event });
@@ -68,13 +83,17 @@ const handleRemoveWidget = (widgetId) => {
       :class="['widget-grid', gridClass]"
       ghost-class="ghost"
       @end="handleDragEnd"
-      :disabled="!isEditing"
+      :disabled="!isDraggable"
     >
       <template #item="{ element: widget }">
-        <div class="widget-wrapper" :class="{ 'is-editing': isEditing }">
+        <div
+          class="widget-wrapper"
+          :class="{ 'is-editing': isEditing, 'is-draggable': isDraggable }"
+          :style="getWidgetStyle(widget)"
+        >
           <component :is="widgetComponents[widget.i]" />
           <button
-            v-if="isEditing"
+            v-if="isDraggable"
             class="remove-widget-btn"
             @click="handleRemoveWidget(widget.i)"
           >
@@ -85,7 +104,7 @@ const handleRemoveWidget = (widgetId) => {
       <template #footer>
         <div
           class="add-widget-wrapper"
-          v-if="isEditing && widgets.length < maxItems"
+          v-if="isDraggable && widgets.length < maxItems"
         >
           <PopoverMenu>
             <template #trigger="{ toggle }">
@@ -124,11 +143,11 @@ const handleRemoveWidget = (widgetId) => {
   position: relative;
 }
 
-.widget-wrapper.is-editing {
+.widget-wrapper.is-draggable {
   cursor: grab;
 }
 
-.widget-wrapper.is-editing:active {
+.widget-wrapper.is-draggable:active {
   cursor: grabbing;
 }
 

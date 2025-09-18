@@ -12,6 +12,7 @@ import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
+import LayoutSelector from '../components/dashboard/LayoutSelector.vue';
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
@@ -44,7 +45,8 @@ const handleNewTrade = async (tradeData) => {
   }
 };
 
-const layout = computed(() => dashboardLayoutStore.layout);
+const layout = computed(() => dashboardLayoutStore.activeLayout);
+const isTemplateActive = computed(() => dashboardLayoutStore.isTemplateActive);
 
 const widgetComponents = {
   'vantageScore': VantageScoreWidget,
@@ -101,6 +103,7 @@ watch(
 <template>
   <div class="dashboard-view" :class="{ 'is-editing': uiStore.isLayoutEditing }">
     <div class="action-bar">
+      <LayoutSelector v-if="uiStore.isLayoutEditing" />
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>
@@ -120,7 +123,8 @@ watch(
       zone-id="charts"
       :widgets="layout.charts"
       :widget-components="widgetComponents"
-      grid-class="complex-widgets-grid"
+      :grid-class="['complex-widgets-grid', { 'grid-positional': isTemplateActive }]"
+      :is-template-active="isTemplateActive"
       :max-items="dashboardLayoutStore.widgetConfig.charts.max"
       :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed"
       @drag-end="onLayoutDragEnd"
@@ -133,7 +137,8 @@ watch(
       zone-id="main"
       :widgets="layout.main"
       :widget-components="widgetComponents"
-      grid-class="main-content-grid"
+      :grid-class="['main-content-grid', { 'grid-positional': isTemplateActive }]"
+      :is-template-active="isTemplateActive"
       :max-items="dashboardLayoutStore.widgetConfig.main.max"
       :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed"
       @drag-end="onLayoutDragEnd"
@@ -189,10 +194,19 @@ watch(
 :deep(.main-content-grid) {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+:deep(.grid-positional) {
+  grid-template-columns: repeat(12, 1fr);
+}
+
 @media (max-width: 1280px) {
   :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  /* Ensure positional grid also works on smaller screens if needed */
+  :deep(.grid-positional) {
+    grid-template-columns: repeat(12, 1fr);
   }
 }
 @media (max-width: 640px) {

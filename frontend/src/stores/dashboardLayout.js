@@ -13,6 +13,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       charts: [],
       main: [],
     },
+    activeLayoutId: 'custom', // 'custom' or a template ID like 'template-1'
     isLoading: false,
     originalLayout: null,
     originalStats: null,
@@ -26,6 +27,27 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         { i: 'calendar' },
         { i: 'recentTrades' },
       ],
+    },
+    templates: {
+      'template-1': {
+        name: 'Standard',
+        layout: {
+          // Based on a 12-column grid
+          stats: [
+            { i: 'netPnl', x: 0, y: 0, w: 3, h: 1 },
+            { i: 'winRate', x: 3, y: 0, w: 3, h: 1 },
+            { i: 'profitFactor', x: 6, y: 0, w: 3, h: 1 },
+            { i: 'trades', x: 9, y: 0, w: 3, h: 1 },
+          ],
+          charts: [
+            { i: 'cumulativePnl', x: 0, y: 0, w: 12, h: 1 },
+          ],
+          main: [
+            { i: 'calendar', x: 0, y: 0, w: 8, h: 2 },
+            { i: 'recentTrades', x: 8, y: 0, w: 4, h: 2 },
+          ]
+        }
+      }
     },
     widgetConfig: {
       charts: {
@@ -47,8 +69,18 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
   }),
 
   getters: {
+    isTemplateActive(state) {
+      return state.activeLayoutId !== 'custom';
+    },
+    activeLayout(state) {
+      if (state.activeLayoutId !== 'custom' && state.templates[state.activeLayoutId]) {
+        return state.templates[state.activeLayoutId].layout;
+      }
+      return state.layout;
+    },
     isDirty(state) {
-      if (!state.originalLayout || !state.originalStats) {
+      // Layout is only considered "dirty" if we are in custom mode
+      if (state.activeLayoutId !== 'custom' || !state.originalLayout || !state.originalStats) {
         return false; // Not in edit mode or no snapshot taken
       }
       const uiStore = useUiStore();
@@ -59,6 +91,9 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
   },
 
   actions: {
+    setActiveLayout(layoutId) {
+      this.activeLayoutId = layoutId;
+    },
     snapshotLayout() {
       const uiStore = useUiStore();
       this.originalLayout = JSON.parse(JSON.stringify(this.layout));
@@ -120,6 +155,9 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     },
 
     async saveLayout() {
+      // Do not save if a template is active, templates are read-only.
+      if (this.activeLayoutId !== 'custom') return;
+
       const authStore = useAuthStore();
       if (!authStore.user) return;
       const uiStore = useUiStore();
