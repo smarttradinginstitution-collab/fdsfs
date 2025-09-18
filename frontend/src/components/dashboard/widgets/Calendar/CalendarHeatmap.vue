@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useTradesStore } from '../../../../stores/trades';
 import { useUiStore } from '../../../../stores/uiStore';
 import CalendarControls from './CalendarControls.vue';
+import BaseWidget from '../../../layout/BaseWidget.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
@@ -74,68 +75,74 @@ const handleWeekClick = (weekIndex) => {
 </script>
 
 <template>
-  <div class="calendar-card">
-    <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
-    <div class="calendar-grid" :style="gridStyle">
-      <div class="day-header">Mon</div>
-      <div class="day-header">Tue</div>
-      <div class="day-header">Wed</div>
-      <div class="day-header">Thu</div>
-      <div class="day-header">Fri</div>
-      <div class="day-header">Sat</div>
-      <div class="day-header">Sun</div>
-      <div v-if="uiStore.isWeeklySummaryVisible" class="week-summary-header"></div>
+  <BaseWidget>
+    <template #header>
+      <h3 class="widget-title">Trading Calendar</h3>
+    </template>
+    <div class="calendar-container">
+      <CalendarControls :month-label="controlsData.monthLabel" :monthly-pnl="controlsData.monthlyPnl" />
+      <div class="calendar-grid" :style="gridStyle">
+        <div class="day-header">Mon</div>
+        <div class="day-header">Tue</div>
+        <div class="day-header">Wed</div>
+        <div class="day-header">Thu</div>
+        <div class="day-header">Fri</div>
+        <div class="day-header">Sat</div>
+        <div class="day-header">Sun</div>
+        <div v-if="uiStore.isWeeklySummaryVisible" class="week-summary-header"></div>
 
-      <template v-for="(week, weekIndex) in calendarData.weeksOfDays" :key="`week-${weekIndex}`">
-        <!-- Loop per i giorni di ogni settimana -->
-        <template v-for="day in week" :key="day.key">
-          <div v-if="!day.isPlaceholder" class="day-cell" :class="{ 'no-trade': day.dailyData.tradeCount === 0 }"
-            :style="getPnlColor(day.dailyData.totalPnl)" @click="handleDayClick(day)">
-            <span class="day-number">{{ day.date }}</span>
-            <div v-if="day.dailyData.tradeCount > 0" class="day-details">
-              <span class="day-pnl" :class="day.dailyData.totalPnl >= 0 ? 'positive' : 'negative'">
-                {{ formatCellPnl(day.dailyData.totalPnl) }}
-              </span>
-              <span v-if="uiStore.isCalendarTradeCountVisible" class="day-trade-count">
-                {{ day.dailyData.tradeCount }} {{ day.dailyData.tradeCount === 1 ? 'trade' : 'trades' }}
-              </span>
-              <span v-if="uiStore.isCalendarWinRateVisible" class="day-extra-stats">
-                {{ ((day.dailyData.winningTrades / day.dailyData.tradeCount) * 100).toFixed(0) }}% WR
-              </span>
+        <template v-for="(week, weekIndex) in calendarData.weeksOfDays" :key="`week-${weekIndex}`">
+          <!-- Loop per i giorni di ogni settimana -->
+          <template v-for="day in week" :key="day.key">
+            <div v-if="!day.isPlaceholder" class="day-cell" :class="{ 'no-trade': day.dailyData.tradeCount === 0 }"
+              :style="getPnlColor(day.dailyData.totalPnl)" @click="handleDayClick(day)">
+              <span class="day-number">{{ day.date }}</span>
+              <div v-if="day.dailyData.tradeCount > 0" class="day-details">
+                <span class="day-pnl" :class="day.dailyData.totalPnl >= 0 ? 'positive' : 'negative'">
+                  {{ formatCellPnl(day.dailyData.totalPnl) }}
+                </span>
+                <span v-if="uiStore.isCalendarTradeCountVisible" class="day-trade-count">
+                  {{ day.dailyData.tradeCount }} {{ day.dailyData.tradeCount === 1 ? 'trade' : 'trades' }}
+                </span>
+                <span v-if="uiStore.isCalendarWinRateVisible" class="day-extra-stats">
+                  {{ ((day.dailyData.winningTrades / day.dailyData.tradeCount) * 100).toFixed(0) }}% WR
+                </span>
+              </div>
             </div>
-          </div>
-          <div v-else class="day-cell placeholder"></div>
-        </template>
+            <div v-else class="day-cell placeholder"></div>
+          </template>
 
-        <!-- Riepilogo Settimanale - renderizzato una volta per riga della griglia -->
-        <div v-if="uiStore.isWeeklySummaryVisible" class="week-summary-card" @click="handleWeekClick(weekIndex)"
-          :class="{ disabled: isFutureWeek(week) }">
-          <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
-          <span class="week-pnl" :class="{
-            'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
-            'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
-          }">
-            {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
-          </span>
-          <span class="week-days">
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
-            {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
-          </span>
-        </div>
-      </template>
+          <!-- Riepilogo Settimanale - renderizzato una volta per riga della griglia -->
+          <div v-if="uiStore.isWeeklySummaryVisible" class="week-summary-card" @click="handleWeekClick(weekIndex)"
+            :class="{ disabled: isFutureWeek(week) }">
+            <span class="week-title">Week {{ calendarData.weeklySummaries[weekIndex].weekNumber }}</span>
+            <span class="week-pnl" :class="{
+              'positive': calendarData.weeklySummaries[weekIndex].totalPnl > 0,
+              'negative': calendarData.weeklySummaries[weekIndex].totalPnl < 0,
+            }">
+              {{ formatCellPnl(calendarData.weeklySummaries[weekIndex].totalPnl) }}
+            </span>
+            <span class="week-days">
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount }}
+              {{ calendarData.weeklySummaries[weekIndex].tradingDaysCount === 1 ? 'day' : 'days' }}
+            </span>
+          </div>
+        </template>
+      </div>
     </div>
-  </div>
+  </BaseWidget>
 </template>
 
 <style scoped>
-.calendar-card {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  padding-block: var(--semantic-size-calendar-card-padding-block-mobile);
-  padding-inline: var(--semantic-size-calendar-card-padding-inline-mobile);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+.widget-title {
+  font: var(--semantic-font-style-heading-md);
+  color: var(--semantic-color-text-primary);
+}
+.calendar-container {
   display: flex;
   flex-direction: column;
+  flex-grow: 0; /* Do not allow the container to grow */
+  align-self: start; /* Align to top of the widget content area */
 }
 
 .calendar-grid {
@@ -296,11 +303,6 @@ const handleWeekClick = (weekIndex) => {
 }
 
 @media (min-width: 768px) {
-  .calendar-card {
-    padding-block: var(--semantic-size-calendar-card-padding-block-tablet);
-    padding-inline: var(--semantic-size-calendar-card-padding-inline-tablet);
-  }
-
   .calendar-grid {
     gap: var(--semantic-size-calendar-grid-gap-tablet);
   }
@@ -311,11 +313,6 @@ const handleWeekClick = (weekIndex) => {
 }
 
 @media (min-width: 1024px) {
-  .calendar-card {
-    padding-block: var(--semantic-size-calendar-card-padding-block-desktop);
-    padding-inline: var(--semantic-size-calendar-card-padding-inline-desktop);
-  }
-
   .calendar-grid {
     gap: var(--semantic-size-calendar-grid-gap-desktop);
   }
