@@ -145,9 +145,8 @@ const score = computed(() => vantageScoreData.value?.score || 0);
 
 .chart-container {
   position: relative;
-  flex-grow: 1;
   width: 100%;
-  min-height: 0;
+  height: 214px;
 }
 
 .score-container {
@@ -157,20 +156,20 @@ const score = computed(() => vantageScoreData.value?.score || 0);
     'bar bar';
   grid-template-columns: auto 1fr;
   align-items: baseline;
-  gap: var(--semantic-size-stack-xs) var(--semantic-size-stack-sm);
+  gap: 0 var(--semantic-size-stack-xs);
   margin-top: 0;
   flex-shrink: 0; /* Prevent the score section from shrinking */
 }
 
 .score-label {
   grid-area: label;
-  font: var(--semantic-font-style-body-sm);
+  font: var(--semantic-font-style-body-xs);
   color: var(--semantic-color-text-secondary);
 }
 
 .score-value {
   grid-area: value;
-  font: var(--semantic-font-style-heading-2xl);
+  font: var(--semantic-font-style-heading-lg);
   color: var(--semantic-color-text-primary);
   justify-self: end;
 }
