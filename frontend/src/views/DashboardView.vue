@@ -180,6 +180,12 @@ watch(
     min-width: 0; /* Fix for grid inside flexbox overflow */
     align-items: start;
 }
+
+/* Allow widgets in the main grid to shrink and scroll if their content is too wide */
+:deep(.main-content-grid .widget-wrapper) {
+  min-width: 0;
+  overflow-x: auto;
+}
 .stats-grid {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
