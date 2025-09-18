@@ -5,100 +5,79 @@ import apiClient from '../services/api';
 import { useAuthStore } from './auth';
 import { useUiStore } from './uiStore';
 
-// This store now only manages the layout for the 'complex' and 'main' widget zones.
 // The 'stats' grid is managed directly in uiStore.
 export const useDashboardLayoutStore = defineStore('dashboardLayout', {
   state: () => ({
-    selectedLayoutId: 'default',
+    selectedLayoutId: 'layout_a',
     layoutTemplates: {
-      default: {
-        name: 'Layout Predefinito',
-        cssClass: 'layout-default',
-        zones: {
-          charts: {
-            max: 3,
-            allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
-          },
-          main: {
-            max: 2,
-            allowed: ['calendar', 'recentTrades'],
-          },
-        },
+      layout_a: {
+        name: 'Layout Standard',
+        cssClass: 'layout-standard',
+        slots: [
+          { id: 'charts', name: 'Grafici', max: 3, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+          { id: 'main', name: 'Contenuto Principale', max: 2, allowed: ['calendar', 'recentTrades'] },
+          { id: 'secondary_charts', name: 'Grafici Secondari', max: 2, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+        ],
       },
-      'focus-principale': {
-        name: 'Focus Principale',
-        cssClass: 'layout-focus-principale',
-        zones: {
-          charts_a: {
-            name: 'Grafici Principali',
-            max: 3,
-            allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
-          },
-          main_content: {
-            name: 'Contenuto Principale',
-            max: 2,
-            allowed: ['calendar', 'recentTrades'],
-          },
-          charts_b: {
-            name: 'Grafici Secondari',
-            max: 2,
-            allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
-          },
-        },
+      layout_b: {
+        name: 'Layout Complesso',
+        cssClass: 'layout-complex',
+        slots: [
+          { id: 'stats1', name: 'Stat 1', max: 1, allowed: ['vantageScore'] }, // Example, should be a real stat widget
+          { id: 'stats2', name: 'Stat 2', max: 1, allowed: ['rrDistribution'] },
+          { id: 'stats3', name: 'Stat 3', max: 1, allowed: ['cumulativePnl'] },
+          { id: 'stats4', name: 'Stat 4', max: 1, allowed: ['vantageScore'] },
+          { id: 'chart_v1', name: 'Grafico Verticale 1', max: 1, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+          { id: 'chart_v2', name: 'Grafico Verticale 2', max: 1, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+          { id: 'calendar_large', name: 'Calendario Grande', max: 1, allowed: ['calendar'] },
+          { id: 'chart_h1', name: 'Grafico Orizzontale 1', max: 1, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+          { id: 'chart_h2', name: 'Grafico Orizzontale 2', max: 1, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+          { id: 'chart_h3', name: 'Grafico Orizzontale 3', max: 1, allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'] },
+        ],
       },
     },
     layoutData: {
-      default: {
-        charts: [
-          { i: 'vantageScore' },
-          { i: 'rrDistribution' },
-          { i: 'cumulativePnl' },
-        ],
-        main: [
-          { i: 'calendar' },
-          { i: 'recentTrades' },
-        ],
+      layout_a: {
+        charts: [{ i: 'vantageScore' }, { i: 'rrDistribution' }, { i: 'cumulativePnl' }],
+        main: [{ i: 'calendar' }, { i: 'recentTrades' }],
+        secondary_charts: [],
       },
-      'focus-principale': {
-        charts_a: [
-            { i: 'cumulativePnl' },
-        ],
-        main_content: [
-            { i: 'calendar' },
-            { i: 'recentTrades' },
-        ],
-        charts_b: [],
+      layout_b: {
+        stats1: [], stats2: [], stats3: [], stats4: [],
+        chart_v1: [{ i: 'vantageScore' }],
+        chart_v2: [{ i: 'rrDistribution' }],
+        calendar_large: [{ i: 'calendar' }],
+        chart_h1: [{ i: 'cumulativePnl' }],
+        chart_h2: [],
+        chart_h3: [],
       },
     },
     isLoading: false,
-    originalLayout: null,
+    originalLayoutData: null,
     originalStats: null,
     availableWidgets: [
-        { i: 'vantageScore', name: 'Vantage Score' },
-        { i: 'rrDistribution', name: 'R:R Distribution' },
-        { i: 'cumulativePnl', name: 'Cumulative P&L' },
-        { i: 'calendar', name: 'Trading Calendar' },
-        { i: 'recentTrades', name: 'Recent Trades' },
+      { i: 'vantageScore', name: 'Vantage Score' },
+      { i: 'rrDistribution', name: 'R:R Distribution' },
+      { i: 'cumulativePnl', name: 'Cumulative P&L' },
+      { i: 'calendar', name: 'Trading Calendar' },
+      { i: 'recentTrades', name: 'Recent Trades' },
     ],
   }),
 
   getters: {
-    layout(state) {
-      return state.layoutData[state.selectedLayoutId];
-    },
     currentLayoutTemplate(state) {
       return state.layoutTemplates[state.selectedLayoutId];
     },
+    currentLayoutData(state) {
+      return state.layoutData[state.selectedLayoutId];
+    },
     isDirty(state) {
-      if (!state.originalLayout || !state.originalStats) {
-        return false; // Not in edit mode or no snapshot taken
-      }
+      if (!state.originalLayoutData) return false;
       const uiStore = useUiStore();
       const statsChanged = JSON.stringify(state.originalStats) !== JSON.stringify(uiStore.visibleStatKeys);
-      // Use the 'layout' getter to ensure we're comparing the correct layout data
-      const layoutChanged = JSON.stringify(state.originalLayout) !== JSON.stringify(this.layout);
+      const layoutChanged = JSON.stringify(state.originalLayoutData) !== JSON.stringify(state.layoutData);
       return statsChanged || layoutChanged;
-    }
+    },
   },
 
   actions: {
@@ -109,15 +88,13 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     },
     snapshotLayout() {
       const uiStore = useUiStore();
-      // The 'layout' getter provides the data for the currently selected layout
-      this.originalLayout = JSON.parse(JSON.stringify(this.layout));
+      this.originalLayoutData = JSON.parse(JSON.stringify(this.layoutData));
       this.originalStats = [...uiStore.visibleStatKeys];
     },
     async fetchLayout() {
       this.isLoading = true;
       const authStore = useAuthStore();
       if (!authStore.user) {
-        // No user, no need to do anything, state is already default
         this.isLoading = false;
         return;
       }
@@ -130,49 +107,45 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         }
 
         if (savedData.layoutData) {
+          // Merge saved data with default data to ensure all layouts have some data
           this.layoutData = { ...this.layoutData, ...savedData.layoutData };
         }
 
         const uiStore = useUiStore();
         if (savedData.stats && Array.isArray(savedData.stats)) {
-          const statKeys = savedData.stats.map(widget => widget.i);
-          uiStore.setVisibleStatKeys(statKeys);
+          uiStore.setVisibleStatKeys(savedData.stats.map(widget => widget.i));
         }
       } catch (error) {
-        console.log('No saved layout found or error, using default state.');
-        // State is already defaulted, so we just log the error.
+        console.error('Failed to fetch layout, using default.', error);
       } finally {
         this.isLoading = false;
       }
     },
+    addWidget({ slotId, widgetId }) {
+      const slot = this.currentLayoutTemplate.slots.find(s => s.id === slotId);
+      const slotData = this.currentLayoutData[slotId];
+      if (!slot || !slotData) return;
 
-    addWidget({ zone, widgetId }) {
-      const zoneConfig = this.currentLayoutTemplate.zones[zone];
-      const zoneData = this.layout[zone];
+      if (slotData.length >= slot.max) return;
+      if (!slot.allowed.includes(widgetId)) return;
+      if (slotData.some(w => w.i === widgetId)) return;
 
-      if (!zoneConfig || !zoneData || zoneData.length >= zoneConfig.max) return;
-      if (!zoneConfig.allowed.includes(widgetId)) return;
-      if (zoneData.some(w => w.i === widgetId)) return;
-
-      zoneData.push({ i: widgetId });
+      slotData.push({ i: widgetId });
     },
-
-    removeWidget({ zone, widgetId }) {
-      const zoneData = this.layout[zone];
-      if (!zoneData) return;
-      const index = zoneData.findIndex(w => w.i === widgetId);
+    removeWidget({ slotId, widgetId }) {
+      const slotData = this.currentLayoutData[slotId];
+      if (!slotData) return;
+      const index = slotData.findIndex(w => w.i === widgetId);
       if (index !== -1) {
-        zoneData.splice(index, 1);
+        slotData.splice(index, 1);
       }
     },
-
-    moveWidget({ zone, oldIndex, newIndex }) {
-        const zoneData = this.layout[zone];
-        if (!zoneData) return;
-        const [removed] = zoneData.splice(oldIndex, 1);
-        zoneData.splice(newIndex, 0, removed);
+    moveWidget({ slotId, oldIndex, newIndex }) {
+      const slotData = this.currentLayoutData[slotId];
+      if (!slotData) return;
+      const [removed] = slotData.splice(oldIndex, 1);
+      slotData.splice(newIndex, 0, removed);
     },
-
     async saveLayout() {
       const authStore = useAuthStore();
       if (!authStore.user) return;
@@ -190,6 +163,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
           message: 'Layout salvato con successo!',
           type: 'success',
         });
+        this.originalLayoutData = JSON.parse(JSON.stringify(this.layoutData));
       } catch (error) {
         uiStore.showNotification({
           message: 'Failed to save dashboard layout.',

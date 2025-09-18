@@ -44,8 +44,8 @@ const handleNewTrade = async (tradeData) => {
   }
 };
 
-const layout = computed(() => dashboardLayoutStore.layout);
 const currentLayoutTemplate = computed(() => dashboardLayoutStore.currentLayoutTemplate);
+const currentLayoutData = computed(() => dashboardLayoutStore.currentLayoutData);
 
 const widgetComponents = {
   'vantageScore': VantageScoreWidget,
@@ -118,7 +118,6 @@ watch(
           </option>
         </select>
       </div>
-
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>
@@ -130,25 +129,31 @@ watch(
       </BaseButton>
     </div>
 
-    <!-- Stats Grid -->
-    <StatsZone />
+    <!-- Stats Grid (only for layouts that don't define their own stats slots) -->
+    <StatsZone v-if="dashboardLayoutStore.selectedLayoutId === 'layout_a'" />
 
     <!-- Dynamic Content Grid -->
     <div class="dashboard-content-grid">
-      <DashboardZone
-        v-for="zoneId in Object.keys(currentLayoutTemplate.zones)"
-        :key="zoneId"
-        :zone-id="zoneId"
-        :widgets="layout[zoneId]"
-        :widget-components="widgetComponents"
-        :grid-class="'zone-' + zoneId"
-        :max-items="currentLayoutTemplate.zones[zoneId].max"
-        :allowed-widgets="currentLayoutTemplate.zones[zoneId].allowed"
-        @drag-end="onLayoutDragEnd"
-        @add-widget="dashboardLayoutStore.addWidget($event)"
-        @remove-widget="dashboardLayoutStore.removeWidget($event)"
-      />
+      <div
+        v-for="slot in currentLayoutTemplate.slots"
+        :key="slot.id"
+        :style="{ gridArea: slot.id }"
+        class="dashboard-slot"
+      >
+        <DashboardZone
+            :zone-id="slot.id"
+            :widgets="currentLayoutData[slot.id]"
+            :widget-components="widgetComponents"
+            :grid-class="'zone-' + slot.id"
+            :max-items="slot.max"
+            :allowed-widgets="slot.allowed"
+            @drag-end="onLayoutDragEnd"
+            @add-widget="dashboardLayoutStore.addWidget({ slotId: slot.id, widgetId: $event.widgetId })"
+            @remove-widget="dashboardLayoutStore.removeWidget({ slotId: slot.id, widgetId: $event.widgetId })"
+        />
+      </div>
     </div>
+
 
     <!-- Modals -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
@@ -214,47 +219,52 @@ watch(
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-/* New styles for focus-principale layout */
-.layout-focus-principale .dashboard-content-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-areas:
-    "charts_a charts_a charts_a"
-    "main_content main_content main_content"
-    "charts_b charts_b .";
+/* --- Layout A: Standard --- */
+.layout-standard .dashboard-content-grid {
+  display: flex;
+  flex-direction: column;
   gap: var(--semantic-size-stack-lg);
 }
-
-.layout-focus-principale :deep(.zone-charts_a) {
-  grid-area: charts_a;
+.layout-standard :deep(.zone-main) {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--semantic-size-stack-lg);
 }
-
-.layout-focus-principale :deep(.zone-main_content) {
-  grid-area: main_content;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--semantic-size-stack-lg);
-}
-
-.layout-focus-principale :deep(.zone-main_content .widget-wrapper:first-child) {
+.layout-standard :deep(.zone-main .widget-wrapper:first-child) {
   grid-column: span 2;
 }
 
-.layout-focus-principale :deep(.zone-charts_b) {
-  grid-area: charts_b;
+/* --- Layout B: Complex --- */
+.layout-complex .dashboard-content-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: var(--semantic-size-stack-lg);
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas:
+    "stats1         stats2         stats3"
+    "stats4         .              ."
+    "chart_v1       calendar_large calendar_large"
+    "chart_v2       calendar_large calendar_large"
+    "chart_h1       chart_h2       chart_h3";
 }
-
 
 @media (max-width: 1280px) {
   :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .layout-complex .dashboard-content-grid {
+    grid-template-columns: 1fr; /* Stack everything on smaller screens */
+    grid-template-areas:
+      "stats1"
+      "stats2"
+      "stats3"
+      "stats4"
+      "chart_v1"
+      "chart_v2"
+      "calendar_large"
+      "chart_h1"
+      "chart_h2"
+      "chart_h3";
   }
 }
 @media (max-width: 640px) {
