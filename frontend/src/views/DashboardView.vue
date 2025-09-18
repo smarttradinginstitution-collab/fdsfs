@@ -112,34 +112,40 @@ watch(
       </BaseButton>
     </div>
 
-    <!-- Stats Grid -->
-    <StatsZone />
+    <div class="dashboard-grid-container">
+      <div class="grid-main-col">
+        <!-- Main Content Grid -->
+        <DashboardZone
+          zone-id="main"
+          :widgets="layout.main"
+          :widget-components="widgetComponents"
+          grid-class="main-content-grid"
+          :max-items="dashboardLayoutStore.widgetConfig.main.max"
+          :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed"
+          @drag-end="onLayoutDragEnd"
+          @add-widget="dashboardLayoutStore.addWidget($event)"
+          @remove-widget="dashboardLayoutStore.removeWidget($event)"
+        />
+      </div>
+      <div class="grid-side-col">
+        <!-- Stats Grid -->
+        <StatsZone class="side-col-top" />
 
-    <!-- Charts Zone -->
-    <DashboardZone
-      zone-id="charts"
-      :widgets="layout.charts"
-      :widget-components="widgetComponents"
-      grid-class="complex-widgets-grid"
-      :max-items="dashboardLayoutStore.widgetConfig.charts.max"
-      :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed"
-      @drag-end="onLayoutDragEnd"
-      @add-widget="dashboardLayoutStore.addWidget($event)"
-      @remove-widget="dashboardLayoutStore.removeWidget($event)"
-    />
-
-    <!-- Main Content Grid -->
-    <DashboardZone
-      zone-id="main"
-      :widgets="layout.main"
-      :widget-components="widgetComponents"
-      grid-class="main-content-grid"
-      :max-items="dashboardLayoutStore.widgetConfig.main.max"
-      :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed"
-      @drag-end="onLayoutDragEnd"
-      @add-widget="dashboardLayoutStore.addWidget($event)"
-      @remove-widget="dashboardLayoutStore.removeWidget($event)"
-    />
+        <!-- Charts Zone -->
+        <DashboardZone
+          zone-id="charts"
+          class="side-col-bottom"
+          :widgets="layout.charts"
+          :widget-components="widgetComponents"
+          grid-class="complex-widgets-grid"
+          :max-items="dashboardLayoutStore.widgetConfig.charts.max"
+          :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed"
+          @drag-end="onLayoutDragEnd"
+          @add-widget="dashboardLayoutStore.addWidget($event)"
+          @remove-widget="dashboardLayoutStore.removeWidget($event)"
+        />
+      </div>
+    </div>
 
     <!-- Modals -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
@@ -164,6 +170,37 @@ watch(
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
 }
+
+.dashboard-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+}
+
+.grid-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+}
+
+@media (min-width: 1280px) {
+  .dashboard-grid-container {
+    display: grid;
+    grid-template-columns: 65fr 35fr;
+  }
+
+  .grid-side-col {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .side-col-top,
+  .side-col-bottom {
+    overflow-y: auto;
+  }
+}
+
 .grid-zone-wrapper {
     /* Styles for the wrapper if needed */
 }
