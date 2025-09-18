@@ -178,7 +178,7 @@ watch(
     display: grid;
     gap: var(--semantic-size-stack-lg);
     min-width: 0; /* Fix for grid inside flexbox overflow */
-    align-items: start;
+    align-items: stretch;
 }
 
 /* Allow widgets in the main grid to shrink and scroll if their content is too wide */
