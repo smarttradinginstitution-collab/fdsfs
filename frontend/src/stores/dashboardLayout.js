@@ -26,7 +26,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       // Each column is an array of widgets.
       main: [
         [{ i: 'calendar' }], // Column 1
-        [{ i: 'recentTrades' }], // Column 2
+        [{ i: 'recentTrades' }, { i: 'vantageScore' }], // Column 2
       ],
     },
     widgetConfig: {
@@ -123,7 +123,8 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       if (zone === 'main') {
         const column = this.layout.main[columnIndex];
         if (column && column[widgetIndex] && column[widgetIndex].i === widgetId) {
-          column.splice(widgetIndex, 1);
+          // Re-assigning with .filter() is more robust for reactivity
+          this.layout.main[columnIndex] = column.filter((_, index) => index !== widgetIndex);
         }
         return;
       }
