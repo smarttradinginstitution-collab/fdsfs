@@ -46,37 +46,127 @@ const draggableList = computed({
 
 const isEditing = computed(() => uiStore.isLayoutEditing);
 
-const handleDragEnd = (event) => {
-  emit('drag-end', { zone: props.zoneId, event });
+const isNestedLayout = computed(() => {
+  if (!props.widgets || props.widgets.length === 0) return false;
+  return Array.isArray(props.widgets[0]);
+});
+
+// Handler for simple, flat layouts (e.g., charts zone)
+const handleFlatDragEnd = (event) => {
+  emit('drag-end', {
+    zone: props.zoneId,
+    oldIndex: event.oldIndex,
+    newIndex: event.newIndex,
+  });
 };
+
+// Handler for new, nested layouts (e.g., main zone)
+const handleNestedDragEnd = (event) => {
+  const fromId = event.from.id;
+  const toId = event.to.id;
+
+  if (!fromId || !toId || !fromId.startsWith('col-') || !toId.startsWith('col-')) {
+    console.error('Draggable elements are missing column IDs.');
+    return;
+  }
+
+  const fromColumnIndex = parseInt(fromId.split('-')[1]);
+  const toColumnIndex = parseInt(toId.split('-')[1]);
+
+  emit('drag-end', {
+    zone: props.zoneId,
+    fromColumnIndex,
+    toColumnIndex,
+    oldIndex: event.oldIndex,
+    newIndex: event.newIndex,
+  });
+};
+
 
 const handleAddWidget = (payload) => {
   emit('add-widget', payload);
 };
 
-const handleRemoveWidget = (widgetId) => {
-  emit('remove-widget', { zone: props.zoneId, widgetId });
+const handleRemoveWidget = (widgetId, columnIndex = null, widgetIndex = null) => {
+  emit('remove-widget', { zone: props.zoneId, widgetId, columnIndex, widgetIndex });
 };
 </script>
 
 <template>
   <div class="grid-zone-wrapper">
+    <!-- Nested Layout Rendering (for main zone) -->
+    <div v-if="isNestedLayout" :class="['widget-grid', gridClass]">
+      <div
+        v-for="(column, colIndex) in widgets"
+        :key="`col-${colIndex}`"
+        class="widget-column"
+      >
+        <draggable
+          :list="column"
+          :item-key="widget => widget.i"
+          tag="div"
+          :id="`col-${colIndex}`"
+          class="column-draggable-area"
+          ghost-class="ghost"
+          :group="{ name: 'main-widgets' }"
+          :disabled="!isEditing"
+          @end="handleNestedDragEnd"
+        >
+          <template #item="{ element: widget, index: widgetIndex }">
+            <div class="widget-wrapper" :class="{ 'is-editing': isEditing }">
+              <component :is="widgetComponents[widget.i]" />
+              <button
+                v-if="isEditing"
+                class="remove-widget-btn"
+                @click="handleRemoveWidget(widget.i, colIndex, widgetIndex)"
+              >
+                &times;
+              </button>
+            </div>
+          </template>
+          <template #footer>
+            <div
+              class="add-widget-wrapper"
+              v-if="isEditing"
+            >
+              <PopoverMenu>
+                <template #trigger="{ toggle }">
+                  <button @click="toggle" class="add-widget-button">
+                    <PlusIcon /> Aggiungi Widget
+                  </button>
+                </template>
+                <template #content="{ close }">
+                  <WidgetSelector
+                    :zone="zoneId"
+                    :allowed-widgets="allowedWidgets"
+                    @add-widget="handleAddWidget({ ...$event, columnIndex: colIndex }); close()"
+                  />
+                </template>
+              </PopoverMenu>
+            </div>
+          </template>
+        </draggable>
+      </div>
+    </div>
+
+    <!-- Flat Layout Rendering (for charts zone) -->
     <draggable
+      v-else
       v-model="draggableList"
       item-key="i"
       tag="div"
       :class="['widget-grid', gridClass]"
       ghost-class="ghost"
-      @end="handleDragEnd"
+      @end="handleFlatDragEnd"
       :disabled="!isEditing"
     >
-      <template #item="{ element: widget }">
+      <template #item="{ element: widget, index }">
         <div class="widget-wrapper" :class="{ 'is-editing': isEditing }">
           <component :is="widgetComponents[widget.i]" />
           <button
             v-if="isEditing"
             class="remove-widget-btn"
-            @click="handleRemoveWidget(widget.i)"
+            @click="handleRemoveWidget(widget.i, null, index)"
           >
             &times;
           </button>
@@ -113,6 +203,20 @@ const handleRemoveWidget = (widgetId) => {
   display: grid;
   gap: var(--semantic-size-stack-lg);
   min-width: 0; /* Fix for grid inside flexbox overflow */
+}
+
+.widget-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+  min-width: 0;
+}
+
+.column-draggable-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+  flex-grow: 1;
 }
 
 .ghost {

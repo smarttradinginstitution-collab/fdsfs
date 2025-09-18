@@ -22,9 +22,11 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         { i: 'rrDistribution' },
         { i: 'cumulativePnl' },
       ],
+      // The 'main' zone is now structured as an array of columns.
+      // Each column is an array of widgets.
       main: [
-        { i: 'calendar' },
-        { i: 'recentTrades' },
+        [{ i: 'calendar' }], // Column 1
+        [{ i: 'recentTrades' }], // Column 2
       ],
     },
     widgetConfig: {
@@ -33,8 +35,10 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
       },
       main: {
-        max: 2,
-        allowed: ['calendar', 'recentTrades'],
+        // TODO: The config for the main zone needs to be adapted for the new column structure.
+        // For now, we increase max to allow more widgets in total.
+        max: 4,
+        allowed: ['calendar', 'recentTrades', 'vantageScore', 'rrDistribution', 'cumulativePnl'],
       },
     },
     availableWidgets: [
@@ -94,7 +98,19 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       }
     },
 
-    addWidget({ zone, widgetId }) {
+    addWidget({ zone, widgetId, columnIndex }) {
+      if (zone === 'main') {
+        const column = this.layout.main[columnIndex];
+        if (column) {
+          // TODO: This doesn't check against a max number of items per column yet.
+          // The widgetConfig would need to be refactored to support that.
+          if (!column.some(w => w.i === widgetId)) {
+            column.push({ i: widgetId });
+          }
+        }
+        return;
+      }
+
       const zoneConfig = this.widgetConfig[zone];
       if (!zoneConfig || this.layout[zone].length >= zoneConfig.max) return;
       if (!zoneConfig.allowed.includes(widgetId)) return;
@@ -103,20 +119,47 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       this.layout[zone].push({ i: widgetId });
     },
 
-    removeWidget({ zone, widgetId }) {
+    removeWidget({ zone, widgetId, columnIndex, widgetIndex }) {
+      if (zone === 'main') {
+        const column = this.layout.main[columnIndex];
+        if (column && column[widgetIndex] && column[widgetIndex].i === widgetId) {
+          column.splice(widgetIndex, 1);
+        }
+        return;
+      }
+
       const zoneLayout = this.layout[zone];
       if (!zoneLayout) return;
-      const index = zoneLayout.findIndex(w => w.i === widgetId);
-      if (index !== -1) {
-        zoneLayout.splice(index, 1);
+      // The old logic for flat layouts used findIndex, but for nested we receive the direct index.
+      // The flat layout also passes widgetIndex now, which is the 'index' from the v-for.
+      if (widgetIndex !== null && zoneLayout[widgetIndex]?.i === widgetId) {
+         zoneLayout.splice(widgetIndex, 1);
+      } else {
+        // Fallback to searching if index is not reliable
+        const index = zoneLayout.findIndex(w => w.i === widgetId);
+        if (index !== -1) {
+          zoneLayout.splice(index, 1);
+        }
       }
     },
 
-    moveWidget({ zone, oldIndex, newIndex }) {
-        const zoneLayout = this.layout[zone];
-        if (!zoneLayout) return;
-        const [removed] = zoneLayout.splice(oldIndex, 1);
-        zoneLayout.splice(newIndex, 0, removed);
+    moveWidget({ zone, fromColumnIndex, toColumnIndex, oldIndex, newIndex }) {
+      if (zone === 'main') {
+        const fromColumn = this.layout.main[fromColumnIndex];
+        const toColumn = this.layout.main[toColumnIndex];
+
+        if (fromColumn && toColumn) {
+          const [widget] = fromColumn.splice(oldIndex, 1);
+          toColumn.splice(newIndex, 0, widget);
+        }
+        return;
+      }
+
+      // Handle flat layouts
+      const zoneLayout = this.layout[zone];
+      if (!zoneLayout) return;
+      const [removed] = zoneLayout.splice(oldIndex, 1);
+      zoneLayout.splice(newIndex, 0, removed);
     },
 
     async saveLayout() {

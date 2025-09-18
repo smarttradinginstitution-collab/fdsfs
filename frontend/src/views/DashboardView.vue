@@ -178,7 +178,21 @@ watch(
     display: grid;
     gap: var(--semantic-size-stack-lg);
     min-width: 0; /* Fix for grid inside flexbox overflow */
-    align-items: start;
+    align-items: stretch; /* Stretch columns to be equal height */
+}
+
+/* The new DashboardZone structure for nested layouts is .widget-grid > .widget-column */
+/* We target the second column specifically to create the 2-row layout. */
+:deep(.main-content-grid > .widget-column:nth-child(2)) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+}
+
+/* The widgets inside the second column should take up equal space. */
+:deep(.main-content-grid > .widget-column:nth-child(2) .widget-wrapper) {
+  flex: 1;
+  min-height: 0; /* Prevents flex items from overflowing their container */
 }
 
 /* Allow widgets in the main grid to shrink and scroll if their content is too wide */
