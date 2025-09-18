@@ -189,6 +189,13 @@ watch(
 :deep(.main-content-grid) {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+@media (min-width: 768px) {
+  :deep(.main-content-grid) {
+    grid-template-columns: 65% 1fr;
+  }
+}
+
 @media (max-width: 1280px) {
   :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
