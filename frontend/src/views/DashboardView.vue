@@ -198,7 +198,21 @@ watch(
 
 @media (min-width: 768px) {
   :deep(.main-content-grid) {
-    grid-template-columns: 65% 1fr;
+    grid-template-columns: 65fr 35fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "main-left main-right-top"
+      "main-left main-right-bottom";
+  }
+
+  :deep(.main-content-grid .widget-wrapper:nth-child(1)) {
+    grid-area: main-left;
+  }
+  :deep(.main-content-grid .widget-wrapper:nth-child(2)) {
+    grid-area: main-right-top;
+  }
+  :deep(.main-content-grid .widget-wrapper:nth-child(3)) {
+    grid-area: main-right-bottom;
   }
 }
 
