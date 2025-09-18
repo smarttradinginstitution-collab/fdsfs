@@ -180,6 +180,12 @@ watch(
     min-width: 0; /* Fix for grid inside flexbox overflow */
     align-items: start;
 }
+
+/* Allow widgets in the main grid to shrink and scroll if their content is too wide */
+:deep(.main-content-grid .widget-wrapper) {
+  min-width: 0;
+  overflow-x: auto;
+}
 .stats-grid {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
@@ -189,6 +195,13 @@ watch(
 :deep(.main-content-grid) {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+@media (min-width: 768px) {
+  :deep(.main-content-grid) {
+    grid-template-columns: 65% 1fr;
+  }
+}
+
 @media (max-width: 1280px) {
   :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
