@@ -45,6 +45,7 @@ const handleNewTrade = async (tradeData) => {
 };
 
 const layout = computed(() => dashboardLayoutStore.layout);
+const currentLayoutTemplate = computed(() => dashboardLayoutStore.currentLayoutTemplate);
 
 const widgetComponents = {
   'vantageScore': VantageScoreWidget,
@@ -99,8 +100,25 @@ watch(
 </script>
 
 <template>
-  <div class="dashboard-view" :class="{ 'is-editing': uiStore.isLayoutEditing }">
+  <div class="dashboard-view" :class="[currentLayoutTemplate.cssClass, { 'is-editing': uiStore.isLayoutEditing }]">
     <div class="action-bar">
+      <div class="layout-selector">
+        <label for="layout-select">Layout:</label>
+        <select
+          id="layout-select"
+          :value="dashboardLayoutStore.selectedLayoutId"
+          @change="dashboardLayoutStore.selectLayout($event.target.value)"
+        >
+          <option
+            v-for="(template, id) in dashboardLayoutStore.layoutTemplates"
+            :key="id"
+            :value="id"
+          >
+            {{ template.name }}
+          </option>
+        </select>
+      </div>
+
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>
@@ -115,31 +133,22 @@ watch(
     <!-- Stats Grid -->
     <StatsZone />
 
-    <!-- Charts Zone -->
-    <DashboardZone
-      zone-id="charts"
-      :widgets="layout.charts"
-      :widget-components="widgetComponents"
-      grid-class="complex-widgets-grid"
-      :max-items="dashboardLayoutStore.widgetConfig.charts.max"
-      :allowed-widgets="dashboardLayoutStore.widgetConfig.charts.allowed"
-      @drag-end="onLayoutDragEnd"
-      @add-widget="dashboardLayoutStore.addWidget($event)"
-      @remove-widget="dashboardLayoutStore.removeWidget($event)"
-    />
-
-    <!-- Main Content Grid -->
-    <DashboardZone
-      zone-id="main"
-      :widgets="layout.main"
-      :widget-components="widgetComponents"
-      grid-class="main-content-grid"
-      :max-items="dashboardLayoutStore.widgetConfig.main.max"
-      :allowed-widgets="dashboardLayoutStore.widgetConfig.main.allowed"
-      @drag-end="onLayoutDragEnd"
-      @add-widget="dashboardLayoutStore.addWidget($event)"
-      @remove-widget="dashboardLayoutStore.removeWidget($event)"
-    />
+    <!-- Dynamic Content Grid -->
+    <div class="dashboard-content-grid">
+      <DashboardZone
+        v-for="zoneId in Object.keys(currentLayoutTemplate.zones)"
+        :key="zoneId"
+        :zone-id="zoneId"
+        :widgets="layout[zoneId]"
+        :widget-components="widgetComponents"
+        :grid-class="'zone-' + zoneId"
+        :max-items="currentLayoutTemplate.zones[zoneId].max"
+        :allowed-widgets="currentLayoutTemplate.zones[zoneId].allowed"
+        @drag-end="onLayoutDragEnd"
+        @add-widget="dashboardLayoutStore.addWidget($event)"
+        @remove-widget="dashboardLayoutStore.removeWidget($event)"
+      />
+    </div>
 
     <!-- Modals -->
     <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
@@ -162,7 +171,22 @@ watch(
 .action-bar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: var(--semantic-size-stack-lg);
+}
+.layout-selector {
+  display: flex;
+  align-items: center;
   gap: var(--semantic-size-stack-sm);
+  margin-right: auto; /* Pushes the other buttons to the right */
+  color: var(--semantic-color-text-primary);
+}
+.layout-selector select {
+    background-color: var(--semantic-color-surface-primary);
+    color: var(--semantic-color-text-primary);
+    border: 1px solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-md);
+    padding: var(--semantic-size-inset-sm);
 }
 .grid-zone-wrapper {
     /* Styles for the wrapper if needed */
@@ -189,6 +213,44 @@ watch(
 :deep(.main-content-grid) {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+/* New styles for focus-principale layout */
+.layout-focus-principale .dashboard-content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas:
+    "charts_a charts_a charts_a"
+    "main_content main_content main_content"
+    "charts_b charts_b .";
+  gap: var(--semantic-size-stack-lg);
+}
+
+.layout-focus-principale :deep(.zone-charts_a) {
+  grid-area: charts_a;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--semantic-size-stack-lg);
+}
+
+.layout-focus-principale :deep(.zone-main_content) {
+  grid-area: main_content;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--semantic-size-stack-lg);
+}
+
+.layout-focus-principale :deep(.zone-main_content .widget-wrapper:first-child) {
+  grid-column: span 2;
+}
+
+.layout-focus-principale :deep(.zone-charts_b) {
+  grid-area: charts_b;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--semantic-size-stack-lg);
+}
+
+
 @media (max-width: 1280px) {
   :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
