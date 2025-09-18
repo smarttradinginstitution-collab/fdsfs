@@ -65,11 +65,9 @@ function formatPnl(pnl) {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  padding-bottom: var(--semantic-size-inset-md);
-  margin-bottom: var(--semantic-size-stack-sm);
-  border-bottom: 1px solid var(--semantic-color-border-default);
   flex-shrink: 0;
   gap: var(--semantic-size-stack-sm);
+  width: 100%;
   /* Add gap for wrapping */
 }
 
