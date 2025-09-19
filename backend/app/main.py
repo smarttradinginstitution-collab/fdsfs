@@ -15,9 +15,18 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+# Add the backend's own origins for docs and local development
+# This is useful for accessing the docs and for tools like Postman
+dev_origins = settings.cors_origins_list
+if settings.ENV == "dev":
+    dev_origins.extend([
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list, 
+    allow_origins=dev_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
