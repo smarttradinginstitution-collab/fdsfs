@@ -63,14 +63,4 @@ class Settings(BaseSettings):
         return list(origins)
 
 settings = Settings()
-
-# --- DEBUGGING ---
-print("--- DEBUG: CHECKING FOR SNAPTRADE ENV VARS ---")
-print(f"SNAPTRADE_CLIENT_ID is set: {'SNAPTRADE_CLIENT_ID' in settings.model_dump(exclude_unset=True)}")
-print(f"SNAPTRADE_CONSUMER_KEY is set: {'SNAPTRADE_CONSUMER_KEY' in settings.model_dump(exclude_unset=True)}")
-if 'SNAPTRADE_CLIENT_ID' in settings.model_dump(exclude_unset=True):
-    print("SNAPTRADE_CLIENT_ID value starts with: " + settings.SNAPTRADE_CLIENT_ID[:5])
-print("----------------------------------------------")
-
-
 settings.DATABASE_URL = settings.assemble_db_url()
