@@ -110,3 +110,31 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("------------------------------------")
             return {"error": "Failed to list SnapTrade users. Check backend logs for details."}
+
+    async def delete_snaptrade_user(self, user_id: str) -> dict:
+        """
+        Deletes a user from SnapTrade and clears their secret from the profile.
+        """
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            # This call is asynchronous on SnapTrade's side
+            api_response = client.authentication.delete_snap_trade_user(user_id=user_id)
+
+            # If SnapTrade accepts the request, we clear the secret locally.
+            user_uuid = uuid.UUID(user_id)
+            user = await self.user_repo.get(user_uuid)
+            if user and user.profile:
+                user.profile.snaptrade_user_secret = None
+                await self.db.commit()
+                await self.db.refresh(user.profile)
+
+            return api_response.body
+        except Exception as e:
+            print("--- SNAPTRADE DELETE USER API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("-------------------------------------")
+            return {"error": "Failed to delete SnapTrade user. Check backend logs for details."}

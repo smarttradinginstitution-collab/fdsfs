@@ -17,3 +17,15 @@ async def list_snaptrade_users(db: AsyncSession = Depends(get_db)):
     if isinstance(users, dict) and "error" in users:
         raise HTTPException(status_code=500, detail=users["error"])
     return users
+
+@router.delete("/snaptrade-users/{user_id}", status_code=200)
+async def delete_snaptrade_user(user_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Deletes a SnapTrade user and clears their secret.
+    Admin-only endpoint.
+    """
+    snaptrade_service = SnapTradeService(db)
+    result = await snaptrade_service.delete_snaptrade_user(user_id)
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
