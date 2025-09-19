@@ -20,3 +20,5 @@ psycopg2-binary
 supabase
 slowapi
 trio
+snaptrade-python-sdk
+aiosqlite
