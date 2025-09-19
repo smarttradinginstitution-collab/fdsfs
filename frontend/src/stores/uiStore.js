@@ -125,6 +125,10 @@ export const useUiStore = defineStore('ui', () => {
   const isDailySummaryModalOpen = ref(false);
   const isWeeklySummaryModalOpen = ref(false);
   const isAddTradeModalOpen = ref(false);
+  const isImportModalOpen = ref(false);
+
+  // Stato per il riepilogo dell'importazione
+  const importSummary = ref(null);
 
   // Salviamo lo stato della sidebar prima di aprire un modale
   let sidebarStateBeforeModal = false;
@@ -150,6 +154,20 @@ export const useUiStore = defineStore('ui', () => {
 
   function closeAddTradeModal() {
     _closeModal(isAddTradeModalOpen);
+  }
+
+  function openImportModal() {
+    _openModal(isImportModalOpen);
+  }
+
+  function closeImportModal() {
+    _closeModal(isImportModalOpen);
+    // Resetta il riepilogo quando il modale viene chiuso
+    importSummary.value = null;
+  }
+
+  function setImportSummary(summary) {
+    importSummary.value = summary;
   }
 
   function openDailySummaryModal() {
@@ -215,6 +233,8 @@ export const useUiStore = defineStore('ui', () => {
     isDailySummaryModalOpen,
     isWeeklySummaryModalOpen,
     isAddTradeModalOpen,
+    isImportModalOpen,
+    importSummary,
 
     toggleLayoutEditing,
     toggleSidebar,
@@ -232,6 +252,9 @@ export const useUiStore = defineStore('ui', () => {
     closeWeeklySummaryModal,
     openAddTradeModal,
     closeAddTradeModal,
+    openImportModal,
+    closeImportModal,
+    setImportSummary,
 
     // Notifications
     notification,

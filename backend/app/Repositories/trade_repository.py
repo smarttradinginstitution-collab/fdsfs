@@ -275,6 +275,36 @@ class TradeRepository:
         await self.db.refresh(trade)
         return trade
 
+    async def create_many_from_csv(
+        self, user_id: UUID, trades_data: List[dict]
+    ) -> int:
+        """
+        Inserisce in blocco una lista di trade da dati pre-processati (es. CSV).
+        Utilizza INSERT ... ON CONFLICT DO NOTHING per garantire l'idempotenza,
+        basandosi sul vincolo di unicità (user_id, external_id).
+
+        :param user_id: L'ID dell'utente proprietario dei trade.
+        :param trades_data: Una lista di dizionari, dove ogni dizionario
+                            rappresenta un trade e include 'external_id'.
+        :return: Il numero di righe effettivamente inserite.
+        """
+        if not trades_data:
+            return 0
+
+        # Aggiungi user_id a ogni dizionario di trade
+        for trade in trades_data:
+            trade["user_id"] = user_id
+
+        stmt = (
+            insert(Trade)
+            .values(trades_data)
+            .on_conflict_do_nothing(index_elements=["user_id", "external_id"])
+        )
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+
+        return result.rowcount
+
     # ──────────────────────────────────────────────────────────────────────
     # UPDATE
     # ──────────────────────────────────────────────────────────────────────

@@ -18,7 +18,9 @@ from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Query, Response
+import re
+from fastapi import Depends, HTTPException, Query, Response, File, UploadFile
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
@@ -27,6 +29,7 @@ from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
 from app.Schemas.vantage_score import VantageScoreData
+from app.Services.csv_import_service import CsvImportService
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 
 
@@ -179,6 +182,52 @@ class TradesController:
         _, tags_now = await repo.get_by_id_with_tags(user_id, trade.id)  # type: ignore[arg-type]
         payload_dict = self._to_trade_read_dict(trade, tags_now)
         return TradeRead.model_validate(payload_dict)
+
+    # --------------------------
+    # IMPORT CSV
+    # --------------------------
+    async def import_trades_from_csv(
+        self,
+        user_id: UUID = Query(..., description="ID utente proprietario dei trade"),
+        file: UploadFile = File(..., description="File CSV con i trade da importare"),
+        db: AsyncSession = Depends(get_db),
+    ):
+        if not file.filename or not file.filename.endswith(".csv"):
+            raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV file.")
+
+        # Estrai il simbolo dal nome del file (es. axom-strat_CME_MINI_NQ1!_...)
+        symbol_match = re.search(r"_(.*?!)_", file.filename)
+        symbol = symbol_match.group(1) if symbol_match else "Unknown"
+
+        content = await file.read()
+        service = CsvImportService(file_content=content, symbol=symbol)
+        result = service.process_csv()
+
+        trades_to_create = result["processed_trades"]
+        errors = result["errors"]
+        inserted_count = 0
+
+        if trades_to_create:
+            repo = TradeRepository(db)
+            inserted_count = await repo.create_many_from_csv(user_id, trades_to_create)
+
+        total_processed = len(trades_to_create)
+        duplicates_count = total_processed - inserted_count
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "CSV import process completed.",
+                "summary": {
+                    "total_rows_in_csv": result.get("total_rows", 0),
+                    "valid_trades_found": total_processed,
+                    "new_trades_imported": inserted_count,
+                    "duplicate_trades_skipped": duplicates_count,
+                    "errors_found": len(errors),
+                },
+                "errors": errors,
+            },
+        )
 
     # --------------------------
     # UPDATE

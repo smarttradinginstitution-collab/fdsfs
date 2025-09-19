@@ -163,10 +163,13 @@ router.include_router(router_dashboard)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 💹 TRADES (pubblici a livello router; user_id via query per swagger)
-#    → se vuoi proteggerli con token in futuro, aggiungi get_current_claims
+# 💹 TRADES (protetti a livello di router)
 # ──────────────────────────────────────────────────────────────────────────────
-router_trades = APIRouter(prefix="/api/v1/trades", tags=["Trades"])
+router_trades = APIRouter(
+    prefix="/api/v1/trades",
+    tags=["Trades"],
+    dependencies=[Depends(get_current_claims)],
+)
 
 # --- Ordine corretto: prima le rotte specifiche, poi quelle con parametri ---
 router_trades.get("/", response_model=list[TradeRead])(trades.list_trades)
@@ -179,6 +182,7 @@ router_trades.get("/equity-curve", response_model=EquityCurveData)(trades.get_eq
 router_trades.get("/summary", response_model=TradeSummary)(trades.get_trade_summary)
 router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
 router_trades.post("/", response_model=TradeRead, status_code=201)(trades.create_trade)
+router_trades.post("/import-csv")(trades.import_trades_from_csv)
 router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
 router_trades.delete("/{trade_id}")(trades.delete_trade)
 

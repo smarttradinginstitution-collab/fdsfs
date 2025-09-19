@@ -12,6 +12,8 @@ import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
+import UploadIcon from '../components/icons/UploadIcon.vue';
+import ImportTradesModal from '../components/trades/ImportTradesModal.vue';
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
@@ -41,6 +43,34 @@ const handleNewTrade = async (tradeData) => {
       message: `Error: ${errorMessage}`,
       type: 'error',
     });
+  }
+};
+
+const handleImport = async (file) => {
+  if (!file) return;
+  const result = await tradesStore.importTradesCsv(file);
+  if (result) {
+    uiStore.setImportSummary(result);
+    // La notifica di successo/errore potrebbe essere gestita qui
+    // o basata sul contenuto del riepilogo.
+    const successCount = result.summary?.new_trades_imported || 0;
+    if (successCount > 0) {
+      uiStore.showNotification({
+        message: `${successCount} new trade(s) imported successfully!`,
+        type: 'success',
+      });
+    } else if (result.summary?.errors_found > 0) {
+       uiStore.showNotification({
+        message: `Import failed. See details in the summary.`,
+        type: 'error',
+      });
+    } else {
+      // Se non ci sono errori ma nessun trade importato (es. tutti duplicati)
+      uiStore.showNotification({
+        message: `Import process finished. No new trades were added.`,
+        type: 'success', // Usiamo 'success' per indicare che il processo è andato a buon fine
+      });
+    }
   }
 };
 
@@ -106,6 +136,11 @@ watch(
         <span class="button-text">{{ editButtonText }}</span>
       </BaseButton>
 
+      <BaseButton variant="secondary" @click="uiStore.openImportModal">
+        <UploadIcon />
+        <span class="button-text">Importa CSV</span>
+      </BaseButton>
+
       <BaseButton variant="primary" @click="uiStore.openAddTradeModal">
         <PlusIcon />
         <span class="button-text">Nuovo Trade</span>
@@ -146,6 +181,15 @@ watch(
       <template #header><h3>Log New Trade</h3></template>
       <NewTradeForm @submit="handleNewTrade" />
     </BaseModal>
+
+    <ImportTradesModal
+      :show="uiStore.isImportModalOpen"
+      :loading="tradesStore.isImporting"
+      :import-summary="uiStore.importSummary"
+      @close="uiStore.closeImportModal"
+      @submit-import="handleImport"
+    />
+
     <DailySummaryModal />
     <WeeklySummaryModal />
   </div>

@@ -43,6 +43,7 @@ export const useTradesStore = defineStore('trades', {
     equityCurve: null,
     vantageScore: null, // Dati per il VantageScoreWidget
     isLoading: false,
+    isImporting: false, // Stato di caricamento per l'importazione CSV
     isSummaryLoading: false,
     activeSummary: null,
   }),
@@ -590,6 +591,53 @@ export const useTradesStore = defineStore('trades', {
         throw error;
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async importTradesCsv(file) {
+      this.isImporting = true;
+      try {
+        const authStore = useAuthStore();
+        const userId = authStore.user?.id;
+        if (!userId) {
+          throw new Error('User not authenticated for CSV import.');
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await apiClient.post(
+          `/api/v1/trades/import-csv?user_id=${userId}`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+
+        // Dopo un'importazione di successo, ricarica tutti i dati della dashboard
+        // per mostrare i nuovi trade e le statistiche aggiornate.
+        await this.fetchAllDataForDashboard();
+
+        // Ritorna il riepilogo per mostrarlo nel modale
+        return response.data;
+
+      } catch (error) {
+        console.error('Error importing CSV:', error);
+        // Ritorna un riepilogo di errore da mostrare nel modale
+        return {
+          summary: {
+            new_trades_imported: 0,
+            duplicate_trades_skipped: 0,
+            errors_found: 1,
+          },
+          errors: [
+            { error: error.response?.data?.detail || 'An unknown server error occurred.' }
+          ]
+        };
+      } finally {
+        this.isImporting = false;
       }
     },
 

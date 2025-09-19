@@ -39,6 +39,7 @@ class Trade(Base):
     __tablename__ = "trades"
     __table_args__ = (
         UniqueConstraint("id", "user_id", name="trades_id_user_id_key"),
+        UniqueConstraint("user_id", "external_id", name="uq_user_external_id"),
         Index("idx_trades_user", "user_id"),
         {"schema": "public"},
     )
@@ -53,6 +54,8 @@ class Trade(Base):
         nullable=False,
         index=True,
     )
+    # ID esterno (es. da file CSV) per idempotenza
+    external_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
 
     # campi base
     created_at: Mapped[Any] = mapped_column(
