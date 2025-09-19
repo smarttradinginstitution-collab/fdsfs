@@ -35,7 +35,6 @@ class SnapTradeController:
             if "not found" in result["error"]:
                 raise HTTPException(status_code=404, detail=result["error"])
             else:
-                # e.g., "already registered"
                 raise HTTPException(status_code=400, detail=result["error"])
 
         return result
@@ -61,8 +60,6 @@ class SnapTradeController:
         result = await svc.generate_connection_link(user_id)
 
         if "error" in result:
-            # For this endpoint, any error from the service is likely a 400-level client error
-            # (e.g., user not registered yet).
             raise HTTPException(status_code=400, detail=result["error"])
 
         return result

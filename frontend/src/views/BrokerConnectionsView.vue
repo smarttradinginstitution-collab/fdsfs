@@ -13,7 +13,6 @@ const user = computed(() => authStore.user);
 const isRegistering = ref(false);
 const isGeneratingLink = ref(false);
 
-// This computed property will reactively check if the user is registered with SnapTrade
 const isSnapTradeUserRegistered = computed(() => {
   return user.value?.profile?.has_snaptrade_user_secret === true;
 });
@@ -42,7 +41,6 @@ const handleGenerateLink = async () => {
   try {
     const redirectURI = await authStore.generateConnectionLink();
     if (redirectURI) {
-      // Redirect the user to the SnapTrade connection portal
       window.location.href = redirectURI;
     }
   } catch (error) {
@@ -52,12 +50,10 @@ const handleGenerateLink = async () => {
       type: 'error',
     });
   } finally {
-    // This may not be reached if the redirect is successful
     isGeneratingLink.value = false;
   }
 };
 
-// Fetch user data when component is mounted to ensure it's up-to-date
 onMounted(() => {
   authStore.fetchUser();
 });
@@ -70,7 +66,6 @@ onMounted(() => {
       <p>Gestisci le tue connessioni ai broker per sincronizzare i tuoi dati di trading.</p>
     </header>
 
-    <!-- Initial registration step -->
     <div v-if="!isSnapTradeUserRegistered" class="registration-step">
       <h2>Passo 1: Crea il tuo profilo di Sincronizzazione</h2>
       <p>
@@ -86,7 +81,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Brokerage connections management (shown after registration) -->
     <div v-else class="connections-management">
        <div class="action-bar">
         <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
@@ -171,5 +165,16 @@ onMounted(() => {
 
 .no-connections p {
   color: var(--semantic-color-text-secondary);
+}
+
+.registration-step h2 {
+    font: var(--semantic-font-style-heading-lg);
+    color: var(--semantic-color-text-primary);
+    margin-bottom: var(--semantic-size-stack-sm);
+}
+
+.registration-step p {
+    color: var(--semantic-color-text-secondary);
+    margin-bottom: var(--semantic-size-stack-md);
 }
 </style>
