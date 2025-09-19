@@ -132,6 +132,65 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Fetches the full user object from the backend and updates the store.
+   */
+  async function fetchUser() {
+    if (!token.value) return;
+    try {
+      const { data } = await apiClient.get('/api/v1/auth/me');
+      user.value = data;
+      localStorage.setItem('user', JSON.stringify(data));
+      // The role name logic might be redundant if the /me endpoint evolves
+      // but we can keep it for now.
+      await loadCurrentRoleName();
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+      // If fetching user fails (e.g., token expired), log out
+      logout();
+    }
+  }
+
+  /**
+   * Registers the user with SnapTrade.
+   */
+  async function registerWithSnapTrade() {
+    try {
+      const response = await apiClient.post('/api/v1/snaptrade/register');
+      // After successful registration, refresh the user data to get the updated profile
+      await fetchUser();
+      return response.data;
+    } catch (error) {
+      console.error('Error registering with SnapTrade:', error);
+      throw error; // Re-throw to be handled by the component
+    }
+  }
+
+  // We should refactor login to use fetchUser as well for consistency
+  async function login(email, password) {
+    try {
+      const response = await apiClient.post('/api/v1/auth/login', {
+        email,
+        password,
+      });
+
+      const { access_token } = response.data;
+
+      token.value = access_token;
+      localStorage.setItem('token', access_token);
+      setAuthToken(access_token);
+
+      // Now that token is set, fetch the full user object
+      await fetchUser();
+
+      router.push('/');
+    } catch (error) {
+      console.error('Errore durante il login:', error);
+      throw error;
+    }
+  }
+
+
   // --- EXPORT ---
   // Esponiamo lo stato e le azioni per renderli accessibili
   // ai componenti che useranno questo store.
@@ -142,5 +201,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     initAuth,
+    fetchUser,
+    registerWithSnapTrade,
   };
 });

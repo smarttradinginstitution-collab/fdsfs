@@ -7,8 +7,11 @@ from uuid import UUID
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.Models.auth_user import AuthUser
+from app.Models.profile import Profile
+from app.Models.brokerage_connection import BrokerageConnection
 
 __all__ = ["AuthUserRepository"]  # <-- espone esplicitamente il simbolo
 
@@ -27,14 +30,32 @@ class AuthUserRepository:
     # READ
     # -------------------------
     async def get(self, user_id: UUID) -> Optional[AuthUser]:
-        """Ritorna un utente per id (UUID) oppure None."""
-        return await self.db.get(AuthUser, user_id)
+        """Ritorna un utente per id (UUID) oppure None, con profilo e connessioni."""
+        stmt = (
+            select(AuthUser)
+            .where(AuthUser.id == user_id)
+            .options(
+                joinedload(AuthUser.profile),
+                selectinload(AuthUser.brokerage_connections)
+            )
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().first()
 
     async def list(self, offset: int = 0, limit: int = 50) -> Sequence[AuthUser]:
         """
-        Ritorna un elenco di utenti con paginazione.
+        Ritorna un elenco di utenti con paginazione, con profili e connessioni.
         """
-        stmt = select(AuthUser).offset(offset).limit(limit)
+        stmt = (
+            select(AuthUser)
+            .offset(offset)
+            .limit(limit)
+            .options(
+                joinedload(AuthUser.profile),
+                selectinload(AuthUser.brokerage_connections)
+            )
+            .order_by(AuthUser.created_at.desc())
+        )
         res = await self.db.execute(stmt)
         return res.scalars().all()
 

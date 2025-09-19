@@ -64,9 +64,28 @@ router_auth.post(
 )(auth.logout)
 
 # (Facoltativo ma utile) Rotte diagnostiche per capire rapidamente chi è l'utente e i suoi ruoli
-@router_auth.get("/me", tags=["Auth"])
-async def who_am_i(claims=Depends(get_current_claims)):
-    return {"sub": claims.get("sub")}
+@router_auth.get("/me", tags=["Auth"], response_model=AuthUserRead)
+async def who_am_i(
+    claims=Depends(get_current_claims),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns the complete data for the currently authenticated user,
+    including their profile and brokerage connections.
+    """
+    from app.Repositories.auth_user_repository import AuthUserRepository
+
+    user_id_str = claims.get("sub")
+    if not user_id_str:
+        raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
+
+    user_repo = AuthUserRepository(db)
+    user = await user_repo.get(UUID(user_id_str))
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Authenticated user not found in database.")
+
+    return AuthUserRead.model_validate(user)
 
 @router_auth.get("/me/roles", tags=["Auth"])
 async def my_roles(
@@ -183,3 +202,19 @@ router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
 router_trades.delete("/{trade_id}")(trades.delete_trade)
 
 router.include_router(router_trades)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔗 SNAPTRADE (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers.snaptrade_controller import SnapTradeController
+snaptrade = SnapTradeController()
+
+router_snaptrade = APIRouter(
+    prefix="/api/v1/snaptrade",
+    tags=["SnapTrade"],
+    dependencies=[Depends(get_current_claims)],
+)
+
+router_snaptrade.post("/register")(snaptrade.handle_register_user)
+
+router.include_router(router_snaptrade)

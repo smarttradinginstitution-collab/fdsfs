@@ -25,6 +25,8 @@ class AuthUserUpdate(BaseModel):
     raw_app_meta_data: Optional[dict] = None # metadati applicativi grezzi (JSON completo)
     raw_user_meta_data: Optional[dict] = None # metadati utente grezzi (JSON completo)
 
+from app.Schemas.snaptrade import ProfileRead, BrokerageConnectionRead
+
 # ✅ Schema di lettura di un utente (output)
 # Definisce i campi che vengono restituiti nelle API in risposta (DTO read-only).
 class AuthUserRead(BaseModel):
@@ -33,6 +35,9 @@ class AuthUserRead(BaseModel):
     role: Optional[str] = None              # ruolo (es. admin, user, etc.)
     raw_app_meta_data: Optional[dict] = None# metadati applicativi (dati dal DB)
     raw_user_meta_data: Optional[dict] = None# metadati utente (dati dal DB)
+    profile: Optional[ProfileRead] = None
+    brokerage_connections: list[BrokerageConnectionRead] = []
+
 
     class Config:
         # Configurazione per permettere a Pydantic di leggere i dati
