@@ -37,7 +37,6 @@ function openConfirmation(user) {
 }
 
 async function handleDelete() {
-  console.log('handleDelete called');
   if (!userToDelete.value) return;
 
   try {

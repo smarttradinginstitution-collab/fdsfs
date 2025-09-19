@@ -19,12 +19,8 @@ const isConfirmed = computed(() => {
 });
 
 function confirm() {
-  console.log('Confirm button clicked');
   if (isConfirmed.value) {
-    console.log('Emitting confirm event');
     emit('confirm');
-  } else {
-    console.log('Confirmation not met');
   }
 }
 
@@ -39,7 +35,7 @@ function close() {
     <template #header>
       <h2 class="text-xl font-bold">{{ title }}</h2>
     </template>
-    <template #body>
+    <template #default>
       <slot></slot>
       <div class="mt-4">
         <label for="confirmation-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
