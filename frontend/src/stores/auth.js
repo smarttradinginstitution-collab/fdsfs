@@ -166,6 +166,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Generates the SnapTrade connection URL.
+   */
+  async function generateConnectionLink() {
+    try {
+      const { data } = await apiClient.post('/api/v1/snaptrade/generate-connection-link');
+      return data.redirectURI;
+    } catch (error) {
+      console.error('Error generating connection link:', error);
+      throw error;
+    }
+  }
+
   // We should refactor login to use fetchUser as well for consistency
   async function login(email, password) {
     try {
@@ -203,5 +216,6 @@ export const useAuthStore = defineStore('auth', () => {
     initAuth,
     fetchUser,
     registerWithSnapTrade,
+    generateConnectionLink,
   };
 });

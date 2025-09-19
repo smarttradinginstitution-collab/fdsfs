@@ -10,15 +10,15 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const user = computed(() => authStore.user);
-const isLoading = ref(false);
+const isRegistering = ref(false);
+const isGeneratingLink = ref(false);
 
-// This computed property will reactively check if the user is registered with SnapTrade
 const isSnapTradeUserRegistered = computed(() => {
   return user.value?.profile?.has_snaptrade_user_secret === true;
 });
 
 const handleRegister = async () => {
-  isLoading.value = true;
+  isRegistering.value = true;
   try {
     await authStore.registerWithSnapTrade();
     uiStore.showNotification({
@@ -32,11 +32,28 @@ const handleRegister = async () => {
       type: 'error',
     });
   } finally {
-    isLoading.value = false;
+    isRegistering.value = false;
   }
 };
 
-// Fetch user data when component is mounted to ensure it's up-to-date
+const handleGenerateLink = async () => {
+  isGeneratingLink.value = true;
+  try {
+    const redirectURI = await authStore.generateConnectionLink();
+    if (redirectURI) {
+      window.location.href = redirectURI;
+    }
+  } catch (error) {
+    const errorMessage = error.response?.data?.detail || 'Impossibile generare il link di connessione.';
+    uiStore.showNotification({
+      message: `Errore: ${errorMessage}`,
+      type: 'error',
+    });
+  } finally {
+    isGeneratingLink.value = false;
+  }
+};
+
 onMounted(() => {
   authStore.fetchUser();
 });
@@ -49,7 +66,6 @@ onMounted(() => {
       <p>Gestisci le tue connessioni ai broker per sincronizzare i tuoi dati di trading.</p>
     </header>
 
-    <!-- Initial registration step -->
     <div v-if="!isSnapTradeUserRegistered" class="registration-step">
       <h2>Passo 1: Crea il tuo profilo di Sincronizzazione</h2>
       <p>
@@ -57,19 +73,19 @@ onMounted(() => {
         Questo passaggio è richiesto solo una volta.
       </p>
       <div class="action-bar">
-        <BaseButton variant="primary" @click="handleRegister" :disabled="isLoading">
-          <SettingsIcon v-if="isLoading" class="spin" />
+        <BaseButton variant="primary" @click="handleRegister" :disabled="isRegistering">
+          <SettingsIcon v-if="isRegistering" class="spin" />
           <PlusIcon v-else />
           <span class="button-text">Crea Profilo SnapTrade</span>
         </BaseButton>
       </div>
     </div>
 
-    <!-- Brokerage connections management (shown after registration) -->
     <div v-else class="connections-management">
        <div class="action-bar">
-        <BaseButton variant="primary">
-          <PlusIcon />
+        <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
+          <SettingsIcon v-if="isGeneratingLink" class="spin" />
+          <PlusIcon v-else />
           <span class="button-text">Aggiungi Nuova Connessione</span>
         </BaseButton>
       </div>
@@ -149,5 +165,16 @@ onMounted(() => {
 
 .no-connections p {
   color: var(--semantic-color-text-secondary);
+}
+
+.registration-step h2 {
+    font: var(--semantic-font-style-heading-lg);
+    color: var(--semantic-color-text-primary);
+    margin-bottom: var(--semantic-size-stack-sm);
+}
+
+.registration-step p {
+    color: var(--semantic-color-text-secondary);
+    margin-bottom: var(--semantic-size-stack-md);
 }
 </style>

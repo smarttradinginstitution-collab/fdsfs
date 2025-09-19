@@ -23,8 +23,6 @@ FOR SELECT
 USING (auth.uid() = id);
 
 -- Create policy to allow users to insert their own profile
--- This is needed so that we can create a profile for a new user.
--- A trigger on the auth.users table will handle the creation.
 CREATE POLICY "Allow users to insert their own profile"
 ON public.profiles
 FOR INSERT

@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     AUTH_AUTO_CONFIRM_DEV: bool = True
 
+    # SnapTrade API Credentials
+    SNAPTRADE_CLIENT_ID: str
+    SNAPTRADE_CONSUMER_KEY: str
+
     def assemble_db_url(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
