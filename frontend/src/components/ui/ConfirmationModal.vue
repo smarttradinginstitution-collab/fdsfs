@@ -19,8 +19,12 @@ const isConfirmed = computed(() => {
 });
 
 function confirm() {
+  console.log('Confirm button clicked');
   if (isConfirmed.value) {
+    console.log('Emitting confirm event');
     emit('confirm');
+  } else {
+    console.log('Confirmation not met');
   }
 }
 
