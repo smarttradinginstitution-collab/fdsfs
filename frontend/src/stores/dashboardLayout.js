@@ -21,6 +21,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         { i: 'vantageScore' },
         { i: 'rrDistribution' },
         { i: 'cumulativePnl' },
+        { i: 'performanceByDay' },
       ],
       main: [
         { i: 'calendar' },
@@ -29,8 +30,8 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     },
     widgetConfig: {
       charts: {
-        max: 3,
-        allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
+        max: 4,
+        allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl', 'performanceByDay'],
       },
       main: {
         max: 2,
@@ -41,6 +42,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         { i: 'vantageScore', name: 'Vantage Score' },
         { i: 'rrDistribution', name: 'R:R Distribution' },
         { i: 'cumulativePnl', name: 'Cumulative P&L' },
+        { i: 'performanceByDay', name: 'Performance by Day' },
         { i: 'calendar', name: 'Trading Calendar' },
         { i: 'recentTrades', name: 'Recent Trades' },
     ],

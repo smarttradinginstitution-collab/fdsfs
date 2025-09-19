@@ -3,6 +3,7 @@ import { computed, onMounted, watch } from 'vue';
 import VantageScoreWidget from '../components/dashboard/widgets/charts/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
+import PerformanceByDayChart from '../components/analytics/PerformanceByDayChart.vue';
 import CalendarHeatmap from '../components/dashboard/widgets/Calendar/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/widgets/Table/RecentTradesTable.vue';
 import BaseModal from '../components/ui/BaseModal.vue';
@@ -50,6 +51,7 @@ const widgetComponents = {
   'vantageScore': VantageScoreWidget,
   'rrDistribution': RrDistributionWidget,
   'cumulativePnl': CumulativePnlWidget,
+  'performanceByDay': PerformanceByDayChart,
   'calendar': CalendarHeatmap,
   'recentTrades': RecentTradesTable,
 };
