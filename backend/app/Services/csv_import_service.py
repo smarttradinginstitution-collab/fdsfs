@@ -109,8 +109,8 @@ class CsvImportService:
         """
         try:
             # --- Estrazione e Conversione Dati ---
-            # Data/Ora (formato atteso: 'GG.MM.AAAA HH:mm:ss')
-            datetime_format = "%d.%m.%Y %H:%M:%S"
+            # Data/Ora (formato corretto: 'AAAA-MM-GG HH:MI')
+            datetime_format = "%Y-%m-%d %H:%M"
             entry_timestamp = datetime.strptime(entry_row["Data/Ora"], datetime_format)
             exit_timestamp = datetime.strptime(exit_row["Data/Ora"], datetime_format)
 

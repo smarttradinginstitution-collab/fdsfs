@@ -5,14 +5,14 @@ from backend.app.Services.csv_import_service import CsvImportService
 
 # Dati di esempio per i test
 VALID_CSV_CONTENT = """Trade #,Tipo,Data/Ora,Segnale,Prezzo USD,Dimensione posizione (quantità),Dimensione posizione (valore),P&L Netto USD,P&L Netto %,Massimale USD,Massimale %,Drawdown USD,Drawdown %,P&L cumulativo USD,P&L cumulativo %
-1,Entrata long,01.01.2023 10:00:00,SignalA,150.00,10,1500.00,50.00,3.33,60.00,4.00,-10.00,-0.67,50.00,3.33
-1,Uscita long,01.01.2023 11:00:00,SignalA,155.00,10,1550.00,50.00,3.33,60.00,4.00,-10.00,-0.67,50.00,3.33
-2,Entrata short,02.01.2023 14:00:00,SignalB,200.00,5,1000.00,-25.00,-2.50,5.00,0.50,-30.00,-3.00,25.00,1.25
-2,Uscita short,02.01.2023 15:00:00,SignalB,195.00,5,975.00,-25.00,-2.50,5.00,0.50,-30.00,-3.00,25.00,1.25
+1,Entrata long,2023-01-01 10:00,SignalA,150.00,10,1500.00,50.00,3.33,60.00,4.00,-10.00,-0.67,50.00,3.33
+1,Uscita long,2023-01-01 11:00,SignalA,155.00,10,1550.00,50.00,3.33,60.00,4.00,-10.00,-0.67,50.00,3.33
+2,Entrata short,2023-01-02 14:00,SignalB,200.00,5,1000.00,-25.00,-2.50,5.00,0.50,-30.00,-3.00,25.00,1.25
+2,Uscita short,2023-01-02 15:00,SignalB,195.00,5,975.00,-25.00,-2.50,5.00,0.50,-30.00,-3.00,25.00,1.25
 """
 
 INCOMPLETE_TRADE_CSV = """Trade #,Tipo,Data/Ora,Segnale,Prezzo USD,Dimensione posizione (quantità),Dimensione posizione (valore),P&L Netto USD,P&L Netto %,Massimale USD,Massimale %,Drawdown USD,Drawdown %,P&L cumulativo USD,P&L cumulativo %
-3,Entrata long,03.01.2023 10:00:00,SignalC,100.00,1,100.00,0,0,0,0,0,0,25.00,1.25
+3,Entrata long,2023-03-01 10:00,SignalC,100.00,1,100.00,0,0,0,0,0,0,25.00,1.25
 """
 
 MALFORMED_DATA_CSV = """Trade #,Tipo,Data/Ora,Segnale,Prezzo USD,Dimensione posizione (quantità),Dimensione posizione (valore),P&L Netto USD,P&L Netto %,Massimale USD,Massimale %,Drawdown USD,Drawdown %,P&L cumulativo USD,P&L cumulativo %

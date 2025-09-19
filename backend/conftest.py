@@ -1,5 +1,6 @@
 # backend/conftest.py
 
+import os
 import pytest
 import asyncio
 from typing import AsyncGenerator
@@ -15,6 +16,11 @@ from app.main import app
 from app.Infrastructure.db import Base
 # Import all models to ensure they are registered with Base
 from app.Models import auth_user, role, tag, trade, trades_tags, user_dashboard_layout, user_role
+
+# Set dummy env vars before any app code is imported to satisfy Pydantic settings.
+os.environ["SUPABASE_PROJECT_URL"] = "http://localhost:54321"
+os.environ["SUPABASE_KEY"] = "dummy_supabase_key"
+
 
 # This is a hack to make the tests work with SQLite
 @compiles(JSONB, "sqlite")
