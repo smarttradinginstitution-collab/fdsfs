@@ -31,7 +31,10 @@ class CsvImportService:
         4. Ritorna i trade processati e gli errori riscontrati.
         """
         try:
-            decoded_content = self.file_content.decode("utf-8")
+            # Usa 'utf-8-sig' per gestire correttamente i file CSV che iniziano
+            # con un BOM (Byte Order Mark), un problema comune con i file
+            # esportati da alcuni programmi (es. Excel).
+            decoded_content = self.file_content.decode("utf-8-sig")
             reader = csv.DictReader(io.StringIO(decoded_content))
             # La prima riga è l'header, DictReader la usa per le chiavi
             rows = list(reader)
