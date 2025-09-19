@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import BaseModal from './BaseModal.vue';
 import BaseButton from './BaseButton.vue';
 import BaseInput from './BaseInput.vue';
+import { useUiStore } from '@/stores/uiStore';
 
 const props = defineProps({
   show: Boolean,
@@ -11,6 +12,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'confirm']);
+const uiStore = useUiStore();
 
 const confirmationInput = ref('');
 
@@ -21,6 +23,8 @@ const isConfirmed = computed(() => {
 function confirm() {
   if (isConfirmed.value) {
     emit('confirm');
+  } else {
+    uiStore.showNotification({ message: 'The confirmation text is incorrect.', type: 'error' });
   }
 }
 
@@ -50,7 +54,7 @@ function close() {
     </template>
     <template #footer>
       <BaseButton @click="close" variant="secondary">Cancel</BaseButton>
-      <BaseButton @click="confirm" :disabled="!isConfirmed" variant="danger">
+      <BaseButton @click="confirm" variant="danger">
         Confirm
       </BaseButton>
     </template>
