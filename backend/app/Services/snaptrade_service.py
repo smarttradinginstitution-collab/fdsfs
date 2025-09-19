@@ -44,8 +44,11 @@ class SnapTradeService:
             if not user_secret:
                 return {"error": "SnapTrade API did not return a userSecret."}
         except Exception as e:
-            print(f"Error communicating with SnapTrade API: {e}")
-            return {"error": "Failed to register user with SnapTrade."}
+            print("--- SNAPTRADE REGISTRATION API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("------------------------------------")
+            return {"error": "Failed to register user with SnapTrade. Check backend logs for details."}
 
         user.profile.snaptrade_user_secret = user_secret
         await self.db.commit()
@@ -83,5 +86,8 @@ class SnapTradeService:
             return {"redirectURI": redirect_uri}
 
         except Exception as e:
-            print(f"Error communicating with SnapTrade API for login link: {e}")
-            return {"error": "Failed to generate connection link from SnapTrade."}
+            print("--- SNAPTRADE CONNECTION LINK API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("---------------------------------------")
+            return {"error": "Failed to generate connection link from SnapTrade. Check backend logs for details."}
