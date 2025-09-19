@@ -11,5 +11,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; object-src 'none';"
+
+        # Updated CSP to allow Swagger UI to load its resources from the CDN.
+        # 'unsafe-inline' is required for Swagger's inline scripts.
+        csp = (
+            "default-src 'self';"
+            " script-src 'self' 'unsafe-inline' cdn.jsdelivr.net;"
+            " style-src 'self' 'unsafe-inline' cdn.jsdelivr.net;"
+            " img-src 'self' data: https://fastapi.tiangolo.com;"
+            " object-src 'none';"
+        )
+        response.headers["Content-Security-Policy"] = csp
+
         return response
