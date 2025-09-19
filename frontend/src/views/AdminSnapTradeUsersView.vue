@@ -42,9 +42,9 @@ async function handleDelete() {
   try {
     await apiClient.delete(`/api/v1/admin/snaptrade-users/${userToDelete.value.userId}`);
     users.value = users.value.filter(u => u.userId !== userToDelete.value.userId);
-    uiStore.showToast({ message: 'User queued for deletion successfully.', type: 'success' });
+    uiStore.showNotification({ message: 'User queued for deletion successfully.', type: 'success' });
   } catch (err) {
-    uiStore.showToast({ message: 'Failed to delete user.', type: 'error' });
+    uiStore.showNotification({ message: 'Failed to delete user.', type: 'error' });
     console.error(err);
   } finally {
     showConfirmation.value = false;
@@ -67,7 +67,7 @@ onMounted(fetchUsers);
     <div v-else>
       <BaseTable :headers="tableHeaders" :items="users">
         <template #actions="{ item }">
-          <BaseButton @click="openConfirmation(item)" variant="secondary" size="small">
+          <BaseButton @click="openConfirmation(item)" variant="danger" size="small">
             Delete
           </BaseButton>
         </template>
