@@ -27,7 +27,7 @@ const navLinks = [
   { to: '/', text: 'Dashboard', icon: 'D' },
   { to: '/trades', text: 'Trades', icon: 'T' },
   { to: '/analytics', text: 'Analytics', icon: 'A' },
-  { to: '#', text: 'Settings', icon: 'S' },
+  { to: '/connections', text: 'Connections', icon: 'S' },
 ];
 </script>
 

@@ -3,18 +3,30 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from sqlalchemy import String, Boolean, SmallInteger, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
+
+if TYPE_CHECKING:
+    from app.Models.profile import Profile
+    from app.Models.brokerage_connection import BrokerageConnection
 
 
 class AuthUser(Base):
     __tablename__ = "users"
-    __table_args__ = {"schema": "auth"}
+    __table_args__ = {"schema": "auth", "extend_existing": True}
+
+    # Relationships
+    profile: Mapped["Profile"] = relationship(
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    brokerage_connections: Mapped[list["BrokerageConnection"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
     instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)

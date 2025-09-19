@@ -34,6 +34,12 @@ const router = createRouter({
       name: 'component-test',
       component: () => import('../views/ComponentTestView.vue'),
       meta: { title: 'Component Test' },
+    },
+    {
+      path: '/connections',
+      name: 'connections',
+      component: () => import('../views/BrokerConnectionsView.vue'),
+      meta: { title: 'Broker Connections' },
     }
   ],
 });
