@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Models.profile import Profile
 from app.config import settings
-# from snaptrade_python_sdk import SnapTrade # Will be uncommented later
-# from snaptrade_python_sdk.apis.tags import authentication_api # Will be uncommented later
+from snaptrade_python_sdk import SnapTrade
+# from snaptrade_python_sdk.apis.tags import authentication_api # This one may not be needed
 
 class SnapTradeService:
     def __init__(self, db: AsyncSession):
@@ -68,13 +68,24 @@ class SnapTradeService:
 
         # 2. Call SnapTrade API to get a redirect URI
         try:
-            # client = SnapTrade(...)
-            # ...
-            # redirect_uri = api_response.body['redirectURI']
-            print("--- MOCKING SNAPTRADE LOGIN CALL ---")
-            redirect_uri = f"https://app.snaptrade.com/mock-redirect?session_id=12345&user_id={user_id}"
-            print(f"--- Generated mock redirect URI: {redirect_uri} ---")
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            api_response = client.authentication.login_snap_trade_user(
+                user_id=str(user_id),
+                user_secret=user_secret,
+                body={"customRedirect": "http://localhost:5173/connections?status=success"}
+            )
+
+            redirect_uri = api_response.body.get('redirectURI')
+
+            if not redirect_uri:
+                print("SnapTrade API did not return a redirectURI.")
+                return {"error": "SnapTrade API did not return a redirectURI."}
+
             return {"redirectURI": redirect_uri}
+
         except Exception as e:
             print(f"Error communicating with SnapTrade API for login link: {e}")
             return {"error": "Failed to generate connection link from SnapTrade."}
