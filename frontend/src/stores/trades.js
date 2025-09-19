@@ -281,6 +281,28 @@ export const useTradesStore = defineStore('trades', {
       return this.processedStats?.by_day_of_week || {};
     },
 
+    performanceByHourData(state) {
+      const emptyData = { labels: [], datasets: [] };
+      if (!state.dashboardStats?.stats?.performance_by_hour) {
+        return emptyData;
+      }
+
+      const hourlyData = state.dashboardStats.stats.performance_by_hour;
+
+      // I colori possono essere resi dinamici in base al tema in futuro
+      const positiveColor = 'rgba(75, 192, 192, 0.5)';
+      const negativeColor = 'rgba(255, 99, 132, 0.5)';
+
+      return {
+        labels: hourlyData.labels,
+        datasets: [{
+          label: 'Net P&L by Hour',
+          data: hourlyData.data,
+          backgroundColor: hourlyData.data.map(pnl => pnl >= 0 ? positiveColor : negativeColor),
+        }]
+      };
+    },
+
     winLossDays(state) {
       return state.processedStats?.win_loss_days || { winningDays: 0, losingDays: 0, breakEvenDays: 0 };
     },
