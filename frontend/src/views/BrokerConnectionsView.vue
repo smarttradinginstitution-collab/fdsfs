@@ -10,7 +10,8 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const user = computed(() => authStore.user);
-const isLoading = ref(false);
+const isRegistering = ref(false);
+const isGeneratingLink = ref(false);
 
 // This computed property will reactively check if the user is registered with SnapTrade
 const isSnapTradeUserRegistered = computed(() => {
@@ -18,7 +19,7 @@ const isSnapTradeUserRegistered = computed(() => {
 });
 
 const handleRegister = async () => {
-  isLoading.value = true;
+  isRegistering.value = true;
   try {
     await authStore.registerWithSnapTrade();
     uiStore.showNotification({
@@ -32,7 +33,27 @@ const handleRegister = async () => {
       type: 'error',
     });
   } finally {
-    isLoading.value = false;
+    isRegistering.value = false;
+  }
+};
+
+const handleGenerateLink = async () => {
+  isGeneratingLink.value = true;
+  try {
+    const redirectURI = await authStore.generateConnectionLink();
+    if (redirectURI) {
+      // Redirect the user to the SnapTrade connection portal
+      window.location.href = redirectURI;
+    }
+  } catch (error) {
+    const errorMessage = error.response?.data?.detail || 'Impossibile generare il link di connessione.';
+    uiStore.showNotification({
+      message: `Errore: ${errorMessage}`,
+      type: 'error',
+    });
+  } finally {
+    // This may not be reached if the redirect is successful
+    isGeneratingLink.value = false;
   }
 };
 
@@ -57,8 +78,8 @@ onMounted(() => {
         Questo passaggio è richiesto solo una volta.
       </p>
       <div class="action-bar">
-        <BaseButton variant="primary" @click="handleRegister" :disabled="isLoading">
-          <SettingsIcon v-if="isLoading" class="spin" />
+        <BaseButton variant="primary" @click="handleRegister" :disabled="isRegistering">
+          <SettingsIcon v-if="isRegistering" class="spin" />
           <PlusIcon v-else />
           <span class="button-text">Crea Profilo SnapTrade</span>
         </BaseButton>
@@ -68,8 +89,9 @@ onMounted(() => {
     <!-- Brokerage connections management (shown after registration) -->
     <div v-else class="connections-management">
        <div class="action-bar">
-        <BaseButton variant="primary">
-          <PlusIcon />
+        <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
+          <SettingsIcon v-if="isGeneratingLink" class="spin" />
+          <PlusIcon v-else />
           <span class="button-text">Aggiungi Nuova Connessione</span>
         </BaseButton>
       </div>

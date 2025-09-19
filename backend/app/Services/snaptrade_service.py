@@ -51,7 +51,7 @@ class SnapTradeService:
 
             # Mocked response for now
             print("--- MOCKING SNAPTRADE API CALL ---")
-            user_secret = f"mock_secret_for_user_{user_id}" # TODO: Replace with real UUID from API
+            user_secret = f"mock_secret_for_user_{user_id}"
             print(f"--- Generated mock user secret: {user_secret} ---")
 
         except Exception as e:
@@ -65,3 +65,38 @@ class SnapTradeService:
         await self.db.refresh(user.profile)
 
         return {"success": True, "userId": user_id}
+
+    async def generate_connection_link(self, user_id: uuid.UUID) -> dict:
+        """
+        Generates a SnapTrade Connection Portal URL for a given user.
+        """
+        # 1. Get user and their SnapTrade secret
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            return {"error": "User is not registered with SnapTrade or secret is missing."}
+
+        user_secret = user.profile.snaptrade_user_secret
+
+        # 2. Call SnapTrade API to get a redirect URI
+        try:
+            # client = SnapTrade(
+            #     consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+            #     client_id=settings.SNAPTRADE_CLIENT_ID,
+            # )
+            # api_response = client.authentication.login_snap_trade_user(
+            #     user_id=str(user_id),
+            #     user_secret=user_secret,
+            #     body={ "customRedirect": "http://localhost:5173/connections?status=success" }
+            # )
+            # redirect_uri = api_response.body['redirectURI']
+
+            # Mocked response for now
+            print("--- MOCKING SNAPTRADE LOGIN CALL ---")
+            redirect_uri = f"https://app.snaptrade.com/mock-redirect?session_id=12345&user_id={user_id}"
+            print(f"--- Generated mock redirect URI: {redirect_uri} ---")
+
+            return {"redirectURI": redirect_uri}
+
+        except Exception as e:
+            print(f"Error communicating with SnapTrade API for login link: {e}")
+            return {"error": "Failed to generate connection link from SnapTrade."}

@@ -39,3 +39,30 @@ class SnapTradeController:
                 raise HTTPException(status_code=400, detail=result["error"])
 
         return result
+
+    async def handle_generate_connection_link(
+        self,
+        db: AsyncSession = Depends(get_db),
+        claims: dict = Depends(get_current_claims),
+    ) -> dict:
+        """
+        Handles the request to generate a SnapTrade connection link.
+        """
+        user_id_str = claims.get("sub")
+        if not user_id_str:
+            raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
+
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid user ID format in token.")
+
+        svc = SnapTradeService(db)
+        result = await svc.generate_connection_link(user_id)
+
+        if "error" in result:
+            # For this endpoint, any error from the service is likely a 400-level client error
+            # (e.g., user not registered yet).
+            raise HTTPException(status_code=400, detail=result["error"])
+
+        return result

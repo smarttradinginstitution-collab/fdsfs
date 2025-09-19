@@ -194,6 +194,19 @@ export const useAuthStore = defineStore('auth', () => {
   // --- EXPORT ---
   // Esponiamo lo stato e le azioni per renderli accessibili
   // ai componenti che useranno questo store.
+  /**
+   * Generates the SnapTrade connection URL.
+   */
+  async function generateConnectionLink() {
+    try {
+      const { data } = await apiClient.post('/api/v1/snaptrade/generate-connection-link');
+      return data.redirectURI;
+    } catch (error) {
+      console.error('Error generating connection link:', error);
+      throw error;
+    }
+  }
+
   return {
     user,
     token,
@@ -203,5 +216,6 @@ export const useAuthStore = defineStore('auth', () => {
     initAuth,
     fetchUser,
     registerWithSnapTrade,
+    generateConnectionLink,
   };
 });
