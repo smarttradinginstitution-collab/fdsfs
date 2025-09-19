@@ -219,3 +219,18 @@ router_snaptrade.post("/register")(snaptrade.handle_register_user)
 router_snaptrade.post("/generate-connection-link")(snaptrade.handle_generate_connection_link)
 
 router.include_router(router_snaptrade)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 👑 ADMIN (protetto: admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers.admin_controller import router as admin_router
+
+router_admin = APIRouter(
+    prefix="/api/v1/admin",
+    tags=["Admin"],
+    dependencies=[Depends(require_roles(["admin"]))],
+)
+
+router_admin.include_router(admin_router)
+
+router.include_router(router_admin)

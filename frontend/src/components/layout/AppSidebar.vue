@@ -20,15 +20,17 @@ const authStore = useAuthStore();
 
 // --- DATI DEL COMPONENTE ---
 const user = computed(() => authStore.user);
+const isAdmin = computed(() => user.value?.roleName === 'admin');
 
 // Dati per i link di navigazione.
 // Usare un array rende più facile gestire l'aggiunta di icone in futuro.
-const navLinks = [
+const navLinks = computed(() => [
   { to: '/', text: 'Dashboard', icon: 'D' },
   { to: '/trades', text: 'Trades', icon: 'T' },
   { to: '/analytics', text: 'Analytics', icon: 'A' },
   { to: '/connections', text: 'Connections', icon: 'S' },
-];
+  ...(isAdmin.value ? [{ to: '/admin/snaptrade-users', text: 'Admin', icon: '👑' }] : [])
+]);
 </script>
 
 <template>

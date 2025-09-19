@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import uuid
+from typing import Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Models.profile import Profile
@@ -91,3 +92,21 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("---------------------------------------")
             return {"error": "Failed to generate connection link from SnapTrade. Check backend logs for details."}
+
+    async def list_all_snaptrade_users(self) -> Union[list[str], dict]:
+        """
+        Lists all user IDs registered with SnapTrade.
+        """
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            api_response = client.authentication.list_snap_trade_users()
+            return api_response.body
+        except Exception as e:
+            print("--- SNAPTRADE LIST USERS API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("------------------------------------")
+            return {"error": "Failed to list SnapTrade users. Check backend logs for details."}

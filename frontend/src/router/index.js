@@ -40,6 +40,12 @@ const router = createRouter({
       name: 'connections',
       component: () => import('../views/BrokerConnectionsView.vue'),
       meta: { title: 'Broker Connections' },
+    },
+    {
+      path: '/admin/snaptrade-users',
+      name: 'admin-snaptrade-users',
+      component: () => import('../views/AdminSnapTradeUsersView.vue'),
+      meta: { title: 'Admin - SnapTrade Users', requiresAdmin: true },
     }
   ],
 });
@@ -57,6 +63,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   const isAuthenticated = authStore.isAuthenticated;
+  const isAdmin = authStore.user?.roleName === 'admin';
 
   // A route is considered protected if it's not marked as public in its meta field.
   const authRequired = !to.meta.public;
@@ -65,6 +72,12 @@ router.beforeEach(async (to, from, next) => {
     // Se la pagina richiede autenticazione e l'utente non è loggato,
     // reindirizza alla pagina di login.
     return next('/login');
+  }
+
+  if (to.meta.requiresAdmin && !isAdmin) {
+    // Se la pagina richiede privilegi di admin e l'utente non è admin,
+    // reindirizza alla dashboard.
+    return next('/');
   }
 
   if (to.path === '/login' && isAuthenticated) {
