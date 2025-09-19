@@ -51,7 +51,7 @@ class SnapTradeService:
 
             # Mocked response for now
             print("--- MOCKING SNAPTRADE API CALL ---")
-            user_secret = f"mock_secret_for_user_{user_id}"
+            user_secret = f"mock_secret_for_user_{user_id}" # TODO: Replace with real UUID from API
             print(f"--- Generated mock user secret: {user_secret} ---")
 
         except Exception as e:
