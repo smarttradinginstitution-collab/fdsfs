@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
-from app.Models.profile import Profile  # Import the Profile model
+from app.Models.profile import Profile
 from app.config import settings
 # from snaptrade_python_sdk import SnapTrade # Will be uncommented later
 # from snaptrade_python_sdk.apis.tags import authentication_api # Will be uncommented later
@@ -25,37 +25,26 @@ class SnapTradeService:
             return {"error": "User not found."}
 
         # 2. Check for profile, and create it if it doesn't exist.
-        # This makes the system robust for users created before the profile trigger was active.
         if not user.profile:
             print(f"User {user_id} does not have a profile. Creating one now.")
             new_profile = Profile(id=user_id)
             self.db.add(new_profile)
             await self.db.commit()
-            await self.db.refresh(user) # Refresh the user object to load the new profile
+            await self.db.refresh(user)
 
         # 3. Check if user is already registered
         if user.profile.snaptrade_user_secret:
             return {"error": "User is already registered with SnapTrade."}
 
         # 4. Call SnapTrade API to register the user
-        #    (This part is mocked as the SDK is not installed)
         try:
-            # client = SnapTrade(
-            #     consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
-            #     client_id=settings.SNAPTRADE_CLIENT_ID,
-            # )
-            # api_response = client.authentication.register_snap_trade_user(
-            #     body={ "userId": str(user_id) }
-            # )
+            # client = SnapTrade(...)
+            # ...
             # user_secret = api_response.body['userSecret']
-
-            # Mocked response for now
             print("--- MOCKING SNAPTRADE API CALL ---")
             user_secret = f"mock_secret_for_user_{user_id}"
             print(f"--- Generated mock user secret: {user_secret} ---")
-
         except Exception as e:
-            # In a real scenario, you would log the error from the SnapTrade API
             print(f"Error communicating with SnapTrade API: {e}")
             return {"error": "Failed to register user with SnapTrade."}
 
@@ -79,24 +68,13 @@ class SnapTradeService:
 
         # 2. Call SnapTrade API to get a redirect URI
         try:
-            # client = SnapTrade(
-            #     consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
-            #     client_id=settings.SNAPTRADE_CLIENT_ID,
-            # )
-            # api_response = client.authentication.login_snap_trade_user(
-            #     user_id=str(user_id),
-            #     user_secret=user_secret,
-            #     body={ "customRedirect": "http://localhost:5173/connections?status=success" }
-            # )
+            # client = SnapTrade(...)
+            # ...
             # redirect_uri = api_response.body['redirectURI']
-
-            # Mocked response for now
             print("--- MOCKING SNAPTRADE LOGIN CALL ---")
             redirect_uri = f"https://app.snaptrade.com/mock-redirect?session_id=12345&user_id={user_id}"
             print(f"--- Generated mock redirect URI: {redirect_uri} ---")
-
             return {"redirectURI": redirect_uri}
-
         except Exception as e:
             print(f"Error communicating with SnapTrade API for login link: {e}")
             return {"error": "Failed to generate connection link from SnapTrade."}
