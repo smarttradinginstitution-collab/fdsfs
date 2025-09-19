@@ -9,6 +9,7 @@
 import { computed } from 'vue';
 import { useTradesStore } from '../../stores/trades';
 import BaseBarChart from '../charts/BaseBarChart.vue';
+import BaseWidget from '../layout/BaseWidget.vue';
 
 // Utilizziamo uno schema di colori predefinito. In futuro, questo potrebbe
 // provenire da un composable che legge i token di design del tema.
@@ -49,19 +50,17 @@ const chartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      display: false, // Nascondiamo la legenda perché il colore della barra è autoesplicativo
+      display: false, // La legenda non è necessaria, il colore della barra è sufficiente
     },
     title: {
-      display: true,
-      text: 'P&L by Day of Week',
-      // Stile del titolo da definire qui o globalmente
+      display: false, // Il titolo è ora gestito dal BaseWidget
     },
   },
   scales: {
     y: {
       beginAtZero: true,
       ticks: {
-        // Formatta i tick dell'asse Y per mostrare il simbolo del dollaro
+        // Formatta i tick dell'asse Y per mostrare il simbolo della valuta
         callback: function (value) {
           return '$' + value;
         },
@@ -72,19 +71,24 @@ const chartOptions = {
 </script>
 
 <template>
-  <div class="chart-widget-container">
-    <!-- Il componente BaseBarChart è responsabile del rendering effettivo -->
-    <BaseBarChart :chart-data="chartData" :chart-options="chartOptions" />
-  </div>
+  <BaseWidget>
+    <template #header>
+      <h3 class="widget-title">Performance by Day</h3>
+    </template>
+    <div class="chart-container">
+      <BaseBarChart :chart-data="chartData" :chart-options="chartOptions" />
+    </div>
+  </BaseWidget>
 </template>
 
 <style scoped>
-.chart-widget-container {
-  /* Definiamo un'altezza fissa per il contenitore del grafico */
-  height: 300px;
-  padding: 1rem;
-  background-color: var(--semantic-color-surface-primary);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
+.widget-title {
+  font: var(--semantic-font-style-heading-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.chart-container {
+  height: 250px; /* Altezza specifica per il contenitore del grafico */
+  position: relative;
 }
 </style>
