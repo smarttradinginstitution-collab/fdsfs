@@ -9,7 +9,7 @@ const isLoading = ref(true);
 const error = ref(null);
 
 const tableHeaders = [
-  { key: 'userId', label: 'SnapTrade User ID' },
+  { key: 'userId', text: 'SnapTrade User ID' },
 ];
 
 onMounted(async () => {
@@ -35,7 +35,7 @@ onMounted(async () => {
       {{ error }}
     </div>
     <div v-else>
-      <BaseTable :headers="tableHeaders" :data="users" />
+      <BaseTable :headers="tableHeaders" :items="users" />
     </div>
   </div>
 </template>
