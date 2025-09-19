@@ -67,7 +67,7 @@ onMounted(fetchUsers);
     <div v-else>
       <BaseTable :headers="tableHeaders" :items="users">
         <template #actions="{ item }">
-          <BaseButton @click="openConfirmation(item)" variant="danger" size="small">
+          <BaseButton @click="openConfirmation(item)" variant="secondary" size="small">
             Delete
           </BaseButton>
         </template>

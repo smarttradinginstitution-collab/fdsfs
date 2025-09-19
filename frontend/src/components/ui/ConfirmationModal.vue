@@ -50,7 +50,7 @@ function close() {
     </template>
     <template #footer>
       <BaseButton @click="close" variant="secondary">Cancel</BaseButton>
-      <BaseButton @click="confirm" :disabled="!isConfirmed" variant="danger">
+      <BaseButton @click="confirm" :disabled="!isConfirmed" variant="secondary">
         Confirm
       </BaseButton>
     </template>

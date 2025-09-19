@@ -124,12 +124,13 @@ class SnapTradeService:
             api_response = client.authentication.delete_snap_trade_user(user_id=user_id)
 
             # If SnapTrade accepts the request, we clear the secret locally.
-            user_uuid = uuid.UUID(user_id)
-            user = await self.user_repo.get(user_uuid)
-            if user and user.profile:
-                user.profile.snaptrade_user_secret = None
-                await self.db.commit()
-                await self.db.refresh(user.profile)
+            if api_response.body.get("status") == "deleted":
+                user_uuid = uuid.UUID(user_id)
+                user = await self.user_repo.get(user_uuid)
+                if user and user.profile:
+                    user.profile.snaptrade_user_secret = None
+                    await self.db.commit()
+                    await self.db.refresh(user.profile)
 
             return api_response.body
         except Exception as e:
