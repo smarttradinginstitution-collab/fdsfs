@@ -3,6 +3,7 @@
 from __future__ import annotations
 import uuid
 from typing import Union
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Models.profile import Profile
@@ -176,3 +177,104 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("---------------------------------------")
             return {"error": "Failed to rotate SnapTrade user secret. Check backend logs for details."}
+
+    async def synchronize_connections(self, user_id: str) -> bool:
+        """
+        Fetches connections from SnapTrade and upserts them into the local database.
+        """
+        from sqlalchemy.dialects.postgresql import insert
+        from app.Models.brokerage_connection import BrokerageConnection
+
+        user_uuid = uuid.UUID(user_id)
+        user = await self.user_repo.get(user_uuid)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            return False
+
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            connections = client.connections.list_brokerage_authorizations(
+                user_id=user_id,
+                user_secret=user.profile.snaptrade_user_secret
+            )
+
+            if not connections.body:
+                return True
+
+            values_to_upsert = []
+            for conn in connections.body:
+                created_at_str = conn['created_date']
+                created_at_dt = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+
+                disabled_date_str = conn.get('disabled_date')
+                disabled_date_dt = None
+                if disabled_date_str:
+                    disabled_date_dt = datetime.fromisoformat(disabled_date_str.replace('Z', '+00:00'))
+
+                values_to_upsert.append({
+                    'id': conn['id'],
+                    'user_id': user_uuid,
+                    'brokerage_name': conn['brokerage']['name'],
+                    'brokerage_display_name': conn['brokerage'].get('display_name'),
+                    'brokerage_logo_url': conn['brokerage'].get('aws_s3_logo_url'),
+                    'connection_type': conn['type'],
+                    'disabled': conn['disabled'],
+                    'disabled_date': disabled_date_dt,
+                    'created_at': created_at_dt,
+                })
+
+            stmt = insert(BrokerageConnection).values(values_to_upsert)
+            update_dict = {
+                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at']
+            }
+            stmt = stmt.on_conflict_do_update(
+                index_elements=['id'],
+                set_=update_dict,
+            )
+            await self.db.execute(stmt)
+            await self.db.commit()
+            return True
+        except Exception as e:
+            print("--- SNAPTRADE SYNC CONNECTIONS API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("------------------------------------------")
+            return False
+
+    async def generate_reconnect_link(self, user_id: uuid.UUID, connection_id: str) -> dict:
+        """
+        Generates a SnapTrade Connection Portal URL for a given user to reconnect a specific connection.
+        """
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            return {"error": "User is not registered with SnapTrade or secret is missing."}
+
+        user_secret = user.profile.snaptrade_user_secret
+
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID
+            )
+            api_response = client.authentication.login_snap_trade_user(
+                user_id=str(user_id),
+                user_secret=user_secret,
+                body={"customRedirect": "http://localhost:5173/connections?status=success", "reconnect": connection_id}
+            )
+
+            redirect_uri = api_response.body.get('redirectURI')
+
+            if not redirect_uri:
+                print("SnapTrade API did not return a redirectURI.")
+                return {"error": "SnapTrade API did not return a redirectURI."}
+
+            return {"redirectURI": redirect_uri}
+
+        except Exception as e:
+            print("--- SNAPTRADE RECONNECT LINK API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("----------------------------------------")
+            return {"error": "Failed to generate reconnect link from SnapTrade. Check backend logs for details."}
