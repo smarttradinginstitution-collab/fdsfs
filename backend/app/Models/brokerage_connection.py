@@ -21,6 +21,7 @@ class BrokerageConnection(Base):
     disabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     disabled_date: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    deleted_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     # Relationship to Profile (many-to-one)
     profile: Mapped["Profile"] = relationship(back_populates="brokerage_connections")

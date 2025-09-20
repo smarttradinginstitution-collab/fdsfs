@@ -6,9 +6,14 @@ from typing import Union
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
+from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
 from app.Models.profile import Profile
 from app.config import settings
 from snaptrade_client import SnapTrade
+
+class SnapTradeConnectionError(Exception):
+    """Custom exception for SnapTrade connection errors."""
+    pass
 
 class SnapTradeService:
     def __init__(self, db: AsyncSession):
@@ -227,7 +232,7 @@ class SnapTradeService:
 
             stmt = insert(BrokerageConnection).values(values_to_upsert)
             update_dict = {
-                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at']
+                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at', 'deleted_at']
             }
             stmt = stmt.on_conflict_do_update(
                 index_elements=['id'],
@@ -278,3 +283,44 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("----------------------------------------")
             return {"error": "Failed to generate reconnect link from SnapTrade. Check backend logs for details."}
+
+    async def delete_connection(self, user_id: uuid.UUID, connection_id: uuid.UUID) -> None:
+        """
+        Deletes a brokerage connection from SnapTrade and soft-deletes it locally.
+        """
+        repo = BrokerageConnectionRepository(self.db)
+        connection = await repo.get_by_id(connection_id)
+
+        # Security check: Ensure connection exists and belongs to the user
+        if not connection or connection.user_id != user_id:
+            raise SnapTradeConnectionError("Connection not found or permission denied.")
+
+        # Get user's SnapTrade secret
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
+        user_secret = user.profile.snaptrade_user_secret
+
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID
+            )
+            # This is a synchronous call, a 204 response means success.
+            client.connections.remove_brokerage_authorization(
+                authorization_id=str(connection_id),
+                user_id=str(user_id),
+                user_secret=user_secret
+            )
+
+            # Soft-delete the connection locally after successful deletion from SnapTrade
+            await repo.soft_delete(connection)
+
+        except Exception as e:
+            print("--- SNAPTRADE DELETE CONNECTION API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("-------------------------------------------")
+            # Re-raise as a custom exception for the controller to handle
+            raise SnapTradeConnectionError("Failed to delete connection from SnapTrade.")

@@ -220,6 +220,11 @@ router_snaptrade.post("/register")(snaptrade.handle_register_user)
 router_snaptrade.post("/generate-connection-link")(snaptrade.handle_generate_connection_link)
 router_snaptrade.post("/reconnect-link")(snaptrade.handle_reconnect_link)
 router_snaptrade.get("/connections", response_model=list[ConnectionSchema])(snaptrade.list_connections)
+router_snaptrade.delete(
+    "/connections/{connection_id}",
+    status_code=204,
+    summary="Delete a brokerage connection",
+)(snaptrade.handle_delete_connection)
 
 router.include_router(router_snaptrade)
 
