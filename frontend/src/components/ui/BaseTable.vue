@@ -85,7 +85,7 @@ th, td {
   text-align: left;
 }
 th {
-  background-color: var(--semantic-color-surface-page);
+  background-color: var(--semantic-color-surface-secondary);
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
 }
