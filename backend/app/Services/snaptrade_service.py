@@ -3,8 +3,11 @@
 from __future__ import annotations
 import uuid
 from typing import Union
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.Repositories.account_balances_repository import AccountBalancesRepository
+from app.Repositories.account_positions_repository import AccountPositionsRepository
+from app.Repositories.account_orders_repository import AccountOrdersRepository
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
 from app.Repositories.brokerage_account_repository import BrokerageAccountRepository
@@ -518,5 +521,135 @@ class SnapTradeService:
 
         return {
             "accounts": local_accounts,
+            "warning": sync_warning
+        }
+
+    async def sync_and_get_account_holdings(self, user_id: uuid.UUID, account_id: uuid.UUID) -> dict:
+        """
+        Synchronizes and retrieves holdings, positions, and orders for a specific trading account.
+        Implements a 15-minute "smart sync" cache to avoid excessive API calls.
+        Returns data from the local database.
+        """
+        account_repo = BrokerageAccountRepository(self.db)
+        account = await account_repo.get_account_by_id(account_id)
+
+        # Security Check: Ensure the account exists and belongs to the requesting user.
+        if not account or account.user_id != user_id:
+            raise SnapTradeConnectionError("Account not found or permission denied.")
+
+        sync_warning = None
+        should_sync = True
+
+        # Smart Sync Logic: Check if a sync is necessary
+        if account.last_synced_at:
+            # Ensure timestamps are timezone-aware for correct comparison
+            last_synced_aware = account.last_synced_at.astimezone(timezone.utc)
+            if datetime.now(timezone.utc) - last_synced_aware < timedelta(minutes=15):
+                should_sync = False
+
+        if should_sync:
+            user = await self.user_repo.get(user_id)
+            if not user or not user.profile or not user.profile.snaptrade_user_secret:
+                raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
+            user_secret = user.profile.snaptrade_user_secret
+
+            try:
+                client = SnapTrade(
+                    consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                    client_id=settings.SNAPTRADE_CLIENT_ID
+                )
+
+                # Fetch holdings from SnapTrade API
+                holdings_response = client.account_information.get_user_account_holdings(
+                    user_id=str(user_id),
+                    user_secret=user_secret,
+                    account_id=str(account_id)
+                )
+
+                holdings_data = holdings_response.body
+
+                # Upsert Balances
+                if holdings_data and holdings_data.get('balances'):
+                    balances_repo = AccountBalancesRepository(self.db)
+                    balances_to_upsert = [
+                        {
+                            "account_id": account_id,
+                            "currency_code": bal.get('currency', {}).get('code'),
+                            "cash_amount": bal.get('cash'),
+                            "buying_power": bal.get('buying_power')
+                        }
+                        for bal in holdings_data['balances'] if bal.get('currency')
+                    ]
+                    if balances_to_upsert:
+                        await balances_repo.upsert_balances(balances_to_upsert)
+
+                # Upsert Positions
+                if holdings_data and holdings_data.get('positions'):
+                    positions_repo = AccountPositionsRepository(self.db)
+                    positions_to_upsert = [
+                        {
+                            "account_id": account_id,
+                            "symbol": pos.get('symbol', {}).get('symbol'),
+                            "description": pos.get('description'),
+                            "units": pos.get('units'),
+                            "price": pos.get('price'),
+                            "currency": pos.get('symbol', {}).get('currency', {}).get('code'),
+                            "open_pnl": pos.get('open_pnl'),
+                            "average_purchase_price": pos.get('average_purchase_price')
+                        }
+                        for pos in holdings_data['positions'] if pos.get('symbol')
+                    ]
+                    if positions_to_upsert:
+                        await positions_repo.upsert_positions(positions_to_upsert)
+
+                # Upsert Orders
+                if holdings_data and holdings_data.get('orders'):
+                    orders_repo = AccountOrdersRepository(self.db)
+                    orders_to_upsert = [
+                        {
+                            "id": order.get('brokerage_order_id'),
+                            "account_id": account_id,
+                            "symbol": order.get('symbol', {}).get('symbol'),
+                            "action": order.get('action'),
+                            "status": order.get('status'),
+                            "total_quantity": order.get('total_quantity'),
+                            "filled_quantity": order.get('filled_quantity'),
+                            "execution_price": order.get('execution_price'),
+                            "limit_price": order.get('limit_price'),
+                            "time_placed": datetime.fromisoformat(order['time_placed'].replace('Z', '+00:00')) if order.get('time_placed') else None
+                        }
+                        for order in holdings_data['orders'] if order.get('brokerage_order_id')
+                    ]
+                    if orders_to_upsert:
+                        await orders_repo.upsert_orders(orders_to_upsert)
+
+                # Update sync timestamp on success
+                account.last_synced_at = datetime.now(timezone.utc)
+                await self.db.commit()
+
+            except Exception as e:
+                print("--- SNAPTRADE GET HOLDINGS API ERROR ---")
+                print(f"An exception occurred: {type(e).__name__}")
+                print(f"Exception details: {e}")
+                print("----------------------------------------")
+                last_updated_str = account.last_synced_at.strftime('%Y-%m-%d %H:%M:%S %Z') if account.last_synced_at else 'never'
+                sync_warning = {
+                    "message": f"Could not update data in real-time. The information shown may be out of date (last updated: {last_updated_str})."
+                }
+
+        # Always fetch from our local DB to return the data
+        balances_repo = AccountBalancesRepository(self.db)
+        positions_repo = AccountPositionsRepository(self.db)
+        orders_repo = AccountOrdersRepository(self.db)
+
+        local_balances = await balances_repo.get_balances_by_account_id(account_id)
+        local_positions = await positions_repo.get_positions_by_account_id(account_id)
+        local_orders = await orders_repo.get_orders_by_account_id(account_id)
+
+        return {
+            "balances": local_balances,
+            "positions": local_positions,
+            "orders": local_orders,
             "warning": sync_warning
         }

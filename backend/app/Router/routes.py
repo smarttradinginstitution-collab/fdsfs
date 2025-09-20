@@ -241,6 +241,19 @@ router_snaptrade.post(
 router.include_router(router_snaptrade)
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 💼 ACCOUNTS (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+router_accounts = APIRouter(
+    prefix="/api/v1/accounts",
+    tags=["Accounts"],
+    dependencies=[Depends(get_current_claims)],
+)
+
+router_accounts.get("/{account_id}/holdings")(snaptrade.get_account_holdings)
+
+router.include_router(router_accounts)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 👑 ADMIN (protetto: admin)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers.admin_controller import router as admin_router
