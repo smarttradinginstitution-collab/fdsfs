@@ -522,6 +522,9 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .broker-cell, .actions-cell {
+    justify-content: flex-end;
+  }
   .broker-logo {
     height: 48px;
     width: 48px;
