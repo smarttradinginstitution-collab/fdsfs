@@ -53,7 +53,7 @@ async def test_sync_and_get_user_accounts_success(snaptrade_service: SnapTradeSe
          patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo:
 
         # Configure mocks for the patched objects
-        mock_snaptrade_client.return_value.account_information.get_all_user_holding_accounts.return_value = mock_api_response
+        mock_snaptrade_client.return_value.account_information.list_user_accounts.return_value = mock_api_response
         mock_account_repo.return_value.upsert_accounts = AsyncMock()
         mock_account_repo.return_value.get_accounts = AsyncMock(return_value=[mock_local_account])
 
@@ -63,7 +63,7 @@ async def test_sync_and_get_user_accounts_success(snaptrade_service: SnapTradeSe
         # Assertions
         assert result["warning"] is None
         assert result["accounts"] == [mock_local_account]
-        mock_snaptrade_client.return_value.account_information.get_all_user_holding_accounts.assert_called_once()
+        mock_snaptrade_client.return_value.account_information.list_user_accounts.assert_called_once()
         mock_account_repo.return_value.upsert_accounts.assert_called_once()
         mock_account_repo.return_value.get_accounts.assert_called_once_with(user_id=user_id, connection_id=connection_id)
 
@@ -85,7 +85,7 @@ async def test_sync_and_get_user_accounts_api_error(snaptrade_service: SnapTrade
     with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
          patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo:
 
-        mock_snaptrade_client.return_value.account_information.get_all_user_holding_accounts.side_effect = Exception("API Error")
+        mock_snaptrade_client.return_value.account_information.list_user_accounts.side_effect = Exception("API Error")
         mock_account_repo.return_value.get_accounts = AsyncMock(return_value=mock_local_accounts)
 
         result = await snaptrade_service.sync_and_get_user_accounts(user_id=user_id)

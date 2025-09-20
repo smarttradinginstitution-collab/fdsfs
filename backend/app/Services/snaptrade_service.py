@@ -475,8 +475,8 @@ class SnapTradeService:
             )
 
             # Fetch all accounts from SnapTrade API
-            # Note: The SDK method is get_all_user_holding_accounts, which maps to GET /api/v1/accounts
-            snaptrade_accounts = client.account_information.get_all_user_holding_accounts(
+            # Note: The SDK method is list_user_accounts, which maps to GET /api/v1/accounts
+            snaptrade_accounts = client.account_information.list_user_accounts(
                 user_id=str(user_id),
                 user_secret=user_secret
             )
