@@ -311,7 +311,7 @@ function formatDateTime(isoString) {
             <template #brokerage_name="{ item }">
               <div class="flex flex-col items-center justify-center gap-2">
                 <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
-                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" :alt="`${item.brokerage_name} logo`" class="h-8 object-contain">
+                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" :alt="`${item.brokerage_name} logo`" class="broker-logo object-contain">
               </div>
             </template>
             <template #created_at="{ item }">
@@ -531,6 +531,11 @@ function formatDateTime(isoString) {
 .broker-name {
   font-weight: var(--semantic-font-weight-medium);
   color: var(--semantic-color-text-primary);
+}
+
+.broker-logo {
+  height: 32px !important;
+  width: auto;
 }
 
 .details-grid {
