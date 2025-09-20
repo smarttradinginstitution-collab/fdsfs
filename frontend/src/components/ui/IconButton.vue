@@ -10,14 +10,21 @@ const props = defineProps({
     type: String,
     default: 'medium',
     validator: (value) => ['medium', 'small'].includes(value),
+  },
+  color: {
+    type: String,
+    default: 'var(--semantic-color-text-secondary)',
   }
 });
 
 const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
+const buttonStyle = computed(() => ({
+  color: props.color,
+}));
 </script>
 
 <template>
-  <button :class="buttonClass" :aria-label="ariaLabel">
+  <button :class="buttonClass" :aria-label="ariaLabel" :style="buttonStyle">
     <slot></slot>
   </button>
 </template>
@@ -28,7 +35,6 @@ const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
   place-items: center;
   border-radius: var(--base-border-radius-full);
   background-color: transparent;
-  color: var(--semantic-color-text-secondary);
   border: none;
   cursor: pointer;
   transition: background-color var(--base-animation-duration-fast), color var(--base-animation-duration-fast);

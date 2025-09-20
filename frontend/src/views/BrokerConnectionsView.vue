@@ -333,14 +333,20 @@ onMounted(async () => {
                     @click.stop="openRefreshConfirmation(item)"
                     :disabled="getRefreshInfo(item).isDisabled"
                     :title="getRefreshInfo(item).buttonTooltip"
-                    class="refresh-btn"
                     aria-label="Refresh connection holdings"
+                    color="var(--semantic-color-text-success)"
+                    class="refresh-btn-hover"
                   >
                     <RefreshIcon />
                   </IconButton>
                 </template>
 
-                <IconButton @click.stop="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
+                <IconButton
+                  @click.stop="openDeleteConfirmation(item)"
+                  aria-label="Delete connection"
+                  color="var(--semantic-color-text-danger)"
+                  class="delete-btn-hover"
+                >
                   <TrashIcon />
                 </IconButton>
               </div>
@@ -531,20 +537,13 @@ onMounted(async () => {
   justify-content: flex-start;
   gap: 0.5rem; /* 8px */
 }
-.refresh-btn {
-  color: var(--semantic-color-text-success);
+.refresh-btn-hover,
+.delete-btn-hover {
   opacity: 0.8;
   transition: opacity 0.2s ease-in-out;
 }
-.refresh-btn:hover {
-  opacity: 1;
-}
-.delete-btn {
-  color: var(--semantic-color-text-danger);
-  opacity: 0.8;
-  transition: opacity 0.2s ease-in-out;
-}
-.delete-btn:hover {
+.refresh-btn-hover:hover,
+.delete-btn-hover:hover {
   opacity: 1;
 }
 
