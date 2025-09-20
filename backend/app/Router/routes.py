@@ -220,7 +220,6 @@ router_snaptrade = APIRouter(
 router_snaptrade.post("/register")(snaptrade.handle_register_user)
 router_snaptrade.post("/generate-connection-link")(snaptrade.handle_generate_connection_link)
 router_snaptrade.post("/reconnect-link")(snaptrade.handle_reconnect_link)
-router_snaptrade.post("/sync", status_code=200, summary="Synchronously refresh all connections from SnapTrade")(snaptrade.handle_sync_connections)
 router_snaptrade.get("/connections", response_model=list[ConnectionSchema])(snaptrade.list_connections)
 router_snaptrade.get("/accounts", response_model=AccountListResponse)(snaptrade.get_accounts)
 router_snaptrade.get(

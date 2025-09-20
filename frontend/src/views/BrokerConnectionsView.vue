@@ -85,15 +85,28 @@ const handleGenerateLink = async () => {
   }
 };
 
-async function fetchConnections() {
-  isLoadingConnections.value = true;
+const isRefreshing = ref(false);
+
+async function fetchConnections(force = false) {
+  const loadingIndicator = force ? isRefreshing : isLoadingConnections;
+  loadingIndicator.value = true;
   try {
-    const response = await apiClient.get('/api/v1/snaptrade/connections');
+    const url = force
+      ? '/api/v1/snaptrade/connections?force_sync=true'
+      : '/api/v1/snaptrade/connections';
+    const response = await apiClient.get(url);
     connections.value = response.data;
+    if (force && !isLoadingConnections.value) { // Avoid showing on initial load
+      uiStore.showNotification({
+        message: 'Connections have been refreshed.',
+        type: 'success',
+      });
+    }
   } catch (error) {
-    uiStore.showNotification({ message: 'Failed to fetch connections.', type: 'error' });
+    const errorMessage = error.response?.data?.detail || 'Failed to refresh connections.';
+    uiStore.showNotification({ message: errorMessage, type: 'error' });
   } finally {
-    isLoadingConnections.value = false;
+    loadingIndicator.value = false;
   }
 }
 
@@ -256,41 +269,22 @@ function formatDate(isoString) {
 }
 
 onMounted(async () => {
-  isLoadingConnections.value = true;
+  // Check for connection status from query params (e.g., after SnapTrade redirect)
+  const urlParams = new URLSearchParams(window.location.search);
+  const status = urlParams.get('status');
+  if (status === 'success') {
+    uiStore.showNotification({
+      message: 'New connection added successfully!',
+      type: 'success',
+    });
+    // Clean the URL
+    router.replace({ query: {} });
+  }
+
   await authStore.fetchUser();
-
   if (isSnapTradeUserRegistered.value) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const status = urlParams.get('status');
-
-    // If the user was just redirected from a successful SnapTrade connection,
-    // we must trigger a synchronous sync before fetching the connections.
-    if (status === 'success') {
-      uiStore.showNotification({
-        message: 'Processing new connection... Please wait.',
-        type: 'info',
-        duration: 5000, // Show for 5 seconds
-      });
-      try {
-        await apiClient.post('/api/v1/snaptrade/sync');
-        uiStore.showNotification({
-          message: 'Synchronization complete!',
-          type: 'success',
-        });
-        // Clean the URL
-        router.replace({ query: {} });
-      } catch (error) {
-        const errorMessage = error.response?.data?.detail || 'Failed to sync new connection.';
-        uiStore.showNotification({
-          message: `Error: ${errorMessage}`,
-          type: 'error',
-        });
-      }
-    }
-    // Always fetch connections, but now we know the data is fresh if we just synced.
-    await fetchConnections();
-  } else {
-    isLoadingConnections.value = false;
+    // Force sync on initial load to get the latest data
+    fetchConnections(true);
   }
 });
 </script>
@@ -319,6 +313,15 @@ onMounted(async () => {
 
     <div v-else class="connections-management">
        <div class="action-bar">
+        <IconButton
+          v-if="!isLoadingConnections"
+          @click="() => fetchConnections(true)"
+          :disabled="isRefreshing"
+          title="Refresh Connections"
+          class="refresh-connections-btn"
+        >
+          <RefreshIcon :class="{ spin: isRefreshing }" />
+        </IconButton>
         <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
           <SettingsIcon v-if="isGeneratingLink" class="spin" />
           <PlusIcon v-else />

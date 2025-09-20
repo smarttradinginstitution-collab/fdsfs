@@ -94,3 +94,50 @@ async def test_sync_and_get_user_accounts_api_error(snaptrade_service: SnapTrade
         assert result["warning"]["warning"] == "sync_failed"
         assert result["accounts"] == mock_local_accounts
         mock_account_repo.return_value.upsert_accounts.assert_not_called()
+
+
+@pytest.mark.anyio
+async def test_synchronize_connections_success(snaptrade_service: SnapTradeService):
+    """
+    Test successful synchronization of connections, iterating and upserting one by one.
+    """
+    user_id = uuid4()
+    user_secret = "user_secret"
+    mock_user = AuthUser(id=user_id, profile=Profile(id=user_id, snaptrade_user_secret=user_secret))
+
+    snaptrade_service.user_repo = AsyncMock()
+    snaptrade_service.user_repo.get.return_value = mock_user
+
+    # Mock SnapTrade API response with two connections
+    mock_api_response = MagicMock()
+    mock_api_response.body = [
+        {
+            "id": "conn1", "brokerage": {"name": "Broker A"}, "created_date": "2023-01-01T12:00:00Z",
+            "type": "read", "disabled": False, "disabled_date": None
+        },
+        {
+            "id": "conn2", "brokerage": {"name": "Alpaca"}, "created_date": "2023-01-02T12:00:00Z",
+            "type": "read", "disabled": False, "disabled_date": None
+        }
+    ]
+
+    # Patch SnapTrade client and mock the database session execute and commit methods
+    with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
+         patch.object(snaptrade_service.db, 'execute', new_callable=AsyncMock) as mock_db_execute, \
+         patch.object(snaptrade_service.db, 'commit', new_callable=AsyncMock) as mock_db_commit:
+
+        mock_snaptrade_client.return_value.connections.list_brokerage_authorizations.return_value = mock_api_response
+
+        # Call the method
+        result = await snaptrade_service.synchronize_connections(user_id=str(user_id))
+
+        # Assertions
+        assert result is True
+        # Check that the API was called
+        mock_snaptrade_client.return_value.connections.list_brokerage_authorizations.assert_called_once()
+
+        # Check that db.execute was called for each connection
+        assert mock_db_execute.call_count == 2
+
+        # Check that the final commit was called
+        mock_db_commit.assert_called_once()

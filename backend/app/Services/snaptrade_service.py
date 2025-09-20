@@ -254,6 +254,7 @@ class SnapTradeService:
         print(f"--- Starting connection synchronization for user_id: {user_id} ---")
         from sqlalchemy.dialects.postgresql import insert
         from app.Models.brokerage_connection import BrokerageConnection
+        import json
 
         user_uuid = uuid.UUID(user_id)
         user = await self.user_repo.get(user_uuid)
@@ -272,16 +273,18 @@ class SnapTradeService:
             )
 
             print("--- Full SnapTrade API Response ---")
-            import json
             print(json.dumps(connections.body, indent=2))
             print("-----------------------------------")
 
             if not connections.body:
                 print("No connections returned from SnapTrade. Sync is complete.")
+                if user.profile:
+                    user.profile.last_synced_at = datetime.now(timezone.utc)
+                await self.db.commit()
                 return True
 
-            values_to_upsert = []
             for conn in connections.body:
+                conn_id = conn.get('id', 'N/A')
                 try:
                     created_at_str = conn['created_date']
                     created_at_dt = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
@@ -291,8 +294,8 @@ class SnapTradeService:
                     if disabled_date_str:
                         disabled_date_dt = datetime.fromisoformat(disabled_date_str.replace('Z', '+00:00'))
 
-                    values_to_upsert.append({
-                        'id': conn['id'],
+                    values_to_upsert = {
+                        'id': conn_id,
                         'user_id': user_uuid,
                         'brokerage_name': conn['brokerage']['name'],
                         'brokerage_display_name': conn['brokerage'].get('display_name'),
@@ -301,39 +304,31 @@ class SnapTradeService:
                         'disabled': conn['disabled'],
                         'disabled_date': disabled_date_dt,
                         'created_at': created_at_dt,
-                    })
+                    }
+
+                    stmt = insert(BrokerageConnection).values([values_to_upsert])
+                    excluded_fields = [
+                        'id', 'user_id', 'created_at', 'deleted_at',
+                        'manual_refresh_count', 'last_manual_refresh_at'
+                    ]
+                    update_dict = {
+                        c.name: c for c in stmt.excluded if c.name not in excluded_fields
+                    }
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=['id'],
+                        set_=update_dict,
+                    )
+
+                    await self.db.execute(stmt)
+                    print(f"Successfully upserted connection_id='{conn_id}'.")
+
                 except Exception as e:
-                    print(f"Error processing connection data for conn_id={conn.get('id')}: {e}")
-
-
-            if not values_to_upsert:
-                print("No valid connections to upsert after processing. Aborting database operation.")
-                return True
-
-            stmt = insert(BrokerageConnection).values(values_to_upsert)
-
-            excluded_fields = [
-                'id', 'user_id', 'created_at', 'deleted_at',
-                'manual_refresh_count', 'last_manual_refresh_at'
-            ]
-            update_dict = {
-                c.name: c for c in stmt.excluded if c.name not in excluded_fields
-            }
-            stmt = stmt.on_conflict_do_update(
-                index_elements=['id'],
-                set_=update_dict,
-            )
-
-            try:
-                await self.db.execute(stmt)
-                print(f"Successfully upserted {len(values_to_upsert)} connection(s) into the database.")
-            except Exception as db_exc:
-                print(f"--- DATABASE UPSERT FAILED ---")
-                print(f"An exception occurred: {type(db_exc).__name__}")
-                print(f"Exception details: {db_exc}")
-                print(f"------------------------------")
-                # We can choose to re-raise or handle it, for now, we log and return False
-                return False
+                    print(f"--- FAILED to process or upsert connection_id='{conn_id}' ---")
+                    print(f"An exception occurred: {type(e).__name__}")
+                    print(f"Exception details: {e}")
+                    # We can choose to continue to the next connection or rollback immediately.
+                    # For this debug task, we log and continue.
+                    pass
 
             if user.profile:
                 user.profile.last_synced_at = datetime.now(timezone.utc)
@@ -346,6 +341,7 @@ class SnapTradeService:
             print(f"An exception occurred: {type(e).__name__}")
             print(f"Exception details: {e}")
             print("------------------------------------------")
+            await self.db.rollback() # Rollback on API error too
             return False
 
     async def generate_reconnect_link(self, user_id: uuid.UUID, connection_id: str) -> dict:
