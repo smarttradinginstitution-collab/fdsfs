@@ -9,6 +9,7 @@ import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import BaseTable from '@/components/ui/BaseTable.vue';
+import BaseModal from '@/components/ui/BaseModal.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
