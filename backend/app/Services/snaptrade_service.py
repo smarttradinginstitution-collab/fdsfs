@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import uuid
+from typing import Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Models.profile import Profile
@@ -91,3 +92,87 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("---------------------------------------")
             return {"error": "Failed to generate connection link from SnapTrade. Check backend logs for details."}
+
+    async def list_all_snaptrade_users(self) -> Union[list[str], dict]:
+        """
+        Lists all user IDs registered with SnapTrade.
+        """
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            api_response = client.authentication.list_snap_trade_users()
+            return api_response.body
+        except Exception as e:
+            print("--- SNAPTRADE LIST USERS API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("------------------------------------")
+            return {"error": "Failed to list SnapTrade users. Check backend logs for details."}
+
+    async def delete_snaptrade_user(self, user_id: str) -> dict:
+        """
+        Deletes a user from SnapTrade and clears their secret from the profile.
+        """
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            # This call is asynchronous on SnapTrade's side
+            api_response = client.authentication.delete_snap_trade_user(user_id=user_id)
+
+            # If SnapTrade accepts the request, we clear the secret locally.
+            if api_response.body.get("status") == "deleted":
+                user_uuid = uuid.UUID(user_id)
+                user = await self.user_repo.get(user_uuid)
+                if user and user.profile:
+                    user.profile.snaptrade_user_secret = None
+                    await self.db.commit()
+                    await self.db.refresh(user.profile)
+
+            return api_response.body
+        except Exception as e:
+            print("--- SNAPTRADE DELETE USER API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("-------------------------------------")
+            return {"error": "Failed to delete SnapTrade user. Check backend logs for details."}
+
+    async def rotate_snaptrade_user_secret(self, user_id: str) -> dict:
+        """
+        Rotates a user's SnapTrade secret and saves the new one to their profile.
+        """
+        user_uuid = uuid.UUID(user_id)
+        user = await self.user_repo.get(user_uuid)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            return {"error": "User is not registered with SnapTrade or secret is missing."}
+
+        current_secret = user.profile.snaptrade_user_secret
+
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID,
+            )
+            api_response = client.authentication.reset_snap_trade_user_secret(
+                user_id=user_id,
+                user_secret=current_secret
+            )
+
+            new_secret = api_response.body.get("userSecret")
+            if new_secret:
+                user.profile.snaptrade_user_secret = new_secret
+                await self.db.commit()
+                await self.db.refresh(user.profile)
+            else:
+                return {"error": "SnapTrade API did not return a new userSecret."}
+
+            return api_response.body
+        except Exception as e:
+            print("--- SNAPTRADE ROTATE SECRET API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("---------------------------------------")
+            return {"error": "Failed to rotate SnapTrade user secret. Check backend logs for details."}
