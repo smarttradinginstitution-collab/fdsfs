@@ -90,6 +90,34 @@ class SnapTradeController:
         connections = await repo.list_by_user(uuid.UUID(user_id_str))
         return connections
 
+    async def handle_get_connection_details(
+        self,
+        connection_id: uuid.UUID,
+        db: AsyncSession = Depends(get_db),
+        claims: dict = Depends(get_current_claims),
+    ):
+        """
+        Handles the request to get and refresh details for a single SnapTrade connection.
+        """
+        user_id_str = claims.get("sub")
+        if not user_id_str:
+            raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
+
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid user ID format in token.")
+
+        svc = SnapTradeService(db)
+        try:
+            connection = await svc.get_and_refresh_connection_details(user_id, connection_id)
+            return connection
+        except SnapTradeConnectionError as e:
+            if "permission denied" in str(e):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connection not found.")
+            else:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
     async def handle_delete_connection(
         self,
         connection_id: uuid.UUID,
