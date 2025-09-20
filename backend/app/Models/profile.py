@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 import uuid
+import datetime
 from typing import List
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
@@ -15,6 +16,7 @@ class Profile(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("auth.users.id"), primary_key=True)
     snaptrade_user_secret: Mapped[str | None] = mapped_column(String)
+    last_synced_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(timezone=True))
 
     # Relationship to AuthUser (one-to-one)
     user: Mapped["AuthUser"] = relationship(back_populates="profile")

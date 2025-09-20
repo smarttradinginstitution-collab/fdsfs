@@ -13,6 +13,8 @@ class ConnectionSchema(BaseModel):
     disabled: bool
     disabled_date: Optional[datetime] = None
     created_at: datetime
+    manual_refresh_count: int
+    last_manual_refresh_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
