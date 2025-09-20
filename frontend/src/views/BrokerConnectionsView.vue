@@ -55,13 +55,13 @@ const handleRegister = async () => {
   try {
     await authStore.registerWithSnapTrade();
     uiStore.showNotification({
-      message: 'Profilo SnapTrade creato con successo!',
+      message: 'SnapTrade profile created successfully!',
       type: 'success',
     });
   } catch (error) {
-    const errorMessage = error.response?.data?.detail || 'Si è verificato un errore sconosciuto.';
+    const errorMessage = error.response?.data?.detail || 'An unknown error occurred.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -77,9 +77,9 @@ const handleGenerateLink = async () => {
       window.location.href = redirectURI;
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.detail || 'Impossibile generare il link di connessione.';
+    const errorMessage = error.response?.data?.detail || 'Could not generate connection link.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -200,9 +200,9 @@ async function handleReconnect() {
       window.location.href = redirectURI;
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.detail || 'Impossibile generare il link di riconnessione.';
+    const errorMessage = error.response?.data?.detail || 'Could not generate reconnect link.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -222,15 +222,15 @@ async function handleConfirmDelete() {
   try {
     await apiClient.delete(`/api/v1/snaptrade/connections/${connectionToDelete.value.id}`);
     uiStore.showNotification({
-      message: '✅ Connessione cancellata con successo',
+      message: '✅ Connection deleted successfully',
       type: 'success',
     });
     // Remove the connection from the local list
     connections.value = connections.value.filter(c => c.id !== connectionToDelete.value.id);
   } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Impossibile cancellare la connessione.';
+    const errorMessage = error.response?.data?.message || 'Could not delete connection.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -274,21 +274,21 @@ onMounted(async () => {
 <template>
   <div class="connections-view">
     <header class="view-header">
-      <h1>Connessioni Broker</h1>
-      <p>Gestisci le tue connessioni ai broker per sincronizzare i tuoi dati di trading.</p>
+      <h1>Broker Connections</h1>
+      <p>Manage your broker connections to sync your trading data.</p>
     </header>
 
     <div v-if="!isSnapTradeUserRegistered" class="registration-step">
-      <h2>Passo 1: Crea il tuo profilo di Sincronizzazione</h2>
+      <h2>Step 1: Create Your Sync Profile</h2>
       <p>
-        Per poter collegare i tuoi conti broker, devi prima creare un profilo sicuro su SnapTrade.
-        Questo passaggio è richiesto solo una volta.
+        To connect your broker accounts, you must first create a secure profile on SnapTrade.
+        This step is only required once.
       </p>
       <div class="action-bar">
         <BaseButton variant="primary" @click="handleRegister" :disabled="isRegistering">
           <SettingsIcon v-if="isRegistering" class="spin" />
           <PlusIcon v-else />
-          <span class="button-text">Crea Profilo SnapTrade</span>
+          <span class="button-text">Create SnapTrade Profile</span>
         </BaseButton>
       </div>
     </div>
@@ -298,11 +298,11 @@ onMounted(async () => {
         <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
           <SettingsIcon v-if="isGeneratingLink" class="spin" />
           <PlusIcon v-else />
-          <span class="button-text">Aggiungi Nuova Connessione</span>
+          <span class="button-text">Add New Connection</span>
         </BaseButton>
       </div>
       <div class="connections-list">
-        <h2>Le tue connessioni</h2>
+        <h2>Your Connections</h2>
         <div v-if="isLoadingConnections" class="flex justify-center p-8">
           <LoadingSpinner />
         </div>
@@ -353,8 +353,8 @@ onMounted(async () => {
           </BaseTable>
         </div>
         <div v-else class="no-connections">
-          <p>Profilo di sincronizzazione creato! Ora puoi aggiungere la tua prima connessione.</p>
-          <p>Clicca su "Aggiungi Nuova Connessione" per iniziare.</p>
+          <p>Sync profile created! You can now add your first connection.</p>
+          <p>Click "Add New Connection" to get started.</p>
         </div>
       </div>
     </div>
