@@ -220,10 +220,10 @@ onMounted(async () => {
             </template>
             <template #actions="{ item }">
               <div class="flex items-center justify-end gap-2">
-                <BaseButton v-if="item.disabled" @click="openReconnectConfirmation(item)" variant="secondary" size="small">
+                <BaseButton v-if="item.disabled" @click.stop="openReconnectConfirmation(item)" variant="secondary" size="small">
                   Reconnect
                 </BaseButton>
-                <IconButton @click="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
+                <IconButton @click.stop="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
                   <TrashIcon />
                 </IconButton>
               </div>
