@@ -85,15 +85,36 @@ const handleGenerateLink = async () => {
   }
 };
 
-async function fetchConnections() {
-  isLoadingConnections.value = true;
+const isRefreshing = ref(false);
+
+async function fetchConnections(isManualRefresh = false) {
+  if (isManualRefresh) {
+    isRefreshing.value = true;
+  } else {
+    // This is the initial load
+    isLoadingConnections.value = true;
+  }
+
   try {
-    const response = await apiClient.get('/api/v1/snaptrade/connections');
+    // Always force a sync for this feature, as per the previous fix.
+    const response = await apiClient.get('/api/v1/snaptrade/connections?force_sync=true');
     connections.value = response.data;
+
+    if (isManualRefresh) {
+      uiStore.showNotification({
+        message: 'Connections have been refreshed.',
+        type: 'success',
+      });
+    }
   } catch (error) {
-    uiStore.showNotification({ message: 'Failed to fetch connections.', type: 'error' });
+    const errorMessage = error.response?.data?.detail || 'Failed to refresh connections.';
+    uiStore.showNotification({ message: errorMessage, type: 'error' });
   } finally {
-    isLoadingConnections.value = false;
+    if (isManualRefresh) {
+      isRefreshing.value = false;
+    } else {
+      isLoadingConnections.value = false;
+    }
   }
 }
 
@@ -256,9 +277,22 @@ function formatDate(isoString) {
 }
 
 onMounted(async () => {
+  // Check for connection status from query params (e.g., after SnapTrade redirect)
+  const urlParams = new URLSearchParams(window.location.search);
+  const status = urlParams.get('status');
+  if (status === 'success') {
+    uiStore.showNotification({
+      message: 'New connection added successfully!',
+      type: 'success',
+    });
+    // Clean the URL
+    router.replace({ query: {} });
+  }
+
   await authStore.fetchUser();
   if (isSnapTradeUserRegistered.value) {
-    fetchConnections();
+    // Fetch connections on initial load, but don't treat it as a manual refresh
+    fetchConnections(false);
   }
 });
 </script>
@@ -287,6 +321,15 @@ onMounted(async () => {
 
     <div v-else class="connections-management">
        <div class="action-bar">
+        <IconButton
+          v-if="!isLoadingConnections"
+          @click="() => fetchConnections(true)"
+          :disabled="isRefreshing"
+          title="Refresh Connections"
+          class="refresh-connections-btn"
+        >
+          <RefreshIcon :class="{ spin: isRefreshing }" />
+        </IconButton>
         <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
           <SettingsIcon v-if="isGeneratingLink" class="spin" />
           <PlusIcon v-else />

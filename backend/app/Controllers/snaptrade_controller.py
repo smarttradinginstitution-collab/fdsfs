@@ -9,6 +9,7 @@ from app.Services.snaptrade_service import SnapTradeService, SnapTradeConnection
 import uuid
 import sys
 from app.Router.auth import get_current_claims
+from app.Schemas.snaptrade import ReconnectRequest
 
 async def run_background_sync(user_id: str):
     """
@@ -86,12 +87,14 @@ class SnapTradeController:
     async def list_connections(
         self,
         background_tasks: BackgroundTasks,
+        force_sync: bool = False,
         db: AsyncSession = Depends(get_db),
         claims: dict = Depends(get_current_claims),
     ) -> list[dict]:
         """
         Handles the request to list all connections for a user.
-        It immediately returns local data and triggers a background sync if the data is stale.
+        - If force_sync is true, it performs an immediate, blocking sync.
+        - Otherwise, it returns local data and triggers a background sync if the data is stale.
         """
         from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
         from app.Repositories.auth_user_repository import AuthUserRepository
@@ -102,25 +105,32 @@ class SnapTradeController:
 
         user_id = uuid.UUID(user_id_str)
 
-        # Check if a background sync is needed
-        user_repo = AuthUserRepository(db)
-        user = await user_repo.get(user_id)
+        # If a force sync is requested, run it synchronously before fetching
+        if force_sync:
+            print(f"Forced synchronization requested for user {user_id_str}")
+            svc = SnapTradeService(db)
+            # This is a blocking call
+            await svc.synchronize_connections(user_id=user_id_str)
+        else:
+            # Standard check for time-based background sync
+            user_repo = AuthUserRepository(db)
+            user = await user_repo.get(user_id)
 
-        should_sync = False
-        if user and user.profile:
-            if user.profile.last_synced_at is None:
-                should_sync = True
-            else:
-                # Sync if last sync was more than 1 hour ago
-                time_since_sync = datetime.now(timezone.utc) - user.profile.last_synced_at
-                if time_since_sync > timedelta(hours=1):
+            should_sync = False
+            if user and user.profile:
+                if user.profile.last_synced_at is None:
                     should_sync = True
+                else:
+                    # Sync if last sync was more than 1 hour ago
+                    time_since_sync = datetime.now(timezone.utc) - user.profile.last_synced_at
+                    if time_since_sync > timedelta(hours=1):
+                        should_sync = True
 
-        if should_sync:
-            # Use the new session-aware background task
-            background_tasks.add_task(run_background_sync, user_id=user_id_str)
+            if should_sync:
+                print(f"Stale data detected. Triggering background sync for user {user_id_str}")
+                background_tasks.add_task(run_background_sync, user_id=user_id_str)
 
-        # Immediately return data from the local database
+        # Always return the latest data from the local database
         repo = BrokerageConnectionRepository(db)
         connections = await repo.list_by_user(user_id)
         return connections
@@ -260,8 +270,6 @@ class SnapTradeController:
         """
         Handles the request to generate a SnapTrade reconnect link.
         """
-        from app.Schemas.snaptrade import ReconnectRequest
-
         user_id_str = claims.get("sub")
         if not user_id_str:
             raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
