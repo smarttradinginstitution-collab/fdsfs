@@ -4,8 +4,10 @@ import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/uiStore';
 import apiClient from '@/services/api';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import IconButton from '@/components/ui/IconButton.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
+import TrashIcon from '@/components/icons/TrashIcon.vue';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
@@ -18,8 +20,14 @@ const isRegistering = ref(false);
 const isGeneratingLink = ref(false);
 const isLoadingConnections = ref(true);
 const connections = ref([]);
+
+// State for Reconnect Modal
 const showReconnectConfirmation = ref(false);
 const connectionToReconnect = ref(null);
+
+// State for Delete Modal
+const showDeleteConfirmation = ref(false);
+const connectionToDelete = ref(null);
 
 const tableHeaders = [
   { key: 'brokerage_name', text: 'Broker' },
@@ -109,6 +117,34 @@ async function handleReconnect() {
   }
 }
 
+function openDeleteConfirmation(connection) {
+  connectionToDelete.value = connection;
+  showDeleteConfirmation.value = true;
+}
+
+async function handleConfirmDelete() {
+  if (!connectionToDelete.value) return;
+
+  try {
+    await apiClient.delete(`/api/v1/snaptrade/connections/${connectionToDelete.value.id}`);
+    uiStore.showNotification({
+      message: '✅ Connessione cancellata con successo',
+      type: 'success',
+    });
+    // Remove the connection from the local list
+    connections.value = connections.value.filter(c => c.id !== connectionToDelete.value.id);
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Impossibile cancellare la connessione.';
+    uiStore.showNotification({
+      message: `Errore: ${errorMessage}`,
+      type: 'error',
+    });
+  } finally {
+    showDeleteConfirmation.value = false;
+    connectionToDelete.value = null;
+  }
+}
+
 onMounted(async () => {
   await authStore.fetchUser();
   if (isSnapTradeUserRegistered.value) {
@@ -166,9 +202,14 @@ onMounted(async () => {
               </span>
             </template>
             <template #actions="{ item }">
-              <BaseButton v-if="item.disabled" @click="openReconnectConfirmation(item)" variant="secondary" size="small">
-                Reconnect
-              </BaseButton>
+              <div class="flex items-center justify-end gap-2">
+                <BaseButton v-if="item.disabled" @click="openReconnectConfirmation(item)" variant="secondary" size="small">
+                  Reconnect
+                </BaseButton>
+                <IconButton @click="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
+                  <TrashIcon />
+                </IconButton>
+              </div>
             </template>
           </BaseTable>
         </div>
@@ -186,7 +227,21 @@ onMounted(async () => {
       @close="showReconnectConfirmation = false"
       @confirm="handleReconnect"
     >
-      <p>Are you sure you want to reconnect this brokerage? You will be redirected to SnapTrade to re-authenticate.</p>
+      <p>You will be redirected to SnapTrade to re-authenticate with this brokerage.</p>
+    </ConfirmationModal>
+
+    <ConfirmationModal
+      :show="showDeleteConfirmation"
+      title="Delete Connection"
+      confirmation-word="delete"
+      @close="showDeleteConfirmation = false"
+      @confirm="handleConfirmDelete"
+    >
+      <p class="text-gray-700 dark:text-gray-300">
+        Are you sure you want to delete this connection? All associated accounts and holdings will be removed.
+        <br />
+        <strong class="font-bold text-red-600 dark:text-red-400">This action cannot be undone.</strong>
+      </p>
     </ConfirmationModal>
   </div>
 </template>
@@ -259,5 +314,13 @@ onMounted(async () => {
 .registration-step p {
     color: var(--semantic-color-text-secondary);
     margin-bottom: var(--semantic-size-stack-md);
+}
+
+.delete-btn {
+  color: var(--semantic-color-text-placeholder);
+  transition: color 0.2s ease-in-out;
+}
+.delete-btn:hover {
+  color: var(--semantic-color-text-danger);
 }
 </style>
