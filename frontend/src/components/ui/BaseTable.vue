@@ -19,13 +19,18 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  // Nuova prop per controllare la dimensione del font
   size: {
     type: String,
     default: 'medium',
     validator: (value) => ['medium', 'small', 'x-small'].includes(value),
-  }
+  },
+  rowClickable: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(['row-click']);
 
 const tableClass = computed(() => {
   return ['table', `table--${props.size}`];
@@ -41,7 +46,12 @@ const tableClass = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id">
+        <tr
+          v-for="item in items"
+          :key="item.id"
+          :class="{ 'row-clickable': rowClickable }"
+          @click="rowClickable && emit('row-click', item)"
+        >
           <td v-for="header in headers" :key="header.key" :data-label="header.text">
             <slot :name="header.key" :item="item">
               {{ item[header.key] }}
@@ -106,6 +116,10 @@ td {
 
 tbody tr:hover {
   background-color: var(--semantic-color-surface-secondary);
+}
+
+.row-clickable {
+  cursor: pointer;
 }
 
 /* === Stili per la Responsività === */

@@ -324,3 +324,58 @@ class SnapTradeService:
             print("-------------------------------------------")
             # Re-raise as a custom exception for the controller to handle
             raise SnapTradeConnectionError("Failed to delete connection from SnapTrade.")
+
+    async def get_and_refresh_connection_details(self, user_id: uuid.UUID, connection_id: uuid.UUID):
+        """
+        Gets detailed info for a connection from SnapTrade, updates the local DB,
+        and returns the updated local record.
+        """
+        from app.Models.brokerage_connection import BrokerageConnection
+
+        repo = BrokerageConnectionRepository(self.db)
+        connection = await repo.get_by_id(connection_id)
+
+        # Security check
+        if not connection or connection.user_id != user_id:
+            raise SnapTradeConnectionError("Connection not found or permission denied.")
+
+        # Get user's SnapTrade secret
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
+        user_secret = user.profile.snaptrade_user_secret
+
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID
+            )
+            api_response = client.connections.detail_brokerage_authorization(
+                authorization_id=str(connection_id),
+                user_id=str(user_id),
+                user_secret=user_secret
+            )
+
+            # Prepare data for local DB update
+            details = api_response.body
+            disabled_date = details.get('disabled_date')
+            data_to_update = {
+                "brokerage_name": details['brokerage']['name'],
+                "brokerage_display_name": details['brokerage'].get('display_name'),
+                "brokerage_logo_url": details['brokerage'].get('aws_s3_logo_url'),
+                "connection_type": details['type'],
+                "disabled": details['disabled'],
+                "disabled_date": datetime.fromisoformat(disabled_date.replace('Z', '+00:00')) if disabled_date else None,
+            }
+
+            # Update local DB and return the updated object
+            updated_connection = await repo.update(connection, data_to_update)
+            return updated_connection
+
+        except Exception as e:
+            print("--- SNAPTRADE DETAIL CONNECTION API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("-------------------------------------------")
+            raise SnapTradeConnectionError("Failed to get connection details from SnapTrade.")

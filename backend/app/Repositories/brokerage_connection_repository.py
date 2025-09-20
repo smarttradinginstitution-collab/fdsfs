@@ -36,3 +36,14 @@ class BrokerageConnectionRepository:
         await self.db.commit()
         await self.db.refresh(connection)
         return connection
+
+    async def update(self, connection: BrokerageConnection, data: dict) -> BrokerageConnection:
+        """
+        Updates a brokerage connection with new data.
+        """
+        for key, value in data.items():
+            setattr(connection, key, value)
+        self.db.add(connection)
+        await self.db.commit()
+        await self.db.refresh(connection)
+        return connection

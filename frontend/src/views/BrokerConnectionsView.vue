@@ -9,6 +9,7 @@ import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import BaseTable from '@/components/ui/BaseTable.vue';
+import BaseModal from '@/components/ui/BaseModal.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
@@ -28,6 +29,10 @@ const connectionToReconnect = ref(null);
 // State for Delete Modal
 const showDeleteConfirmation = ref(false);
 const connectionToDelete = ref(null);
+
+// State for Details Modal
+const isDetailsModalVisible = ref(false);
+const selectedConnectionDetails = ref(null);
 
 const tableHeaders = [
   { key: 'brokerage_name', text: 'Broker' },
@@ -145,6 +150,19 @@ async function handleConfirmDelete() {
   }
 }
 
+async function fetchAndShowDetails(connection) {
+  selectedConnectionDetails.value = { isLoading: true };
+  isDetailsModalVisible.value = true;
+  try {
+    const response = await apiClient.get(`/api/v1/snaptrade/connections/${connection.id}`);
+    selectedConnectionDetails.value = response.data;
+  } catch (error) {
+    uiStore.showNotification({ message: 'Failed to fetch connection details.', type: 'error' });
+    isDetailsModalVisible.value = false; // Close modal on error
+    selectedConnectionDetails.value = null;
+  }
+}
+
 onMounted(async () => {
   await authStore.fetchUser();
   if (isSnapTradeUserRegistered.value) {
@@ -189,11 +207,11 @@ onMounted(async () => {
           <LoadingSpinner />
         </div>
         <div v-else-if="connections.length > 0">
-          <BaseTable :headers="tableHeaders" :items="connections">
+          <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
             <template #brokerage_name="{ item }">
               <div class="flex items-center">
                 <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="w-8 h-8 mr-4 rounded-full">
-                <span>{{ item.brokerage_display_name || item.brokerage_name }}</span>
+                <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
               </div>
             </template>
             <template #status="{ item }">
@@ -203,10 +221,10 @@ onMounted(async () => {
             </template>
             <template #actions="{ item }">
               <div class="flex items-center justify-end gap-2">
-                <BaseButton v-if="item.disabled" @click="openReconnectConfirmation(item)" variant="secondary" size="small">
+                <BaseButton v-if="item.disabled" @click.stop="openReconnectConfirmation(item)" variant="secondary" size="small">
                   Reconnect
                 </BaseButton>
-                <IconButton @click="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
+                <IconButton @click.stop="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
                   <TrashIcon />
                 </IconButton>
               </div>
@@ -243,6 +261,45 @@ onMounted(async () => {
         <strong class="font-bold text-red-600 dark:text-red-400">This action cannot be undone.</strong>
       </p>
     </ConfirmationModal>
+
+    <BaseModal :show="isDetailsModalVisible" @close="isDetailsModalVisible = false">
+      <template #header>
+        <h2>Connection Details</h2>
+      </template>
+      <template #default>
+        <div v-if="!selectedConnectionDetails || selectedConnectionDetails.isLoading" class="flex justify-center p-8">
+          <LoadingSpinner />
+        </div>
+        <div v-else class="details-grid">
+          <div class="detail-item">
+            <span class="label">Broker</span>
+            <span class="value">{{ selectedConnectionDetails.brokerage_display_name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Connected On</span>
+            <span class="value">{{ new Date(selectedConnectionDetails.created_at).toLocaleDateString() }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Status</span>
+            <span class="value" :class="selectedConnectionDetails.disabled ? 'text-red-500' : 'text-green-500'">
+              {{ selectedConnectionDetails.disabled ? 'Disabled' : 'Active' }}
+            </span>
+          </div>
+          <div v-if="selectedConnectionDetails.disabled_date" class="detail-item">
+            <span class="label">Disabled On</span>
+            <span class="value">{{ new Date(selectedConnectionDetails.disabled_date).toLocaleDateString() }}</span>
+          </div>
+           <div class="detail-item">
+            <span class="label">Connection Type</span>
+            <span class="value capitalize">{{ selectedConnectionDetails.connection_type }}</span>
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <BaseButton @click="isDetailsModalVisible = false">Close</BaseButton>
+      </template>
+    </BaseModal>
+
   </div>
 </template>
 
@@ -322,5 +379,37 @@ onMounted(async () => {
 }
 .delete-btn:hover {
   color: var(--semantic-color-text-danger);
+}
+
+.broker-name {
+  font-weight: var(--semantic-font-weight-medium);
+  color: var(--semantic-color-text-primary);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--semantic-size-stack-md);
+  padding: var(--semantic-size-inset-sm);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-xxs);
+}
+
+.detail-item .label {
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-secondary);
+}
+
+.detail-item .value {
+  font: var(--semantic-font-style-body-base);
+  color: var(--semantic-color-text-primary);
+}
+
+.capitalize {
+  text-transform: capitalize;
 }
 </style>
