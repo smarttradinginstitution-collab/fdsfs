@@ -87,16 +87,20 @@ const handleGenerateLink = async () => {
 
 const isRefreshing = ref(false);
 
-async function fetchConnections(force = false) {
-  const loadingIndicator = force ? isRefreshing : isLoadingConnections;
-  loadingIndicator.value = true;
+async function fetchConnections(isManualRefresh = false) {
+  if (isManualRefresh) {
+    isRefreshing.value = true;
+  } else {
+    // This is the initial load
+    isLoadingConnections.value = true;
+  }
+
   try {
-    const url = force
-      ? '/api/v1/snaptrade/connections?force_sync=true'
-      : '/api/v1/snaptrade/connections';
-    const response = await apiClient.get(url);
+    // Always force a sync for this feature, as per the previous fix.
+    const response = await apiClient.get('/api/v1/snaptrade/connections?force_sync=true');
     connections.value = response.data;
-    if (force && !isLoadingConnections.value) { // Avoid showing on initial load
+
+    if (isManualRefresh) {
       uiStore.showNotification({
         message: 'Connections have been refreshed.',
         type: 'success',
@@ -106,7 +110,11 @@ async function fetchConnections(force = false) {
     const errorMessage = error.response?.data?.detail || 'Failed to refresh connections.';
     uiStore.showNotification({ message: errorMessage, type: 'error' });
   } finally {
-    loadingIndicator.value = false;
+    if (isManualRefresh) {
+      isRefreshing.value = false;
+    } else {
+      isLoadingConnections.value = false;
+    }
   }
 }
 
@@ -283,8 +291,8 @@ onMounted(async () => {
 
   await authStore.fetchUser();
   if (isSnapTradeUserRegistered.value) {
-    // Force sync on initial load to get the latest data
-    fetchConnections(true);
+    // Fetch connections on initial load, but don't treat it as a manual refresh
+    fetchConnections(false);
   }
 });
 </script>
