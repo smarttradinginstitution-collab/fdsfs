@@ -232,7 +232,7 @@ class SnapTradeService:
 
             stmt = insert(BrokerageConnection).values(values_to_upsert)
             update_dict = {
-                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at']
+                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at', 'deleted_at']
             }
             stmt = stmt.on_conflict_do_update(
                 index_elements=['id'],
