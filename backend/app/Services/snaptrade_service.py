@@ -307,6 +307,11 @@ class SnapTradeService:
                 set_=update_dict,
             )
             await self.db.execute(stmt)
+
+            # If the sync was successful, update the user's profile with the sync time
+            if user.profile:
+                user.profile.last_synced_at = datetime.now(timezone.utc)
+
             await self.db.commit()
             return True
         except Exception as e:

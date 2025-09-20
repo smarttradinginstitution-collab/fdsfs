@@ -1,12 +1,30 @@
 # app/Controllers/snaptrade_controller.py
 
-from fastapi import Depends, HTTPException, Response, status
+from fastapi import Depends, HTTPException, Response, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.Infrastructure.db import get_db
+from datetime import datetime, timedelta, timezone
+from app.Infrastructure.db import get_db, SessionLocal
 from app.Services.snaptrade_service import SnapTradeService, SnapTradeConnectionError, RateLimitExceededError
 import uuid
+import sys
 from app.Router.auth import get_current_claims
+
+async def run_background_sync(user_id: str):
+    """
+    A session-aware background task to synchronize SnapTrade connections for a user.
+    """
+    print(f"Background sync triggered for user {user_id}")
+    async with SessionLocal() as db_session:
+        try:
+            # Note: The service now manages its own session for this background task.
+            svc = SnapTradeService(db_session)
+            await svc.synchronize_connections(user_id)
+            print(f"Background sync finished successfully for user {user_id}")
+        except Exception as e:
+            # It's good practice to log errors in background tasks
+            print(f"Error during background sync for user {user_id}: {e}", file=sys.stderr)
+
 
 class SnapTradeController:
     def __init__(self):
@@ -67,27 +85,44 @@ class SnapTradeController:
 
     async def list_connections(
         self,
+        background_tasks: BackgroundTasks,
         db: AsyncSession = Depends(get_db),
         claims: dict = Depends(get_current_claims),
     ) -> list[dict]:
         """
         Handles the request to list all connections for a user.
+        It immediately returns local data and triggers a background sync if the data is stale.
         """
         from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
+        from app.Repositories.auth_user_repository import AuthUserRepository
 
         user_id_str = claims.get("sub")
         if not user_id_str:
             raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
 
-        svc = SnapTradeService(db)
-        sync_success = await svc.synchronize_connections(user_id_str)
-        if not sync_success:
-            # Not raising an exception here, as we can still return the cached data.
-            # The error is logged in the service.
-            pass
+        user_id = uuid.UUID(user_id_str)
 
+        # Check if a background sync is needed
+        user_repo = AuthUserRepository(db)
+        user = await user_repo.get(user_id)
+
+        should_sync = False
+        if user and user.profile:
+            if user.profile.last_synced_at is None:
+                should_sync = True
+            else:
+                # Sync if last sync was more than 1 hour ago
+                time_since_sync = datetime.now(timezone.utc) - user.profile.last_synced_at
+                if time_since_sync > timedelta(hours=1):
+                    should_sync = True
+
+        if should_sync:
+            # Use the new session-aware background task
+            background_tasks.add_task(run_background_sync, user_id=user_id_str)
+
+        # Immediately return data from the local database
         repo = BrokerageConnectionRepository(db)
-        connections = await repo.list_by_user(uuid.UUID(user_id_str))
+        connections = await repo.list_by_user(user_id)
         return connections
 
     async def handle_get_connection_details(
