@@ -293,8 +293,14 @@ class SnapTradeService:
                 })
 
             stmt = insert(BrokerageConnection).values(values_to_upsert)
+
+            # Exclude our local-only fields from being overwritten by the sync.
+            excluded_fields = [
+                'id', 'user_id', 'created_at', 'deleted_at',
+                'manual_refresh_count', 'last_manual_refresh_at'
+            ]
             update_dict = {
-                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at', 'deleted_at']
+                c.name: c for c in stmt.excluded if c.name not in excluded_fields
             }
             stmt = stmt.on_conflict_do_update(
                 index_elements=['id'],
