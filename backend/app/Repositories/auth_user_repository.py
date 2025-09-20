@@ -35,8 +35,7 @@ class AuthUserRepository:
             select(AuthUser)
             .where(AuthUser.id == user_id)
             .options(
-                joinedload(AuthUser.profile),
-                selectinload(AuthUser.brokerage_connections)
+                joinedload(AuthUser.profile)
             )
         )
         res = await self.db.execute(stmt)
@@ -51,8 +50,7 @@ class AuthUserRepository:
             .offset(offset)
             .limit(limit)
             .options(
-                joinedload(AuthUser.profile),
-                selectinload(AuthUser.brokerage_connections)
+                joinedload(AuthUser.profile)
             )
             .order_by(AuthUser.created_at.desc())
         )
