@@ -506,8 +506,8 @@ onMounted(async () => {
   gap: 1rem; /* 16px */
 }
 .broker-logo {
-  height: 32px;
-  width: 32px;
+  height: 64px;
+  width: 64px;
   border-radius: 50%;
   object-fit: contain;
 }
