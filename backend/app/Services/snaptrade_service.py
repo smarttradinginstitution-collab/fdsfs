@@ -177,6 +177,8 @@ class SnapTradeService:
             print("---------------------------------------")
             return {"error": "Failed to rotate SnapTrade user secret. Check backend logs for details."}
 
+from datetime import datetime
+
     async def synchronize_connections(self, user_id: str) -> bool:
         """
         Fetches connections from SnapTrade and upserts them into the local database.
@@ -204,6 +206,14 @@ class SnapTradeService:
 
             values_to_upsert = []
             for conn in connections.body:
+                created_at_str = conn['created_date']
+                created_at_dt = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+
+                disabled_date_str = conn.get('disabled_date')
+                disabled_date_dt = None
+                if disabled_date_str:
+                    disabled_date_dt = datetime.fromisoformat(disabled_date_str.replace('Z', '+00:00'))
+
                 values_to_upsert.append({
                     'id': conn['id'],
                     'user_id': user_uuid,
@@ -212,8 +222,8 @@ class SnapTradeService:
                     'brokerage_logo_url': conn['brokerage'].get('aws_s3_logo_url'),
                     'connection_type': conn['type'],
                     'disabled': conn['disabled'],
-                    'disabled_date': conn.get('disabled_date'),
-                    'created_at': conn['created_date'],
+                    'disabled_date': disabled_date_dt,
+                    'created_at': created_at_dt,
                 })
 
             stmt = insert(BrokerageConnection).values(values_to_upsert)
