@@ -3,6 +3,7 @@
 from __future__ import annotations
 import uuid
 from typing import Union
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Models.profile import Profile
@@ -176,8 +177,6 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("---------------------------------------")
             return {"error": "Failed to rotate SnapTrade user secret. Check backend logs for details."}
-
-from datetime import datetime
 
     async def synchronize_connections(self, user_id: str) -> bool:
         """
