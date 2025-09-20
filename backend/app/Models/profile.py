@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 import uuid
+from typing import List
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
+from app.Models.brokerage_connection import BrokerageConnection
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -16,6 +18,9 @@ class Profile(Base):
 
     # Relationship to AuthUser (one-to-one)
     user: Mapped["AuthUser"] = relationship(back_populates="profile")
+
+    # Relationship to BrokerageConnection (one-to-many)
+    brokerage_connections: Mapped[List["BrokerageConnection"]] = relationship(back_populates="profile")
 
     @property
     def has_snaptrade_user_secret(self) -> bool:

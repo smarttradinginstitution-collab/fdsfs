@@ -12,6 +12,9 @@ class ProfileRead(BaseModel):
     class Config:
         from_attributes = True
 
+class ReconnectRequest(BaseModel):
+    connection_id: str
+
 class BrokerageConnectionRead(BaseModel):
     id: uuid.UUID
     brokerage_name: str

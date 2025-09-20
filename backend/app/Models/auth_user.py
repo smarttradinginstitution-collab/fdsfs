@@ -24,9 +24,6 @@ class AuthUser(Base):
     profile: Mapped["Profile"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    brokerage_connections: Mapped[list["BrokerageConnection"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
 
     instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
