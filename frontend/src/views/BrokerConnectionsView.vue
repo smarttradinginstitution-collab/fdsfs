@@ -521,6 +521,16 @@ onMounted(async () => {
   color: var(--semantic-color-text-primary);
 }
 
+@media (max-width: 768px) {
+  .broker-logo {
+    height: 48px;
+    width: 48px;
+  }
+  .broker-name {
+    font: var(--semantic-font-style-body-xs);
+  }
+}
+
 /* Status column styles */
 .status-active {
   color: var(--semantic-color-text-success);
