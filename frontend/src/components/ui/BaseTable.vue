@@ -68,7 +68,7 @@ const tableClass = computed(() => {
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--semantic-color-border-subtle);
-  border-radius: var(--semantic-border-radius-lg);
+  border-radius: 1.5rem;
   /* Per nascondere le linee verticali che escono dal contenitore */
   overflow: hidden;
 }
@@ -85,7 +85,7 @@ th, td {
   text-align: left;
 }
 th {
-  background-color: var(--semantic-color-surface-subtle);
+  background-color: var(--semantic-color-surface-page);
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
 }
