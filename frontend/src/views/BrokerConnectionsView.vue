@@ -252,6 +252,17 @@ async function fetchAndShowDetails(connection) {
   }
 }
 
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 onMounted(async () => {
   await authStore.fetchUser();
   if (isSnapTradeUserRegistered.value) {
@@ -298,30 +309,26 @@ onMounted(async () => {
         <div v-else-if="connections.length > 0">
           <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
             <template #brokerage_name="{ item }">
-              <div class="flex items-center">
-                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="w-8 h-8 mr-4 rounded-full">
+              <div class="broker-cell">
+                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="broker-logo">
                 <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
               </div>
             </template>
+            <template #created_at="{ item }">
+              <span>{{ formatDate(item.created_at) }}</span>
+            </template>
             <template #status="{ item }">
-              <span :class="item.disabled ? 'text-red-500' : 'text-green-500'">
+              <span :class="item.disabled ? 'status-disabled' : 'status-active'">
                 {{ item.disabled ? 'Disabled' : 'Active' }}
               </span>
             </template>
             <template #actions="{ item }">
-              <div class="flex items-center justify-end gap-2">
+              <div class="actions-cell">
                 <BaseButton v-if="item.disabled" @click.stop="openReconnectConfirmation(item)" variant="secondary" size="small">
                   Reconnect
                 </BaseButton>
 
                 <template v-if="!item.disabled">
-                  <span
-                    v-if="getRefreshInfo(item).showCounter"
-                    class="text-sm text-gray-500 dark:text-gray-400 mr-1"
-                    :title="getRefreshInfo(item).counterTooltip"
-                  >
-                    {{ getRefreshInfo(item).counterText }}
-                  </span>
                   <IconButton
                     @click.stop="openRefreshConfirmation(item)"
                     :disabled="getRefreshInfo(item).isDisabled"
@@ -463,6 +470,7 @@ onMounted(async () => {
 .action-bar {
   display: flex;
   justify-content: flex-end;
+  margin-bottom: var(--semantic-size-stack-md);
 }
 
 .connections-list h2 {
@@ -473,12 +481,10 @@ onMounted(async () => {
 
 .no-connections {
   background-color: var(--semantic-color-bg-subtle);
+  border: 1px solid var(--semantic-color-border-subtle);
   border-radius: var(--semantic-border-radius-lg);
   padding: var(--semantic-size-inset-lg);
   text-align: center;
-}
-
-.no-connections p {
   color: var(--semantic-color-text-secondary);
 }
 
@@ -493,17 +499,53 @@ onMounted(async () => {
     margin-bottom: var(--semantic-size-stack-md);
 }
 
-.delete-btn {
-  color: var(--semantic-color-text-placeholder);
-  transition: color 0.2s ease-in-out;
+/* Broker column styles */
+.broker-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* 16px */
 }
-.delete-btn:hover {
-  color: var(--semantic-color-text-danger);
+.broker-logo {
+  height: 32px;
+  width: 32px;
+  border-radius: 50%;
+  object-fit: contain;
 }
-
 .broker-name {
   font-weight: var(--semantic-font-weight-medium);
   color: var(--semantic-color-text-primary);
+}
+
+/* Status column styles */
+.status-active {
+  color: var(--semantic-color-text-success);
+}
+.status-disabled {
+  color: var(--semantic-color-text-danger);
+}
+
+/* Actions column styles */
+.actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem; /* 8px */
+}
+.refresh-btn {
+  color: var(--semantic-color-text-success);
+  opacity: 0.8;
+  transition: opacity 0.2s ease-in-out;
+}
+.refresh-btn:hover {
+  opacity: 1;
+}
+.delete-btn {
+  color: var(--semantic-color-text-danger);
+  opacity: 0.8;
+  transition: opacity 0.2s ease-in-out;
+}
+.delete-btn:hover {
+  opacity: 1;
 }
 
 .details-grid {

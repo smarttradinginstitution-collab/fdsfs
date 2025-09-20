@@ -1,3 +1,1 @@
-
-> trade-vantage@0.0.0 dev
-> vite
+/run/devbox-session/default/command: line 2: ../node_modules/.bin/vite: No such file or directory
