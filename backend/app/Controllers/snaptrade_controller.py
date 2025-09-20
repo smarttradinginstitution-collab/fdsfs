@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
-from app.Services.snaptrade_service import SnapTradeService, SnapTradeConnectionError
+from app.Services.snaptrade_service import SnapTradeService, SnapTradeConnectionError, RateLimitExceededError
 import uuid
 from app.Router.auth import get_current_claims
 
@@ -117,6 +117,39 @@ class SnapTradeController:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connection not found.")
             else:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    async def handle_refresh_connection(
+        self,
+        connection_id: uuid.UUID,
+        db: AsyncSession = Depends(get_db),
+        claims: dict = Depends(get_current_claims),
+    ) -> dict:
+        """
+        Handles the request to refresh a SnapTrade connection's holdings.
+        """
+        user_id_str = claims.get("sub")
+        if not user_id_str:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token does not contain user ID (sub).")
+
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user ID format in token.")
+
+        svc = SnapTradeService(db)
+        try:
+            result = await svc.refresh_connection_holdings(user_id, connection_id)
+            return result
+        except RateLimitExceededError as e:
+            raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(e))
+        except SnapTradeConnectionError as e:
+            if "permission denied" in str(e):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connection not found.")
+            else:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        except Exception as e:
+            # Catch any other unexpected errors
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def handle_delete_connection(
         self,

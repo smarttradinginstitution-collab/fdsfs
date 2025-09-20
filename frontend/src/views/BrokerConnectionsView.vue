@@ -8,6 +8,7 @@ import IconButton from '@/components/ui/IconButton.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
+import RefreshIcon from '@/components/icons/RefreshIcon.vue';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
@@ -25,6 +26,10 @@ const connections = ref([]);
 // State for Reconnect Modal
 const showReconnectConfirmation = ref(false);
 const connectionToReconnect = ref(null);
+
+// State for Refresh Modal
+const showRefreshConfirmation = ref(false);
+const connectionToRefresh = ref(null);
 
 // State for Delete Modal
 const showDeleteConfirmation = ref(false);
@@ -91,6 +96,90 @@ async function fetchConnections() {
     uiStore.showNotification({ message: 'Failed to fetch connections.', type: 'error' });
   } finally {
     isLoadingConnections.value = false;
+  }
+}
+
+function getRefreshInfo(connection) {
+  const count = connection.manual_refresh_count || 0;
+  const lastRefresh = connection.last_manual_refresh_at;
+  const maxRefreshes = 3;
+
+  let usedToday = 0;
+  if (lastRefresh) {
+    const lastRefreshDateUTC = new Date(lastRefresh).toISOString().split('T')[0];
+    const todayUTC = new Date().toISOString().split('T')[0];
+    if (lastRefreshDateUTC === todayUTC) {
+      usedToday = count;
+    }
+  }
+
+  const available = Math.max(0, maxRefreshes - usedToday);
+  const isDisabled = available <= 0;
+
+  const plural = available === 1 ? 'attempt' : 'attempts';
+  const counterTooltip = `You have ${available} refresh ${plural} left today.`;
+
+  const buttonTooltip = isDisabled
+    ? 'Daily limit reached. Try again tomorrow.'
+    : 'Force refresh holdings';
+
+  return {
+    isDisabled,
+    showCounter: !isDisabled,
+    counterText: `(${available}/${maxRefreshes})`,
+    counterTooltip,
+    buttonTooltip,
+  };
+}
+
+function openRefreshConfirmation(connection) {
+  connectionToRefresh.value = connection;
+  showRefreshConfirmation.value = true;
+}
+
+async function handleConfirmRefresh() {
+  if (!connectionToRefresh.value) return;
+
+  const connectionId = connectionToRefresh.value.id;
+  const connectionName = connectionToRefresh.value.brokerage_display_name || connectionToRefresh.value.brokerage_name;
+
+  try {
+    await apiClient.post(`/api/v1/snaptrade/connections/${connectionId}/refresh`);
+
+    uiStore.showNotification({
+      message: `✅ Update for ${connectionName} successfully started!`,
+      type: 'success',
+    });
+
+    // Manually update the connection state locally for instant UI feedback
+    const refreshedConnection = connections.value.find(c => c.id === connectionId);
+    if (refreshedConnection) {
+      refreshedConnection.manual_refresh_count = (refreshedConnection.manual_refresh_count || 0) + 1;
+      refreshedConnection.last_manual_refresh_at = new Date().toISOString();
+    }
+
+  } catch (error) {
+    if (error.response?.status === 429) {
+      uiStore.showNotification({
+        message: '⚠️ You have reached the daily update limit for this connection.',
+        type: 'warning',
+      });
+      // Also disable the button immediately by updating the local state
+      const refreshedConnection = connections.value.find(c => c.id === connectionId);
+      if (refreshedConnection) {
+        refreshedConnection.manual_refresh_count = 3;
+        refreshedConnection.last_manual_refresh_at = new Date().toISOString();
+      }
+    } else {
+      const errorMessage = error.response?.data?.detail || 'Failed to start the update.';
+      uiStore.showNotification({
+        message: `Error: ${errorMessage}`,
+        type: 'error',
+      });
+    }
+  } finally {
+    showRefreshConfirmation.value = false;
+    connectionToRefresh.value = null;
   }
 }
 
@@ -224,6 +313,26 @@ onMounted(async () => {
                 <BaseButton v-if="item.disabled" @click.stop="openReconnectConfirmation(item)" variant="secondary" size="small">
                   Reconnect
                 </BaseButton>
+
+                <template v-if="!item.disabled">
+                  <span
+                    v-if="getRefreshInfo(item).showCounter"
+                    class="text-sm text-gray-500 dark:text-gray-400 mr-1"
+                    :title="getRefreshInfo(item).counterTooltip"
+                  >
+                    {{ getRefreshInfo(item).counterText }}
+                  </span>
+                  <IconButton
+                    @click.stop="openRefreshConfirmation(item)"
+                    :disabled="getRefreshInfo(item).isDisabled"
+                    :title="getRefreshInfo(item).buttonTooltip"
+                    class="refresh-btn"
+                    aria-label="Refresh connection holdings"
+                  >
+                    <RefreshIcon />
+                  </IconButton>
+                </template>
+
                 <IconButton @click.stop="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
                   <TrashIcon />
                 </IconButton>
@@ -237,6 +346,17 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <ConfirmationModal
+      :show="showRefreshConfirmation"
+      title="Force Holdings Update"
+      confirmation-word="update"
+      @close="showRefreshConfirmation = false"
+      @confirm="handleConfirmRefresh"
+    >
+      <p>This will start a background synchronization for this connection's holdings.</p>
+      <p class="mt-2">You can perform this action up to 3 times per day for each connection.</p>
+    </ConfirmationModal>
 
     <ConfirmationModal
       :show="showReconnectConfirmation"

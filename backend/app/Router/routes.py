@@ -231,6 +231,11 @@ router_snaptrade.delete(
     summary="Delete a brokerage connection",
 )(snaptrade.handle_delete_connection)
 
+router_snaptrade.post(
+    "/connections/{connection_id}/refresh",
+    summary="Refresh a brokerage connection's holdings",
+)(snaptrade.handle_refresh_connection)
+
 router.include_router(router_snaptrade)
 
 # ──────────────────────────────────────────────────────────────────────────────

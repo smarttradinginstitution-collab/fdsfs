@@ -3,7 +3,7 @@
 from __future__ import annotations
 import uuid
 from typing import Union
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
@@ -13,6 +13,10 @@ from snaptrade_client import SnapTrade
 
 class SnapTradeConnectionError(Exception):
     """Custom exception for SnapTrade connection errors."""
+    pass
+
+class RateLimitExceededError(Exception):
+    """Custom exception for when a user exceeds a rate limit."""
     pass
 
 class SnapTradeService:
@@ -183,6 +187,64 @@ class SnapTradeService:
             print("---------------------------------------")
             return {"error": "Failed to rotate SnapTrade user secret. Check backend logs for details."}
 
+    async def refresh_connection_holdings(self, user_id: uuid.UUID, connection_id: uuid.UUID) -> dict:
+        """
+        Refreshes the holdings for a specific brokerage connection and handles rate limiting.
+        """
+        repo = BrokerageConnectionRepository(self.db)
+        connection = await repo.get_by_id(connection_id)
+
+        # Security check: Ensure connection exists and belongs to the user
+        if not connection or connection.user_id != user_id:
+            raise SnapTradeConnectionError("Connection not found or permission denied.")
+
+        # Rate limiting logic
+        # Ensure all comparisons are done in UTC
+        today_utc = datetime.now(timezone.utc).date()
+        if connection.last_manual_refresh_at:
+            last_refresh_date_utc = connection.last_manual_refresh_at.astimezone(timezone.utc).date()
+            # If the last refresh was on a previous day (UTC), reset the counter
+            if last_refresh_date_utc < today_utc:
+                connection.manual_refresh_count = 0
+
+        if connection.manual_refresh_count >= 3:
+            raise RateLimitExceededError("Daily refresh limit reached. Please try again tomorrow.")
+
+        # Get user's SnapTrade secret
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
+        user_secret = user.profile.snaptrade_user_secret
+
+        try:
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID
+            )
+            # This call triggers a background sync job on SnapTrade's side
+            api_response = client.connections.refresh_brokerage_authorization(
+                authorization_id=str(connection_id),
+                user_id=str(user_id),
+                user_secret=user_secret
+            )
+
+            # On successful API call, update our database
+            connection.manual_refresh_count += 1
+            connection.last_manual_refresh_at = datetime.now(timezone.utc)
+            await self.db.commit()
+            await self.db.refresh(connection)
+
+            return api_response.body
+
+        except Exception as e:
+            print("--- SNAPTRADE REFRESH CONNECTION API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("--------------------------------------------")
+            # Re-raise as a custom exception for the controller to handle
+            raise SnapTradeConnectionError("Failed to refresh connection via SnapTrade.")
+
     async def synchronize_connections(self, user_id: str) -> bool:
         """
         Fetches connections from SnapTrade and upserts them into the local database.
@@ -231,8 +293,14 @@ class SnapTradeService:
                 })
 
             stmt = insert(BrokerageConnection).values(values_to_upsert)
+
+            # Exclude our local-only fields from being overwritten by the sync.
+            excluded_fields = [
+                'id', 'user_id', 'created_at', 'deleted_at',
+                'manual_refresh_count', 'last_manual_refresh_at'
+            ]
             update_dict = {
-                c.name: c for c in stmt.excluded if c.name not in ['id', 'user_id', 'created_at', 'deleted_at']
+                c.name: c for c in stmt.excluded if c.name not in excluded_fields
             }
             stmt = stmt.on_conflict_do_update(
                 index_elements=['id'],
