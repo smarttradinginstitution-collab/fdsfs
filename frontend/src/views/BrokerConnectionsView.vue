@@ -334,7 +334,6 @@ onMounted(async () => {
                     :disabled="getRefreshInfo(item).isDisabled"
                     :title="getRefreshInfo(item).buttonTooltip"
                     aria-label="Refresh connection holdings"
-                    color="var(--semantic-color-text-success)"
                     class="refresh-btn-hover"
                   >
                     <RefreshIcon />
@@ -344,7 +343,7 @@ onMounted(async () => {
                 <IconButton
                   @click.stop="openDeleteConfirmation(item)"
                   aria-label="Delete connection"
-                  color="var(--semantic-color-text-danger)"
+                  color="var(--semantic-color-feedback-negative-text)"
                   class="delete-btn-hover"
                 >
                   <TrashIcon />
