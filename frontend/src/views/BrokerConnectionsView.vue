@@ -154,6 +154,12 @@ onMounted(async () => {
         </div>
         <div v-else-if="connections.length > 0">
           <BaseTable :headers="tableHeaders" :items="connections">
+            <template #brokerage_name="{ item }">
+              <div class="flex items-center">
+                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="w-8 h-8 mr-4 rounded-full">
+                <span>{{ item.brokerage_display_name || item.brokerage_name }}</span>
+              </div>
+            </template>
             <template #status="{ item }">
               <span :class="item.disabled ? 'text-red-500' : 'text-green-500'">
                 {{ item.disabled ? 'Disabled' : 'Active' }}
