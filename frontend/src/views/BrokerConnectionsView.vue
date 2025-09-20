@@ -309,7 +309,7 @@ function formatDateTime(isoString) {
         <div v-else-if="connections.length > 0" class="table-wrapper">
           <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
             <template #brokerage_name="{ item }">
-              <div class="flex flex-col items-center justify-center gap-2">
+              <div class="w-full flex flex-col items-center justify-center gap-2">
                 <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
                 <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" :alt="`${item.brokerage_name} logo`" class="broker-logo object-contain">
               </div>
