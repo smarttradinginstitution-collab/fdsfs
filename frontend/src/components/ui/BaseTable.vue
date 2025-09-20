@@ -81,6 +81,7 @@ th {
   text-align: left;
   padding: var(--semantic-size-inset-md);
   border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-secondary);
 }
 td {
   font: var(--semantic-font-style-body-sm);

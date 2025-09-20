@@ -258,6 +258,17 @@ onMounted(async () => {
     fetchConnections();
   }
 });
+
+function formatDateTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
 </script>
 
 <template>
@@ -298,10 +309,13 @@ onMounted(async () => {
         <div v-else-if="connections.length > 0">
           <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
             <template #brokerage_name="{ item }">
-              <div class="flex items-center">
-                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="w-8 h-8 mr-4 rounded-full">
+              <div class="flex flex-col items-start gap-1">
                 <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
+                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" :alt="`${item.brokerage_name} logo`" class="h-12 object-contain">
               </div>
+            </template>
+            <template #created_at="{ item }">
+              <span>{{ formatDateTime(item.created_at) }}</span>
             </template>
             <template #status="{ item }">
               <span :class="item.disabled ? 'text-red-500' : 'text-green-500'">
@@ -493,12 +507,20 @@ onMounted(async () => {
     margin-bottom: var(--semantic-size-stack-md);
 }
 
-.delete-btn {
-  color: var(--semantic-color-text-placeholder);
-  transition: color 0.2s ease-in-out;
+.refresh-btn {
+  color: var(--semantic-color-text-success);
+  border-radius: var(--semantic-border-radius-lg);
+  transition: background-color 0.2s ease-in-out;
 }
-.delete-btn:hover {
+
+.delete-btn {
   color: var(--semantic-color-text-danger);
+  border-radius: var(--semantic-border-radius-lg);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.refresh-btn:hover, .delete-btn:hover {
+  background-color: var(--semantic-color-surface-secondary);
 }
 
 .broker-name {
