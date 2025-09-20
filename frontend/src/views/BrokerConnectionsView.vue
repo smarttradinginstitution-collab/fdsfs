@@ -99,19 +99,37 @@ async function fetchConnections() {
   }
 }
 
-function isRefreshDisabled(connection) {
-  const count = connection.manual_refresh_count;
+function getRefreshInfo(connection) {
+  const count = connection.manual_refresh_count || 0;
   const lastRefresh = connection.last_manual_refresh_at;
+  const maxRefreshes = 3;
 
-  if (count === undefined || count < 3 || !lastRefresh) {
-    return false;
+  let usedToday = 0;
+  if (lastRefresh) {
+    const lastRefreshDateUTC = new Date(lastRefresh).toISOString().split('T')[0];
+    const todayUTC = new Date().toISOString().split('T')[0];
+    if (lastRefreshDateUTC === todayUTC) {
+      usedToday = count;
+    }
   }
 
-  // Compare dates in UTC to avoid timezone issues
-  const lastRefreshDateUTC = new Date(lastRefresh).toISOString().split('T')[0];
-  const todayUTC = new Date().toISOString().split('T')[0];
+  const available = Math.max(0, maxRefreshes - usedToday);
+  const isDisabled = available <= 0;
 
-  return count >= 3 && lastRefreshDateUTC === todayUTC;
+  const plural = available === 1 ? 'attempt' : 'attempts';
+  const counterTooltip = `You have ${available} refresh ${plural} left today.`;
+
+  const buttonTooltip = isDisabled
+    ? 'Daily limit reached. Try again tomorrow.'
+    : 'Force refresh holdings';
+
+  return {
+    isDisabled,
+    showCounter: !isDisabled,
+    counterText: `(${available}/${maxRefreshes})`,
+    counterTooltip,
+    buttonTooltip,
+  };
 }
 
 function openRefreshConfirmation(connection) {
@@ -296,16 +314,24 @@ onMounted(async () => {
                   Reconnect
                 </BaseButton>
 
-                <IconButton
-                  v-if="!item.disabled"
-                  @click.stop="openRefreshConfirmation(item)"
-                  :disabled="isRefreshDisabled(item)"
-                  :title="isRefreshDisabled(item) ? 'Daily limit reached. Try again tomorrow.' : 'Force refresh holdings'"
-                  class="refresh-btn"
-                  aria-label="Refresh connection holdings"
-                >
-                  <RefreshIcon />
-                </IconButton>
+                <template v-if="!item.disabled">
+                  <span
+                    v-if="getRefreshInfo(item).showCounter"
+                    class="text-sm text-gray-500 dark:text-gray-400 mr-1"
+                    :title="getRefreshInfo(item).counterTooltip"
+                  >
+                    {{ getRefreshInfo(item).counterText }}
+                  </span>
+                  <IconButton
+                    @click.stop="openRefreshConfirmation(item)"
+                    :disabled="getRefreshInfo(item).isDisabled"
+                    :title="getRefreshInfo(item).buttonTooltip"
+                    class="refresh-btn"
+                    aria-label="Refresh connection holdings"
+                  >
+                    <RefreshIcon />
+                  </IconButton>
+                </template>
 
                 <IconButton @click.stop="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
                   <TrashIcon />
