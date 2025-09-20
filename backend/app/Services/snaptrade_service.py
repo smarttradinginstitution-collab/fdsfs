@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
+from app.Repositories.brokerage_account_repository import BrokerageAccountRepository
 from app.Models.profile import Profile
+from app.Models.brokerage_account import BrokerageAccount
 from app.config import settings
 from snaptrade_client import SnapTrade
 
@@ -452,3 +454,69 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("-------------------------------------------")
             raise SnapTradeConnectionError("Failed to get connection details from SnapTrade.")
+
+    async def sync_and_get_user_accounts(self, user_id: uuid.UUID, connection_id: uuid.UUID | None = None) -> dict:
+        """
+        Synchronizes all trading accounts from SnapTrade for a user and stores them in the local database.
+        Returns the accounts from the local database, optionally filtered by a connection_id.
+        """
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
+        user_secret = user.profile.snaptrade_user_secret
+        sync_warning = None
+
+        try:
+            # Initialize SnapTrade client
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID
+            )
+
+            # Fetch all accounts from SnapTrade API
+            # Note: The SDK method is list_user_accounts, which maps to GET /api/v1/accounts
+            snaptrade_accounts = client.account_information.list_user_accounts(
+                user_id=str(user_id),
+                user_secret=user_secret
+            )
+
+            if snaptrade_accounts.body:
+                accounts_to_upsert = []
+                for acc in snaptrade_accounts.body:
+                    balance = acc.get("balance") or {}
+                    total_balance = balance.get("total") or {}
+
+                    accounts_to_upsert.append({
+                        "id": acc["id"],
+                        "user_id": user_id,
+                        "connection_id": acc["brokerage_authorization"],
+                        "name": acc["name"],
+                        "number": acc["number"],
+                        "institution_name": acc["institution_name"],
+                        "balance": total_balance.get("amount", 0),
+                        "currency": total_balance.get("currency"),
+                    })
+
+                # Upsert data into our local database
+                account_repo = BrokerageAccountRepository(self.db)
+                await account_repo.upsert_accounts(accounts_to_upsert)
+
+        except Exception as e:
+            print("--- SNAPTRADE GET ACCOUNTS API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("----------------------------------------")
+            sync_warning = {
+                "warning": "sync_failed",
+                "message": "Could not update data in real-time. The information shown may be out of date."
+            }
+
+        # Always fetch from our local DB to return the data
+        account_repo = BrokerageAccountRepository(self.db)
+        local_accounts = await account_repo.get_accounts(user_id=user_id, connection_id=connection_id)
+
+        return {
+            "accounts": local_accounts,
+            "warning": sync_warning
+        }

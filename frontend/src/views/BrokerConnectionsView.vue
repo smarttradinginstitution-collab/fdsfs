@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/uiStore';
 import apiClient from '@/services/api';
@@ -16,6 +17,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+const router = useRouter();
 
 const user = computed(() => authStore.user);
 const isRegistering = ref(false);
@@ -34,10 +36,6 @@ const connectionToRefresh = ref(null);
 // State for Delete Modal
 const showDeleteConfirmation = ref(false);
 const connectionToDelete = ref(null);
-
-// State for Details Modal
-const isDetailsModalVisible = ref(false);
-const selectedConnectionDetails = ref(null);
 
 const tableHeaders = [
   { key: 'brokerage_name', text: 'Broker' },
@@ -239,17 +237,11 @@ async function handleConfirmDelete() {
   }
 }
 
-async function fetchAndShowDetails(connection) {
-  selectedConnectionDetails.value = { isLoading: true };
-  isDetailsModalVisible.value = true;
-  try {
-    const response = await apiClient.get(`/api/v1/snaptrade/connections/${connection.id}`);
-    selectedConnectionDetails.value = response.data;
-  } catch (error) {
-    uiStore.showNotification({ message: 'Failed to fetch connection details.', type: 'error' });
-    isDetailsModalVisible.value = false; // Close modal on error
-    selectedConnectionDetails.value = null;
-  }
+function navigateToAccounts(connection) {
+  router.push({
+    name: 'connection-accounts',
+    params: { connectionId: connection.id },
+  });
 }
 
 function formatDate(isoString) {
@@ -307,7 +299,7 @@ onMounted(async () => {
           <LoadingSpinner />
         </div>
         <div v-else-if="connections.length > 0">
-          <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
+          <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="navigateToAccounts">
             <template #brokerage_name="{ item }">
               <div class="broker-cell">
                 <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="broker-logo">
@@ -393,44 +385,6 @@ onMounted(async () => {
         <strong class="font-bold text-red-600 dark:text-red-400">This action cannot be undone.</strong>
       </p>
     </ConfirmationModal>
-
-    <BaseModal :show="isDetailsModalVisible" @close="isDetailsModalVisible = false">
-      <template #header>
-        <h2>Connection Details</h2>
-      </template>
-      <template #default>
-        <div v-if="!selectedConnectionDetails || selectedConnectionDetails.isLoading" class="flex justify-center p-8">
-          <LoadingSpinner />
-        </div>
-        <div v-else class="details-grid">
-          <div class="detail-item">
-            <span class="label">Broker</span>
-            <span class="value">{{ selectedConnectionDetails.brokerage_display_name }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Connected On</span>
-            <span class="value">{{ new Date(selectedConnectionDetails.created_at).toLocaleDateString() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Status</span>
-            <span class="value" :class="selectedConnectionDetails.disabled ? 'text-red-500' : 'text-green-500'">
-              {{ selectedConnectionDetails.disabled ? 'Disabled' : 'Active' }}
-            </span>
-          </div>
-          <div v-if="selectedConnectionDetails.disabled_date" class="detail-item">
-            <span class="label">Disabled On</span>
-            <span class="value">{{ new Date(selectedConnectionDetails.disabled_date).toLocaleDateString() }}</span>
-          </div>
-           <div class="detail-item">
-            <span class="label">Connection Type</span>
-            <span class="value capitalize">{{ selectedConnectionDetails.connection_type }}</span>
-          </div>
-        </div>
-      </template>
-      <template #footer>
-        <BaseButton @click="isDetailsModalVisible = false">Close</BaseButton>
-      </template>
-    </BaseModal>
 
   </div>
 </template>

@@ -125,6 +125,32 @@ class SnapTradeController:
         connections = await repo.list_by_user(user_id)
         return connections
 
+    async def get_accounts(
+        self,
+        connection_id: uuid.UUID | None = None,
+        db: AsyncSession = Depends(get_db),
+        claims: dict = Depends(get_current_claims),
+    ) -> dict:
+        """
+        Handles the request to list all trading accounts for a user.
+        Triggers a sync with SnapTrade and returns the locally stored accounts.
+        """
+        user_id_str = claims.get("sub")
+        if not user_id_str:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token does not contain user ID.")
+
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user ID format in token.")
+
+        svc = SnapTradeService(db)
+        try:
+            result = await svc.sync_and_get_user_accounts(user_id=user_id, connection_id=connection_id)
+            return result
+        except SnapTradeConnectionError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
     async def handle_get_connection_details(
         self,
         connection_id: uuid.UUID,
