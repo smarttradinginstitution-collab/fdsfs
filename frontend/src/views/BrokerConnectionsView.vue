@@ -306,12 +306,12 @@ function formatDateTime(isoString) {
         <div v-if="isLoadingConnections" class="flex justify-center p-8">
           <LoadingSpinner />
         </div>
-        <div v-else-if="connections.length > 0">
+        <div v-else-if="connections.length > 0" class="table-wrapper">
           <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
             <template #brokerage_name="{ item }">
-              <div class="flex flex-col items-start gap-1">
+              <div class="flex flex-col items-center justify-center gap-2">
                 <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
-                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" :alt="`${item.brokerage_name} logo`" class="h-12 object-contain">
+                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" :alt="`${item.brokerage_name} logo`" class="h-8 object-contain">
               </div>
             </template>
             <template #created_at="{ item }">
@@ -507,20 +507,25 @@ function formatDateTime(isoString) {
     margin-bottom: var(--semantic-size-stack-md);
 }
 
-.refresh-btn {
+.connections-list .refresh-btn {
   color: var(--semantic-color-text-success);
-  border-radius: var(--semantic-border-radius-lg);
-  transition: background-color 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out;
 }
 
-.delete-btn {
+.connections-list .delete-btn {
   color: var(--semantic-color-text-danger);
-  border-radius: var(--semantic-border-radius-lg);
-  transition: background-color 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out;
 }
 
-.refresh-btn:hover, .delete-btn:hover {
-  background-color: var(--semantic-color-surface-secondary);
+.connections-list .refresh-btn:hover,
+.connections-list .delete-btn:hover {
+  opacity: 0.7;
+}
+
+.table-wrapper {
+  border: 1px solid var(--semantic-color-border-subtle);
+  border-radius: var(--semantic-border-radius-lg);
+  overflow: hidden;
 }
 
 .broker-name {

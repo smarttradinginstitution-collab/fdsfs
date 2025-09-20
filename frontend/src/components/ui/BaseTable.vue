@@ -81,13 +81,23 @@ th {
   text-align: left;
   padding: var(--semantic-size-inset-md);
   border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  background-color: var(--semantic-color-surface-secondary);
+  border-right: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
 }
+
+th:last-of-type {
+  border-right: none;
+}
+
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
   padding: var(--semantic-size-inset-md);
   border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+  border-right: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+}
+
+td:last-of-type {
+  border-right: none;
 }
 
 /* Stili per la dimensione piccola */
