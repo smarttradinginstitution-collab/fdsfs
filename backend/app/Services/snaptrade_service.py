@@ -272,10 +272,6 @@ class SnapTradeService:
                 user_secret=user.profile.snaptrade_user_secret
             )
 
-            print("--- Full SnapTrade API Response ---")
-            print(json.dumps(connections.body, indent=2))
-            print("-----------------------------------")
-
             if not connections.body:
                 print("No connections returned from SnapTrade. Sync is complete.")
                 if user.profile:
@@ -320,7 +316,6 @@ class SnapTradeService:
                     )
 
                     await self.db.execute(stmt)
-                    print(f"Successfully upserted connection_id='{conn_id}'.")
 
                 except Exception as e:
                     print(f"--- FAILED to process or upsert connection_id='{conn_id}' ---")
