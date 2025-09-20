@@ -66,94 +66,116 @@ const tableClass = computed(() => {
 <style scoped>
 .table-container {
   width: 100%;
-  overflow-x: auto; /* Aggiunge lo scroll orizzontale se la tabella è troppo larga */
+  overflow-x: auto;
+  border: 1px solid var(--semantic-color-border-subtle);
+  border-radius: 1.5rem;
+  /* Per nascondere le linee verticali che escono dal contenitore */
+  overflow: hidden;
 }
 .table {
   width: 100%;
   border-collapse: collapse;
   white-space: nowrap;
+  /* Spaziatura tra le celle per le linee verticali */
+  border-spacing: 0;
 }
-
-/* Stili di default (medium) */
+th, td {
+  border-bottom: 1px solid var(--semantic-color-border-subtle);
+  padding: var(--semantic-size-inset-md);
+  text-align: left;
+}
 th {
+  background-color: var(--semantic-color-surface-secondary);
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
-  text-align: left;
-  padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
 }
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
-  padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
 }
-
+/* Aggiunge la linea verticale */
+th:not(:last-child),
+td:not(:last-child) {
+  border-right: 1px solid var(--semantic-color-border-subtle);
+}
 /* Stili per la dimensione piccola */
+.table--small th, .table--small td {
+  padding-top: var(--semantic-size-inset-sm);
+  padding-bottom: var(--semantic-size-inset-sm);
+}
 .table--small th {
-    font: var(--semantic-font-style-label-sm);
-    padding-top: var(--semantic-size-inset-sm);
-    padding-bottom: var(--semantic-size-inset-sm);
-}
-
-/* Stili per la dimensione extra piccola */
-.table--x-small th {
-    font: var(--semantic-font-style-label-xs);
-    padding-top: var(--semantic-size-inset-xs);
-    padding-bottom: var(--semantic-size-inset-xs);
-}
-.table--x-small td {
-    font: var(--semantic-font-style-body-xxs);
-    padding-top: var(--semantic-size-inset-xs);
-    padding-bottom: var(--semantic-size-inset-xs);
+  font: var(--semantic-font-style-label-sm);
 }
 .table--small td {
-    font: var(--semantic-font-style-body-xs);
-    padding-top: var(--semantic-size-inset-sm);
-    padding-bottom: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-body-xs);
 }
-
-
+/* Stili per la dimensione extra piccola */
+.table--x-small th, .table--x-small td {
+  padding-top: var(--semantic-size-inset-xs);
+  padding-bottom: var(--semantic-size-inset-xs);
+}
+.table--x-small th {
+  font: var(--semantic-font-style-label-xs);
+}
+.table--x-small td {
+  font: var(--semantic-font-style-body-xxs);
+}
 tbody tr:hover {
   background-color: var(--semantic-color-surface-secondary);
 }
-
 .row-clickable {
   cursor: pointer;
 }
-
 /* === Stili per la Responsività === */
 @media (max-width: 768px) {
-  .table { white-space: normal; }
-  .table thead { display: none; }
-  .table tr {
+  .table-container {
+    border: none;
+    border-radius: 0;
+    overflow-x: visible;
+  }
+  .table {
+    white-space: normal;
+    border-spacing: 0;
+  }
+  .table thead {
+    display: none;
+  }
+  .table tbody tr {
     display: block;
     margin-bottom: var(--semantic-size-stack-md);
-    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-surface);
+    border: 1px solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-lg);
     padding: var(--semantic-size-inset-sm);
+    background-color: var(--semantic-color-surface-primary);
   }
   .table td {
     display: block;
     text-align: right;
     padding-left: 50%;
     position: relative;
-    border-top: none;
-    padding-top: var(--base-size-spacing-1);
-    padding-bottom: var(--base-size-spacing-1);
+    border: none;
+    border-bottom: 1px solid var(--semantic-color-border-subtle);
+    padding-top: var(--semantic-size-inset-sm);
+    padding-bottom: var(--semantic-size-inset-sm);
+  }
+  .table tr:last-child td:last-child {
+    border-bottom: none;
   }
   .table td::before {
     content: attr(data-label);
     position: absolute;
-    left: var(--base-size-spacing-2);
+    left: var(--semantic-size-inset-sm);
     width: 45%;
-    padding-right: var(--base-size-spacing-2);
+    padding-right: var(--semantic-size-inset-sm);
     white-space: nowrap;
     text-align: left;
-    font-weight: var(--base-font-weight-bold);
+    font-weight: var(--semantic-font-weight-bold);
     color: var(--semantic-color-text-secondary);
+    font-size: var(--semantic-font-style-label-sm);
   }
-  .table td:first-child { border-top: none; }
-  .table tr:first-child td:first-child { border-top: none; }
+  th:not(:last-child),
+  td:not(:last-child) {
+    border-right: none;
+  }
 }
 </style>

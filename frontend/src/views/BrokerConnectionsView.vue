@@ -55,13 +55,13 @@ const handleRegister = async () => {
   try {
     await authStore.registerWithSnapTrade();
     uiStore.showNotification({
-      message: 'Profilo SnapTrade creato con successo!',
+      message: 'SnapTrade profile created successfully!',
       type: 'success',
     });
   } catch (error) {
-    const errorMessage = error.response?.data?.detail || 'Si è verificato un errore sconosciuto.';
+    const errorMessage = error.response?.data?.detail || 'An unknown error occurred.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -77,9 +77,9 @@ const handleGenerateLink = async () => {
       window.location.href = redirectURI;
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.detail || 'Impossibile generare il link di connessione.';
+    const errorMessage = error.response?.data?.detail || 'Could not generate connection link.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -200,9 +200,9 @@ async function handleReconnect() {
       window.location.href = redirectURI;
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.detail || 'Impossibile generare il link di riconnessione.';
+    const errorMessage = error.response?.data?.detail || 'Could not generate reconnect link.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -222,15 +222,15 @@ async function handleConfirmDelete() {
   try {
     await apiClient.delete(`/api/v1/snaptrade/connections/${connectionToDelete.value.id}`);
     uiStore.showNotification({
-      message: '✅ Connessione cancellata con successo',
+      message: '✅ Connection deleted successfully',
       type: 'success',
     });
     // Remove the connection from the local list
     connections.value = connections.value.filter(c => c.id !== connectionToDelete.value.id);
   } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Impossibile cancellare la connessione.';
+    const errorMessage = error.response?.data?.message || 'Could not delete connection.';
     uiStore.showNotification({
-      message: `Errore: ${errorMessage}`,
+      message: `Error: ${errorMessage}`,
       type: 'error',
     });
   } finally {
@@ -252,6 +252,17 @@ async function fetchAndShowDetails(connection) {
   }
 }
 
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 onMounted(async () => {
   await authStore.fetchUser();
   if (isSnapTradeUserRegistered.value) {
@@ -263,21 +274,21 @@ onMounted(async () => {
 <template>
   <div class="connections-view">
     <header class="view-header">
-      <h1>Connessioni Broker</h1>
-      <p>Gestisci le tue connessioni ai broker per sincronizzare i tuoi dati di trading.</p>
+      <h1>Broker Connections</h1>
+      <p>Manage your broker connections to sync your trading data.</p>
     </header>
 
     <div v-if="!isSnapTradeUserRegistered" class="registration-step">
-      <h2>Passo 1: Crea il tuo profilo di Sincronizzazione</h2>
+      <h2>Step 1: Create Your Sync Profile</h2>
       <p>
-        Per poter collegare i tuoi conti broker, devi prima creare un profilo sicuro su SnapTrade.
-        Questo passaggio è richiesto solo una volta.
+        To connect your broker accounts, you must first create a secure profile on SnapTrade.
+        This step is only required once.
       </p>
       <div class="action-bar">
         <BaseButton variant="primary" @click="handleRegister" :disabled="isRegistering">
           <SettingsIcon v-if="isRegistering" class="spin" />
           <PlusIcon v-else />
-          <span class="button-text">Crea Profilo SnapTrade</span>
+          <span class="button-text">Create SnapTrade Profile</span>
         </BaseButton>
       </div>
     </div>
@@ -287,53 +298,54 @@ onMounted(async () => {
         <BaseButton variant="primary" @click="handleGenerateLink" :disabled="isGeneratingLink">
           <SettingsIcon v-if="isGeneratingLink" class="spin" />
           <PlusIcon v-else />
-          <span class="button-text">Aggiungi Nuova Connessione</span>
+          <span class="button-text">Add New Connection</span>
         </BaseButton>
       </div>
       <div class="connections-list">
-        <h2>Le tue connessioni</h2>
+        <h2>Your Connections</h2>
         <div v-if="isLoadingConnections" class="flex justify-center p-8">
           <LoadingSpinner />
         </div>
         <div v-else-if="connections.length > 0">
           <BaseTable :headers="tableHeaders" :items="connections" :row-clickable="true" @row-click="fetchAndShowDetails">
             <template #brokerage_name="{ item }">
-              <div class="flex items-center">
-                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="w-8 h-8 mr-4 rounded-full">
+              <div class="broker-cell">
+                <img v-if="item.brokerage_logo_url" :src="item.brokerage_logo_url" alt="" class="broker-logo">
                 <span class="broker-name">{{ item.brokerage_display_name || item.brokerage_name }}</span>
               </div>
             </template>
+            <template #created_at="{ item }">
+              <span>{{ formatDate(item.created_at) }}</span>
+            </template>
             <template #status="{ item }">
-              <span :class="item.disabled ? 'text-red-500' : 'text-green-500'">
+              <span :class="item.disabled ? 'status-disabled' : 'status-active'">
                 {{ item.disabled ? 'Disabled' : 'Active' }}
               </span>
             </template>
             <template #actions="{ item }">
-              <div class="flex items-center justify-end gap-2">
+              <div class="actions-cell">
                 <BaseButton v-if="item.disabled" @click.stop="openReconnectConfirmation(item)" variant="secondary" size="small">
                   Reconnect
                 </BaseButton>
 
                 <template v-if="!item.disabled">
-                  <span
-                    v-if="getRefreshInfo(item).showCounter"
-                    class="text-sm text-gray-500 dark:text-gray-400 mr-1"
-                    :title="getRefreshInfo(item).counterTooltip"
-                  >
-                    {{ getRefreshInfo(item).counterText }}
-                  </span>
                   <IconButton
                     @click.stop="openRefreshConfirmation(item)"
                     :disabled="getRefreshInfo(item).isDisabled"
                     :title="getRefreshInfo(item).buttonTooltip"
-                    class="refresh-btn"
                     aria-label="Refresh connection holdings"
+                    class="refresh-btn-hover"
                   >
                     <RefreshIcon />
                   </IconButton>
                 </template>
 
-                <IconButton @click.stop="openDeleteConfirmation(item)" class="delete-btn" aria-label="Delete connection">
+                <IconButton
+                  @click.stop="openDeleteConfirmation(item)"
+                  aria-label="Delete connection"
+                  color="var(--semantic-color-feedback-negative-text)"
+                  class="delete-btn-hover"
+                >
                   <TrashIcon />
                 </IconButton>
               </div>
@@ -341,8 +353,8 @@ onMounted(async () => {
           </BaseTable>
         </div>
         <div v-else class="no-connections">
-          <p>Profilo di sincronizzazione creato! Ora puoi aggiungere la tua prima connessione.</p>
-          <p>Clicca su "Aggiungi Nuova Connessione" per iniziare.</p>
+          <p>Sync profile created! You can now add your first connection.</p>
+          <p>Click "Add New Connection" to get started.</p>
         </div>
       </div>
     </div>
@@ -463,6 +475,7 @@ onMounted(async () => {
 .action-bar {
   display: flex;
   justify-content: flex-end;
+  margin-bottom: var(--semantic-size-stack-md);
 }
 
 .connections-list h2 {
@@ -473,12 +486,10 @@ onMounted(async () => {
 
 .no-connections {
   background-color: var(--semantic-color-bg-subtle);
+  border: 1px solid var(--semantic-color-border-subtle);
   border-radius: var(--semantic-border-radius-lg);
   padding: var(--semantic-size-inset-lg);
   text-align: center;
-}
-
-.no-connections p {
   color: var(--semantic-color-text-secondary);
 }
 
@@ -493,17 +504,59 @@ onMounted(async () => {
     margin-bottom: var(--semantic-size-stack-md);
 }
 
-.delete-btn {
-  color: var(--semantic-color-text-placeholder);
-  transition: color 0.2s ease-in-out;
+/* Broker column styles */
+.broker-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* 16px */
 }
-.delete-btn:hover {
-  color: var(--semantic-color-text-danger);
+.broker-logo {
+  height: 109px;
+  width: 109px;
+  border-radius: 50%;
+  object-fit: contain;
 }
-
 .broker-name {
   font-weight: var(--semantic-font-weight-medium);
   color: var(--semantic-color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .broker-cell, .actions-cell {
+    justify-content: flex-end;
+  }
+  .broker-logo {
+    height: 48px;
+    width: 48px;
+  }
+  .broker-name {
+    font: var(--semantic-font-style-body-xs);
+  }
+}
+
+/* Status column styles */
+.status-active {
+  color: var(--semantic-color-text-success);
+}
+.status-disabled {
+  color: var(--semantic-color-text-danger);
+}
+
+/* Actions column styles */
+.actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem; /* 8px */
+}
+.refresh-btn-hover,
+.delete-btn-hover {
+  opacity: 0.8;
+  transition: opacity 0.2s ease-in-out;
+}
+.refresh-btn-hover:hover,
+.delete-btn-hover:hover {
+  opacity: 1;
 }
 
 .details-grid {
