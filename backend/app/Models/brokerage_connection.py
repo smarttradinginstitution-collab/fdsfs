@@ -3,10 +3,13 @@
 from __future__ import annotations
 import uuid
 import datetime
+from typing import List
 from sqlalchemy import String, ForeignKey, TIMESTAMP, Boolean, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
+from app.Models.brokerage_account import BrokerageAccount
+
 
 class BrokerageConnection(Base):
     __tablename__ = "brokerage_connections"
@@ -27,3 +30,6 @@ class BrokerageConnection(Base):
 
     # Relationship to Profile (many-to-one)
     profile: Mapped["Profile"] = relationship(back_populates="brokerage_connections")
+
+    # Relationship to BrokerageAccount (one-to-many)
+    brokerage_accounts: Mapped[List["BrokerageAccount"]] = relationship(back_populates="connection")
