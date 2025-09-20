@@ -27,6 +27,29 @@ async def run_background_sync(user_id: str):
 
 
 class SnapTradeController:
+    async def handle_sync_connections(
+        self,
+        db: AsyncSession = Depends(get_db),
+        claims: dict = Depends(get_current_claims),
+    ) -> dict:
+        """
+        Handles the request to synchronously pull all connections from SnapTrade
+        and update the local database.
+        """
+        user_id_str = claims.get("sub")
+        if not user_id_str:
+            raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
+
+        svc = SnapTradeService(db)
+        success = await svc.synchronize_connections(user_id_str)
+
+        if not success:
+            raise HTTPException(
+                status_code=500,
+                detail="An error occurred during connection synchronization. Check logs for details."
+            )
+
+        return {"status": "completed"}
     def __init__(self):
         ...
 

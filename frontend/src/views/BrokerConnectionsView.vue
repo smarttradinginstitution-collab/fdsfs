@@ -256,9 +256,41 @@ function formatDate(isoString) {
 }
 
 onMounted(async () => {
+  isLoadingConnections.value = true;
   await authStore.fetchUser();
+
   if (isSnapTradeUserRegistered.value) {
-    fetchConnections();
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+
+    // If the user was just redirected from a successful SnapTrade connection,
+    // we must trigger a synchronous sync before fetching the connections.
+    if (status === 'success') {
+      uiStore.showNotification({
+        message: 'Processing new connection... Please wait.',
+        type: 'info',
+        duration: 5000, // Show for 5 seconds
+      });
+      try {
+        await apiClient.post('/api/v1/snaptrade/sync');
+        uiStore.showNotification({
+          message: 'Synchronization complete!',
+          type: 'success',
+        });
+        // Clean the URL
+        router.replace({ query: {} });
+      } catch (error) {
+        const errorMessage = error.response?.data?.detail || 'Failed to sync new connection.';
+        uiStore.showNotification({
+          message: `Error: ${errorMessage}`,
+          type: 'error',
+        });
+      }
+    }
+    // Always fetch connections, but now we know the data is fresh if we just synced.
+    await fetchConnections();
+  } else {
+    isLoadingConnections.value = false;
   }
 });
 </script>

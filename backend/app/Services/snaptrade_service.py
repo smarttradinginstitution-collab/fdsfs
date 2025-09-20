@@ -251,12 +251,14 @@ class SnapTradeService:
         """
         Fetches connections from SnapTrade and upserts them into the local database.
         """
+        print(f"--- Starting connection synchronization for user_id: {user_id} ---")
         from sqlalchemy.dialects.postgresql import insert
         from app.Models.brokerage_connection import BrokerageConnection
 
         user_uuid = uuid.UUID(user_id)
         user = await self.user_repo.get(user_uuid)
         if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            print(f"User {user_id} not found or has no SnapTrade secret. Aborting sync.")
             return False
 
         try:
@@ -269,34 +271,47 @@ class SnapTradeService:
                 user_secret=user.profile.snaptrade_user_secret
             )
 
+            print("--- Full SnapTrade API Response ---")
+            import json
+            print(json.dumps(connections.body, indent=2))
+            print("-----------------------------------")
+
             if not connections.body:
+                print("No connections returned from SnapTrade. Sync is complete.")
                 return True
 
             values_to_upsert = []
             for conn in connections.body:
-                created_at_str = conn['created_date']
-                created_at_dt = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                try:
+                    created_at_str = conn['created_date']
+                    created_at_dt = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
 
-                disabled_date_str = conn.get('disabled_date')
-                disabled_date_dt = None
-                if disabled_date_str:
-                    disabled_date_dt = datetime.fromisoformat(disabled_date_str.replace('Z', '+00:00'))
+                    disabled_date_str = conn.get('disabled_date')
+                    disabled_date_dt = None
+                    if disabled_date_str:
+                        disabled_date_dt = datetime.fromisoformat(disabled_date_str.replace('Z', '+00:00'))
 
-                values_to_upsert.append({
-                    'id': conn['id'],
-                    'user_id': user_uuid,
-                    'brokerage_name': conn['brokerage']['name'],
-                    'brokerage_display_name': conn['brokerage'].get('display_name'),
-                    'brokerage_logo_url': conn['brokerage'].get('aws_s3_logo_url'),
-                    'connection_type': conn['type'],
-                    'disabled': conn['disabled'],
-                    'disabled_date': disabled_date_dt,
-                    'created_at': created_at_dt,
-                })
+                    values_to_upsert.append({
+                        'id': conn['id'],
+                        'user_id': user_uuid,
+                        'brokerage_name': conn['brokerage']['name'],
+                        'brokerage_display_name': conn['brokerage'].get('display_name'),
+                        'brokerage_logo_url': conn['brokerage'].get('aws_s3_logo_url'),
+                        'connection_type': conn['type'],
+                        'disabled': conn['disabled'],
+                        'disabled_date': disabled_date_dt,
+                        'created_at': created_at_dt,
+                    })
+                except Exception as e:
+                    print(f"Error processing connection data for conn_id={conn.get('id')}: {e}")
+
+
+            if not values_to_upsert:
+                print("No valid connections to upsert after processing. Aborting database operation.")
+                return True
 
             stmt = insert(BrokerageConnection).values(values_to_upsert)
 
-            # Exclude our local-only fields from being overwritten by the sync.
             excluded_fields = [
                 'id', 'user_id', 'created_at', 'deleted_at',
                 'manual_refresh_count', 'last_manual_refresh_at'
@@ -308,13 +323,23 @@ class SnapTradeService:
                 index_elements=['id'],
                 set_=update_dict,
             )
-            await self.db.execute(stmt)
 
-            # If the sync was successful, update the user's profile with the sync time
+            try:
+                await self.db.execute(stmt)
+                print(f"Successfully upserted {len(values_to_upsert)} connection(s) into the database.")
+            except Exception as db_exc:
+                print(f"--- DATABASE UPSERT FAILED ---")
+                print(f"An exception occurred: {type(db_exc).__name__}")
+                print(f"Exception details: {db_exc}")
+                print(f"------------------------------")
+                # We can choose to re-raise or handle it, for now, we log and return False
+                return False
+
             if user.profile:
                 user.profile.last_synced_at = datetime.now(timezone.utc)
 
             await self.db.commit()
+            print("--- Connection synchronization finished successfully ---")
             return True
         except Exception as e:
             print("--- SNAPTRADE SYNC CONNECTIONS API ERROR ---")
