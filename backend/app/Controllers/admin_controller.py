@@ -29,3 +29,15 @@ async def delete_snaptrade_user(user_id: str, db: AsyncSession = Depends(get_db)
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
     return result
+
+@router.post("/snaptrade-users/{user_id}/rotate-secret", status_code=200)
+async def rotate_secret(user_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Rotates a SnapTrade user's secret.
+    Admin-only endpoint.
+    """
+    snaptrade_service = SnapTradeService(db)
+    result = await snaptrade_service.rotate_snaptrade_user_secret(user_id)
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result

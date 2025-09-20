@@ -10,9 +10,15 @@ import { useUiStore } from '@/stores/uiStore';
 const users = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-const showConfirmation = ref(false);
-const userToDelete = ref(null);
 const uiStore = useUiStore();
+
+// State for Delete Modal
+const showDeleteConfirmation = ref(false);
+const userToDelete = ref(null);
+
+// State for Rotate Secret Modal
+const showRotateConfirmation = ref(false);
+const userToRotate = ref(null);
 
 const tableHeaders = [
   { key: 'userId', text: 'SnapTrade User ID' },
@@ -31,9 +37,14 @@ async function fetchUsers() {
   }
 }
 
-function openConfirmation(user) {
+function openDeleteConfirmation(user) {
   userToDelete.value = user;
-  showConfirmation.value = true;
+  showDeleteConfirmation.value = true;
+}
+
+function openRotateConfirmation(user) {
+  userToRotate.value = user;
+  showRotateConfirmation.value = true;
 }
 
 async function handleDelete() {
@@ -47,8 +58,23 @@ async function handleDelete() {
     uiStore.showNotification({ message: 'Failed to delete user.', type: 'error' });
     console.error(err);
   } finally {
-    showConfirmation.value = false;
+    showDeleteConfirmation.value = false;
     userToDelete.value = null;
+  }
+}
+
+async function handleRotateSecret() {
+  if (!userToRotate.value) return;
+
+  try {
+    await apiClient.post(`/api/v1/admin/snaptrade-users/${userToRotate.value.userId}/rotate-secret`);
+    uiStore.showNotification({ message: 'User secret rotated successfully.', type: 'success' });
+  } catch (err) {
+    uiStore.showNotification({ message: 'Failed to rotate secret.', type: 'error' });
+    console.error(err);
+  } finally {
+    showRotateConfirmation.value = false;
+    userToRotate.value = null;
   }
 }
 
@@ -67,21 +93,40 @@ onMounted(fetchUsers);
     <div v-else>
       <BaseTable :headers="tableHeaders" :items="users">
         <template #actions="{ item }">
-          <BaseButton @click="openConfirmation(item)" variant="danger" size="small">
-            Delete
-          </BaseButton>
+          <div class="flex space-x-2">
+            <BaseButton @click="openRotateConfirmation(item)" variant="secondary" size="small">
+              Rotate Secret
+            </BaseButton>
+            <BaseButton @click="openDeleteConfirmation(item)" variant="danger" size="small">
+              Delete
+            </BaseButton>
+          </div>
         </template>
       </BaseTable>
     </div>
+
+    <!-- Delete Confirmation Modal -->
     <ConfirmationModal
-      :show="showConfirmation"
+      :show="showDeleteConfirmation"
       title="Delete SnapTrade User"
       confirmation-word="delete"
-      @close="showConfirmation = false"
+      @close="showDeleteConfirmation = false"
       @confirm="handleDelete"
     >
       <p>Are you sure you want to delete this user? This action is irreversible.</p>
       <p class="mt-2">The user's SnapTrade secret will be cleared from the database.</p>
+    </ConfirmationModal>
+
+    <!-- Rotate Secret Confirmation Modal -->
+    <ConfirmationModal
+      :show="showRotateConfirmation"
+      title="Rotate SnapTrade User Secret"
+      confirmation-word="rotate"
+      @close="showRotateConfirmation = false"
+      @confirm="handleRotateSecret"
+    >
+      <p>Are you sure you want to rotate this user's secret? This action is irreversible.</p>
+      <p class="mt-2">The user will need to be provided with the new secret to access their account.</p>
     </ConfirmationModal>
   </div>
 </template>
