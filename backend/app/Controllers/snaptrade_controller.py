@@ -84,6 +84,36 @@ class SnapTradeController:
 
         return result
 
+    async def get_account_holdings(
+        self,
+        account_id: uuid.UUID,
+        db: AsyncSession = Depends(get_db),
+        claims: dict = Depends(get_current_claims),
+    ):
+        """
+        Handles the request to get all holdings for a specific trading account.
+        """
+        user_id_str = claims.get("sub")
+        if not user_id_str:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token does not contain user ID.")
+
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user ID format in token.")
+
+        svc = SnapTradeService(db)
+        try:
+            result = await svc.sync_and_get_account_holdings(user_id=user_id, account_id=account_id)
+            return result
+        except SnapTradeConnectionError as e:
+            if "permission denied" in str(e):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+            else:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {str(e)}")
+
     async def list_connections(
         self,
         background_tasks: BackgroundTasks,

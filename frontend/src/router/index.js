@@ -49,6 +49,13 @@ const router = createRouter({
       props: true // Pass route params as component props
     },
     {
+      path: '/accounts/:accountId/holdings',
+      name: 'account-holdings',
+      component: () => import('../views/AccountHoldingsView.vue'),
+      meta: { title: 'Account Holdings' },
+      props: true
+    },
+    {
       path: '/admin/snaptrade-users',
       name: 'admin-snaptrade-users',
       component: () => import('../views/AdminSnapTradeUsersView.vue'),

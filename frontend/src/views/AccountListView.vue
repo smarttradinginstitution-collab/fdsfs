@@ -1,12 +1,13 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
 import { useUiStore } from '@/stores/uiStore';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const route = useRoute();
+const router = useRouter();
 const uiStore = useUiStore();
 
 const accounts = ref([]);
@@ -28,6 +29,12 @@ function formatCurrency(value, currency) {
     style: 'currency',
     currency: currency || 'USD',
   }).format(value);
+}
+
+function handleRowClick(item) {
+  if (item && item.id) {
+    router.push(`/accounts/${item.id}/holdings`);
+  }
 }
 
 onMounted(async () => {
@@ -73,7 +80,12 @@ onMounted(async () => {
         <LoadingSpinner />
       </div>
       <div v-else-if="accounts.length > 0">
-        <BaseTable :headers="tableHeaders" :items="accounts" :row-clickable="true">
+        <BaseTable
+          :headers="tableHeaders"
+          :items="accounts"
+          :row-clickable="true"
+          @row-click="handleRowClick"
+        >
           <template #name="{ item }">
             <span class="font-medium">{{ item.name }}</span>
           </template>

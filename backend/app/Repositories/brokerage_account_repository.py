@@ -42,3 +42,11 @@ class BrokerageAccountRepository:
 
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_by_id(self, account_id: uuid.UUID) -> BrokerageAccount | None:
+        """
+        Retrieves a single brokerage account by its ID.
+        """
+        stmt = select(BrokerageAccount).where(BrokerageAccount.id == account_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
