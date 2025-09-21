@@ -8,10 +8,10 @@ class AccountActivity(Base):
     __tablename__ = 'account_activities'
 
     id = Column(String, primary_key=True, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('profiles.id', ondelete='CASCADE'), nullable=False)
-    account_id = Column(UUID(as_uuid=True), ForeignKey('brokerage_accounts.id', ondelete='CASCADE'), nullable=False)
-    security_id = Column(UUID(as_uuid=True), ForeignKey('securities.id', ondelete='CASCADE'), nullable=True)
-    option_symbol_id = Column(String, ForeignKey('option_symbols.id', ondelete='CASCADE'), nullable=True)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    account_id = Column(UUID(as_uuid=True), nullable=False)
+    security_id = Column(UUID(as_uuid=True), nullable=True)
+    option_symbol_id = Column(String, nullable=True)
 
     type = Column(String, nullable=False, index=True)
     option_type = Column(String, nullable=True)
@@ -29,11 +29,12 @@ class AccountActivity(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationships
-    user = relationship("Profile")
-    account = relationship("BrokerageAccount")
-    security = relationship("Security")
-    option_symbol = relationship("OptionSymbol")
+    # Relationships are disabled at the ORM level to prevent initialization errors.
+    # The database schema still enforces these constraints.
+    # user = relationship("Profile")
+    # account = relationship("BrokerageAccount")
+    # security = relationship("Security")
+    # option_symbol = relationship("OptionSymbol")
 
     def __repr__(self):
         return f"<AccountActivity(id='{self.id}', type='{self.type}', account_id='{self.account_id}')>"

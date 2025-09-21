@@ -12,12 +12,12 @@ class OptionSymbol(Base):
     option_type = Column(String, nullable=False)
     strike_price = Column(NUMERIC, nullable=False)
     expiry_date = Column(DATE, nullable=False)
-    underlying_symbol_id = Column(UUID(as_uuid=True), ForeignKey('securities.id'), nullable=False)
+    underlying_symbol_id = Column(UUID(as_uuid=True), nullable=False)
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    underlying_symbol = relationship("Security")
+    # underlying_symbol = relationship("Security") # This relationship is disabled at the ORM level to prevent initialization errors.
 
     def __repr__(self):
         return f"<OptionSymbol(id='{self.id}', description='{self.description}')>"
