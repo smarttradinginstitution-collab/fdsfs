@@ -244,7 +244,7 @@ router.include_router(router_snaptrade)
 # ──────────────────────────────────────────────────────────────────────────────
 # 💼 ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Schemas.snaptrade import AccountHoldingsRead
+from app.Schemas.snaptrade import AccountHoldingsRead, AccountOrderRead
 
 router_accounts = APIRouter(
     prefix="/api/v1/accounts",
@@ -257,6 +257,12 @@ router_accounts.get(
     response_model=AccountHoldingsRead,
     summary="Get all holdings for a specific trading account",
 )(snaptrade.get_account_holdings)
+
+router_accounts.get(
+    "/{account_id}/recent-orders",
+    response_model=List[AccountOrderRead],
+    summary="Get recent (24h) orders for a specific trading account",
+)(snaptrade.get_recent_orders)
 
 router.include_router(router_accounts)
 
