@@ -33,6 +33,6 @@ class BrokerageAccount(Base):
     connection: Mapped["BrokerageConnection"] = relationship(back_populates="brokerage_accounts")
 
     # Relationships to holdings (one-to-many)
-    positions: Mapped[list["AccountPosition"]] = relationship("AccountPosition", back_populates="account", cascade="all, delete-orphan")
-    balances: Mapped[list["AccountBalance"]] = relationship("AccountBalance", back_populates="account", cascade="all, delete-orphan")
-    orders: Mapped[list["AccountOrder"]] = relationship("AccountOrder", back_populates="account", cascade="all, delete-orphan")
+    positions: Mapped[list["AccountPosition"]] = relationship("AccountPosition", back_populates="account", cascade="all, delete-orphan", lazy="selectin")
+    balances: Mapped[list["AccountBalance"]] = relationship("AccountBalance", back_populates="account", cascade="all, delete-orphan", lazy="selectin")
+    orders: Mapped[list["AccountOrder"]] = relationship("AccountOrder", back_populates="account", cascade="all, delete-orphan", lazy="selectin")

@@ -38,4 +38,4 @@ class AccountOrder(Base):
 
     # Relationships
     account: Mapped["BrokerageAccount"] = relationship(back_populates="orders")
-    option_details: Mapped["AccountOrderOption"] = relationship(back_populates="order", cascade="all, delete-orphan", uselist=False)
+    option_details: Mapped["AccountOrderOption"] = relationship(back_populates="order", cascade="all, delete-orphan", uselist=False, lazy="selectin")
