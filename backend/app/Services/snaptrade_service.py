@@ -566,7 +566,7 @@ class SnapTradeService:
                 consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
                 client_id=settings.SNAPTRADE_CLIENT_ID
             )
-            api_response = client.account_information.get_account_holdings(
+            api_response = client.account_information.get_user_holdings(
                 user_id=str(user_id),
                 user_secret=user_secret,
                 account_id=str(account_id)
