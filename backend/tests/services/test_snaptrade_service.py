@@ -171,9 +171,9 @@ async def test_sync_and_get_account_holdings_full_success(snaptrade_service: Sna
 
         # Configure API client mocks
         mock_api_client = mock_snaptrade_client.return_value.account_information
-        mock_api_client.get_user_holdings = AsyncMock(return_value=MagicMock(body={}))
-        mock_api_client.get_user_account_positions = AsyncMock(return_value=MagicMock(body=[]))
-        mock_api_client.get_user_account_orders = AsyncMock(return_value=MagicMock(body=mock_orders_response))
+        mock_api_client.get_user_holdings.return_value = MagicMock(body={})
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_orders.return_value = MagicMock(body=mock_orders_response)
 
         await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
 
@@ -214,9 +214,9 @@ async def test_sync_and_get_account_holdings_with_option(snaptrade_service: Snap
         mock_order_repo.build_orders_from_schemas.return_value = []
 
         mock_api_client = mock_snaptrade_client.return_value.account_information
-        mock_api_client.get_user_holdings = AsyncMock(return_value=MagicMock(body={}))
-        mock_api_client.get_user_account_positions = AsyncMock(return_value=MagicMock(body=[]))
-        mock_api_client.get_user_account_orders = AsyncMock(return_value=MagicMock(body=[mock_option_order]))
+        mock_api_client.get_user_holdings.return_value = MagicMock(body={})
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_orders.return_value = MagicMock(body=[mock_option_order])
 
         await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
 
@@ -247,9 +247,9 @@ async def test_sync_and_get_account_holdings_partial_failure(snaptrade_service: 
         mock_account_repo.return_value.get_by_id = AsyncMock(return_value=mock_account_from_db)
 
         mock_api_client = mock_snaptrade_client.return_value.account_information
-        mock_api_client.get_user_holdings = AsyncMock(return_value=MagicMock(body={}))
-        mock_api_client.get_user_account_positions = AsyncMock(return_value=MagicMock(body=[]))
-        mock_api_client.get_user_account_orders = AsyncMock(side_effect=Exception("API timeout"))
+        mock_api_client.get_user_holdings.return_value = MagicMock(body={})
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_orders.side_effect = Exception("API timeout")
 
         result = await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
 

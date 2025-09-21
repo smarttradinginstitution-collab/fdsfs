@@ -573,7 +573,7 @@ class SnapTradeService:
 
         # API Call 1: Get holdings for balances and account details
         try:
-            holdings_response = await client.account_information.get_user_holdings(
+            holdings_response = client.account_information.get_user_holdings(
                 user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
             )
             holdings_data = holdings_response.body
@@ -598,7 +598,7 @@ class SnapTradeService:
 
         # API Call 2: Get detailed positions
         try:
-            positions_response = await client.account_information.get_user_account_positions(
+            positions_response = client.account_information.get_user_account_positions(
                 user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
             )
             positions_data = positions_response.body
@@ -628,7 +628,7 @@ class SnapTradeService:
 
         # API Call 3: Get detailed orders (fully enriched)
         try:
-            orders_response = await client.account_information.get_user_account_orders(
+            orders_response = client.account_information.get_user_account_orders(
                 user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
             )
             orders_data = orders_response.body
