@@ -546,11 +546,9 @@ class SnapTradeService:
 
     async def sync_and_get_account_holdings(self, user_id: uuid.UUID, account_id: uuid.UUID) -> AccountHoldingsRead:
         """
-        Refactored to use specific endpoints for positions, enhancing data quality and preparing for future refactors.
-        - Fetches account details, balances, and orders from the generic /holdings endpoint.
-        - Fetches detailed position data from the specific /positions endpoint.
-        - Normalizes and upserts security information into a dedicated `securities` table.
-        - Saves the final, consolidated data to the local database.
+        Orchestrates fetching data from three separate SnapTrade endpoints (/holdings, /positions, /orders)
+        to build a complete picture of the user's account. It handles partial failures by logging
+        errors and returning a warning object to the frontend, ensuring the app remains resilient.
         """
         account_repo = BrokerageAccountRepository(self.db)
         security_repo = SecurityRepository(self.db)
@@ -564,23 +562,21 @@ class SnapTradeService:
             raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
 
         user_secret = user.profile.snaptrade_user_secret
+        client = SnapTrade(consumer_key=settings.SNAPTRADE_CONSUMER_KEY, client_id=settings.SNAPTRADE_CLIENT_ID)
 
+        warnings = []
+        positions_to_create = []
+        balances_to_create = []
+        orders_to_create = []
+
+        # API Call 1: Get holdings for balances and account details
         try:
-            client = SnapTrade(consumer_key=settings.SNAPTRADE_CONSUMER_KEY, client_id=settings.SNAPTRADE_CLIENT_ID)
-
-            # API Call 1: Get holdings for balances, orders, and account details
-            holdings_response = client.account_information.get_user_holdings(
+            holdings_response = await client.account_information.get_user_holdings(
                 user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
             )
             holdings_data = holdings_response.body
 
-            # API Call 2: Get detailed positions
-            positions_response = client.account_information.get_user_account_positions(
-                user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
-            )
-            positions_data = positions_response.body
-
-            # Update account details (from /holdings response)
+            # Process account details
             account_details_raw = holdings_data.get('account', {})
             if account_details_raw:
                 update_payload = BrokerageAccountUpdate(
@@ -591,59 +587,81 @@ class SnapTradeService:
                 )
                 await account_repo.update_account_details(account_id, update_payload)
 
-            # Process detailed positions (from /positions response)
-            securities_to_upsert = []
-            positions_to_create = []
-            for p in positions_data:
-                symbol_data = p.get('symbol', {}).get('symbol', {})
-                if not symbol_data or not symbol_data.get('id'):
-                    continue # Skip positions without a universal symbol ID
-
-                # Prepare security data for upsert
-                securities_to_upsert.append(SecurityCreate(
-                    id=symbol_data['id'],
-                    symbol=symbol_data['symbol'],
-                    description=symbol_data.get('description'),
-                    currency_code=symbol_data.get('currency', {}).get('code'),
-                    exchange_name=symbol_data.get('exchange', {}).get('name'),
-                    figi_code=symbol_data.get('figi_code')
-                ))
-
-                # Prepare position data for creation
-                positions_to_create.append(AccountPositionCreate(
-                    security_id=symbol_data['id'],
-                    units=p.get('units'),
-                    price=p.get('price'),
-                    currency=p.get('currency', {}).get('code'),
-                    open_pnl=p.get('open_pnl'),
-                    average_purchase_price=p.get('average_purchase_price')
-                ))
-
-            # Upsert all securities in a single batch
-            if securities_to_upsert:
-                await security_repo.upsert_securities(securities_to_upsert)
-
-            # Process balances and orders (from /holdings response)
+            # Process balances
             balances_raw = holdings_data.get('balances', [])
-            balances_to_create = []
             for b in balances_raw:
                 currency_obj = b.get('currency') or {}
                 balance_data = { "currency_code": currency_obj.get('code'), "cash_amount": b.get('cash'), "buying_power": b.get('buyingPower') }
                 validated_data = {k: v for k, v in balance_data.items() if v is not None}
                 balances_to_create.append(AccountBalanceCreate(**validated_data))
+        except Exception as e:
+            print(f"--- SNAPTRADE GET_USER_HOLDINGS FAILED for account {account_id}: {e} ---")
+            warnings.append({"service": "balances", "error": "Failed to sync balances and account details."})
 
-            orders_raw = holdings_data.get('orders', [])
-            orders_to_create = []
-            for o in orders_raw:
-                o['id'] = o.pop('brokerage_order_id', None)
-                symbol_obj = o.pop('universal_symbol', {}) or {}
-                o['symbol'] = symbol_obj.get('symbol')
-                if o['id']:
+        # API Call 2: Get detailed positions
+        try:
+            positions_response = await client.account_information.get_user_account_positions(
+                user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
+            )
+            positions_data = positions_response.body
+
+            securities_to_upsert = []
+            for p in positions_data:
+                symbol_data = p.get('symbol', {}).get('symbol', {})
+                if not symbol_data or not symbol_data.get('id'):
+                    continue
+
+                securities_to_upsert.append(SecurityCreate(
+                    id=symbol_data['id'], symbol=symbol_data['symbol'],
+                    description=symbol_data.get('description'), currency_code=symbol_data.get('currency', {}).get('code'),
+                    exchange_name=symbol_data.get('exchange', {}).get('name'), figi_code=symbol_data.get('figi_code')
+                ))
+                positions_to_create.append(AccountPositionCreate(
+                    security_id=symbol_data['id'], units=p.get('units'), price=p.get('price'),
+                    currency=p.get('currency', {}).get('code'), open_pnl=p.get('open_pnl'),
+                    average_purchase_price=p.get('average_purchase_price')
+                ))
+
+            if securities_to_upsert:
+                await security_repo.upsert_securities(securities_to_upsert)
+        except Exception as e:
+            print(f"--- SNAPTRADE GET_USER_ACCOUNT_POSITIONS FAILED for account {account_id}: {e} ---")
+            warnings.append({"service": "positions", "error": "Failed to sync positions."})
+
+        # API Call 3: Get detailed orders
+        try:
+            orders_response = await client.account_information.get_user_account_orders(
+                user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
+            )
+            orders_data = orders_response.body
+
+            for o in orders_data:
+                symbol_obj = o.get('universal_symbol', {}) or {}
+                order_data = {
+                    "id": o.get('brokerage_order_id'),
+                    "symbol": symbol_obj.get('symbol'),
+                    "action": o.get('action'),
+                    "status": o.get('status'),
+                    "total_quantity": o.get('total_quantity'),
+                    "filled_quantity": o.get('filled_quantity'),
+                    "execution_price": o.get('execution_price'),
+                    "limit_price": o.get('limit_price'),
+                    "order_type": o.get('order_type'),
+                    "time_in_force": o.get('time_in_force'),
+                    "stop_price": o.get('stop_price'),
+                    "time_placed": o.get('time_placed')
+                }
+                if order_data['id']:
                     schema_fields = AccountOrderCreate.model_fields.keys()
-                    order_data = {k: v for k, v in o.items() if k in schema_fields}
-                    orders_to_create.append(AccountOrderCreate(**order_data))
+                    validated_data = {k: v for k, v in order_data.items() if k in schema_fields}
+                    orders_to_create.append(AccountOrderCreate(**validated_data))
+        except Exception as e:
+            print(f"--- SNAPTRADE GET_USER_ACCOUNT_ORDERS FAILED for account {account_id}: {e} ---")
+            warnings.append({"service": "orders", "error": "Failed to sync recent orders."})
 
-            # Build new ORM objects from the validated schemas
+        # Database transaction: update all successful fetches
+        try:
+            # Build new ORM objects from the validated schemas. This replaces existing collections.
             account.positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
             account.balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
             account.orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
@@ -651,18 +669,26 @@ class SnapTradeService:
             self.db.add(account)
             await self.db.commit()
             await self.db.refresh(account)
-
         except Exception as e:
             await self.db.rollback()
-            print("--- SNAPTRADE GET/SYNC HOLDINGS API ERROR ---")
-            print(f"An exception occurred: {type(e).__name__}")
-            print(f"Exception details: {e}")
-            print("---------------------------------------------")
-            raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
+            print(f"--- DATABASE SYNC FAILED for account {account_id}: {e} ---")
+            # This is a critical error, override other warnings
+            warnings = [{"service": "database", "error": "Failed to save data to the database."}]
+
+
+        # Construct final response
+        warning_payload = None
+        if warnings:
+            failed_services = [w['service'] for w in warnings]
+            warning_payload = {"warning": "partial_sync_failed", "failed_services": failed_services}
+
+        # Refresh account object to get the latest state from the DB
+        await self.db.refresh(account)
 
         return AccountHoldingsRead(
             account=account,
             positions=account.positions,
             balances=account.balances,
-            orders=account.orders
+            orders=account.orders,
+            warning=warning_payload
         )

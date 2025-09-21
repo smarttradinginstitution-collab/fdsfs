@@ -55,6 +55,9 @@ class AccountOrderBase(BaseModel):
     filled_quantity: Optional[float] = None
     execution_price: Optional[float] = None
     limit_price: Optional[float] = None
+    order_type: Optional[str] = None
+    time_in_force: Optional[str] = None
+    stop_price: Optional[float] = None
     time_placed: Optional[datetime.datetime] = None
 
 class AccountOrderCreate(AccountOrderBase):
@@ -81,6 +84,7 @@ class AccountHoldingsRead(BaseModel):
     positions: list[AccountPositionRead]
     balances: list[AccountBalanceRead]
     orders: list[AccountOrderRead]
+    warning: Optional[dict] = None
 
     class Config:
         from_attributes = True

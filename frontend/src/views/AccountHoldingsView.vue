@@ -29,6 +29,8 @@ const orderHeaders = [
   { key: 'symbol', text: 'Symbol' },
   { key: 'action', text: 'Action' },
   { key: 'status', text: 'Status' },
+  { key: 'order_type', text: 'Type' },
+  { key: 'time_in_force', text: 'Time in Force' },
   { key: 'total_quantity', text: 'Quantity' },
   { key: 'limit_price', text: 'Limit Price' },
   { key: 'time_placed', text: 'Time Placed' },
@@ -76,6 +78,15 @@ async function fetchHoldings() {
     error.value = null;
     const response = await apiClient.get(`/api/v1/accounts/${accountId.value}/holdings`);
     holdings.value = response.data;
+
+    // Handle partial sync warnings from the backend
+    if (response.data.warning) {
+      const failedServices = response.data.warning.failed_services.join(', ');
+      uiStore.showNotification({
+        message: `Could not sync all data. Failed sections: ${failedServices}. The data shown may be out of date.`,
+        type: 'warning',
+      });
+    }
   } catch (err) {
     const errorMessage = err.response?.data?.detail || 'Failed to fetch account holdings.';
     error.value = errorMessage;
