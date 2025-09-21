@@ -609,15 +609,35 @@ class SnapTradeService:
                 if not symbol_data or not symbol_data.get('id'):
                     continue
 
+                exchange_data = symbol_data.get('exchange', {}) or {}
+                type_data = symbol_data.get('type', {}) or {}
+                figi_instrument_data = symbol_data.get('figi_instrument', {}) or {}
+
                 securities_to_upsert.append(SecurityCreate(
-                    id=symbol_data['id'], symbol=symbol_data['symbol'],
-                    description=symbol_data.get('description'), currency_code=symbol_data.get('currency', {}).get('code'),
-                    exchange_name=symbol_data.get('exchange', {}).get('name'), figi_code=symbol_data.get('figi_code')
+                    id=symbol_data['id'],
+                    symbol=symbol_data['symbol'],
+                    raw_symbol=symbol_data.get('raw_symbol'),
+                    description=symbol_data.get('description'),
+                    currency_code=symbol_data.get('currency', {}).get('code'),
+                    exchange_name=exchange_data.get('name'),
+                    mic_code=exchange_data.get('mic_code'),
+                    timezone=exchange_data.get('timezone'),
+                    start_time=exchange_data.get('start_time'),
+                    close_time=exchange_data.get('close_time'),
+                    suffix=exchange_data.get('suffix'),
+                    type_code=type_data.get('code'),
+                    type_description=type_data.get('description'),
+                    figi_code=symbol_data.get('figi_code'),
+                    figi_share_class=figi_instrument_data.get('figi_share_class')
                 ))
                 positions_to_create.append(AccountPositionCreate(
-                    security_id=symbol_data['id'], units=p.get('units'), price=p.get('price'),
-                    currency=p.get('currency', {}).get('code'), open_pnl=p.get('open_pnl'),
-                    average_purchase_price=p.get('average_purchase_price')
+                    security_id=symbol_data['id'],
+                    units=p.get('units'),
+                    price=p.get('price'),
+                    currency=p.get('currency', {}).get('code'),
+                    open_pnl=p.get('open_pnl'),
+                    average_purchase_price=p.get('average_purchase_price'),
+                    cash_equivalent=p.get('cash_equivalent')
                 ))
 
             if securities_to_upsert:

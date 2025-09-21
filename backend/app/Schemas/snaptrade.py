@@ -21,6 +21,7 @@ class AccountPositionBase(BaseModel):
     currency: Optional[str] = None
     open_pnl: Optional[float] = None
     average_purchase_price: Optional[float] = None
+    cash_equivalent: Optional[bool] = None
 
 class AccountPositionCreate(AccountPositionBase):
     security_id: uuid.UUID
