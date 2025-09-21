@@ -12,10 +12,10 @@ class ProfileRead(BaseModel):
     class Config:
         from_attributes = True
 
+from app.Schemas.security import SecurityRead
+
 # Schemas for AccountPosition
 class AccountPositionBase(BaseModel):
-    symbol: str
-    description: Optional[str] = None
     units: float
     price: Optional[float] = None
     currency: Optional[str] = None
@@ -23,10 +23,11 @@ class AccountPositionBase(BaseModel):
     average_purchase_price: Optional[float] = None
 
 class AccountPositionCreate(AccountPositionBase):
-    pass
+    security_id: uuid.UUID
 
 class AccountPositionRead(AccountPositionBase):
     id: uuid.UUID
+    security: SecurityRead
 
     class Config:
         from_attributes = True

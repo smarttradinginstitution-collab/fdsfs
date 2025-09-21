@@ -17,8 +17,8 @@ const error = ref(null);
 const accountId = computed(() => route.params.accountId);
 
 const positionHeaders = [
-  { key: 'symbol', text: 'Symbol' },
-  { key: 'description', text: 'Description' },
+  { key: 'security.symbol', text: 'Symbol' },
+  { key: 'security.description', text: 'Description' },
   { key: 'units', text: 'Units' },
   { key: 'price', text: 'Market Price' },
   { key: 'marketValue', text: 'Market Value' },
