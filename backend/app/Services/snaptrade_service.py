@@ -550,6 +550,8 @@ class SnapTradeService:
         to build a complete picture of the user's account. It handles partial failures by logging
         errors and returning a warning object to the frontend, ensuring the app remains resilient.
         """
+        from app.Schemas.snaptrade import AccountOrderOptionCreate
+
         account_repo = BrokerageAccountRepository(self.db)
         security_repo = SecurityRepository(self.db)
         account = await account_repo.get_by_id(account_id)
@@ -576,18 +578,14 @@ class SnapTradeService:
             )
             holdings_data = holdings_response.body
 
-            # Process account details
             account_details_raw = holdings_data.get('account', {})
             if account_details_raw:
                 update_payload = BrokerageAccountUpdate(
-                    name=account_details_raw.get('name'),
-                    number=account_details_raw.get('number'),
-                    status=account_details_raw.get('status'),
-                    sync_status=account_details_raw.get('sync_status')
+                    name=account_details_raw.get('name'), number=account_details_raw.get('number'),
+                    status=account_details_raw.get('status'), sync_status=account_details_raw.get('sync_status')
                 )
                 await account_repo.update_account_details(account_id, update_payload)
 
-            # Process balances
             balances_raw = holdings_data.get('balances', [])
             for b in balances_raw:
                 currency_obj = b.get('currency') or {}
@@ -628,7 +626,7 @@ class SnapTradeService:
             print(f"--- SNAPTRADE GET_USER_ACCOUNT_POSITIONS FAILED for account {account_id}: {e} ---")
             warnings.append({"service": "positions", "error": "Failed to sync positions."})
 
-        # API Call 3: Get detailed orders
+        # API Call 3: Get detailed orders (fully enriched)
         try:
             orders_response = await client.account_information.get_user_account_orders(
                 user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
@@ -636,54 +634,63 @@ class SnapTradeService:
             orders_data = orders_response.body
 
             for o in orders_data:
-                symbol_obj = o.get('universal_symbol', {}) or {}
+                if not o.get('brokerage_order_id'):
+                    continue
+
+                symbol_obj = o.get('universal_symbol') or {}
+                child_orders = o.get('child_brokerage_order_ids') or {}
+
                 order_data = {
-                    "id": o.get('brokerage_order_id'),
-                    "symbol": symbol_obj.get('symbol'),
-                    "action": o.get('action'),
-                    "status": o.get('status'),
-                    "total_quantity": o.get('total_quantity'),
-                    "filled_quantity": o.get('filled_quantity'),
-                    "execution_price": o.get('execution_price'),
-                    "limit_price": o.get('limit_price'),
-                    "order_type": o.get('order_type'),
-                    "time_in_force": o.get('time_in_force'),
-                    "stop_price": o.get('stop_price'),
-                    "time_placed": o.get('time_placed')
+                    "id": o.get('brokerage_order_id'), "symbol": symbol_obj.get('symbol'),
+                    "action": o.get('action'), "status": o.get('status'),
+                    "total_quantity": o.get('total_quantity'), "open_quantity": o.get('open_quantity'),
+                    "canceled_quantity": o.get('canceled_quantity'), "filled_quantity": o.get('filled_quantity'),
+                    "execution_price": o.get('execution_price'), "limit_price": o.get('limit_price'),
+                    "stop_price": o.get('stop_price'), "order_type": o.get('order_type'),
+                    "time_in_force": o.get('time_in_force'), "time_placed": o.get('time_placed'),
+                    "time_updated": o.get('time_updated'), "time_executed": o.get('time_executed'),
+                    "expiry_date": o.get('expiry_date'),
+                    "take_profit_order_id": child_orders.get('take_profit_order_id'),
+                    "stop_loss_order_id": child_orders.get('stop_loss_order_id'),
+                    "quote_universal_symbol": o.get('quote_universal_symbol'),
+                    "quote_currency": o.get('quote_currency'),
+                    "option_details": None
                 }
-                if order_data['id']:
-                    schema_fields = AccountOrderCreate.model_fields.keys()
-                    validated_data = {k: v for k, v in order_data.items() if k in schema_fields}
-                    orders_to_create.append(AccountOrderCreate(**validated_data))
+
+                option_data = o.get('option_symbol')
+                if option_data:
+                    underlying = option_data.get('underlying_symbol') or {}
+                    order_data["option_details"] = AccountOrderOptionCreate(
+                        option_ticker=option_data.get('ticker'),
+                        option_type=option_data.get('option_type'),
+                        strike_price=option_data.get('strike_price'),
+                        expiration_date=option_data.get('expiration_date'),
+                        is_mini_option=option_data.get('is_mini_option'),
+                        underlying_security_id=underlying.get('id')
+                    )
+
+                schema_fields = AccountOrderCreate.model_fields.keys()
+                validated_data = {k: v for k, v in order_data.items() if k in schema_fields}
+                orders_to_create.append(AccountOrderCreate(**validated_data))
         except Exception as e:
             print(f"--- SNAPTRADE GET_USER_ACCOUNT_ORDERS FAILED for account {account_id}: {e} ---")
             warnings.append({"service": "orders", "error": "Failed to sync recent orders."})
 
-        # Database transaction: update all successful fetches
+        # Database transaction
         try:
-            # Build new ORM objects from the validated schemas. This replaces existing collections.
             account.positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
             account.balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
             account.orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
-
             self.db.add(account)
             await self.db.commit()
-            await self.db.refresh(account)
         except Exception as e:
             await self.db.rollback()
             print(f"--- DATABASE SYNC FAILED for account {account_id}: {e} ---")
-            # This is a critical error, override other warnings
             warnings = [{"service": "database", "error": "Failed to save data to the database."}]
 
-
-        # Construct final response
-        warning_payload = None
-        if warnings:
-            failed_services = [w['service'] for w in warnings]
-            warning_payload = {"warning": "partial_sync_failed", "failed_services": failed_services}
-
-        # Refresh account object to get the latest state from the DB
+        # Final response construction
         await self.db.refresh(account)
+        warning_payload = {"warning": "partial_sync_failed", "failed_services": [w['service'] for w in warnings]} if warnings else None
 
         return AccountHoldingsRead(
             account=account,
