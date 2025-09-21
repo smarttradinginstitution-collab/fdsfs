@@ -69,6 +69,9 @@ class AccountHoldingsRead(BaseModel):
     balances: list[AccountBalanceRead]
     orders: list[AccountOrderRead]
 
+    class Config:
+        from_attributes = True
+
 class ReconnectRequest(BaseModel):
     connection_id: str
 
