@@ -63,24 +63,48 @@ router_auth.post(
     dependencies=[Depends(get_current_claims)],
 )(auth.logout)
 
+from fastapi import BackgroundTasks, HTTPException
+
 # (Facoltativo ma utile) Rotte diagnostiche per capire rapidamente chi è l'utente e i suoi ruoli
 @router_auth.get("/me", tags=["Auth"], response_model=AuthUserRead)
 async def who_am_i(
+    background_tasks: BackgroundTasks,
     claims=Depends(get_current_claims),
     db: AsyncSession = Depends(get_db),
+    sync_all_activities: bool = False,
 ):
     """
-    Returns the complete data for the currently authenticated user,
-    including their profile and brokerage connections.
+    Returns the complete data for the currently authenticated user.
+    Includes a temporary query parameter `sync_all_activities` to trigger
+    a background sync of all account activities for the user.
     """
     from app.Repositories.auth_user_repository import AuthUserRepository
+    from app.Repositories.brokerage_account_repository import BrokerageAccountRepository
+    from app.Services.snaptrade_service import SnapTradeService
 
     user_id_str = claims.get("sub")
     if not user_id_str:
         raise HTTPException(status_code=401, detail="Token does not contain user ID (sub).")
 
+    user_id = UUID(user_id_str)
+
+    # Temporary feature to trigger sync for all accounts
+    if sync_all_activities:
+        print(f"--- Triggering temporary activity sync for user {user_id} ---")
+        account_repo = BrokerageAccountRepository(db)
+        snaptrade_service = SnapTradeService(db)
+        accounts = await account_repo.get_accounts(user_id=user_id)
+
+        for account in accounts:
+            print(f"Adding activity sync task for account: {account.id}")
+            background_tasks.add_task(
+                snaptrade_service.sync_account_activities,
+                user_id=user_id,
+                account_id=account.id
+            )
+
     user_repo = AuthUserRepository(db)
-    user = await user_repo.get(UUID(user_id_str))
+    user = await user_repo.get(user_id)
 
     if not user:
         raise HTTPException(status_code=404, detail="Authenticated user not found in database.")
