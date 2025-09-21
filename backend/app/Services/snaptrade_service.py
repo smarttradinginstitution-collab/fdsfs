@@ -11,9 +11,12 @@ from app.Repositories.brokerage_account_repository import BrokerageAccountReposi
 from app.Repositories.account_positions_repository import AccountPositionRepository
 from app.Repositories.account_balances_repository import AccountBalanceRepository
 from app.Repositories.account_orders_repository import AccountOrderRepository
+from app.Repositories.security_repository import SecurityRepository
 from app.Models.profile import Profile
 from app.Models.brokerage_account import BrokerageAccount
+from app.Schemas.brokerage_account import BrokerageAccountUpdate
 from app.Schemas.snaptrade import AccountHoldingsRead, AccountPositionCreate, AccountBalanceCreate, AccountOrderCreate
+from app.Schemas.security import SecurityCreate
 from app.config import settings
 from snaptrade_client import SnapTrade
 
@@ -543,87 +546,111 @@ class SnapTradeService:
 
     async def sync_and_get_account_holdings(self, user_id: uuid.UUID, account_id: uuid.UUID) -> AccountHoldingsRead:
         """
-        Synchronizes and retrieves all holdings (positions, balances, orders) for a specific trading account.
-        The data is fetched from SnapTrade, stored in the local database using a "delete and recreate" strategy,
-        and then read back from the local database to be returned.
+        Refactored to use specific endpoints for positions, enhancing data quality and preparing for future refactors.
+        - Fetches account details, balances, and orders from the generic /holdings endpoint.
+        - Fetches detailed position data from the specific /positions endpoint.
+        - Normalizes and upserts security information into a dedicated `securities` table.
+        - Saves the final, consolidated data to the local database.
         """
         account_repo = BrokerageAccountRepository(self.db)
+        security_repo = SecurityRepository(self.db)
         account = await account_repo.get_by_id(account_id)
 
-        # Security check: Ensure account exists and belongs to the user
         if not account or account.user_id != user_id:
             raise SnapTradeConnectionError("Account not found or permission denied.")
 
-        # Get user's SnapTrade secret
         user = await self.user_repo.get(user_id)
         if not user or not user.profile or not user.profile.snaptrade_user_secret:
             raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
         user_secret = user.profile.snaptrade_user_secret
 
         try:
-            # Initialize SnapTrade client and fetch holdings
-            client = SnapTrade(
-                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
-                client_id=settings.SNAPTRADE_CLIENT_ID
-            )
-            api_response = client.account_information.get_user_holdings(
-                user_id=str(user_id),
-                user_secret=user_secret,
-                account_id=str(account_id)
-            )
-            holdings_data = api_response.body
+            client = SnapTrade(consumer_key=settings.SNAPTRADE_CONSUMER_KEY, client_id=settings.SNAPTRADE_CLIENT_ID)
 
-            # Prepare data using Pydantic schemas for validation
-            positions_raw = holdings_data.get('positions', [])
+            # API Call 1: Get holdings for balances, orders, and account details
+            holdings_response = client.account_information.get_user_holdings(
+                user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
+            )
+            holdings_data = holdings_response.body
+
+            # API Call 2: Get detailed positions
+            positions_response = client.account_information.get_user_account_positions(
+                user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
+            )
+            positions_data = positions_response.body
+
+            # Update account details (from /holdings response)
+            account_details_raw = holdings_data.get('account', {})
+            if account_details_raw:
+                update_payload = BrokerageAccountUpdate(
+                    name=account_details_raw.get('name'),
+                    number=account_details_raw.get('number'),
+                    status=account_details_raw.get('status'),
+                    sync_status=account_details_raw.get('sync_status')
+                )
+                await account_repo.update_account_details(account_id, update_payload)
+
+            # Process detailed positions (from /positions response)
+            securities_to_upsert = []
             positions_to_create = []
-            for p in positions_raw:
-                symbol_obj = p.pop('symbol', {}) or {}
-                p['symbol'] = symbol_obj.get('symbol', {}).get('symbol') # Extract nested symbol string
-                # Ensure currency is also handled if it's an object
-                currency_obj = p.pop('currency', {}) or {}
-                p['currency'] = currency_obj.get('code')
-                positions_to_create.append(AccountPositionCreate(**p))
+            for p in positions_data:
+                symbol_data = p.get('symbol', {}).get('symbol', {})
+                if not symbol_data or not symbol_data.get('id'):
+                    continue # Skip positions without a universal symbol ID
 
+                # Prepare security data for upsert
+                securities_to_upsert.append(SecurityCreate(
+                    id=symbol_data['id'],
+                    symbol=symbol_data['symbol'],
+                    description=symbol_data.get('description'),
+                    currency_code=symbol_data.get('currency', {}).get('code'),
+                    exchange_name=symbol_data.get('exchange', {}).get('name'),
+                    figi_code=symbol_data.get('figi_code')
+                ))
+
+                # Prepare position data for creation
+                positions_to_create.append(AccountPositionCreate(
+                    security_id=symbol_data['id'],
+                    units=p.get('units'),
+                    price=p.get('price'),
+                    currency=p.get('currency', {}).get('code'),
+                    open_pnl=p.get('open_pnl'),
+                    average_purchase_price=p.get('average_purchase_price')
+                ))
+
+            # Upsert all securities in a single batch
+            if securities_to_upsert:
+                await security_repo.upsert_securities(securities_to_upsert)
+
+            # Process balances and orders (from /holdings response)
             balances_raw = holdings_data.get('balances', [])
             balances_to_create = []
             for b in balances_raw:
                 currency_obj = b.get('currency') or {}
-                balance_data = {
-                    "currency_code": currency_obj.get('code'),
-                    "cash_amount": b.get('cash'),
-                    "buying_power": b.get('buyingPower')
-                }
+                balance_data = { "currency_code": currency_obj.get('code'), "cash_amount": b.get('cash'), "buying_power": b.get('buyingPower') }
                 validated_data = {k: v for k, v in balance_data.items() if v is not None}
                 balances_to_create.append(AccountBalanceCreate(**validated_data))
 
             orders_raw = holdings_data.get('orders', [])
             orders_to_create = []
             for o in orders_raw:
-                # Map brokerage_order_id to id field and extract nested symbol
                 o['id'] = o.pop('brokerage_order_id', None)
                 symbol_obj = o.pop('universal_symbol', {}) or {}
                 o['symbol'] = symbol_obj.get('symbol')
-                if o['id']: # Only include orders with an ID
-                    # We only pass fields defined in the schema to avoid validation errors
+                if o['id']:
                     schema_fields = AccountOrderCreate.model_fields.keys()
                     order_data = {k: v for k, v in o.items() if k in schema_fields}
                     orders_to_create.append(AccountOrderCreate(**order_data))
 
             # Build new ORM objects from the validated schemas
-            new_positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
-            new_balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
-            new_orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
+            account.positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
+            account.balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
+            account.orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
 
-            # Replace the relationships on the account object.
-            # SQLAlchemy's 'cascade="all, delete-orphan"' will handle the deletes and inserts.
-            account.positions = new_positions
-            account.balances = new_balances
-            account.orders = new_orders
-
-            # Add the updated account to the session and commit
             self.db.add(account)
             await self.db.commit()
-            await self.db.refresh(account) # Refresh to get DB-generated values if needed
+            await self.db.refresh(account)
 
         except Exception as e:
             await self.db.rollback()
@@ -633,4 +660,9 @@ class SnapTradeService:
             print("---------------------------------------------")
             raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
 
-        return AccountHoldingsRead.model_validate(account)
+        return AccountHoldingsRead(
+            account=account,
+            positions=account.positions,
+            balances=account.balances,
+            orders=account.orders
+        )

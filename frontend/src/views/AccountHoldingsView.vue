@@ -5,6 +5,7 @@ import apiClient from '@/services/api';
 import { useUiStore } from '@/stores/uiStore';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import BaseTable from '@/components/ui/BaseTable.vue';
+import BasePill from '@/components/ui/BasePill.vue';
 
 const route = useRoute();
 const uiStore = useUiStore();
@@ -16,8 +17,8 @@ const error = ref(null);
 const accountId = computed(() => route.params.accountId);
 
 const positionHeaders = [
-  { key: 'symbol', text: 'Symbol' },
-  { key: 'description', text: 'Description' },
+  { key: 'security.symbol', text: 'Symbol' },
+  { key: 'security.description', text: 'Description' },
   { key: 'units', text: 'Units' },
   { key: 'price', text: 'Market Price' },
   { key: 'marketValue', text: 'Market Value' },
@@ -55,6 +56,12 @@ function formatCurrency(value, currency = 'USD') {
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleString();
+}
+
+function formatSyncDate(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }
 
 async function fetchHoldings() {
@@ -95,7 +102,15 @@ onMounted(fetchHoldings);
     </div>
     <div v-else-if="holdings" class="holdings-content">
       <header class="view-header">
-        <h1>Account Dashboard</h1>
+        <h1>{{ holdings.account.name }}</h1>
+        <div class="header-pills">
+          <BasePill v-if="holdings.account.status">
+            Status: {{ holdings.account.status }}
+          </BasePill>
+          <BasePill v-if="holdings.account.sync_status?.holdings?.last_successful_sync">
+            Last Synced: {{ formatSyncDate(holdings.account.sync_status.holdings.last_successful_sync) }}
+          </BasePill>
+        </div>
         <p>A complete overview of your trading account's holdings, balances, and recent orders.</p>
       </header>
 
@@ -195,6 +210,12 @@ onMounted(fetchHoldings);
   font: var(--semantic-font-style-body-lg);
   color: var(--semantic-color-text-secondary);
   margin-top: var(--semantic-size-stack-xs);
+}
+
+.header-pills {
+  display: flex;
+  gap: var(--semantic-size-stack-sm);
+  margin-top: var(--semantic-size-stack-sm);
 }
 
 section h2 {

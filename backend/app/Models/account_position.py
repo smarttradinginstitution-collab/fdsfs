@@ -12,15 +12,18 @@ class AccountPosition(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("public.brokerage_accounts.id", ondelete="CASCADE"))
-    symbol: Mapped[str] = mapped_column(String)
-    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    security_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("public.securities.id", ondelete="SET NULL"), nullable=True)
+
+    # Position-specific data
     units: Mapped[float] = mapped_column(Numeric)
     price: Mapped[float | None] = mapped_column(Numeric, nullable=True)
     currency: Mapped[str | None] = mapped_column(String, nullable=True)
     open_pnl: Mapped[float | None] = mapped_column(Numeric, nullable=True)
     average_purchase_price: Mapped[float | None] = mapped_column(Numeric, nullable=True)
+
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
-    # Relationship to BrokerageAccount (many-to-one)
+    # Relationships
     account: Mapped["BrokerageAccount"] = relationship(back_populates="positions")
+    security: Mapped["Security"] = relationship(back_populates="positions")

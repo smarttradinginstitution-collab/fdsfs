@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from app.Models.brokerage_account import BrokerageAccount
+from app.Schemas.brokerage_account import BrokerageAccountUpdate
 
 class BrokerageAccountRepository:
     def __init__(self, db: AsyncSession):
@@ -59,3 +60,24 @@ class BrokerageAccountRepository:
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
+
+    async def update_account_details(self, account_id: uuid.UUID, update_data: "BrokerageAccountUpdate") -> None:
+        """
+        Updates specific details of a brokerage account.
+        """
+        from sqlalchemy import update
+        from app.Models.brokerage_account import BrokerageAccount
+
+        # Create a dictionary with the data to update, excluding unset values
+        update_values = update_data.model_dump(exclude_unset=True)
+
+        if not update_values:
+            return # Nothing to update
+
+        stmt = (
+            update(BrokerageAccount)
+            .where(BrokerageAccount.id == account_id)
+            .values(**update_values)
+        )
+        await self.db.execute(stmt)
+        # The commit will be handled in the service layer
