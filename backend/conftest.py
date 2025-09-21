@@ -31,26 +31,10 @@ from sqlalchemy.ext.compiler import compiles
 from app.main import app
 from app.Infrastructure.db import Base
 # Import all models to ensure they are registered with Base
-# Import all models to ensure they are registered with Base.
-# Ordering might matter for SQLAlchemy's metadata registration.
-from app.Models import (
-    profile,
-    auth_user,
-    role,
-    brokerage_connection,
-    security,
-    brokerage_account,
-    tag,
-    trade,
-    trades_tags,
-    user_dashboard_layout,
-    user_role,
-    option_symbol,
-    account_balance,
-    account_position,
-    account_order,
-    account_activity
-)
+# By importing the models package, we trigger the __init__.py file,
+# which now handles the registration of all models with the Base metadata.
+# This is a cleaner way to ensure all tables are known to SQLAlchemy.
+from app import Models
 
 # This is a hack to make the tests work with SQLite
 @compiles(JSONB, "sqlite")
