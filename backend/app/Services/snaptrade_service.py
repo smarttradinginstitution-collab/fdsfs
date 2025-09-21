@@ -744,16 +744,39 @@ class SnapTradeService:
             await self.db.rollback()
             print(f"--- DATABASE SYNC FAILED for account {account_id}: {e} ---")
             warnings = [{"service": "database", "error": "Failed to save data to the database."}]
+            # On failure, we must still return a valid object. Re-fetch the original state.
+            await self.db.refresh(account)
+            return AccountHoldingsRead(
+                account=account,
+                positions=[],
+                balances=account.balances, # Balances may have been fetched before the TX failed
+                orders=[],
+                warning={"warning": "database_error", "message": "Failed to save updated data."}
+            )
 
-        # Final response construction
-        await self.db.refresh(account)
+        # Final response construction: Re-fetch the account with all relationships eagerly loaded.
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload, joinedload
+        from app.Models.account_position import AccountPosition
+
+        result = await self.db.execute(
+            select(BrokerageAccount)
+            .where(BrokerageAccount.id == account_id)
+            .options(
+                selectinload(BrokerageAccount.positions).joinedload(AccountPosition.security),
+                selectinload(BrokerageAccount.balances),
+                selectinload(BrokerageAccount.orders)
+            )
+        )
+        refreshed_account = result.scalar_one()
+
         warning_payload = {"warning": "partial_sync_failed", "failed_services": [w['service'] for w in warnings]} if warnings else None
 
         return AccountHoldingsRead(
-            account=account,
-            positions=account.positions,
-            balances=account.balances,
-            orders=account.orders,
+            account=refreshed_account,
+            positions=refreshed_account.positions,
+            balances=refreshed_account.balances,
+            orders=refreshed_account.orders,
             warning=warning_payload
         )
 
