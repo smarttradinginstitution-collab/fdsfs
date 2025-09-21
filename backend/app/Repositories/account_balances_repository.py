@@ -1,35 +1,18 @@
 from __future__ import annotations
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 from app.Models.account_balance import AccountBalance
 from app.Schemas.snaptrade import AccountBalanceCreate
 
 class AccountBalanceRepository:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-
-    async def batch_delete_and_create_for_account(self, account_id: uuid.UUID, balances: list[AccountBalanceCreate]):
+    @staticmethod
+    def build_balances_from_schemas(account_id: uuid.UUID, balances: list[AccountBalanceCreate]) -> list[AccountBalance]:
         """
-        Deletes all existing balances for a given account and creates new ones.
+        Constructs a list of AccountBalance ORM objects from schemas.
+        This method does not interact with the database.
         """
-        await self.db.execute(
-            AccountBalance.__table__.delete().where(AccountBalance.account_id == account_id)
-        )
-
-        new_balances = [
+        return [
             AccountBalance(
                 account_id=account_id,
                 **balance.model_dump()
             ) for balance in balances
         ]
-
-        self.db.add_all(new_balances)
-
-    async def get_by_account_id(self, account_id: uuid.UUID) -> list[AccountBalance]:
-        """
-        Retrieves all balances for a given account.
-        """
-        stmt = select(AccountBalance).where(AccountBalance.account_id == account_id)
-        result = await self.db.execute(stmt)
-        return result.scalars().all()

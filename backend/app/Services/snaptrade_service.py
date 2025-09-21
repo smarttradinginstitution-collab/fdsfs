@@ -609,17 +609,21 @@ class SnapTradeService:
                     order_data = {k: v for k, v in o.items() if k in schema_fields}
                     orders_to_create.append(AccountOrderCreate(**order_data))
 
-            # Initialize repositories
-            positions_repo = AccountPositionRepository(self.db)
-            balances_repo = AccountBalanceRepository(self.db)
-            orders_repo = AccountOrderRepository(self.db)
+            # Build new ORM objects from the validated schemas
+            new_positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
+            new_balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
+            new_orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
 
-            # Perform DB operations in a transaction
-            await positions_repo.batch_delete_and_create_for_account(account_id, positions_to_create)
-            await balances_repo.batch_delete_and_create_for_account(account_id, balances_to_create)
-            await orders_repo.batch_delete_and_create_for_account(account_id, orders_to_create)
+            # Replace the relationships on the account object.
+            # SQLAlchemy's 'cascade="all, delete-orphan"' will handle the deletes and inserts.
+            account.positions = new_positions
+            account.balances = new_balances
+            account.orders = new_orders
 
+            # Add the updated account to the session and commit
+            self.db.add(account)
             await self.db.commit()
+            await self.db.refresh(account) # Refresh to get DB-generated values if needed
 
         except Exception as e:
             await self.db.rollback()
@@ -628,9 +632,5 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("---------------------------------------------")
             raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
-
-        # Refresh the original account object to load the new relationships
-        # This is more efficient than re-querying and avoids identity map conflicts
-        await self.db.refresh(account)
 
         return AccountHoldingsRead.model_validate(account)
