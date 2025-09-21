@@ -579,8 +579,9 @@ class SnapTradeService:
             balances_raw = holdings_data.get('balances', [])
             balances_to_create = []
             for b in balances_raw:
+                currency_obj = b.get('currency') or {}
                 balance_data = {
-                    "currency_code": b.get('currency'),
+                    "currency_code": currency_obj.get('code'),
                     "cash_amount": b.get('cash'),
                     "buying_power": b.get('buyingPower')
                 }
