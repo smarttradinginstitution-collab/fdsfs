@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.Models.brokerage_account import BrokerageAccount
 
 class BrokerageAccountRepository:
@@ -42,3 +43,19 @@ class BrokerageAccountRepository:
 
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_by_id(self, account_id: uuid.UUID) -> BrokerageAccount | None:
+        """
+        Retrieves a single brokerage account by its ID, eagerly loading related holdings.
+        """
+        stmt = (
+            select(BrokerageAccount)
+            .where(BrokerageAccount.id == account_id)
+            .options(
+                selectinload(BrokerageAccount.positions),
+                selectinload(BrokerageAccount.balances),
+                selectinload(BrokerageAccount.orders)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()

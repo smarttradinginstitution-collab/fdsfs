@@ -240,6 +240,26 @@ router_snaptrade.post(
 
 router.include_router(router_snaptrade)
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 💼 ACCOUNTS (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Schemas.snaptrade import AccountHoldingsRead
+
+router_accounts = APIRouter(
+    prefix="/api/v1/accounts",
+    tags=["Accounts"],
+    dependencies=[Depends(get_current_claims)],
+)
+
+router_accounts.get(
+    "/{account_id}/holdings",
+    response_model=AccountHoldingsRead,
+    summary="Get all holdings for a specific trading account",
+)(snaptrade.get_account_holdings)
+
+router.include_router(router_accounts)
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 👑 ADMIN (protetto: admin)
 # ──────────────────────────────────────────────────────────────────────────────

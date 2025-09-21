@@ -12,6 +12,66 @@ class ProfileRead(BaseModel):
     class Config:
         from_attributes = True
 
+# Schemas for AccountPosition
+class AccountPositionBase(BaseModel):
+    symbol: str
+    description: Optional[str] = None
+    units: float
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    open_pnl: Optional[float] = None
+    average_purchase_price: Optional[float] = None
+
+class AccountPositionCreate(AccountPositionBase):
+    pass
+
+class AccountPositionRead(AccountPositionBase):
+    id: uuid.UUID
+
+    class Config:
+        from_attributes = True
+
+# Schemas for AccountBalance
+class AccountBalanceBase(BaseModel):
+    currency_code: str
+    cash_amount: Optional[float] = None
+    buying_power: Optional[float] = None
+
+class AccountBalanceCreate(AccountBalanceBase):
+    pass
+
+class AccountBalanceRead(AccountBalanceBase):
+    class Config:
+        from_attributes = True
+
+# Schemas for AccountOrder
+class AccountOrderBase(BaseModel):
+    id: str  # brokerage_order_id from SnapTrade
+    symbol: str
+    action: Optional[str] = None
+    status: Optional[str] = None
+    total_quantity: Optional[float] = None
+    filled_quantity: Optional[float] = None
+    execution_price: Optional[float] = None
+    limit_price: Optional[float] = None
+    time_placed: Optional[datetime.datetime] = None
+
+class AccountOrderCreate(AccountOrderBase):
+    pass
+
+class AccountOrderRead(AccountOrderBase):
+    class Config:
+        from_attributes = True
+
+# Final response model for the holdings endpoint
+class AccountHoldingsRead(BaseModel):
+    positions: list[AccountPositionRead]
+    balances: list[AccountBalanceRead]
+    orders: list[AccountOrderRead]
+
+    class Config:
+        from_attributes = True
+
 class ReconnectRequest(BaseModel):
     connection_id: str
 

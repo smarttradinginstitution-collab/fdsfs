@@ -5,6 +5,9 @@ from sqlalchemy import String, ForeignKey, TIMESTAMP, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
+from app.Models.account_position import AccountPosition
+from app.Models.account_balance import AccountBalance
+from app.Models.account_order import AccountOrder
 
 class BrokerageAccount(Base):
     __tablename__ = "brokerage_accounts"
@@ -26,3 +29,8 @@ class BrokerageAccount(Base):
 
     # Relationship to BrokerageConnection (many-to-one)
     connection: Mapped["BrokerageConnection"] = relationship(back_populates="brokerage_accounts")
+
+    # Relationships to holdings (one-to-many)
+    positions: Mapped[list["AccountPosition"]] = relationship("AccountPosition", back_populates="account", cascade="all, delete-orphan")
+    balances: Mapped[list["AccountBalance"]] = relationship("AccountBalance", back_populates="account", cascade="all, delete-orphan")
+    orders: Mapped[list["AccountOrder"]] = relationship("AccountOrder", back_populates="account", cascade="all, delete-orphan")

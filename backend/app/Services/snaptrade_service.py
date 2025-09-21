@@ -8,8 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
 from app.Repositories.brokerage_account_repository import BrokerageAccountRepository
+from app.Repositories.account_positions_repository import AccountPositionRepository
+from app.Repositories.account_balances_repository import AccountBalanceRepository
+from app.Repositories.account_orders_repository import AccountOrderRepository
 from app.Models.profile import Profile
 from app.Models.brokerage_account import BrokerageAccount
+from app.Schemas.snaptrade import AccountHoldingsRead, AccountPositionCreate, AccountBalanceCreate, AccountOrderCreate
 from app.config import settings
 from snaptrade_client import SnapTrade
 
@@ -536,3 +540,97 @@ class SnapTradeService:
             "accounts": local_accounts,
             "warning": sync_warning
         }
+
+    async def sync_and_get_account_holdings(self, user_id: uuid.UUID, account_id: uuid.UUID) -> AccountHoldingsRead:
+        """
+        Synchronizes and retrieves all holdings (positions, balances, orders) for a specific trading account.
+        The data is fetched from SnapTrade, stored in the local database using a "delete and recreate" strategy,
+        and then read back from the local database to be returned.
+        """
+        account_repo = BrokerageAccountRepository(self.db)
+        account = await account_repo.get_by_id(account_id)
+
+        # Security check: Ensure account exists and belongs to the user
+        if not account or account.user_id != user_id:
+            raise SnapTradeConnectionError("Account not found or permission denied.")
+
+        # Get user's SnapTrade secret
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+        user_secret = user.profile.snaptrade_user_secret
+
+        try:
+            # Initialize SnapTrade client and fetch holdings
+            client = SnapTrade(
+                consumer_key=settings.SNAPTRADE_CONSUMER_KEY,
+                client_id=settings.SNAPTRADE_CLIENT_ID
+            )
+            api_response = client.account_information.get_user_holdings(
+                user_id=str(user_id),
+                user_secret=user_secret,
+                account_id=str(account_id)
+            )
+            holdings_data = api_response.body
+
+            # Prepare data using Pydantic schemas for validation
+            positions_raw = holdings_data.get('positions', [])
+            positions_to_create = []
+            for p in positions_raw:
+                symbol_obj = p.pop('symbol', {}) or {}
+                p['symbol'] = symbol_obj.get('symbol', {}).get('symbol') # Extract nested symbol string
+                # Ensure currency is also handled if it's an object
+                currency_obj = p.pop('currency', {}) or {}
+                p['currency'] = currency_obj.get('code')
+                positions_to_create.append(AccountPositionCreate(**p))
+
+            balances_raw = holdings_data.get('balances', [])
+            balances_to_create = []
+            for b in balances_raw:
+                currency_obj = b.get('currency') or {}
+                balance_data = {
+                    "currency_code": currency_obj.get('code'),
+                    "cash_amount": b.get('cash'),
+                    "buying_power": b.get('buyingPower')
+                }
+                validated_data = {k: v for k, v in balance_data.items() if v is not None}
+                balances_to_create.append(AccountBalanceCreate(**validated_data))
+
+            orders_raw = holdings_data.get('orders', [])
+            orders_to_create = []
+            for o in orders_raw:
+                # Map brokerage_order_id to id field and extract nested symbol
+                o['id'] = o.pop('brokerage_order_id', None)
+                symbol_obj = o.pop('universal_symbol', {}) or {}
+                o['symbol'] = symbol_obj.get('symbol')
+                if o['id']: # Only include orders with an ID
+                    # We only pass fields defined in the schema to avoid validation errors
+                    schema_fields = AccountOrderCreate.model_fields.keys()
+                    order_data = {k: v for k, v in o.items() if k in schema_fields}
+                    orders_to_create.append(AccountOrderCreate(**order_data))
+
+            # Build new ORM objects from the validated schemas
+            new_positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
+            new_balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
+            new_orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
+
+            # Replace the relationships on the account object.
+            # SQLAlchemy's 'cascade="all, delete-orphan"' will handle the deletes and inserts.
+            account.positions = new_positions
+            account.balances = new_balances
+            account.orders = new_orders
+
+            # Add the updated account to the session and commit
+            self.db.add(account)
+            await self.db.commit()
+            await self.db.refresh(account) # Refresh to get DB-generated values if needed
+
+        except Exception as e:
+            await self.db.rollback()
+            print("--- SNAPTRADE GET/SYNC HOLDINGS API ERROR ---")
+            print(f"An exception occurred: {type(e).__name__}")
+            print(f"Exception details: {e}")
+            print("---------------------------------------------")
+            raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
+
+        return AccountHoldingsRead.model_validate(account)
