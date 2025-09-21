@@ -660,4 +660,9 @@ class SnapTradeService:
             print("---------------------------------------------")
             raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
 
-        return AccountHoldingsRead.model_validate(account)
+        return AccountHoldingsRead(
+            account=account,
+            positions=account.positions,
+            balances=account.balances,
+            orders=account.orders
+        )
