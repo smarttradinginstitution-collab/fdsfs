@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 import uuid
-from typing import Union
+import json
+from typing import Union, List
 from datetime import datetime, timezone
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Repositories.brokerage_connection_repository import BrokerageConnectionRepository
@@ -719,3 +721,112 @@ class SnapTradeService:
             orders=account.orders,
             warning=warning_payload
         )
+
+    async def sync_and_get_recent_orders(self, user_id: uuid.UUID, account_id: uuid.UUID) -> List[AccountOrder]:
+        """
+        Fetches recent orders from SnapTrade for a specific account, upserts them
+        into the local database, and returns the updated orders.
+        """
+        # 1. Get user credentials and initialize client
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User profile or SnapTrade secret not found.")
+
+        user_secret = user.profile.snaptrade_user_secret
+        client = SnapTrade(consumer_key=settings.SNAPTRADE_CONSUMER_KEY, client_id=settings.SNAPTRADE_CLIENT_ID)
+
+        # 2. Fetch recent orders from SnapTrade API
+        try:
+            orders_response = client.account_information.get_user_account_recent_orders(
+                user_id=str(user_id),
+                user_secret=user_secret,
+                account_id=str(account_id),
+                only_executed=False  # As per requirement
+            )
+            raw_orders = orders_response.body
+        except Exception as e:
+            print(f"--- SNAPTRADE GET_USER_ACCOUNT_RECENT_ORDERS FAILED for account {account_id}: {e} ---")
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to fetch recent orders from SnapTrade.")
+
+        if not raw_orders:
+            return []
+
+        # 3. Upsert securities first to maintain foreign key integrity
+        securities_to_upsert = []
+        for o in raw_orders:
+            if o.get('universal_symbol'):
+                securities_to_upsert.append(o['universal_symbol'])
+            if o.get('option_symbol', {}).get('underlying_symbol'):
+                securities_to_upsert.append(o['option_symbol']['underlying_symbol'])
+            if o.get('quote_universal_symbol'):
+                securities_to_upsert.append(o['quote_universal_symbol'])
+
+        # Deduplicate securities by their ID
+        unique_securities = {s['id']: s for s in securities_to_upsert if s.get('id')}.values()
+
+        if unique_securities:
+            security_repo = SecurityRepository(self.db)
+            security_schemas = [SecurityCreate.model_validate(s) for s in unique_securities]
+            await security_repo.upsert_securities(security_schemas)
+
+        # 4. Prepare data for the order repository
+        orders_to_upsert = []
+        order_ids = []
+        for o in raw_orders:
+            brokerage_order_id = o.get('brokerage_order_id')
+            if not brokerage_order_id:
+                continue
+
+            order_ids.append(brokerage_order_id)
+            symbol_obj = o.get('universal_symbol') or {}
+            child_orders = o.get('child_brokerage_order_ids') or {}
+            option_data = o.get('option_symbol')
+
+            order_data = {
+                "id": brokerage_order_id,
+                "account_id": account_id,
+                "symbol": symbol_obj.get('raw_symbol') or symbol_obj.get('symbol'),
+                "action": o.get('action'),
+                "status": o.get('status'),
+                "total_quantity": o.get('total_quantity'),
+                "open_quantity": o.get('open_quantity'),
+                "canceled_quantity": o.get('canceled_quantity'),
+                "filled_quantity": o.get('filled_quantity'),
+                "execution_price": o.get('execution_price'),
+                "limit_price": o.get('limit_price'),
+                "stop_price": o.get('stop_price'),
+                "order_type": o.get('order_type'),
+                "time_in_force": o.get('time_in_force'),
+                "time_placed": o.get('time_placed'),
+                "time_updated": o.get('time_updated'),
+                "time_executed": o.get('time_executed'),
+                "expiry_date": o.get('expiry_date'),
+                "take_profit_order_id": child_orders.get('take_profit_order_id'),
+                "stop_loss_order_id": child_orders.get('stop_loss_order_id'),
+                "quote_universal_symbol": o.get('quote_universal_symbol'),
+                "quote_currency": o.get('quote_currency'),
+                "universal_symbol": symbol_obj,
+                "option_symbol": None
+            }
+
+            if option_data:
+                underlying = option_data.get('underlying_symbol') or {}
+                order_data["option_symbol"] = {
+                    "ticker": option_data.get('ticker'),
+                    "option_type": option_data.get('option_type'),
+                    "strike_price": option_data.get('strike_price'),
+                    "expiration_date": option_data.get('expiration_date'),
+                    "is_mini_option": option_data.get('is_mini_option'),
+                    "underlying_security_id": underlying.get('id')
+                }
+
+            orders_to_upsert.append(order_data)
+
+        # 5. Call repository to upsert data
+        if orders_to_upsert:
+            order_repo = AccountOrderRepository(self.db)
+            await order_repo.upsert_orders_and_options(orders_to_upsert)
+
+        # 6. Fetch and return the updated orders from our DB
+        order_repo = AccountOrderRepository(self.db)
+        return await order_repo.get_orders_by_ids(order_ids)
