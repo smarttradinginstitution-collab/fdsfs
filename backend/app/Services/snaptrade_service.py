@@ -629,8 +629,8 @@ class SnapTradeService:
             print("---------------------------------------------")
             raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
 
-        # Always read from our local DB to return the data
-        # We re-fetch from the DB to get objects with relationships loaded
-        refreshed_account = await account_repo.get_by_id(account_id)
+        # Refresh the original account object to load the new relationships
+        # This is more efficient than re-querying and avoids identity map conflicts
+        await self.db.refresh(account)
 
-        return AccountHoldingsRead.model_validate(refreshed_account)
+        return AccountHoldingsRead.model_validate(account)
