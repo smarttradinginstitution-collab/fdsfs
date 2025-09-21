@@ -45,6 +45,24 @@ class AccountBalanceRead(AccountBalanceBase):
     class Config:
         from_attributes = True
 
+# Schemas for AccountOrderOption
+class AccountOrderOptionBase(BaseModel):
+    option_ticker: str
+    option_type: Optional[str] = None
+    strike_price: Optional[float] = None
+    expiration_date: Optional[datetime.date] = None
+    is_mini_option: Optional[bool] = None
+
+class AccountOrderOptionCreate(AccountOrderOptionBase):
+    underlying_security_id: Optional[uuid.UUID] = None
+
+class AccountOrderOptionRead(AccountOrderOptionBase):
+    id: uuid.UUID
+    underlying_security_id: Optional[uuid.UUID] = None
+
+    class Config:
+        from_attributes = True
+
 # Schemas for AccountOrder
 class AccountOrderBase(BaseModel):
     id: str  # brokerage_order_id from SnapTrade
@@ -52,15 +70,28 @@ class AccountOrderBase(BaseModel):
     action: Optional[str] = None
     status: Optional[str] = None
     total_quantity: Optional[float] = None
+    open_quantity: Optional[float] = None
+    canceled_quantity: Optional[float] = None
     filled_quantity: Optional[float] = None
     execution_price: Optional[float] = None
     limit_price: Optional[float] = None
+    stop_price: Optional[float] = None
+    order_type: Optional[str] = None
+    time_in_force: Optional[str] = None
     time_placed: Optional[datetime.datetime] = None
+    time_updated: Optional[datetime.datetime] = None
+    time_executed: Optional[datetime.datetime] = None
+    expiry_date: Optional[datetime.datetime] = None
+    take_profit_order_id: Optional[str] = None
+    stop_loss_order_id: Optional[str] = None
+    quote_universal_symbol: Optional[dict] = None
+    quote_currency: Optional[dict] = None
 
 class AccountOrderCreate(AccountOrderBase):
-    pass
+    option_details: Optional[AccountOrderOptionCreate] = None
 
 class AccountOrderRead(AccountOrderBase):
+    option_details: Optional[AccountOrderOptionRead] = None
     class Config:
         from_attributes = True
 
@@ -81,6 +112,7 @@ class AccountHoldingsRead(BaseModel):
     positions: list[AccountPositionRead]
     balances: list[AccountBalanceRead]
     orders: list[AccountOrderRead]
+    warning: Optional[dict] = None
 
     class Config:
         from_attributes = True

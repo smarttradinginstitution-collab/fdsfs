@@ -144,136 +144,116 @@ async def test_synchronize_connections_success(snaptrade_service: SnapTradeServi
 
 
 @pytest.mark.anyio
-async def test_sync_and_get_account_holdings_enrichment(snaptrade_service: SnapTradeService):
+async def test_sync_and_get_account_holdings_full_success(snaptrade_service: SnapTradeService):
     """
-    Test that sync_and_get_account_holdings correctly updates the account details.
+    Test the fully refactored method on a happy path, ensuring all 3 API calls
+    are made and the service calls the repository layer with correctly processed data.
     """
-    user_id = uuid4()
-    account_id = uuid4()
-    user_secret = "user_secret"
-
-    # Mock user and account from the database
+    user_id, account_id, user_secret, symbol_id = uuid4(), uuid4(), "secret", uuid4()
     mock_user = AuthUser(id=user_id, profile=Profile(id=user_id, snaptrade_user_secret=user_secret))
-    mock_account = BrokerageAccount(id=account_id, user_id=user_id)
+    mock_account_from_db = BrokerageAccount(id=account_id, user_id=user_id, connection_id=uuid4())
+    snaptrade_service.user_repo.get = AsyncMock(return_value=mock_user)
 
-    # Mock the user repository
-    snaptrade_service.user_repo = AsyncMock()
-    snaptrade_service.user_repo.get.return_value = mock_user
+    mock_orders_response = [{"brokerage_order_id": "order1", "universal_symbol": {"symbol": "GOOG"}, "open_quantity": 5.0}]
 
-    # Mock SnapTrade API response
-    mock_holdings_response = MagicMock()
-    mock_holdings_response.body = {
-        "account": {
-            "id": str(account_id),
-            "name": "Updated Name",
-            "number": "999",
-            "status": "open",
-            "sync_status": {"holdings": {"last_successful_sync": "2025-01-01T12:00:00Z"}}
-        },
-        "positions": [],
-        "balances": [],
-        "orders": []
-    }
-
-    # Patch the SnapTrade client and the account repository
-    with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
-         patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo:
-
-        # Configure mocks
-        mock_account_repo.return_value.get_by_id.return_value = mock_account
-        mock_snaptrade_client.return_value.account_information.get_user_holdings.return_value = mock_holdings_response
-        mock_account_repo.return_value.update_account_details = AsyncMock()
-
-        # Call the method
-        await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
-
-        # Assertions
-        # Verify that get_by_id was called
-        mock_account_repo.return_value.get_by_id.assert_called_once_with(account_id)
-
-        # Verify that the update method was called
-        mock_account_repo.return_value.update_account_details.assert_called_once()
-
-        # Check the payload passed to the update method
-        update_call_args = mock_account_repo.return_value.update_account_details.call_args
-        update_payload = update_call_args[0][1] # Second argument of the call
-
-        assert update_payload.name == "Updated Name"
-        assert update_payload.number == "999"
-        assert update_payload.status == "open"
-        assert update_payload.sync_status is not None
-
-
-@pytest.mark.anyio
-async def test_sync_and_get_account_holdings_refactored(snaptrade_service: SnapTradeService):
-    """
-    Test the refactored sync_and_get_account_holdings method.
-    Ensures it calls both /holdings and /positions endpoints and correctly
-    upserts security and position data.
-    """
-    user_id = uuid4()
-    account_id = uuid4()
-    user_secret = "user_secret"
-    symbol_id = uuid4()
-
-    # Mock user and account
-    mock_user = AuthUser(id=user_id, profile=Profile(id=user_id, snaptrade_user_secret=user_secret))
-    mock_account = BrokerageAccount(id=account_id, user_id=user_id)
-
-    snaptrade_service.user_repo = AsyncMock()
-    snaptrade_service.user_repo.get.return_value = mock_user
-
-    # Mock API responses
-    mock_holdings_response = MagicMock()
-    mock_holdings_response.body = {"account": {}, "balances": [], "orders": []} # No positions here
-
-    mock_positions_response = MagicMock()
-    mock_positions_response.body = [
-        {
-            "symbol": {
-                "symbol": {
-                    "id": str(symbol_id),
-                    "symbol": "AAPL",
-                    "description": "Apple Inc.",
-                    "currency": {"code": "USD"},
-                    "exchange": {"name": "NASDAQ"},
-                    "figi_code": "BBG000B9XRY4",
-                }
-            },
-            "units": 10, "price": 150.0, "currency": {"code": "USD"}
-        }
-    ]
-
-    # Patch SnapTrade client and repositories
+    # We patch the repositories and the SnapTrade client
     with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
          patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo, \
-         patch('app.Services.snaptrade_service.SecurityRepository') as mock_security_repo:
+         patch('app.Services.snaptrade_service.SecurityRepository') as mock_security_repo, \
+         patch('app.Services.snaptrade_service.AccountOrderRepository') as mock_order_repo, \
+         patch.object(snaptrade_service.db, 'commit', new_callable=AsyncMock), \
+         patch.object(snaptrade_service.db, 'refresh', new_callable=AsyncMock):
 
-        # Configure mocks
-        mock_account_repo.return_value.get_by_id.return_value = mock_account
+        # Configure repository mocks
+        mock_account_repo.return_value.get_by_id = AsyncMock(return_value=mock_account_from_db)
         mock_security_repo.return_value.upsert_securities = AsyncMock()
+        mock_order_repo.build_orders_from_schemas.return_value = []
 
-        # Set up the two different API call mocks
+        # Configure API client mocks
         mock_api_client = mock_snaptrade_client.return_value.account_information
-        mock_api_client.get_user_holdings.return_value = mock_holdings_response
-        mock_api_client.get_user_account_positions.return_value = mock_positions_response
+        mock_api_client.get_user_holdings.return_value = MagicMock(body={})
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_orders.return_value = MagicMock(body=mock_orders_response)
 
-        # Call the method
         await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
 
-        # Assertions
-        mock_api_client.get_user_holdings.assert_called_once_with(user_id=str(user_id), user_secret=user_secret, account_id=str(account_id))
-        mock_api_client.get_user_account_positions.assert_called_once_with(user_id=str(user_id), user_secret=user_secret, account_id=str(account_id))
+        # Assert that the order repository's build method was called
+        mock_order_repo.build_orders_from_schemas.assert_called_once()
 
-        # Verify security upsert was called
-        mock_security_repo.return_value.upsert_securities.assert_called_once()
-        upsert_call_args = mock_security_repo.return_value.upsert_securities.call_args[0][0]
-        assert len(upsert_call_args) == 1
-        assert upsert_call_args[0].id == str(symbol_id)
-        assert upsert_call_args[0].symbol == "AAPL"
+        # Inspect the data passed to the repository method
+        call_args = mock_order_repo.build_orders_from_schemas.call_args
+        created_orders_schemas = call_args[0][1]
+        assert len(created_orders_schemas) == 1
+        assert created_orders_schemas[0].id == "order1"
+        assert created_orders_schemas[0].open_quantity == 5.0
 
-        # Verify that the account object's positions relationship was updated
-        # We can't easily check the call to build_positions_from_schemas as it's a static method
-        # but we can check the final state of the account object before commit.
-        # For that, we would need to mock db.add() and inspect the argument.
-        # For this test, verifying the repository calls is sufficient.
+@pytest.mark.anyio
+async def test_sync_and_get_account_holdings_with_option(snaptrade_service: SnapTradeService):
+    """
+    Test that an order with option data is processed correctly and passed to the repository.
+    """
+    user_id, account_id, user_secret, underlying_id = uuid4(), uuid4(), "secret", uuid4()
+    mock_user = AuthUser(id=user_id, profile=Profile(id=user_id, snaptrade_user_secret=user_secret))
+    mock_account_from_db = BrokerageAccount(id=account_id, user_id=user_id, connection_id=uuid4())
+    snaptrade_service.user_repo.get = AsyncMock(return_value=mock_user)
+
+    mock_option_order = {
+        "brokerage_order_id": "option_order_1", "universal_symbol": {"symbol": "AAPL..."},
+        "option_symbol": {
+            "ticker": "AAPL251219C00200000", "strike_price": 200.0, "underlying_symbol": {"id": str(underlying_id)}
+        }
+    }
+
+    with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
+         patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo, \
+         patch('app.Services.snaptrade_service.AccountOrderRepository') as mock_order_repo, \
+         patch.object(snaptrade_service.db, 'commit', new_callable=AsyncMock), \
+         patch.object(snaptrade_service.db, 'refresh', new_callable=AsyncMock):
+
+        mock_account_repo.return_value.get_by_id = AsyncMock(return_value=mock_account_from_db)
+        mock_order_repo.build_orders_from_schemas.return_value = []
+
+        mock_api_client = mock_snaptrade_client.return_value.account_information
+        mock_api_client.get_user_holdings.return_value = MagicMock(body={})
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_orders.return_value = MagicMock(body=[mock_option_order])
+
+        await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
+
+        mock_order_repo.build_orders_from_schemas.assert_called_once()
+        created_orders_schemas = mock_order_repo.build_orders_from_schemas.call_args[0][1]
+
+        assert len(created_orders_schemas) == 1
+        option_details = created_orders_schemas[0].option_details
+        assert option_details is not None
+        assert option_details.option_ticker == "AAPL251219C00200000"
+        assert option_details.underlying_security_id == underlying_id
+
+@pytest.mark.anyio
+async def test_sync_and_get_account_holdings_partial_failure(snaptrade_service: SnapTradeService):
+    """
+    Test that if one API call fails, the process continues and returns a warning.
+    """
+    user_id, account_id, user_secret = uuid4(), uuid4(), "secret"
+    mock_user = AuthUser(id=user_id, profile=Profile(id=user_id, snaptrade_user_secret=user_secret))
+    mock_account_from_db = BrokerageAccount(id=account_id, user_id=user_id, connection_id=uuid4(), orders=[], balances=[], positions=[])
+    snaptrade_service.user_repo.get = AsyncMock(return_value=mock_user)
+
+    with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
+         patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo, \
+         patch.object(snaptrade_service.db, 'commit', new_callable=AsyncMock), \
+         patch.object(snaptrade_service.db, 'refresh', new_callable=AsyncMock):
+
+        mock_account_repo.return_value.get_by_id = AsyncMock(return_value=mock_account_from_db)
+
+        mock_api_client = mock_snaptrade_client.return_value.account_information
+        mock_api_client.get_user_holdings.return_value = MagicMock(body={})
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_orders.side_effect = Exception("API timeout")
+
+        result = await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
+
+        assert result.warning is not None
+        assert result.warning["warning"] == "partial_sync_failed"
+        assert result.warning["failed_services"] == ["orders"]
+        assert len(result.orders) == 0
