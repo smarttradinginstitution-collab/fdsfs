@@ -160,6 +160,7 @@ async def test_sync_and_get_account_holdings_full_success(snaptrade_service: Sna
     with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
          patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo, \
          patch('app.Services.snaptrade_service.SecurityRepository') as mock_security_repo, \
+         patch('app.Services.snaptrade_service.AccountPositionRepository') as mock_position_repo, \
          patch('app.Services.snaptrade_service.AccountOrderRepository') as mock_order_repo, \
          patch.object(snaptrade_service.db, 'commit', new_callable=AsyncMock), \
          patch.object(snaptrade_service.db, 'refresh', new_callable=AsyncMock):
@@ -168,24 +169,37 @@ async def test_sync_and_get_account_holdings_full_success(snaptrade_service: Sna
         mock_account_repo.return_value.get_by_id = AsyncMock(return_value=mock_account_from_db)
         mock_security_repo.return_value.upsert_securities = AsyncMock()
         mock_order_repo.build_orders_from_schemas.return_value = []
+        mock_position_repo.build_positions_from_schemas.return_value = []
 
-        # Configure API client mocks
+
+        # Configure API client mocks to return enriched data
+        mock_positions_response = [{
+            "symbol": {"symbol": {
+                "id": str(symbol_id), "symbol": "AAPL", "raw_symbol": "AAPL", "type": {"code": "cs", "description": "Common Stock"}
+            }},
+            "units": 10, "cash_equivalent": True
+        }]
         mock_api_client = mock_snaptrade_client.return_value.account_information
         mock_api_client.get_user_holdings.return_value = MagicMock(body={})
-        mock_api_client.get_user_account_positions.return_value = MagicMock(body=[])
+        mock_api_client.get_user_account_positions.return_value = MagicMock(body=mock_positions_response)
         mock_api_client.get_user_account_orders.return_value = MagicMock(body=mock_orders_response)
 
         await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
 
-        # Assert that the order repository's build method was called
-        mock_order_repo.build_orders_from_schemas.assert_called_once()
+        # Assert that the security repository was called with the enriched data
+        mock_security_repo.return_value.upsert_securities.assert_called_once()
+        upsert_args = mock_security_repo.return_value.upsert_securities.call_args[0][0]
+        assert len(upsert_args) == 1
+        created_security_schema = upsert_args[0]
+        assert created_security_schema.raw_symbol == "AAPL"
+        assert created_security_schema.type_code == "cs"
 
-        # Inspect the data passed to the repository method
-        call_args = mock_order_repo.build_orders_from_schemas.call_args
-        created_orders_schemas = call_args[0][1]
-        assert len(created_orders_schemas) == 1
-        assert created_orders_schemas[0].id == "order1"
-        assert created_orders_schemas[0].open_quantity == 5.0
+        # Assert that the position repository was called with the enriched data
+        mock_position_repo.build_positions_from_schemas.assert_called_once()
+        position_call_args = mock_position_repo.build_positions_from_schemas.call_args[0][1]
+        assert len(position_call_args) == 1
+        created_position_schema = position_call_args[0]
+        assert created_position_schema.cash_equivalent is True
 
 @pytest.mark.anyio
 async def test_sync_and_get_account_holdings_with_option(snaptrade_service: SnapTradeService):
