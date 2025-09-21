@@ -81,3 +81,18 @@ class BrokerageAccountRepository:
         )
         await self.db.execute(stmt)
         # The commit will be handled in the service layer
+
+    async def update_sync_timestamp(self, account_id: uuid.UUID, field_name: str) -> None:
+        """
+        Updates a specific timestamp field on the brokerage account to the current time.
+        """
+        from sqlalchemy import update
+        from datetime import datetime, timezone
+
+        stmt = (
+            update(BrokerageAccount)
+            .where(BrokerageAccount.id == account_id)
+            .values({field_name: datetime.now(timezone.utc)})
+        )
+        await self.db.execute(stmt)
+        # The commit will be handled in the service layer

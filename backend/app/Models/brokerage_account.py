@@ -23,6 +23,7 @@ class BrokerageAccount(Base):
     institution_name: Mapped[str] = mapped_column(String)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     sync_status: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    last_activities_synced_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
 

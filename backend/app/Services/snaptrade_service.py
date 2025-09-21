@@ -316,6 +316,11 @@ class SnapTradeService:
                 await activity_repo.create_activities(activities_to_create)
                 print(f"Prepared to insert {len(activities_to_create)} new activities.")
 
+                # Update the sync timestamp on the account
+                account_repo = BrokerageAccountRepository(self.db)
+                await account_repo.update_sync_timestamp(account_id, "last_activities_synced_at")
+                print(f"Updated last_activities_synced_at for account {account_id}.")
+
             # The 'async with self.db.begin()' block handles the commit.
             print(f"--- Activity synchronization finished successfully for account_id: {account_id} ---")
 
