@@ -13,6 +13,7 @@ from app.Repositories.account_balances_repository import AccountBalanceRepositor
 from app.Repositories.account_orders_repository import AccountOrderRepository
 from app.Models.profile import Profile
 from app.Models.brokerage_account import BrokerageAccount
+from app.Schemas.brokerage_account import BrokerageAccountUpdate
 from app.Schemas.snaptrade import AccountHoldingsRead, AccountPositionCreate, AccountBalanceCreate, AccountOrderCreate
 from app.config import settings
 from snaptrade_client import SnapTrade
@@ -544,8 +545,8 @@ class SnapTradeService:
     async def sync_and_get_account_holdings(self, user_id: uuid.UUID, account_id: uuid.UUID) -> AccountHoldingsRead:
         """
         Synchronizes and retrieves all holdings (positions, balances, orders) for a specific trading account.
-        The data is fetched from SnapTrade, stored in the local database using a "delete and recreate" strategy,
-        and then read back from the local database to be returned.
+        The data is fetched from SnapTrade, stored in the local database, and then read back to be returned.
+        This now includes updating the account's own details like status and sync_status.
         """
         account_repo = BrokerageAccountRepository(self.db)
         account = await account_repo.get_by_id(account_id)
@@ -573,13 +574,23 @@ class SnapTradeService:
             )
             holdings_data = api_response.body
 
-            # Prepare data using Pydantic schemas for validation
+            # (NEW) Extract account details and update the brokerage_accounts table
+            account_details_raw = holdings_data.get('account', {})
+            if account_details_raw:
+                update_payload = BrokerageAccountUpdate(
+                    name=account_details_raw.get('name'),
+                    number=account_details_raw.get('number'),
+                    status=account_details_raw.get('status'),
+                    sync_status=account_details_raw.get('sync_status')
+                )
+                await account_repo.update_account_details(account_id, update_payload)
+
+            # (EXISTING) Process and upsert positions, balances, and orders
             positions_raw = holdings_data.get('positions', [])
             positions_to_create = []
             for p in positions_raw:
                 symbol_obj = p.pop('symbol', {}) or {}
-                p['symbol'] = symbol_obj.get('symbol', {}).get('symbol') # Extract nested symbol string
-                # Ensure currency is also handled if it's an object
+                p['symbol'] = symbol_obj.get('symbol', {}).get('symbol')
                 currency_obj = p.pop('currency', {}) or {}
                 p['currency'] = currency_obj.get('code')
                 positions_to_create.append(AccountPositionCreate(**p))
@@ -599,31 +610,25 @@ class SnapTradeService:
             orders_raw = holdings_data.get('orders', [])
             orders_to_create = []
             for o in orders_raw:
-                # Map brokerage_order_id to id field and extract nested symbol
                 o['id'] = o.pop('brokerage_order_id', None)
                 symbol_obj = o.pop('universal_symbol', {}) or {}
                 o['symbol'] = symbol_obj.get('symbol')
-                if o['id']: # Only include orders with an ID
-                    # We only pass fields defined in the schema to avoid validation errors
+                if o['id']:
                     schema_fields = AccountOrderCreate.model_fields.keys()
                     order_data = {k: v for k, v in o.items() if k in schema_fields}
                     orders_to_create.append(AccountOrderCreate(**order_data))
 
-            # Build new ORM objects from the validated schemas
             new_positions = AccountPositionRepository.build_positions_from_schemas(account_id, positions_to_create)
             new_balances = AccountBalanceRepository.build_balances_from_schemas(account_id, balances_to_create)
             new_orders = AccountOrderRepository.build_orders_from_schemas(account_id, orders_to_create)
 
-            # Replace the relationships on the account object.
-            # SQLAlchemy's 'cascade="all, delete-orphan"' will handle the deletes and inserts.
             account.positions = new_positions
             account.balances = new_balances
             account.orders = new_orders
 
-            # Add the updated account to the session and commit
             self.db.add(account)
             await self.db.commit()
-            await self.db.refresh(account) # Refresh to get DB-generated values if needed
+            await self.db.refresh(account)
 
         except Exception as e:
             await self.db.rollback()
@@ -633,4 +638,6 @@ class SnapTradeService:
             print("---------------------------------------------")
             raise SnapTradeConnectionError("Failed to synchronize account holdings from SnapTrade.")
 
+        # The 'account' object is now updated with the latest details from the DB
+        # The AccountHoldingsRead schema expects an 'account' attribute, which our ORM object has.
         return AccountHoldingsRead.model_validate(account)

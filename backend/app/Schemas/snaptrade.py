@@ -63,8 +63,20 @@ class AccountOrderRead(AccountOrderBase):
     class Config:
         from_attributes = True
 
+# Schemas for enriched Brokerage Account data in the holdings response
+class BrokerageAccountReadForHoldings(BaseModel):
+    id: uuid.UUID
+    name: Optional[str] = None
+    number: Optional[str] = None
+    status: Optional[str] = None
+    sync_status: Optional[dict] = None
+
+    class Config:
+        from_attributes = True
+
 # Final response model for the holdings endpoint
 class AccountHoldingsRead(BaseModel):
+    account: BrokerageAccountReadForHoldings
     positions: list[AccountPositionRead]
     balances: list[AccountBalanceRead]
     orders: list[AccountOrderRead]

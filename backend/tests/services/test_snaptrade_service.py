@@ -141,3 +141,64 @@ async def test_synchronize_connections_success(snaptrade_service: SnapTradeServi
 
         # Check that the final commit was called
         mock_db_commit.assert_called_once()
+
+
+@pytest.mark.anyio
+async def test_sync_and_get_account_holdings_enrichment(snaptrade_service: SnapTradeService):
+    """
+    Test that sync_and_get_account_holdings correctly updates the account details.
+    """
+    user_id = uuid4()
+    account_id = uuid4()
+    user_secret = "user_secret"
+
+    # Mock user and account from the database
+    mock_user = AuthUser(id=user_id, profile=Profile(id=user_id, snaptrade_user_secret=user_secret))
+    mock_account = BrokerageAccount(id=account_id, user_id=user_id)
+
+    # Mock the user repository
+    snaptrade_service.user_repo = AsyncMock()
+    snaptrade_service.user_repo.get.return_value = mock_user
+
+    # Mock SnapTrade API response
+    mock_holdings_response = MagicMock()
+    mock_holdings_response.body = {
+        "account": {
+            "id": str(account_id),
+            "name": "Updated Name",
+            "number": "999",
+            "status": "open",
+            "sync_status": {"holdings": {"last_successful_sync": "2025-01-01T12:00:00Z"}}
+        },
+        "positions": [],
+        "balances": [],
+        "orders": []
+    }
+
+    # Patch the SnapTrade client and the account repository
+    with patch('app.Services.snaptrade_service.SnapTrade') as mock_snaptrade_client, \
+         patch('app.Services.snaptrade_service.BrokerageAccountRepository') as mock_account_repo:
+
+        # Configure mocks
+        mock_account_repo.return_value.get_by_id.return_value = mock_account
+        mock_snaptrade_client.return_value.account_information.get_user_holdings.return_value = mock_holdings_response
+        mock_account_repo.return_value.update_account_details = AsyncMock()
+
+        # Call the method
+        await snaptrade_service.sync_and_get_account_holdings(user_id, account_id)
+
+        # Assertions
+        # Verify that get_by_id was called
+        mock_account_repo.return_value.get_by_id.assert_called_once_with(account_id)
+
+        # Verify that the update method was called
+        mock_account_repo.return_value.update_account_details.assert_called_once()
+
+        # Check the payload passed to the update method
+        update_call_args = mock_account_repo.return_value.update_account_details.call_args
+        update_payload = update_call_args[0][1] # Second argument of the call
+
+        assert update_payload.name == "Updated Name"
+        assert update_payload.number == "999"
+        assert update_payload.status == "open"
+        assert update_payload.sync_status is not None
