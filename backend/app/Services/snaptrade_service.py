@@ -599,16 +599,50 @@ class SnapTradeService:
             print(f"--- SNAPTRADE GET_USER_HOLDINGS FAILED for account {account_id}: {e} ---")
             warnings.append({"service": "balances", "error": "Failed to sync balances and account details."})
 
-        # API Call 2: Get detailed positions
+        # API Call 2: Get detailed positions (TEMPORARILY MOCKED)
         try:
-            positions_response = client.account_information.get_user_account_positions(
-                user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
-            )
-            positions_data = positions_response.body
+            # --- START TEMPORARY MOCK DATA ---
+            # This block simulates a response from SnapTrade for testing purposes.
+            # It should be removed once testing is complete.
+            mock_positions_data = [
+                {
+                    "symbol": {
+                        "id": "1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a", # Static UUID for AAPL
+                        "symbol": "AAPL",
+                        "raw_symbol": "AAPL",
+                        "description": "Apple Inc.",
+                        "currency": { "code": "USD" },
+                        "exchange": {}, "type": {}, "figi_instrument": {}
+                    },
+                    "units": 10, "price": 175.50, "average_purchase_price": 150.25,
+                    "currency": {"code": "USD"}, "open_pnl": 252.5, "cash_equivalent": False
+                },
+                {
+                    "symbol": {
+                        "id": "2b2b2b2b-2b2b-2b2b-2b2b-2b2b2b2b2b2b", # Static UUID for GOOG
+                        "symbol": "GOOG",
+                        "raw_symbol": "GOOG",
+                        "description": "Alphabet Inc.",
+                        "currency": { "code": "USD" },
+                        "exchange": {}, "type": {}, "figi_instrument": {}
+                    },
+                    "units": 5, "price": 2800.00, "average_purchase_price": 2750.00,
+                    "currency": {"code": "USD"}, "open_pnl": 250.0, "cash_equivalent": False
+                }
+            ]
+            positions_data = mock_positions_data
+            print("--- USING MOCKED POSITIONS DATA ---")
+            # The original API call is commented out below for reference.
+            # positions_response = client.account_information.get_user_account_positions(
+            #     user_id=str(user_id), user_secret=user_secret, account_id=str(account_id)
+            # )
+            # positions_data = positions_response.body
+            # --- END TEMPORARY MOCK DATA ---
 
             securities_to_upsert = []
             for p in positions_data:
-                symbol_data = p.get('symbol', {}).get('symbol', {})
+                # Adjusted to handle the simplified mock structure (no extra 'symbol' nesting)
+                symbol_data = p.get('symbol', {})
                 if not symbol_data or not symbol_data.get('id'):
                     continue
 
@@ -646,7 +680,7 @@ class SnapTradeService:
             if securities_to_upsert:
                 await security_repo.upsert_securities(securities_to_upsert)
         except Exception as e:
-            print(f"--- SNAPTRADE GET_USER_ACCOUNT_POSITIONS FAILED for account {account_id}: {e} ---")
+            print(f"--- SNAPTRADE GET_USER_ACCOUNT_POSITIONS FAILED (WITH MOCK) for account {account_id}: {e} ---")
             warnings.append({"service": "positions", "error": "Failed to sync positions."})
 
         # API Call 3: Get detailed orders (fully enriched)
