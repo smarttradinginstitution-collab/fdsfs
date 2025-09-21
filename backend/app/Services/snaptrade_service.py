@@ -23,8 +23,20 @@ from app.Schemas.security import SecurityCreate
 from app.config import settings
 from snaptrade_client import SnapTrade
 
+# Imports for Activity Sync
+from app.Models.account_activity import AccountActivity
+from app.Models.option_symbol import OptionSymbol
+from app.Repositories.activity_repository import ActivityRepository
+from app.Repositories.option_symbol_repository import OptionSymbolRepository
+from app.Schemas.snaptrade import AccountActivityCreate, OptionSymbolCreate
+
+
 class SnapTradeConnectionError(Exception):
     """Custom exception for SnapTrade connection errors."""
+    pass
+
+class SnapTradeSyncError(Exception):
+    """Custom exception for SnapTrade data synchronization errors."""
     pass
 
 class RateLimitExceededError(Exception):
@@ -198,6 +210,119 @@ class SnapTradeService:
             print(f"Exception details: {e}")
             print("---------------------------------------")
             return {"error": "Failed to rotate SnapTrade user secret. Check backend logs for details."}
+
+    async def sync_account_activities(self, user_id: uuid.UUID, account_id: uuid.UUID):
+        """
+        Synchronizes all historical activities for a given account from SnapTrade
+        using a 'fetch-all-then-write' strategy within a transaction.
+        """
+        print(f"--- Starting activity synchronization for account_id: {account_id} ---")
+        user = await self.user_repo.get(user_id)
+        if not user or not user.profile or not user.profile.snaptrade_user_secret:
+            raise SnapTradeConnectionError("User profile or SnapTrade secret not found.")
+
+        user_secret = user.profile.snaptrade_user_secret
+        client = SnapTrade(consumer_key=settings.SNAPTRADE_CONSUMER_KEY, client_id=settings.SNAPTRADE_CLIENT_ID)
+
+        # 1. Fetch all activities from SnapTrade with pagination
+        all_activities_raw = []
+        offset = 0
+        limit = 100  # A reasonable page size
+        while True:
+            try:
+                print(f"Fetching activities for account {account_id} with offset {offset} and limit {limit}")
+                activities_response = client.account_information.get_account_activities(
+                    user_id=str(user_id),
+                    user_secret=user_secret,
+                    account_id=str(account_id),
+                    limit=limit,
+                    offset=offset,
+                )
+                activities_page = activities_response.body
+                if not activities_page:
+                    break  # No more pages
+                all_activities_raw.extend(activities_page)
+                offset += len(activities_page)
+            except Exception as e:
+                print(f"--- SNAPTRADE GET_ACCOUNT_ACTIVITIES FAILED for account {account_id}: {e} ---")
+                raise SnapTradeSyncError("Failed to fetch activities from SnapTrade. The operation has been aborted, and no data has been changed.")
+
+        print(f"Successfully fetched a total of {len(all_activities_raw)} activities from SnapTrade.")
+
+        # 2. Prepare data for validation and creation
+        securities_to_upsert = {}
+        option_symbols_to_create = {}
+        activities_to_create = []
+
+        for activity_data in all_activities_raw:
+            # Extract security data for upserting
+            if activity_data.get('symbol'):
+                symbol_data = activity_data['symbol']
+                securities_to_upsert[symbol_data['id']] = SecurityCreate.model_validate(symbol_data)
+
+            # Extract option symbol data, ensuring its underlying security is also captured
+            if activity_data.get('option_symbol'):
+                option_data = activity_data['option_symbol']
+                if option_data.get('underlying_symbol'):
+                    underlying_data = option_data['underlying_symbol']
+                    securities_to_upsert[underlying_data['id']] = SecurityCreate.model_validate(underlying_data)
+
+                    # Prepare a flattened dict for OptionSymbolCreate validation
+                    option_create_data = {
+                        "id": option_data.get('id'),
+                        "description": option_data.get('description'),
+                        "option_type": option_data.get('option_type'),
+                        "strike_price": option_data.get('strike_price'),
+                        "expiry_date": option_data.get('expiry_date'),
+                        "underlying_symbol_id": underlying_data.get('id')
+                    }
+                    option_symbols_to_create[option_data['id']] = OptionSymbolCreate.model_validate(option_create_data)
+
+            # Prepare activity data for creation, validating against its schema
+            activity_create_data = {
+                "id": activity_data.get('id'), "user_id": user_id, "account_id": account_id,
+                "security_id": activity_data.get('symbol', {}).get('id'),
+                "option_symbol_id": activity_data.get('option_symbol', {}).get('id'),
+                "type": activity_data.get('type'), "option_type": activity_data.get('option_type'),
+                "price": activity_data.get('price'), "units": activity_data.get('units'),
+                "amount": activity_data.get('amount'), "description": activity_data.get('description'),
+                "trade_date": activity_data.get('trade_date'), "settlement_date": activity_data.get('settlement_date'),
+                "fee": activity_data.get('fee'), "fx_rate": activity_data.get('fx_rate'),
+                "institution": activity_data.get('institution'), "external_reference_id": activity_data.get('external_reference_id'),
+            }
+            validated_activity = AccountActivityCreate.model_validate(activity_create_data)
+            activities_to_create.append(validated_activity)
+
+        # 3. Perform database operations within a single transaction
+        try:
+            async with self.db.begin():
+                # Instantiate repositories
+                security_repo = SecurityRepository(self.db)
+                option_symbol_repo = OptionSymbolRepository(self.db)
+                activity_repo = ActivityRepository(self.db)
+
+                # Upsert dependencies first
+                if securities_to_upsert:
+                    await security_repo.upsert_securities(list(securities_to_upsert.values()))
+                    print(f"Upserted {len(securities_to_upsert)} securities.")
+                if option_symbols_to_create:
+                    await option_symbol_repo.upsert_option_symbols(list(option_symbols_to_create.values()))
+                    print(f"Upserted {len(option_symbols_to_create)} option symbols.")
+
+                # Delete-and-replace activities
+                deleted_count = await activity_repo.delete_by_account_id(account_id)
+                print(f"Deleted {deleted_count} old activities for account {account_id}.")
+
+                await activity_repo.create_activities(activities_to_create)
+                print(f"Prepared to insert {len(activities_to_create)} new activities.")
+
+            # The 'async with self.db.begin()' block handles the commit.
+            print(f"--- Activity synchronization finished successfully for account_id: {account_id} ---")
+
+        except Exception as e:
+            # The 'begin' block will rollback automatically on exception.
+            print(f"--- DATABASE TRANSACTION FAILED for account {account_id}: {e} ---")
+            raise SnapTradeSyncError(f"A database error occurred during the sync process: {e}")
 
     async def refresh_connection_holdings(self, user_id: uuid.UUID, connection_id: uuid.UUID) -> dict:
         """

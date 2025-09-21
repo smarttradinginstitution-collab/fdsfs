@@ -1,8 +1,25 @@
 # backend/conftest.py
 
+from dotenv import load_dotenv
+import os
 import pytest
 import asyncio
 from typing import AsyncGenerator
+
+# Load environment variables from .env file for testing.
+# This must be done before the app and its settings are imported.
+print("Loading .env file for tests...")
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    print(f"Found .env file at: {dotenv_path}")
+    load_dotenv(dotenv_path=dotenv_path)
+else:
+    print("No .env file found, setting dummy environment variables.")
+    # If no .env file, set dummy values to satisfy settings validation during tests
+    os.environ.setdefault('SNAPTRADE_CLIENT_ID', 'dummy_client_id')
+    os.environ.setdefault('SNAPTRADE_CONSUMER_KEY', 'dummy_consumer_key')
+    os.environ.setdefault('SUPABASE_PROJECT_URL', 'http://dummy.url')
+    os.environ.setdefault('SUPABASE_KEY', 'dummy_key')
 from httpx import AsyncClient
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -14,7 +31,26 @@ from sqlalchemy.ext.compiler import compiles
 from app.main import app
 from app.Infrastructure.db import Base
 # Import all models to ensure they are registered with Base
-from app.Models import auth_user, role, tag, trade, trades_tags, user_dashboard_layout, user_role
+# Import all models to ensure they are registered with Base.
+# Ordering might matter for SQLAlchemy's metadata registration.
+from app.Models import (
+    profile,
+    auth_user,
+    role,
+    brokerage_connection,
+    security,
+    brokerage_account,
+    tag,
+    trade,
+    trades_tags,
+    user_dashboard_layout,
+    user_role,
+    option_symbol,
+    account_balance,
+    account_position,
+    account_order,
+    account_activity
+)
 
 # This is a hack to make the tests work with SQLite
 @compiles(JSONB, "sqlite")

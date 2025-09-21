@@ -245,6 +245,7 @@ router.include_router(router_snaptrade)
 # 💼 ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Schemas.snaptrade import AccountHoldingsRead, AccountOrderRead
+from app.Controllers.activities_controller import router as activities_router
 
 router_accounts = APIRouter(
     prefix="/api/v1/accounts",
@@ -263,6 +264,10 @@ router_accounts.get(
     response_model=List[AccountOrderRead],
     summary="Get recent (24h) orders for a specific trading account",
 )(snaptrade.get_recent_orders)
+
+# Include the new activities router
+router_accounts.include_router(activities_router, prefix="/{account_id}/activities")
+
 
 router.include_router(router_accounts)
 

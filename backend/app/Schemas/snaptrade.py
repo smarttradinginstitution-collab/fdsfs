@@ -12,6 +12,39 @@ class ProfileRead(BaseModel):
     class Config:
         from_attributes = True
 
+# Schemas for OptionSymbol
+class OptionSymbolBase(BaseModel):
+    id: str
+    description: str
+    option_type: str
+    strike_price: float
+    expiry_date: datetime.date
+
+class OptionSymbolCreate(OptionSymbolBase):
+    underlying_symbol_id: uuid.UUID
+
+# Schemas for AccountActivity
+class AccountActivityBase(BaseModel):
+    id: str
+    type: str
+    option_type: Optional[str] = None
+    price: Optional[float] = None
+    units: Optional[float] = None
+    amount: Optional[float] = None
+    description: Optional[str] = None
+    trade_date: Optional[datetime.datetime] = None
+    settlement_date: Optional[datetime.datetime] = None
+    fee: Optional[float] = None
+    fx_rate: Optional[float] = None
+    institution: Optional[str] = None
+    external_reference_id: Optional[str] = None
+
+class AccountActivityCreate(AccountActivityBase):
+    user_id: uuid.UUID
+    account_id: uuid.UUID
+    security_id: Optional[uuid.UUID] = None
+    option_symbol_id: Optional[str] = None
+
 from app.Schemas.security import SecurityRead
 
 # Schemas for AccountPosition
