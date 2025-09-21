@@ -2,7 +2,7 @@ from __future__ import annotations
 import uuid
 import datetime
 from sqlalchemy import String, ForeignKey, TIMESTAMP, Numeric
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
 from app.Models.account_position import AccountPosition
@@ -21,6 +21,8 @@ class BrokerageAccount(Base):
     balance: Mapped[float] = mapped_column(Numeric)
     currency: Mapped[str] = mapped_column(String)
     institution_name: Mapped[str] = mapped_column(String)
+    status: Mapped[str | None] = mapped_column(String, nullable=True)
+    sync_status: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
 
