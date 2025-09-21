@@ -16,6 +16,7 @@ from app.Repositories.account_orders_repository import AccountOrderRepository
 from app.Repositories.security_repository import SecurityRepository
 from app.Models.profile import Profile
 from app.Models.brokerage_account import BrokerageAccount
+from app.Models.account_order import AccountOrder
 from app.Schemas.brokerage_account import BrokerageAccountUpdate
 from app.Schemas.snaptrade import AccountHoldingsRead, AccountPositionCreate, AccountBalanceCreate, AccountOrderCreate
 from app.Schemas.security import SecurityCreate
