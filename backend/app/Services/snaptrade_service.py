@@ -574,7 +574,15 @@ class SnapTradeService:
             holdings_data = api_response.body
 
             # Prepare data using Pydantic schemas for validation
-            positions_to_create = [AccountPositionCreate(**p) for p in holdings_data.get('positions', [])]
+            positions_raw = holdings_data.get('positions', [])
+            positions_to_create = []
+            for p in positions_raw:
+                symbol_obj = p.pop('symbol', {}) or {}
+                p['symbol'] = symbol_obj.get('symbol', {}).get('symbol') # Extract nested symbol string
+                # Ensure currency is also handled if it's an object
+                currency_obj = p.pop('currency', {}) or {}
+                p['currency'] = currency_obj.get('code')
+                positions_to_create.append(AccountPositionCreate(**p))
 
             balances_raw = holdings_data.get('balances', [])
             balances_to_create = []
@@ -585,17 +593,21 @@ class SnapTradeService:
                     "cash_amount": b.get('cash'),
                     "buying_power": b.get('buyingPower')
                 }
-                # Filter out None values so Pydantic uses the default Optional[None]
                 validated_data = {k: v for k, v in balance_data.items() if v is not None}
                 balances_to_create.append(AccountBalanceCreate(**validated_data))
 
             orders_raw = holdings_data.get('orders', [])
             orders_to_create = []
             for o in orders_raw:
-                # Map brokerage_order_id to id field
+                # Map brokerage_order_id to id field and extract nested symbol
                 o['id'] = o.pop('brokerage_order_id', None)
+                symbol_obj = o.pop('universal_symbol', {}) or {}
+                o['symbol'] = symbol_obj.get('symbol')
                 if o['id']: # Only include orders with an ID
-                    orders_to_create.append(AccountOrderCreate(**o))
+                    # We only pass fields defined in the schema to avoid validation errors
+                    schema_fields = AccountOrderCreate.model_fields.keys()
+                    order_data = {k: v for k, v in o.items() if k in schema_fields}
+                    orders_to_create.append(AccountOrderCreate(**order_data))
 
             # Initialize repositories
             positions_repo = AccountPositionRepository(self.db)
