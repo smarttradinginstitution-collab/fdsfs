@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUpdated, watch, nextTick } from 'vue';
 import draggable from 'vuedraggable';
 import { useUiStore } from '../../../stores/uiStore';
 import { useTradesStore } from '../../../stores/trades';
@@ -12,6 +12,35 @@ const uiStore = useUiStore();
 const tradesStore = useTradesStore();
 
 const isEditing = computed(() => uiStore.isLayoutEditing);
+const grid = ref(null);
+
+const adjustFontOnOverflow = async () => {
+    await nextTick();
+
+    const gridEl = grid.value?.$el;
+    if (!gridEl) return;
+
+    // Reset class before checking
+    gridEl.classList.remove('stats-grid--font-sm');
+
+    const labels = gridEl.querySelectorAll('.stat-label');
+    const values = gridEl.querySelectorAll('.stat-value');
+    let isOverflowing = false;
+
+    for (const el of [...labels, ...values]) {
+        if (el.scrollWidth > el.clientWidth) {
+            isOverflowing = true;
+            break;
+        }
+    }
+    if (isOverflowing) {
+        gridEl.classList.add('stats-grid--font-sm');
+    }
+};
+
+onMounted(adjustFontOnOverflow);
+onUpdated(adjustFontOnOverflow);
+watch(() => uiStore.visibleStatKeys, adjustFontOnOverflow, { deep: true });
 
 const onStatsDragEnd = (event) => {
   uiStore.moveStat({
@@ -24,6 +53,7 @@ const onStatsDragEnd = (event) => {
 <template>
   <div class="grid-zone-wrapper">
     <draggable
+      ref="grid"
       :list="uiStore.visibleStatKeys"
       item-key="key"
       tag="div"
@@ -66,6 +96,13 @@ const onStatsDragEnd = (event) => {
   gap: var(--semantic-size-stack-lg);
   min-width: 0; /* Fix for grid inside flexbox overflow */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* --- QUERIES DESKTOP FIRST --- */
+@media (min-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }
 
 @media (max-width: 640px) {
@@ -141,5 +178,12 @@ const onStatsDragEnd = (event) => {
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
   border-color: var(--semantic-color-border-focus);
+}
+
+.stats-grid--font-sm .stat-label {
+    font-size: 0.75rem !important;
+}
+.stats-grid--font-sm .stat-value {
+    font-size: 1.5rem !important;
 }
 </style>

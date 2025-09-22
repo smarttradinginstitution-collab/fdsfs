@@ -88,15 +88,12 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-xs);
-  /* BEST PRACTICE: No Text Wrapping (come da richiesta)
-     Manteniamo il testo su una sola riga per preservare il layout a 2 colonne.
-     Questo ci costringe a essere molto attenti con le spaziature e le dimensioni
-     dei font su schermi piccoli. */
-  white-space: normal;
+  min-width: 0;
 }
 .stat-label {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
+  white-space: nowrap;
 }
 /*
   BEST PRACTICE: Tipografia Fluida
@@ -107,6 +104,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 .stat-value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
+  white-space: nowrap;
 }
 .stat-value--positive {
   color: var(--semantic-color-feedback-positive-text);
