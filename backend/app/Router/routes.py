@@ -231,3 +231,10 @@ router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
 router_trades.delete("/{trade_id}")(trades.delete_trade)
 
 router.include_router(router_trades)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 📂 FILE ANALYSIS (pubblico)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router.file_analysis import router_file_analysis
+router.include_router(router_file_analysis)
