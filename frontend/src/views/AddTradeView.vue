@@ -132,7 +132,7 @@ const handleNewTrade = async (tradeData) => {
   gap: var(--semantic-size-stack-lg);
   background-color: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-container);
+  border-radius: var(--base-border-radius-xl);
   padding: var(--semantic-size-inset-lg);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -211,7 +211,7 @@ const handleNewTrade = async (tradeData) => {
 .form-view {
     background-color: var(--semantic-color-surface-primary);
     padding: var(--semantic-size-inset-xl);
-    border-radius: var(--semantic-border-radius-container);
+    border-radius: var(--base-border-radius-xl);
     box-shadow: var(--semantic-effect-shadow-md);
 }
 
