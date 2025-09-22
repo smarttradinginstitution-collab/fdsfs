@@ -116,8 +116,19 @@ class AuthController:
         creds: HTTPAuthorizationCredentials = Depends(bearer),
     ) -> TotpEnrollResponse:
         access_token = creds.credentials
-        friendly = payload.friendly_name if payload else "Authenticator"
 
+        # Controlla che l'email dell'utente sia verificata prima di procedere
+        user_res = await supabase_service.get_user_from_access_token(access_token)
+        if user_res.get("error"):
+            raise HTTPException(status_code=401, detail="Token non valido o scaduto.")
+
+        if not user_res.get("email_confirmed_at"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Per abilitare l'MFA, devi prima confermare il tuo indirizzo email."
+            )
+
+        friendly = payload.friendly_name if payload else "Authenticator"
         res = await supabase_service.enroll_totp(access_token, friendly_name=friendly)
         if res.get("error"):
             msg = res.get("message") or "Enroll TOTP non riuscito"

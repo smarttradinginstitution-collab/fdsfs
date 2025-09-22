@@ -329,6 +329,12 @@ async def test_enroll_totp_success(auth_controller: AuthController, mocker):
     mock_creds = MagicMock()
     mock_creds.credentials = "user_token"
 
+    # Mock the user fetch call to return a confirmed user
+    mock_supabase_service.get_user_from_access_token = AsyncMock(return_value={
+        "id": str(uuid4()),
+        "email_confirmed_at": "2023-01-01T12:00:00Z"
+    })
+
     mock_supabase_service.enroll_totp = AsyncMock(return_value={
         "id": factor_id,
         "totp": {
@@ -417,3 +423,23 @@ async def test_disable_mfa_success(auth_controller: AuthController, mocker):
     assert response.access_token == aal2_token
     assert response.user["id"] == user_id
     assert len(response.user["factors"]) == 0
+
+@pytest.mark.anyio
+async def test_enroll_totp_unconfirmed_email(auth_controller: AuthController, mocker):
+    """Test that enrolling in MFA fails if the user's email is not confirmed."""
+    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+    mock_creds = MagicMock()
+    mock_creds.credentials = "user_token"
+
+    # Mock a user without a confirmed email
+    mock_supabase_service.get_user_from_access_token = AsyncMock(return_value={
+        "id": str(uuid4()),
+        "email": "unconfirmed@example.com",
+        "email_confirmed_at": None
+    })
+
+    with pytest.raises(HTTPException) as exc_info:
+        await auth_controller.enroll_totp(payload=None, creds=mock_creds)
+
+    assert exc_info.value.status_code == 400
+    assert "devi prima confermare il tuo indirizzo email" in exc_info.value.detail
