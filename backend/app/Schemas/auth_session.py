@@ -34,3 +34,36 @@ class RegisterResponse(BaseModel):
 
 class LogoutResponse(BaseModel):
     ok: bool = True
+
+# ───────────── MFA ─────────────
+
+class LoginMfaChallenge(BaseModel):
+    status: str = "mfa_required"
+    factor_id: str
+    challenge_id: str
+
+class VerifyMfaInput(BaseModel):
+    access_token: str
+    factor_id: str
+    challenge_id: str
+    code: str = Field(..., description="Codice OTP (One-Time Password)")
+
+class VerifyMfaResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: Optional[int] = None
+    refresh_token: Optional[str] = None
+    user: Dict[str, Any]
+
+class TotpEnrollInput(BaseModel):
+    friendly_name: Optional[str] = Field(None, description="Nome amichevole per il fattore MFA, es. 'Mio Telefono'")
+
+class TotpEnrollResponse(BaseModel):
+    factor_id: str
+    secret: str
+    otpauth_uri: str
+    qr_code: str # SVG string
+    challenge_id: str
+
+class ListFactorsResponse(BaseModel):
+    factors: list[Dict[str, Any]]

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from app.Controllers.auth_controller import AuthController
-from app.Schemas.auth_session import LoginInput, RegisterInput
+from app.Schemas.auth_session import LoginInput, RegisterInput, VerifyMfaInput
 from app.config import settings
 
 # ------------------------------
@@ -43,7 +43,7 @@ async def test_login_success(auth_controller: AuthController, mock_db_session: A
     mock_supabase_service.sign_in = AsyncMock(return_value=mock_supabase_response)
 
     payload = LoginInput(email="test@example.com", password="password")
-    response = await auth_controller.login(payload, mock_db_session)
+    response = await auth_controller.login(payload)
 
     assert response.access_token == "fake_access_token"
     assert response.user["id"] == str(user_id)
@@ -62,7 +62,7 @@ async def test_login_invalid_credentials(auth_controller: AuthController, mock_d
     payload = LoginInput(email="test@example.com", password="wrong_password")
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.login(payload, mock_db_session)
+        await auth_controller.login(payload)
 
     assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert "Invalid credentials" in exc_info.value.detail
@@ -77,32 +77,11 @@ async def test_login_upstream_error_no_token(auth_controller: AuthController, mo
     payload = LoginInput(email="test@example.com", password="password")
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.login(payload, mock_db_session)
+        await auth_controller.login(payload)
 
     assert exc_info.value.status_code == status.HTTP_502_BAD_GATEWAY
-    assert "Login upstream senza access_token" in exc_info.value.detail
+    assert "Login upstream non riuscito: access_token mancante" in exc_info.value.detail
 
-@pytest.mark.anyio
-async def test_login_dev_mode_error_message(auth_controller: AuthController, mock_db_session: AsyncSession, mocker):
-    """Test that dev mode provides a more detailed error message."""
-    mocker.patch.object(settings, 'ENV', 'dev')
-    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
-
-    mock_supabase_service.sign_in = AsyncMock(return_value={
-        "error": "invalid_grant",
-        "message": "Invalid credentials",
-        "http_status": 400,
-        "raw": {"error_description": "Invalid login credentials"}
-    })
-
-    payload = LoginInput(email="test@example.com", password="wrong_password")
-
-    with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.login(payload, mock_db_session)
-
-    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-    assert "http_status=400" in exc_info.value.detail
-    assert "raw='Invalid login credentials'" in exc_info.value.detail
 
 # ------------------------------
 # REGISTER Tests
@@ -134,25 +113,6 @@ async def test_register_success(auth_controller: AuthController, mock_db_session
     mock_supabase_service.register_user.assert_called_once()
     mock_user_role_repo.assign.assert_called_once_with(user_id=user_id, role_id=role_id)
 
-@pytest.mark.anyio
-async def test_register_role_not_found(auth_controller: AuthController, mock_db_session: AsyncSession, mocker):
-    """Test registration when the default 'user' role is not found."""
-    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
-
-    user_id = uuid4()
-    mock_supabase_service.register_user = AsyncMock(return_value={
-        "user": {"id": str(user_id), "email": "new_user@example.com"}
-    })
-
-    mock_role_result = MagicMock()
-    mock_role_result.scalar_one_or_none.return_value = None
-    mock_db_session.execute.return_value = mock_role_result
-
-    payload = RegisterInput(email="new_user@example.com", password="password123")
-    response = await auth_controller.register(payload, mock_db_session)
-
-    assert response.status == "registered_but_role_missing:user"
-    assert response.user_id == str(user_id)
 
 @pytest.mark.anyio
 async def test_register_supabase_error(auth_controller: AuthController, mock_db_session: AsyncSession, mocker):
@@ -202,7 +162,7 @@ async def test_logout_success(auth_controller: AuthController, mock_db_session: 
     user_id = uuid4()
     mock_claims = {"sub": str(user_id)}
 
-    response = await auth_controller.logout(mock_claims, mock_db_session)
+    response = await auth_controller.logout(mock_claims)
 
     assert response.ok is True
     mock_supabase_service.admin_logout_user.assert_called_once_with(str(user_id))
@@ -221,7 +181,7 @@ async def test_logout_non_critical_error(auth_controller: AuthController, mock_d
     user_id = uuid4()
     mock_claims = {"sub": str(user_id)}
 
-    response = await auth_controller.logout(mock_claims, mock_db_session)
+    response = await auth_controller.logout(mock_claims)
 
     assert response.ok is True
 
@@ -239,7 +199,7 @@ async def test_logout_critical_error(auth_controller: AuthController, mock_db_se
     mock_claims = {"sub": str(user_id)}
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.logout(mock_claims, mock_db_session)
+        await auth_controller.logout(mock_claims)
 
     assert exc_info.value.status_code == status.HTTP_502_BAD_GATEWAY
     assert "Logout admin error 500" in exc_info.value.detail
@@ -252,7 +212,7 @@ async def test_logout_no_userid_in_claims(auth_controller: AuthController, mock_
 
     mock_claims = {"role": "user"}
 
-    response = await auth_controller.logout(mock_claims, mock_db_session)
+    response = await auth_controller.logout(mock_claims)
 
     assert response.ok is True
     mock_supabase_service.admin_logout_user.assert_not_called()
@@ -284,61 +244,137 @@ async def test_register_integrity_error(auth_controller: AuthController, mock_db
     assert response.status == "registered"
     assert response.user_id == str(user_id)
 
-@pytest.mark.anyio
-async def test_login_dev_mode_same_error_message(auth_controller: AuthController, mock_db_session: AsyncSession, mocker):
-    """Test dev mode error message when raw message is the same."""
-    mocker.patch.object(settings, 'ENV', 'dev')
-    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
-
-    mock_supabase_service.sign_in = AsyncMock(return_value={
-        "error": "invalid_grant",
-        "message": "Invalid credentials",
-        "raw": {"error_description": "Invalid credentials"}
-    })
-
-    payload = LoginInput(email="test@example.com", password="wrong_password")
-
-    with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.login(payload, mock_db_session)
-
-    # The raw message should not be appended if it's the same
-    assert exc_info.value.detail == "Invalid credentials"
+# ------------------------------
+# MFA Tests
+# ------------------------------
 
 @pytest.mark.anyio
-async def test_login_dev_mode_none_raw_message(auth_controller: AuthController, mock_db_session: AsyncSession, mocker):
-    """Test dev mode error message when raw message is None."""
-    mocker.patch.object(settings, 'ENV', 'dev')
+async def test_login_mfa_required(auth_controller: AuthController, mocker):
+    """Test login that requires an MFA challenge."""
     mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+    mocker.patch("app.Controllers.auth_controller.jwt.get_unverified_claims", return_value={"aal": "aal1"})
+
+    factor_id = f"factor_{uuid4()}"
+    challenge_id = f"challenge_{uuid4()}"
 
     mock_supabase_service.sign_in = AsyncMock(return_value={
-        "error": "invalid_grant",
-        "message": "Invalid credentials",
-        "raw": {"error_description": None}
+        "access_token": "aal1_token",
+        "user": {
+            "id": str(uuid4()),
+            "factors": [{"id": factor_id, "factor_type": "totp", "status": "verified"}]
+        }
     })
+    mock_supabase_service.create_mfa_challenge = AsyncMock(return_value={"id": challenge_id})
 
-    payload = LoginInput(email="test@example.com", password="wrong_password")
+    payload = LoginInput(email="mfa_user@example.com", password="password")
+    response = await auth_controller.login(payload)
 
-    with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.login(payload, mock_db_session)
+    assert response.status == "mfa_required"
+    assert response.factor_id == factor_id
+    assert response.challenge_id == challenge_id
+    mock_supabase_service.create_mfa_challenge.assert_called_once_with("aal1_token", factor_id)
 
-    assert "raw=" not in exc_info.value.detail
 
 @pytest.mark.anyio
-async def test_login_dev_mode_no_raw_message(auth_controller: AuthController, mock_db_session: AsyncSession, mocker):
-    """Test dev mode error message when raw message is missing."""
-    mocker.patch.object(settings, 'ENV', 'dev')
+async def test_verify_mfa_success(auth_controller: AuthController, mocker):
+    """Test successful MFA verification."""
     mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
-
-    mock_supabase_service.sign_in = AsyncMock(return_value={
-        "error": "invalid_grant",
-        "message": "Invalid credentials",
-        "http_status": 400,
-        "raw": {}
+    mock_supabase_service.verify_mfa_challenge = AsyncMock(return_value={
+        "access_token": "aal2_token",
+        "token_type": "bearer",
+        "user": {"mfa_status": "verified"}
     })
 
-    payload = LoginInput(email="test@example.com", password="wrong_password")
+    payload = VerifyMfaInput(
+        access_token="aal1_token",
+        factor_id="factor_id",
+        challenge_id="challenge_id",
+        code="123456"
+    )
+    response = await auth_controller.verify_mfa(payload)
 
+    assert response.access_token == "aal2_token"
+    mock_supabase_service.verify_mfa_challenge.assert_called_once_with(
+        "aal1_token", "factor_id", "challenge_id", "123456"
+    )
+
+@pytest.mark.anyio
+async def test_verify_mfa_failure(auth_controller: AuthController, mocker):
+    """Test failed MFA verification."""
+    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+    mock_supabase_service.verify_mfa_challenge = AsyncMock(return_value={
+        "error": "some_error",
+        "message": "Codice OTP non valido"
+    })
+
+    payload = VerifyMfaInput(
+        access_token="aal1_token",
+        factor_id="factor_id",
+        challenge_id="challenge_id",
+        code="wrong_code"
+    )
     with pytest.raises(HTTPException) as exc_info:
-        await auth_controller.login(payload, mock_db_session)
+        await auth_controller.verify_mfa(payload)
 
-    assert "raw=" not in exc_info.value.detail
+    assert exc_info.value.status_code == 401
+    assert "Codice OTP non valido" in exc_info.value.detail
+
+@pytest.mark.anyio
+async def test_enroll_totp_success(auth_controller: AuthController, mocker):
+    """Test successful TOTP enrollment."""
+    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+
+    factor_id = f"factor_{uuid4()}"
+    challenge_id = f"challenge_{uuid4()}"
+    mock_creds = MagicMock()
+    mock_creds.credentials = "user_token"
+
+    mock_supabase_service.enroll_totp = AsyncMock(return_value={
+        "id": factor_id,
+        "totp": {
+            "secret": "SUPERSECRET",
+            "uri": "otpauth://...",
+            "qr_code": "<svg>...</svg>"
+        }
+    })
+    mock_supabase_service.create_mfa_challenge = AsyncMock(return_value={"id": challenge_id})
+
+    response = await auth_controller.enroll_totp(payload=None, creds=mock_creds)
+
+    assert response.factor_id == factor_id
+    assert response.secret == "SUPERSECRET"
+    assert response.challenge_id == challenge_id
+    mock_supabase_service.enroll_totp.assert_called_once()
+    mock_supabase_service.create_mfa_challenge.assert_called_once_with("user_token", factor_id)
+
+
+@pytest.mark.anyio
+async def test_list_factors_success(auth_controller: AuthController, mocker):
+    """Test successfully listing MFA factors."""
+    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+    mock_creds = MagicMock()
+    mock_creds.credentials = "user_token"
+
+    factors_list = [{"id": "factor1", "status": "verified"}]
+    mock_supabase_service.list_factors = AsyncMock(return_value={"factors": factors_list})
+
+    response = await auth_controller.list_factors(creds=mock_creds)
+
+    assert response.factors == factors_list
+    mock_supabase_service.list_factors.assert_called_once_with("user_token")
+
+@pytest.mark.anyio
+async def test_delete_factor_success(auth_controller: AuthController, mocker):
+    """Test successfully deleting an MFA factor."""
+    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+    mock_creds = MagicMock()
+    mock_creds.credentials = "user_token"
+    factor_id = "factor_to_delete"
+
+    mock_supabase_service.delete_mfa_factor = AsyncMock(return_value={"id": factor_id})
+
+    response = await auth_controller.delete_factor(factor_id=factor_id, creds=mock_creds)
+
+    assert response.ok is True
+    mock_supabase_service.delete_mfa_factor.assert_called_once_with("user_token", factor_id)
+

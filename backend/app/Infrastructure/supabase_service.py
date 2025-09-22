@@ -153,5 +153,56 @@ async def get_user_from_access_token(access_token: str) -> Dict[str, Any]:
         "GET",
         "/auth/v1/user",
         json=None,
-        extra_headers={"Authorization": f"Bearer {access_token}"},
+        extra_headers=_bearer_auth_headers(access_token),
+    )
+
+# ----------------- Flussi MFA (richiedono Bearer token utente) -----------------
+
+def _bearer_auth_headers(access_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {access_token}"}
+
+async def enroll_totp(access_token: str, friendly_name: Optional[str] = None) -> Dict[str, Any]:
+    """Inizia l'enroll di un fattore TOTP."""
+    payload = {"factor_type": "totp"}
+    if friendly_name:
+        payload["friendly_name"] = friendly_name
+    return await _request(
+        "POST",
+        "/auth/v1/factors",
+        json=payload,
+        extra_headers=_bearer_auth_headers(access_token),
+    )
+
+async def create_mfa_challenge(access_token: str, factor_id: str) -> Dict[str, Any]:
+    """Crea una challenge per un fattore MFA. Necessario per l'enroll e la verifica."""
+    return await _request(
+        "POST",
+        f"/auth/v1/factors/{factor_id}/challenge",
+        json={},
+        extra_headers=_bearer_auth_headers(access_token),
+    )
+
+async def verify_mfa_challenge(
+    access_token: str, factor_id: str, challenge_id: str, code: str
+) -> Dict[str, Any]:
+    """Verifica una challenge MFA con un codice OTP."""
+    payload = {"challenge_id": challenge_id, "code": code}
+    return await _request(
+        "POST",
+        f"/auth/v1/factors/{factor_id}/verify",
+        json=payload,
+        extra_headers=_bearer_auth_headers(access_token),
+    )
+
+async def list_factors(access_token: str) -> Dict[str, Any]:
+    """Elenca i fattori MFA dell'utente. Ritorna l'oggetto User completo."""
+    # L'oggetto utente contiene già i fattori, quindi riutilizziamo la funzione esistente.
+    return await get_user_from_access_token(access_token)
+
+async def delete_mfa_factor(access_token: str, factor_id: str) -> Dict[str, Any]:
+    """Elimina un fattore MFA per un utente."""
+    return await _request(
+        "DELETE",
+        f"/auth/v1/factors/{factor_id}",
+        extra_headers=_bearer_auth_headers(access_token),
     )
