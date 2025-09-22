@@ -22,7 +22,7 @@ from app.Controllers.user_dashboard_layout_controller import UserDashboardLayout
 # 📦 Schemi response (opzionali ma utili in Swagger)
 from app.Schemas.auth_user import AuthUserRead
 from app.Schemas.role import RoleRead
-from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse
+from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse, LoginMfaChallenge
 from app.Schemas.trade import TradeRead
 from app.Schemas.user_dashboard_layout import UserDashboardLayoutRead, UserDashboardLayoutUpdate
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
@@ -53,7 +53,7 @@ router = APIRouter()
 router_auth = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
 # LOGIN/REGISTER pubblici
-router_auth.post("/login", response_model=LoginResponse)(auth.login)
+router_auth.post("/login", response_model=LoginResponse | LoginMfaChallenge)(auth.login)
 router_auth.post("/register", response_model=RegisterResponse)(auth.register)
 
 # LOGOUT protetto: richiede un token valido
@@ -77,6 +77,54 @@ async def my_roles(
     user_id = UUID(claims["sub"])
     roles_list = await repo.list_user_roles(user_id)
     return {"roles": [r.name for r in roles_list]}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔐 MFA (Multi-Factor Authentication)
+# ──────────────────────────────────────────────────────────────────────────────
+# Le rotte MFA sono protette da token, eccetto la verifica che usa un token AAL1 speciale
+from app.Schemas.auth_session import (
+    VerifyMfaResponse,
+    TotpEnrollResponse,
+    ListFactorsResponse,
+)
+
+router_mfa = APIRouter(
+    prefix="/mfa",
+    tags=["Auth-MFA"],
+)
+
+# VERIFY (pubblico nel senso che non richiede un token AAL2, ma un AAL1 valido)
+router_mfa.post("/verify", response_model=VerifyMfaResponse)(auth.verify_mfa)
+
+# ENROLL, LIST, DELETE (richiedono token valido)
+router_mfa.post(
+    "/enroll-totp",
+    response_model=TotpEnrollResponse,
+    dependencies=[Depends(get_current_claims)],
+)(auth.enroll_totp)
+
+router_mfa.get(
+    "/factors",
+    response_model=ListFactorsResponse,
+    dependencies=[Depends(get_current_claims)],
+)(auth.list_factors)
+
+router_mfa.delete(
+    "/factors/{factor_id}",
+    response_model=LogoutResponse, # Ritorna {ok: true}
+    dependencies=[Depends(get_current_claims)],
+)(auth.delete_factor)
+
+router_mfa.post(
+    "/disable",
+    response_model=VerifyMfaResponse,
+    dependencies=[Depends(get_current_claims)],
+)(auth.disable_mfa)
+
+# Monta le rotte MFA dentro al router di autenticazione (es. /api/v1/auth/mfa/...)
+router_auth.include_router(router_mfa)
+
 
 # monta il blocco auth nel router principale
 router.include_router(router_auth)
