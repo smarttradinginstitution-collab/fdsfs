@@ -2,6 +2,7 @@
 
 from fastapi import File, UploadFile, HTTPException, status
 import pandas as pd
+import numpy as np
 import xml.etree.ElementTree as ET
 from io import StringIO, BytesIO
 import logging
@@ -39,6 +40,9 @@ class FileAnalysisController:
 
             # Read the CSV data into a pandas DataFrame
             df = pd.read_csv(string_io)
+
+            # Replace NaN with None for JSON compatibility, as NaN is not a valid JSON value
+            df = df.replace({np.nan: None})
 
             # Convert the DataFrame to a list of dictionaries (JSON objects)
             json_output = df.to_dict(orient='records')
