@@ -22,7 +22,7 @@ from app.Controllers.user_dashboard_layout_controller import UserDashboardLayout
 # 📦 Schemi response (opzionali ma utili in Swagger)
 from app.Schemas.auth_user import AuthUserRead
 from app.Schemas.role import RoleRead
-from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse
+from app.Schemas.auth_session import LoginResponse, RegisterResponse, LogoutResponse, LoginMfaChallenge
 from app.Schemas.trade import TradeRead
 from app.Schemas.user_dashboard_layout import UserDashboardLayoutRead, UserDashboardLayoutUpdate
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
@@ -53,7 +53,7 @@ router = APIRouter()
 router_auth = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
 # LOGIN/REGISTER pubblici
-router_auth.post("/login", response_model=LoginResponse)(auth.login)
+router_auth.post("/login", response_model=LoginResponse | LoginMfaChallenge)(auth.login)
 router_auth.post("/register", response_model=RegisterResponse)(auth.register)
 
 # LOGOUT protetto: richiede un token valido
