@@ -166,6 +166,9 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     .stat-label {
         font: var(--semantic-font-style-label-xs);
     }
+    .stat-value {
+        font-size: 1.4rem;
+    }
     .chart-content {
         width: var(--semantic-size-component-stat-card-chart-width-tablet);
     }
@@ -178,6 +181,9 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     }
     .stat-label {
         font: var(--semantic-font-style-label-xxs);
+    }
+    .stat-value {
+        font-size: 1.2rem;
     }
     .chart-content {
         width: var(--semantic-size-component-stat-card-chart-width-mobile);
