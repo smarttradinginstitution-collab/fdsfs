@@ -77,6 +77,14 @@ const handleSubmit = () => {
   <form class="new-trade-form" @submit.prevent="handleSubmit">
 
     <fieldset class="form-section">
+      <legend>Timestamps</legend>
+      <div class="grid-group grid-group-2-col">
+        <BaseInput v-model="form.entry_timestamp" label="Entry Timestamp" type="datetime-local" />
+        <BaseInput v-model="form.exit_timestamp" label="Exit Timestamp" type="datetime-local" />
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
       <legend>Core Information</legend>
       <div class="grid-group grid-group-4-col">
         <BaseInput v-model="form.ticker" label="Ticker" placeholder="e.g., AAPL" />
@@ -96,14 +104,6 @@ const handleSubmit = () => {
         <BaseInput v-model.number="form.lowest_price_during_trade" label="Lowest Price (MAE)" type="number" step="0.01" />
         <BaseInput v-model.number="form.highest_price_during_trade" label="Highest Price (MFE)" type="number" step="0.01" />
         <BaseInput v-model.number="form.position_size" label="Position Size" type="number" step="0.01" />
-      </div>
-    </fieldset>
-
-    <fieldset class="form-section">
-      <legend>Timestamps</legend>
-      <div class="grid-group grid-group-2-col">
-        <BaseInput v-model="form.entry_timestamp" label="Entry Timestamp" type="datetime-local" />
-        <BaseInput v-model="form.exit_timestamp" label="Exit Timestamp" type="datetime-local" />
       </div>
     </fieldset>
 
@@ -181,7 +181,7 @@ const handleSubmit = () => {
 
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .grid-group-3-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-.grid-group-2-col { grid-template-columns: 1fr 1fr; }
+.grid-group-2-col { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 
 .notes-group {
   margin-top: var(--semantic-size-stack-sm);
