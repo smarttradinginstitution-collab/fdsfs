@@ -15,19 +15,31 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 const authStore = useAuthStore();
 const email = ref('');
 const password = ref('');
+const otpCode = ref('');
 const errorMessage = ref('');
+const isMfaStep = ref(false); // Nuovo stato per gestire il flusso MFA
 
 async function handleLogin() {
   errorMessage.value = '';
   try {
-    await authStore.login(email.value, password.value);
-    // La redirezione avviene all'interno dell'azione `login` dello store
-  } catch (error) {
-    if (error.response && error.response.data && error.response.data.detail) {
-      errorMessage.value = error.response.data.detail;
-    } else {
-      errorMessage.value = 'Si è verificato un errore inatteso.';
+    const result = await authStore.login(email.value, password.value);
+    if (result.mfaRequired) {
+      isMfaStep.value = true; // Mostra il form per l'OTP
     }
+    // Se non è richiesta MFA, la redirezione avviene nello store
+  } catch (error) {
+    errorMessage.value = error.response?.data?.detail || 'Credenziali non valide o errore inatteso.';
+    console.error(error);
+  }
+}
+
+async function handleMfaVerification() {
+  errorMessage.value = '';
+  try {
+    await authStore.verifyMfaAndLogin(otpCode.value);
+    // La redirezione avviene nello store dopo la verifica
+  } catch (error) {
+    errorMessage.value = error.response?.data?.detail || 'Codice OTP non valido o errore inatteso.';
     console.error(error);
   }
 }
@@ -41,7 +53,8 @@ async function handleLogin() {
         <p class="login-subtitle">Accedi al tuo trading journal</p>
       </div>
 
-      <form class="login-form" @submit.prevent="handleLogin">
+      <!-- Form di Login Standard -->
+      <form v-if="!isMfaStep" class="login-form" @submit.prevent="handleLogin">
         <div class="form-fields">
           <BaseInput
             v-model="email"
@@ -58,13 +71,33 @@ async function handleLogin() {
             required
           />
         </div>
-
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-
         <BaseButton type="submit" variant="primary" size="medium">
           Accedi
+        </BaseButton>
+      </form>
+
+      <!-- Form per Inserimento Codice MFA/OTP -->
+      <form v-else class="login-form" @submit.prevent="handleMfaVerification">
+        <div class="form-fields">
+          <p class="login-subtitle">Controlla la tua app di autenticazione e inserisci il codice.</p>
+          <BaseInput
+            v-model="otpCode"
+            label="Codice di Verifica"
+            type="text"
+            placeholder="123456"
+            required
+            inputmode="numeric"
+            pattern="\d{6}"
+          />
+        </div>
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+        <BaseButton type="submit" variant="primary" size="medium">
+          Verifica Codice
         </BaseButton>
       </form>
     </div>
