@@ -140,28 +140,24 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
-/* Using hardcoded values for diagnosis to bypass any CSS token/variable issues */
 .new-trade-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 8px;
-  margin-right: -12px;
+  gap: var(--semantic-size-stack-xl); /* Increased gap for more breathing room */
 }
 
 .form-section {
-  border: 1px solid #E5E7EB; /* light gray border */
-  background-color: #F9FAFB; /* very light gray background */
-  border-radius: 8px;
-  padding: 24px 16px 16px 16px;
-  margin-top: 24px;
+  border: 1px solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-lg);
+  padding-top: var(--semantic-size-inset-xl); /* More space at the top */
+  margin-top: var(--semantic-size-stack-lg); /* Space for the legend */
   position: relative;
 }
 
 .form-section:first-of-type {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 .form-section legend {
@@ -169,20 +165,18 @@ const handleSubmit = () => {
   top: 0;
   left: 16px;
   transform: translateY(-50%);
-  background: #F3F4F6; /* Gray 100 for the pill background */
-  padding: 4px 12px;
+  background: var(--semantic-color-surface-secondary);
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-md);
+  font: var(--semantic-font-style-label-md);
   font-weight: 600;
-  color: #374151; /* Gray 700 for text */
-  font-size: 14px;
-  width: auto;
-  border: 1px solid #E5E7EB; /* light gray border for the pill */
-  border-radius: 9999px;
+  color: var(--semantic-color-text-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-pill);
 }
 
 .grid-group {
   display: grid;
-  gap: 16px;
-  padding: 0 8px;
+  gap: var(--semantic-size-stack-md);
 }
 
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -190,29 +184,28 @@ const handleSubmit = () => {
 .grid-group-2-col { grid-template-columns: 1fr 1fr; }
 
 .notes-group {
-  margin-top: 8px;
+  margin-top: var(--semantic-size-stack-sm);
 }
 
 .textarea-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--semantic-size-stack-xs);
 }
 
 .textarea-group label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #4B5563; /* Gray */
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-secondary);
   margin-left: 2px;
 }
 
 textarea {
   width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #D1D5DB; /* Gray */
-  background-color: #FFFFFF;
-  color: #111827; /* Black */
+  padding: var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-interactive);
+  border: 1px solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-page); /* Slightly different from section bg */
+  color: var(--semantic-color-text-primary);
   font-family: inherit;
   font-size: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -220,14 +213,13 @@ textarea {
 
 textarea:focus {
   outline: none;
-  border-color: #3B82F6; /* Blue */
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+  border-color: var(--semantic-color-border-focus);
+  box-shadow: 0 0 0 2px var(--semantic-color-border-focus);
 }
 
 .form-actions {
-  margin-top: 16px;
+  margin-top: var(--semantic-size-stack-lg);
   display: flex;
   justify-content: flex-end;
-  padding-right: 1rem;
 }
 </style>

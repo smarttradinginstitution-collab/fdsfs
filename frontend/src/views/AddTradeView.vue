@@ -209,10 +209,7 @@ const handleNewTrade = async (tradeData) => {
 }
 
 .form-view {
-    background-color: var(--semantic-color-surface-primary);
-    padding: var(--semantic-size-inset-xl);
-    border-radius: var(--semantic-border-radius-surface);
-    box-shadow: var(--semantic-effect-shadow-md);
+    /* Styles removed to integrate the form directly into the page */
 }
 
 .form-header {
