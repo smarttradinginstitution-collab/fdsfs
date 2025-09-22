@@ -116,6 +116,12 @@ router_mfa.delete(
     dependencies=[Depends(get_current_claims)],
 )(auth.delete_factor)
 
+router_mfa.post(
+    "/disable",
+    response_model=VerifyMfaResponse,
+    dependencies=[Depends(get_current_claims)],
+)(auth.disable_mfa)
+
 # Monta le rotte MFA dentro al router di autenticazione (es. /api/v1/auth/mfa/...)
 router_auth.include_router(router_mfa)
 

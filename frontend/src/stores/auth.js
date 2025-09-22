@@ -11,26 +11,37 @@ import router from '@/router';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
-  // Usiamo ref per definire lo stato reattivo.
-  // Lo stato viene inizializzato dal localStorage per mantenere l'utente
-  // loggato tra le sessioni.
   const user = ref(JSON.parse(localStorage.getItem('user')) || null);
   const token = ref(localStorage.getItem('token') || null);
+  const mfaChallenge = ref(null);
+  const mfaAal1Token = ref(null); // Token temporaneo AAL1 per la verifica
 
   // --- GETTERS ---
-  // I getters sono come le computed properties per gli store.
   const isAuthenticated = computed(() => !!token.value);
+  const isMfaActive = computed(() => user.value?.factors?.some(f => f.factor_type === 'totp' && f.status === 'verified'));
+  const getMfaFactor = computed(() => {
+    if (!isMfaActive.value) return null;
+    return user.value.factors.find(f => f.factor_type === 'totp' && f.status === 'verified');
+  });
 
   // --- ACTIONS ---
-  // Le azioni sono metodi che possono essere chiamati per modificare lo stato.
-  // (AGGIUNTA) Carica il nome del ruolo e lo salva in user.roleName
+  async function _setAuthentication(accessToken, userData) {
+    token.value = accessToken;
+    user.value = userData;
+    mfaChallenge.value = null;
+    mfaAal1Token.value = null;
+
+    localStorage.setItem('token', accessToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setAuthToken(accessToken);
+  }
+
+  // Carica il nome del ruolo dell'utente. Funzione di supporto.
   async function loadCurrentRoleName() {
     try {
       const userId = user.value?.id;
       if (!userId) return;
-      // ✅ Endpoint corretto: /api/v1/users/{user_id}/roles
       const { data } = await apiClient.get(`/api/v1/users/${userId}/roles`);
-      // Può tornare un oggetto singolo o una lista: gestiamo entrambi i casi
       const roleObj = Array.isArray(data) ? data[0] : data;
       const name = roleObj?.name ?? null;
       if (name) {
@@ -42,88 +53,81 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  /**
-   * Esegue il login dell'utente.
-   * @param {string} email - L'email dell'utente.
-   * @param {string} password - La password dell'utente.
-   */
   async function login(email, password) {
-    try {
-      const response = await apiClient.post('/api/v1/auth/login', {
-        email,
-        password,
-      });
+    const response = await apiClient.post('/api/v1/auth/login', { email, password });
 
-      // (AGGIUNTA) La API può restituire anche token_type/expires_in.
-      // Qui ci servono solo access_token e user.
-      const { access_token, user: userData } = response.data;
-
-      // Aggiorna lo stato dello store
-      token.value = access_token;
-      user.value = userData;
-
-      // Salva il token e i dati utente nel localStorage
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Imposta il token nell'header di apiClient per le richieste future
-      // (AGGIUNTA) Usa l'helper centralizzato per coerenza con gli interceptor
-      setAuthToken(access_token);
-
-      // (AGGIUNTA) Popola user.roleName tramite /users/{id}/roles
+    if (response.data.status === 'mfa_required') {
+      mfaChallenge.value = response.data; // Salva tutta la challenge
+      mfaAal1Token.value = response.data.access_token;
+      return { mfaRequired: true };
+    } else {
+      await _setAuthentication(response.data.access_token, response.data.user);
       await loadCurrentRoleName();
-
-      // Reindirizza al dashboard dopo il login
       router.push('/');
-    } catch (error) {
-      console.error('Errore durante il login:', error);
-      // Rilancia l'errore per poterlo gestire nel componente UI
-      throw error;
+      return { mfaRequired: false };
     }
   }
 
-  /**
-   * Esegue il logout dell'utente.
-   */
+  async function verifyMfaAndLogin(otpCode) {
+    if (!mfaChallenge.value || !mfaAal1Token.value) throw new Error("Dati della challenge MFA non trovati.");
+
+    const response = await apiClient.post('/api/v1/auth/mfa/verify', {
+      access_token: mfaAal1Token.value,
+      factor_id: mfaChallenge.value.factor_id,
+      challenge_id: mfaChallenge.value.challenge_id,
+      code: otpCode,
+    });
+
+    await _setAuthentication(response.data.access_token, response.data.user);
+    await loadCurrentRoleName();
+    router.push('/');
+  }
+
+  async function enrollMfa() {
+    const { data } = await apiClient.post('/api/v1/auth/mfa/enroll-totp');
+    return data;
+  }
+
+  async function verifyAndEnableMfa(factorId, challengeId, otpCode) {
+    const { data } = await apiClient.post('/api/v1/auth/mfa/verify', {
+      access_token: token.value,
+      factor_id: factorId,
+      challenge_id: challengeId,
+      code: otpCode,
+    });
+    await _setAuthentication(data.access_token, data.user);
+    await loadCurrentRoleName();
+  }
+
+  async function disableMfa(otpCode) {
+    const { data } = await apiClient.post('/api/v1/auth/mfa/disable', { code: otpCode });
+    await _setAuthentication(data.access_token, data.user);
+    await loadCurrentRoleName();
+  }
+
   async function logout() {
     try {
-      // (AGGIUNTA) Prova a notificare il backend per invalidare i refresh token lato server.
-      // Non blocca il logout lato client in caso di errore.
       await apiClient.post('/api/v1/auth/logout');
-    } catch {
-      /* noop */
-    }
+    } catch { /* noop */ }
 
-    // Rimuovi i dati dallo stato
     user.value = null;
     token.value = null;
-
-    // Rimuovi i dati dal localStorage
+    mfaChallenge.value = null;
+    mfaAal1Token.value = null;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
-    // Rimuovi l'header di autorizzazione da apiClient
-    // (AGGIUNTA) Usa l'helper centralizzato per rimuovere l'Authorization
     setAuthToken(null);
-
-    // Reindirizza alla pagina di login
     router.push('/login');
   }
 
-  /**
-   * Inizializza il token di autorizzazione se presente nel localStorage
-   */
   function initAuth() {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       token.value = storedToken;
-      // (AGGIUNTA) Imposta l'Authorization centralmente
       setAuthToken(storedToken);
     }
-
-    // (AGGIUNTA) Ripristina anche l'utente se presente
     const storedUser = localStorage.getItem('user');
-    if (storedUser && !user.value) {
+    if (storedUser) {
       try {
         user.value = JSON.parse(storedUser);
       } catch {
@@ -132,15 +136,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // --- EXPORT ---
-  // Esponiamo lo stato e le azioni per renderli accessibili
-  // ai componenti che useranno questo store.
   return {
     user,
     token,
     isAuthenticated,
+    isMfaActive,
+    getMfaFactor,
+    mfaChallenge,
+    mfaAal1Token,
     login,
     logout,
     initAuth,
+    verifyMfaAndLogin,
+    enrollMfa,
+    verifyAndEnableMfa,
+    disableMfa,
   };
 });

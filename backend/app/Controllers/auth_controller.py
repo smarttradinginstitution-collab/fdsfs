@@ -24,6 +24,7 @@ from app.Schemas.auth_session import (
     TotpEnrollInput,
     TotpEnrollResponse,
     ListFactorsResponse,
+    MfaDisableInput,
 )
 from app.config import settings
 
@@ -74,6 +75,7 @@ class AuthController:
                 if challenge_id:
                     return LoginMfaChallenge(
                         status="mfa_required",
+                        access_token=access_token,
                         factor_id=factor_id,
                         challenge_id=challenge_id,
                     )
@@ -161,6 +163,55 @@ class AuthController:
             msg = res.get("message") or res.get("msg") or "Delete factor non riuscito"
             raise HTTPException(status_code=status_code, detail=msg)
         return LogoutResponse(ok=True)
+
+    # DISABLE MFA (con OTP)
+    async def disable_mfa(
+        self,
+        payload: MfaDisableInput,
+        creds: HTTPAuthorizationCredentials = Depends(bearer),
+    ) -> VerifyMfaResponse: # Ritorna una sessione aggiornata
+        access_token = creds.credentials
+
+        # 1. Trova il fattore TOTP attivo dell'utente
+        user_res = await supabase_service.get_user_from_access_token(access_token)
+        if user_res.get("error"):
+            raise HTTPException(status_code=401, detail="Token non valido o scaduto.")
+
+        factors = user_res.get("factors", [])
+        totp_factor = next((f for f in factors if f.get("factor_type") == "totp" and f.get("status") == "verified"), None)
+        if not totp_factor:
+            raise HTTPException(status_code=404, detail="Nessun fattore MFA di tipo TOTP attivo trovato.")
+
+        factor_id = totp_factor.get("id")
+
+        # 2. Crea una challenge per il fattore
+        challenge_res = await supabase_service.create_mfa_challenge(access_token, factor_id)
+        challenge_id = challenge_res.get("id")
+        if not challenge_id:
+             raise HTTPException(status_code=500, detail="Impossibile creare la challenge MFA per la verifica.")
+
+        # 3. Verifica il codice OTP per ottenere un token AAL2
+        verify_res = await supabase_service.verify_mfa_challenge(access_token, factor_id, challenge_id, payload.code)
+        if verify_res.get("error"):
+            raise HTTPException(status_code=401, detail="Codice OTP non valido.")
+
+        # 4. Usa il nuovo token AAL2 per eliminare il fattore
+        aal2_token = verify_res.get("access_token")
+        if not aal2_token:
+            raise HTTPException(status_code=500, detail="Verifica riuscita ma token AAL2 mancante.")
+
+        delete_res = await supabase_service.delete_mfa_factor(aal2_token, factor_id)
+        if delete_res.get("error"):
+            raise HTTPException(status_code=500, detail="Errore durante l'eliminazione del fattore MFA.")
+
+        # 5. Ritorna la nuova sessione AAL2. L'oggetto utente in verify_res è già aggiornato.
+        return VerifyMfaResponse(
+            access_token=verify_res.get("access_token"),
+            token_type=verify_res.get("token_type"),
+            expires_in=verify_res.get("expires_in"),
+            refresh_token=verify_res.get("refresh_token"),
+            user=verify_res.get("user") or {},
+        )
 
     # REGISTER
     async def register(

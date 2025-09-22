@@ -39,6 +39,7 @@ class LogoutResponse(BaseModel):
 
 class LoginMfaChallenge(BaseModel):
     status: str = "mfa_required"
+    access_token: str # Il token AAL1 da usare per la verifica
     factor_id: str
     challenge_id: str
 
@@ -67,3 +68,6 @@ class TotpEnrollResponse(BaseModel):
 
 class ListFactorsResponse(BaseModel):
     factors: list[Dict[str, Any]]
+
+class MfaDisableInput(BaseModel):
+    code: str = Field(..., description="Codice OTP (One-Time Password) per confermare la disattivazione")

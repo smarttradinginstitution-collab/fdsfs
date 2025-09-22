@@ -12,7 +12,8 @@ import { RouterLink } from 'vue-router';
 import { useUiStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/auth';
 import ThemeToggle from '../ui/ThemeToggle.vue';
-import { computed } from 'vue';
+import MfaModal from '../mfa/MfaModal.vue'; // Importa la nuova modale
+import { computed, ref } from 'vue';
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -20,6 +21,16 @@ const authStore = useAuthStore();
 
 // --- DATI DEL COMPONENTE ---
 const user = computed(() => authStore.user);
+const isMfaActive = computed(() => authStore.isMfaActive);
+
+// Stato per la modale MFA
+const isMfaModalOpen = ref(false);
+const mfaMode = ref('enroll'); // 'enroll' o 'disable'
+
+function openMfaModal(mode) {
+  mfaMode.value = mode;
+  isMfaModalOpen.value = true;
+}
 
 // Dati per i link di navigazione.
 // Usare un array rende più facile gestire l'aggiunta di icone in futuro.
@@ -74,6 +85,12 @@ const navLinks = [
         </div>
       </div>
       <div class="footer-actions" v-if="!uiStore.isSidebarCollapsed">
+        <button v-if="!isMfaActive" @click="openMfaModal('enroll')" class="mfa-button">
+          Attiva MFA
+        </button>
+        <button v-else @click="openMfaModal('disable')" class="mfa-button-active">
+          Disattiva MFA
+        </button>
         <button @click="authStore.logout" class="logout-button">
           Logout
         </button>
@@ -81,6 +98,8 @@ const navLinks = [
       </div>
     </div>
   </aside>
+
+  <MfaModal v-model="isMfaModalOpen" :mode="mfaMode" @success="(msg) => console.log(msg)" />
 </template>
 
 <style scoped>
@@ -125,9 +144,26 @@ const navLinks = [
   place-items: center;
   transition: all var(--base-animation-duration-fast);
 }
-.toggle-button:hover {
+.logout-button:hover, .mfa-button:hover, .mfa-button-active:hover {
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
+}
+
+.mfa-button, .mfa-button-active {
+  background: none;
+  border: 1px solid var(--semantic-color-border-default);
+  color: var(--semantic-color-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--semantic-border-radius-interactive);
+  transition: all var(--base-animation-duration-fast);
+  flex-grow: 1; /* Make buttons share space */
+  text-align: center;
+}
+
+.mfa-button-active {
+  border-color: var(--semantic-color-border-success);
+  color: var(--semantic-color-text-success);
 }
 /* Ruotiamo il pulsante quando la sidebar è collassata. */
 .sidebar.is-collapsed .toggle-button {
@@ -231,9 +267,26 @@ const navLinks = [
   transition: all var(--base-animation-duration-fast);
 }
 
-.logout-button:hover {
+.logout-button:hover, .mfa-button:hover, .mfa-button-active:hover {
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
+}
+
+.mfa-button, .mfa-button-active {
+  background: none;
+  border: 1px solid var(--semantic-color-border-default);
+  color: var(--semantic-color-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--semantic-border-radius-interactive);
+  transition: all var(--base-animation-duration-fast);
+  flex-grow: 1; /* Make buttons share space */
+  text-align: center;
+}
+
+.mfa-button-active {
+  border-color: var(--semantic-color-border-success);
+  color: var(--semantic-color-text-success);
 }
 
 

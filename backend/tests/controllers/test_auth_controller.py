@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from app.Controllers.auth_controller import AuthController
-from app.Schemas.auth_session import LoginInput, RegisterInput, VerifyMfaInput
+from app.Schemas.auth_session import LoginInput, RegisterInput, VerifyMfaInput, MfaDisableInput
 from app.config import settings
 
 # ------------------------------
@@ -378,3 +378,42 @@ async def test_delete_factor_success(auth_controller: AuthController, mocker):
     assert response.ok is True
     mock_supabase_service.delete_mfa_factor.assert_called_once_with("user_token", factor_id)
 
+@pytest.mark.anyio
+async def test_disable_mfa_success(auth_controller: AuthController, mocker):
+    """Test successful MFA disable with OTP verification."""
+    mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
+    mock_creds = MagicMock()
+    mock_creds.credentials = "user_token"
+
+    user_id = str(uuid4())
+    factor_id = f"factor_{uuid4()}"
+    challenge_id = f"challenge_{uuid4()}"
+    aal2_token = "new_aal2_token"
+
+    # Mock the sequence of service calls
+    mock_supabase_service.get_user_from_access_token = AsyncMock(return_value={
+        "id": user_id,
+        "factors": [{"id": factor_id, "factor_type": "totp", "status": "verified"}]
+    })
+    mock_supabase_service.create_mfa_challenge = AsyncMock(return_value={"id": challenge_id})
+    mock_supabase_service.verify_mfa_challenge = AsyncMock(return_value={
+        "access_token": aal2_token,
+            "token_type": "bearer",
+            "expires_in": 3600,
+            "refresh_token": "some_refresh_token",
+        "user": {"id": user_id, "factors": []} # User object after unenroll
+    })
+    mock_supabase_service.delete_mfa_factor = AsyncMock(return_value={"id": factor_id})
+
+    payload = MfaDisableInput(code="123456")
+    response = await auth_controller.disable_mfa(payload=payload, creds=mock_creds)
+
+    # Assertions
+    mock_supabase_service.get_user_from_access_token.assert_called_once_with("user_token")
+    mock_supabase_service.create_mfa_challenge.assert_called_once_with("user_token", factor_id)
+    mock_supabase_service.verify_mfa_challenge.assert_called_once_with("user_token", factor_id, challenge_id, "123456")
+    mock_supabase_service.delete_mfa_factor.assert_called_once_with(aal2_token, factor_id)
+
+    assert response.access_token == aal2_token
+    assert response.user["id"] == user_id
+    assert len(response.user["factors"]) == 0
