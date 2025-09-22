@@ -54,13 +54,19 @@ class AuthController:
         try:
             decoded_token = jwt.get_unverified_claims(access_token)
             aal = decoded_token.get("aal")
-        except Exception:
-            # Se la decodifica fallisce, non possiamo procedere con la logica MFA.
-            # L'utente riceverà un token AAL1 standard, che è un fallback sicuro.
+        except Exception as e:
+            print(f"DEBUG: Errore durante la decodifica del token: {e}")
             pass
 
         # I 'factors' sono nell'oggetto user, che è corretto.
         factors = user_obj.get("factors")
+
+        # DEBUG LOGS
+        print("--- DEBUG LOGIN MFA ---")
+        print(f"AAL Level: {aal}")
+        print(f"User Object: {user_obj}")
+        print(f"Factors: {factors}")
+        print("-----------------------")
 
         if aal == "aal1" and factors and len(factors) > 0:
             # L'utente ha MFA, dobbiamo avviare la challenge
