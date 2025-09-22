@@ -73,7 +73,7 @@ async function fetchEnrollmentDetails() {
   try {
     enrollData.value = await authStore.enrollMfa();
   } catch (e) {
-    error.value = 'Errore durante la generazione del QR code.';
+    error.value = e.response?.data?.detail || 'Errore durante la generazione del QR code.';
   } finally {
     isLoading.value = false;
   }
