@@ -76,8 +76,16 @@ class AuthController:
             if totp_factor and access_token:
                 factor_id = totp_factor.get("id")
                 chal = await supabase_service.create_mfa_challenge(access_token, factor_id)
-                challenge_id = chal.get("id")
 
+                print(f"DEBUG: Risposta da create_mfa_challenge: {chal}") # DEBUG LOG
+
+                if chal.get("error"):
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"Impossibile creare la MFA challenge: {chal.get('message')}"
+                    )
+
+                challenge_id = chal.get("id")
                 if challenge_id:
                     return LoginMfaChallenge(
                         status="mfa_required",
