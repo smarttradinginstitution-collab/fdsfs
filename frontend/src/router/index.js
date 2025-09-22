@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import DashboardView from '../views/DashboardView.vue';
+import AddTradeView from '../views/AddTradeView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,12 @@ const router = createRouter({
       name: 'dashboard',
       component: DashboardView,
       meta: { title: 'Dashboard' },
+    },
+    {
+      path: '/add-trade',
+      name: 'add-trade',
+      component: AddTradeView,
+      meta: { title: 'Add Trade' },
     },
     {
       path: '/trades',

@@ -124,7 +124,6 @@ export const useUiStore = defineStore('ui', () => {
   // --- STATO E AZIONI PER I MODALI ---
   const isDailySummaryModalOpen = ref(false);
   const isWeeklySummaryModalOpen = ref(false);
-  const isAddTradeModalOpen = ref(false);
 
   // Salviamo lo stato della sidebar prima di aprire un modale
   let sidebarStateBeforeModal = false;
@@ -142,14 +141,6 @@ export const useUiStore = defineStore('ui', () => {
     if (!isMobile.value) {
       isSidebarCollapsed.value = sidebarStateBeforeModal;
     }
-  }
-
-  function openAddTradeModal() {
-    _openModal(isAddTradeModalOpen);
-  }
-
-  function closeAddTradeModal() {
-    _closeModal(isAddTradeModalOpen);
   }
 
   function openDailySummaryModal() {
@@ -214,7 +205,6 @@ export const useUiStore = defineStore('ui', () => {
     isCalendarWinRateVisible,
     isDailySummaryModalOpen,
     isWeeklySummaryModalOpen,
-    isAddTradeModalOpen,
 
     toggleLayoutEditing,
     toggleSidebar,
@@ -230,8 +220,6 @@ export const useUiStore = defineStore('ui', () => {
     closeDailySummaryModal,
     openWeeklySummaryModal,
     closeWeeklySummaryModal,
-    openAddTradeModal,
-    closeAddTradeModal,
 
     // Notifications
     notification,

@@ -5,8 +5,6 @@ import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistr
 import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/widgets/Calendar/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/widgets/Table/RecentTradesTable.vue';
-import BaseModal from '../components/ui/BaseModal.vue';
-import NewTradeForm from '../components/trades/NewTradeForm.vue';
 import DashboardZone from '../components/dashboard/zones/DashboardZone.vue';
 import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
@@ -23,26 +21,6 @@ const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
-
-const handleNewTrade = async (tradeData) => {
-  try {
-    const newTrade = await tradesStore.addTrade(tradeData);
-    if (newTrade) {
-      uiStore.closeAddTradeModal();
-      uiStore.showNotification({
-        message: 'Trade successfully created!',
-        type: 'success',
-      });
-    }
-  } catch (error) {
-    console.error('Failed to add trade:', error);
-    const errorMessage = error.response?.data?.detail || 'An unknown error occurred.';
-    uiStore.showNotification({
-      message: `Error: ${errorMessage}`,
-      type: 'error',
-    });
-  }
-};
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -106,10 +84,12 @@ watch(
         <span class="button-text">{{ editButtonText }}</span>
       </BaseButton>
 
-      <BaseButton variant="primary" @click="uiStore.openAddTradeModal">
-        <PlusIcon />
-        <span class="button-text">Nuovo Trade</span>
-      </BaseButton>
+      <router-link to="/add-trade" custom v-slot="{ navigate }">
+        <BaseButton variant="primary" @click="navigate">
+          <PlusIcon />
+          <span class="button-text">Nuovo Trade</span>
+        </BaseButton>
+      </router-link>
     </div>
 
     <!-- Stats Grid -->
@@ -142,10 +122,6 @@ watch(
     />
 
     <!-- Modals -->
-    <BaseModal :show="uiStore.isAddTradeModalOpen" @close="uiStore.closeAddTradeModal">
-      <template #header><h3>Log New Trade</h3></template>
-      <NewTradeForm @submit="handleNewTrade" />
-    </BaseModal>
     <DailySummaryModal />
     <WeeklySummaryModal />
   </div>
