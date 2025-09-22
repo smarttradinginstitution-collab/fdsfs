@@ -131,8 +131,9 @@ class AuthController:
         friendly = payload.friendly_name if payload else "Authenticator"
         res = await supabase_service.enroll_totp(access_token, friendly_name=friendly)
         if res.get("error"):
-            msg = res.get("message") or "Enroll TOTP non riuscito"
-            raise HTTPException(status_code=400, detail=msg)
+            # Passa il messaggio di errore esatto da Supabase al frontend.
+            detail = res.get("message") or "Errore sconosciuto durante l'enrollment MFA."
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
         factor_id = res.get("id")
         if not factor_id:
