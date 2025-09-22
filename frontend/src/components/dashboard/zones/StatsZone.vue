@@ -63,7 +63,7 @@ const onStatsDragEnd = (event) => {
       :disabled="!isEditing"
     >
       <template #item="{ element: statKey }">
-        <div class="widget-wrapper" :class="{ 'is-editing': isEditing }">
+        <div class="widget-wrapper">
           <StatCard :stat="tradesStore.allDashboardStats[statKey]" />
           <button
             v-if="isEditing"
@@ -99,7 +99,7 @@ const onStatsDragEnd = (event) => {
 }
 
 /* --- QUERIES DESKTOP FIRST --- */
-@media (min-width: 1200px) {
+@container stats-zone (min-width: 1100px) {
     .stats-grid {
         grid-template-columns: repeat(5, 1fr);
     }
@@ -185,5 +185,9 @@ const onStatsDragEnd = (event) => {
 }
 .stats-grid--font-sm .stat-value {
     font-size: 1.5rem !important;
+}
+.grid-zone-wrapper {
+    container-type: inline-size;
+    container-name: stats-zone;
 }
 </style>
