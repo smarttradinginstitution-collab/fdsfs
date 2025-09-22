@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :model-value="modelValue" @update:modelValue="$emit('update:modelValue')" title="Gestione MFA">
+  <BaseModal :show="modelValue" @close="$emit('update:modelValue', false)" title="Gestione MFA">
     <div v-if="mode === 'enroll'">
       <h3 class="modal-subtitle">Attiva Autenticazione a Due Fattori</h3>
       <div v-if="isLoading" class="loading-state">
