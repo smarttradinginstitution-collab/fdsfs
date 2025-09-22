@@ -397,10 +397,18 @@ async def test_disable_mfa_success(auth_controller: AuthController, mocker):
     aal2_token = "new_aal2_token"
 
     # Mock the sequence of service calls
-    mock_supabase_service.get_user_from_access_token = AsyncMock(return_value={
-        "id": user_id,
-        "factors": [{"id": factor_id, "factor_type": "totp", "status": "verified"}]
-    })
+    mock_supabase_service.get_user_from_access_token = AsyncMock(side_effect = [
+        # First call (to find the factor)
+        {
+            "id": user_id,
+            "factors": [{"id": factor_id, "factor_type": "totp", "status": "verified"}]
+        },
+        # Second call (to get refreshed user state)
+        {
+            "id": user_id,
+            "factors": []
+        }
+    ])
     mock_supabase_service.create_mfa_challenge = AsyncMock(return_value={"id": challenge_id})
     mock_supabase_service.verify_mfa_challenge = AsyncMock(return_value={
         "access_token": aal2_token,
@@ -415,7 +423,9 @@ async def test_disable_mfa_success(auth_controller: AuthController, mocker):
     response = await auth_controller.disable_mfa(payload=payload, creds=mock_creds)
 
     # Assertions
-    mock_supabase_service.get_user_from_access_token.assert_called_once_with("user_token")
+    assert mock_supabase_service.get_user_from_access_token.call_count == 2
+    mock_supabase_service.get_user_from_access_token.assert_any_call("user_token")
+    mock_supabase_service.get_user_from_access_token.assert_any_call(aal2_token)
     mock_supabase_service.create_mfa_challenge.assert_called_once_with("user_token", factor_id)
     mock_supabase_service.verify_mfa_challenge.assert_called_once_with("user_token", factor_id, challenge_id, "123456")
     mock_supabase_service.delete_mfa_factor.assert_called_once_with(aal2_token, factor_id)

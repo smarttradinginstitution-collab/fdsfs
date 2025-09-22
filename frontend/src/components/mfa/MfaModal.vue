@@ -57,6 +57,7 @@ const emit = defineEmits(['update:modelValue', 'success']);
 const authStore = useAuthStore();
 const otpCode = ref('');
 const enrollData = ref(null);
+const unverifiedFactorId = ref(null); // Traccia il fattore creato ma non ancora verificato
 const isLoading = ref(false);
 const isVerifying = ref(false);
 const isDisabling = ref(false);
@@ -71,7 +72,9 @@ async function fetchEnrollmentDetails() {
   isLoading.value = true;
   error.value = '';
   try {
-    enrollData.value = await authStore.enrollMfa();
+    const data = await authStore.enrollMfa();
+    enrollData.value = data;
+    unverifiedFactorId.value = data.factor_id; // Salva l'ID del fattore non verificato
   } catch (e) {
     error.value = e.response?.data?.detail || 'Errore durante la generazione del QR code.';
   } finally {
@@ -84,6 +87,7 @@ async function handleVerifyAndEnable() {
   error.value = '';
   try {
     await authStore.verifyAndEnableMfa(enrollData.value.factor_id, enrollData.value.challenge_id, otpCode.value);
+    unverifiedFactorId.value = null; // Il fattore è stato verificato, non serve più pulirlo
     emit('success', 'MFA attivata con successo!');
     emit('update:modelValue', false);
   } catch (e) {
@@ -109,11 +113,19 @@ async function handleDisable() {
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
+    // La modale si sta aprendo
     otpCode.value = '';
     error.value = '';
     enrollData.value = null;
+    unverifiedFactorId.value = null;
     if (props.mode === 'enroll') {
       fetchEnrollmentDetails();
+    }
+  } else {
+    // La modale si sta chiudendo
+    // Se stavamo facendo l'enroll e abbiamo un fattore non verificato, puliamolo.
+    if (props.mode === 'enroll' && unverifiedFactorId.value) {
+      authStore.unenrollMfa(unverifiedFactorId.value);
     }
   }
 });

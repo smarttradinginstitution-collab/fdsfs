@@ -99,6 +99,16 @@ export const useAuthStore = defineStore('auth', () => {
     await loadCurrentRoleName();
   }
 
+  async function unenrollMfa(factorId) {
+    // Non fa nulla allo stato locale, serve solo per pulizia.
+    // L'utente non è autenticato con questo fattore, quindi non c'è bisogno di aggiornare lo stato.
+    try {
+      await apiClient.delete(`/api/v1/auth/mfa/factors/${factorId}`);
+    } catch (error) {
+      console.error(`Pulizia del fattore ${factorId} fallita:`, error);
+    }
+  }
+
   async function disableMfa(otpCode) {
     const { data } = await apiClient.post('/api/v1/auth/mfa/disable', { code: otpCode });
     await _setAuthentication(data.access_token, data.user);
@@ -151,5 +161,6 @@ export const useAuthStore = defineStore('auth', () => {
     enrollMfa,
     verifyAndEnableMfa,
     disableMfa,
+    unenrollMfa,
   };
 });

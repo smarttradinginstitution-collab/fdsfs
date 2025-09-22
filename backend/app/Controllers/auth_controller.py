@@ -230,13 +230,18 @@ class AuthController:
         if delete_res.get("error"):
             raise HTTPException(status_code=500, detail="Errore durante l'eliminazione del fattore MFA.")
 
-        # 5. Ritorna la nuova sessione AAL2. L'oggetto utente in verify_res è già aggiornato.
+        # 5. Recupera lo stato utente aggiornato DOPO l'eliminazione del fattore.
+        refreshed_user_res = await supabase_service.get_user_from_access_token(aal2_token)
+        if refreshed_user_res.get("error"):
+            raise HTTPException(status_code=500, detail="Impossibile recuperare lo stato utente aggiornato.")
+
+        # 6. Ritorna la nuova sessione AAL2 con l'utente aggiornato.
         return VerifyMfaResponse(
-            access_token=verify_res.get("access_token"),
-            token_type=verify_res.get("token_type"),
+            access_token=aal2_token,
+            token_type=verify_res.get("token_type", "bearer"),
             expires_in=verify_res.get("expires_in"),
             refresh_token=verify_res.get("refresh_token"),
-            user=verify_res.get("user") or {},
+            user=refreshed_user_res,
         )
 
     # REGISTER
