@@ -181,7 +181,7 @@ const handleSubmit = () => {
 
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .grid-group-3-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-.grid-group-2-col { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.grid-group-2-col { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
 .notes-group {
   margin-top: var(--semantic-size-stack-sm);
