@@ -35,8 +35,8 @@
           "chart": {
             "width": {
               "desktop": { "$value": "60px", "$type": "dimension" },
-              "tablet": { "$value": "48px", "$type": "dimension" },
-              "mobile": { "$value": "40px", "$type": "dimension" }
+              "tablet": { "$value": "44px", "$type": "dimension" },
+              "mobile": { "$value": "36px", "$type": "dimension" }
             }
           }
         },

@@ -61,26 +61,6 @@ const onStatsDragEnd = (event) => {
 </template>
 
 <style scoped>
-.stats-grid {
-  display: grid;
-  gap: var(--semantic-size-stack-lg);
-  min-width: 0; /* Fix for grid inside flexbox overflow */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-}
-
-@media (max-width: 400px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-sm);
-  }
-}
-
 .ghost {
   opacity: 0.5;
   background-color: var(--semantic-color-surface-secondary);
