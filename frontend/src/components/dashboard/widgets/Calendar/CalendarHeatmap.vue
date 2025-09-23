@@ -131,8 +131,8 @@ const handleWeekClick = (weekIndex) => {
 .calendar-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
-  padding-block: var(--semantic-size-calendar-card-padding-block-mobile);
-  padding-inline: var(--semantic-size-calendar-card-padding-inline-mobile);
+  padding-block: var(--semantic-size-calendar-card-padding-block);
+  padding-inline: var(--semantic-size-calendar-card-padding-inline);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
@@ -141,7 +141,7 @@ const handleWeekClick = (weekIndex) => {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr) auto;
-  gap: var(--semantic-size-calendar-grid-gap-mobile);
+  gap: var(--semantic-size-calendar-grid-gap);
 }
 
 .day-header {
@@ -161,7 +161,7 @@ const handleWeekClick = (weekIndex) => {
   position: relative;
   aspect-ratio: 1 / 1.5;
   border-radius: var(--base-border-radius-sm);
-  padding: var(--semantic-size-calendar-day-cell-padding-mobile);
+  padding: var(--semantic-size-calendar-day-cell-padding);
   transition: transform 150ms;
   display: flex;
   align-items: center;
@@ -295,35 +295,7 @@ const handleWeekClick = (weekIndex) => {
   color: var(--semantic-color-feedback-negative-text);
 }
 
-@media (min-width: 768px) {
-  .calendar-card {
-    padding-block: var(--semantic-size-calendar-card-padding-block-tablet);
-    padding-inline: var(--semantic-size-calendar-card-padding-inline-tablet);
-  }
-
-  .calendar-grid {
-    gap: var(--semantic-size-calendar-grid-gap-tablet);
-  }
-
-  .day-cell {
-    padding: var(--semantic-size-calendar-day-cell-padding-tablet);
-  }
-}
-
 @media (min-width: 1024px) {
-  .calendar-card {
-    padding-block: var(--semantic-size-calendar-card-padding-block-desktop);
-    padding-inline: var(--semantic-size-calendar-card-padding-inline-desktop);
-  }
-
-  .calendar-grid {
-    gap: var(--semantic-size-calendar-grid-gap-desktop);
-  }
-
-  .day-cell {
-    padding: var(--semantic-size-calendar-day-cell-padding-desktop);
-  }
-
   .day-extra-stats {
     display: block;
   }

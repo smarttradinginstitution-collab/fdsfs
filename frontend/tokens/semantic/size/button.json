@@ -4,26 +4,22 @@
       "button": {
         "padding-inline": {
           "medium": {
-            "desktop": { "$value": "{semantic.size.inset.md}", "$type": "dimension" },
-            "tablet": { "$value": "{semantic.size.inset.sm}", "$type": "dimension" },
-            "mobile": { "$value": "{semantic.size.inset.xs}", "$type": "dimension" }
+            "$value": "{base.size.fluid-spacing.md}",
+            "$type": "spacing"
           },
           "small": {
-            "desktop": { "$value": "{semantic.size.inset.sm}", "$type": "dimension" },
-            "tablet": { "$value": "{semantic.size.inset.xs}", "$type": "dimension" },
-            "mobile": { "$value": "{base.size.spacing.1.5}", "$type": "dimension" }
+            "$value": "{base.size.fluid-spacing.sm}",
+            "$type": "spacing"
           }
         },
         "padding-block": {
           "medium": {
-            "desktop": { "$value": "{semantic.size.inset.sm}", "$type": "dimension" },
-            "tablet": { "$value": "{semantic.size.inset.xs}", "$type": "dimension" },
-            "mobile": { "$value": "{base.size.spacing.1}", "$type": "dimension" }
+            "$value": "{base.size.fluid-spacing.sm}",
+            "$type": "spacing"
           },
           "small": {
-            "desktop": { "$value": "{semantic.size.inset.xs}", "$type": "dimension" },
-            "tablet": { "$value": "{base.size.spacing.1.5}", "$type": "dimension" },
-            "mobile": { "$value": "{base.size.spacing.1}", "$type": "dimension" }
+            "$value": "{base.size.fluid-spacing.xs}",
+            "$type": "spacing"
           }
         }
       }

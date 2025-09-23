@@ -143,7 +143,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     /* BEST PRACTICE: Tokenizzazione delle dimensioni dei componenti
        La larghezza del grafico è gestita da token semantici, rendendo
        facile modificarla in futuro senza toccare il CSS. */
-    width: var(--semantic-size-component-stat-card-chart-width-desktop);
+    width: var(--semantic-size-component-stat-card-chart-width);
 }
 
 /* === Media Queries per la Responsività Mobile === */
@@ -168,9 +168,6 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     .stat-label {
         font: var(--semantic-font-style-label-xs);
     }
-    .chart-content {
-        width: var(--semantic-size-component-stat-card-chart-width-tablet);
-    }
 }
 
 @media (max-width: 365px) { /* xxs breakpoint */
@@ -180,9 +177,6 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     }
     .stat-label {
         font: var(--semantic-font-style-label-xxs);
-    }
-    .chart-content {
-        width: var(--semantic-size-component-stat-card-chart-width-mobile);
     }
 }
 </style>

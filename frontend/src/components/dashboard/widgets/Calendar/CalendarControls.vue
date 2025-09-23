@@ -78,7 +78,7 @@ function formatPnl(pnl) {
 .month-selector {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-calendar-controls-gap-mobile);
+  gap: var(--semantic-size-calendar-controls-gap);
 }
 
 .month-label {
@@ -107,23 +107,6 @@ function formatPnl(pnl) {
   color: var(--semantic-color-feedback-negative-text);
 }
 
-@media (min-width: 768px) {
-
-  .controls-left,
-  .controls-right,
-  .month-selector {
-    gap: var(--semantic-size-calendar-controls-gap-tablet);
-  }
-}
-
-@media (min-width: 1024px) {
-
-  .controls-left,
-  .controls-right,
-  .month-selector {
-    gap: var(--semantic-size-calendar-controls-gap-desktop);
-  }
-}
 
 @media (max-width: 768px) {
   .monthly-stats {
