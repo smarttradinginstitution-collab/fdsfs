@@ -86,7 +86,7 @@ const isPublicRoute = computed(() => route.meta.public);
   z-index: var(--semantic-layer-z-index-overlay);
 }
 
-@media (max-width: 768px) {
+@media (max-width: var(--base-layout-breakpoint-md)) {
   /* Aumentata la specificità per sovrascrivere lo stato collassato su mobile */
   .content-wrapper.sidebar-is-collapsed,
   .content-wrapper {

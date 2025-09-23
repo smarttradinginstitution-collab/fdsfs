@@ -55,8 +55,7 @@ onMounted(() => {
   fetchUsers();
 });
 
-// Logica responsive con VueUse
-const isDesktop = useMediaQuery('(min-width: 769px)');
+// Logica responsive gestita via CSS.
 </script>
 
 <template>
@@ -67,8 +66,8 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
     </div>
 
     <div class="header-right">
-      <!-- Filtri per Desktop (v-if) -->
-      <div v-if="isDesktop" class="header-controls">
+      <!-- Filtri per Desktop -->
+      <div class="header-controls desktop-filters">
         <DropdownButton>
           <template #icon>
             <FilterIcon />
@@ -89,8 +88,8 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
         </DropdownButton>
       </div>
 
-      <!-- Filtro unificato per Mobile (v-else) -->
-      <div v-else class="header-controls">
+      <!-- Filtro unificato per Mobile -->
+      <div class="header-controls mobile-filters-container">
         <DropdownButton>
           <template #icon>
             <FilterIcon />
@@ -145,7 +144,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: var(--base-layout-breakpoint-md)) {
   .hamburger-menu {
     display: flex;
   }
@@ -155,9 +154,24 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: var(--base-layout-breakpoint-xs)) {
   .header-controls .button-text {
     display: none;
+  }
+}
+
+.mobile-filters-container {
+  display: none;
+}
+
+/* A 768px (md) e inferiori, mostriamo il filtro mobile e nascondiamo quelli desktop */
+@media (max-width: var(--base-layout-breakpoint-md)) {
+  .desktop-filters {
+    display: none;
+  }
+
+  .mobile-filters-container {
+    display: flex;
   }
 }
 </style>
