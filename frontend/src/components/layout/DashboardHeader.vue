@@ -55,8 +55,8 @@ onMounted(() => {
   fetchUsers();
 });
 
-// Logica responsive con VueUse
-const isDesktop = useMediaQuery('(min-width: 769px)');
+// Logica responsive con VueUse. Allineato al breakpoint 'md' (768px).
+const isDesktop = useMediaQuery('(min-width: 768px)');
 </script>
 
 <template>
@@ -141,23 +141,39 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   gap: var(--semantic-size-stack-md);
 }
 
+/*
+  Stili Mobile-First:
+  - hamburger-menu è visibile di default.
+  - il titolo è più piccolo di default.
+  - il testo del bottone "Filters" è nascosto di default.
+*/
 .hamburger-menu {
+  display: flex;
+}
+
+.title {
+  font: var(--semantic-font-style-heading-xl);
+}
+
+.header-controls .button-text {
   display: none;
 }
 
-@media (max-width: 768px) {
-  .hamburger-menu {
-    display: flex;
-  }
-
-  .title {
-    font: var(--semantic-font-style-heading-xl);
+/* Stili per schermi piccoli (xs) e superiori */
+@media (--breakpoint-xs) {
+  .header-controls .button-text {
+    display: inline; /* Mostra di nuovo il testo del bottone */
   }
 }
 
-@media (max-width: 400px) {
-  .header-controls .button-text {
-    display: none;
+/* Stili per schermi medi (md) e superiori */
+@media (--breakpoint-md) {
+  .hamburger-menu {
+    display: none; /* Nasconde l'hamburger su schermi più grandi */
+  }
+
+  .title {
+    font: var(--semantic-font-style-heading-2xl); /* Ripristina la dimensione del titolo per desktop */
   }
 }
 </style>

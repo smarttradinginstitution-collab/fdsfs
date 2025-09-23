@@ -1,0 +1,47 @@
+/*
+  ==============================================
+  === PUNTI DI INTERRUZIONE RESPONSIVE GLOBALI ===
+  ==============================================
+
+  Questo file definisce un set di media query personalizzate
+  per essere utilizzate in tutta l'applicazione.
+
+  Approccio: Mobile First (min-width)
+  - Gli stili di base sono per i dispositivi mobili.
+  - Le media query aggiungono o modificano stili per schermi più grandi.
+
+  Come si usa (esempio in un file .vue):
+
+  <style scoped>
+    .mio-componente {
+      background-color: blue;
+    }
+
+    @media (--breakpoint-md) {
+      .mio-componente {
+        background-color: red;
+      }
+    }
+  </style>
+*/
+
+/* Breakpoint per piccoli dispositivi mobili e oltre */
+@custom-media --breakpoint-xs (min-width: 480px);
+
+/* Breakpoint per dispositivi mobili grandi e oltre (tablet verticali) */
+@custom-media --breakpoint-sm (min-width: 640px);
+
+/* Breakpoint per tablet e oltre (laptop piccoli) */
+@custom-media --breakpoint-md (min-width: 768px);
+
+/* Breakpoint per laptop e oltre (desktop standard) */
+@custom-media --breakpoint-lg (min-width: 1024px);
+
+/* Breakpoint per desktop di grandi dimensioni e oltre */
+@custom-media --breakpoint-xl (min-width: 1280px);
+
+/* Breakpoint per monitor molto grandi e oltre */
+@custom-media --breakpoint-2xl (min-width: 1536px);
+
+/* Breakpoint per monitor ad altissima risoluzione */
+@custom-media --breakpoint-3xl (min-width: 1800px);

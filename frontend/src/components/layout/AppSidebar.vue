@@ -289,32 +289,60 @@ const navLinks = [
 }
 
 
-/* --- Media Query per il comportamento Mobile --- */
-@media (max-width: 768px) {
+/*
+  --- Stili Mobile-First (Default) ---
+  Di default, la sidebar è un overlay nascosto fuori dallo schermo,
+  pensato per i dispositivi mobili.
+*/
+.sidebar {
+  position: fixed;
+  z-index: var(--base-layer-z-index-nav); /* Assicura che sia sopra il contenuto */
+  transform: translateX(-100%);
+  transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
+  /* Su mobile, la larghezza è sempre quella espansa */
+  width: var(--semantic-size-component-sidebar-width-expanded) !important;
+}
+
+.sidebar.is-mobile-open {
+  transform: translateX(0);
+}
+
+.toggle-button {
+  display: none;
+}
+
+/*
+  Forziamo la visualizzazione del testo anche se la classe `is-collapsed`
+  fosse presente su mobile, dove non ha senso.
+*/
+.sidebar.is-collapsed .nav-text,
+.sidebar.is-collapsed .user-info {
+  opacity: 1;
+}
+
+
+/* --- Stili per Tablet/Desktop (md e superiori) --- */
+@media (--breakpoint-md) {
   .sidebar {
-    /* Su mobile, la sidebar è un overlay che appare da sinistra */
-    position: fixed;
-    transform: translateX(-100%); /* Nascosta di default */
-    transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
-
-    /* Su mobile, non vogliamo mai la versione "collassata", ma sempre quella estesa */
-    width: var(--semantic-size-component-sidebar-width-expanded) !important;
-  }
-
-  /* Quando il menu mobile è aperto, la facciamo apparire */
-  .sidebar.is-mobile-open {
+    /* Su schermi grandi, la sidebar torna ad essere fissa e parte del layout */
+    position: sticky;
     transform: translateX(0);
+    transition: width var(--base-animation-duration-base) var(--base-animation-easing-out);
+    width: var(--semantic-size-component-sidebar-width-expanded);
   }
 
-  /* Nascondiamo il bottone per collassare la sidebar, dato che non serve su mobile */
+  .sidebar.is-collapsed {
+    width: var(--semantic-size-component-sidebar-width-collapsed);
+  }
+
   .toggle-button {
-    display: none;
+    display: grid; /* Ripristiniamo il bottone per collassare */
   }
 
-  /* Forziamo la visualizzazione del testo dei link, ignorando lo stato `is-collapsed` */
-  .sidebar.is-collapsed .nav-text,
-  .sidebar.is-collapsed .user-info {
-    opacity: 1;
+  /* Ripristiniamo il comportamento di fade-out del testo quando collassata */
+  .sidebar.is-collapsed .user-info,
+  .sidebar.is-collapsed .nav-text {
+    opacity: 0;
   }
 }
 </style>

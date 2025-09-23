@@ -63,21 +63,26 @@ const onStatsDragEnd = (event) => {
 <style scoped>
 .stats-grid {
   display: grid;
-  gap: var(--semantic-size-stack-lg);
   min-width: 0; /* Fix for grid inside flexbox overflow */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: stretch; /* <-- CHIAVE: Assicura che tutte le card in una riga abbiano la stessa altezza. */
+
+  /* Default (Mobile < 480px) */
+  gap: var(--semantic-size-stack-sm);
+  grid-template-columns: 1fr 1fr;
 }
 
-@media (max-width: 640px) {
+/* Stili per schermi xs (480px) e superiori */
+@media (--breakpoint-xs) {
   .stats-grid {
+    gap: var(--semantic-size-stack-lg);
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 
-@media (max-width: 400px) {
+/* Stili per schermi sm (640px) e superiori */
+@media (--breakpoint-sm) {
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-sm);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 

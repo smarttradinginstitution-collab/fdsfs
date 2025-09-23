@@ -172,28 +172,46 @@ watch(
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-@media (min-width: 768px) {
+/* --- Mobile-First Styles --- */
+
+/* Default for smallest screens */
+.action-bar .button-text {
+  display: none;
+}
+.stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* From xs (480px) upwards */
+@media (--breakpoint-xs) {
+  .action-bar .button-text {
+    display: inline;
+  }
+}
+
+/* From sm (640px) upwards */
+@media (--breakpoint-sm) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* From md (768px) upwards */
+@media (--breakpoint-md) {
   :deep(.main-content-grid) {
     grid-template-columns: 65% 1fr;
   }
 }
 
-@media (max-width: 1280px) {
-  :deep(.main-content-grid),
-  :deep(.complex-widgets-grid) {
+/* From xl (1280px) upwards */
+/* The old rule `max-width: 1280px` reset the layout. In mobile-first,
+   we need to explicitly define the layout for larger screens if we want
+   it to be different from the md layout. Here we reset it back to auto-fit. */
+@media (--breakpoint-xl) {
+  :deep(.main-content-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
 
-@media (max-width: 400px) {
-  .action-bar .button-text {
-    display: none;
-  }
-}
 /* Common widget styles are now encapsulated in their respective zone components */
 </style>

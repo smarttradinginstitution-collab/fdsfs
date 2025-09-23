@@ -67,43 +67,32 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 */
 .stat-card {
   background-color: var(--semantic-color-surface-primary);
-  padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: var(--semantic-size-stack-md);
-
   transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
   overflow: hidden;
+  height: 100%; /* Assicura che la card occupi tutta l'altezza della cella di griglia. */
 }
 .stat-card:hover {
-    box-shadow: var(--semantic-effect-shadow-elevation-medium);
+  box-shadow: var(--semantic-effect-shadow-elevation-medium);
 }
 
 .text-content {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-xs);
-  /* BEST PRACTICE: No Text Wrapping (come da richiesta)
-     Manteniamo il testo su una sola riga per preservare il layout a 2 colonne.
-     Questo ci costringe a essere molto attenti con le spaziature e le dimensioni
-     dei font su schermi piccoli. */
   white-space: normal;
 }
+
 .stat-label {
-  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
+  white-space: nowrap; /* Impedisce al testo dell'etichetta di andare a capo. */
 }
-/*
-  BEST PRACTICE: Tipografia Fluida
-  Usiamo un token (`metric-display`) che applica la funzione CSS `clamp()`.
-  Questo permette al font di scalare fluidamente con la larghezza dello schermo,
-  diventando più piccolo su mobile senza bisogno di molteplici media query.
-*/
+
 .stat-value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
@@ -116,73 +105,77 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 }
 
 .win-rate-label {
-    display: flex;
-    align-items: center;
-    gap: var(--semantic-size-stack-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
 }
 .badges {
-    display: flex;
-    gap: var(--semantic-size-stack-xxs);
+  display: flex;
+  gap: var(--semantic-size-stack-xxs);
 }
 .badge {
-    font: var(--semantic-font-style-body-xs);
-    padding: 0.1rem 0.4rem;
-    border-radius: var(--semantic-border-radius-tag);
+  border-radius: var(--semantic-border-radius-tag);
 }
 .badge.win {
-    background-color: var(--semantic-color-feedback-positive-surface);
-    color: var(--semantic-color-feedback-positive-text);
+  background-color: var(--semantic-color-feedback-positive-surface);
+  color: var(--semantic-color-feedback-positive-text);
 }
 .badge.loss {
-    background-color: var(--semantic-color-feedback-negative-surface);
-    color: var(--semantic-color-feedback-negative-text);
+  background-color: var(--semantic-color-feedback-negative-surface);
+  color: var(--semantic-color-feedback-negative-text);
 }
 
 .chart-content {
-    flex-shrink: 0;
-    /* BEST PRACTICE: Tokenizzazione delle dimensioni dei componenti
-       La larghezza del grafico è gestita da token semantici, rendendo
-       facile modificarla in futuro senza toccare il CSS. */
+  flex-shrink: 0;
+}
+
+/* === Stili Mobile-First === */
+
+/* Default styles for the smallest screens (< 480px) */
+.stat-card {
+  gap: var(--semantic-size-stack-sm); /* Using sm as xxs was not defined */
+  padding: var(--semantic-size-inset-xs);
+}
+.stat-label {
+  font: var(--semantic-font-style-label-xxs);
+}
+.chart-content {
+  width: var(--semantic-size-component-stat-card-chart-width-mobile);
+}
+.badge {
+  font: var(--semantic-font-style-body-xxs);
+  padding: 0.05rem 0.25rem;
+}
+
+/* From xs (480px) upwards */
+@media (--breakpoint-xs) {
+  .stat-card {
+    padding: var(--semantic-size-inset-sm);
+    gap: var(--semantic-size-stack-sm);
+  }
+  .stat-label {
+    font: var(--semantic-font-style-label-xs);
+  }
+  .chart-content {
+    width: var(--semantic-size-component-stat-card-chart-width-tablet);
+  }
+}
+
+/* From sm (640px) upwards - Desktop styles */
+@media (--breakpoint-sm) {
+  .stat-card {
+    padding: var(--semantic-size-inset-md);
+    gap: var(--semantic-size-stack-md);
+  }
+  .stat-label {
+    font: var(--semantic-font-style-body-sm);
+  }
+  .chart-content {
     width: var(--semantic-size-component-stat-card-chart-width-desktop);
-}
-
-/* === Media Queries per la Responsività Mobile === */
-/*
-  BEST PRACTICE: Breakpoint specifici per la compattazione
-  Usiamo breakpoint multipli per ridurre progressivamente le dimensioni
-  e le spaziature, garantendo che il layout a 2 colonne funzioni
-  senza overflow anche su schermi molto stretti.
-*/
-@media (max-width: 640px) { /* sm breakpoint */
-    .badge {
-        font: var(--semantic-font-style-body-xxs);
-        padding: 0.05rem 0.25rem;
-    }
-}
-
-@media (max-width: 480px) { /* xs breakpoint */
-    .stat-card {
-        padding: var(--semantic-size-inset-sm);
-        gap: var(--semantic-size-stack-sm);
-    }
-    .stat-label {
-        font: var(--semantic-font-style-label-xs);
-    }
-    .chart-content {
-        width: var(--semantic-size-component-stat-card-chart-width-tablet);
-    }
-}
-
-@media (max-width: 365px) { /* xxs breakpoint */
-    .stat-card {
-        gap: var(--semantic-size-gap-xs);
-        padding: var(--semantic-size-inset-xs);
-    }
-    .stat-label {
-        font: var(--semantic-font-style-label-xxs);
-    }
-    .chart-content {
-        width: var(--semantic-size-component-stat-card-chart-width-mobile);
-    }
+  }
+  .badge {
+    font: var(--semantic-font-style-body-xs);
+    padding: 0.1rem 0.4rem;
+  }
 }
 </style>

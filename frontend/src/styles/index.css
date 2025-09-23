@@ -3,6 +3,7 @@
  * Importa prima i token di base (privati) e poi i token semantici (pubblici).
  * L'applicazione dovrebbe importare solo questo file per accedere ai token.
  */
+@import "./_responsive.css";
 @import "./_base.css";
 @import "./tokens-light.css";
 @import "./tokens-dark.css";
