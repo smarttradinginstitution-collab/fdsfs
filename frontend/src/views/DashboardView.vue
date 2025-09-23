@@ -148,13 +148,17 @@ watch(
     font: var(--semantic-font-style-heading-lg);
     color: var(--semantic-color-text-primary);
 }
-.stats-grid,
+/*
+  Le griglie dei widget sono state refattorizzate per usare i token di breakpoint,
+  garantendo un comportamento responsivo coerente e manutenibile.
+*/
 :deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
     display: grid;
     gap: var(--semantic-size-stack-lg);
     min-width: 0; /* Fix for grid inside flexbox overflow */
     align-items: start;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 /* Allow widgets in the main grid to shrink and scroll if their content is too wide */
@@ -162,38 +166,23 @@ watch(
   min-width: 0;
   overflow-x: auto;
 }
-.stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-:deep(.complex-widgets-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-:deep(.main-content-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
 
-@media (min-width: 768px) {
+/*
+  Per la griglia principale, usiamo un approccio mobile-first.
+  Di default, è a una colonna. A partire dal breakpoint 'md',
+  passa a una griglia asimmetrica più complessa.
+*/
+@media (min-width: var(--base-layout-breakpoint-md)) {
   :deep(.main-content-grid) {
     grid-template-columns: 65% 1fr;
   }
 }
 
-@media (max-width: 1280px) {
-  :deep(.main-content-grid),
-  :deep(.complex-widgets-grid) {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-}
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
-
-@media (max-width: 400px) {
+@media (--media-nav-collapse) {
   .action-bar .button-text {
     display: none;
   }
 }
+
 /* Common widget styles are now encapsulated in their respective zone components */
 </style>

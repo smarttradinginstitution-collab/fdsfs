@@ -2,6 +2,21 @@
   "base": {
     "layout": {
       "breakpoint": {
+        "xxs": {
+          "$value": "360px",
+          "$type": "dimension",
+          "$comment": "Breakpoint per i dispositivi mobili più piccoli."
+        },
+        "xs": {
+          "$value": "480px",
+          "$type": "dimension",
+          "$comment": "Breakpoint per dispositivi mobili standard."
+        },
+        "mobile-nav-collapse": {
+          "$value": "400px",
+          "$type": "dimension",
+          "$comment": "Breakpoint specifico per nascondere il testo nei bottoni dell'action bar."
+        },
         "sm": {
           "$value": "640px",
           "$type": "dimension",

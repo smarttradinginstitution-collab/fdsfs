@@ -1,0 +1,14 @@
+/*
+  Definizione di Custom Media Queries per un utilizzo centralizzato e coerente
+  dei breakpoint in tutta l'applicazione.
+  Fonte di verità: /tokens/base/layout/breakpoint.json
+*/
+
+@custom-media --media-xxs (max-width: var(--base-layout-breakpoint-xxs));
+@custom-media --media-xs (max-width: var(--base-layout-breakpoint-xs));
+@custom-media --media-nav-collapse (max-width: var(--base-layout-breakpoint-mobile-nav-collapse));
+@custom-media --media-sm (max-width: var(--base-layout-breakpoint-sm));
+@custom-media --media-md (max-width: var(--base-layout-breakpoint-md));
+@custom-media --media-lg (max-width: var(--base-layout-breakpoint-lg));
+@custom-media --media-xl (max-width: var(--base-layout-breakpoint-xl));
+@custom-media --media-2xl (max-width: var(--base-layout-breakpoint-2xl));

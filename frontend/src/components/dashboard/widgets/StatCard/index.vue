@@ -148,19 +148,18 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 
 /* === Media Queries per la Responsività Mobile === */
 /*
-  BEST PRACTICE: Breakpoint specifici per la compattazione
-  Usiamo breakpoint multipli per ridurre progressivamente le dimensioni
-  e le spaziature, garantendo che il layout a 2 colonne funzioni
-  senza overflow anche su schermi molto stretti.
+  BEST PRACTICE: Utilizzo di Custom Media Queries
+  Le media query sono ora gestite tramite il sistema centralizzato di token,
+  garantendo coerenza e manutenibilità.
 */
-@media (max-width: 640px) { /* sm breakpoint */
+@media (--media-sm) {
     .badge {
         font: var(--semantic-font-style-body-xxs);
         padding: 0.05rem 0.25rem;
     }
 }
 
-@media (max-width: 480px) { /* xs breakpoint */
+@media (--media-xs) {
     .stat-card {
         padding: var(--semantic-size-inset-sm);
         gap: var(--semantic-size-stack-sm);
@@ -173,7 +172,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     }
 }
 
-@media (max-width: 365px) { /* xxs breakpoint */
+@media (--media-xxs) {
     .stat-card {
         gap: var(--semantic-size-gap-xs);
         padding: var(--semantic-size-inset-xs);

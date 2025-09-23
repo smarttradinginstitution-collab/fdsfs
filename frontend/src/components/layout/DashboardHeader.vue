@@ -7,6 +7,7 @@ DESCRIZIONE: Header con dati da /api/v1/users (per admin).
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useMediaQuery } from '@vueuse/core';
+import breakpointTokens from '../../../tokens/base/layout/breakpoint.json';
 import HamburgerButton from '../ui/HamburgerButton.vue';
 import DropdownButton from '../ui/DropdownButton.vue';
 import StrategyFilter from '../dashboard/filters/StrategyFilter.vue';
@@ -56,7 +57,7 @@ onMounted(() => {
 });
 
 // Logica responsive con VueUse
-const isDesktop = useMediaQuery('(min-width: 769px)');
+const isDesktop = useMediaQuery(`(min-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
 </script>
 
 <template>
@@ -145,7 +146,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (--media-md) {
   .hamburger-menu {
     display: flex;
   }
@@ -155,7 +156,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   }
 }
 
-@media (max-width: 400px) {
+@media (--media-nav-collapse) {
   .header-controls .button-text {
     display: none;
   }

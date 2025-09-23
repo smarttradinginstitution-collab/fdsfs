@@ -61,23 +61,38 @@ const onStatsDragEnd = (event) => {
 </template>
 
 <style scoped>
+/*
+  Il layout delle statistiche è stato refattorizzato per usare un numero fisso di colonne
+  a breakpoint specifici. Questo risolve il problema delle card di larghezza non uniforme
+  causato da `auto-fit` e garantisce un layout coerente e allineato.
+*/
 .stats-grid {
   display: grid;
   gap: var(--semantic-size-stack-lg);
   min-width: 0; /* Fix for grid inside flexbox overflow */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* Default a 4 colonne per desktop e schermi grandi */
+  grid-template-columns: repeat(4, 1fr);
 }
 
-@media (max-width: 640px) {
+/* A 2 colonne per tablet */
+@media (--media-lg) {
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 400px) {
+/* A 2 colonne per tablet */
+@media (--media-md) {
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-sm);
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* A 1 colonna per mobile, per garantire leggibilità */
+@media (--media-sm) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--semantic-size-stack-md);
   }
 }
 
