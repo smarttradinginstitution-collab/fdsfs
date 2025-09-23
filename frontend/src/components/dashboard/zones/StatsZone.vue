@@ -63,21 +63,24 @@ const onStatsDragEnd = (event) => {
 <style scoped>
 .stats-grid {
   display: grid;
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--semantic-size-stack-sm);
   min-width: 0; /* Fix for grid inside flexbox overflow */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr 1fr; /* Default for smallest screens */
+  align-items: stretch; /* Forces all cards to have the same height */
 }
 
-@media (max-width: 640px) {
+/* xs breakpoint (480px) and up */
+@include mq-xs {
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--semantic-size-stack-lg);
   }
 }
 
-@media (max-width: 400px) {
+/* sm breakpoint (640px) and up */
+@include mq-sm {
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-sm);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 

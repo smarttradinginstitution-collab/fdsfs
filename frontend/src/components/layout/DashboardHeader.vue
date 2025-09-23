@@ -124,8 +124,9 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   gap: var(--semantic-size-stack-sm);
 }
 
+/* Mobile-first: Titolo piccolo di default */
 .title {
-  font: var(--semantic-font-style-heading-2xl);
+  font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
 }
 
@@ -141,23 +142,31 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   gap: var(--semantic-size-stack-md);
 }
 
+/* Mobile-first: Hamburger visibile di default */
 .hamburger-menu {
+  display: flex;
+}
+
+/* Mobile-first: testo del bottone nascosto su schermi piccolissimi */
+.header-controls .button-text {
   display: none;
 }
 
-@media (max-width: 768px) {
-  .hamburger-menu {
-    display: flex;
-  }
-
-  .title {
-    font: var(--semantic-font-style-heading-xl);
+/* Mostra il testo del bottone da 'xs' in su */
+@include mq-xs {
+  .header-controls .button-text {
+    display: inline;
   }
 }
 
-@media (max-width: 400px) {
-  .header-controls .button-text {
+/* Stili per Desktop (da 'md' in su) */
+@include mq-md {
+  .hamburger-menu {
     display: none;
+  }
+
+  .title {
+    font: var(--semantic-font-style-heading-2xl);
   }
 }
 </style>

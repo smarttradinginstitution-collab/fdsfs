@@ -128,6 +128,7 @@ const handleWeekClick = (weekIndex) => {
 </template>
 
 <style scoped>
+/* --- Mobile First Default Styles --- */
 .calendar-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
@@ -140,7 +141,7 @@ const handleWeekClick = (weekIndex) => {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr) auto;
+  /* grid-template-columns is controlled by a computed property in the script */
   gap: var(--semantic-size-calendar-grid-gap-mobile);
 }
 
@@ -201,7 +202,7 @@ const handleWeekClick = (weekIndex) => {
   flex-direction: column;
   align-items: flex-end;
   gap: 0;
-  line-height: 1.15;
+  line-height: 1.1; /* Mobile line height */
   color: var(--semantic-color-text-on-brand);
   width: 100%;
 }
@@ -221,7 +222,9 @@ const handleWeekClick = (weekIndex) => {
       var(--base-font-fluid-size-xxs-max));
 }
 
+/* Hidden by default on mobile */
 .day-extra-stats {
+  display: none;
   color: var(--semantic-color-text-secondary);
   opacity: 0.8;
   font-size: clamp(var(--base-font-fluid-size-xxs-min),
@@ -229,7 +232,7 @@ const handleWeekClick = (weekIndex) => {
       var(--base-font-fluid-size-xxs-max));
 }
 
-/* --- Stili per il riepilogo settimanale --- */
+/* --- Weekly Summary Styles --- */
 .week-summary-card {
   display: flex;
   flex-direction: column;
@@ -243,42 +246,29 @@ const handleWeekClick = (weekIndex) => {
   border-radius: var(--base-border-radius-sm);
   transition: all 150ms ease-in-out;
   cursor: pointer;
-  /* L'altezza sarà determinata dalla griglia, allineandosi a aspect-ratio delle celle giorno */
 }
-
 .week-summary-card:hover {
   transform: scale(1.03);
   border-color: var(--semantic-color-border-focus);
   background-color: var(--semantic-color-surface-secondary);
 }
-
-/* 👇 Aggiunta: stato disabilitato per settimane future */
 .week-summary-card.disabled {
   cursor: not-allowed;
   opacity: 0.5;
   pointer-events: none;
 }
-
-.week-title {
+.week-title, .week-days {
   font-family: var(--base-font-family-palette-sans);
   font-size: 0.7rem;
   color: var(--semantic-color-text-secondary);
   line-height: 1.2;
   white-space: nowrap;
 }
-
 .week-days {
-  font-family: var(--base-font-family-palette-sans);
-  font-size: 0.7rem;
-  color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
-  white-space: nowrap;
-  /* Stili per lo sfondo richiesto */
   background-color: var(--semantic-color-surface-secondary);
   padding: 0.1rem var(--base-size-spacing-1-5);
   border-radius: var(--semantic-border-radius-tag);
 }
-
 .week-pnl {
   font-size: var(--base-font-size-sm);
   font-family: var(--semantic-font-style-data-numeric-font-family);
@@ -286,78 +276,49 @@ const handleWeekClick = (weekIndex) => {
   line-height: 1.2;
   white-space: nowrap;
 }
+.week-pnl.positive { color: var(--semantic-color-feedback-positive-text); }
+.week-pnl.negative { color: var(--semantic-color-feedback-negative-text); }
 
-.week-pnl.positive {
-  color: var(--semantic-color-feedback-positive-text);
-}
 
-.week-pnl.negative {
-  color: var(--semantic-color-feedback-negative-text);
-}
+/* --- Tablet and Desktop Overrides --- */
 
-@media (min-width: 768px) {
+@include mq-md {
   .calendar-card {
     padding-block: var(--semantic-size-calendar-card-padding-block-tablet);
     padding-inline: var(--semantic-size-calendar-card-padding-inline-tablet);
   }
-
   .calendar-grid {
     gap: var(--semantic-size-calendar-grid-gap-tablet);
   }
-
   .day-cell {
     padding: var(--semantic-size-calendar-day-cell-padding-tablet);
   }
+  .day-details {
+    line-height: 1.15;
+  }
 }
 
-@media (min-width: 1024px) {
+@include mq-lg {
   .calendar-card {
     padding-block: var(--semantic-size-calendar-card-padding-block-desktop);
     padding-inline: var(--semantic-size-calendar-card-padding-inline-desktop);
   }
-
   .calendar-grid {
     gap: var(--semantic-size-calendar-grid-gap-desktop);
   }
-
   .day-cell {
     padding: var(--semantic-size-calendar-day-cell-padding-desktop);
   }
-
   .day-extra-stats {
-    display: block;
-  }
-}
-
-@media (max-width: 1024px) {
-  .day-extra-stats {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .calendar-grid {
-    grid-template-columns: repeat(7, 1fr);
-  }
-
-  .week-summary-header,
-  .week-summary-card {
-    /* Aggiornato da .week-summary-cell */
-    display: none;
-  }
-
-  .day-details {
-    line-height: 1.1;
+    display: block; /* Show extra stats on large screens */
   }
 }
 
 /* --- DARK THEME OVERRIDE --- */
-/* The user requested that the text inside colored calendar cells be black for readability. */
 [data-theme='dark'] .day-cell:not(.no-trade) .day-details,
 [data-theme='dark'] .day-cell:not(.no-trade) .day-details span {
-  color: #131316; /* Using a very dark gray from the palette for consistency */
+  color: #131316;
 }
-
 [data-theme='dark'] .day-cell:not(.no-trade) .day-number {
   color: #131316;
   opacity: 0.6;

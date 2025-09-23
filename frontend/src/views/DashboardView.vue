@@ -162,38 +162,50 @@ watch(
   min-width: 0;
   overflow-x: auto;
 }
+
+/* --- Mobile First Grid Layouts --- */
+
+/* Default (smallest screens < 400px) */
+.action-bar .button-text {
+  display: none;
+}
 .stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
-:deep(.complex-widgets-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
+:deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-@media (min-width: 768px) {
+/* xs breakpoint (400px) and up */
+@include mq-xs {
+  .action-bar .button-text {
+    display: inline;
+  }
+}
+
+/* sm breakpoint (640px) and up */
+@include mq-sm {
+  .stats-grid {
+    /* Increase min-width for stats cards on slightly larger screens */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* md breakpoint (768px) and up */
+@include mq-md {
   :deep(.main-content-grid) {
+    /* Special two-column layout for medium screens */
     grid-template-columns: 65% 1fr;
   }
 }
 
-@media (max-width: 1280px) {
-  :deep(.main-content-grid),
-  :deep(.complex-widgets-grid) {
+/* xl breakpoint (1280px) and up */
+@include mq-xl {
+  :deep(.main-content-grid) {
+    /* Revert to auto-fit layout on very large screens */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
 
-@media (max-width: 400px) {
-  .action-bar .button-text {
-    display: none;
-  }
-}
-/* Common widget styles are now encapsulated in their respective zone components */
 </style>

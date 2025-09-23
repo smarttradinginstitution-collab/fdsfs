@@ -58,27 +58,25 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 </template>
 
 <style scoped>
-/*
-  BEST PRACTICE: Layout con CSS Grid
-  Usiamo `display: grid` per il layout interno della card. È più robusto di Flexbox
-  per questo tipo di layout a colonne. `grid-template-columns: 1fr auto;` dice alla
-  griglia di dare tutto lo spazio disponibile alla prima colonna (testo) e solo
-  lo spazio necessario alla seconda (grafico).
-*/
+/* Mobile-first: Default styles are for the smallest screens (< 365px) */
 .stat-card {
   background-color: var(--semantic-color-surface-primary);
-  padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
+  transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
 
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: var(--semantic-size-stack-md);
-
-  transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
   overflow: hidden;
+
+  /* Key Fixes */
+  height: 100%; /* Fill the space provided by the parent grid */
+
+  /* Smallest screen settings */
+  gap: var(--semantic-size-gap-xs);
+  padding: var(--semantic-size-inset-xs);
 }
 .stat-card:hover {
     box-shadow: var(--semantic-effect-shadow-elevation-medium);
@@ -88,25 +86,18 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-xs);
-  /* BEST PRACTICE: No Text Wrapping (come da richiesta)
-     Manteniamo il testo su una sola riga per preservare il layout a 2 colonne.
-     Questo ci costringe a essere molto attenti con le spaziature e le dimensioni
-     dei font su schermi piccoli. */
-  white-space: normal;
+  min-width: 0; /* Prevents text from overflowing and expanding the card */
 }
+
 .stat-label {
-  font: var(--semantic-font-style-body-sm);
+  font: var(--semantic-font-style-label-xxs); /* Smallest font by default */
   color: var(--semantic-color-text-secondary);
 }
-/*
-  BEST PRACTICE: Tipografia Fluida
-  Usiamo un token (`metric-display`) che applica la funzione CSS `clamp()`.
-  Questo permette al font di scalare fluidamente con la larghezza dello schermo,
-  diventando più piccolo su mobile senza bisogno di molteplici media query.
-*/
+
 .stat-value {
-  font: var(--semantic-font-style-metric-display);
+  font: var(--semantic-font-style-metric-display); /* Fluid font */
   color: var(--semantic-color-text-primary);
+  white-space: nowrap; /* Prevents the '%' from wrapping */
 }
 .stat-value--positive {
   color: var(--semantic-color-feedback-positive-text);
@@ -124,9 +115,11 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     display: flex;
     gap: var(--semantic-size-stack-xxs);
 }
+
+/* Badges are tiny by default */
 .badge {
-    font: var(--semantic-font-style-body-xs);
-    padding: 0.1rem 0.4rem;
+    font: var(--semantic-font-style-body-xxs);
+    padding: 0.05rem 0.25rem;
     border-radius: var(--semantic-border-radius-tag);
 }
 .badge.win {
@@ -140,27 +133,13 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 
 .chart-content {
     flex-shrink: 0;
-    /* BEST PRACTICE: Tokenizzazione delle dimensioni dei componenti
-       La larghezza del grafico è gestita da token semantici, rendendo
-       facile modificarla in futuro senza toccare il CSS. */
-    width: var(--semantic-size-component-stat-card-chart-width-desktop);
+    width: var(--semantic-size-component-stat-card-chart-width-mobile); /* Smallest chart by default */
 }
 
-/* === Media Queries per la Responsività Mobile === */
-/*
-  BEST PRACTICE: Breakpoint specifici per la compattazione
-  Usiamo breakpoint multipli per ridurre progressivamente le dimensioni
-  e le spaziature, garantendo che il layout a 2 colonne funzioni
-  senza overflow anche su schermi molto stretti.
-*/
-@media (max-width: 640px) { /* sm breakpoint */
-    .badge {
-        font: var(--semantic-font-style-body-xxs);
-        padding: 0.05rem 0.25rem;
-    }
-}
+/* === Progressive Enhancement with Breakpoints === */
 
-@media (max-width: 480px) { /* xs breakpoint */
+/* From xxs (365px) upwards */
+@include mq-xxs {
     .stat-card {
         padding: var(--semantic-size-inset-sm);
         gap: var(--semantic-size-stack-sm);
@@ -168,21 +147,30 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     .stat-label {
         font: var(--semantic-font-style-label-xs);
     }
+}
+
+/* From xs (480px) upwards */
+@include mq-xs {
     .chart-content {
         width: var(--semantic-size-component-stat-card-chart-width-tablet);
     }
 }
 
-@media (max-width: 365px) { /* xxs breakpoint */
+/* From sm (640px) upwards */
+@include mq-sm {
     .stat-card {
-        gap: var(--semantic-size-gap-xs);
-        padding: var(--semantic-size-inset-xs);
+        padding: var(--semantic-size-inset-md);
+        gap: var(--semantic-size-stack-md);
+    }
+    .badge {
+        font: var(--semantic-font-style-body-xs);
+        padding: 0.1rem 0.4rem;
     }
     .stat-label {
-        font: var(--semantic-font-style-label-xxs);
+        font: var(--semantic-font-style-body-sm);
     }
     .chart-content {
-        width: var(--semantic-size-component-stat-card-chart-width-mobile);
+        width: var(--semantic-size-component-stat-card-chart-width-desktop);
     }
 }
 </style>

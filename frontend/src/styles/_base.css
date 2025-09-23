@@ -124,6 +124,8 @@
   --base-layer-z-index-overlay: 1300;
   --base-layer-z-index-modal: 1400;
   --base-layer-z-index-notification: 2000;
+  --base-layout-breakpoint-xxs: 365px;
+  --base-layout-breakpoint-xs: 480px;
   --base-layout-breakpoint-sm: 640px;
   --base-layout-breakpoint-md: 768px;
   --base-layout-breakpoint-lg: 1024px;

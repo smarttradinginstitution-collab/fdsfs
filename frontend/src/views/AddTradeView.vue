@@ -120,7 +120,7 @@ const handleNewTrade = async (tradeData) => {
   gap: var(--semantic-size-stack-lg);
 }
 
-@media (min-width: 768px) {
+@include mq-md {
   .card-deck {
     grid-template-columns: 1fr 1fr;
   }

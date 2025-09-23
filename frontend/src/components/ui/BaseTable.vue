@@ -58,88 +58,120 @@ const tableClass = computed(() => {
   width: 100%;
   overflow-x: auto; /* Aggiunge lo scroll orizzontale se la tabella è troppo larga */
 }
+
+/* Mobile-first: Default styles are the "card" view */
 .table {
   width: 100%;
   border-collapse: collapse;
+  white-space: normal;
+}
+
+.table thead {
+  display: none;
+}
+
+.table tr {
+  display: block;
+  margin-bottom: var(--semantic-size-stack-md);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-sm);
+}
+
+.table td {
+  display: block;
+  text-align: right;
+  padding-left: 50%;
+  position: relative;
+  border-top: none;
+  padding-top: var(--base-size-spacing-1);
+  padding-bottom: var(--base-size-spacing-1);
+}
+
+.table td::before {
+  content: attr(data-label);
+  position: absolute;
+  left: var(--base-size-spacing-2);
+  width: 45%;
+  padding-right: var(--base-size-spacing-2);
   white-space: nowrap;
-}
-
-/* Stili di default (medium) */
-th {
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-secondary);
   text-align: left;
-  padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  font-weight: var(--base-font-weight-bold);
+  color: var(--semantic-color-text-secondary);
 }
-td {
+
+.table td:first-child {
+  border-top: none;
+}
+
+/* Stili per dimensione (applicati sia in mobile che desktop) */
+.table--medium th {
+  font: var(--semantic-font-style-label-md);
+  padding: var(--semantic-size-inset-md);
+}
+.table--medium td {
   font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-primary);
-  padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
 }
-
-/* Stili per la dimensione piccola */
 .table--small th {
-    font: var(--semantic-font-style-label-sm);
-    padding-top: var(--semantic-size-inset-sm);
-    padding-bottom: var(--semantic-size-inset-sm);
-}
-
-/* Stili per la dimensione extra piccola */
-.table--x-small th {
-    font: var(--semantic-font-style-label-xs);
-    padding-top: var(--semantic-size-inset-xs);
-    padding-bottom: var(--semantic-size-inset-xs);
-}
-.table--x-small td {
-    font: var(--semantic-font-style-body-xxs);
-    padding-top: var(--semantic-size-inset-xs);
-    padding-bottom: var(--semantic-size-inset-xs);
+  font: var(--semantic-font-style-label-sm);
+  padding-top: var(--semantic-size-inset-sm);
+  padding-bottom: var(--semantic-size-inset-sm);
 }
 .table--small td {
-    font: var(--semantic-font-style-body-xs);
-    padding-top: var(--semantic-size-inset-sm);
-    padding-bottom: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-body-xs);
+}
+.table--x-small th {
+  font: var(--semantic-font-style-label-xs);
+  padding-top: var(--semantic-size-inset-xs);
+  padding-bottom: var(--semantic-size-inset-xs);
+}
+.table--x-small td {
+  font: var(--semantic-font-style-body-xxs);
 }
 
 
-tbody tr:hover {
-  background-color: var(--semantic-color-surface-secondary);
-}
-
-/* === Stili per la Responsività === */
-@media (max-width: 768px) {
-  .table { white-space: normal; }
-  .table thead { display: none; }
-  .table tr {
-    display: block;
-    margin-bottom: var(--semantic-size-stack-md);
-    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-surface);
-    padding: var(--semantic-size-inset-sm);
-  }
-  .table td {
-    display: block;
-    text-align: right;
-    padding-left: 50%;
-    position: relative;
-    border-top: none;
-    padding-top: var(--base-size-spacing-1);
-    padding-bottom: var(--base-size-spacing-1);
-  }
-  .table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: var(--base-size-spacing-2);
-    width: 45%;
-    padding-right: var(--base-size-spacing-2);
+/* Desktop view (md breakpoint and up) */
+@include mq-md {
+  .table {
     white-space: nowrap;
-    text-align: left;
-    font-weight: var(--base-font-weight-bold);
-    color: var(--semantic-color-text-secondary);
   }
-  .table td:first-child { border-top: none; }
-  .table tr:first-child td:first-child { border-top: none; }
+
+  .table thead {
+    display: table-header-group;
+  }
+
+  .table tr {
+    display: table-row;
+    margin-bottom: 0;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .table td {
+    display: table-cell;
+    text-align: left;
+    padding-left: var(--semantic-size-inset-md);
+    position: static;
+    border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+  }
+
+  .table--small td { padding: var(--semantic-size-inset-sm); }
+  .table--x-small td { padding: var(--semantic-size-inset-xs); }
+
+
+  .table td::before {
+    display: none;
+  }
+
+  .table tr:hover {
+    background-color: var(--semantic-color-surface-secondary);
+  }
+
+  th {
+    color: var(--semantic-color-text-secondary);
+    text-align: left;
+    border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  }
 }
 </style>

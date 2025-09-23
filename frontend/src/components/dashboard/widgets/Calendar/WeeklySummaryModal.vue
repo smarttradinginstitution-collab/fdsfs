@@ -223,7 +223,7 @@ const formatDuration = (minutes) => {
 
 
 /* --- Tablet & Desktop Overrides --- */
-@media (min-width: 768px) {
+@include mq-md {
   .modal-body-content {
     gap: var(--semantic-size-stack-lg);
   }

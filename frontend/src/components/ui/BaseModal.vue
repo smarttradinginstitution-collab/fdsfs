@@ -139,7 +139,7 @@ export default {
   max-height: 85vh;
 }
 
-@media (min-width: 768px) {
+@include mq-md {
   .modal-card {
     max-width: var(--semantic-size-component-modal-max-width-tablet);
     padding: var(--semantic-size-component-modal-padding-tablet);
@@ -147,7 +147,7 @@ export default {
   }
 }
 
-@media (min-width: 1024px) {
+@include mq-lg {
   .modal-card {
     max-width: var(--semantic-size-component-modal-max-width-desktop);
     padding: var(--semantic-size-component-modal-padding-desktop);

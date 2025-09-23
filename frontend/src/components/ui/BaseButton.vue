@@ -49,13 +49,13 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   padding-block: var(--semantic-size-button-padding-block-medium-mobile);
   padding-inline: var(--semantic-size-button-padding-inline-medium-mobile);
 }
-@media (min-width: 768px) {
+@include mq-md {
   .button--medium {
     padding-block: var(--semantic-size-button-padding-block-medium-tablet);
     padding-inline: var(--semantic-size-button-padding-inline-medium-tablet);
   }
 }
-@media (min-width: 1024px) {
+@include mq-lg {
   .button--medium {
     padding-block: var(--semantic-size-button-padding-block-medium-desktop);
     padding-inline: var(--semantic-size-button-padding-inline-medium-desktop);
@@ -68,13 +68,13 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   padding-block: var(--semantic-size-button-padding-block-small-mobile);
   padding-inline: var(--semantic-size-button-padding-inline-small-mobile);
 }
-@media (min-width: 768px) {
+@include mq-md {
   .button--small {
     padding-block: var(--semantic-size-button-padding-block-small-tablet);
     padding-inline: var(--semantic-size-button-padding-inline-small-tablet);
   }
 }
-@media (min-width: 1024px) {
+@include mq-lg {
   .button--small {
     padding-block: var(--semantic-size-button-padding-block-small-desktop);
     padding-inline: var(--semantic-size-button-padding-inline-small-desktop);

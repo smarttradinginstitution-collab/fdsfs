@@ -39,13 +39,13 @@ const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
   width: var(--semantic-size-component-icon-button-size-medium-mobile);
   height: var(--semantic-size-component-icon-button-size-medium-mobile);
 }
-@media (min-width: 768px) {
+@include mq-md {
   .icon-button--medium {
     width: var(--semantic-size-component-icon-button-size-medium-tablet);
     height: var(--semantic-size-component-icon-button-size-medium-tablet);
   }
 }
-@media (min-width: 1024px) {
+@include mq-lg {
   .icon-button--medium {
     width: var(--semantic-size-component-icon-button-size-medium-desktop);
     height: var(--semantic-size-component-icon-button-size-medium-desktop);
@@ -57,13 +57,13 @@ const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
   width: var(--semantic-size-component-icon-button-size-small-mobile);
   height: var(--semantic-size-component-icon-button-size-small-mobile);
 }
-@media (min-width: 768px) {
+@include mq-md {
   .icon-button--small {
     width: var(--semantic-size-component-icon-button-size-small-tablet);
     height: var(--semantic-size-component-icon-button-size-small-tablet);
   }
 }
-@media (min-width: 1024px) {
+@include mq-lg {
   .icon-button--small {
     width: var(--semantic-size-component-icon-button-size-small-desktop);
     height: var(--semantic-size-component-icon-button-size-small-desktop);

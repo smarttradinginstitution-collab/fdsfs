@@ -103,24 +103,40 @@ const navLinks = [
 </template>
 
 <style scoped>
+/* Stili Mobile-First (default) */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: var(--semantic-size-component-sidebar-width-expanded); /* Usa il nuovo token */
   height: 100vh;
   background-color: var(--base-color-gray-900);
   border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
   padding: var(--semantic-size-inset-lg);
-  /* Transizione fluida per la larghezza. */
-  transition: width var(--base-animation-duration-base) var(--base-animation-easing-out);
+  z-index: var(--base-layer-z-index-nav); /* Assicura che la sidebar sia sopra il contenuto */
+
+  /* Su mobile, la sidebar è un overlay che appare da sinistra */
+  width: var(--semantic-size-component-sidebar-width-expanded);
+  transform: translateX(-100%);
+  transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
 }
 
-/* Stili per lo stato collassato */
+/* Quando il menu mobile è aperto, la facciamo apparire */
+.sidebar.is-mobile-open {
+  transform: translateX(0);
+}
+
+/* Nascondiamo il bottone per collassare la sidebar su mobile */
+.toggle-button {
+  display: none;
+}
+
+/* Stili per lo stato collassato (solo desktop) */
 .sidebar.is-collapsed {
-  width: var(--base-size-component-sidebar-width-collapsed); /* Usa il nuovo token */
+  /* Su mobile questo non ha effetto perché la larghezza è fissa. */
+  /* Su desktop, la transizione della larghezza si attiverà. */
+  width: var(--semantic-size-component-sidebar-width-collapsed);
 }
 
 .sidebar-header {
@@ -132,17 +148,6 @@ const navLinks = [
   margin-bottom: var(--semantic-size-stack-xl);
 }
 
-.toggle-button {
-  background: none;
-  border: none;
-  color: var(--semantic-color-text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  transition: all var(--base-animation-duration-fast);
-}
 .logout-button:hover, .mfa-button:hover, .mfa-button-active:hover {
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
@@ -164,7 +169,8 @@ const navLinks = [
   border-color: var(--semantic-color-border-success);
   color: var(--semantic-color-text-success);
 }
-/* Ruotiamo il pulsante quando la sidebar è collassata. */
+
+/* Ruotiamo il pulsante quando la sidebar è collassata (solo desktop) */
 .sidebar.is-collapsed .toggle-button {
   transform: rotate(180deg);
 }
@@ -186,13 +192,15 @@ const navLinks = [
   padding: var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
   transition: all var(--base-animation-duration-fast);
-  white-space: nowrap; /* Impedisce al testo di andare a capo durante la transizione */
-  overflow: hidden; /* Nasconde il testo che fuoriesce */
+  white-space: nowrap;
+  overflow: hidden;
 }
-/* Centra l'icona quando la sidebar è collassata */
+
+/* Centra l'icona quando la sidebar è collassata (solo desktop) */
 .sidebar.is-collapsed .nav-item {
   justify-content: center;
 }
+
 .nav-icon {
   font-weight: bold;
   min-width: 20px;
@@ -239,9 +247,10 @@ const navLinks = [
 }
 
 .user-info, .nav-text {
-  /* Effetto di dissolvenza per il testo */
   transition: opacity var(--base-animation-duration-fast);
 }
+
+/* Nascondi testo solo su desktop quando collassato */
 .sidebar.is-collapsed .user-info,
 .sidebar.is-collapsed .nav-text {
   opacity: 0;
@@ -266,55 +275,27 @@ const navLinks = [
   transition: all var(--base-animation-duration-fast);
 }
 
-.logout-button:hover, .mfa-button:hover, .mfa-button-active:hover {
-  background-color: var(--semantic-color-surface-secondary);
-  color: var(--semantic-color-text-primary);
-}
-
-.mfa-button, .mfa-button-active {
-  background: none;
-  border: 1px solid var(--semantic-color-border-default);
-  color: var(--semantic-color-text-secondary);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--semantic-border-radius-interactive);
-  transition: all var(--base-animation-duration-fast);
-  flex-grow: 1; /* Make buttons share space */
-  text-align: center;
-}
-
-.mfa-button-active {
-  border-color: var(--semantic-color-border-success);
-  color: var(--semantic-color-text-success);
-}
-
-
-/* --- Media Query per il comportamento Mobile --- */
-@media (max-width: 768px) {
+/* Stili Desktop (da breakpoint 'md' in su) */
+@include mq-md {
   .sidebar {
-    /* Su mobile, la sidebar è un overlay che appare da sinistra */
-    position: fixed;
-    transform: translateX(-100%); /* Nascosta di default */
-    transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
-
-    /* Su mobile, non vogliamo mai la versione "collassata", ma sempre quella estesa */
-    width: var(--semantic-size-component-sidebar-width-expanded) !important;
-  }
-
-  /* Quando il menu mobile è aperto, la facciamo apparire */
-  .sidebar.is-mobile-open {
+    /* Su desktop, la sidebar è sempre visibile e non si trasforma */
     transform: translateX(0);
+    width: var(--semantic-size-component-sidebar-width-expanded);
+    transition: width var(--base-animation-duration-base) var(--base-animation-easing-out);
   }
 
-  /* Nascondiamo il bottone per collassare la sidebar, dato che non serve su mobile */
+  .sidebar.is-collapsed {
+    width: var(--semantic-size-component-sidebar-width-collapsed);
+  }
+
   .toggle-button {
-    display: none;
+    display: grid; /* Ri-mostra il bottone per collassare */
   }
 
-  /* Forziamo la visualizzazione del testo dei link, ignorando lo stato `is-collapsed` */
+  /* Su desktop, l'opacità del testo deve rispettare lo stato collassato */
   .sidebar.is-collapsed .nav-text,
   .sidebar.is-collapsed .user-info {
-    opacity: 1;
+    opacity: 0;
   }
 }
 </style>

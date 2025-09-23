@@ -58,20 +58,8 @@ const isPublicRoute = computed(() => route.meta.public);
 .content-wrapper {
   flex-grow: 1;
   min-width: 0; /* Prevents the container from overflowing when its content is too wide */
-  /*
-    BEST PRACTICE: Layout con Sidebar Fissa
-    La sidebar ha `position: fixed`, quindi è rimossa dal flusso del layout.
-    Per evitare che il contenuto principale finisca sotto la sidebar, applichiamo
-    un `margin-left` al content-wrapper. Questo margine è uguale alla larghezza
-    della sidebar, creando lo spazio necessario.
-    Usiamo i token per la larghezza della sidebar per mantenere tutto sincronizzato.
-  */
-  margin-left: var(--semantic-size-component-sidebar-width-expanded);
+  margin-left: 0; /* Mobile-first: no margin by default */
   transition: margin-left var(--semantic-animation-duration-complex) var(--semantic-animation-easing-exit);
-}
-
-.content-wrapper.sidebar-is-collapsed {
-  margin-left: var(--semantic-size-component-sidebar-width-collapsed);
 }
 
 /* .main-content rimosso perché la sua logica è ora in MainLayout.vue */
@@ -84,13 +72,24 @@ const isPublicRoute = computed(() => route.meta.public);
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: var(--semantic-layer-z-index-overlay);
+  /* No display property here, let the v-if handle it on mobile */
 }
 
-@media (max-width: 768px) {
-  /* Aumentata la specificità per sovrascrivere lo stato collassato su mobile */
-  .content-wrapper.sidebar-is-collapsed,
+/* Hide overlay on larger screens where it's not needed */
+@include mq-md {
+  .mobile-menu-overlay {
+    display: none;
+  }
+}
+
+/* Apply sidebar margin only on larger screens */
+@include mq-md {
   .content-wrapper {
-    margin-left: 0;
+    margin-left: var(--semantic-size-component-sidebar-width-expanded);
+  }
+
+  .content-wrapper.sidebar-is-collapsed {
+    margin-left: var(--semantic-size-component-sidebar-width-collapsed);
   }
 }
 </style>

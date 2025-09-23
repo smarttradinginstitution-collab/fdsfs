@@ -2,6 +2,16 @@
   "base": {
     "layout": {
       "breakpoint": {
+        "xxs": {
+          "$value": "365px",
+          "$type": "dimension",
+          "$comment": "Breakpoint per dispositivi mobili piccolissimi."
+        },
+        "xs": {
+          "$value": "480px",
+          "$type": "dimension",
+          "$comment": "Breakpoint per dispositivi mobili piccoli."
+        },
         "sm": {
           "$value": "640px",
           "$type": "dimension",

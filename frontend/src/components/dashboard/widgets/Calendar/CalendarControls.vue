@@ -91,6 +91,7 @@ function formatPnl(pnl) {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap;
+  display: none; /* Hidden by default on mobile */
 }
 
 .stats-value {
@@ -107,7 +108,10 @@ function formatPnl(pnl) {
   color: var(--semantic-color-feedback-negative-text);
 }
 
-@media (min-width: 768px) {
+@include mq-md {
+  .monthly-stats {
+    display: block; /* Show stats on tablet and up */
+  }
 
   .controls-left,
   .controls-right,
@@ -116,18 +120,11 @@ function formatPnl(pnl) {
   }
 }
 
-@media (min-width: 1024px) {
-
+@include mq-lg {
   .controls-left,
   .controls-right,
   .month-selector {
     gap: var(--semantic-size-calendar-controls-gap-desktop);
-  }
-}
-
-@media (max-width: 768px) {
-  .monthly-stats {
-    display: none;
   }
 }
 </style>

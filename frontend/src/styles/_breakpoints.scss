@@ -1,0 +1,45 @@
+// Do not edit directly, this file was auto-generated from breakpoint.json.
+
+// Mobile-first media query mixins
+
+@mixin mq-xxs {
+  @media (min-width: 365px) {
+    @content;
+  }
+}
+
+@mixin mq-xs {
+  @media (min-width: 480px) {
+    @content;
+  }
+}
+
+@mixin mq-sm {
+  @media (min-width: 640px) {
+    @content;
+  }
+}
+
+@mixin mq-md {
+  @media (min-width: 768px) {
+    @content;
+  }
+}
+
+@mixin mq-lg {
+  @media (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin mq-xl {
+  @media (min-width: 1280px) {
+    @content;
+  }
+}
+
+@mixin mq-2xl {
+  @media (min-width: 1536px) {
+    @content;
+  }
+}
