@@ -1,5 +1,5 @@
 import StyleDictionary from 'style-dictionary';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, resolve } from 'path';
 import fs from 'fs/promises';
 
@@ -17,7 +17,9 @@ const configs = [
 async function buildStyleDictionaryTokens() {
   console.log('Building CSS variables from tokens...');
   for (const configPath of configs) {
-    const configModule = await import(resolve(__dirname, configPath));
+    // Convert the resolved path to a file URL for cross-platform compatibility
+    const fileUrl = pathToFileURL(resolve(__dirname, configPath));
+    const configModule = await import(fileUrl);
     const sd = new StyleDictionary(configModule.default);
     await sd.buildAllPlatforms();
   }
