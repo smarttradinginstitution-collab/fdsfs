@@ -84,6 +84,20 @@ const onStatsDragEnd = (event) => {
   }
 }
 
+/* lg breakpoint (1024px) and up */
+@include mq-lg {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* xl breakpoint (1280px) and up */
+@include mq-xl {
+  .stats-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 .ghost {
   opacity: 0.5;
   background-color: var(--semantic-color-surface-secondary);

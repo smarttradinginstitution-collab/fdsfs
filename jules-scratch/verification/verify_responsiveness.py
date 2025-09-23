@@ -25,6 +25,11 @@ def run(playwright):
     page.wait_for_selector('.stats-grid', timeout=10000)
     page.screenshot(path="jules-scratch/verification/mobile_view.png")
 
+    # --- XL Desktop Screenshot ---
+    page.set_viewport_size({"width": 1920, "height": 1080})
+    page.wait_for_selector('.stats-grid', timeout=10000)
+    page.screenshot(path="jules-scratch/verification/xl_view.png")
+
     context.close()
     browser.close()
 
