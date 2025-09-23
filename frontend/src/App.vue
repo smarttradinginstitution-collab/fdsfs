@@ -74,8 +74,6 @@ const isPublicRoute = computed(() => route.meta.public);
   margin-left: var(--semantic-size-component-sidebar-width-collapsed);
 }
 
-/* .main-content rimosso perché la sua logica è ora in MainLayout.vue */
-
 .mobile-menu-overlay {
   position: fixed;
   top: 0;
@@ -86,11 +84,25 @@ const isPublicRoute = computed(() => route.meta.public);
   z-index: var(--semantic-layer-z-index-overlay);
 }
 
-@media (max-width: 768px) {
-  /* Aumentata la specificità per sovrascrivere lo stato collassato su mobile */
-  .content-wrapper.sidebar-is-collapsed,
+/*
+  Stili Mobile-First:
+  Di default, il contenuto non ha margine, poiché la sidebar è un overlay.
+*/
+.content-wrapper.sidebar-is-collapsed,
+.content-wrapper {
+  margin-left: 0;
+}
+
+/*
+  Stili per schermi grandi (md e superiori):
+  Ripristiniamo il margine per fare spazio alla sidebar sticky.
+*/
+@media (--breakpoint-md) {
   .content-wrapper {
-    margin-left: 0;
+    margin-left: var(--semantic-size-component-sidebar-width-expanded);
+  }
+  .content-wrapper.sidebar-is-collapsed {
+    margin-left: var(--semantic-size-component-sidebar-width-collapsed);
   }
 }
 </style>
