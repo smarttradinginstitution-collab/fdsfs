@@ -97,21 +97,21 @@ const isVisible = (statKey) => {
 }
 
 .panel-title {
-  font: var(--semantic-font-style-heading-lg);
+  font: var(--semantic-font-style-heading-md);
 }
 
 .panel-content {
-  padding: var(--semantic-size-inset-lg);
+  padding: var(--semantic-size-inset-sm);
   overflow-y: auto;
   flex-grow: 1;
 }
 
 .stat-group {
-  margin-bottom: var(--semantic-size-stack-lg);
+  margin-bottom: var(--semantic-size-stack-md);
 }
 
 .group-title {
-  font: var(--semantic-font-style-label-lg);
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
   margin-bottom: var(--semantic-size-stack-sm);
 }
@@ -122,7 +122,7 @@ const isVisible = (statKey) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--semantic-size-stack-xxs);
 }
 
 .stat-item {
@@ -140,14 +140,14 @@ const isVisible = (statKey) => {
 }
 
 .stat-name {
-  font: var(--semantic-font-style-body-md);
+  font: var(--semantic-font-style-body-sm);
 }
 
 /* Checkbox Styles */
 .checkbox {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--semantic-color-border-default);
+  width: var(--semantic-size-inset-md);
+  height: var(--semantic-size-inset-md);
+  border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-sm);
   display: flex;
   align-items: center;
@@ -155,10 +155,10 @@ const isVisible = (statKey) => {
   transition: background-color 0.2s, border-color 0.2s;
 }
 .checkbox-inner {
-  width: 12px;
-  height: 12px;
+  width: var(--semantic-size-inset-sm);
+  height: var(--semantic-size-inset-sm);
   background-color: white;
-  border-radius: 2px;
+  border-radius: var(--semantic-border-radius-sm);
   transform: scale(0);
   transition: transform 0.2s;
 }
