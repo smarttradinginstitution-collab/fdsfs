@@ -181,7 +181,7 @@ watch(
 @include media-up('md') {
   :deep(.stats-grid) {
     /* Su schermi più grandi, aumentiamo la larghezza minima delle card */
-    grid-template-columns: repeat(auto-fit, minmax(315px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
