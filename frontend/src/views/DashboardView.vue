@@ -149,7 +149,7 @@ watch(
   color: var(--semantic-color-text-primary);
 }
 /* --- BASE GRID STYLES (MOBILE-FIRST) --- */
-.stats-grid,
+:deep(.stats-grid),
 :deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
   display: grid;
@@ -165,7 +165,7 @@ watch(
 }
 
 /* Fase 1: Eccezione per stats-grid, sempre minimo 2 colonne */
-.stats-grid {
+:deep(.stats-grid) {
   grid-template-columns: repeat(2, 1fr);
   /* Abilita lo scroll orizzontale se le 2 colonne non ci stanno */
   overflow-x: auto;
@@ -182,7 +182,7 @@ watch(
 
 @include media-up('sm') {
   /* Layout fluido per schermi medi */
-  .stats-grid {
+  :deep(.stats-grid) {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 
@@ -201,7 +201,7 @@ watch(
 /* Fase 3: Layout specifico per il calendario da 'xl' in su */
 @include media-up('xl') {
   /* Limite massimo di 6 colonne per le stats card */
-  .stats-grid {
+  :deep(.stats-grid) {
     grid-template-columns: repeat(6, 1fr);
   }
 
