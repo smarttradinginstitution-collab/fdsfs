@@ -51,7 +51,7 @@
   --base-effect-shadow-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
   --base-font-fluid-size-sm: clamp(0.5rem, 0.8vw, 0.65rem);
   --base-font-fluid-size-md: clamp(0.6rem, 1.0vw, 0.75rem);
-  --base-font-fluid-size-lg: clamp(0.3rem, 1.2vw, 0.9rem);
+  --base-font-fluid-size-lg: clamp(0.7rem, 1.2vw, 0.9rem);
   --base-font-fluid-size-xl: clamp(0.7rem, 1.5vw, 1.1rem);
   --base-font-fluid-size-xs: clamp(0.6rem, 0.9vw, 0.8rem);
   --base-font-fluid-size-xxs: clamp(0.5rem, 0.7vw, 0.65rem);
