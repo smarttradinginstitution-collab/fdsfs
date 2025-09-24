@@ -2,16 +2,16 @@
   "base": {
     "size": {
       "fluid-spacing": {
-        "xxs": { "$value": "clamp(0.25rem, 0.8vw, 0.375rem)", "$type": "spacing" },
-        "xs":  { "$value": "clamp(0.375rem, 1.2vw, 0.5rem)", "$type": "spacing" },
-        "sm":  { "$value": "clamp(0.5rem, 1.8vw, 0.75rem)", "$type": "spacing" },
-        "md":  { "$value": "clamp(0.75rem, 2.5vw, 1rem)", "$type": "spacing" },
-        "lg":  { "$value": "clamp(1rem, 3.5vw, 1.5rem)", "$type": "spacing" },
-        "xl":  { "$value": "clamp(1.5rem, 5vw, 2.25rem)", "$type": "spacing" },
-        "xxl": { "$value": "clamp(2.25rem, 7vw, 3.5rem)", "$type": "spacing" },
-        "stat-card-gap": { "$value": "clamp(0.5rem, 3vw, 1.5rem)", "$type": "spacing" },
-        "badge-padding-y": { "$value": "clamp(0.05rem, 0.2vw, 0.1rem)", "$type": "spacing" },
-        "badge-padding-x": { "$value": "clamp(0.25rem, 0.4vw, 0.4rem)", "$type": "spacing" }
+        "xxs": { "$value": "clamp(0.175rem, 0.56vw, 0.2625rem)", "$type": "spacing" },
+        "xs":  { "$value": "clamp(0.2625rem, 0.84vw, 0.35rem)", "$type": "spacing" },
+        "sm":  { "$value": "clamp(0.35rem, 1.26vw, 0.525rem)", "$type": "spacing" },
+        "md":  { "$value": "clamp(0.525rem, 1.75vw, 0.7rem)", "$type": "spacing" },
+        "lg":  { "$value": "clamp(0.7rem, 2.45vw, 1.05rem)", "$type": "spacing" },
+        "xl":  { "$value": "clamp(1.05rem, 3.5vw, 1.575rem)", "$type": "spacing" },
+        "xxl": { "$value": "clamp(1.575rem, 4.9vw, 2.45rem)", "$type": "spacing" },
+        "stat-card-gap": { "$value": "clamp(0.35rem, 2.1vw, 1.05rem)", "$type": "spacing" },
+        "badge-padding-y": { "$value": "clamp(0.035rem, 0.14vw, 0.07rem)", "$type": "spacing" },
+        "badge-padding-x": { "$value": "clamp(0.175rem, 0.28vw, 0.28rem)", "$type": "spacing" }
       }
     }
   }
