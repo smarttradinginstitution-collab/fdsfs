@@ -97,6 +97,11 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 .stat-label {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
+
+  /* Impedisce al titolo di andare a capo */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /*
   BEST PRACTICE: Tipografia Fluida
