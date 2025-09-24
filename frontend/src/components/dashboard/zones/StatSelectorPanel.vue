@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 import { useUiStore } from '../../../stores/uiStore';
 import { useTradesStore } from '../../../stores/trades';
-import CloseIcon from '@/components/icons/CloseIcon.vue';
-import IconButton from '@/components/ui/IconButton.vue';
+import CloseIcon from '../../icons/CloseIcon.vue';
+import IconButton from '../../ui/IconButton.vue';
 
 defineProps({
   isOpen: {
