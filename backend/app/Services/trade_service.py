@@ -11,7 +11,6 @@ from app.Repositories.trading_account_repository import TradingAccountRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Infrastructure.db import get_db
-from app.Models.auth_user import AuthUser
 from app.Models.trade import Trade
 from app.Models.tag import Tag
 from app.Models.mistake import Mistake
@@ -27,9 +26,10 @@ class TradeService:
         self.trading_account_repo = TradingAccountRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
 
-    def _validate_and_get_trading_account(self, user: AuthUser, trading_account_id: UUID) -> tuple[UUID, UUID]:
+    def _validate_and_get_trading_account(self, claims: dict, trading_account_id: UUID) -> tuple[UUID, UUID]:
         """Verifica che il trading account esista e appartenga all'utente."""
-        general_account = self.general_account_repo.get_by_user_id(user.id)
+        user_id = UUID(claims["sub"])
+        general_account = self.general_account_repo.get_by_user_id(user_id)
         if not general_account:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
 
@@ -55,10 +55,10 @@ class TradeService:
 
         return entities
 
-    def create_trade(self, user: AuthUser, trade_data: TradeCreate) -> TradeRead:
+    def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
         """Crea un nuovo trade per l'utente."""
 
-        _, general_account_id = self._validate_and_get_trading_account(user, trade_data.trading_account_id)
+        _, general_account_id = self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
         tags = self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
         mistakes = self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
@@ -81,40 +81,36 @@ class TradeService:
 
         return TradeRead.from_orm(db_trade)
 
-    def get_trade(self, user: AuthUser, trade_id: UUID) -> Optional[TradeRead]:
+    def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
         """Recupera un singolo trade, verificando l'appartenenza."""
-        # Trova il trade tramite ID
         trade = self.repo.db.query(Trade).filter(Trade.id == trade_id).first()
         if not trade:
             return None
 
-        # Verifica l'appartenenza
-        self._validate_and_get_trading_account(user, trade.trading_account_id)
+        self._validate_and_get_trading_account(claims, trade.trading_account_id)
 
         return TradeRead.from_orm(trade)
 
-    def list_trades_by_trading_account(self, user: AuthUser, trading_account_id: UUID) -> List[TradeRead]:
+    def list_trades_by_trading_account(self, claims: dict, trading_account_id: UUID) -> List[TradeRead]:
         """Elenca tutti i trade per un trading account specifico, verificando l'appartenenza."""
-        self._validate_and_get_trading_account(user, trading_account_id)
+        self._validate_and_get_trading_account(claims, trading_account_id)
 
         trades = self.repo.list_by_trading_account_id(trading_account_id)
         return [TradeRead.from_orm(trade) for trade in trades]
 
-    def update_trade(self, user: AuthUser, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
+    def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
         """Aggiorna un trade esistente."""
 
         db_trade = self.repo.db.query(Trade).filter(Trade.id == trade_id).first()
         if not db_trade:
             return None
 
-        trading_account_id, general_account_id = self._validate_and_get_trading_account(user, db_trade.trading_account_id)
+        _, general_account_id = self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        # Aggiorna i campi semplici
         update_dict = update_data.dict(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
-        # Aggiorna le relazioni M2M se fornite nel payload
         if update_data.tag_ids is not None:
             db_trade.tags = self._get_related_entities(general_account_id, Tag, update_data.tag_ids)
         if update_data.mistake_ids is not None:
@@ -131,13 +127,13 @@ class TradeService:
 
         return TradeRead.from_orm(db_trade)
 
-    def delete_trade(self, user: AuthUser, trade_id: UUID) -> bool:
+    def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
         """Elimina un trade, verificando l'appartenenza."""
         db_trade = self.repo.db.query(Trade).filter(Trade.id == trade_id).first()
         if not db_trade:
             return False
 
-        self._validate_and_get_trading_account(user, db_trade.trading_account_id)
+        self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
         self.repo.delete_trade(db_trade)
         return True

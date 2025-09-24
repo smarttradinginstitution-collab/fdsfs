@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import List, Optional
+from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 
@@ -9,7 +10,6 @@ from app.Repositories.trading_account_repository import TradingAccountRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.trading_account import TradingAccountCreate, TradingAccountRead
 from app.Infrastructure.db import get_db
-from app.Models.auth_user import AuthUser
 
 
 class TradingAccountService:
@@ -19,14 +19,15 @@ class TradingAccountService:
         self.general_account_repo = GeneralAccountRepository(db)
 
     def create_trading_account_for_user(
-        self, current_user: AuthUser, account_data: TradingAccountCreate
+        self, claims: dict, account_data: TradingAccountCreate
     ) -> TradingAccountRead:
         """
         Crea un TradingAccount per l'utente corrente.
         Verifica prima che l'utente abbia un GeneralAccount.
         """
+        user_id = UUID(claims["sub"])
         # 1. Recupera il GeneralAccount dell'utente
-        general_account = self.general_account_repo.get_by_user_id(current_user.id)
+        general_account = self.general_account_repo.get_by_user_id(user_id)
         if not general_account:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -42,12 +43,13 @@ class TradingAccountService:
         return TradingAccountRead.from_orm(db_account)
 
     def get_trading_accounts_for_user(
-        self, current_user: AuthUser
+        self, claims: dict
     ) -> List[TradingAccountRead]:
         """
         Elenca tutti i TradingAccount per l'utente corrente.
         """
-        general_account = self.general_account_repo.get_by_user_id(current_user.id)
+        user_id = UUID(claims["sub"])
+        general_account = self.general_account_repo.get_by_user_id(user_id)
         if not general_account:
             return []  # Se non c'è GeneralAccount, non ci sono TradingAccount
 
@@ -55,12 +57,13 @@ class TradingAccountService:
         return [TradingAccountRead.from_orm(acc) for acc in db_accounts]
 
     def get_trading_account_by_id(
-        self, account_id: str, current_user: AuthUser
+        self, account_id: UUID, claims: dict
     ) -> Optional[TradingAccountRead]:
         """
         Recupera un singolo TradingAccount per ID, verificando che appartenga all'utente.
         """
-        general_account = self.general_account_repo.get_by_user_id(current_user.id)
+        user_id = UUID(claims["sub"])
+        general_account = self.general_account_repo.get_by_user_id(user_id)
         if not general_account:
             return None
 

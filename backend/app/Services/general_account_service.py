@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from uuid import UUID
+from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.general_account import GeneralAccountCreate, GeneralAccountRead
 from app.Infrastructure.db import get_db
-from app.Models.auth_user import AuthUser
 
 
 class GeneralAccountService:
@@ -17,25 +17,29 @@ class GeneralAccountService:
         self.repo = GeneralAccountRepository(db)
 
     def create_general_account_for_user(
-        self, current_user: AuthUser
+        self, claims: dict
     ) -> GeneralAccountRead:
         """
         Crea un GeneralAccount per l'utente corrente, usando la sua email come label.
         """
-        account_create_schema = GeneralAccountCreate(label=current_user.email)
+        user_id = UUID(claims["sub"])
+        user_email = claims["email"]
+
+        account_create_schema = GeneralAccountCreate(label=user_email)
 
         db_account = self.repo.create_general_account(
-            user_id=current_user.id,
+            user_id=user_id,
             account_data=account_create_schema
         )
 
         return GeneralAccountRead.from_orm(db_account)
 
     def get_general_account_for_user(
-        self, current_user: AuthUser
+        self, claims: dict
     ) -> Optional[GeneralAccountRead]:
         """Recupera il GeneralAccount per l'utente corrente."""
-        db_account = self.repo.get_by_user_id(user_id=current_user.id)
+        user_id = UUID(claims["sub"])
+        db_account = self.repo.get_by_user_id(user_id=user_id)
         if db_account:
             return GeneralAccountRead.from_orm(db_account)
         return None
