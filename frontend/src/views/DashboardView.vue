@@ -164,11 +164,9 @@ watch(
   grid-template-columns: 1fr;
 }
 
-/* Fase 1: Eccezione per stats-grid, sempre minimo 2 colonne */
 :deep(.stats-grid) {
-  grid-template-columns: repeat(2, 1fr);
-  /* Abilita lo scroll orizzontale se le 2 colonne non ci stanno */
-  overflow-x: auto;
+  /* Layout fluido moderno: le colonne si adattano e vanno a capo automaticamente */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 /* Allow widgets in all grids to shrink and scroll if their content is too wide */
@@ -180,12 +178,15 @@ watch(
 
 /* --- RESPONSIVE BREAKPOINTS (media-up) --- */
 
-@include media-up('sm') {
-  /* Layout fluido per schermi medi */
+@include media-up('md') {
   :deep(.stats-grid) {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    /* Su schermi più grandi, aumentiamo la larghezza minima delle card */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
+}
 
+/* --- Complex Widgets Grid --- */
+@include media-up('sm') {
   :deep(.complex-widgets-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
@@ -198,13 +199,8 @@ watch(
   }
 }
 
-/* Fase 3: Layout specifico per il calendario da 'xl' in su */
+/* Layout specifico per il calendario da 'xl' in su */
 @include media-up('xl') {
-  /* Limite massimo di 6 colonne per le stats card */
-  :deep(.stats-grid) {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
   :deep(.main-content-grid) {
     /* Griglia a 2 colonne con rapporto 2:1 */
     grid-template-columns: 2fr 1fr;
