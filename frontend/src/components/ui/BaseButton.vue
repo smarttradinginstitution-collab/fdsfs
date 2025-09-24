@@ -81,4 +81,16 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   background-color: var(--semantic-color-surface-secondary);
   border-color: var(--semantic-color-border-subtle);
 }
+
+/* Stili responsivi per schermi piccoli */
+@include media-down('sm') {
+  .button--medium {
+    /* Riduci il padding orizzontale su mobile */
+    padding-inline: var(--base-size-spacing-3);
+  }
+  .button {
+    /* Riduci lo spazio tra icona e testo */
+    gap: var(--base-size-spacing-1);
+  }
+}
 </style>

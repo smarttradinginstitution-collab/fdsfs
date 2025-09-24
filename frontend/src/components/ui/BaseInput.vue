@@ -110,4 +110,11 @@ function onInput(event) {
   color: var(--semantic-color-text-disabled);
   cursor: not-allowed;
 }
+
+@include media-down('sm') {
+  .input-field {
+    /* Usa un padding fluido su schermi piccoli per un look più compatto */
+    padding-block: var(--base-size-fluid-spacing-fluid-inset-sm);
+  }
+}
 </style>

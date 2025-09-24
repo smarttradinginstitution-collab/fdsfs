@@ -145,4 +145,11 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
        facile modificarla in futuro senza toccare il CSS. */
     width: var(--semantic-size-component-stat-card-chart-width);
 }
+
+@include media-down('sm') {
+  .stat-card {
+    /* Usa un padding fluido su schermi piccoli per un look più compatto */
+    padding: var(--base-size-fluid-spacing-fluid-inset-md);
+  }
+}
 </style>

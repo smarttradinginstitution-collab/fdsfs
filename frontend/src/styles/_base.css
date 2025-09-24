@@ -117,6 +117,8 @@
   --base-size-fluid-spacing-stat-card-gap: clamp(0.5rem, 3vw, 1.5rem);
   --base-size-fluid-spacing-badge-padding-y: clamp(0.05rem, 0.2vw, 0.1rem);
   --base-size-fluid-spacing-badge-padding-x: clamp(0.25rem, 0.4vw, 0.4rem);
+  --base-size-fluid-spacing-fluid-inset-sm: clamp(0.5rem, 2vw, 0.75rem);
+  --base-size-fluid-spacing-fluid-inset-md: clamp(0.75rem, 3vw, 1rem);
   --base-size-spacing-0: 0rem;
   --base-size-spacing-1: 0.25rem;
   --base-size-spacing-2: 0.5rem;

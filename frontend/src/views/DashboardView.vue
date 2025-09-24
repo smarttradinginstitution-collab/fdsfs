@@ -162,34 +162,49 @@ watch(
   min-width: 0;
   overflow-x: auto;
 }
+
+/* --- Mobile First Grid Layout --- */
+
+/* Default (Mobile) */
 .stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
 }
 :deep(.complex-widgets-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
 }
 :deep(.main-content-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
 }
 
+/* Tablet */
 @include media-up('md') {
-  :deep(.main-content-grid) {
-    grid-template-columns: 65% 1fr;
-  }
-}
-
-@include media-down('xl') {
-  :deep(.main-content-grid),
-  :deep(.complex-widgets-grid) {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-}
-@include media-down('sm') {
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
+  }
+  :deep(.complex-widgets-grid) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* On tablet, main content can also be two columns */
+  :deep(.main-content-grid) {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
+/* Desktop */
+@include media-up('lg') {
+  .stats-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  :deep(.complex-widgets-grid) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  /* On desktop, calendar is twice as wide as recent trades */
+  :deep(.main-content-grid) {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Hide button text on very small screens to save space */
 @include media-down('xs') {
   .action-bar .button-text {
     display: none;
