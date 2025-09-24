@@ -18,6 +18,30 @@ from app.config import settings
 
 Base = declarative_base()
 
+# Import all models here to ensure they are registered with SQLAlchemy's Base
+# before any operation that needs them is executed. This prevents circular
+# dependency errors between models with relationships.
+from app.Models.asset import Asset
+from app.Models.asset_class import AssetClass
+from app.Models.auth_user import AuthUser
+from app.Models.broker import Broker
+from app.Models.general_account import GeneralAccount
+from app.Models.mistake import Mistake
+from app.Models.news_impact import NewsImpact
+from app.Models.playbook import Playbook
+from app.Models.psychology_state import PsychologyState
+from app.Models.role import Role
+from app.Models.tag import Tag
+from app.Models.trade import Trade
+from app.Models.trading_account import TradingAccount
+from app.Models.trades_mistakes import TradesMistakes
+from app.Models.trades_news_impacts import TradesNewsImpacts
+from app.Models.trades_playbooks import TradesPlaybooks
+from app.Models.trades_psychology import TradesPsychology
+from app.Models.trades_tags import TradesTags
+from app.Models.user_dashboard_layout import UserDashboardLayout
+from app.Models.user_role import UserRole
+
 
 def _make_ssl_context() -> dict:
     """
