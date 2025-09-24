@@ -122,32 +122,6 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     margin-bottom: 0; /* Rimuove il margine se presente */
 }
 
-/*
-  BEST PRACTICE: Responsive Overlay
-  Per risolvere il problema dell'overflow, l'overlay viene posizionato in modo
-  assoluto rispetto alla card. Usiamo le media query per adattarne le dimensioni:
-  - Su schermi grandi, ha una larghezza fissa per una leggibilità ottimale.
-  - Su schermi piccoli, si adatta alla larghezza della card per evitare di
-    uscire dai bordi dello schermo.
-*/
-.header-overlay :deep(.info-overlay) {
-  /* Impostazioni di base per tutte le dimensioni */
-  left: 0;
-  right: auto;
-  width: auto; /* L'overlay si adatta al contenuto */
-  min-width: 280px; /* Larghezza minima per leggibilità su desktop */
-  max-width: 320px;
-}
-
-@include media-down('sm') {
-  .header-overlay :deep(.info-overlay) {
-    /* Su mobile, l'overlay occupa la larghezza della card meno un po' di padding */
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - var(--semantic-size-inset-md) * 2);
-    min-width: unset; /* Rimuoviamo la larghezza minima */
-  }
-}
 
 /*
   Stili per il contenuto dell'overlay, per garantire che sia leggibile e ben
