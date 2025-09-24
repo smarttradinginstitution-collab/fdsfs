@@ -140,7 +140,9 @@ watch(
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
 }
-
+.grid-zone-wrapper {
+  /* Styles for the wrapper if needed */
+}
 .zone-title {
   margin-bottom: var(--semantic-size-stack-sm);
   font: var(--semantic-font-style-heading-lg);
@@ -162,11 +164,9 @@ watch(
   grid-template-columns: 1fr;
 }
 
-/* Fase 1: Eccezione per stats-grid, sempre minimo 2 colonne */
 :deep(.stats-grid) {
-  grid-template-columns: repeat(2, 1fr);
-  /* Abilita lo scroll orizzontale se le 2 colonne non ci stanno */
-  overflow-x: auto;
+  /* Layout fluido moderno: le colonne si adattano e vanno a capo automaticamente */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 /* Allow widgets in all grids to shrink and scroll if their content is too wide */
@@ -177,29 +177,6 @@ watch(
 }
 
 /* --- RESPONSIVE BREAKPOINTS (media-up) --- */
-
-/* --- Stats Grid --- */
-/* Aumentiamo il numero di colonne in modo esplicito per evitare collassi */
-@include media-up('sm') {
-  :deep(.stats-grid) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-@include media-up('md') {
-  :deep(.stats-grid) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-@include media-up('lg') {
-  :deep(.stats-grid) {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-@include media-up('xl') {
-  :deep(.stats-grid) {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
 
 /* --- Complex Widgets Grid --- */
 @include media-up('sm') {
