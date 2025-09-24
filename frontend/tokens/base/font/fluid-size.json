@@ -28,7 +28,7 @@
           "$type": "fontSize"
         },
         "stat-display": {
-          "$value": "clamp(1rem, 2vw, 1.2rem)",
+          "$value": "clamp(0.9rem, 2vw, 1.2rem)",
           "$type": "fontSize"
         },
         "fluid-heading-xl": {

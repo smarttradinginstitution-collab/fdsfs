@@ -75,7 +75,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: var(--semantic-size-stack-md);
+  gap: var(--semantic-size-stack-fluid-stat-card-gap);
 
   transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
   overflow: hidden;
@@ -125,8 +125,8 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     gap: var(--semantic-size-stack-xxs);
 }
 .badge {
-    font: var(--semantic-font-style-body-xs);
-    padding: 0.1rem 0.4rem;
+    font: var(--semantic-font-style-body-xxs);
+    padding: var(--semantic-size-badge-padding-y) var(--semantic-size-badge-padding-x);
     border-radius: var(--semantic-border-radius-tag);
 }
 .badge.win {
@@ -144,39 +144,5 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
        La larghezza del grafico è gestita da token semantici, rendendo
        facile modificarla in futuro senza toccare il CSS. */
     width: var(--semantic-size-component-stat-card-chart-width);
-}
-
-/* === Media Queries per la Responsività Mobile === */
-/*
-  BEST PRACTICE: Breakpoint specifici per la compattazione
-  Usiamo breakpoint multipli per ridurre progressivamente le dimensioni
-  e le spaziature, garantendo che il layout a 2 colonne funzioni
-  senza overflow anche su schermi molto stretti.
-*/
-@media (max-width: 640px) { /* sm breakpoint */
-    .badge {
-        font: var(--semantic-font-style-body-xxs);
-        padding: 0.05rem 0.25rem;
-    }
-}
-
-@media (max-width: 480px) { /* xs breakpoint */
-    .stat-card {
-        padding: var(--semantic-size-inset-sm);
-        gap: var(--semantic-size-stack-sm);
-    }
-    .stat-label {
-        font: var(--semantic-font-style-label-xs);
-    }
-}
-
-@media (max-width: 365px) { /* xxs breakpoint */
-    .stat-card {
-        gap: var(--semantic-size-gap-xs);
-        padding: var(--semantic-size-inset-xs);
-    }
-    .stat-label {
-        font: var(--semantic-font-style-label-xxs);
-    }
 }
 </style>
