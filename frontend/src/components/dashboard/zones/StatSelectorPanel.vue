@@ -72,7 +72,9 @@ const isVisible = (statKey) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/styles/_breakpoints.scss' as *;
+
 /* Base Styles for the Panel */
 .stat-selector-panel {
   background-color: var(--semantic-color-surface-primary);
