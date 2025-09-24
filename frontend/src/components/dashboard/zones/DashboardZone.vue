@@ -122,6 +122,10 @@ const handleRemoveWidget = (widgetId) => {
 
 .widget-wrapper {
   position: relative;
+  /* This is the key to preventing grid blowouts. It allows the widget
+     to shrink below its content's intrinsic minimum size. The overflow
+     will then be handled by the BaseWidget's own scrolling content area. */
+  min-width: 0;
 }
 
 .widget-wrapper.is-editing {
