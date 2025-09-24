@@ -86,7 +86,8 @@ function onChange(event) {
 
   /* Stili condivisi con BaseInput per coerenza. */
   font-family: var(--semantic-font-style-body-base-font-family);
-  font-size: var(--semantic-font-style-body-base-font-size);
+  /* Utilizziamo una dimensione del font fluida per una migliore responsività */
+  font-size: var(--semantic-font-style-body-sm-font-size);
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
@@ -125,5 +126,12 @@ di default non è stilizzabile. Usiamo un pseudo-elemento `::after` sul contenit
   outline: none;
   border-color: var(--semantic-color-border-focus);
   box-shadow: var(--semantic-effect-shadow-focus-ring);
+}
+
+@include media-down('sm') {
+  .select-field {
+    /* Usa un padding fluido su schermi piccoli per un look più compatto */
+    padding-block: var(--base-size-fluid-spacing-fluid-inset-sm);
+  }
 }
 </style>

@@ -65,19 +65,22 @@ const onStatsDragEnd = (event) => {
   display: grid;
   gap: var(--semantic-size-stack-lg);
   min-width: 0; /* Fix for grid inside flexbox overflow */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+  /* Mobile-first: 2 colonne di default */
+  grid-template-columns: repeat(2, 1fr);
 }
 
-@include media-down('sm') {
+/* Tablet: 3 colonne */
+@include media-up('md') {
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@include media-down('xs') {
+/* Desktop: 5 colonne */
+@include media-up('lg') {
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-sm);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -88,6 +91,9 @@ const onStatsDragEnd = (event) => {
 
 .widget-wrapper {
   position: relative;
+  /* This is the key to preventing grid blowouts. It allows the widget
+     to shrink below its content's intrinsic minimum size. */
+  min-width: 0;
 }
 
 .widget-wrapper.is-editing {
