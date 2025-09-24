@@ -115,6 +115,9 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 .header-overlay :deep(.title-container) {
   /* Allinea l'icona info verticalmente con il testo dell'etichetta. */
   align-items: center;
+  /* Sovrascrive lo space-between per avvicinare l'icona al testo */
+  justify-content: flex-start;
+  gap: var(--semantic-size-stack-xxs); /* Riduci lo spazio tra testo e icona */
 }
 .header-overlay :deep(.info-button) {
     margin-bottom: 0; /* Rimuove il margine se presente */
