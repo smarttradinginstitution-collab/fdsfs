@@ -2,11 +2,15 @@
 import { computed } from 'vue';
 import GaugeChart from './GaugeChart.vue';
 import WinLossDonutChart from './WinLossDonutChart.vue';
+import HeaderInfoOverlay from '../../../ui/HeaderInfoOverlay.vue';
+import { useMetricInfo } from '../../../../composables/useMetricInfo.js';
 
 // --- PROPS ---
 const props = defineProps({
   stat: { type: Object, required: true },
 });
+
+const { info } = useMetricInfo(props.stat.key);
 
 // --- COMPUTED PROPERTIES ---
 const valueClasses = computed(() => ({
@@ -34,16 +38,22 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
       e il contenitore del grafico rimane semplicemente vuoto se non necessario.
     -->
     <div class="text-content">
-      <!-- Gestione speciale per Win Rate con i badge -->
-      <div v-if="isWinRate" class="win-rate-label">
-        <span class="stat-label">Win %</span>
-        <div class="badges">
-          <span class="badge win">{{ stat.wins }}</span>
-          <span class="badge loss">{{ stat.losses }}</span>
-        </div>
-      </div>
-      <!-- Etichetta standard per tutte le altre card -->
-      <p v-else class="stat-label">{{ stat.label }}</p>
+      <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`" class="header-overlay">
+        <template #title>
+          <div v-if="isWinRate" class="win-rate-label">
+            <span class="stat-label">Win %</span>
+            <div class="badges">
+              <span class="badge win">{{ stat.wins }}</span>
+              <span class="badge loss">{{ stat.losses }}</span>
+            </div>
+          </div>
+          <p v-else class="stat-label">{{ stat.label }}</p>
+        </template>
+        <template #content>
+          <h4 class="info-overlay-title">{{ info.title }}</h4>
+          <p class="info-overlay-text">{{ info.description }}</p>
+        </template>
+      </HeaderInfoOverlay>
 
       <!-- Valore della statistica -->
       <p :class="valueClasses">{{ stat.value }}</p>
@@ -93,6 +103,36 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   white-space: nowrap; /* Impedisce al testo di andare a capo */
+}
+
+/*
+  BEST PRACTICE: Overriding Nested Component Styles
+  Usiamo :deep() per raggiungere e modificare gli stili di un componente figlio
+  (HeaderInfoOverlay) dall'interno di un componente padre. Questo ci permette
+  di adattare il suo layout senza modificare il componente originale, mantenendo
+  la modularità.
+*/
+.header-overlay :deep(.title-container) {
+  /* Allinea l'icona info verticalmente con il testo dell'etichetta. */
+  align-items: center;
+}
+.header-overlay :deep(.info-button) {
+    margin-bottom: 0; /* Rimuove il margine se presente */
+}
+
+/*
+  Stili per il contenuto dell'overlay, per garantire che sia leggibile e ben
+  formattato quando appare.
+*/
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 /*
   BEST PRACTICE: Tipografia Fluida
