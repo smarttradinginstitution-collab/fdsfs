@@ -40,4 +40,17 @@
   padding-top: 0;
   min-height: 0; /* Allow content to shrink and scroll if needed */
 }
+
+@include media-down('sm') {
+  .widget-header {
+    /* Riduci il padding e l'altezza su mobile */
+    padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+    min-height: 50px;
+  }
+  .widget-content {
+    /* Riduci il padding su mobile */
+    padding: var(--semantic-size-inset-md);
+    padding-top: 0;
+  }
+}
 </style>

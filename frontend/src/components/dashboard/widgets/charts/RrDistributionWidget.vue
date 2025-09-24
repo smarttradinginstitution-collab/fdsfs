@@ -139,7 +139,12 @@ const chartOptions = computed(() => ({
 .chart-container {
   position: relative;
   width: 100%;
-  height: 250px;
+  /* Rimuoviamo l'altezza fissa e usiamo aspect-ratio per la responsività */
+  aspect-ratio: 16 / 9;
+  /* Aggiungiamo un'altezza massima per evitare che diventi troppo grande */
+  max-height: 350px;
+  /* Assicuriamo che il contenitore possa restringersi */
+  min-height: 0;
 }
 
 .info-overlay-title {
