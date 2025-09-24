@@ -127,7 +127,7 @@ watch(
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .dashboard-view {
   width: 100%;
   padding: var(--semantic-size-inset-xl);
@@ -141,20 +141,20 @@ watch(
   gap: var(--semantic-size-stack-sm);
 }
 .grid-zone-wrapper {
-    /* Styles for the wrapper if needed */
+  /* Styles for the wrapper if needed */
 }
 .zone-title {
-    margin-bottom: var(--semantic-size-stack-sm);
-    font: var(--semantic-font-style-heading-lg);
-    color: var(--semantic-color-text-primary);
+  margin-bottom: var(--semantic-size-stack-sm);
+  font: var(--semantic-font-style-heading-lg);
+  color: var(--semantic-color-text-primary);
 }
 .stats-grid,
 :deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
-    display: grid;
-    gap: var(--semantic-size-stack-lg);
-    min-width: 0; /* Fix for grid inside flexbox overflow */
-    align-items: start;
+  display: grid;
+  gap: var(--semantic-size-stack-lg);
+  min-width: 0; /* Fix for grid inside flexbox overflow */
+  align-items: start;
 }
 
 /* Allow widgets in the main grid to shrink and scroll if their content is too wide */
@@ -172,25 +172,25 @@ watch(
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-@media (min-width: 768px) {
+@include media-up('md') {
   :deep(.main-content-grid) {
     grid-template-columns: 65% 1fr;
   }
 }
 
-@media (max-width: 1280px) {
+@include media-down('xl') {
   :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
-@media (max-width: 640px) {
+@include media-down('sm') {
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
 
-@media (max-width: 400px) {
+@include media-down('xs') {
   .action-bar .button-text {
     display: none;
   }

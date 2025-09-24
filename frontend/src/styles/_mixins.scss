@@ -1,0 +1,29 @@
+// File: _mixins.scss
+@use 'sass:map';
+@use 'breakpoints' as *;
+
+// Per @media (min-width: ...)
+@mixin media-up($key) {
+  $size: map.get($breakpoints, $key);
+  @if $size {
+    @media (min-width: $size) {
+      @content;
+    }
+  }
+  @else {
+    @error "Breakpoint '#{$key}' non trovato.";
+  }
+}
+
+// Per @media (max-width: ...)
+@mixin media-down($key) {
+  $size: map.get($breakpoints, $key);
+  @if $size {
+    @media (max-width: $size) {
+      @content;
+    }
+  }
+  @else {
+    @error "Breakpoint '#{$key}' non trovato.";
+  }
+}

@@ -60,7 +60,7 @@ const onStatsDragEnd = (event) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .stats-grid {
   display: grid;
   gap: var(--semantic-size-stack-lg);
@@ -68,13 +68,13 @@ const onStatsDragEnd = (event) => {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-@media (max-width: 640px) {
+@include media-down('sm') {
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 
-@media (max-width: 400px) {
+@include media-down('xs') {
   .stats-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--semantic-size-stack-sm);

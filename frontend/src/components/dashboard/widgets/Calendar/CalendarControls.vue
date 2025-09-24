@@ -59,7 +59,7 @@ function formatPnl(pnl) {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .calendar-controls {
   display: flex;
   justify-content: space-between;
@@ -107,8 +107,7 @@ function formatPnl(pnl) {
   color: var(--semantic-color-feedback-negative-text);
 }
 
-
-@media (max-width: 768px) {
+@include media-down('md') {
   .monthly-stats {
     display: none;
   }
