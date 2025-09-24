@@ -125,7 +125,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     gap: var(--semantic-size-stack-xxs);
 }
 .badge {
-    font: var(--semantic-font-style-body-xs);
+    font: var(--semantic-font-style-body-xxs);
     padding: var(--semantic-size-badge-padding-y) var(--semantic-size-badge-padding-x);
     border-radius: var(--semantic-border-radius-tag);
 }
