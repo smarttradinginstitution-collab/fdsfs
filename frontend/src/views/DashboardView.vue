@@ -148,45 +148,66 @@ watch(
   font: var(--semantic-font-style-heading-lg);
   color: var(--semantic-color-text-primary);
 }
-.stats-grid,
+/* --- BASE GRID STYLES (MOBILE-FIRST) --- */
+:deep(.stats-grid),
 :deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
   display: grid;
   gap: var(--semantic-size-stack-lg);
-  min-width: 0; /* Fix for grid inside flexbox overflow */
   align-items: start;
+  min-width: 315px; /* Fase 2: width minima di 315px */
 }
 
-/* Allow widgets in the main grid to shrink and scroll if their content is too wide */
-:deep(.main-content-grid .widget-wrapper) {
+/* Fase 1: tutte le griglie a 1 colonna (default mobile) */
+:deep(.complex-widgets-grid),
+:deep(.main-content-grid) {
+  grid-template-columns: 1fr;
+}
+
+/* Fase 1: Eccezione per stats-grid, sempre minimo 2 colonne */
+:deep(.stats-grid) {
+  grid-template-columns: repeat(2, 1fr);
+  /* Abilita lo scroll orizzontale se le 2 colonne non ci stanno */
+  overflow-x: auto;
+}
+
+/* Allow widgets in all grids to shrink and scroll if their content is too wide */
+:deep(.main-content-grid .widget-wrapper),
+:deep(.complex-widgets-grid .widget-wrapper) {
   min-width: 0;
   overflow-x: auto;
 }
-.stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-:deep(.complex-widgets-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-:deep(.main-content-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
 
-@include media-up('md') {
-  :deep(.main-content-grid) {
-    grid-template-columns: 65% 1fr;
+/* --- RESPONSIVE BREAKPOINTS (media-up) --- */
+
+@include media-up('sm') {
+  /* Layout fluido per schermi medi */
+  :deep(.stats-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
-}
 
-@include media-down('xl') {
-  :deep(.main-content-grid),
   :deep(.complex-widgets-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
-@include media-down('sm') {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+/* Limite di 3 colonne per i widget complessi su schermi grandi */
+@include media-up('lg') {
+  :deep(.complex-widgets-grid) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Fase 3: Layout specifico per il calendario da 'xl' in su */
+@include media-up('xl') {
+  /* Limite massimo di 6 colonne per le stats card */
+  :deep(.stats-grid) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  :deep(.main-content-grid) {
+    /* Griglia a 2 colonne con rapporto 2:1 */
+    grid-template-columns: 2fr 1fr;
   }
 }
 
