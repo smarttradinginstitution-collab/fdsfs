@@ -2,62 +2,72 @@
 import { computed } from 'vue';
 
 const props = defineProps({
+  size: {
+    type: String,
+    default: 'medium', // small, medium, large
+    validator: (value) => ['small', 'medium', 'large'].includes(value),
+  },
   ariaLabel: {
     type: String,
     required: true,
   },
-  size: {
-    type: String,
-    default: 'medium',
-    validator: (value) => ['medium', 'small'].includes(value),
-  }
 });
 
-const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
+const sizeClasses = computed(() => `icon-button--${props.size}`);
 </script>
 
 <template>
-  <button :class="buttonClass" :aria-label="ariaLabel">
+  <button :class="['icon-button', sizeClasses]" :aria-label="ariaLabel">
     <slot></slot>
   </button>
 </template>
 
 <style scoped>
 .icon-button {
-  display: grid;
-  place-items: center;
-  border-radius: var(--base-border-radius-full);
   background-color: transparent;
-  color: var(--semantic-color-text-secondary);
   border: none;
+  border-radius: 50%;
   cursor: pointer;
-  transition: background-color var(--base-animation-duration-fast), color var(--base-animation-duration-fast);
-}
-
-/* Medium Size */
-.icon-button--medium {
-  width: var(--semantic-size-component-icon-button-size-medium);
-  height: var(--semantic-size-component-icon-button-size-medium);
-}
-
-/* Small Size */
-.icon-button--small {
-  width: var(--semantic-size-component-icon-button-size-small);
-  height: var(--semantic-size-component-icon-button-size-small);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 0.2s;
+  color: inherit; /* Inherit color from parent by default */
 }
 
 .icon-button:hover {
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.dark .icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.icon-button:focus-visible {
-  outline: none;
-  box-shadow: var(--semantic-effect-shadow-focus-ring);
+/* --- Sizes --- */
+.icon-button--small {
+  width: 24px;
+  height: 24px;
+}
+.icon-button--medium {
+  width: 32px;
+  height: 32px;
+}
+.icon-button--large {
+  width: 40px;
+  height: 40px;
 }
 
-/* Make the SVG inside the button scale nicely */
-.icon-button > :deep(svg) {
-  width: 60%;
-  height: 60%;
+/* --- SVG Icon Sizing --- */
+.icon-button--small :deep(svg) {
+  width: 16px;
+  height: 16px;
+}
+.icon-button--medium :deep(svg) {
+  width: 20px;
+  height: 20px;
+}
+.icon-button--large :deep(svg) {
+  width: 24px;
+  height: 24px;
 }
 </style>

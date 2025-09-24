@@ -17,6 +17,7 @@ export const useUiStore = defineStore('ui', () => {
   const isSidebarCollapsed = ref(false);
   const isMobileMenuOpen = ref(false);
   const isLayoutEditing = ref(false);
+  const isStatSelectorVisible = ref(false);
   const visibleStatKeys = ref(['netPnl', 'winRate', 'profitFactor', 'trades', 'avgWin', 'avgTradePnl', 'maxDrawdownAbs']);
   const isWeeklySummaryVisible = ref(true);
   const isCalendarTradeCountVisible = ref(true);
@@ -51,6 +52,14 @@ export const useUiStore = defineStore('ui', () => {
 
 
   // --- AZIONI (Actions) ---
+
+  function toggleStatSelector() {
+    isStatSelectorVisible.value = !isStatSelectorVisible.value;
+  }
+
+  function closeStatSelector() {
+    isStatSelectorVisible.value = false;
+  }
 
   function toggleLayoutEditing() {
     isLayoutEditing.value = !isLayoutEditing.value;
@@ -205,7 +214,10 @@ export const useUiStore = defineStore('ui', () => {
     isCalendarWinRateVisible,
     isDailySummaryModalOpen,
     isWeeklySummaryModalOpen,
+    isStatSelectorVisible,
 
+    toggleStatSelector,
+    closeStatSelector,
     toggleLayoutEditing,
     toggleSidebar,
     toggleMobileMenu,

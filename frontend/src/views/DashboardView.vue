@@ -16,6 +16,7 @@ import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
+import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
@@ -124,6 +125,14 @@ watch(
     <!-- Modals -->
     <DailySummaryModal />
     <WeeklySummaryModal />
+
+    <!-- Stat Selector Panel -->
+    <div
+      v-if="uiStore.isStatSelectorVisible"
+      class="stat-selector-overlay"
+      @click="uiStore.closeStatSelector"
+    ></div>
+    <StatSelectorPanel :is-open="uiStore.isStatSelectorVisible" />
   </div>
 </template>
 
@@ -213,4 +222,24 @@ watch(
   }
 }
 /* Common widget styles are now encapsulated in their respective zone components */
+
+.stat-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Below the panel, above everything else */
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none; /* Allow clicks to pass through when hidden */
+}
+
+@include media-up('md') {
+  .dashboard-view:has(.stat-selector-panel.is-open) .stat-selector-overlay {
+    opacity: 1;
+    pointer-events: auto; /* Block clicks when visible */
+  }
+}
 </style>

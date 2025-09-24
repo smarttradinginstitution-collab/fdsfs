@@ -4,8 +4,6 @@ import draggable from 'vuedraggable';
 import { useUiStore } from '../../../stores/uiStore';
 import { useTradesStore } from '../../../stores/trades';
 import StatCard from '../widgets/StatCard/index.vue';
-import PopoverMenu from '../../ui/PopoverMenu.vue';
-import StatSelectorMenu from './StatSelectorMenu.vue';
 import PlusIcon from '../../icons/PlusIcon.vue';
 
 const uiStore = useUiStore();
@@ -45,16 +43,9 @@ const onStatsDragEnd = (event) => {
         </div>
       </template>
       <template #footer>
-        <PopoverMenu v-if="isEditing">
-          <template #trigger="{ toggle }">
-            <button @click="toggle" class="add-widget-button">
-              <PlusIcon /> Aggiungi o Rimuovi Stat
-            </button>
-          </template>
-          <template #content="{ close }">
-            <StatSelectorMenu @close="close" />
-          </template>
-        </PopoverMenu>
+        <button v-if="isEditing" @click="uiStore.toggleStatSelector" class="add-widget-button">
+          <PlusIcon /> Aggiungi o Rimuovi Stat
+        </button>
       </template>
     </draggable>
   </div>
