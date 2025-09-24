@@ -153,7 +153,7 @@ watch(
 :deep(.main-content-grid) {
   display: grid;
   gap: var(--semantic-size-stack-sm);
-  min-width: 0; /* Fix for grid inside flexbox overflow */
+  min-width: 315px;
   align-items: start;
 }
 
