@@ -207,13 +207,13 @@ const handleWeekClick = (weekIndex) => {
 }
 
 .day-pnl {
-  font: var(--semantic-font-style-body-sm);
+  font: var(--semantic-font-style-calendar-day-pnl);
   color: var(--semantic-color-text-secondary);
 }
 
 .day-trade-count,
 .day-extra-stats {
-  font: var(--semantic-font-style-calendar-day-header);
+  font: var(--semantic-font-style-calendar-day-details);
   color: var(--semantic-color-text-secondary);
 }
 

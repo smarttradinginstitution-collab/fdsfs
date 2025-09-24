@@ -64,6 +64,8 @@
   --base-font-fluid-size-fluid-calendar-day-number: clamp(0.625rem, 1vw, 0.75rem);
   --base-font-fluid-size-button-label-medium: clamp(0.75rem, 1.5vw, 0.875rem);
   --base-font-fluid-size-button-label-small: clamp(0.625rem, 1.2vw, 0.75rem);
+  --base-font-fluid-size-calendar-pnl-aggressive: clamp(0.5rem, 2.5vw, 1.1rem);
+  --base-font-fluid-size-calendar-details-aggressive: clamp(0.4rem, 1.5vw, 0.7rem);
   --base-font-line-height-none: 1;
   --base-font-line-height-tight: 1.2;
   --base-font-line-height-normal: 1.5;

@@ -34,6 +34,8 @@
   --semantic-font-style-calendar-day-number: var(--base-font-weight-regular) var(--base-font-fluid-size-fluid-calendar-day-number)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-button-label-medium: var(--base-font-weight-medium) var(--base-font-fluid-size-button-label-medium)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-button-label-small: var(--base-font-weight-medium) var(--base-font-fluid-size-button-label-small)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
+  --semantic-font-style-calendar-day-pnl: var(--base-font-weight-bold) var(--base-font-fluid-size-calendar-pnl-aggressive)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
+  --semantic-font-style-calendar-day-details: var(--base-font-weight-regular) var(--base-font-fluid-size-calendar-details-aggressive)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-size-button-padding-inline-medium: var(--base-size-fluid-spacing-md);
   --semantic-size-button-padding-inline-small: var(--base-size-fluid-spacing-sm);
   --semantic-size-button-padding-block-medium: var(--base-size-fluid-spacing-sm);
