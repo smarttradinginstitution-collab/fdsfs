@@ -8,7 +8,10 @@
         "md":  { "$value": "clamp(0.75rem, 2.5vw, 1rem)", "$type": "spacing" },
         "lg":  { "$value": "clamp(1rem, 3.5vw, 1.5rem)", "$type": "spacing" },
         "xl":  { "$value": "clamp(1.5rem, 5vw, 2.25rem)", "$type": "spacing" },
-        "xxl": { "$value": "clamp(2.25rem, 7vw, 3.5rem)", "$type": "spacing" }
+        "xxl": { "$value": "clamp(2.25rem, 7vw, 3.5rem)", "$type": "spacing" },
+        "stat-card-gap": { "$value": "clamp(0.5rem, 3vw, 1.5rem)", "$type": "spacing" },
+        "badge-padding-y": { "$value": "clamp(0.05rem, 0.2vw, 0.1rem)", "$type": "spacing" },
+        "badge-padding-x": { "$value": "clamp(0.25rem, 0.4vw, 0.4rem)", "$type": "spacing" }
       }
     }
   }

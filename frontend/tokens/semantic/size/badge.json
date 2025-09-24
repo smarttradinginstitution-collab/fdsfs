@@ -1,0 +1,16 @@
+{
+  "semantic": {
+    "size": {
+      "badge": {
+        "padding-y": {
+          "$value": "{base.size.fluid-spacing.badge-padding-y}",
+          "$type": "spacing"
+        },
+        "padding-x": {
+          "$value": "{base.size.fluid-spacing.badge-padding-x}",
+          "$type": "spacing"
+        }
+      }
+    }
+  }
+}

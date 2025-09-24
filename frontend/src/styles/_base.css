@@ -51,7 +51,7 @@
   --base-effect-shadow-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
   --base-font-fluid-size-sm: clamp(0.5rem, 0.8vw, 0.65rem);
   --base-font-fluid-size-md: clamp(0.6rem, 1.0vw, 0.75rem);
-  --base-font-fluid-size-lg: clamp(0.3rem, 1.2vw, 0.9rem);
+  --base-font-fluid-size-lg: clamp(0.7rem, 1.2vw, 0.9rem);
   --base-font-fluid-size-xl: clamp(0.7rem, 1.5vw, 1.1rem);
   --base-font-fluid-size-xs: clamp(0.6rem, 0.9vw, 0.8rem);
   --base-font-fluid-size-xxs: clamp(0.5rem, 0.7vw, 0.65rem);
@@ -119,6 +119,9 @@
   --base-size-fluid-spacing-lg: clamp(1rem, 3.5vw, 1.5rem);
   --base-size-fluid-spacing-xl: clamp(1.5rem, 5vw, 2.25rem);
   --base-size-fluid-spacing-xxl: clamp(2.25rem, 7vw, 3.5rem);
+  --base-size-fluid-spacing-stat-card-gap: clamp(0.5rem, 3vw, 1.5rem);
+  --base-size-fluid-spacing-badge-padding-y: clamp(0.05rem, 0.2vw, 0.1rem);
+  --base-size-fluid-spacing-badge-padding-x: clamp(0.25rem, 0.4vw, 0.4rem);
   --base-size-spacing-0: 0rem;
   --base-size-spacing-1: 0.25rem;
   --base-size-spacing-2: 0.5rem;
