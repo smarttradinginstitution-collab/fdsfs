@@ -127,7 +127,7 @@ const handleWeekClick = (weekIndex) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .calendar-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
@@ -287,19 +287,19 @@ const handleWeekClick = (weekIndex) => {
   color: var(--semantic-color-feedback-negative-text);
 }
 
-@media (min-width: 1024px) {
+@include media-up('lg') {
   .day-extra-stats {
     display: block;
   }
 }
 
-@media (max-width: 1024px) {
+@include media-down('lg') {
   .day-extra-stats {
     display: none;
   }
 }
 
-@media (max-width: 768px) {
+@include media-down('md') {
   .calendar-grid {
     grid-template-columns: repeat(7, 1fr);
   }

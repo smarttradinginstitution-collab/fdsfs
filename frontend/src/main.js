@@ -22,7 +22,7 @@ import { setAuthToken } from '@/services/api'; // (AGGIUNTA) helper per impostar
   e che può quindi utilizzare i token definiti in precedenza.
 */
 import '@/styles/index.css';
-import '@/assets/main.css';
+import '@/assets/main.scss';
 
 // --- CREAZIONE E CONFIGURAZIONE DELL'APP ---
 

@@ -10,7 +10,8 @@ export default {
         {
           destination: '_base.css',
           format: 'css/variables',
-          options: { selector: ':root', outputReferences: false }
+          options: { selector: ':root', outputReferences: false },
+          filter: (token) => token.path.indexOf('breakpoint') === -1
         }
       ]
     }

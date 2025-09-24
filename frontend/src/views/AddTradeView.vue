@@ -83,7 +83,7 @@ const handleNewTrade = async (tradeData) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .add-trade-container {
   padding: var(--semantic-size-inset-xl);
   width: 100%;
@@ -91,7 +91,8 @@ const handleNewTrade = async (tradeData) => {
   justify-content: center;
 }
 
-.selection-view, .form-view {
+.selection-view,
+.form-view {
   width: 100%;
   max-width: 800px;
   display: flex;
@@ -120,7 +121,7 @@ const handleNewTrade = async (tradeData) => {
   gap: var(--semantic-size-stack-lg);
 }
 
-@media (min-width: 768px) {
+@include media-up('md') {
   .card-deck {
     grid-template-columns: 1fr 1fr;
   }

@@ -47,7 +47,7 @@ const isPublicRoute = computed(() => route.meta.public);
   </div>
 </template>
 
-<style>
+<style lang="scss">
 .app-layout {
   display: flex;
   position: relative;
@@ -86,7 +86,7 @@ const isPublicRoute = computed(() => route.meta.public);
   z-index: var(--semantic-layer-z-index-overlay);
 }
 
-@media (max-width: 768px) {
+@include media-down('md') {
   /* Aumentata la specificità per sovrascrivere lo stato collassato su mobile */
   .content-wrapper.sidebar-is-collapsed,
   .content-wrapper {

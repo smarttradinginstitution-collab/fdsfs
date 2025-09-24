@@ -53,7 +53,7 @@ const tableClass = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .table-container {
   width: 100%;
   overflow-x: auto; /* Aggiunge lo scroll orizzontale se la tabella è troppo larga */
@@ -70,48 +70,53 @@ th {
   color: var(--semantic-color-text-secondary);
   text-align: left;
   padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-bottom: var(--base-border-width-1) solid
+    var(--semantic-color-border-default);
 }
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
   padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid var(--semantic-color-border-subtle);
+  border-top: var(--base-border-width-1) solid
+    var(--semantic-color-border-subtle);
 }
 
 /* Stili per la dimensione piccola */
 .table--small th {
-    font: var(--semantic-font-style-label-sm);
-    padding-top: var(--semantic-size-inset-sm);
-    padding-bottom: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-label-sm);
+  padding-top: var(--semantic-size-inset-sm);
+  padding-bottom: var(--semantic-size-inset-sm);
 }
 
 /* Stili per la dimensione extra piccola */
 .table--x-small th {
-    font: var(--semantic-font-style-label-xs);
-    padding-top: var(--semantic-size-inset-xs);
-    padding-bottom: var(--semantic-size-inset-xs);
+  font: var(--semantic-font-style-label-xs);
+  padding-top: var(--semantic-size-inset-xs);
+  padding-bottom: var(--semantic-size-inset-xs);
 }
 .table--x-small td {
-    font: var(--semantic-font-style-body-xxs);
-    padding-top: var(--semantic-size-inset-xs);
-    padding-bottom: var(--semantic-size-inset-xs);
+  font: var(--semantic-font-style-body-xxs);
+  padding-top: var(--semantic-size-inset-xs);
+  padding-bottom: var(--semantic-size-inset-xs);
 }
 .table--small td {
-    font: var(--semantic-font-style-body-xs);
-    padding-top: var(--semantic-size-inset-sm);
-    padding-bottom: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-body-xs);
+  padding-top: var(--semantic-size-inset-sm);
+  padding-bottom: var(--semantic-size-inset-sm);
 }
-
 
 tbody tr:hover {
   background-color: var(--semantic-color-surface-secondary);
 }
 
 /* === Stili per la Responsività === */
-@media (max-width: 768px) {
-  .table { white-space: normal; }
-  .table thead { display: none; }
+@include media-down('md') {
+  .table {
+    white-space: normal;
+  }
+  .table thead {
+    display: none;
+  }
   .table tr {
     display: block;
     margin-bottom: var(--semantic-size-stack-md);
@@ -139,7 +144,11 @@ tbody tr:hover {
     font-weight: var(--base-font-weight-bold);
     color: var(--semantic-color-text-secondary);
   }
-  .table td:first-child { border-top: none; }
-  .table tr:first-child td:first-child { border-top: none; }
+  .table td:first-child {
+    border-top: none;
+  }
+  .table tr:first-child td:first-child {
+    border-top: none;
+  }
 }
 </style>

@@ -108,7 +108,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   </header>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .header {
   display: flex;
   justify-content: space-between;
@@ -145,7 +145,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   display: none;
 }
 
-@media (max-width: 768px) {
+@include media-down('md') {
   .hamburger-menu {
     display: flex;
   }
@@ -155,7 +155,7 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
   }
 }
 
-@media (max-width: 400px) {
+@include media-down('xs') {
   .header-controls .button-text {
     display: none;
   }

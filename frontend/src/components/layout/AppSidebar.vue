@@ -102,25 +102,31 @@ const navLinks = [
   <MfaModal v-model="isMfaModalOpen" :mode="mfaMode" @success="(msg) => console.log(msg)" />
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: var(--semantic-size-component-sidebar-width-expanded); /* Usa il nuovo token */
+  width: var(
+    --semantic-size-component-sidebar-width-expanded
+  ); /* Usa il nuovo token */
   height: 100vh;
   background-color: var(--base-color-gray-900);
-  border-right: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-right: var(--base-border-width-1) solid
+    var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
   padding: var(--semantic-size-inset-lg);
   /* Transizione fluida per la larghezza. */
-  transition: width var(--base-animation-duration-base) var(--base-animation-easing-out);
+  transition: width var(--base-animation-duration-base)
+    var(--base-animation-easing-out);
 }
 
 /* Stili per lo stato collassato */
 .sidebar.is-collapsed {
-  width: var(--base-size-component-sidebar-width-collapsed); /* Usa il nuovo token */
+  width: var(
+    --base-size-component-sidebar-width-collapsed
+  ); /* Usa il nuovo token */
 }
 
 .sidebar-header {
@@ -143,12 +149,15 @@ const navLinks = [
   place-items: center;
   transition: all var(--base-animation-duration-fast);
 }
-.logout-button:hover, .mfa-button:hover, .mfa-button-active:hover {
+.logout-button:hover,
+.mfa-button:hover,
+.mfa-button-active:hover {
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
 }
 
-.mfa-button, .mfa-button-active {
+.mfa-button,
+.mfa-button-active {
   background: none;
   border: 1px solid var(--semantic-color-border-default);
   color: var(--semantic-color-text-secondary);
@@ -238,7 +247,8 @@ const navLinks = [
   flex-shrink: 0;
 }
 
-.user-info, .nav-text {
+.user-info,
+.nav-text {
   /* Effetto di dissolvenza per il testo */
   transition: opacity var(--base-animation-duration-fast);
 }
@@ -266,12 +276,15 @@ const navLinks = [
   transition: all var(--base-animation-duration-fast);
 }
 
-.logout-button:hover, .mfa-button:hover, .mfa-button-active:hover {
+.logout-button:hover,
+.mfa-button:hover,
+.mfa-button-active:hover {
   background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
 }
 
-.mfa-button, .mfa-button-active {
+.mfa-button,
+.mfa-button-active {
   background: none;
   border: 1px solid var(--semantic-color-border-default);
   color: var(--semantic-color-text-secondary);
@@ -288,14 +301,14 @@ const navLinks = [
   color: var(--semantic-color-text-success);
 }
 
-
 /* --- Media Query per il comportamento Mobile --- */
-@media (max-width: 768px) {
+@include media-down('md') {
   .sidebar {
     /* Su mobile, la sidebar è un overlay che appare da sinistra */
     position: fixed;
     transform: translateX(-100%); /* Nascosta di default */
-    transition: transform var(--base-animation-duration-base) var(--base-animation-easing-out);
+    transition: transform var(--base-animation-duration-base)
+      var(--base-animation-easing-out);
 
     /* Su mobile, non vogliamo mai la versione "collassata", ma sempre quella estesa */
     width: var(--semantic-size-component-sidebar-width-expanded) !important;
