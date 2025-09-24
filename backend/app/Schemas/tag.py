@@ -1,27 +1,28 @@
 # app/Schemas/tag.py
 
 from __future__ import annotations
-
-from typing import Optional
 from uuid import UUID
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
-class TagCreate(BaseModel):
+class TagBase(BaseModel):
     name: str = Field(..., max_length=50)
     color: Optional[str] = Field(default="#888888", max_length=7)
 
 
-class TagUpdate(BaseModel):
+class TagCreate(TagBase):
+    pass
+
+
+class TagUpdate(TagBase):
     name: Optional[str] = Field(default=None, max_length=50)
     color: Optional[str] = Field(default=None, max_length=7)
 
 
-class TagRead(BaseModel):
+class TagRead(TagBase):
     id: UUID
-    user_id: UUID
-    name: str
-    color: Optional[str] = None
+    general_account_id: UUID
 
     class Config:
         from_attributes = True

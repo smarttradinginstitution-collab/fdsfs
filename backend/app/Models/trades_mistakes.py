@@ -1,4 +1,4 @@
-# app/Models/trades_tags.py
+# app/Models/trades_mistakes.py
 from __future__ import annotations
 
 import uuid
@@ -12,13 +12,13 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.trade import Trade
-    from app.Models.tag import Tag
+    from app.Models.mistake import Mistake
 
 
-class TradesTags(Base):
-    __tablename__ = "trades_tags"
+class TradesMistakes(Base):
+    __tablename__ = "trades_mistakes"
     __table_args__ = (
-        UniqueConstraint("trade_id", "tag_id", name="uq_trades_tags_trade_tag"),
+        UniqueConstraint("trade_id", "mistake_id", name="uq_trades_mistakes_trade_mistake"),
         {"schema": "public"},
     )
 
@@ -27,9 +27,9 @@ class TradesTags(Base):
         ForeignKey("public.trades.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    tag_id: Mapped[uuid.UUID] = mapped_column(
+    mistake_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("public.tags.id", ondelete="CASCADE"),
+        ForeignKey("public.mistakes.id", ondelete="CASCADE"),
         primary_key=True,
     )
     created_at: Mapped[Any] = mapped_column(
@@ -37,5 +37,5 @@ class TradesTags(Base):
     )
 
     # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade", back_populates="tag_links")
-    tag: Mapped["Tag"] = relationship("Tag", back_populates="trade_links")
+    trade: Mapped["Trade"] = relationship("Trade", back_populates="mistake_links")
+    mistake: Mapped["Mistake"] = relationship("Mistake", back_populates="trade_links")

@@ -1,10 +1,10 @@
-# app/Models/tag.py
+# app/Models/trading_account.py
 from __future__ import annotations
 
 import uuid
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
-from sqlalchemy import String, ForeignKey, func, TIMESTAMP
+from sqlalchemy import String, TIMESTAMP, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,11 +12,12 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trades_tags import TradesTags
+    from app.Models.broker import Broker
+    from app.Models.trade import Trade
 
 
-class Tag(Base):
-    __tablename__ = "tags"
+class TradingAccount(Base):
+    __tablename__ = "trading_accounts"
     __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -27,19 +28,23 @@ class Tag(Base):
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True, default="#888888")
+    broker_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.brokers.id"),
+        nullable=True,  # <--- Reso opzionale come richiesto
+    )
+    label: Mapped[Optional[str]] = mapped_column(String)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
     # Relazioni
     general_account: Mapped["GeneralAccount"] = relationship(
-        "GeneralAccount", back_populates="tags"
+        "GeneralAccount", back_populates="trading_accounts"
     )
-    trade_links: Mapped[list["TradesTags"]] = relationship(
-        "TradesTags",
-        back_populates="tag",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+    broker: Mapped[Optional["Broker"]] = relationship(
+        "Broker", back_populates="trading_accounts"
+    )
+    trades: Mapped[list["Trade"]] = relationship(
+        "Trade", back_populates="trading_account"
     )

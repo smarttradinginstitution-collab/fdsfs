@@ -211,23 +211,35 @@ router.include_router(router_dashboard)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 💹 TRADES (pubblici a livello router; user_id via query per swagger)
-#    → se vuoi proteggerli con token in futuro, aggiungi get_current_claims
+# 💼 GENERAL ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-router_trades = APIRouter(prefix="/api/v1/trades", tags=["Trades"])
+from app.Controllers import general_account_controller
 
-# --- Ordine corretto: prima le rotte specifiche, poi quelle con parametri ---
-router_trades.get("/", response_model=list[TradeRead])(trades.list_trades)
-router_trades.get("/vantage-score", response_model=VantageScoreData)(trades.get_vantage_score)
-router_trades.get("/setups", response_model=List[str])(trades.list_setups)
-router_trades.get("/calendar/data")(trades.calendar_data)
-router_trades.get("/performance/metrics")(trades.get_performance_metrics)
-router_trades.get("/processed-stats", response_model=ProcessedStats)(trades.get_processed_stats)
-router_trades.get("/equity-curve", response_model=EquityCurveData)(trades.get_equity_curve)
-router_trades.get("/summary", response_model=TradeSummary)(trades.get_trade_summary)
-router_trades.get("/{trade_id}", response_model=TradeRead)(trades.get_trade)
-router_trades.post("/", response_model=TradeRead, status_code=201)(trades.create_trade)
-router_trades.put("/{trade_id}", response_model=TradeRead)(trades.update_trade)
-router_trades.delete("/{trade_id}")(trades.delete_trade)
+router.include_router(
+    general_account_controller.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
 
-router.include_router(router_trades)
+# ──────────────────────────────────────────────────────────────────────────────
+# 📈 TRADING ACCOUNTS (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import trading_account_controller
+
+router.include_router(
+    trading_account_controller.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 💹 TRADES (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import trades_controller
+
+router.include_router(
+    trades_controller.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)

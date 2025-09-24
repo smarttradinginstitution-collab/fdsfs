@@ -1,6 +1,4 @@
 # app/Models/trade.py
-# Modello SQLAlchemy per la tabella public.trades
-
 from __future__ import annotations
 
 import enum
@@ -12,24 +10,30 @@ from sqlalchemy import (
     Text,
     TIMESTAMP,
     ForeignKey,
-    Index,
-    UniqueConstraint,
     Numeric,
     Float,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY, ENUM
+from sqlalchemy.dialects.postgresql import UUID, ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
-    # Solo per Pylance / type-checker (evita cicli d'import)
+    from app.Models.trading_account import TradingAccount
+    from app.Models.asset import Asset
     from app.Models.trades_tags import TradesTags
     from app.Models.tag import Tag
+    from app.Models.trades_mistakes import TradesMistakes
+    from app.Models.mistake import Mistake
+    from app.Models.trades_playbooks import TradesPlaybooks
+    from app.Models.playbook import Playbook
+    from app.Models.trades_news_impacts import TradesNewsImpacts
+    from app.Models.news_impact import NewsImpact
+    from app.Models.trades_psychology import TradesPsychology
+    from app.Models.psychology_state import PsychologyState
 
 
-# Definizione dell'ENUM Python che corrisponde a 'trade_direction' in PostgreSQL
 class TradeDirectionEnum(enum.Enum):
     Long = "Long"
     Short = "Short"
@@ -37,52 +41,46 @@ class TradeDirectionEnum(enum.Enum):
 
 class Trade(Base):
     __tablename__ = "trades"
-    __table_args__ = (
-        UniqueConstraint("id", "user_id", name="trades_id_user_id_key"),
-        Index("idx_trades_user", "user_id"),
-        {"schema": "public"},
-    )
+    __table_args__ = {"schema": "public"}
 
-    # chiavi
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    trading_account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("auth.users.id", ondelete="CASCADE"),
+        ForeignKey("public.trading_accounts.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
+    asset_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.assets.id"),
+        nullable=True,
+    )
 
-    # campi base
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
     p_l: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-
-    # prezzi/size
     setup: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     stop_loss_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     take_profit_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     entry_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     exit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    position_size: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    position_size: M'ped[Optional[float]] = mapped_column(Float, nullable=True)
     lowest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
         Numeric, nullable=True
     )
     highest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
         Numeric, nullable=True
     )
-
-    # extra
     symbol: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     direction: Mapped[Optional[TradeDirectionEnum]] = mapped_column(
         ENUM(TradeDirectionEnum, name="trade_direction", create_type=False),
         nullable=True,
     )
     emotional_state: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    mistakes: Mapped[Optional[list[str]]] = mapped_column(ARRAY(Text), nullable=True)
     notes_pre_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notes_post_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     entry_timestamp: Mapped[Optional[Any]] = mapped_column(
@@ -92,21 +90,42 @@ class Trade(Base):
         TIMESTAMP(timezone=True), nullable=True
     )
 
-    # relazioni (scrittura tramite tabella ponte)
+    # Relazioni Principali
+    trading_account: Mapped["TradingAccount"] = relationship(
+        "TradingAccount", back_populates="trades"
+    )
+    asset: Mapped[Optional["Asset"]] = relationship("Asset", back_populates="trades")
+
+    # Relazioni Many-to-Many (tramite tabelle associative)
     tag_links: Mapped[list["TradesTags"]] = relationship(
-        "TradesTags",
-        back_populates="trade",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-        overlaps="trade_links,tag",
+        "TradesTags", back_populates="trade", cascade="all, delete-orphan"
+    )
+    mistake_links: Mapped[list["TradesMistakes"]] = relationship(
+        "TradesMistakes", back_populates="trade", cascade="all, delete-orphan"
+    )
+    playbook_links: Mapped[list["TradesPlaybooks"]] = relationship(
+        "TradesPlaybooks", back_populates="trade", cascade="all, delete-orphan"
+    )
+    news_impact_links: Mapped[list["TradesNewsImpacts"]] = relationship(
+        "TradesNewsImpacts", back_populates="trade", cascade="all, delete-orphan"
+    )
+    psychology_links: Mapped[list["TradesPsychology"]] = relationship(
+        "TradesPsychology", back_populates="trade", cascade="all, delete-orphan"
     )
 
-    # relazione many-to-many di sola lettura verso Tag
+    # Relazioni di sola lettura per un accesso più semplice
     tags: Mapped[list["Tag"]] = relationship(
-        "Tag",
-        secondary="public.trades_tags",
-        primaryjoin="Trade.id==TradesTags.trade_id",
-        secondaryjoin="Tag.id==TradesTags.tag_id",
-        viewonly=True,
-        overlaps="trade_links,tag_links",
+        "Tag", secondary="public.trades_tags", viewonly=True
+    )
+    mistakes: Mapped[list["Mistake"]] = relationship(
+        "Mistake", secondary="public.trades_mistakes", viewonly=True
+    )
+    playbooks: Mapped[list["Playbook"]] = relationship(
+        "Playbook", secondary="public.trades_playbooks", viewonly=True
+    )
+    news_impacts: Mapped[list["NewsImpact"]] = relationship(
+        "NewsImpact", secondary="public.trades_news_impacts", viewonly=True
+    )
+    psychology_states: Mapped[list["PsychologyState"]] = relationship(
+        "PsychologyState", secondary="public.trades_psychology", viewonly=True
     )

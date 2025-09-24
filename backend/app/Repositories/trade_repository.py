@@ -1,413 +1,94 @@
 # app/Repositories/trade_repository.py
-# Repository asincrono per la gestione dei TRADES, TAGS e tabella ponte TRADES_TAGS.
-# Espone query filtrabili, CRUD, letture con tag aggregati e funzioni di supporto.
-# Tutte le query sono costruite con SQLAlchemy 2.x (async) e Postgres.
-
 from __future__ import annotations
 
-from datetime import date
-from typing import Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
+from typing import List, Optional
 
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select
 
 from app.Models.trade import Trade
-from app.Models.tag import Tag
-from app.Models.trades_tags import TradesTags
+from app.Schemas.trade import TradeCreate, TradeUpdate
 
 
 class TradeRepository:
-    """Incapsula l’accesso a Trade / Tag / TradesTags (async)."""
-
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(self, db: Session):
         self.db = db
 
-    # ──────────────────────────────────────────────────────────────────────
-    # HELPERS
-    # ──────────────────────────────────────────────────────────────────────
-    async def _get_tag_ids_for_user(
-        self, user_id: UUID, names: Iterable[str]
-    ) -> dict[str, UUID]:
-        """
-        Ritorna una mappa {name -> tag_id} per i tag (dell'utente) già esistenti.
-        """
-        names = [n for n in (names or []) if n]
-        if not names:
-            return {}
-
-        q = (
-            select(Tag.name, Tag.id)
-            .where(Tag.user_id == user_id)
-            .where(Tag.name.in_(names))
-        )
-        res = await self.db.execute(q)
-        return {row[0]: row[1] for row in res.all()}
-
-    async def _ensure_tags_and_get_ids(
-        self, user_id: UUID, names: Iterable[str]
-    ) -> List[UUID]:
-        """
-        Garantisce che per ogni name esista un Tag(user_id, name), creando quelli mancanti.
-        Ritorna la lista degli id in input-order (senza duplicati).
-        """
-        deduped = []
-        seen = set()
-        for n in names or []:
-            if not n:
-                continue
-            k = n.strip()
-            if k and k not in seen:
-                deduped.append(k)
-                seen.add(k)
-
-        if not deduped:
-            return []
-
-        existing = await self._get_tag_ids_for_user(user_id, deduped)
-        to_create = [n for n in deduped if n not in existing]
-
-        # Inserimento bulk con ON CONFLICT (user_id, name) DO NOTHING
-        if to_create:
-            stmt = (
-                insert(Tag)
-                .values([{"user_id": user_id, "name": n} for n in to_create])
-                .on_conflict_do_nothing(
-                    index_elements=[Tag.user_id, Tag.name]  # unique (user_id, name)
-                )
-                .returning(Tag.id, Tag.name)
+    def _get_trade_query(self):
+        """Costruisce la query base per i trade con tutte le relazioni pre-caricate."""
+        return (
+            select(Trade)
+            .options(
+                joinedload(Trade.tags),
+                joinedload(Trade.mistakes),
+                joinedload(Trade.playbooks),
+                joinedload(Trade.news_impacts),
+                joinedload(Trade.psychology_states),
+                joinedload(Trade.asset),
             )
-            # Nota: returning in on_conflict_do_nothing può non restituire righe se c'è conflitto.
-            # Per ottenere tutti gli id coerenti, dopo l'insert rileggiamo comunque.
-            await self.db.execute(stmt)
-
-        # Reload globale dei tag richiesti (esistenti + appena creati)
-        q = (
-            select(Tag.name, Tag.id)
-            .where(Tag.user_id == user_id)
-            .where(Tag.name.in_(deduped))
-        )
-        res = await self.db.execute(q)
-        name_to_id = {row[0]: row[1] for row in res.all()}
-
-        # Mantieni l'ordine richiesto in input
-        return [name_to_id[n] for n in deduped if n in name_to_id]
-
-    async def _replace_trade_tag_links(
-        self, user_id: UUID, trade_id: UUID, tag_ids: Iterable[UUID]
-    ) -> None:
-        """
-        Sostituisce integralmente i link tag ↔ trade per il trade indicato.
-        Esegue:
-          - DELETE su trades_tags per quel trade (scoped per user_id per coerenza)
-          - INSERT dei nuovi link (ON CONFLICT DO NOTHING per idempotenza)
-        """
-        # 1) rimuovi link esistenti
-        del_stmt = delete(TradesTags).where(
-            TradesTags.trade_id == trade_id, TradesTags.user_id == user_id
-        )
-        await self.db.execute(del_stmt)
-
-        # 2) inserisci nuovi link
-        rows = [
-            {"trade_id": trade_id, "tag_id": tag_id, "user_id": user_id}
-            for tag_id in (tag_ids or [])
-        ]
-        if rows:
-            ins = (
-                insert(TradesTags)
-                .values(rows)
-                .on_conflict_do_nothing(
-                    index_elements=[TradesTags.trade_id, TradesTags.tag_id]
-                )
-            )
-            await self.db.execute(ins)
-
-    async def _load_tags_for_trades(
-        self, trade_ids: Sequence[UUID]
-    ) -> dict[UUID, list[str]]:
-        """
-        Carica tutte le etichette (nomi) dei tag per un insieme di trade_ids.
-        Ritorna {trade_id: [name, ...]}.
-        """
-        if not trade_ids:
-            return {}
-
-        q = (
-            select(TradesTags.trade_id, Tag.name)
-            .join(Tag, Tag.id == TradesTags.tag_id)
-            .where(TradesTags.trade_id.in_(trade_ids))
-        )
-        res = await self.db.execute(q)
-        out: dict[UUID, list[str]] = {}
-        for trade_id, name in res.all():
-            out.setdefault(trade_id, []).append(name)
-        return out
-
-    # ──────────────────────────────────────────────────────────────────────
-    # LIST + FILTRI
-    # ──────────────────────────────────────────────────────────────────────
-    async def list_with_filters(
-        self,
-        user_id: UUID,
-        *,
-        symbol: Optional[str] = None,
-        direction: Optional[str] = None,
-        setups: Optional[List[str]] = None,
-        mistakes: Optional[List[str]] = None,
-        days_of_week: Optional[List[int]] = None,  # 1..7 (ISO)
-        min_size: Optional[float] = None,
-        max_size: Optional[float] = None,
-        tags: Optional[List[str]] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        user_timezone: str = "UTC",
-    ) -> List[Tuple[Trade, List[str]]]:
-        """
-        Ritorna una lista di tuple (Trade, [tag_names]) filtrate per user_id e criteri opzionali.
-
-        NOTE filtri:
-          - symbol: ILIKE "%symbol%"
-          - direction: ==
-          - setups: IN
-          - mistakes: array contiene tutti? (qui usiamo "contains" Postgres -> @>, basta che contenga l'insieme passato)
-          - days_of_week: func.extract('isodow', entry_timestamp).in_(days_of_week)
-          - min/max_size: range su position_size
-          - tags: deve contenere TUTTI i tag passati (subquery con count(distinct) == len(tags))
-          - start_date/end_date: range su func.date(entry_timestamp)
-        """
-        tz = user_timezone or "UTC"
-        base = select(Trade).where(Trade.user_id == user_id)
-
-        if symbol:
-            base = base.where(Trade.symbol.contains(symbol, autoescape=True))
-        if direction:
-            base = base.where(Trade.direction == direction)
-        if setups:
-            base = base.where(Trade.setup.in_(setups))
-        if mistakes:
-            # Postgres ARRAY contains
-            base = base.where(Trade.mistakes.contains(mistakes))
-        if days_of_week:
-            base = base.where(
-                func.extract("isodow", Trade.entry_timestamp.op("AT TIME ZONE")(tz)).in_(
-                    days_of_week
-                )
-            )
-        if min_size is not None:
-            base = base.where(Trade.position_size >= min_size)
-        if max_size is not None:
-            base = base.where(Trade.position_size <= max_size)
-        if start_date:
-            base = base.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) >= start_date
-            )
-        if end_date:
-            base = base.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) <= end_date
-            )
-
-
-        # Filtra per TAGS (tutti presenti) con subquery:
-        if tags:
-            tag_subq = (
-                select(TradesTags.trade_id)
-                .join(Tag, Tag.id == TradesTags.tag_id)
-                .where(TradesTags.user_id == user_id)
-                .where(Tag.name.in_(tags))
-                .group_by(TradesTags.trade_id)
-                .having(func.count(func.distinct(Tag.name)) == len(set(tags)))
-            )
-            base = base.where(Trade.id.in_(tag_subq))
-
-        base = base.order_by(
-            Trade.entry_timestamp.desc().nullslast(), Trade.created_at.desc()
         )
 
-        trades: List[Trade] = (await self.db.execute(base)).scalars().all()
-        ids = [t.id for t in trades]
-        tag_map = await self._load_tags_for_trades(ids)
-
-        return [(t, tag_map.get(t.id, [])) for t in trades]
-
-    # ──────────────────────────────────────────────────────────────────────
-    # GET (scoped per utente) + GET (solo per trade_id)
-    # ──────────────────────────────────────────────────────────────────────
-    async def get_by_id_with_tags(
-        self, user_id: UUID, trade_id: UUID
-    ) -> Optional[Tuple[Trade, List[str]]]:
-        """
-        Ritorna (Trade, [tag_names]) se il trade appartiene a user_id; altrimenti None.
-        """
-        q = select(Trade).where(Trade.id == trade_id, Trade.user_id == user_id).limit(1)
-        res = await self.db.execute(q)
-        trade = res.scalars().first()
-        if not trade:
-            return None
-
-        tag_map = await self._load_tags_for_trades([trade_id])
-        return trade, tag_map.get(trade_id, [])
-
-
-    # ──────────────────────────────────────────────────────────────────────
-    # CREATE
-    # ──────────────────────────────────────────────────────────────────────
-    async def create_with_tags(
-        self, user_id: UUID, data: dict, tag_names: Optional[List[str]] = None
-    ) -> Trade:
-        """
-        Crea un Trade per user_id e collega eventuali tag (creandoli se mancanti).
-        Ritorna l'oggetto Trade appena creato.
-        """
-        # 1) crea Trade
-        trade = Trade(user_id=user_id, **data)
-        self.db.add(trade)
-        await self.db.flush()   # ottieni id immediatamente
-
-        # 2) gestisci Tags (se forniti)
-        if tag_names:
-            tag_ids = await self._ensure_tags_and_get_ids(user_id, tag_names)
-            await self._replace_trade_tag_links(user_id, trade.id, tag_ids)  # type: ignore[arg-type]
-
-        await self.db.commit()
-        # refresh opzionale
-        await self.db.refresh(trade)
-        return trade
-
-    # ──────────────────────────────────────────────────────────────────────
-    # UPDATE
-    # ──────────────────────────────────────────────────────────────────────
-    async def update_with_tags(
-        self,
-        user_id: UUID,
-        trade_id: UUID,
-        patch: dict,
-        tag_names: Optional[List[str]] = None,
+    def get_by_id(
+        self, trade_id: UUID, trading_account_id: UUID
     ) -> Optional[Trade]:
-        """
-        Aggiorna i campi del Trade di user_id. Se `tag_names` è non-None,
-        riallinea interamente le associazioni tag↔trade.
-        Ritorna la Trade aggiornata o None se non trovata.
-        """
-        # 1) Aggiorna i campi (se patch è vuota, salta update)
-        if patch:
-            stmt = (
-                update(Trade)
-                .where(Trade.id == trade_id, Trade.user_id == user_id)
-                .values(**patch)
-                .returning(Trade)
-            )
-            res = await self.db.execute(stmt)
-            trade = res.scalar_one_or_none()
-            if not trade:
-                await self.db.rollback()
-                return None
-        else:
-            # Se non ci sono campi da aggiornare, ricarica il trade (per coerenza con output)
-            res = await self.db.execute(
-                select(Trade).where(Trade.id == trade_id, Trade.user_id == user_id)
-            )
-            trade = res.scalars().first()
-            if not trade:
-                return None
-
-        # 2) Se tag_names è presente, sostituisci i link
-        if tag_names is not None:
-            tag_ids = await self._ensure_tags_and_get_ids(user_id, tag_names)
-            await self._replace_trade_tag_links(user_id, trade_id, tag_ids)
-
-        await self.db.commit()
-        await self.db.refresh(trade)
-        return trade
-
-    # ──────────────────────────────────────────────────────────────────────
-    # DELETE
-    # ──────────────────────────────────────────────────────────────────────
-    async def delete(self, user_id: UUID, trade_id: UUID) -> bool:
-        """
-        Elimina il Trade (scoped per user_id). Ritorna True se almeno una riga è stata cancellata.
-        Le righe nella tabella ponte vengono eliminate per ON DELETE CASCADE a livello DB.
-        """
-        stmt = delete(Trade).where(Trade.id == trade_id, Trade.user_id == user_id)
-        res = await self.db.execute(stmt)
-        await self.db.commit()
-        return (res.rowcount or 0) > 0
-
-    # ──────────────────────────────────────────────────────────────────────
-    # DISTINCT VALUES (per filtri UI)
-    # ──────────────────────────────────────────────────────────────────────
-    async def get_distinct_setups(self, user_id: UUID) -> List[str]:
-        """
-        Ritorna una lista di tutti i valori "setup" univoci e non-null per un utente.
-        Utile per popolare i filtri dell'interfaccia utente.
-        """
-        q = (
-            select(Trade.setup)
-            .where(Trade.user_id == user_id)
-            .where(Trade.setup.is_not(None))
-            .distinct()
-            .order_by(Trade.setup)
+        """Recupera un trade per ID, assicurandosi che appartenga al trading account corretto."""
+        query = self._get_trade_query().where(
+            Trade.id == trade_id,
+            Trade.trading_account_id == trading_account_id
         )
-        res = await self.db.execute(q)
-        # scalars().all() estrae la prima colonna di ogni riga
-        return res.scalars().all()
+        return self.db.scalars(query).first()
 
-    # ──────────────────────────────────────────────────────────────────────
-    # CALENDAR DATA
-    # ──────────────────────────────────────────────────────────────────────
-    async def get_calendar_data(
-        self,
-        user_id: UUID,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        setups: Optional[List[str]] = None,
-        user_timezone: str = "UTC",
-    ) -> List[dict]:
-        """
-        Restituisce dati aggregati per giorno per il calendario.
-        Per ogni giorno con trade, calcola: P&L totale, numero di trade, e numero di trade vincenti.
-        Filtra per un intervallo di date e per setup, se forniti.
-        Usa il fuso orario dell'utente per il raggruppamento.
-        """
-        tz = user_timezone or "UTC"
-        day_alias = func.date_trunc(
-            "day", Trade.entry_timestamp.op("AT TIME ZONE")(tz)
-        ).label("day")
-        q = (
-            select(
-                day_alias,
-                func.sum(Trade.p_l).label("daily_pnl"),
-                func.count(Trade.id).label("trade_count"),
-                func.count().filter(Trade.p_l > 0).label("winning_trades_count"),
-            )
-            .where(Trade.user_id == user_id)
-            .where(Trade.entry_timestamp.is_not(None))
-        )
+    def list_by_trading_account_id(
+        self, trading_account_id: UUID
+    ) -> List[Trade]:
+        """Elenca tutti i trade per un dato trading account."""
+        query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
+        return self.db.scalars(query).all()
 
-        if start_date:
-            q = q.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) >= start_date
-            )
-        if end_date:
-            q = q.where(
-                func.date(Trade.entry_timestamp.op("AT TIME ZONE")(tz)) <= end_date
-            )
-        if setups:
-            q = q.where(Trade.setup.in_(setups))
+    def create_trade(self, trade_data: TradeCreate) -> Trade:
+        """Crea un nuovo trade."""
 
-        q = q.group_by(day_alias).order_by(day_alias.asc())
-        res = await self.db.execute(q)
-        rows = res.all()
+        # Estrai gli ID delle relazioni
+        tag_ids = trade_data.tag_ids or []
+        mistake_ids = trade_data.mistake_ids or []
+        playbook_ids = trade_data.playbook_ids or []
+        news_impact_ids = trade_data.news_impact_ids or []
+        psychology_state_ids = trade_data.psychology_state_ids or []
 
-        out = []
-        for day, pnl, trade_count, winning_trades_count in rows:
-            out.append(
-                {
-                    "date": day.date().isoformat(),
-                    "pnl": float(pnl or 0),
-                    "trade_count": trade_count,
-                    "winning_trades_count": winning_trades_count,
-                }
-            )
-        return out
+        # Crea l'oggetto Trade senza le relazioni M2M
+        trade_dict = trade_data.dict(exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
+        db_trade = Trade(**trade_dict)
+
+        # Aggiungi le relazioni (assumendo che gli ID siano validi)
+        # La validazione avverrà nel service
+        # NOTA: Questo richiede che i modelli corrispondenti (Tag, Mistake, etc.) siano caricati nella sessione
+        # o che vengano gestiti correttamente da SQLAlchemy. Il Service si occuperà di questo.
+
+        self.db.add(db_trade)
+        self.db.commit()
+        self.db.refresh(db_trade)
+
+        # La gestione effettiva dei link avverrà nel service
+        return db_trade
+
+    def update_trade(
+        self, db_trade: Trade, update_data: TradeUpdate
+    ) -> Trade:
+        """Aggiorna un trade esistente."""
+
+        update_dict = update_data.dict(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
+
+        for key, value in update_dict.items():
+            setattr(db_trade, key, value)
+
+        self.db.commit()
+        self.db.refresh(db_trade)
+
+        # La gestione dei link M2M avverrà nel service
+        return db_trade
+
+    def delete_trade(self, db_trade: Trade) -> None:
+        """Elimina un trade."""
+        self.db.delete(db_trade)
+        self.db.commit()

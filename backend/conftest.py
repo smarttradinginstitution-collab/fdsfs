@@ -68,3 +68,64 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
+
+# --- Fixtures for Sync Tests ---
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from fastapi.testclient import TestClient
+from app.Services.auth_service import get_current_user
+from app.Models.auth_user import AuthUser
+import uuid
+
+SYNC_TEST_DATABASE_URL = "sqlite:///:memory:"
+
+@pytest.fixture(scope="session")
+def sync_engine():
+    # The echo=False is to avoid too much noise in the logs
+    return create_engine(SYNC_TEST_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False)
+
+@pytest.fixture(scope="session")
+def sync_tables(sync_engine):
+    # Remove schema for sqlite
+    for table in Base.metadata.tables.values():
+        table.schema = None
+    Base.metadata.create_all(bind=sync_engine)
+    yield
+    Base.metadata.drop_all(bind=sync_engine)
+
+@pytest.fixture(scope="function")
+def db_session_sync(sync_engine, sync_tables):
+    """Fixture for a sync db session."""
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+    session = SessionLocal()
+    yield session
+    session.close()
+
+@pytest.fixture(scope="function")
+def test_client_sync(db_session_sync):
+    """
+    Creates a sync test client, overriding dependencies.
+    """
+    def override_get_db():
+        yield db_session_sync
+
+    mock_user_id = uuid.uuid4()
+    mock_user_email = "test@example.com"
+
+    def override_get_current_user():
+        # Check if user exists, if not create it
+        user = db_session_sync.query(AuthUser).filter_by(id=mock_user_id).first()
+        if not user:
+            user = AuthUser(id=mock_user_id, email=mock_user_email)
+            db_session_sync.add(user)
+            db_session_sync.commit()
+        return user
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
