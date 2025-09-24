@@ -216,6 +216,26 @@
           },
           "$type": "typography",
           "$comment": "Stile aggressivo per i dettagli nel calendario."
+        },
+        "week-summary-label": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.fluid-size.xs}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per le etichette nel riepilogo settimanale del calendario."
+        },
+        "week-summary-value": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.monospace}",
+            "fontWeight": "{base.font.weight.semibold}",
+            "fontSize": "{base.font.fluid-size.lg}",
+            "lineHeight": "{base.font.line-height.normal}"
+          },
+          "$type": "typography",
+          "$comment": "Stile per il valore P&L nel riepilogo settimanale del calendario."
         }
       }
     }

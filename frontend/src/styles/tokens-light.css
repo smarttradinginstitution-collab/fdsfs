@@ -36,6 +36,8 @@
   --semantic-font-style-button-label-small: var(--base-font-weight-medium) var(--base-font-fluid-size-button-label-small)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
   --semantic-font-style-calendar-day-pnl: var(--base-font-weight-bold) var(--base-font-fluid-size-calendar-pnl-aggressive)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
   --semantic-font-style-calendar-day-details: var(--base-font-weight-regular) var(--base-font-fluid-size-calendar-details-aggressive)/var(--base-font-line-height-tight) var(--base-font-family-palette-sans);
+  --semantic-font-style-week-summary-label: var(--base-font-weight-regular) var(--base-font-fluid-size-xs)/var(--base-font-line-height-normal) var(--base-font-family-palette-sans);
+  --semantic-font-style-week-summary-value: var(--base-font-weight-semibold) var(--base-font-fluid-size-lg)/var(--base-font-line-height-normal) var(--base-font-family-palette-monospace);
   --semantic-size-badge-padding-y: var(--base-size-fluid-spacing-badge-padding-y);
   --semantic-size-badge-padding-x: var(--base-size-fluid-spacing-badge-padding-x);
   --semantic-size-button-padding-inline-medium: var(--base-size-fluid-spacing-md);

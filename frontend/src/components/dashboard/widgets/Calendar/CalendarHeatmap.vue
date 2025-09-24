@@ -252,18 +252,14 @@ const handleWeekClick = (weekIndex) => {
 }
 
 .week-title {
-  font-family: var(--base-font-family-palette-sans);
-  font-size: 0.7rem;
+  font: var(--semantic-font-style-week-summary-label);
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
   white-space: nowrap;
 }
 
 .week-days {
-  font-family: var(--base-font-family-palette-sans);
-  font-size: 0.7rem;
+  font: var(--semantic-font-style-week-summary-label);
   color: var(--semantic-color-text-secondary);
-  line-height: 1.2;
   white-space: nowrap;
   /* Stili per lo sfondo richiesto */
   background-color: var(--semantic-color-surface-secondary);
@@ -272,10 +268,7 @@ const handleWeekClick = (weekIndex) => {
 }
 
 .week-pnl {
-  font-size: var(--base-font-size-sm);
-  font-family: var(--semantic-font-style-data-numeric-font-family);
-  font-weight: var(--base-font-weight-semibold);
-  line-height: 1.2;
+  font: var(--semantic-font-style-week-summary-value);
   white-space: nowrap;
 }
 
