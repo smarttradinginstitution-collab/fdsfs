@@ -196,6 +196,26 @@
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography"
+        },
+        "calendar-day-pnl": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "{base.font.fluid-size.calendar-pnl-aggressive}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile aggressivo per il P&L nel calendario."
+        },
+        "calendar-day-details": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.fluid-size.calendar-details-aggressive}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile aggressivo per i dettagli nel calendario."
         }
       }
     }

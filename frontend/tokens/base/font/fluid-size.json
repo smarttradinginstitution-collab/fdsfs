@@ -62,6 +62,16 @@
         "button-label-small": {
           "$value": "clamp({base.font.size.xxs}, 1.2vw, {base.font.size.xs})",
           "$type": "fontSize"
+        },
+        "calendar-pnl-aggressive": {
+          "$value": "clamp(0.5rem, 2.5vw, 1.1rem)",
+          "$type": "fontSize",
+          "$comment": "Scala aggressiva per il P&L nel calendario."
+        },
+        "calendar-details-aggressive": {
+          "$value": "clamp(0.4rem, 1.5vw, 0.7rem)",
+          "$type": "fontSize",
+          "$comment": "Scala aggressiva per i dettagli nel calendario."
         }
       }
     }
