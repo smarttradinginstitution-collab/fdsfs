@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Any
 
 from sqlalchemy import String, ForeignKey, func, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
