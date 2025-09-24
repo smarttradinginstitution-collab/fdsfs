@@ -64,7 +64,7 @@ function onInput(event) {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 /* Stili specifici per questo componente. */
 .input-wrapper {
   display: flex;
@@ -111,7 +111,7 @@ function onInput(event) {
   cursor: not-allowed;
 }
 
-@include media-down('sm') {
+@media (max-width: 400px) {
   .input-field {
     /* Usa un padding fluido su schermi piccoli per un look più compatto */
     padding-block: var(--base-size-fluid-spacing-fluid-inset-sm);

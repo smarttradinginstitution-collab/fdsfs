@@ -30,7 +30,7 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   </button>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 /* Stili di base comuni a tutte le varianti */
 .button {
   display: inline-flex;
@@ -83,7 +83,7 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 }
 
 /* Stili responsivi per schermi piccoli */
-@include media-down('sm') {
+@media (max-width: 400px) {
   .button--medium {
     /* Riduci il padding orizzontale su mobile */
     padding-inline: var(--base-size-spacing-3);

@@ -50,4 +50,11 @@ watch(() => uiStore.isSidebarCollapsed, () => {
   /* Aggiungo uno sfondo di pagina per coerenza */
   background-color: var(--semantic-color-surface-page);
 }
+
+@media (max-width: 400px) {
+  .layout-main {
+    /* Riduci il padding su schermi molto piccoli, come richiesto */
+    padding: var(--semantic-size-stack-md) var(--semantic-size-stack-sm);
+  }
+}
 </style>

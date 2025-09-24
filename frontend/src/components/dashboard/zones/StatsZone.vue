@@ -91,9 +91,6 @@ const onStatsDragEnd = (event) => {
 
 .widget-wrapper {
   position: relative;
-  /* This is the key to preventing grid blowouts. It allows the widget
-     to shrink below its content's intrinsic minimum size. */
-  min-width: 0;
 }
 
 .widget-wrapper.is-editing {

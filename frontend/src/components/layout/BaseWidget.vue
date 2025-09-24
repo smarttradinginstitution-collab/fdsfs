@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .widget-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
@@ -41,7 +41,7 @@
   min-height: 0; /* Allow content to shrink and scroll if needed */
 }
 
-@include media-down('sm') {
+@media (max-width: 400px) {
   .widget-header {
     /* Riduci il padding e l'altezza su mobile */
     padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);

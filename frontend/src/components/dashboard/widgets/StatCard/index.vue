@@ -57,7 +57,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 /*
   BEST PRACTICE: Layout con CSS Grid
   Usiamo `display: grid` per il layout interno della card. È più robusto di Flexbox
@@ -151,7 +151,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
     width: var(--semantic-size-component-stat-card-chart-width);
 }
 
-@include media-down('sm') {
+@media (max-width: 400px) {
   .stat-card {
     /* Usa un padding fluido su schermi piccoli per un look più compatto */
     padding: var(--base-size-fluid-spacing-fluid-inset-md);
