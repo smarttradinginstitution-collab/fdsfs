@@ -16,7 +16,6 @@ from app.Controllers.auth_controller import AuthController
 from app.Controllers.users_controller import UsersController
 from app.Controllers.roles_controller import RolesController
 from app.Controllers.user_roles_controller import UserRolesController
-from app.Controllers.trades_controller import TradesController
 from app.Controllers.user_dashboard_layout_controller import UserDashboardLayoutController
 
 # 📦 Schemi response (opzionali ma utili in Swagger)
@@ -39,7 +38,6 @@ auth = AuthController()
 users = UsersController()
 roles = RolesController()
 user_roles = UserRolesController()
-trades = TradesController()
 dashboard_layout = UserDashboardLayoutController()
 
 # ──────────────────────────────────────────────────────────────────────────────
