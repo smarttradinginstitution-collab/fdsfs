@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.post("/", response_model=TradingAccountRead, status_code=status.HTTP_201_CREATED)
-def create_trading_account(
+async def create_trading_account(
     account_data: TradingAccountCreate,
     claims: dict = Depends(get_current_claims),
     service: TradingAccountService = Depends(),
@@ -25,22 +25,22 @@ def create_trading_account(
     """
     Crea un nuovo Trading Account per l'utente autenticato.
     """
-    return service.create_trading_account_for_user(claims, account_data)
+    return await service.create_trading_account_for_user(claims, account_data)
 
 
 @router.get("/", response_model=List[TradingAccountRead])
-def get_my_trading_accounts(
+async def get_my_trading_accounts(
     claims: dict = Depends(get_current_claims),
     service: TradingAccountService = Depends(),
 ):
     """
     Recupera tutti i Trading Accounts dell'utente autenticato.
     """
-    return service.get_trading_accounts_for_user(claims)
+    return await service.get_trading_accounts_for_user(claims)
 
 
 @router.get("/{account_id}", response_model=TradingAccountRead)
-def get_trading_account(
+async def get_trading_account(
     account_id: UUID,
     claims: dict = Depends(get_current_claims),
     service: TradingAccountService = Depends(),
@@ -48,7 +48,7 @@ def get_trading_account(
     """
     Recupera un singolo Trading Account per ID.
     """
-    account = service.get_trading_account_by_id(account_id, claims)
+    account = await service.get_trading_account_by_id(account_id, claims)
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

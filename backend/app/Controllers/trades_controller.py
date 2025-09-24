@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)
-def create_trade(
+async def create_trade(
     trade_data: TradeCreate,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
@@ -27,11 +27,11 @@ def create_trade(
     Il `trading_account_id` nel body determina a quale account appartiene.
     Il servizio verificherà che l'utente sia il proprietario del trading account.
     """
-    return service.create_trade(claims, trade_data)
+    return await service.create_trade(claims, trade_data)
 
 
 @router.get("/by-trading-account/{trading_account_id}", response_model=List[TradeRead])
-def get_trades_for_trading_account(
+async def get_trades_for_trading_account(
     trading_account_id: UUID,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
@@ -39,11 +39,11 @@ def get_trades_for_trading_account(
     """
     Recupera tutti i trades per un specifico Trading Account.
     """
-    return service.list_trades_by_trading_account(claims, trading_account_id)
+    return await service.list_trades_by_trading_account(claims, trading_account_id)
 
 
 @router.get("/{trade_id}", response_model=TradeRead)
-def get_trade(
+async def get_trade(
     trade_id: UUID,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
@@ -51,7 +51,7 @@ def get_trade(
     """
     Recupera un singolo Trade per ID.
     """
-    trade = service.get_trade(claims, trade_id)
+    trade = await service.get_trade(claims, trade_id)
     if not trade:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,7 +61,7 @@ def get_trade(
 
 
 @router.put("/{trade_id}", response_model=TradeRead)
-def update_trade(
+async def update_trade(
     trade_id: UUID,
     trade_data: TradeUpdate,
     claims: dict = Depends(get_current_claims),
@@ -70,7 +70,7 @@ def update_trade(
     """
     Aggiorna un Trade esistente.
     """
-    updated_trade = service.update_trade(claims, trade_id, trade_data)
+    updated_trade = await service.update_trade(claims, trade_id, trade_data)
     if not updated_trade:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -80,7 +80,7 @@ def update_trade(
 
 
 @router.delete("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_trade(
+async def delete_trade(
     trade_id: UUID,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
@@ -88,7 +88,7 @@ def delete_trade(
     """
     Elimina un Trade.
     """
-    success = service.delete_trade(claims, trade_id)
+    success = await service.delete_trade(claims, trade_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

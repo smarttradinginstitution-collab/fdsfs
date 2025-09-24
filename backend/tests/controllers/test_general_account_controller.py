@@ -1,15 +1,15 @@
 # backend/tests/controllers/test_general_account_controller.py
 
-from fastapi.testclient import TestClient
+import pytest
+from httpx import AsyncClient
 
-def test_create_general_account(test_client_sync: TestClient):
+pytestmark = pytest.mark.anyio
+
+async def test_create_general_account(async_client: AsyncClient):
     """
     Testa la creazione di un GeneralAccount per un utente.
-    La prima volta dovrebbe avere successo (201 Created).
-    La seconda volta dovrebbe restituire l'account esistente (200 OK, anche se il controller restituisce 201).
     """
-    # Prima chiamata: creazione
-    response = test_client_sync.post("/api/v1/general-accounts/")
+    response = await async_client.post("/api/v1/general-accounts/")
     assert response.status_code == 201
     data = response.json()
     assert "id" in data
@@ -17,36 +17,31 @@ def test_create_general_account(test_client_sync: TestClient):
 
     general_account_id = data["id"]
 
-    # Seconda chiamata: deve restituire lo stesso account
-    response_repeat = test_client_sync.post("/api/v1/general-accounts/")
-    assert response_repeat.status_code == 201 # Il service è idempotente
+    # La seconda chiamata deve restituire lo stesso account
+    response_repeat = await async_client.post("/api/v1/general-accounts/")
+    assert response_repeat.status_code == 201
     data_repeat = response_repeat.json()
     assert data_repeat["id"] == general_account_id
 
-def test_get_my_general_account(test_client_sync: TestClient):
+async def test_get_my_general_account(async_client: AsyncClient):
     """
     Testa il recupero del GeneralAccount dell'utente.
-    Prima lo crea, poi lo recupera.
     """
-    # 1. Crea l'account
-    create_response = test_client_sync.post("/api/v1/general-accounts/")
+    create_response = await async_client.post("/api/v1/general-accounts/")
     assert create_response.status_code == 201
     created_data = create_response.json()
 
-    # 2. Recupera l'account
-    get_response = test_client_sync.get("/api/v1/general-accounts/me")
+    get_response = await async_client.get("/api/v1/general-accounts/me")
     assert get_response.status_code == 200
     get_data = get_response.json()
 
     assert get_data["id"] == created_data["id"]
     assert get_data["label"] == created_data["label"]
 
-def test_get_my_general_account_not_found(test_client_sync: TestClient):
+async def test_get_my_general_account_not_found(async_client: AsyncClient):
     """
-    Testa che venga restituito 404 se si cerca di recuperare un account non esistente.
+    Testa 404 se l'account non esiste.
     """
-    # In questa sessione di test, l'utente non ha ancora un account
-    # Nota: questo test deve essere eseguito con un db pulito.
-    # La fixture `test_client_sync` garantisce una sessione pulita per ogni test.
-    response = test_client_sync.get("/api/v1/general-accounts/me")
+    # La fixture `async_client` usa un db pulito per ogni test, quindi non c'è account all'inizio.
+    response = await async_client.get("/api/v1/general-accounts/me")
     assert response.status_code == 404

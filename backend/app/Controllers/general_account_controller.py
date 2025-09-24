@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.post("/", response_model=GeneralAccountRead, status_code=status.HTTP_201_CREATED)
-def create_general_account(
+async def create_general_account(
     claims: dict = Depends(get_current_claims),
     service: GeneralAccountService = Depends(),
 ):
@@ -23,19 +23,19 @@ def create_general_account(
     Crea un General Account per l'utente autenticato.
     Se l'utente ha già un account, lo restituisce senza crearne uno nuovo.
     """
-    account = service.create_general_account_for_user(claims)
+    account = await service.create_general_account_for_user(claims)
     return account
 
 
 @router.get("/me", response_model=GeneralAccountRead)
-def get_my_general_account(
+async def get_my_general_account(
     claims: dict = Depends(get_current_claims),
     service: GeneralAccountService = Depends(),
 ):
     """
     Recupera il General Account dell'utente autenticato.
     """
-    account = service.get_general_account_for_user(claims)
+    account = await service.get_general_account_for_user(claims)
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from uuid import UUID
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from fastapi import Depends, HTTPException, status
 
 from app.Repositories.trade_repository import TradeRepository
@@ -20,51 +21,52 @@ from app.Models.psychology_state import PsychologyState
 
 
 class TradeService:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.repo = TradeRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
 
-    def _validate_and_get_trading_account(self, claims: dict, trading_account_id: UUID) -> tuple[UUID, UUID]:
+    async def _validate_and_get_trading_account(self, claims: dict, trading_account_id: UUID) -> tuple[UUID, UUID]:
         """Verifica che il trading account esista e appartenga all'utente."""
         user_id = UUID(claims["sub"])
-        general_account = self.general_account_repo.get_by_user_id(user_id)
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
         if not general_account:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
 
-        trading_account = self.trading_account_repo.get_by_id(trading_account_id)
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
         if not trading_account or trading_account.general_account_id != general_account.id:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Trading Account non valido o non appartenente all'utente.")
 
         return trading_account.id, general_account.id
 
-    def _get_related_entities(self, general_account_id: UUID, model, ids: List[UUID]) -> list:
+    async def _get_related_entities(self, general_account_id: UUID, model, ids: List[UUID]) -> list:
         """Funzione helper per recuperare entità M2M e validare la loro appartenenza."""
         if not ids:
             return []
 
-        query = self.db.query(model).filter(
+        query = select(model).where(
             model.general_account_id == general_account_id,
             model.id.in_(ids)
         )
-        entities = query.all()
+        result = await self.db.execute(query)
+        entities = result.scalars().all()
 
         if len(entities) != len(set(ids)):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Uno o più ID per {model.__name__} non sono validi o non appartengono al tuo account.")
 
         return entities
 
-    def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
+    async def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
         """Crea un nuovo trade per l'utente."""
 
-        _, general_account_id = self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
+        _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
-        tags = self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
-        mistakes = self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
-        playbooks = self._get_related_entities(general_account_id, Playbook, trade_data.playbook_ids)
-        news_impacts = self._get_related_entities(general_account_id, NewsImpact, trade_data.news_impact_ids)
-        psychology_states = self._get_related_entities(general_account_id, PsychologyState, trade_data.psychology_state_ids)
+        tags = await self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
+        mistakes = await self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
+        playbooks = await self._get_related_entities(general_account_id, Playbook, trade_data.playbook_ids)
+        news_impacts = await self._get_related_entities(general_account_id, NewsImpact, trade_data.news_impact_ids)
+        psychology_states = await self._get_related_entities(general_account_id, PsychologyState, trade_data.psychology_state_ids)
 
         trade_dict = trade_data.dict(exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
         db_trade = Trade(**trade_dict)
@@ -75,65 +77,62 @@ class TradeService:
         db_trade.news_impacts = news_impacts
         db_trade.psychology_states = psychology_states
 
-        self.db.add(db_trade)
-        self.db.commit()
-        self.db.refresh(db_trade)
+        db_trade = await self.repo.add_and_commit(db_trade)
 
         return TradeRead.from_orm(db_trade)
 
-    def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
+    async def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
         """Recupera un singolo trade, verificando l'appartenenza."""
-        trade = self.repo.db.query(Trade).filter(Trade.id == trade_id).first()
+        trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not trade:
             return None
 
-        self._validate_and_get_trading_account(claims, trade.trading_account_id)
+        await self._validate_and_get_trading_account(claims, trade.trading_account_id)
 
         return TradeRead.from_orm(trade)
 
-    def list_trades_by_trading_account(self, claims: dict, trading_account_id: UUID) -> List[TradeRead]:
+    async def list_trades_by_trading_account(self, claims: dict, trading_account_id: UUID) -> List[TradeRead]:
         """Elenca tutti i trade per un trading account specifico, verificando l'appartenenza."""
-        self._validate_and_get_trading_account(claims, trading_account_id)
+        await self._validate_and_get_trading_account(claims, trading_account_id)
 
-        trades = self.repo.list_by_trading_account_id(trading_account_id)
+        trades = await self.repo.list_by_trading_account_id(trading_account_id)
         return [TradeRead.from_orm(trade) for trade in trades]
 
-    def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
+    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
         """Aggiorna un trade esistente."""
 
-        db_trade = self.repo.db.query(Trade).filter(Trade.id == trade_id).first()
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not db_trade:
             return None
 
-        _, general_account_id = self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
         update_dict = update_data.dict(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
         if update_data.tag_ids is not None:
-            db_trade.tags = self._get_related_entities(general_account_id, Tag, update_data.tag_ids)
+            db_trade.tags = await self._get_related_entities(general_account_id, Tag, update_data.tag_ids)
         if update_data.mistake_ids is not None:
-            db_trade.mistakes = self._get_related_entities(general_account_id, Mistake, update_data.mistake_ids)
+            db_trade.mistakes = await self._get_related_entities(general_account_id, Mistake, update_data.mistake_ids)
         if update_data.playbook_ids is not None:
-            db_trade.playbooks = self._get_related_entities(general_account_id, Playbook, update_data.playbook_ids)
+            db_trade.playbooks = await self._get_related_entities(general_account_id, Playbook, update_data.playbook_ids)
         if update_data.news_impact_ids is not None:
-            db_trade.news_impacts = self._get_related_entities(general_account_id, NewsImpact, update_data.news_impact_ids)
+            db_trade.news_impacts = await self._get_related_entities(general_account_id, NewsImpact, update_data.news_impact_ids)
         if update_data.psychology_state_ids is not None:
-            db_trade.psychology_states = self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
+            db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
-        self.db.commit()
-        self.db.refresh(db_trade)
+        db_trade = await self.repo.commit_and_refresh(db_trade)
 
         return TradeRead.from_orm(db_trade)
 
-    def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
+    async def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
         """Elimina un trade, verificando l'appartenenza."""
-        db_trade = self.repo.db.query(Trade).filter(Trade.id == trade_id).first()
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not db_trade:
             return False
 
-        self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        self.repo.delete_trade(db_trade)
+        await self.repo.delete_trade(db_trade)
         return True
