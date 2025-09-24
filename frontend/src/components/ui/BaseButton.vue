@@ -46,39 +46,15 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 /* Stili per dimensione Medium (default) */
 .button--medium {
   font: var(--semantic-font-style-button-label-medium);
-  padding-block: var(--semantic-size-button-padding-block-medium-mobile);
-  padding-inline: var(--semantic-size-button-padding-inline-medium-mobile);
-}
-@media (min-width: 768px) {
-  .button--medium {
-    padding-block: var(--semantic-size-button-padding-block-medium-tablet);
-    padding-inline: var(--semantic-size-button-padding-inline-medium-tablet);
-  }
-}
-@media (min-width: 1024px) {
-  .button--medium {
-    padding-block: var(--semantic-size-button-padding-block-medium-desktop);
-    padding-inline: var(--semantic-size-button-padding-inline-medium-desktop);
-  }
+  padding-block: var(--semantic-size-button-padding-block-medium);
+  padding-inline: var(--semantic-size-button-padding-inline-medium);
 }
 
 /* Stili per dimensione Small */
 .button--small {
   font: var(--semantic-font-style-button-label-small);
-  padding-block: var(--semantic-size-button-padding-block-small-mobile);
-  padding-inline: var(--semantic-size-button-padding-inline-small-mobile);
-}
-@media (min-width: 768px) {
-  .button--small {
-    padding-block: var(--semantic-size-button-padding-block-small-tablet);
-    padding-inline: var(--semantic-size-button-padding-inline-small-tablet);
-  }
-}
-@media (min-width: 1024px) {
-  .button--small {
-    padding-block: var(--semantic-size-button-padding-block-small-desktop);
-    padding-inline: var(--semantic-size-button-padding-inline-small-desktop);
-  }
+  padding-block: var(--semantic-size-button-padding-block-small);
+  padding-inline: var(--semantic-size-button-padding-inline-small);
 }
 
 .button:focus-visible {

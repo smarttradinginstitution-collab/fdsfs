@@ -36,38 +36,14 @@ const buttonClass = computed(() => `icon-button icon-button--${props.size}`);
 
 /* Medium Size */
 .icon-button--medium {
-  width: var(--semantic-size-component-icon-button-size-medium-mobile);
-  height: var(--semantic-size-component-icon-button-size-medium-mobile);
-}
-@media (min-width: 768px) {
-  .icon-button--medium {
-    width: var(--semantic-size-component-icon-button-size-medium-tablet);
-    height: var(--semantic-size-component-icon-button-size-medium-tablet);
-  }
-}
-@media (min-width: 1024px) {
-  .icon-button--medium {
-    width: var(--semantic-size-component-icon-button-size-medium-desktop);
-    height: var(--semantic-size-component-icon-button-size-medium-desktop);
-  }
+  width: var(--semantic-size-component-icon-button-size-medium);
+  height: var(--semantic-size-component-icon-button-size-medium);
 }
 
 /* Small Size */
 .icon-button--small {
-  width: var(--semantic-size-component-icon-button-size-small-mobile);
-  height: var(--semantic-size-component-icon-button-size-small-mobile);
-}
-@media (min-width: 768px) {
-  .icon-button--small {
-    width: var(--semantic-size-component-icon-button-size-small-tablet);
-    height: var(--semantic-size-component-icon-button-size-small-tablet);
-  }
-}
-@media (min-width: 1024px) {
-  .icon-button--small {
-    width: var(--semantic-size-component-icon-button-size-small-desktop);
-    height: var(--semantic-size-component-icon-button-size-small-desktop);
-  }
+  width: var(--semantic-size-component-icon-button-size-small);
+  height: var(--semantic-size-component-icon-button-size-small);
 }
 
 .icon-button:hover {

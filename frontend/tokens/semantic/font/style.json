@@ -26,7 +26,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.semibold}",
-            "fontSize": "clamp({base.font.fluid-size.fluid-heading-xl.min}, {base.font.fluid-size.fluid-heading-xl.ideal}, {base.font.fluid-size.fluid-heading-xl.max})",
+            "fontSize": "{base.font.fluid-size.fluid-heading-xl}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography",
@@ -66,7 +66,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.regular}",
-            "fontSize": "clamp({base.font.fluid-size.fluid-body-sm.min}, {base.font.fluid-size.fluid-body-sm.ideal}, {base.font.fluid-size.fluid-body-sm.max})",
+            "fontSize": "{base.font.fluid-size.fluid-body-sm}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography",
@@ -86,7 +86,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.medium}",
-            "fontSize": "clamp({base.font.fluid-size.fluid-label-md.min}, {base.font.fluid-size.fluid-label-md.ideal}, {base.font.fluid-size.fluid-label-md.max})",
+            "fontSize": "{base.font.fluid-size.fluid-label-md}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography",
@@ -137,7 +137,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.bold}",
-            "fontSize": "clamp({base.font.fluid-size.stat-display.min}, {base.font.fluid-size.stat-display.ideal}, {base.font.fluid-size.stat-display.max})",
+            "fontSize": "{base.font.fluid-size.stat-display}",
             "lineHeight": "{base.font.line-height.tight}"
           },
           "$type": "typography"
@@ -156,7 +156,7 @@
             "$value": {
                 "fontFamily": "{base.font.family.palette.sans}",
                 "fontWeight": "{base.font.weight.semibold}",
-                "fontSize": "clamp({base.font.fluid-size.fluid-heading-sm.min}, {base.font.fluid-size.fluid-heading-sm.ideal}, {base.font.fluid-size.fluid-heading-sm.max})",
+                "fontSize": "{base.font.fluid-size.fluid-heading-sm}",
                 "lineHeight": "{base.font.line-height.normal}"
             },
             "$type": "typography"
@@ -165,7 +165,7 @@
             "$value": {
                 "fontFamily": "{base.font.family.palette.sans}",
                 "fontWeight": "{base.font.weight.medium}",
-                "fontSize": "clamp({base.font.fluid-size.fluid-calendar-day-header.min}, {base.font.fluid-size.fluid-calendar-day-header.ideal}, {base.font.fluid-size.fluid-calendar-day-header.max})",
+                "fontSize": "{base.font.fluid-size.fluid-calendar-day-header}",
                 "lineHeight": "{base.font.line-height.normal}"
             },
             "$type": "typography"
@@ -174,7 +174,7 @@
             "$value": {
                 "fontFamily": "{base.font.family.palette.sans}",
                 "fontWeight": "{base.font.weight.regular}",
-                "fontSize": "clamp({base.font.fluid-size.fluid-calendar-day-number.min}, {base.font.fluid-size.fluid-calendar-day-number.ideal}, {base.font.fluid-size.fluid-calendar-day-number.max})",
+                "fontSize": "{base.font.fluid-size.fluid-calendar-day-number}",
                 "lineHeight": "{base.font.line-height.normal}"
             },
             "$type": "typography"
@@ -183,7 +183,7 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.medium}",
-            "fontSize": "clamp({base.font.fluid-size.button-label-medium.min}, {base.font.fluid-size.button-label-medium.ideal}, {base.font.fluid-size.button-label-medium.max})",
+            "fontSize": "{base.font.fluid-size.button-label-medium}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography"
@@ -192,10 +192,30 @@
           "$value": {
             "fontFamily": "{base.font.family.palette.sans}",
             "fontWeight": "{base.font.weight.medium}",
-            "fontSize": "clamp({base.font.fluid-size.button-label-small.min}, {base.font.fluid-size.button-label-small.ideal}, {base.font.fluid-size.button-label-small.max})",
+            "fontSize": "{base.font.fluid-size.button-label-small}",
             "lineHeight": "{base.font.line-height.normal}"
           },
           "$type": "typography"
+        },
+        "calendar-day-pnl": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.bold}",
+            "fontSize": "{base.font.fluid-size.calendar-pnl-aggressive}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile aggressivo per il P&L nel calendario."
+        },
+        "calendar-day-details": {
+          "$value": {
+            "fontFamily": "{base.font.family.palette.sans}",
+            "fontWeight": "{base.font.weight.regular}",
+            "fontSize": "{base.font.fluid-size.calendar-details-aggressive}",
+            "lineHeight": "{base.font.line-height.tight}"
+          },
+          "$type": "typography",
+          "$comment": "Stile aggressivo per i dettagli nel calendario."
         }
       }
     }
