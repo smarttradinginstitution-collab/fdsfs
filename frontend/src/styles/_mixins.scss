@@ -1,0 +1,29 @@
+@use 'sass:map';
+@use 'breakpoints' as *;
+
+// Mixin per generare media query "min-width" (mobile-first)
+// Legge il valore dalla mappa $breakpoints
+@mixin media-up($key) {
+  $size: map.get($breakpoints, $key);
+
+  @if $size {
+    @media (min-width: $size) {
+      @content;
+    }
+  } @else {
+    @error "Breakpoint '#{$key}' non trovato nella mappa $breakpoints.";
+  }
+}
+
+// Mixin per generare media query "max-width" (desktop-first)
+@mixin media-down($key) {
+  $size: map.get($breakpoints, $key);
+
+  @if $size {
+    @media (max-width: $size) {
+      @content;
+    }
+  } @else {
+    @error "Breakpoint '#{$key}' non trovato nella mappa $breakpoints.";
+  }
+}

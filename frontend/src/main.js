@@ -21,7 +21,7 @@ import { setAuthToken } from '@/services/api'; // (AGGIUNTA) helper per impostar
   Successivamente importiamo `main.css`, che contiene gli stili globali e i reset,
   e che può quindi utilizzare i token definiti in precedenza.
 */
-import '@/styles/index.css';
+import '@/styles/index.scss';
 import '@/assets/main.css';
 
 // --- CREAZIONE E CONFIGURAZIONE DELL'APP ---

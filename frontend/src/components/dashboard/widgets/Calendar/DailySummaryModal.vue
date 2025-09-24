@@ -145,7 +145,7 @@ const formatDuration = (minutes) => {
   </BaseModal>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 /* --- Mobile First Styles --- */
 
 /* Header Styles */
@@ -213,7 +213,7 @@ const formatDuration = (minutes) => {
 
 
 /* --- Tablet & Desktop Overrides --- */
-@media (min-width: 768px) {
+@include media-up('md') {
   .modal-body-content {
     gap: var(--semantic-size-stack-lg);
   }

@@ -8,7 +8,6 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import { useMediaQuery } from '@vueuse/core';
-import breakpointTokens from '../../tokens/base/layout/breakpoint.json';
 
 // Definiamo lo store usando la sintassi "Setup Store"
 export const useUiStore = defineStore('ui', () => {
@@ -39,7 +38,7 @@ export const useUiStore = defineStore('ui', () => {
     Questo garantisce che se un giorno modificheremo il token, la logica JS
     si aggiornerà automaticamente insieme al CSS.
   */
-  const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
+  const isMobile = useMediaQuery(`(max-width: 768px)`);
 
   // Chiudiamo automaticamente il menu mobile se l'utente allarga la finestra
   // passando dalla visuale mobile a quella desktop.
