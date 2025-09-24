@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .widget-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);

@@ -64,7 +64,7 @@ function onInput(event) {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 /* Stili specifici per questo componente. */
 .input-wrapper {
   display: flex;

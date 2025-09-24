@@ -57,7 +57,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 /*
   BEST PRACTICE: Layout con CSS Grid
   Usiamo `display: grid` per il layout interno della card. È più robusto di Flexbox

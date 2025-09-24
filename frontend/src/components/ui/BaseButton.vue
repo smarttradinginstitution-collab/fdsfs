@@ -30,7 +30,7 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   </button>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 /* Stili di base comuni a tutte le varianti */
 .button {
   display: inline-flex;
