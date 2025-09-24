@@ -88,7 +88,6 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
   gap: var(--semantic-size-stack-fluid-stat-card-gap);
 
   transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
-  overflow: hidden;
 }
 .stat-card:hover {
     box-shadow: var(--semantic-effect-shadow-elevation-medium);
@@ -122,6 +121,7 @@ const isWinRate = computed(() => props.stat.key === 'winRate');
 .header-overlay :deep(.info-button) {
     margin-bottom: 0; /* Rimuove il margine se presente */
 }
+
 
 /*
   Stili per il contenuto dell'overlay, per garantire che sia leggibile e ben
