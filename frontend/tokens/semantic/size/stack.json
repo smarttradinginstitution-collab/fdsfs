@@ -31,6 +31,11 @@
           "$value": "{base.size.spacing.12}",
           "$type": "spacing",
           "$comment": "48px. Spazio ampio per separare gruppi di contenuti non correlati."
+        },
+        "fluid-stat-card-gap": {
+          "$value": "{base.size.fluid-spacing.stat-card-gap}",
+          "$type": "spacing",
+          "$comment": "Spaziatura fluida per il gap principale nelle StatCard."
         }
       }
     }
