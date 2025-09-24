@@ -180,12 +180,31 @@ watch(
 
 /* --- RESPONSIVE BREAKPOINTS (media-up) --- */
 
+/* --- Stats Grid --- */
+/* Aumentiamo il numero di colonne in modo esplicito per evitare collassi */
 @include media-up('sm') {
-  /* Layout fluido per schermi medi */
   :deep(.stats-grid) {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
   }
+}
+@include media-up('md') {
+  :deep(.stats-grid) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@include media-up('lg') {
+  :deep(.stats-grid) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+@include media-up('xl') {
+  :deep(.stats-grid) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
 
+/* --- Complex Widgets Grid --- */
+@include media-up('sm') {
   :deep(.complex-widgets-grid) {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
@@ -198,13 +217,8 @@ watch(
   }
 }
 
-/* Fase 3: Layout specifico per il calendario da 'xl' in su */
+/* Layout specifico per il calendario da 'xl' in su */
 @include media-up('xl') {
-  /* Limite massimo di 6 colonne per le stats card */
-  :deep(.stats-grid) {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
   :deep(.main-content-grid) {
     /* Griglia a 2 colonne con rapporto 2:1 */
     grid-template-columns: 2fr 1fr;
