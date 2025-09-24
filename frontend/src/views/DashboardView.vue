@@ -133,7 +133,7 @@ watch(
   padding: var(--semantic-size-inset-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--semantic-size-stack-sm);
 }
 .action-bar {
   display: flex;
@@ -152,7 +152,7 @@ watch(
 :deep(.complex-widgets-grid),
 :deep(.main-content-grid) {
   display: grid;
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--semantic-size-stack-sm);
   min-width: 0; /* Fix for grid inside flexbox overflow */
   align-items: start;
 }

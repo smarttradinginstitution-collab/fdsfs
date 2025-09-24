@@ -63,7 +63,7 @@ const onStatsDragEnd = (event) => {
 <style lang="scss" scoped>
 .stats-grid {
   display: grid;
-  gap: var(--semantic-size-stack-lg);
+  gap: var(--semantic-size-stack-sm);
   min-width: 0; /* Fix for grid inside flexbox overflow */
 
   /* Mobile-first: 2 colonne di default */
