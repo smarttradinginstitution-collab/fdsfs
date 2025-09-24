@@ -68,7 +68,7 @@ class Trade(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     entry_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     exit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    position_size: M'ped[Optional[float]] = mapped_column(Float, nullable=True)
+    position_size: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     lowest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
         Numeric, nullable=True
     )
