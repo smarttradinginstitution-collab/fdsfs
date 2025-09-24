@@ -207,26 +207,18 @@ const handleWeekClick = (weekIndex) => {
 }
 
 .day-pnl {
-  font-weight: var(--base-font-weight-bold);
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-  font-size: clamp(var(--base-font-fluid-size-lg-min),
-      var(--base-font-fluid-size-lg-ideal),
-      var(--base-font-fluid-size-lg-max));
 }
 
-.day-trade-count {
+.day-trade-count,
+.day-extra-stats {
+  font: var(--semantic-font-style-calendar-day-header);
   color: var(--semantic-color-text-secondary);
-  font-size: clamp(var(--base-font-fluid-size-xxs-min),
-      var(--base-font-fluid-size-xxs-ideal),
-      var(--base-font-fluid-size-xxs-max));
 }
 
 .day-extra-stats {
-  color: var(--semantic-color-text-secondary);
   opacity: 0.8;
-  font-size: clamp(var(--base-font-fluid-size-xxs-min),
-      var(--base-font-fluid-size-xxs-ideal),
-      var(--base-font-fluid-size-xxs-max));
 }
 
 /* --- Stili per il riepilogo settimanale --- */
