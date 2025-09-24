@@ -55,7 +55,7 @@
   --base-font-fluid-size-xl: clamp(0.7rem, 1.5vw, 1.1rem);
   --base-font-fluid-size-xs: clamp(0.6rem, 0.9vw, 0.8rem);
   --base-font-fluid-size-xxs: clamp(0.5rem, 0.7vw, 0.65rem);
-  --base-font-fluid-size-stat-display: clamp(1rem, 2vw, 1.2rem);
+  --base-font-fluid-size-stat-display: clamp(0.9rem, 2vw, 1.2rem);
   --base-font-fluid-size-fluid-heading-xl: clamp(1.125rem, 3vw, 1.25rem);
   --base-font-fluid-size-fluid-heading-sm: clamp(0.875rem, 2vw, 1rem);
   --base-font-fluid-size-fluid-body-sm: clamp(0.75rem, 1.5vw, 0.875rem);
