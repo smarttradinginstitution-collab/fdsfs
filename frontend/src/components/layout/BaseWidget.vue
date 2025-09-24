@@ -39,7 +39,17 @@
   /* The header has padding, so the content doesn't need top padding */
   padding-top: 0;
   min-height: 0; /* Allow content to shrink and scroll if needed */
+  overflow-x: auto; /* Abilita lo scroll orizzontale quando necessario */
 }
+
+/* Forziamo una larghezza minima per il contenuto del widget
+   per garantire che lo scroll orizzontale si attivi correttamente.
+   Questo è un "workaround" per il fatto che i grafici hanno una larghezza minima
+   intrinseca che non sempre viene rispettata dai contenitori flex. */
+:deep(.widget-content > *) {
+  min-width: 320px;
+}
+
 
 @include media-down('sm') {
   .widget-header {
