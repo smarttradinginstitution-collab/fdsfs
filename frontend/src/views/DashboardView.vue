@@ -140,9 +140,7 @@ watch(
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
 }
-.grid-zone-wrapper {
-  /* Styles for the wrapper if needed */
-}
+
 .zone-title {
   margin-bottom: var(--semantic-size-stack-sm);
   font: var(--semantic-font-style-heading-lg);
