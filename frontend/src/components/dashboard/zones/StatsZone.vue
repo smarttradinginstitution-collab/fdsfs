@@ -61,25 +61,11 @@ const onStatsDragEnd = (event) => {
 </template>
 
 <style lang="scss" scoped>
-.stats-grid {
-  display: grid;
-  gap: var(--semantic-size-stack-lg);
-  min-width: 0; /* Fix for grid inside flexbox overflow */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-@include media-down('sm') {
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-}
-
-@include media-down('xs') {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-sm);
-  }
-}
+/*
+  Gli stili per la griglia (.stats-grid) sono stati centralizzati in DashboardView.vue
+  per garantire una gestione unica e coerente del layout responsive.
+  Questo file contiene solo stili specifici per gli elementi interni alla zona.
+*/
 
 .ghost {
   opacity: 0.5;

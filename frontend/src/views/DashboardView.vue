@@ -171,8 +171,9 @@ watch(
   overflow-x: auto;
 }
 
-/* Allow widgets in the main grid to shrink and scroll if their content is too wide */
-:deep(.main-content-grid .widget-wrapper) {
+/* Allow widgets in all grids to shrink and scroll if their content is too wide */
+:deep(.main-content-grid .widget-wrapper),
+:deep(.complex-widgets-grid .widget-wrapper) {
   min-width: 0;
   overflow-x: auto;
 }
