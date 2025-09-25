@@ -12,7 +12,6 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trades_psychology import TradesPsychology
 
 
 class PsychologyState(Base):
@@ -36,9 +35,8 @@ class PsychologyState(Base):
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="psychology_states"
     )
-    trade_links: Mapped[list["TradesPsychology"]] = relationship(
-        "TradesPsychology",
-        back_populates="psychology_state",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+    trades: Mapped[list["Trade"]] = relationship(
+        "Trade",
+        secondary="public.trades_psychology",
+        back_populates="psychology_states",
     )

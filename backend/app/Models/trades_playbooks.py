@@ -37,5 +37,5 @@ class TradesPlaybooks(Base):
     )
 
     # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade", back_populates="playbook_links")
-    playbook: Mapped["Playbook"] = relationship("Playbook", back_populates="trade_links")
+    trade: Mapped["Trade"] = relationship("Trade")
+    playbook: Mapped["Playbook"] = relationship("Playbook")

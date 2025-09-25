@@ -6,14 +6,72 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.Services.trade_service import TradeService
+from app.Services.analytics_service import AnalyticsService
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.analytics import (
+    PerformanceMetrics,
+    CalendarDayData,
+    ProcessedStats,
+    VantageScoreData,
+    EquityCurveData
+)
 from app.Router.auth import get_current_claims
+from datetime import date
 
 router = APIRouter(
     prefix="/trades",
     tags=["Trades"],
     responses={404: {"description": "Not found"}},
 )
+
+
+# --- Endpoint di Analisi ---
+
+@router.get("/performance/metrics", response_model=PerformanceMetrics)
+async def get_performance_metrics(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_performance_metrics(trading_account_id, start_date, end_date)
+
+@router.get("/calendar/data", response_model=List[CalendarDayData])
+async def get_calendar_data(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    user_timezone: str,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_calendar_data(trading_account_id, start_date, end_date, user_timezone)
+
+@router.get("/processed-stats", response_model=ProcessedStats)
+async def get_processed_stats(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_processed_stats(trading_account_id, start_date, end_date)
+
+@router.get("/vantage-score", response_model=VantageScoreData)
+async def get_vantage_score(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_vantage_score(trading_account_id, start_date, end_date)
+
+@router.get("/equity-curve", response_model=EquityCurveData)
+async def get_equity_curve(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_equity_curve(trading_account_id, start_date, end_date)
 
 
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)

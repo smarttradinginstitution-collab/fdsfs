@@ -37,5 +37,5 @@ class TradesTags(Base):
     )
 
     # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade", back_populates="tag_links")
-    tag: Mapped["Tag"] = relationship("Tag", back_populates="trade_links")
+    trade: Mapped["Trade"] = relationship("Trade")
+    tag: Mapped["Tag"] = relationship("Tag")

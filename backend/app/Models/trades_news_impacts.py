@@ -37,5 +37,5 @@ class TradesNewsImpacts(Base):
     )
 
     # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade", back_populates="news_impact_links")
-    news_impact: Mapped["NewsImpact"] = relationship("NewsImpact", back_populates="trade_links")
+    trade: Mapped["Trade"] = relationship("Trade")
+    news_impact: Mapped["NewsImpact"] = relationship("NewsImpact")

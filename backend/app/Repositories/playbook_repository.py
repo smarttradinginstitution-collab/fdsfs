@@ -1,57 +1,63 @@
 # app/Repositories/playbook_repository.py
+from __future__ import annotations
+
+from typing import Optional, Sequence
 from uuid import UUID
-from sqlalchemy.orm import Session
-from sqlalchemy.future import select
+from sqlalchemy import select, insert, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.Models.playbook import Playbook
 from app.Schemas.playbook import PlaybookCreate, PlaybookUpdate
 
+
 class PlaybookRepository:
-    async def get_by_id(self, db: Session, playbook_id: UUID) -> Playbook | None:
-        """
-        Recupera un playbook per ID.
-        """
-        result = await db.execute(select(Playbook).filter(Playbook.id == playbook_id))
+    """Repository for Playbook CRUD operations."""
+
+    def __init__(self, db: AsyncSession) -> None:
+        self.db = db
+
+    async def get_by_id(self, playbook_id: UUID) -> Optional[Playbook]:
+        stmt = select(Playbook).where(Playbook.id == playbook_id)
+        result = await self.db.execute(stmt)
         return result.scalars().first()
 
-    async def get_by_general_account_id(self, db: Session, general_account_id: UUID) -> list[Playbook]:
-        """
-        Recupera tutti i playbook associati a un General Account.
-        """
-        result = await db.execute(select(Playbook).filter(Playbook.general_account_id == general_account_id))
-        return result.scalars().all()
+    async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[Playbook]:
+        stmt = select(Playbook).where(Playbook.general_account_id == general_account_id).order_by(Playbook.title.asc())
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
 
-    async def create(self, db: Session, playbook_in: PlaybookCreate, general_account_id: UUID) -> Playbook:
-        """
-        Crea un nuovo playbook.
-        """
+    async def create(self, playbook_in: PlaybookCreate, general_account_id: UUID) -> Playbook:
         db_playbook = Playbook(
             **playbook_in.model_dump(),
             general_account_id=general_account_id
         )
-        db.add(db_playbook)
-        await db.commit()
-        await db.refresh(db_playbook)
+        self.db.add(db_playbook)
+        await self.db.commit()
+        await self.db.refresh(db_playbook)
         return db_playbook
 
-    async def update(self, db: Session, db_obj: Playbook, obj_in: PlaybookUpdate) -> Playbook:
-        """
-        Aggiorna un playbook esistente.
-        """
+    async def update(self, db_obj: Playbook, obj_in: PlaybookUpdate) -> Playbook:
         update_data = obj_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
-
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
+        self.db.add(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db: Session, db_obj: Playbook) -> Playbook:
-        """
-        Elimina un playbook.
-        """
-        await db.delete(db_obj)
-        await db.commit()
-        return db_obj
+    async def delete(self, db_obj: Playbook) -> None:
+        await self.db.delete(db_obj)
+        await self.db.commit()
 
-playbook_repository = PlaybookRepository()
+    async def upsert_by_title(self, general_account_id: UUID, title: str) -> Playbook:
+        stmt = select(Playbook).where(Playbook.general_account_id == general_account_id, Playbook.title == title).limit(1)
+        res = await self.db.execute(stmt)
+        row = res.scalars().first()
+        if row:
+            return row
+
+        stmt_ins = insert(Playbook).values(general_account_id=general_account_id, title=title).returning(Playbook)
+        res_ins = await self.db.execute(stmt_ins)
+        new_row = res_ins.scalar_one()
+        await self.db.flush()
+        return new_row

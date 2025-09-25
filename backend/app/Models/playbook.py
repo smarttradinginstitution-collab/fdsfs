@@ -12,7 +12,6 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trades_playbooks import TradesPlaybooks
 
 
 class Playbook(Base):
@@ -36,9 +35,6 @@ class Playbook(Base):
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="playbooks"
     )
-    trade_links: Mapped[list["TradesPlaybooks"]] = relationship(
-        "TradesPlaybooks",
-        back_populates="playbook",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+    trades: Mapped[list["Trade"]] = relationship(
+        "Trade", secondary="public.trades_playbooks", back_populates="playbooks"
     )

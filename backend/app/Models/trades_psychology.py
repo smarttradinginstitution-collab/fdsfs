@@ -37,7 +37,5 @@ class TradesPsychology(Base):
     )
 
     # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade", back_populates="psychology_links")
-    psychology_state: Mapped["PsychologyState"] = relationship(
-        "PsychologyState", back_populates="trade_links"
-    )
+    trade: Mapped["Trade"] = relationship("Trade")
+    psychology_state: Mapped["PsychologyState"] = relationship("PsychologyState")

@@ -6,7 +6,6 @@ import uuid
 from typing import Any, Optional, TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
     Text,
     TIMESTAMP,
     ForeignKey,
@@ -22,15 +21,10 @@ from app.Infrastructure.db import Base
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
     from app.Models.asset import Asset
-    from app.Models.trades_tags import TradesTags
     from app.Models.tag import Tag
-    from app.Models.trades_mistakes import TradesMistakes
     from app.Models.mistake import Mistake
-    from app.Models.trades_playbooks import TradesPlaybooks
     from app.Models.playbook import Playbook
-    from app.Models.trades_news_impacts import TradesNewsImpacts
     from app.Models.news_impact import NewsImpact
-    from app.Models.trades_psychology import TradesPsychology
     from app.Models.psychology_state import PsychologyState
 
 
@@ -62,7 +56,6 @@ class Trade(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
     p_l: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    setup: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     stop_loss_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     take_profit_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -80,7 +73,6 @@ class Trade(Base):
         ENUM(TradeDirectionEnum, name="trade_direction", create_type=False),
         nullable=True,
     )
-    emotional_state: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     notes_pre_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notes_post_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     entry_timestamp: Mapped[Optional[Any]] = mapped_column(
@@ -96,36 +88,19 @@ class Trade(Base):
     )
     asset: Mapped[Optional["Asset"]] = relationship("Asset", back_populates="trades")
 
-    # Relazioni Many-to-Many (tramite tabelle associative)
-    tag_links: Mapped[list["TradesTags"]] = relationship(
-        "TradesTags", back_populates="trade", cascade="all, delete-orphan"
-    )
-    mistake_links: Mapped[list["TradesMistakes"]] = relationship(
-        "TradesMistakes", back_populates="trade", cascade="all, delete-orphan"
-    )
-    playbook_links: Mapped[list["TradesPlaybooks"]] = relationship(
-        "TradesPlaybooks", back_populates="trade", cascade="all, delete-orphan"
-    )
-    news_impact_links: Mapped[list["TradesNewsImpacts"]] = relationship(
-        "TradesNewsImpacts", back_populates="trade", cascade="all, delete-orphan"
-    )
-    psychology_links: Mapped[list["TradesPsychology"]] = relationship(
-        "TradesPsychology", back_populates="trade", cascade="all, delete-orphan"
-    )
-
-    # Relazioni di sola lettura per un accesso più semplice
+    # Relazioni Many-to-Many
     tags: Mapped[list["Tag"]] = relationship(
-        "Tag", secondary="public.trades_tags", viewonly=True
+        secondary="public.trades_tags", back_populates="trades"
     )
     mistakes: Mapped[list["Mistake"]] = relationship(
-        "Mistake", secondary="public.trades_mistakes", viewonly=True
+        "Mistake", secondary="public.trades_mistakes", back_populates="trades"
     )
     playbooks: Mapped[list["Playbook"]] = relationship(
-        "Playbook", secondary="public.trades_playbooks", viewonly=True
+        "Playbook", secondary="public.trades_playbooks", back_populates="trades"
     )
     news_impacts: Mapped[list["NewsImpact"]] = relationship(
-        "NewsImpact", secondary="public.trades_news_impacts", viewonly=True
+        "NewsImpact", secondary="public.trades_news_impacts", back_populates="trades"
     )
     psychology_states: Mapped[list["PsychologyState"]] = relationship(
-        "PsychologyState", secondary="public.trades_psychology", viewonly=True
+        "PsychologyState", secondary="public.trades_psychology", back_populates="trades"
     )

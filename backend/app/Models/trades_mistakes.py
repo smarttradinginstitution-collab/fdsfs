@@ -37,5 +37,5 @@ class TradesMistakes(Base):
     )
 
     # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade", back_populates="mistake_links")
-    mistake: Mapped["Mistake"] = relationship("Mistake", back_populates="trade_links")
+    trade: Mapped["Trade"] = relationship("Trade")
+    mistake: Mapped["Mistake"] = relationship("Mistake")
