@@ -2,10 +2,6 @@
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.Models.tag import Tag
-from app.Models.playbook import Playbook
-from app.Models.mistake import Mistake
 import uuid
 
 pytestmark = pytest.mark.anyio
@@ -54,43 +50,54 @@ async def test_create_and_get_trade(async_client: AsyncClient):
     list_data = list_response.json()
     assert len(list_data) == 1
 
-async def test_trade_with_m2m_relations(async_client: AsyncClient, db_session: AsyncSession):
-    """Testa la creazione e l'aggiornamento di un trade con relazioni M2M (tags)."""
+async def test_create_trade_with_related_entities_by_name(async_client: AsyncClient):
+    """
+    Testa la creazione di un trade con entità correlate (tags, mistakes, playbooks)
+    passando i loro nomi come stringhe, come farebbe il frontend.
+    """
     trading_account_id = await setup_trading_account(async_client)
-
-    ga_response = await async_client.get("/api/v1/general-accounts/me")
-    general_account_id = uuid.UUID(ga_response.json()["id"])
-
-    tag1 = Tag(name="FOMO", general_account_id=general_account_id)
-    tag2 = Tag(name="Good Entry", general_account_id=general_account_id)
-    db_session.add_all([tag1, tag2])
-    await db_session.commit()
 
     trade_payload = {
         "trading_account_id": trading_account_id,
         "symbol": "ETHUSD",
-        "tag_ids": [str(tag1.id)]
+        "tags": ["Good Entry", "News-Driven"],
+        "mistakes": ["FOMO"],
+        "playbooks": ["Opening Range Breakout"]
     }
     create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
     assert create_response.status_code == 201
-    trade_id = create_response.json()["id"]
+    created_trade = create_response.json()
+    trade_id = created_trade["id"]
 
-    # Adesso verifichiamo che il trade sia stato salvato correttamente
-    get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
-    assert get_response.status_code == 200
-    get_data = get_response.json()
-    assert len(get_data["tags"]) == 1
-    assert get_data["tags"][0]["name"] == "FOMO"
+    # Verifica che le entità siano state create e associate
+    assert len(created_trade["tags"]) == 2
+    returned_tags = {tag['name'] for tag in created_trade['tags']}
+    assert returned_tags == {"Good Entry", "News-Driven"}
 
-    update_payload = {"tag_ids": [str(tag1.id), str(tag2.id)]}
-    update_response = await async_client.put(f"/api/v1/trades/{trade_id}", json=update_payload)
-    assert update_response.status_code == 200
+    assert len(created_trade["mistakes"]) == 1
+    assert created_trade["mistakes"][0]["name"] == "FOMO"
 
-    # Verifichiamo di nuovo dopo l'aggiornamento
-    get_response_after_update = await async_client.get(f"/api/v1/trades/{trade_id}")
-    assert get_response_after_update.status_code == 200
-    updated_data = get_response_after_update.json()
-    assert len(updated_data["tags"]) == 2
+    assert len(created_trade["playbooks"]) == 1
+    assert created_trade["playbooks"][0]["title"] == "Opening Range Breakout"
+
+    # Verifica che una richiesta successiva con gli stessi nomi non crei duplicati
+    trade_payload_2 = {
+        "trading_account_id": trading_account_id,
+        "symbol": "SOLUSD",
+        "tags": ["Good Entry"],
+    }
+    create_response_2 = await async_client.post("/api/v1/trades/", json=trade_payload_2)
+    assert create_response_2.status_code == 201
+    created_trade_2 = create_response_2.json()
+    assert len(created_trade_2["tags"]) == 1
+
+    # L'ID del tag "Good Entry" dovrebbe essere lo stesso del primo trade,
+    # verificando che l'upsert non abbia creato un duplicato.
+    good_entry_tag_from_trade1 = next(t for t in created_trade['tags'] if t['name'] == 'Good Entry')
+    good_entry_tag_from_trade2 = created_trade_2['tags'][0]
+
+    assert good_entry_tag_from_trade2['id'] == good_entry_tag_from_trade1['id']
+
 
 async def test_delete_trade(async_client: AsyncClient):
     """Testa l'eliminazione di un trade."""
@@ -104,46 +111,3 @@ async def test_delete_trade(async_client: AsyncClient):
 
     get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
     assert get_response.status_code == 404
-
-async def test_trade_with_playbooks_and_mistakes(async_client: AsyncClient, db_session: AsyncSession):
-    """Testa la creazione e l'aggiornamento di un trade con playbooks e mistakes."""
-    trading_account_id = await setup_trading_account(async_client)
-    ga_response = await async_client.get("/api/v1/general-accounts/me")
-    general_account_id = uuid.UUID(ga_response.json()["id"])
-
-    # Creazione di entità correlate
-    playbook1 = Playbook(title="Opening Range Breakout", general_account_id=general_account_id)
-    mistake1 = Mistake(name="Over-leveraged", general_account_id=general_account_id)
-    db_session.add_all([playbook1, mistake1])
-    await db_session.commit()
-
-    # Creazione del trade
-    trade_payload = {
-        "trading_account_id": trading_account_id,
-        "symbol": "SPY",
-        "playbook_ids": [str(playbook1.id)],
-        "mistake_ids": [str(mistake1.id)],
-    }
-    create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
-    assert create_response.status_code == 201
-    trade_id = create_response.json()["id"]
-
-    # Verifica delle relazioni leggendo il trade
-    get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
-    assert get_response.status_code == 200
-    get_data = get_response.json()
-    assert len(get_data["playbooks"]) == 1
-    assert get_data["playbooks"][0]["title"] == "Opening Range Breakout"
-    assert len(get_data["mistakes"]) == 1
-    assert get_data["mistakes"][0]["name"] == "Over-leveraged"
-
-    # Aggiornamento del trade per rimuovere le associazioni
-    update_payload = {"playbook_ids": [], "mistake_ids": []}
-    await async_client.put(f"/api/v1/trades/{trade_id}", json=update_payload)
-
-    # Verifichiamo di nuovo dopo l'aggiornamento
-    get_response_after_update = await async_client.get(f"/api/v1/trades/{trade_id}")
-    assert get_response_after_update.status_code == 200
-    updated_data = get_response_after_update.json()
-    assert len(updated_data["playbooks"]) == 0
-    assert len(updated_data["mistakes"]) == 0

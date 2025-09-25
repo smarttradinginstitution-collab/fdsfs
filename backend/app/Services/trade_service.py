@@ -11,14 +11,14 @@ from fastapi import Depends, HTTPException, status
 from app.Repositories.trade_repository import TradeRepository
 from app.Repositories.trading_account_repository import TradingAccountRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
+from app.Repositories.tag_repository import TagRepository
+from app.Repositories.mistake_repository import MistakeRepository
+from app.Repositories.playbook_repository import PlaybookRepository
+from app.Repositories.news_impact_repository import NewsImpactRepository
+from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Infrastructure.db import get_db
 from app.Models.trade import Trade
-from app.Models.tag import Tag
-from app.Models.mistake import Mistake
-from app.Models.playbook import Playbook
-from app.Models.news_impact import NewsImpact
-from app.Models.psychology_state import PsychologyState
 
 
 class TradeService:
@@ -27,6 +27,11 @@ class TradeService:
         self.repo = TradeRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
+        self.tag_repo = TagRepository(db)
+        self.mistake_repo = MistakeRepository(db)
+        self.playbook_repo = PlaybookRepository(db)
+        self.news_impact_repo = NewsImpactRepository(db)
+        self.psychology_state_repo = PsychologyStateRepository(db)
 
     async def _validate_and_get_trading_account(self, claims: dict, trading_account_id: UUID) -> tuple[UUID, UUID]:
         """Verifica che il trading account esista e appartenga all'utente."""
@@ -41,36 +46,47 @@ class TradeService:
 
         return trading_account.id, general_account.id
 
-    async def _get_related_entities(self, general_account_id: UUID, model, ids: List[UUID]) -> list:
-        """Funzione helper per recuperare entità M2M e validare la loro appartenenza."""
-        if not ids:
+    async def _get_or_create_related_entities(self, general_account_id: UUID, values: List[str], repo, upsert_method_name: str, value_field_name: str) -> list:
+        """
+        Funzione helper generica per recuperare o creare entità M2M tramite 'upsert'.
+        """
+        if not values:
             return []
 
-        query = select(model).where(
-            model.general_account_id == general_account_id,
-            model.id.in_(ids)
-        )
-        result = await self.db.execute(query)
-        entities = result.scalars().all()
-
-        if len(entities) != len(set(ids)):
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Uno o più ID per {model.__name__} non sono validi o non appartengono al tuo account.")
-
+        entities = []
+        upsert_method = getattr(repo, upsert_method_name)
+        for value in values:
+            # Passa l'argomento con il nome corretto (es. name=value, title=value, state=value)
+            entity = await upsert_method(general_account_id=general_account_id, **{value_field_name: value})
+            entities.append(entity)
         return entities
 
     async def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
-        """Crea un nuovo trade per l'utente."""
-
+        """Crea un nuovo trade per l'utente, gestendo le entità correlate tramite nome."""
         _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
-        trade_dict = trade_data.model_dump(exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
+        # Gestione campi obsoleti per retrocompatibilità
+        playbook_names = trade_data.playbooks or []
+        if trade_data.setup and trade_data.setup not in playbook_names:
+            playbook_names.append(trade_data.setup)
+
+        psychology_names = trade_data.psychology_states or []
+        if trade_data.emotional_state and trade_data.emotional_state not in psychology_names:
+            psychology_names.append(trade_data.emotional_state)
+
+        # Escludi i campi gestiti separatamente dal dizionario principale
+        trade_dict = trade_data.model_dump(exclude={
+            'tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states',
+            'setup', 'emotional_state' # Escludi anche i campi obsoleti
+        })
         db_trade = Trade(**trade_dict)
 
-        db_trade.tags = await self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
-        db_trade.mistakes = await self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
-        db_trade.playbooks = await self._get_related_entities(general_account_id, Playbook, trade_data.playbook_ids)
-        db_trade.news_impacts = await self._get_related_entities(general_account_id, NewsImpact, trade_data.news_impact_ids)
-        db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, trade_data.psychology_state_ids)
+        # Recupera o crea le entità correlate
+        db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
+        db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
+        db_trade.playbooks = await self._get_or_create_related_entities(general_account_id, playbook_names, self.playbook_repo, "upsert_by_title", "title")
+        db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
+        db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
 
         self.db.add(db_trade)
         await self.db.commit()
