@@ -36,6 +36,4 @@ class TradesMistakes(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade")
-    mistake: Mapped["Mistake"] = relationship("Mistake")
+    # Le relazioni qui sono state rimosse per risolvere l'ambiguità.
