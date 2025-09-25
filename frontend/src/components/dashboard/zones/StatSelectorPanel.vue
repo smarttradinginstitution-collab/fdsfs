@@ -178,7 +178,7 @@ const isVisible = (statKey) => {
     position: fixed;
     top: 0;
     right: 0;
-    width: 320px;
+    width: var(--semantic-size-component-sidebar-width-expanded);
     height: 100vh;
     transform: translateX(100%);
   }
