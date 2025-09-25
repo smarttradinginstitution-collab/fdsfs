@@ -38,7 +38,28 @@ export const useTradesStore = defineStore('trades', {
       const playbookLabels = resourceStore.playbooks.map((p) => p.label);
       return ['All', ...playbookLabels];
     },
-    // Altri getter possono essere aggiunti qui se necessario
+
+    allDashboardStats(state) {
+      const emptyStat = (key, label, category, value = 'N/A') => ({ key, label, category, value, changeType: 'neutral' });
+      const emptyStats = {
+        netPnl: { ...emptyStat('netPnl', 'Net P&L', 'Profitability', '$0.00'), changeType: 'neutral' },
+        winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
+        trades: emptyStat('trades', 'Trades', 'Consistency', '0'),
+        profitFactor: emptyStat('profitFactor', 'Profit Factor', 'Ratios & Efficiency'),
+        avgWin: emptyStat('avgWin', 'Avg. Win', 'Profitability', '$0.00'),
+        avgLoss: emptyStat('avgLoss', 'Avg. Loss', 'Profitability', '$0.00'),
+        expectancy: emptyStat('expectancy', 'Expectancy', 'Ratios & Efficiency', '$0.00'),
+      };
+
+      if (!state.dashboardStats) {
+        return emptyStats;
+      }
+
+      // Se i dati esistono, mapparli come prima.
+      // Questa parte può essere implementata quando l'endpoint delle statistiche sarà riattivato.
+      // Per ora, restituiamo i dati vuoti per evitare crash.
+      return emptyStats;
+    },
   },
 
   actions: {
