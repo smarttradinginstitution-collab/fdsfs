@@ -21,7 +21,7 @@ const mapBackendTradeToFrontend = (trade) => ({
   type: trade.direction,
   pnl: trade.p_l,
   date: trade.entry_timestamp,
-  strategy: trade.setup, // Mapping cruciale: 'setup' (backend) -> 'strategy' (frontend)
+  strategy: trade.playbooks?.length > 0 ? trade.playbooks[0].title : 'N/A', // Usa il primo playbook come strategia
   risk: trade.risk, // Assumendo che 'risk' esista o venga calcolato
   instrument: 'Stocks', // Da rendere dinamico se necessario
   commission: trade.commission, // Assumendo che esista
@@ -37,7 +37,7 @@ const mapBackendTradeToFrontend = (trade) => ({
 export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
-    setups: [], // Elenco dei setup/strategie per i filtri
+    playbooks: [], // Sostituisce 'setups'
     dashboardStats: null,
     calendarData: [],
     processedStats: null,
@@ -53,9 +53,10 @@ export const useTradesStore = defineStore('trades', {
       return state.trades.reduce((sum, trade) => sum + trade.pnl, 0);
     },
 
-    allStrategies(state) {
-      // Ora usa l'elenco dei setup caricato dal backend.
-      return ['All', ...state.setups];
+    allPlaybooks(state) {
+      // Ora usa l'elenco dei playbook caricato dal backend.
+      const playbookTitles = state.playbooks.map(p => p.title);
+      return ['All', ...playbookTitles];
     },
 
     allDashboardStats() {
@@ -321,24 +322,18 @@ export const useTradesStore = defineStore('trades', {
 
   actions: {
     /**
-     * Recupera l'elenco di tutti i setup/strategie univoci per l'utente.
-     * Questa chiamata ora non richiede più user_id, in quanto l'utente è identificato dal token.
-     * I setup sono legati al GeneralAccount.
+     * Recupera l'elenco di tutti i playbook per l'utente autenticato.
      */
-    async fetchSetups() {
+    async fetchPlaybooks() {
       const authStore = useAuthStore();
       if (!authStore.isAuthenticated) return;
 
       try {
-        // L'endpoint per i setup/tag/etc. dovrebbe essere a livello di GeneralAccount
-        // Assumiamo che il backend li restituisca per l'utente autenticato.
-        // Se ci fosse un endpoint tipo /api/v1/setups/, lo useremmo.
-        // Per ora, adattiamo quello esistente rimuovendo user_id.
-        const response = await apiClient.get(`/api/v1/trades/setups`);
-        this.setups = response.data;
+        const response = await apiClient.get(`/api/v1/playbooks/`);
+        this.playbooks = response.data;
       } catch (error) {
-        console.error('Errore nel recupero dei setup:', error);
-        this.setups = []; // Resetta in caso di errore
+        console.error('Errore nel recupero dei playbook:', error);
+        this.playbooks = []; // Resetta in caso di errore
       }
     },
 
@@ -542,7 +537,7 @@ export const useTradesStore = defineStore('trades', {
           trading_account_id: selectedAccount.id, // Aggiungi l'ID del conto di trading
           symbol: tradeData.ticker,
           p_l: tradeData.pnl,
-          setup: tradeData.setup,
+          playbook_ids: tradeData.playbook_ids || [], // Usa playbook_ids
           direction: tradeData.direction,
           entry_price: tradeData.entry_price,
           exit_price: tradeData.exit_price,
@@ -647,7 +642,7 @@ export const useTradesStore = defineStore('trades', {
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
-          this.fetchSetups(),
+          this.fetchPlaybooks(), // Riabilita la chiamata con la nuova funzione
           this.fetchVantageScore(),
         ]);
       } finally {

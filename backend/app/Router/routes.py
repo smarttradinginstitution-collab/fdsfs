@@ -220,6 +220,18 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 📖 PLAYBOOKS (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import playbook_controller
+
+router.include_router(
+    playbook_controller.router,
+    prefix="/api/v1/playbooks",
+    tags=["Playbooks"],
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📈 TRADING ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import trading_account_controller
