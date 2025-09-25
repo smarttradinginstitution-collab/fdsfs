@@ -8,38 +8,84 @@
 
 <script setup>
 // --- IMPORTAZIONI ---
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 import { useUiStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/auth';
 import ThemeToggle from '../ui/ThemeToggle.vue';
-import MfaModal from '../mfa/MfaModal.vue'; // Importa la nuova modale
-import { computed, ref } from 'vue';
+import MfaModal from '../mfa/MfaModal.vue';
+import { computed, ref, watch, nextTick } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
 
-// --- STORE ---
+// Import (placeholder) Lottie animations
+import DashboardAnimation from '../../assets/lottie/dashboard.json';
+import TradesAnimation from '../../assets/lottie/trades.json';
+import AnalyticsAnimation from '../../assets/lottie/analytics.json';
+import SettingsAnimation from '../../assets/lottie/settings.json';
+
+// --- STORE E ROUTING ---
 const uiStore = useUiStore();
 const authStore = useAuthStore();
+const route = useRoute();
 
 // --- DATI DEL COMPONENTE ---
 const user = computed(() => authStore.user);
 const isMfaActive = computed(() => authStore.isMfaActive);
-
-// Stato per la modale MFA
 const isMfaModalOpen = ref(false);
-const mfaMode = ref('enroll'); // 'enroll' o 'disable'
+const mfaMode = ref('enroll');
 
 function openMfaModal(mode) {
   mfaMode.value = mode;
   isMfaModalOpen.value = true;
 }
 
-// Dati per i link di navigazione.
-// Usare un array rende più facile gestire l'aggiunta di icone in futuro.
 const navLinks = [
-  { to: '/', text: 'Dashboard', icon: 'D' },
-  { to: '/trades', text: 'Trades', icon: 'T' },
-  { to: '/analytics', text: 'Analytics', icon: 'A' },
-  { to: '#', text: 'Settings', icon: 'S' },
+  { to: '/', text: 'Dashboard', animationData: DashboardAnimation },
+  { to: '/trades', text: 'Trades', animationData: TradesAnimation },
+  { to: '/analytics', text: 'Analytics', animationData: AnalyticsAnimation },
+  { to: '#', text: 'Settings', animationData: SettingsAnimation },
 ];
+
+// --- LOGICA ANIMAZIONI LOTTIE ---
+const lottiePlayers = ref([]);
+function playAnimation(index) { lottiePlayers.value[index]?.play(); }
+function stopAnimation(index) { lottiePlayers.value[index]?.stop(); }
+
+// --- LOGICA PILLOLA MAGNETICA ---
+const navContainer = ref(null);
+const pillStyle = ref({ opacity: 0, transform: 'translateY(0px)', height: '0px' });
+const hoveredIndex = ref(null);
+
+const activeIndex = computed(() => navLinks.findIndex(link => link.to === route.path));
+const targetIndex = computed(() => hoveredIndex.value ?? activeIndex.value);
+
+function updatePillPosition() {
+  if (targetIndex.value === -1 || !navContainer.value) {
+    pillStyle.value.opacity = 0;
+    return;
+  }
+  const targetElement = navContainer.value.children[targetIndex.value + 1];
+
+  if (targetElement) {
+    pillStyle.value = {
+      opacity: 1,
+      height: `${targetElement.offsetHeight}px`,
+      transform: `translateY(${targetElement.offsetTop}px)`,
+    };
+  }
+}
+
+function handleMouseOver(index) {
+  hoveredIndex.value = index;
+}
+
+function handleMouseLeave() {
+  hoveredIndex.value = null;
+}
+
+watch([targetIndex, () => uiStore.isSidebarCollapsed], () => {
+  nextTick(updatePillPosition);
+}, { immediate: true });
+
 </script>
 
 <template>
@@ -57,19 +103,28 @@ const navLinks = [
       </button>
     </div>
 
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" ref="navContainer" @mouseleave="handleMouseLeave">
+      <div class="nav-pill" :style="pillStyle"></div>
       <!--
       Aggiungiamo un evento @click per chiudere il menu mobile quando si
       seleziona un link, migliorando l'esperienza utente su mobile.
       -->
       <RouterLink
-        v-for="link in navLinks"
+        v-for="(link, index) in navLinks"
         :key="link.text"
         :to="link.to"
         class="nav-item"
         @click="uiStore.closeMobileMenu"
+        @mouseover="handleMouseOver(index); playAnimation(index);"
+        @mouseleave="stopAnimation(index)"
       >
-        <span class="nav-icon">{{ link.icon }}</span>
+        <Vue3Lottie
+          :ref="el => lottiePlayers[index] = el"
+          :animationData="link.animationData"
+          :autoPlay="false"
+          :loop="false"
+          class="nav-icon"
+        />
         <span v-if="!uiStore.isSidebarCollapsed" class="nav-text">{{ link.text }}</span>
       </RouterLink>
     </nav>
@@ -179,13 +234,26 @@ const navLinks = [
 }
 
 .sidebar-nav {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-xs);
   flex-grow: 1;
 }
 
+.nav-pill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: var(--semantic-border-radius-interactive);
+  background-color: var(--semantic-color-surface-secondary-transparent);
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), height 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  z-index: 1;
+}
+
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--semantic-size-stack-sm);
@@ -194,23 +262,25 @@ const navLinks = [
   text-decoration: none;
   padding: var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
-  transition: all var(--base-animation-duration-fast);
+  transition: color var(--base-animation-duration-fast);
   white-space: nowrap; /* Impedisce al testo di andare a capo durante la transizione */
   overflow: hidden; /* Nasconde il testo che fuoriesce */
+  z-index: 2;
 }
 /* Centra l'icona quando la sidebar è collassata */
 .sidebar.is-collapsed .nav-item {
   justify-content: center;
 }
 .nav-icon {
-  font-weight: bold;
-  min-width: 20px;
-  text-align: center;
+  min-width: 24px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
 }
 
 .nav-item:hover,
 .nav-item.router-link-active {
-  background-color: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);
 }
 

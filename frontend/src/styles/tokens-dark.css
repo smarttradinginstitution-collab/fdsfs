@@ -5,6 +5,7 @@
 [data-theme="dark"] {
   --semantic-size-component-stat-card-min-width: 200px;
   --semantic-size-component-modal-max-width: min(95vw, 850px);
+  --semantic-color-surface-secondary-transparent: rgba(46, 46, 51, 0.5);
   --semantic-color-feedback-positive-surface: rgba(74, 222, 128, 0.1);
   --semantic-color-feedback-negative-surface: rgba(248, 113, 113, 0.1);
   --semantic-border-radius-interactive: var(--base-border-radius-md);

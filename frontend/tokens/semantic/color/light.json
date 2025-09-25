@@ -5,6 +5,7 @@
         "page":    { "$value": "{base.color.gray.50}", "$type": "color", "$comment": "Sfondo principale dell'applicazione, leggermente off-white." },
         "primary": { "$value": "{base.color.white}", "$type": "color", "$comment": "Sfondo per contenitori primari come card e widget." },
         "secondary": { "$value": "{base.color.gray.100}", "$type": "color", "$comment": "Sfondo per aree secondarie o per elementi in stato hover." },
+        "secondary-transparent": { "$value": "rgba(233, 233, 234, 0.7)", "$type": "color" },
         "disabled":{ "$value": "{base.color.gray.100}", "$type": "color", "$comment": "Sfondo per elementi disabilitati." }
       },
       "text": {

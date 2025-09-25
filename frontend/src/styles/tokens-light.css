@@ -5,6 +5,7 @@
 :root {
   --semantic-size-component-stat-card-min-width: 200px;
   --semantic-size-component-modal-max-width: min(95vw, 850px);
+  --semantic-color-surface-secondary-transparent: rgba(233, 233, 234, 0.7);
   --semantic-color-feedback-positive-surface: rgba(22, 163, 74, 0.1);
   --semantic-color-feedback-negative-surface: rgba(220, 38, 38, 0.1);
   --semantic-border-radius-interactive: var(--base-border-radius-md);
