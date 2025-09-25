@@ -14,6 +14,12 @@ import { useAuthStore } from '../../stores/auth';
 import ThemeToggle from '../ui/ThemeToggle.vue';
 import MfaModal from '../mfa/MfaModal.vue'; // Importa la nuova modale
 import { computed, ref } from 'vue';
+import {
+  LayoutDashboard,
+  ArrowRightLeft,
+  BarChart2,
+  Settings,
+} from 'lucide-vue-next';
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -35,10 +41,10 @@ function openMfaModal(mode) {
 // Dati per i link di navigazione.
 // Usare un array rende più facile gestire l'aggiunta di icone in futuro.
 const navLinks = [
-  { to: '/', text: 'Dashboard', icon: 'D' },
-  { to: '/trades', text: 'Trades', icon: 'T' },
-  { to: '/analytics', text: 'Analytics', icon: 'A' },
-  { to: '#', text: 'Settings', icon: 'S' },
+  { to: '/', text: 'Dashboard', icon: LayoutDashboard },
+  { to: '/trades', text: 'Trades', icon: ArrowRightLeft },
+  { to: '/analytics', text: 'Analytics', icon: BarChart2 },
+  { to: '#', text: 'Settings', icon: Settings },
 ];
 </script>
 
@@ -69,7 +75,7 @@ const navLinks = [
         class="nav-item"
         @click="uiStore.closeMobileMenu"
       >
-        <span class="nav-icon">{{ link.icon }}</span>
+        <component :is="link.icon" class="nav-icon" />
         <span v-if="!uiStore.isSidebarCollapsed" class="nav-text">{{ link.text }}</span>
       </RouterLink>
     </nav>
@@ -203,7 +209,6 @@ const navLinks = [
   justify-content: center;
 }
 .nav-icon {
-  font-weight: bold;
   min-width: 20px;
   text-align: center;
 }
