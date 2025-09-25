@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
 import { useAuthStore } from './auth';
+import { useTradingAccountsStore } from './tradingAccounts'; // Importa il nuovo store
 import apiClient from '../services/api';
 
 /**
@@ -321,14 +322,19 @@ export const useTradesStore = defineStore('trades', {
   actions: {
     /**
      * Recupera l'elenco di tutti i setup/strategie univoci per l'utente.
+     * Questa chiamata ora non richiede più user_id, in quanto l'utente è identificato dal token.
+     * I setup sono legati al GeneralAccount.
      */
     async fetchSetups() {
       const authStore = useAuthStore();
-      const userId = authStore.user?.id;
-      if (!userId) return;
+      if (!authStore.isAuthenticated) return;
 
       try {
-        const response = await apiClient.get(`/api/v1/trades/setups?user_id=${userId}`);
+        // L'endpoint per i setup/tag/etc. dovrebbe essere a livello di GeneralAccount
+        // Assumiamo che il backend li restituisca per l'utente autenticato.
+        // Se ci fosse un endpoint tipo /api/v1/setups/, lo useremmo.
+        // Per ora, adattiamo quello esistente rimuovendo user_id.
+        const response = await apiClient.get(`/api/v1/trades/setups`);
         this.setups = response.data;
       } catch (error) {
         console.error('Errore nel recupero dei setup:', error);
@@ -338,21 +344,21 @@ export const useTradesStore = defineStore('trades', {
 
     /**
      * Azione unificata per recuperare i trade dal backend con filtri.
+     * Ora dipende dal trading account selezionato.
      */
     async fetchTrades() {
       this.isLoading = true;
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
 
-      const authStore = useAuthStore();
-      const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-
-      if (!userId) {
-        console.error("Utente non autenticato.");
+      if (!selectedAccount) {
+        console.log("Nessun trading account selezionato. Non carico i trade.");
+        this.trades = []; // Pulisci i trade se non c'è un account selezionato
         this.isLoading = false;
         return;
       }
 
-      // Usa sempre i filtri globali dello store
+      const filterStore = useFilterStore();
       const _startDate = filterStore.startDate;
       const _endDate = filterStore.endDate;
       const _strategy = filterStore.selectedStrategy;
@@ -369,7 +375,6 @@ export const useTradesStore = defineStore('trades', {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const params = {
-        user_id: userId,
         start_date: toYYYYMMDD(_startDate),
         end_date: toYYYYMMDD(_endDate),
         user_timezone: userTimezone,
@@ -380,7 +385,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/api/v1/trades/', { params });
+        const response = await apiClient.get(`/api/v1/trades/by-trading-account/${selectedAccount.id}`, { params });
         this.trades = response.data.map(mapBackendTradeToFrontend);
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
@@ -394,15 +399,15 @@ export const useTradesStore = defineStore('trades', {
       this.isSummaryLoading = true;
       this.activeSummary = null;
 
-      const authStore = useAuthStore();
-      const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-      if (!userId) {
-        console.error("Utente non autenticato per il riepilogo.");
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) {
+        console.error("Nessun trading account selezionato per il riepilogo.");
         this.isSummaryLoading = false;
         return;
       }
 
+      const filterStore = useFilterStore();
       const toYYYYMMDD = (date) => {
         if (!date) return null;
         const d = new Date(date);
@@ -411,7 +416,7 @@ export const useTradesStore = defineStore('trades', {
 
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = {
-        user_id: userId,
+        trading_account_id: selectedAccount.id, // Aggiungi trading_account_id
         start_date: toYYYYMMDD(dateRange.startDate),
         end_date: toYYYYMMDD(dateRange.endDate),
         user_timezone: userTimezone,
@@ -425,7 +430,7 @@ export const useTradesStore = defineStore('trades', {
         // Eseguiamo le due chiamate in parallelo per efficienza
         const [summaryResponse, tradesResponse] = await Promise.all([
           apiClient.get('/api/v1/trades/summary', { params }),
-          apiClient.get('/api/v1/trades/', { params })
+          apiClient.get(`/api/v1/trades/by-trading-account/${selectedAccount.id}`, { params })
         ]);
 
         const fetchedTrades = tradesResponse.data.map(mapBackendTradeToFrontend);
@@ -447,17 +452,13 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchDashboardStats() {
-      const authStore = useAuthStore();
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) return;
+
       const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-
-      if (!userId) {
-        console.error('User not authenticated, cannot fetch dashboard stats.');
-        return;
-      }
-
       const params = {
-        user_id: userId,
+        trading_account_id: selectedAccount.id, // Aggiungi trading_account_id
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -475,23 +476,18 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchCalendarData() {
-      const authStore = useAuthStore();
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) return;
+
       const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-
-      if (!userId) {
-        console.error('User not authenticated, cannot fetch calendar data.');
-        return;
-      }
-
-      // Rileva il fuso orario IANA del browser dell'utente.
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const params = {
-        user_id: userId,
+        trading_account_id: selectedAccount.id, // Aggiungi trading_account_id
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
-        user_timezone: userTimezone, // Aggiungi il fuso orario alla richiesta
+        user_timezone: userTimezone,
       };
 
       if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
@@ -507,13 +503,13 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchVantageScore() {
-      const authStore = useAuthStore();
-      const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-      if (!userId) return;
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) return;
 
+      const filterStore = useFilterStore();
       const params = {
-        user_id: userId,
+        trading_account_id: selectedAccount.id,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -533,16 +529,17 @@ export const useTradesStore = defineStore('trades', {
     async addTrade(tradeData) {
       this.isLoading = true;
       try {
-        const authStore = useAuthStore();
-        const userId = authStore.user?.id;
+        const tradingAccountsStore = useTradingAccountsStore();
+        const selectedAccount = tradingAccountsStore.selectedTradingAccount;
 
-        if (!userId) {
-          console.error('User not authenticated, cannot add trade.');
-          throw new Error('User not authenticated');
+        if (!selectedAccount) {
+          console.error('Nessun trading account selezionato, impossibile aggiungere il trade.');
+          throw new Error('Nessun trading account selezionato');
         }
 
         // Mappa i dati dal form al payload atteso dal backend
         const payload = {
+          trading_account_id: selectedAccount.id, // Aggiungi l'ID del conto di trading
           symbol: tradeData.ticker,
           p_l: tradeData.pnl,
           setup: tradeData.setup,
@@ -560,8 +557,9 @@ export const useTradesStore = defineStore('trades', {
           notes_pre_trade: tradeData.notes_pre_trade,
           notes_post_trade: tradeData.notes_post_trade,
           emotional_state: tradeData.emotional_state,
-          mistakes: tradeData.mistakes,
-          tags: tradeData.tags,
+          // I campi many-to-many ora si aspettano array di ID
+          tag_ids: tradeData.tags || [], // Assumendo che 'tags' sia un array di ID
+          mistake_ids: tradeData.mistakes || [], // Assumendo che 'mistakes' sia un array di ID
         };
 
         // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
@@ -571,11 +569,7 @@ export const useTradesStore = defineStore('trades', {
           }
         });
 
-        // L'URL ora termina con una slash per evitare il redirect 307 di FastAPI
-        const response = await apiClient.post(
-          `/api/v1/trades/?user_id=${userId}`,
-          payload
-        );
+        const response = await apiClient.post('/api/v1/trades/', payload);
 
         const newTradeFromServer = mapBackendTradeToFrontend(response.data);
         this.trades.unshift(newTradeFromServer);
@@ -594,13 +588,13 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchProcessedStats() {
-      const authStore = useAuthStore();
-      const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-      if (!userId) return;
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) return;
 
+      const filterStore = useFilterStore();
       const params = {
-        user_id: userId,
+        trading_account_id: selectedAccount.id,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -618,13 +612,13 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchEquityCurve() {
-      const authStore = useAuthStore();
-      const filterStore = useFilterStore();
-      const userId = authStore.user?.id;
-      if (!userId) return;
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) return;
 
+      const filterStore = useFilterStore();
       const params = {
-        user_id: userId,
+        trading_account_id: selectedAccount.id,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };

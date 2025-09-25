@@ -13,11 +13,12 @@ export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
   const user = ref(JSON.parse(localStorage.getItem('user')) || null);
   const token = ref(localStorage.getItem('token') || null);
+  const generalAccount = ref(JSON.parse(localStorage.getItem('generalAccount')) || null); // Nuovo state per il General Account
   const mfaChallenge = ref(null);
   const mfaAal1Token = ref(null); // Token temporaneo AAL1 per la verifica
 
   // --- GETTERS ---
-  const isAuthenticated = computed(() => !!token.value);
+  const isAuthenticated = computed(() => !!token.value && !!generalAccount.value); // L'utente è autenticato solo se ha anche un General Account
   const isMfaActive = computed(() => user.value?.factors?.some(f => f.factor_type === 'totp' && f.status === 'verified'));
   const getMfaFactor = computed(() => {
     if (!isMfaActive.value) return null;
@@ -25,6 +26,22 @@ export const useAuthStore = defineStore('auth', () => {
   });
 
   // --- ACTIONS ---
+
+  // Funzione per recuperare il General Account
+  async function fetchGeneralAccount() {
+    try {
+      const { data } = await apiClient.get('/api/v1/general-accounts/me');
+      generalAccount.value = data;
+      localStorage.setItem('generalAccount', JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error('Errore nel recupero del General Account:', error);
+      // Se non si riesce a ottenere il GA, l'autenticazione non è completa.
+      await logout(); // Esegui il logout per pulire lo stato.
+      return false;
+    }
+  }
+
   async function _setAuthentication(accessToken, userData) {
     token.value = accessToken;
     user.value = userData;
@@ -34,6 +51,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('token', accessToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setAuthToken(accessToken);
+
+    // Dopo aver impostato il token, recupera il General Account
+    return await fetchGeneralAccount();
   }
 
   // Carica il nome del ruolo dell'utente. Funzione di supporto.
@@ -61,9 +81,11 @@ export const useAuthStore = defineStore('auth', () => {
       mfaAal1Token.value = response.data.access_token;
       return { mfaRequired: true };
     } else {
-      await _setAuthentication(response.data.access_token, response.data.user);
-      await loadCurrentRoleName();
-      router.push('/');
+      const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
+      if (authSuccessful) {
+        await loadCurrentRoleName();
+        router.push('/');
+      }
       return { mfaRequired: false };
     }
   }
@@ -78,9 +100,11 @@ export const useAuthStore = defineStore('auth', () => {
       code: otpCode,
     });
 
-    await _setAuthentication(response.data.access_token, response.data.user);
-    await loadCurrentRoleName();
-    router.push('/');
+    const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
+    if (authSuccessful) {
+      await loadCurrentRoleName();
+      router.push('/');
+    }
   }
 
   async function enrollMfa() {
@@ -95,8 +119,11 @@ export const useAuthStore = defineStore('auth', () => {
       challenge_id: challengeId,
       code: otpCode,
     });
-    await _setAuthentication(data.access_token, data.user);
-    await loadCurrentRoleName();
+    // Qui non facciamo il redirect, ma aggiorniamo lo stato
+    const authSuccessful = await _setAuthentication(data.access_token, data.user);
+    if (authSuccessful) {
+      await loadCurrentRoleName();
+    }
   }
 
   async function unenrollMfa(factorId) {
@@ -111,8 +138,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function disableMfa(otpCode) {
     const { data } = await apiClient.post('/api/v1/auth/mfa/disable', { code: otpCode });
-    await _setAuthentication(data.access_token, data.user);
-    await loadCurrentRoleName();
+    const authSuccessful = await _setAuthentication(data.access_token, data.user);
+    if (authSuccessful) {
+      await loadCurrentRoleName();
+    }
   }
 
   async function logout() {
@@ -122,26 +151,34 @@ export const useAuthStore = defineStore('auth', () => {
 
     user.value = null;
     token.value = null;
+    generalAccount.value = null; // Pulisci il General Account
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('generalAccount'); // Rimuovi dal localStorage
     setAuthToken(null);
     router.push('/login');
   }
 
-  function initAuth() {
+  async function initAuth() {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       token.value = storedToken;
       setAuthToken(storedToken);
-    }
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        user.value = JSON.parse(storedUser);
-      } catch {
-        localStorage.removeItem('user');
+      // Se c'è un token, proviamo a recuperare i dati dell'utente e del GA
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          user.value = JSON.parse(storedUser);
+          // Tentativo di recuperare il General Account all'avvio
+          await fetchGeneralAccount();
+        } catch {
+          // Se qualcosa va storto, puliamo tutto
+          await logout();
+        }
+      } else {
+        await logout(); // Se non ci sono dati utente, il token è invalido
       }
     }
   }
@@ -149,6 +186,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     token,
+    generalAccount, // Esponi il nuovo state
     isAuthenticated,
     isMfaActive,
     getMfaFactor,
