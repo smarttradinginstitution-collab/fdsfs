@@ -7,6 +7,7 @@ from uuid import UUID
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.Models.auth_user import AuthUser
 
@@ -27,8 +28,17 @@ class AuthUserRepository:
     # READ
     # -------------------------
     async def get(self, user_id: UUID) -> Optional[AuthUser]:
-        """Ritorna un utente per id (UUID) oppure None."""
-        return await self.db.get(AuthUser, user_id)
+        """
+        Ritorna un utente per id (UUID) oppure None.
+        Usa selectinload per caricare la relazione general_account ed evitare errori di lazy-loading asincrono.
+        """
+        stmt = (
+            select(AuthUser)
+            .options(selectinload(AuthUser.general_account))
+            .where(AuthUser.id == user_id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
 
     async def list(self, offset: int = 0, limit: int = 50) -> Sequence[AuthUser]:
         """

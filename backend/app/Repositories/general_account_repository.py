@@ -4,7 +4,7 @@ from __future__ import annotations
 from uuid import UUID
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,8 +18,12 @@ class GeneralAccountRepository:
         self.db = db
 
     async def get_by_user_id(self, user_id: UUID) -> Optional[GeneralAccount]:
-        """Recupera un GeneralAccount tramite user_id."""
-        stmt = select(GeneralAccount).where(GeneralAccount.user_id == user_id)
+        """Recupera un GeneralAccount tramite user_id, con eager loading dell'utente."""
+        stmt = (
+            select(GeneralAccount)
+            .options(selectinload(GeneralAccount.user))
+            .where(GeneralAccount.user_id == user_id)
+        )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
