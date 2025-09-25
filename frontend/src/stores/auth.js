@@ -8,6 +8,8 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
+import { useAccountStore } from './account';
+import { useResourceStore } from './resourceStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -34,6 +36,12 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('token', accessToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setAuthToken(accessToken);
+
+    // Inizializza gli account e le risorse correlate
+    const accountStore = useAccountStore();
+    await accountStore.initializeAccounts();
+    const resourceStore = useResourceStore();
+    await resourceStore.fetchAllResources();
   }
 
   // Carica il nome del ruolo dell'utente. Funzione di supporto.
@@ -119,6 +127,12 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await apiClient.post('/api/v1/auth/logout');
     } catch { /* noop */ }
+
+    // Resetta gli store degli account e delle risorse
+    const accountStore = useAccountStore();
+    accountStore.reset();
+    const resourceStore = useResourceStore();
+    resourceStore.reset();
 
     user.value = null;
     token.value = null;
