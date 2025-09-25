@@ -280,6 +280,26 @@ class AuthController:
             except IntegrityError:
                 pass
 
+        # ---- Creazione automatica del GeneralAccount ----
+        from app.Services.general_account_service import GeneralAccountService
+        from app.Schemas.general_account import GeneralAccountCreate
+
+        ga_service = GeneralAccountService(db)
+        try:
+            ga_create_schema = GeneralAccountCreate(label=user.get("email"))
+            await ga_service.repo.create_general_account(
+                user_id=UUID(user_id_str),
+                account_data=ga_create_schema
+            )
+        except Exception as e:
+            # Se la creazione del GeneralAccount fallisce, la registrazione non dovrebbe essere considerata un successo.
+            # Qui si potrebbe loggare l'errore `e` per il debug.
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User created, but failed to create associated general account."
+            )
+        # ---------------------------------------------
+
         return RegisterResponse(user_id=user_id_str, email=user.get("email"), user=user)
 
     # LOGOUT
