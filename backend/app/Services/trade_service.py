@@ -8,6 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import Depends, HTTPException, status
 
+from datetime import date
+
 from app.Repositories.trade_repository import TradeRepository
 from app.Repositories.trading_account_repository import TradingAccountRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
@@ -17,11 +19,10 @@ from app.Schemas.stats import (
     PerformanceMetrics,
     CalendarData,
     ProcessedStats,
-    VantageScoreData,
     EquityCurveData,
 )
+from app.Schemas.vantage_score import VantageScoreData
 from app.Infrastructure.db import get_db
-from datetime import date
 from app.Models.trade import Trade
 from app.Models.tag import Tag
 from app.Models.mistake import Mistake
