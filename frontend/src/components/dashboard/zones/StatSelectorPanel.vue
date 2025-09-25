@@ -178,7 +178,7 @@ const isVisible = (statKey) => {
     position: fixed;
     top: 0;
     right: 0;
-    width: 320px;
+    width: var(--semantic-size-component-sidebar-width-expanded);
     height: 100vh;
     transform: translateX(100%);
   }
@@ -204,6 +204,38 @@ const isVisible = (statKey) => {
 
   .stat-selector-panel.is-open {
     transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar for Panel Content */
+.panel-content {
+  /* Firefox - The color is set on hover to make it appear dynamically */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  &:hover {
+    scrollbar-color: var(--semantic-color-text-tertiary) transparent;
+  }
+
+  /* Chrome, Safari, Edge */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: var(--semantic-border-radius-tag);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--semantic-color-text-tertiary);
   }
 }
 </style>
