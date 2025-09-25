@@ -12,7 +12,6 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trades_news_impacts import TradesNewsImpacts
 
 
 class NewsImpact(Base):
@@ -35,12 +34,6 @@ class NewsImpact(Base):
     # Relazioni
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="news_impacts"
-    )
-    trade_links: Mapped[list["TradesNewsImpacts"]] = relationship(
-        "TradesNewsImpacts",
-        back_populates="news_impact",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
     )
     trades: Mapped[list["Trade"]] = relationship(
         "Trade", secondary="public.trades_news_impacts", back_populates="news_impacts"

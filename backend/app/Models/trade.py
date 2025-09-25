@@ -26,11 +26,6 @@ if TYPE_CHECKING:
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
-    from app.Models.trades_tags import TradesTags
-    from app.Models.trades_mistakes import TradesMistakes
-    from app.Models.trades_playbooks import TradesPlaybooks
-    from app.Models.trades_news_impacts import TradesNewsImpacts
-    from app.Models.trades_psychology import TradesPsychology
 
 
 class TradeDirectionEnum(enum.Enum):
@@ -97,48 +92,15 @@ class Trade(Base):
     tags: Mapped[list["Tag"]] = relationship(
         secondary="public.trades_tags", back_populates="trades"
     )
-    tag_links: Mapped[list["TradesTags"]] = relationship(
-        "TradesTags",
-        back_populates="trade",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
     mistakes: Mapped[list["Mistake"]] = relationship(
         "Mistake", secondary="public.trades_mistakes", back_populates="trades"
     )
-    mistake_links: Mapped[list["TradesMistakes"]] = relationship(
-        "TradesMistakes",
-        back_populates="trade",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
-
     playbooks: Mapped[list["Playbook"]] = relationship(
         "Playbook", secondary="public.trades_playbooks", back_populates="trades"
     )
-    playbook_links: Mapped[list["TradesPlaybooks"]] = relationship(
-        "TradesPlaybooks",
-        back_populates="trade",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
-
     news_impacts: Mapped[list["NewsImpact"]] = relationship(
         "NewsImpact", secondary="public.trades_news_impacts", back_populates="trades"
     )
-    news_impact_links: Mapped[list["TradesNewsImpacts"]] = relationship(
-        "TradesNewsImpacts",
-        back_populates="trade",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
-
     psychology_states: Mapped[list["PsychologyState"]] = relationship(
         "PsychologyState", secondary="public.trades_psychology", back_populates="trades"
-    )
-    psychology_links: Mapped[list["TradesPsychology"]] = relationship(
-        "TradesPsychology",
-        back_populates="trade",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
     )

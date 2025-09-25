@@ -12,7 +12,6 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trades_tags import TradesTags
 
 
 class Tag(Base):
@@ -37,12 +36,6 @@ class Tag(Base):
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="tags"
     )
-    trade_links: Mapped[list["TradesTags"]] = relationship(
-        "TradesTags",
-        back_populates="tag",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
-    trades: Mapped[list[Trade]] = relationship(
+    trades: Mapped[list["Trade"]] = relationship(
         secondary="public.trades_tags", back_populates="tags"
     )

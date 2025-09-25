@@ -12,7 +12,6 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trades_mistakes import TradesMistakes
 
 
 class Mistake(Base):
@@ -35,12 +34,6 @@ class Mistake(Base):
     # Relazioni
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="mistakes"
-    )
-    trade_links: Mapped[list["TradesMistakes"]] = relationship(
-        "TradesMistakes",
-        back_populates="mistake",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
     )
     trades: Mapped[list["Trade"]] = relationship(
         "Trade", secondary="public.trades_mistakes", back_populates="mistakes"
