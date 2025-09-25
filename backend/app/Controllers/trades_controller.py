@@ -13,9 +13,9 @@ from app.Schemas.stats import (
     PerformanceMetrics,
     CalendarData,
     ProcessedStats,
-    VantageScoreData,
     EquityCurveData,
 )
+from app.Schemas.vantage_score import VantageScoreData
 from app.Router.auth import get_current_claims
 
 router = APIRouter(

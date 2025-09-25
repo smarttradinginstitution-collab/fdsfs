@@ -17,9 +17,9 @@ from app.Schemas.stats import (
     PerformanceMetrics,
     CalendarData,
     ProcessedStats,
-    VantageScoreData,
     EquityCurveData,
 )
+from app.Schemas.vantage_score import VantageScoreData
 
 
 class TradeRepository:
