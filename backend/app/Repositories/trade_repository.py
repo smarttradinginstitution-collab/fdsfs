@@ -49,6 +49,21 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def get_filtered_trades(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date
+    ) -> List[Trade]:
+        """Recupera i trade filtrati per un intervallo di date."""
+        query = self._get_trade_query().where(
+            Trade.trading_account_id == trading_account_id,
+            Trade.entry_timestamp >= start_date,
+            Trade.entry_timestamp <= end_date
+        )
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def get_trade_by_id_simple(self, trade_id: UUID) -> Optional[Trade]:
         """Recupera un trade per ID senza controlli di appartenenza."""
         query = self._get_trade_query().where(Trade.id == trade_id)
