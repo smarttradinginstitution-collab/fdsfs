@@ -10,7 +10,9 @@ import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
+import TradingAccountSelector from '../components/TradingAccountSelector.vue';
 import { useTradesStore } from '../stores/trades';
+import { useTradingAccountsStore } from '../stores/tradingAccounts';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
@@ -19,6 +21,7 @@ import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklyS
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
 
 const tradesStore = useTradesStore();
+const tradingAccountsStore = useTradingAccountsStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
@@ -47,7 +50,11 @@ const editButtonText = computed(() => {
 
 // --- Data Fetching ---
 onMounted(() => {
-  tradesStore.fetchAllDataForDashboard();
+  // Fetch accounts first, as other data depends on the selected account
+  tradingAccountsStore.fetchTradingAccounts().then(() => {
+    // Now that we have an account (the store selects one by default), fetch dashboard data
+    tradesStore.fetchAllDataForDashboard();
+  });
   dashboardLayoutStore.fetchLayout();
 });
 
@@ -56,6 +63,19 @@ watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
     tradesStore.fetchAllDataForDashboard();
+  },
+  { deep: true }
+);
+
+// Watch for trading account changes and refetch all dashboard data
+watch(
+  () => tradingAccountsStore.selectedTradingAccount,
+  (newAccount, oldAccount) => {
+    // We only want to refetch if the account has actually changed to a new one
+    // and if the oldAccount is not null (to prevent double fetch on initial load)
+    if (newAccount && oldAccount && newAccount.id !== oldAccount.id) {
+      tradesStore.fetchAllDataForDashboard();
+    }
   },
   { deep: true }
 );
@@ -80,6 +100,7 @@ watch(
 <template>
   <div class="dashboard-view" :class="{ 'is-editing': uiStore.isLayoutEditing }">
     <div class="action-bar">
+      <TradingAccountSelector />
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>

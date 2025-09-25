@@ -55,31 +55,6 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Crea un nuovo conto di trading.
-   * @param {object} accountData - I dati per il nuovo account (es. { label, broker_id }).
-   */
-  async function createTradingAccount(accountData) {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
-      throw new Error("Utente non autenticato.");
-    }
-
-    isLoading.value = true;
-    try {
-      const { data } = await apiClient.post('/api/v1/trading-accounts/', accountData);
-      tradingAccounts.value.push(data);
-      // Opzionale: seleziona automaticamente il nuovo account creato
-      selectTradingAccount(data);
-      return data;
-    } catch (error) {
-      console.error("Errore nella creazione del trading account:", error);
-      throw error;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /**
    * Imposta il conto di trading attivo.
    * @param {object | null} account - L'oggetto del conto da selezionare o null.
    */
@@ -98,7 +73,6 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     isLoading,
     hasTradingAccounts,
     fetchTradingAccounts,
-    createTradingAccount,
     selectTradingAccount,
   };
 });
