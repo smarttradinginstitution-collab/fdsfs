@@ -9,7 +9,26 @@ from sqlalchemy import String, Boolean, SmallInteger, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
+
 from app.Infrastructure.db import Base
+from sqlalchemy.orm import Mapped, relationship
+
+if TYPE_CHECKING:
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
+import uuid
+from typing import Any
+
+from sqlalchemy import String, Boolean, SmallInteger, Text, TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+    from app.Models.general_account import GeneralAccount
+
+if TYPE_CHECKING:
+    from app.Models.general_account import GeneralAccount
 
 
 class AuthUser(Base):
@@ -50,3 +69,8 @@ class AuthUser(Base):
     is_sso_user: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted_at: Mapped[Any | None] = mapped_column(TIMESTAMP(timezone=True))
     is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Relazione inversa
+    general_account: Mapped[Optional["GeneralAccount"]] = relationship(
+        "GeneralAccount", back_populates="user"
+    )

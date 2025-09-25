@@ -39,7 +39,7 @@ class GeneralAccount(Base):
     )
 
     # Relazioni
-    user: Mapped["AuthUser"] = relationship()
+    user: Mapped["AuthUser"] = relationship(back_populates="general_account")
     trading_accounts: Mapped[list["TradingAccount"]] = relationship(
         "TradingAccount", back_populates="general_account"
     )
