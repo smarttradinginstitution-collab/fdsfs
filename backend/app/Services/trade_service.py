@@ -5,6 +5,7 @@ from uuid import UUID
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi import Depends, HTTPException, status
 
 from app.Repositories.trade_repository import TradeRepository
@@ -62,22 +63,18 @@ class TradeService:
 
         _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
-        tags = await self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
-        mistakes = await self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
-        playbooks = await self._get_related_entities(general_account_id, Playbook, trade_data.playbook_ids)
-        news_impacts = await self._get_related_entities(general_account_id, NewsImpact, trade_data.news_impact_ids)
-        psychology_states = await self._get_related_entities(general_account_id, PsychologyState, trade_data.psychology_state_ids)
-
-        trade_dict = trade_data.dict(exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
+        trade_dict = trade_data.model_dump(exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
         db_trade = Trade(**trade_dict)
 
-        db_trade.tags = tags
-        db_trade.mistakes = mistakes
-        db_trade.playbooks = playbooks
-        db_trade.news_impacts = news_impacts
-        db_trade.psychology_states = psychology_states
+        db_trade.tags = await self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
+        db_trade.mistakes = await self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
+        db_trade.playbooks = await self._get_related_entities(general_account_id, Playbook, trade_data.playbook_ids)
+        db_trade.news_impacts = await self._get_related_entities(general_account_id, NewsImpact, trade_data.news_impact_ids)
+        db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, trade_data.psychology_state_ids)
 
-        db_trade = await self.repo.add_and_commit(db_trade)
+        self.db.add(db_trade)
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states', 'asset'])
 
         return TradeRead.from_orm(db_trade)
 
@@ -107,7 +104,7 @@ class TradeService:
 
         _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        update_dict = update_data.dict(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
+        update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
@@ -122,7 +119,8 @@ class TradeService:
         if update_data.psychology_state_ids is not None:
             db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
-        db_trade = await self.repo.commit_and_refresh(db_trade)
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states', 'asset'])
 
         return TradeRead.from_orm(db_trade)
 

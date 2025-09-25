@@ -42,3 +42,6 @@ class Playbook(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    trades: Mapped[list["Trade"]] = relationship(
+        "Trade", secondary="public.trades_playbooks", back_populates="playbooks"
+    )

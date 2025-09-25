@@ -47,7 +47,7 @@ class TradeRepository:
         """Elenca tutti i trade per un dato trading account."""
         query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
         result = await self.db.execute(query)
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     async def get_trade_by_id_simple(self, trade_id: UUID) -> Optional[Trade]:
         """Recupera un trade per ID senza controlli di appartenenza."""

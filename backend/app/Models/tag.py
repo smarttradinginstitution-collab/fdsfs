@@ -43,3 +43,6 @@ class Tag(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    trades: Mapped[list[Trade]] = relationship(
+        secondary="public.trades_tags", back_populates="tags"
+    )

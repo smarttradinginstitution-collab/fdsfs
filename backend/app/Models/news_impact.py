@@ -42,3 +42,6 @@ class NewsImpact(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    trades: Mapped[list["Trade"]] = relationship(
+        "Trade", secondary="public.trades_news_impacts", back_populates="news_impacts"
+    )
