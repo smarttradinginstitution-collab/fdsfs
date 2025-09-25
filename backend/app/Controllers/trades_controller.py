@@ -1,12 +1,21 @@
 # app/Controllers/trades_controller.py
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import date
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from app.Services.trade_service import TradeService
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.stats import (
+    TradeSummary,
+    PerformanceMetrics,
+    CalendarData,
+    ProcessedStats,
+    VantageScoreData,
+    EquityCurveData,
+)
 from app.Router.auth import get_current_claims
 
 router = APIRouter(
@@ -95,3 +104,114 @@ async def delete_trade(
             detail="Trade non trovato o non appartenente all'utente.",
         )
     return None
+
+
+# ==============================================================================
+# ENDPOINTS PER STATISTICHE E DASHBOARD
+# ==============================================================================
+
+@router.get("/summary", response_model=TradeSummary)
+async def get_trade_summary(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    user_timezone: str = Query("UTC", description="Timezone from Intl.DateTimeFormat().resolvedOptions().timeZone"),
+    setups: Optional[List[str]] = Query(None),
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await service.get_trade_summary(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date,
+        user_timezone=user_timezone,
+        setups=setups,
+    )
+
+@router.get("/performance/metrics", response_model=PerformanceMetrics)
+async def get_performance_metrics(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    setups: Optional[List[str]] = Query(None),
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await service.get_performance_metrics(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date,
+        setups=setups,
+    )
+
+@router.get("/calendar/data", response_model=List[CalendarData])
+async def get_calendar_data(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    user_timezone: str = Query("UTC"),
+    setups: Optional[List[str]] = Query(None),
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await service.get_calendar_data(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date,
+        user_timezone=user_timezone,
+        setups=setups,
+    )
+
+@router.get("/processed-stats", response_model=ProcessedStats)
+async def get_processed_stats(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    setups: Optional[List[str]] = Query(None),
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await service.get_processed_stats(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date,
+        setups=setups,
+    )
+
+@router.get("/vantage-score", response_model=VantageScoreData)
+async def get_vantage_score(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    setups: Optional[List[str]] = Query(None),
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await service.get_vantage_score(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date,
+        setups=setups,
+    )
+
+@router.get("/equity-curve", response_model=EquityCurveData)
+async def get_equity_curve(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    setups: Optional[List[str]] = Query(None),
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await service.get_equity_curve(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date,
+        setups=setups,
+    )

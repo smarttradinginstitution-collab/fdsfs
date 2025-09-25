@@ -12,7 +12,16 @@ from app.Repositories.trade_repository import TradeRepository
 from app.Repositories.trading_account_repository import TradingAccountRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Schemas.stats import (
+    TradeSummary,
+    PerformanceMetrics,
+    CalendarData,
+    ProcessedStats,
+    VantageScoreData,
+    EquityCurveData,
+)
 from app.Infrastructure.db import get_db
+from datetime import date
 from app.Models.trade import Trade
 from app.Models.tag import Tag
 from app.Models.mistake import Mistake
@@ -134,3 +143,43 @@ class TradeService:
 
         await self.repo.delete_trade(db_trade)
         return True
+
+    # ==============================================================================
+    # METODI PER STATISTICHE E DASHBOARD
+    # ==============================================================================
+
+    async def get_trade_summary(
+        self, claims: dict, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str, setups: Optional[List[str]]
+    ) -> TradeSummary:
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+        return await self.repo.get_trade_summary(trading_account_id, start_date, end_date, user_timezone, setups)
+
+    async def get_performance_metrics(
+        self, claims: dict, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]]
+    ) -> PerformanceMetrics:
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+        return await self.repo.get_performance_metrics(trading_account_id, start_date, end_date, setups)
+
+    async def get_calendar_data(
+        self, claims: dict, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str, setups: Optional[List[str]]
+    ) -> List[CalendarData]:
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+        return await self.repo.get_calendar_data(trading_account_id, start_date, end_date, user_timezone, setups)
+
+    async def get_processed_stats(
+        self, claims: dict, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]]
+    ) -> ProcessedStats:
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+        return await self.repo.get_processed_stats(trading_account_id, start_date, end_date, setups)
+
+    async def get_vantage_score(
+        self, claims: dict, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]]
+    ) -> VantageScoreData:
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+        return await self.repo.get_vantage_score(trading_account_id, start_date, end_date, setups)
+
+    async def get_equity_curve(
+        self, claims: dict, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]]
+    ) -> EquityCurveData:
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+        return await self.repo.get_equity_curve(trading_account_id, start_date, end_date, setups)
