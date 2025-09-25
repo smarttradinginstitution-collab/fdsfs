@@ -8,7 +8,7 @@ from app.Models.playbook import Playbook
 from app.Repositories.playbook_repository import playbook_repository, PlaybookRepository
 from app.Repositories.auth_user_repository import AuthUserRepository
 from app.Schemas.playbook import PlaybookCreate, PlaybookUpdate
-from app.Router.auth import get_current_claims
+# Rimossa l'importazione di get_current_claims perché non più usata come dipendenza qui
 
 class PlaybookService:
     def __init__(
@@ -37,7 +37,7 @@ class PlaybookService:
         return current_user
 
     async def get_playbooks_by_general_account(
-        self, db: Session, claims: dict = Depends(get_current_claims)
+        self, db: Session, claims: dict
     ) -> list[Playbook]:
         """
         Recupera tutti i playbook per il General Account dell'utente autenticato.
@@ -47,7 +47,7 @@ class PlaybookService:
         return await self.repo.get_by_general_account_id(db, general_account_id=general_account_id)
 
     async def create_playbook(
-        self, playbook_in: PlaybookCreate, db: Session, claims: dict = Depends(get_current_claims)
+        self, playbook_in: PlaybookCreate, db: Session, claims: dict
     ) -> Playbook:
         """
         Crea un nuovo playbook per il General Account dell'utente autenticato.
@@ -57,7 +57,7 @@ class PlaybookService:
         return await self.repo.create(db, playbook_in=playbook_in, general_account_id=general_account_id)
 
     async def update_playbook(
-        self, playbook_id: UUID, playbook_in: PlaybookUpdate, db: Session, claims: dict = Depends(get_current_claims)
+        self, playbook_id: UUID, playbook_in: PlaybookUpdate, db: Session, claims: dict
     ) -> Playbook:
         """
         Aggiorna un playbook, verificando che appartenga al General Account dell'utente.
@@ -74,7 +74,7 @@ class PlaybookService:
         return await self.repo.update(db, db_obj=db_playbook, obj_in=playbook_in)
 
     async def delete_playbook(
-        self, playbook_id: UUID, db: Session, claims: dict = Depends(get_current_claims)
+        self, playbook_id: UUID, db: Session, claims: dict
     ) -> Playbook:
         """
         Elimina un playbook, verificando che appartenga al General Account dell'utente.
