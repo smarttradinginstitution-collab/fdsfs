@@ -234,6 +234,12 @@ class AuthController:
             phone=payload.phone,
         )
 
+        # ---- DEBUG REGISTRATION ----
+        print("--- DEBUG REGISTER RESPONSE ---")
+        print(f"Response from Supabase: {res}")
+        print("-----------------------------")
+        # --------------------------
+
         if res.get("error"):
             msg = res.get("message") or "Registrazione fallita"
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
