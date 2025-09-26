@@ -2,8 +2,8 @@
 import enum
 
 class TradeDirection(str, enum.Enum):
-    LONG = "long"
-    SHORT = "short"
+    LONG = "LONG"
+    SHORT = "SHORT"
 
 class TradeStatus(str, enum.Enum):
     open = "open"
