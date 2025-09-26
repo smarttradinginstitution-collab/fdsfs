@@ -79,7 +79,7 @@ class Trade(Base):
     status: Mapped[TradeStatus] = mapped_column(
         Enum(TradeStatus, name="trade_status", schema="public"),
         nullable=False,
-        default=TradeStatus.CLOSED
+        default=TradeStatus.closed
     )
 
     # Financial details
