@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Funzione per recuperare il General Account
   async function fetchGeneralAccount() {
     try {
-      const { data } = await apiClient.get('/api/v1/general-accounts/me');
+      const { data } = await apiClient.get('/general-accounts/me');
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
       return true;
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const userId = user.value?.id;
       if (!userId) return;
-      const { data } = await apiClient.get(`/api/v1/users/${userId}/roles`);
+      const { data } = await apiClient.get(`/users/${userId}/roles`);
       const roleObj = Array.isArray(data) ? data[0] : data;
       const name = roleObj?.name ?? null;
       if (name) {
@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(email, password) {
-    const response = await apiClient.post('/api/v1/auth/login', { email, password });
+    const response = await apiClient.post('/auth/login', { email, password });
 
     if (response.data.status === 'mfa_required') {
       mfaChallenge.value = response.data; // Salva tutta la challenge
@@ -93,7 +93,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function verifyMfaAndLogin(otpCode) {
     if (!mfaChallenge.value || !mfaAal1Token.value) throw new Error("Dati della challenge MFA non trovati.");
 
-    const response = await apiClient.post('/api/v1/auth/mfa/verify', {
+    const response = await apiClient.post('/auth/mfa/verify', {
       access_token: mfaAal1Token.value,
       factor_id: mfaChallenge.value.factor_id,
       challenge_id: mfaChallenge.value.challenge_id,
@@ -108,12 +108,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function enrollMfa() {
-    const { data } = await apiClient.post('/api/v1/auth/mfa/enroll-totp');
+    const { data } = await apiClient.post('/auth/mfa/enroll-totp');
     return data;
   }
 
   async function verifyAndEnableMfa(factorId, challengeId, otpCode) {
-    const { data } = await apiClient.post('/api/v1/auth/mfa/verify', {
+    const { data } = await apiClient.post('/auth/mfa/verify', {
       access_token: token.value,
       factor_id: factorId,
       challenge_id: challengeId,
@@ -130,14 +130,14 @@ export const useAuthStore = defineStore('auth', () => {
     // Non fa nulla allo stato locale, serve solo per pulizia.
     // L'utente non è autenticato con questo fattore, quindi non c'è bisogno di aggiornare lo stato.
     try {
-      await apiClient.delete(`/api/v1/auth/mfa/factors/${factorId}`);
+      await apiClient.delete(`/auth/mfa/factors/${factorId}`);
     } catch (error) {
       console.error(`Pulizia del fattore ${factorId} fallita:`, error);
     }
   }
 
   async function disableMfa(otpCode) {
-    const { data } = await apiClient.post('/api/v1/auth/mfa/disable', { code: otpCode });
+    const { data } = await apiClient.post('/auth/mfa/disable', { code: otpCode });
     const authSuccessful = await _setAuthentication(data.access_token, data.user);
     if (authSuccessful) {
       await loadCurrentRoleName();
@@ -146,7 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await apiClient.post('/api/v1/auth/logout');
+      await apiClient.post('/auth/logout');
     } catch { /* noop */ }
 
     user.value = null;

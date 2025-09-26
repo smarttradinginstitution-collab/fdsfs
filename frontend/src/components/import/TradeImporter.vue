@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/auth'; // Assuming you have this
 import { useTradingAccountsStore } from '@/stores/tradingAccounts'; // Assuming you have this
@@ -14,7 +14,7 @@ const importResult = ref(null);
 
 // This should be passed as a prop or fetched from a store
 const tradingAccountsStore = useTradingAccountsStore();
-const selectedAccountId = ref(tradingAccountsStore.selectedAccount?.id);
+const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
 
 
 const onFileChange = (event) => {
@@ -22,6 +22,11 @@ const onFileChange = (event) => {
 };
 
 const handleUpload = async () => {
+  console.log('Attempting to upload...', {
+    fileCount: files.value.length,
+    accountId: selectedAccountId.value,
+  });
+
   if (!files.value.length || !selectedAccountId.value) {
     uiStore.showNotification({ message: 'Please select a file and a trading account.', type: 'error' });
     return;

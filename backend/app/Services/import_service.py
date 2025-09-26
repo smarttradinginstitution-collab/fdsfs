@@ -27,7 +27,7 @@ class ImportService:
         new_run = ImportRun(
             user_id=user_id,
             trading_account_id=trading_account_id,
-            source_type=ImportSourceType.CSV,
+            source_type="csv",
             file_name=file_name,
             status="queued",
         )

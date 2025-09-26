@@ -40,7 +40,7 @@ async function fetchUsers() {
   loadingUsers.value = true;
   errorUsers.value = null;
   try {
-    const res = await apiClient.get('/api/v1/users/');
+    const res = await apiClient.get('/users/');
     users.value = res.data;
   } catch (err) {
     console.error('Errore caricamento utenti:', err);

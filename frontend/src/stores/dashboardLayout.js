@@ -73,7 +73,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
         return;
       }
       try {
-        const response = await apiClient.get('/api/v1/dashboard/layout');
+        const response = await apiClient.get('/dashboard/layout');
         const savedLayout = response.data.layout || {};
         this.layout = {
           charts: savedLayout.charts || this.defaultLayout.charts,
@@ -132,7 +132,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       };
 
       try {
-        await apiClient.put('/api/v1/dashboard/layout', { layout: fullLayout });
+        await apiClient.put('/dashboard/layout', { layout: fullLayout });
         uiStore.showNotification({
           message: 'Layout salvato con successo!',
           type: 'success',
