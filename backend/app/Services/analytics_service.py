@@ -39,8 +39,13 @@ class AnalyticsService:
         if not trades:
             return PerformanceMetrics(stats=PerformanceStats())
 
-        net_pnl = sum(trade.p_l for trade in trades if trade.p_l is not None)
-        trade_count = len(trades)
+        # --- Basic Calcs ---
+        pnl_list = [t.p_l for t in trades if t.p_l is not None]
+        trade_count = len(pnl_list)
+        if trade_count == 0:
+            return PerformanceMetrics(stats=PerformanceStats())
+
+        net_pnl = sum(pnl_list)
 
         winning_trades_list = [t for t in trades if t.p_l is not None and t.p_l > 0]
         losing_trades_list = [t for t in trades if t.p_l is not None and t.p_l < 0]
@@ -48,7 +53,7 @@ class AnalyticsService:
         winning_trades_count = len(winning_trades_list)
         losing_trades_count = len(losing_trades_list)
 
-        win_rate = (winning_trades_count / trade_count) * 100 if trade_count > 0 else 0
+        win_rate = (winning_trades_count / trade_count) * 100
 
         gross_profit = sum(t.p_l for t in winning_trades_list)
         gross_loss = abs(sum(t.p_l for t in losing_trades_list))
@@ -58,6 +63,53 @@ class AnalyticsService:
 
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
         profit_factor_label = f"{profit_factor:.2f}" if profit_factor is not None else "∞"
+
+        # --- Advanced Metrics ---
+
+        # Sort trades for time-series calculations
+        sorted_trades = sorted(trades, key=lambda t: t.exit_timestamp or t.entry_timestamp)
+        pnl_series = [t.p_l for t in sorted_trades if t.p_l is not None]
+
+        # Max Consecutive Wins/Losses
+        max_consecutive_wins = 0
+        max_consecutive_losses = 0
+        current_wins = 0
+        current_losses = 0
+        for pnl in pnl_series:
+            if pnl > 0:
+                current_wins += 1
+                current_losses = 0
+            elif pnl < 0:
+                current_losses += 1
+                current_wins = 0
+            max_consecutive_wins = max(max_consecutive_wins, current_wins)
+            max_consecutive_losses = max(max_consecutive_losses, current_losses)
+
+        # Average Hold Time
+        total_hold_time = 0
+        trades_with_duration = 0
+        for trade in trades:
+            if trade.entry_timestamp and trade.exit_timestamp:
+                hold_time = (trade.exit_timestamp - trade.entry_timestamp).total_seconds()
+                total_hold_time += hold_time
+                trades_with_duration += 1
+
+        average_hold_time = (total_hold_time / trades_with_duration) / 60 if trades_with_duration > 0 else 0 # in minutes
+
+        # Expectancy
+        loss_rate = (losing_trades_count / trade_count) if trade_count > 0 else 0
+        expectancy = ((win_rate / 100) * avg_win) - (loss_rate * avg_loss)
+
+        # Max Drawdown
+        cumulative_pnl = np.cumsum(pnl_series)
+        peak = np.maximum.accumulate(cumulative_pnl)
+        drawdown = peak - cumulative_pnl
+        max_drawdown_abs = np.max(drawdown) if len(drawdown) > 0 else 0
+
+        # Sharpe Ratio (assuming risk-free rate is 0)
+        pnl_std_dev = np.std(pnl_list) if len(pnl_list) > 1 else 0
+        average_trade_pnl = net_pnl / trade_count
+        sharpe_ratio = (average_trade_pnl / pnl_std_dev) if pnl_std_dev > 0 else 0
 
         stats = PerformanceStats(
             net_pnl=net_pnl,
@@ -72,8 +124,15 @@ class AnalyticsService:
             profit_factor_label=profit_factor_label,
             avg_win=avg_win,
             avg_loss=avg_loss,
-            largest_profit=max((t.p_l for t in trades if t.p_l is not None), default=0),
-            largest_loss=min((t.p_l for t in trades if t.p_l is not None), default=0),
+            largest_profit=max(pnl_list) if any(p > 0 for p in pnl_list) else 0,
+            largest_loss=min(pnl_list) if any(p < 0 for p in pnl_list) else 0,
+            max_consecutive_wins=max_consecutive_wins,
+            max_consecutive_losses=max_consecutive_losses,
+            average_hold_time=average_hold_time,
+            expectancy=expectancy,
+            average_trade_pnl=average_trade_pnl,
+            max_drawdown_abs=float(max_drawdown_abs),
+            sharpe_ratio=sharpe_ratio
         )
 
         return PerformanceMetrics(stats=stats)
@@ -134,13 +193,74 @@ class AnalyticsService:
         for week_key, data in weekly_totals.items():
             weekly_totals[week_key]["trading_days"] = len(data["trading_days"])
 
-        # Per ora, le altre statistiche rimangono mockate per focalizzarci sul problema
+        # --- Inizializzazione delle strutture dati ---
+        by_strategy: Dict[str, Dict[str, Any]] = {}
+        by_day_of_week: Dict[str, Dict[str, float]] = {
+            day: {"total_pnl": 0.0, "trade_count": 0}
+            for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        }
+        daily_pnl: Dict[date, float] = {}
+        monthly_totals: Dict[str, float] = {}
+
+        if trades:
+            for trade in trades:
+                if not trade.entry_timestamp or trade.p_l is None:
+                    continue
+
+                trade_date = trade.entry_timestamp.date()
+
+                # --- By Strategy (Playbook) ---
+                if trade.playbooks:
+                    for playbook in trade.playbooks:
+                        if playbook.title not in by_strategy:
+                            by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": 0.0, "winning_trades": 0}
+
+                        by_strategy[playbook.title]["trade_count"] += 1
+                        by_strategy[playbook.title]["total_pnl"] += trade.p_l
+                        if trade.p_l > 0:
+                            by_strategy[playbook.title]["winning_trades"] += 1
+
+                # --- By Day of Week ---
+                day_name = trade_date.strftime("%A")
+                by_day_of_week[day_name]["total_pnl"] += trade.p_l
+                by_day_of_week[day_name]["trade_count"] += 1
+
+                # --- Daily and Monthly PnL ---
+                if trade_date not in daily_pnl:
+                    daily_pnl[trade_date] = 0.0
+                daily_pnl[trade_date] += trade.p_l
+
+                month_key = trade_date.strftime("%Y-%m")
+                if month_key not in monthly_totals:
+                    monthly_totals[month_key] = 0.0
+                monthly_totals[month_key] += trade.p_l
+
+        # --- Final Calcs ---
+
+        # Win/Loss/Breakeven Days
+        winning_days = sum(1 for pnl in daily_pnl.values() if pnl > 0)
+        losing_days = sum(1 for pnl in daily_pnl.values() if pnl < 0)
+        breakeven_days = sum(1 for pnl in daily_pnl.values() if pnl == 0)
+        win_loss_days = WinLossDays(winningDays=winning_days, losingDays=losing_days, breakEvenDays=breakeven_days)
+
+        # Finalize By Strategy data
+        processed_by_strategy = {
+            name: StrategyPerformance(
+                trade_count=data["trade_count"],
+                total_pnl=data["total_pnl"],
+                win_rate=(data["winning_trades"] / data["trade_count"]) * 100 if data["trade_count"] > 0 else 0
+            ) for name, data in by_strategy.items()
+        }
+
+        # Max Abs PnL for scaling charts
+        max_abs_pnl_by_strategy = max(abs(s.total_pnl) for s in processed_by_strategy.values()) if processed_by_strategy else 0
+
         return ProcessedStats(
-            by_strategy={},
-            max_abs_pnl_by_strategy=0,
-            by_day_of_week={},
-            win_loss_days=WinLossDays(winningDays=0, losingDays=0, breakEvenDays=0),
-            monthly_totals={},
+            by_strategy=processed_by_strategy,
+            max_abs_pnl_by_strategy=max_abs_pnl_by_strategy,
+            by_day_of_week=by_day_of_week,
+            win_loss_days=win_loss_days,
+            monthly_totals=monthly_totals,
             weekly_totals=weekly_totals
         )
 
