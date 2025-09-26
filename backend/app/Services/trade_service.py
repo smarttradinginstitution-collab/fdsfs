@@ -104,11 +104,27 @@ class TradeService:
 
         return TradeRead.from_orm(trade)
 
-    async def list_trades_by_trading_account(self, claims: dict, trading_account_id: UUID) -> List[TradeRead]:
-        """Elenca tutti i trade per un trading account specifico, verificando l'appartenenza."""
+    async def list_trades_by_trading_account(
+        self,
+        claims: dict,
+        trading_account_id: UUID,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None
+    ) -> List[TradeRead]:
+        """
+        Elenca i trade per un trading account, con filtro opzionale per data.
+        """
         await self._validate_and_get_trading_account(claims, trading_account_id)
 
-        trades = await self.repo.list_by_trading_account_id(trading_account_id)
+        if start_date and end_date:
+            trades = await self.repo.get_filtered_trades(
+                trading_account_id=trading_account_id,
+                start_date=start_date,
+                end_date=end_date
+            )
+        else:
+            trades = await self.repo.list_by_trading_account_id(trading_account_id)
+
         return [TradeRead.from_orm(trade) for trade in trades]
 
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
