@@ -270,15 +270,74 @@ class AnalyticsService:
         start_date: date,
         end_date: date
     ) -> VantageScoreData:
-        # Logica Mock
+        metrics_data = await self.get_performance_metrics(trading_account_id, start_date, end_date)
+        stats = metrics_data.stats
+
+        if stats.trade_count < 5:  # Non calcolare se ci sono troppo pochi trade
+            return VantageScoreData(
+                vantage_score=0, win_rate_score=0, profit_factor_score=0,
+                avg_win_loss_score=0, recovery_factor_score=0,
+                max_drawdown_score=0, consistency_score=0
+            )
+
+        # --- Funzioni di Normalizzazione (Scalano un valore in un punteggio 0-100) ---
+        def normalize(value, min_val, max_val, invert=False):
+            """Normalizza un valore in una scala 0-100, con protezione dalla divisione per zero."""
+            value = max(min_val, min(value, max_val))
+            denominator = max_val - min_val
+            if denominator == 0:
+                return 0  # Ritorna 0 se il range è nullo per evitare errori
+            score = ((value - min_val) / denominator) * 100
+            return 100 - score if invert else score
+
+        # --- Calcolo dei Sub-Scores ---
+
+        # 1. Win Rate Score (Scala lineare 0-100%)
+        win_rate_score = normalize(stats.win_rate, 0, 100)
+
+        # 2. Profit Factor Score (Valore ottimale intorno a 2-3, capped a 5)
+        profit_factor_score = normalize(stats.profit_factor or 0, 0, 5)
+
+        # 3. Avg Win/Loss Ratio Score (Rapporto tra vincita media e perdita media)
+        avg_win_loss_ratio = (stats.avg_win / stats.avg_loss) if stats.avg_loss > 0 else 5.0 # Cap a 5 se non ci sono perdite
+        avg_win_loss_score = normalize(avg_win_loss_ratio, 0, 5) # Cap a 5
+
+        # 4. Recovery Factor Score (Net PnL / Max Drawdown)
+        recovery_factor = (stats.net_pnl / stats.max_drawdown_abs) if stats.max_drawdown_abs > 0 else 0
+        recovery_factor_score = normalize(recovery_factor, 0, 10) # Cap a 10
+
+        # 5. Max Drawdown Score (Invertito: meno drawdown è meglio. Normalizzato contro Net PnL)
+        # Se non c'è profitto, qualsiasi drawdown è "cattivo"
+        if stats.net_pnl > 0:
+            drawdown_ratio = (stats.max_drawdown_abs / stats.net_pnl) * 100
+            max_drawdown_score = normalize(drawdown_ratio, 0, 100, invert=True)
+        else:
+            max_drawdown_score = 0 # Penalità massima se il PnL è negativo
+
+        # 6. Consistency Score (Usiamo lo Sharpe Ratio come proxy per la consistenza)
+        # Lo Sharpe Ratio può essere negativo, normalizziamolo da -1 a 2.
+        consistency_score = normalize(stats.sharpe_ratio, -1, 2)
+
+
+        # --- Calcolo del Punteggio Finale ---
+        scores = [
+            win_rate_score,
+            profit_factor_score,
+            avg_win_loss_score,
+            recovery_factor_score,
+            max_drawdown_score,
+            consistency_score
+        ]
+        final_score = sum(scores) / len(scores)
+
         return VantageScoreData(
-            vantage_score=0,
-            win_rate_score=0,
-            profit_factor_score=0,
-            avg_win_loss_score=0,
-            recovery_factor_score=0,
-            max_drawdown_score=0,
-            consistency_score=0
+            vantage_score=int(final_score),
+            win_rate_score=int(win_rate_score),
+            profit_factor_score=int(profit_factor_score),
+            avg_win_loss_score=int(avg_win_loss_score),
+            recovery_factor_score=int(recovery_factor_score),
+            max_drawdown_score=int(max_drawdown_score),
+            consistency_score=int(consistency_score)
         )
 
     async def get_equity_curve(
