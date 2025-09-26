@@ -45,7 +45,7 @@ class PsychologyStateRead(BaseModel):
 
 
 class TradeBase(BaseModel):
-    symbol: Optional[str] = None
+    symbol_snapshot: Optional[str] = None
     p_l: Optional[float] = None
     stop_loss_price: Optional[float] = None
     take_profit_price: Optional[float] = None

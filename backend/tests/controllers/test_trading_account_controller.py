@@ -3,20 +3,31 @@
 import pytest
 from httpx import AsyncClient
 import uuid
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.Models import Broker
 
 pytestmark = pytest.mark.anyio
 
-async def test_create_trading_account_fails_without_general_account(async_client: AsyncClient):
+async def setup_broker(db_session: AsyncSession) -> uuid.UUID:
+    """Helper function to create a broker for tests."""
+    broker = Broker(name=f"Test Broker {uuid.uuid4()}")
+    db_session.add(broker)
+    await db_session.commit()
+    await db_session.refresh(broker)
+    return broker.id
+
+async def test_create_trading_account_fails_without_general_account(async_client: AsyncClient, db_session: AsyncSession):
     """
     Testa che la creazione di un TradingAccount fallisca se non esiste un GeneralAccount.
     """
+    broker_id = await setup_broker(db_session)
     response = await async_client.post(
         "/api/v1/trading-accounts/",
-        json={"label": "My First Trading Account"}
+        json={"label": "My First Trading Account", "broker_id": str(broker_id)}
     )
     assert response.status_code == 403
 
-async def test_create_and_get_trading_account(async_client: AsyncClient):
+async def test_create_and_get_trading_account(async_client: AsyncClient, db_session: AsyncSession):
     """
     Testa la creazione e il recupero di un TradingAccount.
     """
@@ -24,16 +35,19 @@ async def test_create_and_get_trading_account(async_client: AsyncClient):
     ga_response = await async_client.post("/api/v1/general-accounts/")
     assert ga_response.status_code == 201
 
+    # 1.5 Create a Broker to associate with the Trading Account
+    broker_id = await setup_broker(db_session)
+
     # 2. Crea un TradingAccount
     label = "My Test Account"
     ta_response = await async_client.post(
         "/api/v1/trading-accounts/",
-        json={"label": label}
+        json={"label": label, "broker_id": str(broker_id)}
     )
     assert ta_response.status_code == 201
     data = ta_response.json()
     assert data["label"] == label
-    assert data["broker_id"] is None
+    assert data["broker_id"] == str(broker_id)
 
     trading_account_id = data["id"]
 

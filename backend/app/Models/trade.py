@@ -1,7 +1,6 @@
 # app/Models/trade.py
 from __future__ import annotations
 
-import enum
 import uuid
 from typing import Any, Optional, TYPE_CHECKING
 
@@ -12,25 +11,25 @@ from sqlalchemy import (
     Numeric,
     Float,
     func,
+    String,
+    Enum,
 )
-from sqlalchemy.dialects.postgresql import UUID, ENUM
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
+from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
 
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
     from app.Models.asset import Asset
+    from app.Models.platform import Platform
+    from app.Models.import_run import ImportRun
     from app.Models.tag import Tag
     from app.Models.mistake import Mistake
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
-
-
-class TradeDirectionEnum(enum.Enum):
-    Long = "Long"
-    Short = "Short"
 
 
 class Trade(Base):
@@ -51,44 +50,78 @@ class Trade(Base):
         ForeignKey("public.assets.id"),
         nullable=True,
     )
-
-    created_at: Mapped[Any] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    platform_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.platforms.id"),
+        nullable=True
     )
+    import_run_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.import_runs.id"),
+        nullable=True
+    )
+
+    # Core trade data
     p_l: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    stop_loss_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    take_profit_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     entry_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     exit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     position_size: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    lowest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
-        Numeric, nullable=True
-    )
-    highest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
-        Numeric, nullable=True
-    )
-    symbol: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    direction: Mapped[Optional[TradeDirectionEnum]] = mapped_column(
-        ENUM(TradeDirectionEnum, name="trade_direction", create_type=False),
-        nullable=True,
-    )
-    notes_pre_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    notes_post_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     entry_timestamp: Mapped[Optional[Any]] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )
     exit_timestamp: Mapped[Optional[Any]] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )
+    direction: Mapped[Optional[TradeDirection]] = mapped_column(
+        Enum(TradeDirection, name="trade_direction", schema="public"),
+        nullable=True,
+    )
+    status: Mapped[TradeStatus] = mapped_column(
+        Enum(TradeStatus, name="trade_status", schema="public"),
+        nullable=False,
+        default=TradeStatus.CLOSED
+    )
 
-    # Relazioni Principali
+    # Financial details
+    fees: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True, default=0)
+    commissions: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True, default=0)
+    currency: Mapped[Optional[str]] = mapped_column(String(3), nullable=True)
+
+    # Import-related fields
+    external_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    dedupe_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    symbol_snapshot: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    asset_name_snapshot: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Optional fields
+    stop_loss_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
+    take_profit_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    lowest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
+        Numeric, nullable=True
+    )
+    highest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
+        Numeric, nullable=True
+    )
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes_pre_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes_post_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[Any] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[Any] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
     trading_account: Mapped["TradingAccount"] = relationship(
         "TradingAccount", back_populates="trades"
     )
     asset: Mapped[Optional["Asset"]] = relationship("Asset", back_populates="trades")
+    platform: Mapped[Optional["Platform"]] = relationship("Platform", back_populates="trades")
+    import_run: Mapped[Optional["ImportRun"]] = relationship("ImportRun", back_populates="trades")
 
-    # Relazioni Many-to-Many
     tags: Mapped[list["Tag"]] = relationship(
         secondary="public.trades_tags", back_populates="trades"
     )

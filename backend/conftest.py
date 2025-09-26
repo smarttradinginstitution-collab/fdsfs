@@ -33,6 +33,17 @@ def compile_jsonb_sqlite(type_, compiler, **kw):
 def compile_array_sqlite(type_, compiler, **kw):
     return "JSON"
 
+from sqlalchemy.dialects.postgresql import CITEXT
+from sqlalchemy import Text
+
+@compiles(CITEXT, "sqlite")
+def compile_citext_sqlite(element, compiler, **kw):
+    """
+    Renders CITEXT as TEXT COLLATE NOCASE for SQLite, which provides
+    case-insensitive text comparison.
+    """
+    return "TEXT COLLATE NOCASE"
+
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 

@@ -28,10 +28,10 @@ class TradingAccount(Base):
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    broker_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    broker_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.brokers.id"),
-        nullable=True,  # <--- Reso opzionale come richiesto
+        nullable=False,
     )
     label: Mapped[Optional[str]] = mapped_column(String)
     created_at: Mapped[Any] = mapped_column(

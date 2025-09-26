@@ -220,6 +220,16 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 📥 IMPORT (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import import_controller
+
+router.include_router(
+    import_controller.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📖 PLAYBOOKS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import playbook_controller

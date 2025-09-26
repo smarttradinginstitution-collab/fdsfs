@@ -7,12 +7,13 @@ import { useUiStore } from '@/stores/uiStore';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import UploadIcon from '@/components/icons/UploadIcon.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import TradeImporter from '@/components/import/TradeImporter.vue';
 
 const router = useRouter();
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 
-const choice = ref(null); // 'manual' or null
+const choice = ref(null); // 'manual' or 'import'
 
 const handleNewTrade = async (tradeData) => {
   try {
@@ -57,8 +58,7 @@ const handleNewTrade = async (tradeData) => {
         </div>
 
         <!-- Import from Broker Card -->
-        <div class="card disabled">
-           <div class="card-badge">Coming Soon</div>
+        <div class="card" @click="choice = 'import'">
           <div class="card-icon-wrapper">
             <UploadIcon class="card-icon" />
           </div>
@@ -72,13 +72,23 @@ const handleNewTrade = async (tradeData) => {
     </div>
 
     <div v-else-if="choice === 'manual'" class="form-view">
-       <div class="form-header">
+      <div class="form-header">
         <BaseButton @click="choice = null" variant="secondary" class="back-button">
             &larr; Back to selection
         </BaseButton>
         <h1 class="title">Manual Trade Entry</h1>
       </div>
       <NewTradeForm @submit="handleNewTrade" />
+    </div>
+
+    <div v-else-if="choice === 'import'" class="form-view">
+      <div class="form-header">
+        <BaseButton @click="choice = null" variant="secondary" class="back-button">
+            &larr; Back to selection
+        </BaseButton>
+        <h1 class="title">Import from Broker</h1>
+      </div>
+      <TradeImporter />
     </div>
   </div>
 </template>
