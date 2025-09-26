@@ -282,9 +282,12 @@ class AnalyticsService:
 
         # --- Funzioni di Normalizzazione (Scalano un valore in un punteggio 0-100) ---
         def normalize(value, min_val, max_val, invert=False):
-            """Normalizza un valore in una scala 0-100."""
+            """Normalizza un valore in una scala 0-100, con protezione dalla divisione per zero."""
             value = max(min_val, min(value, max_val))
-            score = ((value - min_val) / (max_val - min_val)) * 100
+            denominator = max_val - min_val
+            if denominator == 0:
+                return 0  # Ritorna 0 se il range è nullo per evitare errori
+            score = ((value - min_val) / denominator) * 100
             return 100 - score if invert else score
 
         # --- Calcolo dei Sub-Scores ---
