@@ -73,3 +73,45 @@ async def test_get_equity_curve(mock_trades):
     assert len(result.labels) == 4
     assert len(result.data) == 4
     assert result.data == [100.0, 50.0, 200.0, 200.0] # P&L Cumulativo
+
+async def test_get_processed_stats_weekly_totals():
+    """
+    Testa che i totali settimanali in get_processed_stats siano calcolati correttamente.
+    """
+    # Arrange
+    # Nota: Le date sono fisse per rendere il test deterministico
+    trades = [
+        # Settimana 1: 2 trade, 2 giorni, P&L 150
+        Trade(id=uuid4(), p_l=100, entry_timestamp=datetime(2023, 10, 16)), # Lun
+        Trade(id=uuid4(), p_l=50, entry_timestamp=datetime(2023, 10, 18)),  # Mer
+        # Settimana 2: 3 trade, 2 giorni, P&L 120
+        Trade(id=uuid4(), p_l=-30, entry_timestamp=datetime(2023, 10, 23)), # Lun
+        Trade(id=uuid4(), p_l=100, entry_timestamp=datetime(2023, 10, 25)), # Mer
+        Trade(id=uuid4(), p_l=50, entry_timestamp=datetime(2023, 10, 25)),  # Mer
+    ]
+
+    mock_db_session = AsyncMock()
+    service = AnalyticsService(db=mock_db_session)
+    service.trade_repo.get_filtered_trades = AsyncMock(return_value=trades)
+
+    # Act
+    result = await service.get_processed_stats(
+        trading_account_id=uuid4(),
+        start_date=date(2023, 10, 1),
+        end_date=date(2023, 10, 31)
+    )
+
+    # Assert
+    weekly_totals = result.weekly_totals
+
+    # Settimana 42 del 2023
+    week1_key = "2023-W42"
+    assert week1_key in weekly_totals
+    assert weekly_totals[week1_key]["total_pnl"] == 150.0
+    assert weekly_totals[week1_key]["trading_days"] == 2
+
+    # Settimana 43 del 2023
+    week2_key = "2023-W43"
+    assert week2_key in weekly_totals
+    assert weekly_totals[week2_key]["total_pnl"] == 120.0
+    assert weekly_totals[week2_key]["trading_days"] == 2

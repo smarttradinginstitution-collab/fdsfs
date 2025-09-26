@@ -114,14 +114,34 @@ class AnalyticsService:
         start_date: date,
         end_date: date
     ) -> ProcessedStats:
-        # Logica Mock per ora, per sbloccare il frontend
+        trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date)
+
+        weekly_totals = {}
+        if trades:
+            for trade in trades:
+                if trade.entry_timestamp:
+                    trade_date = trade.entry_timestamp.date()
+                    iso_year, iso_week, _ = trade_date.isocalendar()
+                    week_key = f"{iso_year}-W{iso_week:02d}"
+
+                    if week_key not in weekly_totals:
+                        weekly_totals[week_key] = {"total_pnl": 0.0, "trading_days": set()}
+
+                    weekly_totals[week_key]["total_pnl"] += trade.p_l or 0
+                    weekly_totals[week_key]["trading_days"].add(trade_date)
+
+        # Converti i set di giorni in conteggi
+        for week_key, data in weekly_totals.items():
+            weekly_totals[week_key]["trading_days"] = len(data["trading_days"])
+
+        # Per ora, le altre statistiche rimangono mockate per focalizzarci sul problema
         return ProcessedStats(
             by_strategy={},
             max_abs_pnl_by_strategy=0,
             by_day_of_week={},
             win_loss_days=WinLossDays(winningDays=0, losingDays=0, breakEvenDays=0),
             monthly_totals={},
-            weekly_totals={}
+            weekly_totals=weekly_totals
         )
 
     async def get_vantage_score(
