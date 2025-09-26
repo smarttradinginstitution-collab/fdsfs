@@ -44,6 +44,11 @@ class TradovateParser:
 
         for row in reader:
             try:
+                trade_id = row.get('tradeId')
+                if not trade_id:
+                    # If there's no tradeId, we cannot reliably deduplicate.
+                    continue
+
                 # Determine direction and assign timestamps and prices accordingly
                 bought_ts = self._parse_timestamp(row.get('boughtTimestamp'))
                 sold_ts = self._parse_timestamp(row.get('soldTimestamp'))
@@ -57,7 +62,7 @@ class TradovateParser:
                 entry_ts, exit_ts = (bought_ts, sold_ts) if direction == TradeDirection.LONG else (sold_ts, bought_ts)
                 entry_price_str, exit_price_str = (row.get('buyPrice'), row.get('sellPrice')) if direction == TradeDirection.LONG else (row.get('sellPrice'), row.get('buyPrice'))
 
-                dedupe_key_source = f"{row.get('symbol')}{entry_ts.isoformat()}{exit_ts.isoformat()}{row.get('qty')}{entry_price_str}{exit_price_str}"
+                gross_pnl = self._clean_pnl(row.get('pnl', '0'))
 
                 trade_data = {
                     "symbol_snapshot": row.get('symbol'),
@@ -66,10 +71,11 @@ class TradovateParser:
                     "exit_timestamp": exit_ts,
                     "entry_price": self._clean_price(entry_price_str),
                     "exit_price": self._clean_price(exit_price_str),
-                    "p_l": self._clean_pnl(row.get('pnl', '0')),
+                    "gross_p_l": gross_pnl,
+                    "p_l": gross_pnl, # Temporarily set Net P&L to Gross P&L
                     "position_size": float(row.get('qty', 0)),
-                    "dedupe_key": hashlib.sha256(dedupe_key_source.encode()).hexdigest(),
-                    # These fields are not directly in the performance report
+                    "dedupe_key": hashlib.sha256(trade_id.encode()).hexdigest(),
+                    # These fields are not directly in the performance report but required by our model
                     "status": "closed",
                     "fees": 0,
                     "commissions": 0,

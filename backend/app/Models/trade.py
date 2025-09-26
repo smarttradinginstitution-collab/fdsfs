@@ -63,6 +63,7 @@ class Trade(Base):
 
     # Core trade data
     p_l: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    gross_p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     entry_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     exit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     position_size: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
