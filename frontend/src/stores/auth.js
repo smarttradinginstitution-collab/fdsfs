@@ -84,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
       if (authSuccessful) {
         await loadCurrentRoleName();
-        router.push('/');
+        router.push('/select-account');
       }
       return { mfaRequired: false };
     }
@@ -103,7 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
     const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
     if (authSuccessful) {
       await loadCurrentRoleName();
-      router.push('/');
+      router.push('/select-account');
     }
   }
 
