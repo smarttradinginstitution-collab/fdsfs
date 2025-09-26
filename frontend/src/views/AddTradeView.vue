@@ -219,9 +219,6 @@ const handleNewTrade = async (tradeData) => {
     font-weight: 600;
 }
 
-.form-view {
-    /* Styles removed to integrate the form directly into the page */
-}
 
 .form-header {
     display: flex;

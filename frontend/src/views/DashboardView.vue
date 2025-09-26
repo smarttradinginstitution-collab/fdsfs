@@ -210,9 +210,8 @@ watch(
   min-width: 200px; /* Dà al selettore una larghezza minima */
   margin-right: auto; /* Spinge gli altri bottoni a destra */
 }
-.grid-zone-wrapper {
-  /* Styles for the wrapper if needed */
-}
+
+
 .zone-title {
   margin-bottom: var(--semantic-size-stack-sm);
   font: var(--semantic-font-style-heading-lg);
