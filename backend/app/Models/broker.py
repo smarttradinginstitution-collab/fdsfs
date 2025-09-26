@@ -12,6 +12,8 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
+    from app.Models.platform import Platform
+    from app.Models.asset_alias import AssetAlias
 
 class Broker(Base):
     __tablename__ = "brokers"
@@ -25,7 +27,13 @@ class Broker(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relazioni
+    # Relationships
     trading_accounts: Mapped[list["TradingAccount"]] = relationship(
         "TradingAccount", back_populates="broker"
+    )
+    platforms: Mapped[list["Platform"]] = relationship(
+        secondary="public.broker_platforms", back_populates="brokers"
+    )
+    asset_aliases: Mapped[list["AssetAlias"]] = relationship(
+        "AssetAlias", back_populates="broker", cascade="all, delete-orphan"
     )

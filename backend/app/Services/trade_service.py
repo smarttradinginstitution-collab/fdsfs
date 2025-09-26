@@ -79,6 +79,11 @@ class TradeService:
             'tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states',
             'setup', 'emotional_state' # Escludi anche i campi obsoleti
         })
+
+        # Manually handle the symbol to symbol_snapshot mapping
+        if 'symbol' in trade_dict:
+            trade_dict['symbol_snapshot'] = trade_dict.pop('symbol')
+
         db_trade = Trade(**trade_dict)
 
         # Recupera o crea le entità correlate

@@ -13,6 +13,7 @@ from app.Infrastructure.db import Base
 if TYPE_CHECKING:
     from app.Models.asset_class import AssetClass
     from app.Models.trade import Trade
+    from app.Models.asset_alias import AssetAlias
 
 
 class Asset(Base):
@@ -38,3 +39,6 @@ class Asset(Base):
         "AssetClass", back_populates="assets"
     )
     trades: Mapped[list["Trade"]] = relationship("Trade", back_populates="asset")
+    aliases: Mapped[list["AssetAlias"]] = relationship(
+        "AssetAlias", back_populates="asset", cascade="all, delete-orphan"
+    )
