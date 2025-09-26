@@ -39,34 +39,35 @@ class AnalyticsService:
         if not trades:
             return PerformanceMetrics(stats=PerformanceStats())
 
-        total_pl = sum(trade.p_l for trade in trades if trade.p_l is not None)
+        net_pnl = sum(trade.p_l for trade in trades if trade.p_l is not None)
         trade_count = len(trades)
 
-        winning_trades = [t for t in trades if t.p_l is not None and t.p_l > 0]
-        losing_trades = [t for t in trades if t.p_l is not None and t.p_l < 0]
+        winning_trades_list = [t for t in trades if t.p_l is not None and t.p_l > 0]
+        losing_trades_list = [t for t in trades if t.p_l is not None and t.p_l < 0]
 
-        winning_trades_count = len(winning_trades)
-        losing_trades_count = len(losing_trades)
-        breakeven_trades_count = trade_count - winning_trades_count - losing_trades_count
+        winning_trades_count = len(winning_trades_list)
+        losing_trades_count = len(losing_trades_list)
 
         win_rate = (winning_trades_count / trade_count) * 100 if trade_count > 0 else 0
 
-        total_profit = sum(t.p_l for t in winning_trades)
-        total_loss = abs(sum(t.p_l for t in losing_trades))
+        gross_profit = sum(t.p_l for t in winning_trades_list)
+        gross_loss = abs(sum(t.p_l for t in losing_trades_list))
 
-        avg_win = total_profit / winning_trades_count if winning_trades_count > 0 else 0
-        avg_loss = total_loss / losing_trades_count if losing_trades_count > 0 else 0
+        avg_win = gross_profit / winning_trades_count if winning_trades_count > 0 else 0
+        avg_loss = gross_loss / losing_trades_count if losing_trades_count > 0 else 0
 
-        profit_factor = total_profit / total_loss if total_loss > 0 else None
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
         profit_factor_label = f"{profit_factor:.2f}" if profit_factor is not None else "∞"
 
         stats = PerformanceStats(
-            total_pl=total_pl,
+            net_pnl=net_pnl,
+            gross_profit=gross_profit,
+            gross_loss=gross_loss,
             win_rate=win_rate,
             trade_count=trade_count,
-            winning_trades_count=winning_trades_count,
-            losing_trades_count=losing_trades_count,
-            breakeven_trades_count=breakeven_trades_count,
+            winning_trades=winning_trades_count,
+            losing_trades=losing_trades_count,
+            breakeven_trades=trade_count - winning_trades_count - losing_trades_count,
             profit_factor=profit_factor,
             profit_factor_label=profit_factor_label,
             avg_win=avg_win,
@@ -113,14 +114,34 @@ class AnalyticsService:
         start_date: date,
         end_date: date
     ) -> ProcessedStats:
-        # Logica Mock per ora, per sbloccare il frontend
+        trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date)
+
+        weekly_totals = {}
+        if trades:
+            for trade in trades:
+                if trade.entry_timestamp:
+                    trade_date = trade.entry_timestamp.date()
+                    iso_year, iso_week, _ = trade_date.isocalendar()
+                    week_key = f"{iso_year}-W{iso_week:02d}"
+
+                    if week_key not in weekly_totals:
+                        weekly_totals[week_key] = {"total_pnl": 0.0, "trading_days": set()}
+
+                    weekly_totals[week_key]["total_pnl"] += trade.p_l or 0
+                    weekly_totals[week_key]["trading_days"].add(trade_date)
+
+        # Converti i set di giorni in conteggi
+        for week_key, data in weekly_totals.items():
+            weekly_totals[week_key]["trading_days"] = len(data["trading_days"])
+
+        # Per ora, le altre statistiche rimangono mockate per focalizzarci sul problema
         return ProcessedStats(
             by_strategy={},
             max_abs_pnl_by_strategy=0,
             by_day_of_week={},
             win_loss_days=WinLossDays(winningDays=0, losingDays=0, breakEvenDays=0),
             monthly_totals={},
-            weekly_totals={}
+            weekly_totals=weekly_totals
         )
 
     async def get_vantage_score(
@@ -146,8 +167,28 @@ class AnalyticsService:
         start_date: date,
         end_date: date
     ) -> EquityCurveData:
-        # Logica Mock
-        return EquityCurveData(labels=[], data=[])
+        """
+        Calcola i dati per la curva di equity (P&L cumulativo) in un dato periodo.
+        """
+        trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date)
+        if not trades:
+            return EquityCurveData(labels=[], data=[])
+
+        # Ordina i trade per data di chiusura (o apertura se non chiusi)
+        sorted_trades = sorted(trades, key=lambda t: t.exit_timestamp or t.entry_timestamp)
+
+        labels = []
+        cumulative_pnl_data = []
+        cumulative_pnl = 0
+
+        for trade in sorted_trades:
+            if trade.p_l is not None:
+                cumulative_pnl += trade.p_l
+                trade_date = (trade.exit_timestamp or trade.entry_timestamp).date()
+                labels.append(trade_date)
+                cumulative_pnl_data.append(cumulative_pnl)
+
+        return EquityCurveData(labels=labels, data=cumulative_pnl_data)
 
     async def get_trade_summary(
         self,
