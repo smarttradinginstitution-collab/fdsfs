@@ -73,7 +73,7 @@ class Trade(Base):
         TIMESTAMP(timezone=True), nullable=True
     )
     direction: Mapped[Optional[TradeDirection]] = mapped_column(
-        Enum(TradeDirection, name="trade_direction", schema="public"),
+        Enum(TradeDirection, name="direction", schema="public"),
         nullable=True,
     )
     status: Mapped[TradeStatus] = mapped_column(
