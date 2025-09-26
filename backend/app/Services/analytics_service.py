@@ -106,6 +106,10 @@ class AnalyticsService:
         drawdown = peak - cumulative_pnl
         max_drawdown_abs = np.max(drawdown) if len(drawdown) > 0 else 0
 
+        # Avg Realized R:R
+        r_multiples = [t.r_multiple for t in trades if t.r_multiple is not None]
+        avg_realized_rr = sum(r_multiples) / len(r_multiples) if r_multiples else 0.0
+
         # Sharpe Ratio (assuming risk-free rate is 0)
         pnl_std_dev = np.std(pnl_list) if len(pnl_list) > 1 else 0
         average_trade_pnl = net_pnl / trade_count
@@ -131,6 +135,7 @@ class AnalyticsService:
             average_hold_time=average_hold_time,
             expectancy=expectancy,
             average_trade_pnl=average_trade_pnl,
+            avg_realized_rr=avg_realized_rr,
             max_drawdown_abs=float(max_drawdown_abs),
             sharpe_ratio=sharpe_ratio
         )
@@ -280,46 +285,30 @@ class AnalyticsService:
                 max_drawdown_score=0, consistency_score=0
             )
 
-        # --- Funzioni di Normalizzazione (Scalano un valore in un punteggio 0-100) ---
         def normalize(value, min_val, max_val, invert=False):
             """Normalizza un valore in una scala 0-100, con protezione dalla divisione per zero."""
             value = max(min_val, min(value, max_val))
             denominator = max_val - min_val
             if denominator == 0:
-                return 0  # Ritorna 0 se il range è nullo per evitare errori
+                return 0
             score = ((value - min_val) / denominator) * 100
             return 100 - score if invert else score
 
-        # --- Calcolo dei Sub-Scores ---
-
-        # 1. Win Rate Score (Scala lineare 0-100%)
         win_rate_score = normalize(stats.win_rate, 0, 100)
-
-        # 2. Profit Factor Score (Valore ottimale intorno a 2-3, capped a 5)
         profit_factor_score = normalize(stats.profit_factor or 0, 0, 5)
-
-        # 3. Avg Win/Loss Ratio Score (Rapporto tra vincita media e perdita media)
-        avg_win_loss_ratio = (stats.avg_win / stats.avg_loss) if stats.avg_loss > 0 else 5.0 # Cap a 5 se non ci sono perdite
-        avg_win_loss_score = normalize(avg_win_loss_ratio, 0, 5) # Cap a 5
-
-        # 4. Recovery Factor Score (Net PnL / Max Drawdown)
+        avg_win_loss_ratio = (stats.avg_win / stats.avg_loss) if stats.avg_loss > 0 else 5.0
+        avg_win_loss_score = normalize(avg_win_loss_ratio, 0, 5)
         recovery_factor = (stats.net_pnl / stats.max_drawdown_abs) if stats.max_drawdown_abs > 0 else 0
-        recovery_factor_score = normalize(recovery_factor, 0, 10) # Cap a 10
+        recovery_factor_score = normalize(recovery_factor, 0, 10)
 
-        # 5. Max Drawdown Score (Invertito: meno drawdown è meglio. Normalizzato contro Net PnL)
-        # Se non c'è profitto, qualsiasi drawdown è "cattivo"
         if stats.net_pnl > 0:
             drawdown_ratio = (stats.max_drawdown_abs / stats.net_pnl) * 100
             max_drawdown_score = normalize(drawdown_ratio, 0, 100, invert=True)
         else:
-            max_drawdown_score = 0 # Penalità massima se il PnL è negativo
+            max_drawdown_score = 0
 
-        # 6. Consistency Score (Usiamo lo Sharpe Ratio come proxy per la consistenza)
-        # Lo Sharpe Ratio può essere negativo, normalizziamolo da -1 a 2.
         consistency_score = normalize(stats.sharpe_ratio, -1, 2)
 
-
-        # --- Calcolo del Punteggio Finale ---
         scores = [
             win_rate_score,
             profit_factor_score,

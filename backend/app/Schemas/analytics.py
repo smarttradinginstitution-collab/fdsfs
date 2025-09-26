@@ -23,10 +23,10 @@ class PerformanceStats(BaseModel):
     largest_loss: float = 0.0
     max_consecutive_wins: int = 0
     max_consecutive_losses: int = 0
-    avg_realized_rr: float = 0.0
     max_drawdown_abs: float = 0.0
     sharpe_ratio: float = 0.0
     average_hold_time: float = 0.0 # in minuti
+    avg_realized_rr: float = 0.0
 
 class PerformanceMetrics(BaseModel):
     stats: PerformanceStats
