@@ -6,9 +6,9 @@ class TradeDirection(str, enum.Enum):
     SHORT = "short"
 
 class TradeStatus(str, enum.Enum):
-    OPEN = "open"
-    CLOSED = "closed"
-    CANCELLED = "cancelled"
+    open = "open"
+    closed = "closed"
+    cancelled = "cancelled"
 
 class ImportSourceType(str, enum.Enum):
     CSV = "csv"
