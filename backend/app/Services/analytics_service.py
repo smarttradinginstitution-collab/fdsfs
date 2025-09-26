@@ -331,13 +331,13 @@ class AnalyticsService:
         final_score = sum(scores) / len(scores)
 
         return VantageScoreData(
-            vantage_score=final_score,
-            win_rate_score=win_rate_score,
-            profit_factor_score=profit_factor_score,
-            avg_win_loss_score=avg_win_loss_score,
-            recovery_factor_score=recovery_factor_score,
-            max_drawdown_score=max_drawdown_score,
-            consistency_score=consistency_score
+            vantage_score=int(final_score),
+            win_rate_score=int(win_rate_score),
+            profit_factor_score=int(profit_factor_score),
+            avg_win_loss_score=int(avg_win_loss_score),
+            recovery_factor_score=int(recovery_factor_score),
+            max_drawdown_score=int(max_drawdown_score),
+            consistency_score=int(consistency_score)
         )
 
     async def get_equity_curve(
