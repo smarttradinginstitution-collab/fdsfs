@@ -14,7 +14,7 @@ const importResult = ref(null);
 
 // This should be passed as a prop or fetched from a store
 const tradingAccountsStore = useTradingAccountsStore();
-const selectedAccountId = computed(() => tradingAccountsStore.selectedAccount?.id);
+const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
 
 
 const onFileChange = (event) => {
@@ -22,6 +22,11 @@ const onFileChange = (event) => {
 };
 
 const handleUpload = async () => {
+  console.log('Attempting to upload...', {
+    fileCount: files.value.length,
+    accountId: selectedAccountId.value,
+  });
+
   if (!files.value.length || !selectedAccountId.value) {
     uiStore.showNotification({ message: 'Please select a file and a trading account.', type: 'error' });
     return;
