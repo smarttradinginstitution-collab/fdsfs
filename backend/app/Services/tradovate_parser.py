@@ -27,11 +27,12 @@ class TradovateParser:
         trades = []
         content_as_string = file_content.decode('utf-8')
 
-        # Tradovate CSVs can have metadata in the first few lines. We need to find the header row.
         lines = content_as_string.strip().splitlines()
         header_row_index = -1
         for i, line in enumerate(lines):
-            if 'symbol' in line and 'pnl' in line and 'boughtTimestamp' in line:
+            line_lower = line.lower()
+            # Make header detection case-insensitive
+            if 'symbol' in line_lower and 'pnl' in line_lower and 'boughttimestamp' in line_lower:
                 header_row_index = i
                 break
 
@@ -42,11 +43,24 @@ class TradovateParser:
         csv_content = "\n".join(lines[header_row_index:])
         reader = csv.DictReader(io.StringIO(csv_content))
 
-        for row in reader:
+        for row_raw in reader:
             try:
+                # Normalize keys to be lowercase and stripped of whitespace for robust access
+                row = {k.lower().strip().replace(' ', ''): v for k, v in row_raw.items() if k}
+
+                # Use the fill IDs for a reliable deduplication key
+                buy_fill_id = row.get('buyfillid')
+                sell_fill_id = row.get('sellfillid')
+
+                if not buy_fill_id or not sell_fill_id:
+                    # If either fill ID is missing, we cannot reliably identify the trade.
+                    continue
+
+                dedupe_key_source = f"{buy_fill_id}{sell_fill_id}"
+
                 # Determine direction and assign timestamps and prices accordingly
-                bought_ts = self._parse_timestamp(row.get('boughtTimestamp'))
-                sold_ts = self._parse_timestamp(row.get('soldTimestamp'))
+                bought_ts = self._parse_timestamp(row.get('boughttimestamp'))
+                sold_ts = self._parse_timestamp(row.get('soldtimestamp'))
 
                 if not bought_ts or not sold_ts:
                     # If timestamps are missing, we can't process the trade
@@ -55,9 +69,9 @@ class TradovateParser:
                 direction = TradeDirection.LONG if bought_ts < sold_ts else TradeDirection.SHORT
 
                 entry_ts, exit_ts = (bought_ts, sold_ts) if direction == TradeDirection.LONG else (sold_ts, bought_ts)
-                entry_price_str, exit_price_str = (row.get('buyPrice'), row.get('sellPrice')) if direction == TradeDirection.LONG else (row.get('sellPrice'), row.get('buyPrice'))
+                entry_price_str, exit_price_str = (row.get('buyprice'), row.get('sellprice')) if direction == TradeDirection.LONG else (row.get('sellprice'), row.get('buyprice'))
 
-                dedupe_key_source = f"{row.get('symbol')}{entry_ts.isoformat()}{exit_ts.isoformat()}{row.get('qty')}{entry_price_str}{exit_price_str}"
+                gross_pnl = self._clean_pnl(row.get('pnl', '0'))
 
                 trade_data = {
                     "symbol_snapshot": row.get('symbol'),
@@ -66,10 +80,11 @@ class TradovateParser:
                     "exit_timestamp": exit_ts,
                     "entry_price": self._clean_price(entry_price_str),
                     "exit_price": self._clean_price(exit_price_str),
-                    "p_l": self._clean_pnl(row.get('pnl', '0')),
+                    "gross_p_l": gross_pnl,
+                    "p_l": gross_pnl, # Temporarily set Net P&L to Gross P&L
                     "position_size": float(row.get('qty', 0)),
                     "dedupe_key": hashlib.sha256(dedupe_key_source.encode()).hexdigest(),
-                    # These fields are not directly in the performance report
+                    # These fields are not directly in the performance report but required by our model
                     "status": "closed",
                     "fees": 0,
                     "commissions": 0,
