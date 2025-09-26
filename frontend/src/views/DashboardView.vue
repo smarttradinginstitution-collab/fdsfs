@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, watch, ref } from 'vue';
 import VantageScoreWidget from '../components/dashboard/widgets/charts/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
@@ -8,22 +8,50 @@ import RecentTradesTable from '../components/dashboard/widgets/Table/RecentTrade
 import DashboardZone from '../components/dashboard/zones/DashboardZone.vue';
 import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
+import BaseSelect from '../components/ui/BaseSelect.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import { useTradesStore } from '../stores/trades';
 import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
+import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
+import CreateAccountModal from '@/components/dashboard/modals/CreateAccountModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
+const tradingAccountsStore = useTradingAccountsStore();
+
+const isCreateAccountModalOpen = ref(false);
 
 const layout = computed(() => dashboardLayoutStore.layout);
+
+const accountOptions = computed(() =>
+  tradingAccountsStore.tradingAccounts.map(acc => ({
+    value: acc.id,
+    text: acc.label || 'Senza nome'
+  }))
+);
+
+function handleAccountChange(accountId) {
+  const account = tradingAccountsStore.tradingAccounts.find(acc => acc.id === accountId);
+  if (account) {
+    tradingAccountsStore.selectTradingAccount(account);
+  }
+}
+
+function openCreateAccountModal() {
+  isCreateAccountModalOpen.value = true;
+}
+
+function closeCreateAccountModal() {
+  isCreateAccountModalOpen.value = false;
+}
 
 const widgetComponents = {
   'vantageScore': VantageScoreWidget,
@@ -60,15 +88,24 @@ watch(
   { deep: true }
 );
 
+// Watch for changes in the selected trading account and refetch data
+watch(
+  () => tradingAccountsStore.selectedTradingAccount,
+  (newAccount, oldAccount) => {
+    if (newAccount && newAccount.id !== oldAccount?.id) {
+      tradesStore.fetchAllDataForDashboard();
+    }
+  },
+  { deep: true }
+);
+
 // Watch for the user finishing layout editing
 watch(
   () => uiStore.isLayoutEditing,
   (isEditing) => {
     if (isEditing) {
-      // User just entered edit mode, take a snapshot of the current layout
       dashboardLayoutStore.snapshotLayout();
     } else {
-      // User just finished editing, check if dirty and save
       if (dashboardLayoutStore.isDirty) {
         dashboardLayoutStore.saveLayout();
       }
@@ -80,6 +117,20 @@ watch(
 <template>
   <div class="dashboard-view" :class="{ 'is-editing': uiStore.isLayoutEditing }">
     <div class="action-bar">
+      <!-- Account Selector Dropdown -->
+      <BaseSelect
+        :model-value="tradingAccountsStore.selectedTradingAccount?.id"
+        @update:model-value="handleAccountChange"
+        :options="accountOptions"
+        placeholder="Seleziona un account"
+        class="account-selector"
+      />
+
+      <BaseButton variant="secondary" @click="openCreateAccountModal" data-testid="create-account-btn">
+        <PlusIcon />
+        <span class="button-text">Crea Account</span>
+      </BaseButton>
+
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>
@@ -125,6 +176,11 @@ watch(
     <!-- Modals -->
     <DailySummaryModal />
     <WeeklySummaryModal />
+    <CreateAccountModal
+      :is-open="isCreateAccountModalOpen"
+      @close="closeCreateAccountModal"
+      @account-created="closeCreateAccountModal"
+    />
 
     <!-- Stat Selector Panel -->
     <div
@@ -148,6 +204,11 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
+  align-items: center; /* Allinea verticalmente gli elementi */
+}
+.account-selector {
+  min-width: 200px; /* Dà al selettore una larghezza minima */
+  margin-right: auto; /* Spinge gli altri bottoni a destra */
 }
 .grid-zone-wrapper {
   /* Styles for the wrapper if needed */

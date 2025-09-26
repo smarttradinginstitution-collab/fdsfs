@@ -36,13 +36,11 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       const { data } = await apiClient.get('/api/v1/trading-accounts/');
       tradingAccounts.value = data;
 
-      // Se non c'è un account selezionato o quello selezionato non è più valido,
-      // seleziona il primo della lista.
+      // Verifica se l'account precedentemente selezionato è ancora valido.
+      // Se non lo è (o non ce n'era uno), pulisce la selezione senza sceglierne uno nuovo.
+      // Questo assicura che l'utente venga indirizzato alla pagina di selezione.
       const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
-      if (!isSelectedAccountValid && data.length > 0) {
-        selectTradingAccount(data[0]);
-      } else if (data.length === 0) {
-        // Se non ci sono conti, pulisci la selezione
+      if (!isSelectedAccountValid) {
         selectTradingAccount(null);
       }
 

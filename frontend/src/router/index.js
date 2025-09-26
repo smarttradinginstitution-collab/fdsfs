@@ -8,9 +8,14 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      // I'm not using MainLayout for the login page
       component: () => import('../views/LoginView.vue'),
       meta: { title: 'Login', public: true }
+    },
+    {
+      path: '/select-account',
+      name: 'select-account',
+      component: () => import('../views/SelectAccountView.vue'),
+      meta: { title: 'Select Account' }, // Protected by default
     },
     {
       path: '/',
@@ -47,34 +52,54 @@ const router = createRouter({
 
 // --- NAVIGATION GUARD ---
 import { useAuthStore } from '../stores/auth';
+import { useTradingAccountsStore } from '../stores/tradingAccounts';
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  const tradingAccountsStore = useTradingAccountsStore();
 
   // Initialize auth store to ensure token is loaded from localStorage
-  // if the app is reloaded.
-  if (!authStore.token) {
-    authStore.initAuth();
+  if (!authStore.token && localStorage.getItem('token')) {
+    await authStore.initAuth(); // Ensures we have user and generalAccount info
+  }
+
+  // If user is authenticated but the list of trading accounts is empty, fetch them.
+  // This handles page reloads on any protected route.
+  if (authStore.isAuthenticated && tradingAccountsStore.tradingAccounts.length === 0) {
+      await tradingAccountsStore.fetchTradingAccounts();
   }
 
   const isAuthenticated = authStore.isAuthenticated;
-
-  // A route is considered protected if it's not marked as public in its meta field.
+  // Re-evaluate after fetching, in case fetchTradingAccounts cleared the selection
+  const hasSelectedTradingAccount = !!tradingAccountsStore.selectedTradingAccount;
   const authRequired = !to.meta.public;
 
   if (authRequired && !isAuthenticated) {
-    // Se la pagina richiede autenticazione e l'utente non è loggato,
-    // reindirizza alla pagina di login.
+    // If a protected route is accessed without authentication (no token/GA), redirect to login.
     return next('/login');
   }
 
-  if (to.path === '/login' && isAuthenticated) {
-    // Se l'utente è già loggato e cerca di andare alla pagina di login,
-    // reindirizzalo alla dashboard.
-    return next('/');
+  if (isAuthenticated) {
+    // If the user is authenticated (has token and GA)
+    if (to.path === '/login') {
+      // and tries to access the login page, redirect them away.
+      return next(hasSelectedTradingAccount ? '/' : '/select-account');
+    }
+
+    // For any other protected route
+    if (authRequired) {
+      if (!hasSelectedTradingAccount && to.path !== '/select-account') {
+        // If the user hasn't selected a trading account yet, force them to the selection page.
+        return next('/select-account');
+      }
+      if (hasSelectedTradingAccount && to.path === '/select-account') {
+        // If user has an account and tries to go to selection, redirect to dashboard.
+        return next('/');
+      }
+    }
   }
 
-  // Altrimenti, procedi con la navigazione.
+  // Otherwise, allow navigation.
   next();
 });
 

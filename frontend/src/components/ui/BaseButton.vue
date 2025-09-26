@@ -25,7 +25,7 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 </script>
 
 <template>
-  <button :class="buttonClass">
+  <button :class="buttonClass" v-bind="$attrs">
     <slot></slot>
   </button>
 </template>
