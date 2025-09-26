@@ -5,12 +5,14 @@ from datetime import date
 
 # --- Schemi per /performance/metrics ---
 class PerformanceStats(BaseModel):
-    total_pl: float = 0.0
+    net_pnl: float = 0.0
+    gross_profit: float = 0.0
+    gross_loss: float = 0.0
     win_rate: float = 0.0
     trade_count: int = 0
-    winning_trades_count: int = 0
-    losing_trades_count: int = 0
-    breakeven_trades_count: int = 0
+    winning_trades: int = 0
+    losing_trades: int = 0
+    breakeven_trades: int = 0
     profit_factor: Optional[float] = None
     profit_factor_label: str = "N/A"
     avg_win: float = 0.0
