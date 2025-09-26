@@ -1,19 +1,48 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import NewTradeForm from '@/components/trades/NewTradeForm.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useUiStore } from '@/stores/uiStore';
+import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import UploadIcon from '@/components/icons/UploadIcon.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseSelect from '@/components/ui/BaseSelect.vue';
 import TradeImporter from '@/components/import/TradeImporter.vue';
 
 const router = useRouter();
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
+const tradingAccountsStore = useTradingAccountsStore();
 
 const choice = ref(null); // 'manual' or 'import'
+
+// --- Computed Properties ---
+const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
+
+const accountOptions = computed(() =>
+  tradingAccountsStore.tradingAccounts.map(acc => ({
+    value: acc.id,
+    text: acc.label,
+  }))
+);
+
+// --- Lifecycle Hooks ---
+onMounted(() => {
+  // Ensure trading accounts are loaded when the component is mounted
+  if (!tradingAccountsStore.hasTradingAccounts) {
+    tradingAccountsStore.fetchTradingAccounts();
+  }
+});
+
+// --- Methods ---
+const handleAccountSelection = (accountId) => {
+  const selectedAccount = tradingAccountsStore.tradingAccounts.find(
+    (acc) => acc.id === accountId
+  );
+  tradingAccountsStore.selectTradingAccount(selectedAccount);
+};
 
 const handleNewTrade = async (tradeData) => {
   try {
@@ -88,12 +117,32 @@ const handleNewTrade = async (tradeData) => {
         </BaseButton>
         <h1 class="title">Import from Broker</h1>
       </div>
-      <TradeImporter />
+
+      <!-- Step 1: Select Trading Account -->
+      <div class="import-step">
+        <h2 class="step-title">Step 1: Select a Trading Account</h2>
+        <p class="step-description">Choose the account you want to import trades into.</p>
+        <BaseSelect
+          label="Trading Account"
+          :model-value="selectedAccountId"
+          :options="accountOptions"
+          @update:modelValue="handleAccountSelection"
+        />
+      </div>
+
+      <!-- Step 2: Upload File (shown only after account selection) -->
+      <div v-if="selectedAccountId" class="import-step">
+        <h2 class="step-title">Step 2: Upload Your File</h2>
+        <p class="step-description">Select the 'Performance' CSV file exported from your broker.</p>
+        <TradeImporter />
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+@import '@/styles/mixins';
+
 .add-trade-container {
   padding: var(--semantic-size-inset-xl);
   width: 100%;
@@ -219,16 +268,40 @@ const handleNewTrade = async (tradeData) => {
     font-weight: 600;
 }
 
-.form-view {
-    /* Styles removed to integrate the form directly into the page */
-}
-
 .form-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    // justify-content: space-between;
+    gap: var(--semantic-size-stack-lg);
     margin-bottom: var(--semantic-size-stack-lg);
     padding-bottom: var(--semantic-size-stack-lg);
     border-bottom: 1px solid var(--semantic-color-border-default);
+}
+
+.back-button {
+    flex-shrink: 0;
+}
+
+.form-header .title {
+    flex-grow: 1;
+}
+
+.import-step {
+    background-color: var(--semantic-color-surface-secondary);
+    padding: var(--semantic-size-inset-lg);
+    border-radius: var(--semantic-border-radius-surface);
+    border: 1px solid var(--semantic-color-border-subtle);
+}
+
+.step-title {
+    font: var(--semantic-font-style-heading-h5);
+    color: var(--semantic-color-text-primary);
+}
+
+.step-description {
+    font: var(--semantic-font-style-body-sm);
+    color: var(--semantic-color-text-secondary);
+    margin-top: var(--semantic-size-stack-xs);
+    margin-bottom: var(--semantic-size-stack-lg);
 }
 </style>

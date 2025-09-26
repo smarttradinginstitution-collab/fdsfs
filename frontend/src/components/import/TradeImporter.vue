@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/auth'; // Assuming you have this
 import { useTradingAccountsStore } from '@/stores/tradingAccounts'; // Assuming you have this
@@ -14,7 +14,7 @@ const importResult = ref(null);
 
 // This should be passed as a prop or fetched from a store
 const tradingAccountsStore = useTradingAccountsStore();
-const selectedAccountId = ref(tradingAccountsStore.selectedAccount?.id);
+const selectedAccountId = computed(() => tradingAccountsStore.selectedAccount?.id);
 
 
 const onFileChange = (event) => {
