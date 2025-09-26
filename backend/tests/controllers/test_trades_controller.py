@@ -3,6 +3,7 @@
 import pytest
 from httpx import AsyncClient
 import uuid
+from datetime import date, timedelta
 
 pytestmark = pytest.mark.anyio
 
@@ -111,3 +112,31 @@ async def test_delete_trade(async_client: AsyncClient):
 
     get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
     assert get_response.status_code == 404
+
+async def test_list_trades_with_date_filter(async_client: AsyncClient):
+    """Testa che il filtro per data sull'endpoint di elenco dei trade funzioni correttamente."""
+    trading_account_id = await setup_trading_account(async_client)
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+
+    # Crea tre trade in giorni diversi
+    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol": "YESTERDAY_TRADE", "entry_timestamp": yesterday.isoformat()})
+    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol": "TODAY_TRADE", "entry_timestamp": today.isoformat()})
+    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol": "TOMORROW_TRADE", "entry_timestamp": tomorrow.isoformat()})
+
+    # 1. Testa con il filtro per data (solo oggi)
+    response_filtered = await async_client.get(
+        f"/api/v1/trades/by-trading-account/{trading_account_id}",
+        params={"start_date": today.isoformat(), "end_date": today.isoformat()}
+    )
+    assert response_filtered.status_code == 200
+    filtered_data = response_filtered.json()
+    assert len(filtered_data) == 1
+    assert filtered_data[0]["symbol"] == "TODAY_TRADE"
+
+    # 2. Testa senza filtro per data (tutti i trade)
+    response_unfiltered = await async_client.get(f"/api/v1/trades/by-trading-account/{trading_account_id}")
+    assert response_unfiltered.status_code == 200
+    unfiltered_data = response_unfiltered.json()
+    assert len(unfiltered_data) == 3

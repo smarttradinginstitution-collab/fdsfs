@@ -55,11 +55,16 @@ class TradeRepository:
         start_date: date,
         end_date: date
     ) -> List[Trade]:
-        """Recupera i trade filtrati per un intervallo di date."""
+        """Recupera i trade filtrati per un intervallo di date, includendo l'intero giorno di fine."""
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
         query = self._get_trade_query().where(
             Trade.trading_account_id == trading_account_id,
-            Trade.entry_timestamp >= start_date,
-            Trade.entry_timestamp <= end_date
+            Trade.entry_timestamp >= start_datetime,
+            Trade.entry_timestamp <= end_datetime
         )
         result = await self.db.execute(query)
         return result.unique().scalars().all()

@@ -36,6 +36,4 @@ class TradesPsychology(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade")
-    psychology_state: Mapped["PsychologyState"] = relationship("PsychologyState")
+    # Le relazioni qui sono state rimosse per risolvere l'ambiguità.

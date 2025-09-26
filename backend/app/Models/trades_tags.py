@@ -36,6 +36,6 @@ class TradesTags(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade")
-    tag: Mapped["Tag"] = relationship("Tag")
+    # Le relazioni qui sono state rimosse per risolvere l'ambiguità.
+    # L'associazione è gestita direttamente dalle relazioni nei modelli
+    # Trade e Tag attraverso l'argomento 'secondary'.

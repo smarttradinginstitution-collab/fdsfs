@@ -36,6 +36,4 @@ class TradesNewsImpacts(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relazioni
-    trade: Mapped["Trade"] = relationship("Trade")
-    news_impact: Mapped["NewsImpact"] = relationship("NewsImpact")
+    # Le relazioni qui sono state rimosse per risolvere l'ambiguità.

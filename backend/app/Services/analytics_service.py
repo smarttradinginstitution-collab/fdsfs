@@ -19,7 +19,8 @@ from app.Schemas.analytics import (
     EquityCurveData,
     StrategyPerformance,
     DayOfWeekPerformance,
-    WinLossDays
+    WinLossDays,
+    TradeSummary
 )
 
 class AnalyticsService:
@@ -147,3 +148,20 @@ class AnalyticsService:
     ) -> EquityCurveData:
         # Logica Mock
         return EquityCurveData(labels=[], data=[])
+
+    async def get_trade_summary(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date
+    ) -> TradeSummary:
+        """
+        Recupera un riepilogo completo dei trade per un dato periodo.
+        """
+        performance_metrics = await self.get_performance_metrics(trading_account_id, start_date, end_date)
+        equity_curve = await self.get_equity_curve(trading_account_id, start_date, end_date)
+
+        return TradeSummary(
+            stats=performance_metrics.stats,
+            cumulative_pnl_series=equity_curve
+        )

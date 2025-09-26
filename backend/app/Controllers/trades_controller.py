@@ -1,7 +1,7 @@
 # app/Controllers/trades_controller.py
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -13,7 +13,8 @@ from app.Schemas.analytics import (
     CalendarDayData,
     ProcessedStats,
     VantageScoreData,
-    EquityCurveData
+    EquityCurveData,
+    TradeSummary
 )
 from app.Router.auth import get_current_claims
 from datetime import date
@@ -73,6 +74,15 @@ async def get_equity_curve(
 ):
     return await service.get_equity_curve(trading_account_id, start_date, end_date)
 
+@router.get("/summary", response_model=TradeSummary)
+async def get_trade_summary(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_trade_summary(trading_account_id, start_date, end_date)
+
 
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)
 async def create_trade(
@@ -91,13 +101,20 @@ async def create_trade(
 @router.get("/by-trading-account/{trading_account_id}", response_model=List[TradeRead])
 async def get_trades_for_trading_account(
     trading_account_id: UUID,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
 ):
     """
-    Recupera tutti i trades per un specifico Trading Account.
+    Recupera i trades per un specifico Trading Account, con filtro opzionale per data.
     """
-    return await service.list_trades_by_trading_account(claims, trading_account_id)
+    return await service.list_trades_by_trading_account(
+        claims=claims,
+        trading_account_id=trading_account_id,
+        start_date=start_date,
+        end_date=end_date
+    )
 
 
 @router.get("/{trade_id}", response_model=TradeRead)
