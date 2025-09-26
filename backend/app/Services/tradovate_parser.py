@@ -31,7 +31,9 @@ class TradovateParser:
         lines = content_as_string.strip().splitlines()
         header_row_index = -1
         for i, line in enumerate(lines):
-            if 'symbol' in line and 'pnl' in line and 'boughtTimestamp' in line:
+            line_lower = line.lower()
+            # Make header detection case-insensitive
+            if 'symbol' in line_lower and 'pnl' in line_lower and 'boughttimestamp' in line_lower:
                 header_row_index = i
                 break
 
@@ -42,16 +44,20 @@ class TradovateParser:
         csv_content = "\n".join(lines[header_row_index:])
         reader = csv.DictReader(io.StringIO(csv_content))
 
-        for row in reader:
+        for row_raw in reader:
             try:
-                trade_id = row.get('tradeId')
+                # Normalize keys to be lowercase and stripped of whitespace for robust access
+                row = {k.lower().strip().replace(' ', ''): v for k, v in row_raw.items() if k}
+
+                # Use the cleaned key 'tradeid'
+                trade_id = row.get('tradeid')
                 if not trade_id:
                     # If there's no tradeId, we cannot reliably deduplicate.
                     continue
 
                 # Determine direction and assign timestamps and prices accordingly
-                bought_ts = self._parse_timestamp(row.get('boughtTimestamp'))
-                sold_ts = self._parse_timestamp(row.get('soldTimestamp'))
+                bought_ts = self._parse_timestamp(row.get('boughttimestamp'))
+                sold_ts = self._parse_timestamp(row.get('soldtimestamp'))
 
                 if not bought_ts or not sold_ts:
                     # If timestamps are missing, we can't process the trade
@@ -60,7 +66,7 @@ class TradovateParser:
                 direction = TradeDirection.LONG if bought_ts < sold_ts else TradeDirection.SHORT
 
                 entry_ts, exit_ts = (bought_ts, sold_ts) if direction == TradeDirection.LONG else (sold_ts, bought_ts)
-                entry_price_str, exit_price_str = (row.get('buyPrice'), row.get('sellPrice')) if direction == TradeDirection.LONG else (row.get('sellPrice'), row.get('buyPrice'))
+                entry_price_str, exit_price_str = (row.get('buyprice'), row.get('sellprice')) if direction == TradeDirection.LONG else (row.get('sellprice'), row.get('buyprice'))
 
                 gross_pnl = self._clean_pnl(row.get('pnl', '0'))
 
