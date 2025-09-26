@@ -329,7 +329,7 @@ export const useTradesStore = defineStore('trades', {
       if (!authStore.isAuthenticated) return;
 
       try {
-        const response = await apiClient.get(`/api/v1/playbooks/`);
+        const response = await apiClient.get(`/playbooks/`);
         this.playbooks = response.data;
       } catch (error) {
         console.error('Errore nel recupero dei playbook:', error);
@@ -380,7 +380,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/api/v1/trades/by-trading-account/${selectedAccount.id}`, { params });
+        const response = await apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params });
         this.trades = response.data.map(mapBackendTradeToFrontend);
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
@@ -424,8 +424,8 @@ export const useTradesStore = defineStore('trades', {
       try {
         // Eseguiamo le due chiamate in parallelo per efficienza
         const [summaryResponse, tradesResponse] = await Promise.all([
-          apiClient.get('/api/v1/trades/summary', { params }),
-          apiClient.get(`/api/v1/trades/by-trading-account/${selectedAccount.id}`, { params })
+          apiClient.get('/trades/summary', { params }),
+          apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params })
         ]);
 
         const fetchedTrades = tradesResponse.data.map(mapBackendTradeToFrontend);
@@ -463,7 +463,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/api/v1/trades/performance/metrics', { params });
+        const response = await apiClient.get('/trades/performance/metrics', { params });
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -490,7 +490,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/api/v1/trades/calendar/data', { params });
+        const response = await apiClient.get('/trades/calendar/data', { params });
         this.calendarData = response.data;
       } catch (error) {
         console.error('Error fetching calendar data:', error);
@@ -513,7 +513,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/api/v1/trades/vantage-score', { params });
+        const response = await apiClient.get('/trades/vantage-score', { params });
         this.vantageScore = response.data;
       } catch (error) {
         console.error('Error fetching vantage score:', error);
@@ -564,7 +564,7 @@ export const useTradesStore = defineStore('trades', {
           }
         });
 
-        const response = await apiClient.post('/api/v1/trades/', payload);
+        const response = await apiClient.post('/trades/', payload);
 
         const newTradeFromServer = mapBackendTradeToFrontend(response.data);
         this.trades.unshift(newTradeFromServer);
@@ -598,7 +598,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/api/v1/trades/processed-stats', { params });
+        const response = await apiClient.get('/trades/processed-stats', { params });
         this.processedStats = response.data;
       } catch (error) {
         console.error('Error fetching processed stats:', error);
@@ -622,7 +622,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/api/v1/trades/equity-curve', { params });
+        const response = await apiClient.get('/trades/equity-curve', { params });
         this.equityCurve = response.data;
       } catch (error) {
         console.error('Error fetching equity curve:', error);

@@ -33,7 +33,7 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
     isLoading.value = true;
     try {
-      const { data } = await apiClient.get('/api/v1/trading-accounts/');
+      const { data } = await apiClient.get('/trading-accounts/');
       tradingAccounts.value = data;
 
       // Verifica se l'account precedentemente selezionato è ancora valido.
@@ -64,7 +64,7 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
     isLoading.value = true;
     try {
-      const { data } = await apiClient.post('/api/v1/trading-accounts/', accountData);
+      const { data } = await apiClient.post('/trading-accounts/', accountData);
       tradingAccounts.value.push(data);
       // Opzionale: seleziona automaticamente il nuovo account creato
       selectTradingAccount(data);
