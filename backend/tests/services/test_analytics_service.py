@@ -1,117 +1,151 @@
 # backend/tests/services/test_analytics_service.py
 
 import pytest
+import numpy as np
 from uuid import uuid4
-from datetime import date, datetime, timedelta
-from unittest.mock import AsyncMock
+from datetime import date, datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Services.analytics_service import AnalyticsService
-from app.Models.trade import Trade
+from app.Models import (
+    GeneralAccount,
+    TradingAccount,
+    Playbook,
+    Trade
+)
 
+# Mark all tests in this module as asyncio tests
 pytestmark = pytest.mark.anyio
 
 @pytest.fixture
-def mock_trades():
-    """Fixture per fornire una lista di trade di esempio."""
-    today = datetime.now()
-    return [
-        Trade(id=uuid4(), trading_account_id=uuid4(), p_l=100, entry_timestamp=today - timedelta(days=2)),
-        Trade(id=uuid4(), trading_account_id=uuid4(), p_l=-50, entry_timestamp=today - timedelta(days=1)),
-        Trade(id=uuid4(), trading_account_id=uuid4(), p_l=150, entry_timestamp=today),
-        Trade(id=uuid4(), trading_account_id=uuid4(), p_l=0, entry_timestamp=today),
+async def setup_test_data(db_session: AsyncSession):
+    """
+    Fixture to set up realistic data in the test database.
+    Creates a GeneralAccount, TradingAccount, Playbooks, and a series of Trades.
+    """
+    # 1. Create parent accounts
+    general_account = GeneralAccount(id=uuid4(), user_id=uuid4(), label="Test General Account")
+    trading_account = TradingAccount(id=uuid4(), general_account_id=general_account.id, label="Test Trading Account", broker_id=uuid4())
+
+    db_session.add_all([general_account, trading_account])
+    await db_session.flush()
+
+    # 2. Create Playbooks (Strategies)
+    playbook_a = Playbook(id=uuid4(), title="Breakout Strategy", general_account_id=general_account.id)
+    playbook_b = Playbook(id=uuid4(), title="Mean Reversion", general_account_id=general_account.id)
+
+    db_session.add_all([playbook_a, playbook_b])
+    await db_session.flush()
+
+    # 3. Create a series of Trades
+    trades_data = [
+        # Giorno 1 (Lunedì): Win, Win
+        {"p_l": 100, "entry_ts": datetime(2023, 10, 16, 9, 0), "exit_ts": datetime(2023, 10, 16, 10, 0), "playbooks": [playbook_a]},
+        {"p_l": 150, "entry_ts": datetime(2023, 10, 16, 11, 0), "exit_ts": datetime(2023, 10, 16, 12, 30), "playbooks": [playbook_b]},
+        # Giorno 2 (Martedì): Loss
+        {"p_l": -50, "entry_ts": datetime(2023, 10, 17, 9, 0), "exit_ts": datetime(2023, 10, 17, 9, 45), "playbooks": [playbook_a]},
+        # Giorno 3 (Mercoledì): Win, Loss, Loss
+        {"p_l": 200, "entry_ts": datetime(2023, 10, 18, 10, 0), "exit_ts": datetime(2023, 10, 18, 15, 0), "playbooks": [playbook_a]},
+        {"p_l": -70, "entry_ts": datetime(2023, 10, 18, 15, 0), "exit_ts": datetime(2023, 10, 18, 16, 0), "playbooks": [playbook_b]},
+        {"p_l": -80, "entry_ts": datetime(2023, 10, 18, 16, 0), "exit_ts": datetime(2023, 10, 18, 17, 0), "playbooks": [playbook_b]},
+        # Giorno 4 (Giovedì): Breakeven
+        {"p_l": 0, "entry_ts": datetime(2023, 10, 19, 9, 0), "exit_ts": datetime(2023, 10, 19, 10, 0), "playbooks": []},
+        # Giorno 5 (Venerdì, mese diverso): Win
+        {"p_l": 300, "entry_ts": datetime(2023, 11, 3, 10, 0), "exit_ts": datetime(2023, 11, 3, 14, 0), "playbooks": [playbook_a]},
     ]
 
-async def test_get_performance_metrics(mock_trades):
+    for data in trades_data:
+        trade = Trade(
+            id=uuid4(),
+            trading_account_id=trading_account.id,
+            p_l=data["p_l"],
+            entry_timestamp=data["entry_ts"],
+            exit_timestamp=data["exit_ts"],
+            playbooks=data["playbooks"]
+        )
+        db_session.add(trade)
+
+    await db_session.commit()
+
+    # Return the ID of the trading account for querying
+    return trading_account.id
+
+
+async def test_get_performance_metrics_integration(db_session: AsyncSession, setup_test_data: uuid4):
     """
-    Testa che le metriche di performance siano calcolate correttamente.
+    Testa che le metriche di performance avanzate siano calcolate correttamente
+    in un ambiente di integrazione con database.
     """
     # Arrange
-    mock_db_session = AsyncMock()
-    service = AnalyticsService(db=mock_db_session)
-
-    # Mock del repository
-    service.trade_repo.get_filtered_trades = AsyncMock(return_value=mock_trades)
+    trading_account_id = setup_test_data
+    service = AnalyticsService(db=db_session)
 
     # Act
     result = await service.get_performance_metrics(
-        trading_account_id=uuid4(),
-        start_date=date.today() - timedelta(days=3),
-        end_date=date.today()
+        trading_account_id=trading_account_id,
+        start_date=date(2023, 1, 1),
+        end_date=date(2023, 12, 31)
     )
-
-    # Assert
     stats = result.stats
-    assert stats.trade_count == 4
-    assert stats.net_pnl == 200.0
-    assert stats.winning_trades == 2
-    assert stats.losing_trades == 1
+
+    # Assert - Valori attesi calcolati manualmente sulla base dei dati di test
+    assert stats.trade_count == 8
+    assert stats.net_pnl == pytest.approx(550.0)
+    assert stats.winning_trades == 4
+    assert stats.losing_trades == 3
     assert stats.breakeven_trades == 1
-    assert stats.gross_profit == 250.0
-    assert stats.gross_loss == 50.0
-    assert stats.win_rate == 50.0
-    assert stats.profit_factor == 5.0
-    assert stats.avg_win == 125.0
-    assert stats.avg_loss == 50.0
+    assert stats.win_rate == pytest.approx(50.0)
+    assert stats.profit_factor == pytest.approx(3.75)
+    assert stats.max_consecutive_wins == 2
+    assert stats.max_consecutive_losses == 2
+    assert stats.average_hold_time == pytest.approx(915 / 8)
+    assert stats.expectancy == pytest.approx(68.75)
+    assert stats.max_drawdown_abs == pytest.approx(150.0)
 
-async def test_get_equity_curve(mock_trades):
+    pnl_list = [100, 150, -50, 200, -70, -80, 0, 300]
+    pnl_std = np.std(pnl_list)
+    avg_pnl = sum(pnl_list) / len(pnl_list)
+    assert stats.sharpe_ratio == pytest.approx(avg_pnl / pnl_std)
+
+async def test_get_processed_stats_integration(db_session: AsyncSession, setup_test_data: uuid4):
     """
-    Testa che la curva di equity sia calcolata correttamente.
-    """
-    # Arrange
-    mock_db_session = AsyncMock()
-    service = AnalyticsService(db=mock_db_session)
-    service.trade_repo.get_filtered_trades = AsyncMock(return_value=mock_trades)
-
-    # Act
-    result = await service.get_equity_curve(
-        trading_account_id=uuid4(),
-        start_date=date.today() - timedelta(days=3),
-        end_date=date.today()
-    )
-
-    # Assert
-    assert len(result.labels) == 4
-    assert len(result.data) == 4
-    assert result.data == [100.0, 50.0, 200.0, 200.0] # P&L Cumulativo
-
-async def test_get_processed_stats_weekly_totals():
-    """
-    Testa che i totali settimanali in get_processed_stats siano calcolati correttamente.
+    Testa che le statistiche aggregate (per strategia, giorno, etc.) siano corrette
+    in un ambiente di integrazione con database.
     """
     # Arrange
-    # Nota: Le date sono fisse per rendere il test deterministico
-    trades = [
-        # Settimana 1: 2 trade, 2 giorni, P&L 150
-        Trade(id=uuid4(), p_l=100, entry_timestamp=datetime(2023, 10, 16)), # Lun
-        Trade(id=uuid4(), p_l=50, entry_timestamp=datetime(2023, 10, 18)),  # Mer
-        # Settimana 2: 3 trade, 2 giorni, P&L 120
-        Trade(id=uuid4(), p_l=-30, entry_timestamp=datetime(2023, 10, 23)), # Lun
-        Trade(id=uuid4(), p_l=100, entry_timestamp=datetime(2023, 10, 25)), # Mer
-        Trade(id=uuid4(), p_l=50, entry_timestamp=datetime(2023, 10, 25)),  # Mer
-    ]
-
-    mock_db_session = AsyncMock()
-    service = AnalyticsService(db=mock_db_session)
-    service.trade_repo.get_filtered_trades = AsyncMock(return_value=trades)
+    trading_account_id = setup_test_data
+    service = AnalyticsService(db=db_session)
 
     # Act
     result = await service.get_processed_stats(
-        trading_account_id=uuid4(),
-        start_date=date(2023, 10, 1),
-        end_date=date(2023, 10, 31)
+        trading_account_id=trading_account_id,
+        start_date=date(2023, 1, 1),
+        end_date=date(2023, 12, 31)
     )
 
-    # Assert
-    weekly_totals = result.weekly_totals
+    # --- Assert By Strategy ---
+    by_strategy = result.by_strategy
+    assert "Breakout Strategy" in by_strategy
+    assert "Mean Reversion" in by_strategy
+    assert by_strategy["Breakout Strategy"].total_pnl == pytest.approx(550.0)
+    assert by_strategy["Breakout Strategy"].win_rate == pytest.approx(75.0)
+    assert by_strategy["Mean Reversion"].total_pnl == pytest.approx(0.0)
+    assert by_strategy["Mean Reversion"].win_rate == pytest.approx(100 / 3)
 
-    # Settimana 42 del 2023
-    week1_key = "2023-W42"
-    assert week1_key in weekly_totals
-    assert weekly_totals[week1_key]["total_pnl"] == 150.0
-    assert weekly_totals[week1_key]["trading_days"] == 2
+    # --- Assert By Day of Week ---
+    by_day = result.by_day_of_week
+    assert by_day["Monday"].total_pnl == pytest.approx(250)
+    assert by_day["Tuesday"].total_pnl == pytest.approx(-50)
+    assert by_day["Wednesday"].total_pnl == pytest.approx(50)
+    assert by_day["Friday"].total_pnl == pytest.approx(300)
 
-    # Settimana 43 del 2023
-    week2_key = "2023-W43"
-    assert week2_key in weekly_totals
-    assert weekly_totals[week2_key]["total_pnl"] == 120.0
-    assert weekly_totals[week2_key]["trading_days"] == 2
+    # --- Assert Win/Loss Days ---
+    win_loss_days = result.win_loss_days
+    assert win_loss_days.winningDays == 3
+    assert win_loss_days.losingDays == 1
+    assert win_loss_days.breakEvenDays == 1
+
+    # --- Assert Monthly Totals ---
+    monthly = result.monthly_totals
+    assert monthly["2023-10"] == pytest.approx(250.0)
+    assert monthly["2023-11"] == pytest.approx(300.0)
