@@ -19,7 +19,8 @@ from app.Schemas.analytics import (
     EquityCurveData,
     StrategyPerformance,
     DayOfWeekPerformance,
-    WinLossDays
+    WinLossDays,
+    TradeSummary
 )
 
 class AnalyticsService:
