@@ -83,11 +83,11 @@ export const useTradesStore = defineStore('trades', {
       }
 
       const stats = this.dashboardStats.stats;
-      const totalPnl = parseFloat(stats.total_pl);
+      const totalPnl = parseFloat(stats.net_pnl); // Corretto da total_pl
       const tradeCount = stats.trade_count;
-      const winningTrades = stats.winning_trades_count;
-      const losingTrades = stats.losing_trades_count;
-      const breakEvenTrades = stats.breakeven_trades_count;
+      const winningTrades = stats.winning_trades; // Corretto da winning_trades_count
+      const losingTrades = stats.losing_trades; // Corretto da losing_trades_count
+      const breakEvenTrades = stats.breakeven_trades; // Corretto da breakeven_trades_count
       const winRate = parseFloat(stats.win_rate);
       const avgWin = parseFloat(stats.avg_win);
       const avgLoss = parseFloat(stats.avg_loss);
