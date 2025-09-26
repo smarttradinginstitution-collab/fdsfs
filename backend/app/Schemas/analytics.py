@@ -51,6 +51,10 @@ class EquityCurveData(BaseModel):
     labels: List[date]
     data: List[float]
 
+class TradeSummary(BaseModel):
+    stats: PerformanceStats
+    cumulative_pnl_series: EquityCurveData
+
 # --- Schemi per /processed-stats ---
 class StrategyPerformance(BaseModel):
     trade_count: int

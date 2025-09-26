@@ -13,7 +13,8 @@ from app.Schemas.analytics import (
     CalendarDayData,
     ProcessedStats,
     VantageScoreData,
-    EquityCurveData
+    EquityCurveData,
+    TradeSummary
 )
 from app.Router.auth import get_current_claims
 from datetime import date
@@ -72,6 +73,15 @@ async def get_equity_curve(
     service: AnalyticsService = Depends(),
 ):
     return await service.get_equity_curve(trading_account_id, start_date, end_date)
+
+@router.get("/summary", response_model=TradeSummary)
+async def get_trade_summary(
+    trading_account_id: UUID,
+    start_date: date,
+    end_date: date,
+    service: AnalyticsService = Depends(),
+):
+    return await service.get_trade_summary(trading_account_id, start_date, end_date)
 
 
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)
