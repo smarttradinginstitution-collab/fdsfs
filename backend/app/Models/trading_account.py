@@ -34,6 +34,8 @@ class TradingAccount(Base):
         nullable=False,
     )
     label: Mapped[Optional[str]] = mapped_column(String)
+    initial_balance: Mapped[Optional[float]] = mapped_column()
+    currency: Mapped[Optional[str]] = mapped_column(String(3))
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )

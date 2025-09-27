@@ -242,6 +242,17 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🏢 BROKERS (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import broker_controller
+
+router.include_router(
+    broker_controller.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📈 TRADING ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import trading_account_controller
