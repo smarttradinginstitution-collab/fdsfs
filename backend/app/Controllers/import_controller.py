@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Backgro
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
-from app.Models.enums import ImportSourceType
 from app.Router.auth import get_current_claims
 from app.Schemas.import_run import ImportRunRead
 from app.Services.import_service import ImportService
@@ -68,7 +67,7 @@ async def import_tradovate_trades(
         user_id=user_id,
         trading_account_id=trading_account_id,
         file_name=performance_report_file.filename,
-        source_type=ImportSourceType.TRADOVATE_CSV,
+        source_type="csv"
     )
 
     file_content = await performance_report_file.read()
@@ -86,35 +85,19 @@ async def import_tradovate_trades(
     "/mt5/{trading_account_id}",
     response_model=ImportRunRead,
     status_code=status.HTTP_202_ACCEPTED,
-    summary="Import trades from MT5 HTML files"
+    summary="Import trades from MT5 HTML file"
 )
 async def import_mt5_trades(
     trading_account_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-    files: List[UploadFile] = File(...),
+    file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     claims: dict = Depends(get_current_claims),
 ):
     """
-    Uploads an MT5 HTML file to import trades.
-
-    This endpoint accepts the file and queues it for processing in the background.
+    Uploads a single MT5 HTML file to import trades.
     """
-    if not files:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An HTML file is required for the import."
-        )
-
-    # MT5 import expects a single file
-    if len(files) > 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only one file can be uploaded at a time for MT5 import."
-        )
-
-    html_file = files[0]
-    if not html_file.filename.lower().endswith('.html'):
+    if not file.filename.lower().endswith('.html'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The uploaded file must be an HTML file."
@@ -126,11 +109,11 @@ async def import_mt5_trades(
     initial_import_run = await import_service.create_initial_import_run(
         user_id=user_id,
         trading_account_id=trading_account_id,
-        file_name=html_file.filename,
-        source_type=ImportSourceType.MT5_HTML,
+        file_name=file.filename,
+        source_type="html",
     )
 
-    file_content = await html_file.read()
+    file_content = await file.read()
 
     background_tasks.add_task(
         import_service.process_mt5_import,

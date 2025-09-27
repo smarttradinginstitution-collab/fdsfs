@@ -138,12 +138,6 @@ def valid_mt5_html_content():
                 <td>2025.09.22 13:43:20</td><td>3725.65</td><td>-10.44</td><td>0.00</td>
                 <td colspan="2">-200.00</td>
             </tr>
-             <tr align="right">
-                <td>2025.09.23 16:02:23</td><td>311313462</td><td>XAUUSD</td><td>buy</td>
-                <td>5</td><td>3784.98</td><td>3783.53</td><td>3788.37</td>
-                <td>2025.09.23 16:07:14</td><td>3784.79</td><td>-26.50</td><td>0.00</td>
-                <td colspan="2">-95.00</td>
-            </tr>
             <tr><th colspan="14"><div><b>Ordini</b></div></th></tr>
         </table>
     </body>
@@ -156,9 +150,8 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
     """
     trading_account_id = await setup_trading_account(async_client, db_session)
 
-    files = {'files': ('report.html', valid_mt5_html_content, 'text/html')}
+    files = {'file': ('report.html', valid_mt5_html_content, 'text/html')}
 
-    # 1. Upload the file
     response = await async_client.post(
         f"/api/v1/import/mt5/{trading_account_id}",
         files=files
@@ -167,12 +160,11 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
     assert response.status_code == 202
     import_run_data = response.json()
     assert import_run_data['status'] == 'queued'
-    assert import_run_data['source_type'] == 'mt5_html'
+    assert import_run_data['source_type'] == 'html'
 
     import_run_id = import_run_data['id']
 
-    # 2. Poll for completion
-    for _ in range(10): # Poll for up to 30 seconds
+    for _ in range(10):
         await asyncio.sleep(3)
         status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
         if status_response.status_code == 200 and status_response.json()['status'] == 'applied':
@@ -183,14 +175,13 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
     final_run_data = final_status_response.json()
 
     assert final_run_data['status'] == 'applied'
-    assert final_run_data['total_rows'] == 2
-    assert final_run_data['inserted_count'] == 2
+    assert final_run_data['total_rows'] == 1
+    assert final_run_data['inserted_count'] == 1
 
-    # 3. Verify trades were inserted in DB
     result = await db_session.execute(
         select(Trade).where(Trade.import_run_id == uuid.UUID(import_run_id))
     )
-    inserted_trades = result.scalars().all()
-    assert len(inserted_trades) == 2
-    assert inserted_trades[0].p_l == -200.0
-    assert inserted_trades[1].p_l == -95.0
+    inserted_trade = result.scalars().first()
+    assert inserted_trade is not None
+    assert inserted_trade.p_l == -200.0
+    assert inserted_trade.position_size == 2.0

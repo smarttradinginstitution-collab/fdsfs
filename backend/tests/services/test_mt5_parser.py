@@ -111,7 +111,7 @@ def test_parse_valid_mt5_report(parser, valid_mt5_html_report):
     assert trade1['position_id'] == '310402409'
     assert trade1['symbol'] == 'XAUUSD'
     assert trade1['trade_type'] == 'buy'
-    assert trade1['volume'] == 2.0
+    assert trade1['position_size'] == 2.0
     assert trade1['entry_price'] == 3726.65
     assert trade1['stop_loss'] == 3725.75
     assert trade1['take_profit'] == 3727.20
@@ -124,12 +124,12 @@ def test_parse_valid_mt5_report(parser, valid_mt5_html_report):
 
     # Test second trade
     trade2 = trades[1]
-    assert trade2['volume'] == 216.41
+    assert trade2['position_size'] == 216.41
     assert trade2['p_l'] == -6565.88
 
     # Test third trade (with empty S/L, T/P)
     trade3 = trades[2]
-    assert trade3['volume'] == 0.01
+    assert trade3['position_size'] == 0.01
     assert trade3['entry_price'] == 3784.83
     assert trade3['stop_loss'] is None
     assert trade3['take_profit'] is None

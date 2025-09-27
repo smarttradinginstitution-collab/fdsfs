@@ -36,26 +36,22 @@ const handleUpload = async () => {
   importResult.value = null;
 
   const firstFile = files.value[0];
-  const fileExtension = firstFile.name.split('.').pop().toLowerCase();
+  const isHtml = firstFile.name.toLowerCase().endsWith('.html');
 
   let endpoint = '';
   const formData = new FormData();
 
-  if (fileExtension === 'html') {
+  if (isHtml) {
     if (files.value.length > 1) {
-      uiStore.showNotification({ message: 'Only one HTML file can be uploaded at a time for MT5 import.', type: 'warning' });
+       uiStore.showNotification({ message: 'For MT5 import, only the first selected HTML file will be processed.', type: 'warning' });
     }
-    formData.append('files', firstFile);
+    formData.append('file', firstFile); // MT5 endpoint expects a single 'file'
     endpoint = `/import/mt5/${selectedAccountId.value}`;
-  } else if (fileExtension === 'csv') {
+  } else {
     files.value.forEach(file => {
-      formData.append('files', file);
+      formData.append('files', file); // Tradovate endpoint expects 'files'
     });
     endpoint = `/import/tradovate/${selectedAccountId.value}`;
-  } else {
-    uiStore.showNotification({ message: 'Unsupported file type. Please upload a .csv or .html file.', type: 'error' });
-    isUploading.value = false;
-    return;
   }
 
   try {

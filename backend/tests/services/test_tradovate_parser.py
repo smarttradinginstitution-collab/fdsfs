@@ -27,7 +27,7 @@ NQZ5,-2,0,0.25,4,3,1,24946.0,24933.75,$(245.00),09/23/2025 16:01:30,09/23/2025 1
     assert long_trade['entry_price'] == 24861.0
     assert long_trade['exit_price'] == 24878.0
     assert long_trade['p_l'] == 340.0
-    assert long_trade['volume'] == 1.0
+    assert long_trade['position_size'] == 1.0
     assert 'dedupe_key' in long_trade
 
     # Test the short trade
@@ -37,7 +37,7 @@ NQZ5,-2,0,0.25,4,3,1,24946.0,24933.75,$(245.00),09/23/2025 16:01:30,09/23/2025 1
     assert short_trade['entry_price'] == 24933.75
     assert short_trade['exit_price'] == 24946.0
     assert short_trade['p_l'] == -245.0
-    assert short_trade['volume'] == 1.0
+    assert short_trade['position_size'] == 1.0
     assert 'dedupe_key' in short_trade
 
 def test_parser_handles_missing_header(parser):
@@ -47,10 +47,10 @@ def test_parser_handles_missing_header(parser):
 
 def test_parser_skips_malformed_rows(parser):
     csv_content = """
-symbol,pnl,boughtTimestamp,soldTimestamp,buyPrice,sellPrice,qty,buyFillId,sellFillId
-VALID,100,09/22/2025 15:50:36,09/22/2025 15:54:58,10,20,1,1,2
-INVALID_DATE,200,not-a-date,09/22/2025 15:54:58,10,20,1,3,4
-VALID2,300,09/23/2025 15:50:36,09/23/2025 15:54:58,10,20,1,5,6
+symbol,pnl,boughtTimestamp,soldTimestamp,buyPrice,sellPrice,qty
+VALID,100,09/22/2025 15:50:36,09/22/2025 15:54:58,10,20,1
+INVALID_DATE,200,not-a-date,09/22/2025 15:54:58,10,20,1
+VALID2,300,09/23/2025 15:50:36,09/23/2025 15:54:58,10,20,1
     """.strip().encode('utf-8')
 
     result = parser.parse_performance_report(csv_content)
