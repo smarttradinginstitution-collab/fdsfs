@@ -11,6 +11,7 @@ import HamburgerButton from '../ui/HamburgerButton.vue';
 import DropdownButton from '../ui/DropdownButton.vue';
 import StrategyFilter from '../dashboard/filters/StrategyFilter.vue';
 import DateRangeFilter from '../dashboard/filters/DateRangeFilter.vue';
+import AccountSelector from '../ui/AccountSelector.vue';
 import { useUiStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/auth';
 import BaseButton from '../ui/BaseButton.vue';
@@ -104,6 +105,8 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
           </template>
         </DropdownButton>
       </div>
+
+      <AccountSelector />
     </div>
   </header>
 </template>

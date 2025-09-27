@@ -8,6 +8,9 @@ from pydantic import BaseModel
 
 from pydantic import condecimal
 
+# Importa lo schema del broker per l'inclusione
+from .broker import BrokerRead
+
 class TradingAccountRead(BaseModel):
     id: UUID
     general_account_id: UUID
@@ -16,6 +19,9 @@ class TradingAccountRead(BaseModel):
     created_at: datetime
     initial_balance: Optional[condecimal(max_digits=10, decimal_places=2)] = None
     currency: Optional[str] = None
+
+    # Aggiungi il campo per i dati del broker
+    broker: Optional[BrokerRead] = None
 
     class Config:
         from_attributes = True
