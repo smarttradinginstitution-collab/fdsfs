@@ -1,7 +1,7 @@
 <template>
   <div class="add-account-container">
     <!-- Step 1: Welcome Message -->
-    <div v-if="currentStep === 'welcome'" class="welcome-card">
+    <div v-if="currentStep === 'welcome'" class="step-card">
       <div class="welcome-message">
         <h1>Welcome to TradeVantage!</h1>
         <p>Take control of your trading journey. Let's start by adding your first account.</p>
@@ -13,20 +13,21 @@
     </div>
 
     <!-- Step 2: Broker Selection -->
-    <div v-if="currentStep === 'select-broker'" class="broker-selection-card">
+    <div v-if="currentStep === 'select-broker'" class="step-card">
       <h2>Choose your Broker</h2>
       <input type="text" v-model="searchQuery" placeholder="Search for a broker..." class="search-bar" />
-      <div class="broker-list">
-        <div v-for="broker in filteredBrokers" :key="broker.id" class="broker-item" @click="selectBroker(broker)">
-          <span class="broker-icon">🏢</span> <!-- Placeholder Icon -->
+      <p v-if="!searchQuery" class="popular-brokers-label">Or Select From The Popular Brokers</p>
+      <div class="broker-grid">
+        <div v-for="broker in displayBrokers" :key="broker.id" class="broker-item" @click="selectBroker(broker)">
+          <span class="broker-icon">🏢</span>
           <span class="broker-name">{{ broker.name }}</span>
         </div>
-        <p v-if="filteredBrokers.length === 0">No brokers found.</p>
       </div>
+      <p v-if="displayBrokers.length === 0" class="no-results-message">No brokers found.</p>
     </div>
 
     <!-- Step 3: Account Details Form -->
-    <div v-if="currentStep === 'account-details'" class="account-details-card">
+    <div v-if="currentStep === 'account-details'" class="step-card">
       <h2>Account Details</h2>
       <p class="broker-info">
         <strong>Broker:</strong> {{ selectedBroker.name }}
@@ -96,10 +97,12 @@ onMounted(async () => {
 });
 
 // --- Computed Properties ---
-const filteredBrokers = computed(() => {
+const displayBrokers = computed(() => {
   if (!searchQuery.value) {
-    return brokers.value;
+    // If no search query, show the top 8 as "popular brokers"
+    return brokers.value.slice(0, 8);
   }
+  // Otherwise, filter the entire list based on the search query
   return brokers.value.filter(broker =>
     broker.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
@@ -142,99 +145,158 @@ async function submitAccount() {
 </script>
 
 <style scoped>
+/* --- Generic Layout --- */
 .add-account-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
   padding: 2rem;
 }
 
-.welcome-card, .broker-selection-card, .account-details-card {
+.step-card {
   width: 100%;
   max-width: 500px;
-  background-color: white;
-  padding: 2rem 2.5rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--semantic-color-surface-primary);
+  padding: 2.5rem;
+  border-radius: var(--semantic-border-radius-lg);
+  border: 1px solid var(--semantic-color-border-subtle);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
   text-align: center;
 }
 
+/* --- Welcome Step --- */
 .welcome-message {
   margin-bottom: 2rem;
 }
 
 .welcome-message h1 {
   font-size: 2.2rem;
-  color: #333;
+  color: var(--semantic-color-text-primary);
 }
 
 .welcome-message p {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--semantic-color-text-secondary);
 }
 
 .add-account-card {
   padding: 1.5rem;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--semantic-color-surface-secondary);
 }
 
 .add-account-card:hover {
-  border-color: #007bff;
-  background-color: #f8f9fa;
+  border-color: var(--semantic-color-border-focus);
+  background-color: var(--semantic-color-interactive-secondary-hover);
+  transform: translateY(-2px);
 }
 
+.add-account-card h2 {
+  color: var(--semantic-color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.add-account-card p {
+  color: var(--semantic-color-text-secondary);
+}
+
+
+/* --- Broker Selection Step --- */
 .search-bar {
   width: 100%;
-  padding: 0.8rem;
+  padding: 0.8rem 1rem;
   margin-bottom: 1.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-md);
+  color: var(--semantic-color-text-primary);
   font-size: 1rem;
+  transition: all 0.2s ease-in-out;
 }
 
-.broker-list {
-  max-height: 250px;
+.search-bar:focus {
+  outline: none;
+  border-color: var(--semantic-color-border-focus);
+  box-shadow: var(--semantic-effect-shadow-focus-ring);
+}
+
+.popular-brokers-label {
+  color: var(--semantic-color-text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.broker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  max-height: 300px;
   overflow-y: auto;
+  padding-right: 0.5rem; /* For scrollbar spacing */
 }
 
 .broker-item {
   display: flex;
   align-items: center;
-  padding: 0.8rem;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-md);
   cursor: pointer;
-  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
 }
 
 .broker-item:hover {
-  background-color: #f0f2f5;
+  border-color: var(--semantic-color-border-focus);
+  background-color: var(--semantic-color-interactive-secondary-hover);
+  transform: translateY(-2px);
 }
 
 .broker-icon {
-  font-size: 1.5rem;
-  margin-right: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  font-size: 1.25rem;
+  background-color: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-full);
+  color: var(--semantic-color-text-secondary);
 }
 
 .broker-name {
-  font-size: 1.1rem;
+  color: var(--semantic-color-text-primary);
+  font-weight: 500;
 }
 
+.no-results-message {
+  color: var(--semantic-color-text-secondary);
+  margin-top: 1.5rem;
+}
+
+/* --- Account Details Step --- */
 .broker-info {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
+  color: var(--semantic-color-text-secondary);
 }
 
 .change-broker-btn {
   background: none;
   border: none;
-  color: #007bff;
+  color: var(--semantic-color-text-interactive);
   cursor: pointer;
   margin-left: 0.5rem;
   font-size: 0.9rem;
+}
+
+.change-broker-btn:hover {
+  text-decoration: underline;
 }
 
 .form-group {
@@ -245,40 +307,52 @@ async function submitAccount() {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--semantic-color-text-secondary);
 }
 
 .form-group input, .form-group select {
   width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 0.8rem 1rem;
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-md);
+  color: var(--semantic-color-text-primary);
   font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--semantic-color-border-focus);
+  box-shadow: var(--semantic-effect-shadow-focus-ring);
 }
 
 .submit-btn {
   width: 100%;
   padding: 0.9rem;
-  background-color: #007bff;
-  color: white;
+  background-color: var(--semantic-color-interactive-primary-default);
+  color: var(--semantic-color-text-on-brand);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--semantic-border-radius-md);
   font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .submit-btn:disabled {
-  background-color: #aaa;
+  background-color: var(--semantic-color-surface-disabled);
+  color: var(--semantic-color-text-disabled);
   cursor: not-allowed;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--semantic-color-interactive-primary-hover);
 }
 
 .error-message {
-  color: #dc3545;
+  color: var(--semantic-color-feedback-negative-text);
   margin-top: 1rem;
 }
 </style>
