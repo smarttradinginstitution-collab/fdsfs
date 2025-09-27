@@ -56,7 +56,7 @@ async def import_trades_from_file(
             detail=f"Unsupported file type: {file.content_type or file.filename}. Please upload a Tradovate CSV or an MT5 HTML file."
         )
 
-    if source_type == ImportSourceType.TRADOVATE_CSV and "performance" not in file.filename.lower():
+    if source_type == ImportSourceType.CSV and "performance" not in file.filename.lower():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="For Tradovate imports, a 'Performance' report CSV file is required."
