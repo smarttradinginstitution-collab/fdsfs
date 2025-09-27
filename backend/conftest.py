@@ -2,7 +2,7 @@
 
 import pytest
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict
 from httpx import AsyncClient
 import uuid
 
@@ -47,6 +47,12 @@ def compile_citext_sqlite(element, compiler, **kw):
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
+@pytest.fixture(scope="function")
+def mock_user_claims() -> Dict[str, str]:
+    """Provides mock user claims for an authenticated user for a single test function."""
+    return {"sub": str(uuid.uuid4()), "email": f"testuser_{uuid.uuid4()}@example.com"}
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for each test session."""
@@ -79,12 +85,13 @@ async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 @pytest.fixture
-async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def async_client(db_session: AsyncSession, mock_user_claims: Dict[str, str]) -> AsyncGenerator[AsyncClient, None]:
     """
     Fixture for an async client, overriding db and auth dependencies.
+    It uses the mock_user_claims fixture to simulate an authenticated user.
     """
-    mock_user_id = uuid.uuid4()
-    mock_user_email = "test@example.com"
+    mock_user_id = uuid.UUID(mock_user_claims["sub"])
+    mock_user_email = mock_user_claims["email"]
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
@@ -100,7 +107,7 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
             )
             db_session.add(user)
             await db_session.commit()
-        return {"sub": str(mock_user_id), "email": mock_user_email}
+        return mock_user_claims
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_claims] = override_get_current_claims

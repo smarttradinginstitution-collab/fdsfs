@@ -11,17 +11,21 @@ from app.Models.import_run import ImportRun
 from app.Models.trade import Trade
 from app.Models.enums import ImportSourceType
 from app.Services.tradovate_parser import TradovateParser
+from app.Services.mt5_parser import Mt5Parser
 from app.Services.trade_service import TradeService
 
 
 class ImportService:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
-        self.parser = TradovateParser()
         self.trade_service = TradeService(db_session)
+        self._parsers = {
+            ImportSourceType.TRADOVATE_CSV: TradovateParser(),
+            ImportSourceType.MT5_HTML: Mt5Parser(),
+        }
 
     async def create_initial_import_run(
-        self, user_id: uuid.UUID, trading_account_id: uuid.UUID, file_name: str
+        self, user_id: uuid.UUID, trading_account_id: uuid.UUID, file_name: str, source_type: ImportSourceType
     ) -> ImportRun:
         """
         Creates an initial record for an import run with 'queued' status.
@@ -29,7 +33,7 @@ class ImportService:
         new_run = ImportRun(
             user_id=user_id,
             trading_account_id=trading_account_id,
-            source_type="csv",
+            source_type=source_type,
             file_name=file_name,
             status="queued",
         )
@@ -38,25 +42,34 @@ class ImportService:
         await self.db.refresh(new_run)
         return new_run
 
-    async def process_tradovate_import(
+    async def process_import(
         self, import_run_id: uuid.UUID, file_content: bytes
     ):
         """
-        The main background task for processing a Tradovate CSV file.
+        The main background task for processing an imported file.
         """
         # 1. Update status to 'parsing'
         import_run = await self.get_import_run(import_run_id)
         if not import_run:
-            return  # Or log an error
+            # TODO: Log this properly
+            print(f"Import run with ID {import_run_id} not found.")
+            return
 
         import_run.status = "parsing"
         file_hash = hashlib.sha256(file_content).hexdigest()
         import_run.file_sha256 = file_hash
         await self.db.commit()
 
-        # 2. Parse the file
+        # 2. Select parser and parse the file
+        parser = self._parsers.get(import_run.source_type)
+        if not parser:
+            import_run.status = "failed"
+            import_run.error_message = f"Unsupported source type: {import_run.source_type}"
+            await self.db.commit()
+            return
+
         try:
-            parsed_trades = self.parser.parse_performance_report(file_content)
+            parsed_trades = parser.parse_performance_report(file_content)
             import_run.total_rows = len(parsed_trades)
             import_run.status = "applying"
             await self.db.commit()

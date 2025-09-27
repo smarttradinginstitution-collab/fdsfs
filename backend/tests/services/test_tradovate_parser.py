@@ -46,11 +46,12 @@ def test_parser_handles_missing_header(parser):
         parser.parse_performance_report(csv_content)
 
 def test_parser_skips_malformed_rows(parser):
+    # Added buyfillid and sellfillid to the header and rows
     csv_content = """
-symbol,pnl,boughtTimestamp,soldTimestamp,buyPrice,sellPrice,qty
-VALID,100,09/22/2025 15:50:36,09/22/2025 15:54:58,10,20,1
-INVALID_DATE,200,not-a-date,09/22/2025 15:54:58,10,20,1
-VALID2,300,09/23/2025 15:50:36,09/23/2025 15:54:58,10,20,1
+symbol,pnl,boughtTimestamp,soldTimestamp,buyPrice,sellPrice,qty,buyfillid,sellfillid
+VALID,100,09/22/2025 15:50:36,09/22/2025 15:54:58,10,20,1,1,2
+INVALID_DATE,200,not-a-date,09/22/2025 15:54:58,10,20,1,3,4
+VALID2,300,09/23/2025 15:50:36,09/23/2025 15:54:58,10,20,1,5,6
     """.strip().encode('utf-8')
 
     result = parser.parse_performance_report(csv_content)

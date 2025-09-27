@@ -23,7 +23,12 @@ async def setup_trading_account(client: AsyncClient, db_session: AsyncSession) -
     broker_id = await setup_broker(db_session)
     response = await client.post(
         "/api/v1/trading-accounts/",
-        json={"label": "Test Trading Account", "broker_id": broker_id}
+        json={
+            "label": "Test Trading Account",
+            "broker_id": broker_id,
+            "initial_balance": 100000.0,
+            "currency": "USD"
+        }
     )
     assert response.status_code == 201, response.text
     return response.json()["id"]
@@ -32,7 +37,7 @@ async def test_create_trade_fails_without_trading_account(async_client: AsyncCli
     """Testa che la creazione di un trade fallisca se il trading account non esiste."""
     response = await async_client.post(
         "/api/v1/trades/",
-        json={"trading_account_id": str(uuid.uuid4()), "symbol_snapshot": "EURUSD", "status": "closed", "direction": "long"}
+        json={"trading_account_id": str(uuid.uuid4()), "symbol_snapshot": "EURUSD", "status": "closed", "direction": "LONG"}
     )
     assert response.status_code == 404
 
@@ -43,7 +48,7 @@ async def test_create_and_get_trade(async_client: AsyncClient, db_session: Async
     trade_payload = {
         "trading_account_id": trading_account_id,
         "symbol_snapshot": "BTCUSD",
-        "direction": "long",
+        "direction": "LONG",
         "status": "closed",
         "entry_price": 50000,
         "exit_price": 51000,
@@ -78,7 +83,7 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
         "trading_account_id": trading_account_id,
         "symbol_snapshot": "ETHUSD",
         "status": "closed",
-        "direction": "short",
+        "direction": "SHORT",
         "tags": ["Good Entry", "News-Driven"],
         "mistakes": ["FOMO"],
         "playbooks": ["Opening Range Breakout"]
@@ -102,7 +107,7 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
         "symbol_snapshot": "SOLUSD",
         "tags": ["Good Entry"],
         "status": "closed",
-        "direction": "long"
+        "direction": "LONG"
     }
     create_response_2 = await async_client.post("/api/v1/trades/", json=trade_payload_2)
     assert create_response_2.status_code == 201
@@ -118,7 +123,7 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
 async def test_delete_trade(async_client: AsyncClient, db_session: AsyncSession):
     """Testa l'eliminazione di un trade."""
     trading_account_id = await setup_trading_account(async_client, db_session)
-    trade_payload = {"trading_account_id": trading_account_id, "symbol_snapshot": "ADAUSD", "status": "closed", "direction": "long"}
+    trade_payload = {"trading_account_id": trading_account_id, "symbol_snapshot": "ADAUSD", "status": "closed", "direction": "LONG"}
     create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
     assert create_response.status_code == 201
     trade_id = create_response.json()["id"]
@@ -137,9 +142,9 @@ async def test_list_trades_with_date_filter(async_client: AsyncClient, db_sessio
     tomorrow = today + timedelta(days=1)
 
     # Crea tre trade in giorni diversi
-    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol_snapshot": "YESTERDAY_TRADE", "entry_timestamp": yesterday.isoformat(), "status": "closed", "direction": "long"})
-    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol_snapshot": "TODAY_TRADE", "entry_timestamp": today.isoformat(), "status": "closed", "direction": "long"})
-    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol_snapshot": "TOMORROW_TRADE", "entry_timestamp": tomorrow.isoformat(), "status": "closed", "direction": "long"})
+    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol_snapshot": "YESTERDAY_TRADE", "entry_timestamp": yesterday.isoformat(), "status": "closed", "direction": "LONG"})
+    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol_snapshot": "TODAY_TRADE", "entry_timestamp": today.isoformat(), "status": "closed", "direction": "LONG"})
+    await async_client.post("/api/v1/trades/", json={"trading_account_id": trading_account_id, "symbol_snapshot": "TOMORROW_TRADE", "entry_timestamp": tomorrow.isoformat(), "status": "closed", "direction": "LONG"})
 
     # 1. Testa con il filtro per data (solo oggi)
     response_filtered = await async_client.get(
