@@ -271,6 +271,7 @@ async function submitAccount() {
   max-height: 300px;
   overflow-y: auto;
   padding-right: 0.5rem; /* For scrollbar spacing */
+  padding-top: 2px; /* To prevent hover animation from being clipped */
 }
 
 @media (min-width: 640px) { /* Corresponds to 'sm' breakpoint */
