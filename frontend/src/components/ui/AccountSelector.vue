@@ -70,6 +70,11 @@ function selectAccount(account) {
   height: 100%;
 }
 
+.account-selector :deep(.trigger-icon svg) {
+  width: 20px;
+  height: 20px;
+}
+
 .account-selector :deep(.dropdown-trigger[disabled]) {
   cursor: not-allowed;
   opacity: 0.6;
@@ -83,7 +88,7 @@ function selectAccount(account) {
 }
 
 .account-name {
-  font: var(--semantic-font-style-label-md);
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-primary);
 }
 
