@@ -15,11 +15,17 @@ const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
 // This computed property checks if the route is marked as public.
 // Public routes (like login) will not use the main app layout.
 const isPublicRoute = computed(() => route.meta.public);
+const isFullScreenRoute = computed(() => route.meta.fullScreen);
 </script>
 
 <template>
   <!-- Render only the component for public routes -->
   <RouterView v-if="isPublicRoute" />
+
+  <!-- Render a dedicated full-screen layout -->
+  <div v-else-if="isFullScreenRoute" class="fullscreen-layout">
+    <RouterView />
+  </div>
 
   <!-- Render the full layout for protected routes -->
   <div v-else class="app-layout">
@@ -48,6 +54,11 @@ const isPublicRoute = computed(() => route.meta.public);
 </template>
 
 <style lang="scss">
+.fullscreen-layout {
+  min-height: 100vh;
+  background-color: var(--semantic-color-surface-page);
+}
+
 .app-layout {
   display: flex;
   position: relative;

@@ -16,7 +16,7 @@ const router = createRouter({
       path: '/add-account',
       name: 'add-account',
       component: AddAccountView,
-      meta: { title: 'Add Account' },
+      meta: { title: 'Add Account', fullScreen: true },
     },
     {
       path: '/select-account',
