@@ -1,61 +1,64 @@
 <template>
   <div class="add-account-container">
-    <!-- Step 1: Welcome Message -->
-    <div v-if="currentStep === 'welcome'" class="step-card">
-      <div class="welcome-message">
-        <h1>Welcome to TradeVantage!</h1>
-        <p>Take control of your trading journey. Let's start by adding your first account.</p>
-      </div>
-      <div class="add-account-card" @click="startProcess">
-        <h2>Add your Account</h2>
-        <p>Click here to choose your broker and set up your account.</p>
-      </div>
-    </div>
+    <header class="add-account-header">
+      <h1>{{ currentStepTitle }}</h1>
+    </header>
 
-    <!-- Step 2: Broker Selection -->
-    <div v-if="currentStep === 'select-broker'" class="step-card">
-      <h2>Choose your Broker</h2>
-      <input type="text" v-model="searchQuery" placeholder="Search for a broker..." class="search-bar" />
-      <p v-if="!searchQuery" class="popular-brokers-label">Or Select From The Popular Brokers</p>
-      <div class="broker-grid">
-        <div v-for="broker in displayBrokers" :key="broker.id" class="broker-item" @click="selectBroker(broker)">
-          <span class="broker-icon">🏢</span>
-          <span class="broker-name">{{ broker.name }}</span>
+    <main class="step-content">
+      <!-- Step 1: Welcome Message -->
+      <div v-if="currentStep === 'welcome'" class="step-card">
+        <div class="welcome-message">
+          <p>Take control of your trading journey. Let's start by adding your first account.</p>
+        </div>
+        <div class="add-account-card" @click="startProcess">
+          <h2>Add your Account</h2>
+          <p>Click here to choose your broker and set up your account.</p>
         </div>
       </div>
-      <p v-if="displayBrokers.length === 0" class="no-results-message">No brokers found.</p>
-    </div>
 
-    <!-- Step 3: Account Details Form -->
-    <div v-if="currentStep === 'account-details'" class="step-card">
-      <h2>Account Details</h2>
-      <p class="broker-info">
-        <strong>Broker:</strong> {{ selectedBroker.name }}
-        <button @click="resetStep" class="change-broker-btn">Change</button>
-      </p>
-      <form @submit.prevent="submitAccount">
-        <div class="form-group">
-          <label for="account-label">Account Name</label>
-          <input id="account-label" v-model="form.label" type="text" required placeholder="e.g., My Prop Firm Account" />
+      <!-- Step 2: Broker Selection -->
+      <div v-if="currentStep === 'select-broker'" class="step-card">
+        <input type="text" v-model="searchQuery" placeholder="Search for a broker..." class="search-bar" />
+        <p v-if="!searchQuery" class="popular-brokers-label">Or Select From The Popular Brokers</p>
+        <div class="broker-grid">
+          <div v-for="broker in displayBrokers" :key="broker.id" class="broker-item" @click="selectBroker(broker)">
+            <span class="broker-icon">🏢</span>
+            <span class="broker-name">{{ broker.name }}</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="initial-balance">Initial Balance</label>
-          <input id="initial-balance" v-model="form.initial_balance" type="number" step="0.01" required placeholder="e.g., 10000" />
-        </div>
-        <div class="form-group">
-          <label for="currency">Currency</label>
-          <select id="currency" v-model="form.currency" required>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-          </select>
-        </div>
-        <button type="submit" class="submit-btn" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Creating...' : 'Create Account' }}
-        </button>
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-      </form>
-    </div>
+        <p v-if="displayBrokers.length === 0" class="no-results-message">No brokers found.</p>
+      </div>
+
+      <!-- Step 3: Account Details Form -->
+      <div v-if="currentStep === 'account-details'" class="step-card">
+        <p class="broker-info">
+          <strong>Broker:</strong> {{ selectedBroker.name }}
+          <button @click="resetStep" class="change-broker-btn">Change</button>
+        </p>
+        <form @submit.prevent="submitAccount">
+          <div class="form-group">
+            <label for="account-label">Account Name</label>
+            <input id="account-label" v-model="form.label" type="text" required placeholder="e.g., My Prop Firm Account" />
+          </div>
+          <div class="form-group">
+            <label for="initial-balance">Initial Balance</label>
+            <input id="initial-balance" v-model="form.initial_balance" type="number" step="0.01" required placeholder="e.g., 10000" />
+          </div>
+          <div class="form-group">
+            <label for="currency">Currency</label>
+            <select id="currency" v-model="form.currency" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+          <button type="submit" class="submit-btn" :disabled="isSubmitting">
+            {{ isSubmitting ? 'Creating...' : 'Create Account' }}
+          </button>
+          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        </form>
+      </div>
+    </main>
   </div>
 </template>
 
@@ -97,6 +100,19 @@ onMounted(async () => {
 });
 
 // --- Computed Properties ---
+const currentStepTitle = computed(() => {
+  switch (currentStep.value) {
+    case 'welcome':
+      return 'Welcome to TradeVantage';
+    case 'select-broker':
+      return 'Choose your Broker';
+    case 'account-details':
+      return 'Account Details';
+    default:
+      return 'Add Account';
+  }
+});
+
 const displayBrokers = computed(() => {
   if (!searchQuery.value) {
     // If no search query, show the top 8 as "popular brokers"
@@ -148,20 +164,38 @@ async function submitAccount() {
 /* --- Generic Layout --- */
 .add-account-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: 2rem;
+  /* padding removed to allow header to touch the top */
+  gap: 2rem;
+}
+
+.add-account-header {
+  width: 100%;
+  text-align: center;
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--semantic-color-border-subtle);
+  background: linear-gradient(180deg, var(--semantic-color-surface-primary) 0%, var(--semantic-color-surface-page) 100%);
+}
+
+.add-account-header h1 {
+  font-size: 2.25rem; /* Corresponds to heading-2xl */
+  font-weight: 700; /* bold */
+  color: var(--semantic-color-text-primary);
+  line-height: 1.2;
+}
+
+.step-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 2rem; /* Add horizontal padding to content area */
 }
 
 .step-card {
   width: 100%;
   max-width: 500px;
-  background-color: var(--semantic-color-surface-primary);
-  padding: 2.5rem;
-  border-radius: var(--semantic-border-radius-lg);
-  border: 1px solid var(--semantic-color-border-subtle);
-  box-shadow: var(--semantic-effect-shadow-elevation-low);
   text-align: center;
 }
 
@@ -183,7 +217,7 @@ async function submitAccount() {
 .add-account-card {
   padding: 1.5rem;
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   background-color: var(--semantic-color-surface-secondary);
@@ -212,7 +246,7 @@ async function submitAccount() {
   margin-bottom: 1.5rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   color: var(--semantic-color-text-primary);
   font-size: 1rem;
   transition: all 0.2s ease-in-out;
@@ -232,11 +266,18 @@ async function submitAccount() {
 
 .broker-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr; /* Mobile-first: single column */
   gap: 1rem;
   max-height: 300px;
   overflow-y: auto;
   padding-right: 0.5rem; /* For scrollbar spacing */
+  padding-top: 2px; /* To prevent hover animation from being clipped */
+}
+
+@media (min-width: 640px) { /* Corresponds to 'sm' breakpoint */
+  .broker-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .broker-item {
@@ -246,7 +287,7 @@ async function submitAccount() {
   padding: 1rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
@@ -316,7 +357,7 @@ async function submitAccount() {
   padding: 0.8rem 1rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   color: var(--semantic-color-text-primary);
   font-size: 1rem;
   transition: all 0.2s ease-in-out;
@@ -334,7 +375,7 @@ async function submitAccount() {
   background-color: var(--semantic-color-interactive-primary-default);
   color: var(--semantic-color-text-on-brand);
   border: none;
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
