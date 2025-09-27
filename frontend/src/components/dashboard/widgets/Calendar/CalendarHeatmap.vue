@@ -185,7 +185,7 @@ const handleWeekClick = (weekIndex) => {
 
 .day-number {
   position: absolute;
-  top: 0.1rem;
+  top: 0.05rem;
   right: 0.35rem;
   font: var(--semantic-font-style-calendar-day-number);
   color: var(--semantic-color-text-secondary);
