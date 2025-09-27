@@ -68,6 +68,8 @@ function selectAccount(account) {
 .account-selector :deep(.dropdown-trigger) {
   gap: var(--semantic-size-stack-xs);
   height: 100%;
+  padding-top: var(--base-size-spacing-1);
+  padding-bottom: var(--base-size-spacing-1);
 }
 
 .account-selector :deep(.trigger-icon svg) {
@@ -87,13 +89,20 @@ function selectAccount(account) {
   line-height: 1.2;
 }
 
+.account-name, .account-item-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px; /* Adjust as needed */
+}
+
 .account-name {
-  font: var(--semantic-font-style-label-sm);
+  font: var(--semantic-font-style-label-xs);
   color: var(--semantic-color-text-primary);
 }
 
 .broker-name {
-  font: var(--semantic-font-style-body-xs);
+  font: var(--semantic-font-style-body-xxs);
   color: var(--semantic-color-text-secondary);
 }
 
