@@ -1,33 +1,26 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useUiStore } from '@/stores/uiStore';
-import { useAuthStore } from '@/stores/auth'; // Assuming you have this
-import { useTradingAccountsStore } from '@/stores/tradingAccounts'; // Assuming you have this
-import api from '@/services/api'; // Your API service
+import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import api from '@/services/api';
 import BaseButton from '@/components/ui/BaseButton.vue';
 
 const uiStore = useUiStore();
-const files = ref([]);
+const file = ref(null); // Changed to handle a single file
 const uploadProgress = ref(0);
 const isUploading = ref(false);
 const importResult = ref(null);
 
-// This should be passed as a prop or fetched from a store
 const tradingAccountsStore = useTradingAccountsStore();
 const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
 
-
 const onFileChange = (event) => {
-  files.value = [...event.target.files];
+  // Handle a single file selection
+  file.value = event.target.files[0];
 };
 
 const handleUpload = async () => {
-  console.log('Attempting to upload...', {
-    fileCount: files.value.length,
-    accountId: selectedAccountId.value,
-  });
-
-  if (!files.value.length || !selectedAccountId.value) {
+  if (!file.value || !selectedAccountId.value) {
     uiStore.showNotification({ message: 'Please select a file and a trading account.', type: 'error' });
     return;
   }
@@ -36,12 +29,12 @@ const handleUpload = async () => {
   importResult.value = null;
 
   const formData = new FormData();
-  files.value.forEach(file => {
-    formData.append('files', file);
-  });
+  // The backend now expects a single file with the key 'file'
+  formData.append('file', file.value);
 
   try {
-    const response = await api.post(`/import/tradovate/${selectedAccountId.value}`, formData, {
+    // Use the new, generic file import endpoint
+    const response = await api.post(`/import/file/${selectedAccountId.value}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -51,7 +44,7 @@ const handleUpload = async () => {
     });
 
     uiStore.showNotification({ message: 'File uploaded! Processing has started in the background.', type: 'info' });
-    importResult.value = response.data; // Initial import run data
+    importResult.value = response.data;
     pollImportStatus(response.data.id);
 
   } catch (error) {
@@ -83,25 +76,24 @@ const pollImportStatus = (importRunId) => {
   <div class="trade-importer">
     <div class="file-input-section">
       <label for="file-upload" class="file-upload-label">
-        <span>Select up to 5 files</span>
+        <span>Select a Tradovate CSV or MT5 HTML file</span>
       </label>
       <input
         id="file-upload"
         type="file"
-        multiple
         @change="onFileChange"
-        accept=".csv"
+        accept=".csv,.html,.htm"
         :disabled="isUploading"
       />
-      <div v-if="files.length" class="file-list">
-        <p>Selected files:</p>
+      <div v-if="file" class="file-list">
+        <p>Selected file:</p>
         <ul>
-          <li v-for="file in files" :key="file.name">{{ file.name }}</li>
+          <li>{{ file.name }}</li>
         </ul>
       </div>
     </div>
 
-    <BaseButton @click="handleUpload" :disabled="isUploading || !files.length">
+    <BaseButton @click="handleUpload" :disabled="isUploading || !file">
       {{ isUploading ? 'Uploading...' : 'Upload and Import' }}
     </BaseButton>
 
