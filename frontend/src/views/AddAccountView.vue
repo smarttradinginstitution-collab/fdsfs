@@ -167,13 +167,12 @@ async function submitAccount() {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: 2rem;
+  /* padding removed to allow header to touch the top */
   gap: 2rem;
 }
 
 .add-account-header {
   width: 100%;
-  max-width: 700px;
   text-align: center;
   padding: 2rem 0;
   border-bottom: 1px solid var(--semantic-color-border-subtle);
@@ -191,6 +190,7 @@ async function submitAccount() {
   width: 100%;
   display: flex;
   justify-content: center;
+  padding: 0 2rem; /* Add horizontal padding to content area */
 }
 
 .step-card {
