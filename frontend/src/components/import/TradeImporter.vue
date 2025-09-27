@@ -35,13 +35,31 @@ const handleUpload = async () => {
   isUploading.value = true;
   importResult.value = null;
 
+  const firstFile = files.value[0];
+  const fileExtension = firstFile.name.split('.').pop().toLowerCase();
+
+  let endpoint = '';
   const formData = new FormData();
-  files.value.forEach(file => {
-    formData.append('files', file);
-  });
+
+  if (fileExtension === 'html') {
+    if (files.value.length > 1) {
+      uiStore.showNotification({ message: 'Only one HTML file can be uploaded at a time for MT5 import.', type: 'warning' });
+    }
+    formData.append('files', firstFile);
+    endpoint = `/import/mt5/${selectedAccountId.value}`;
+  } else if (fileExtension === 'csv') {
+    files.value.forEach(file => {
+      formData.append('files', file);
+    });
+    endpoint = `/import/tradovate/${selectedAccountId.value}`;
+  } else {
+    uiStore.showNotification({ message: 'Unsupported file type. Please upload a .csv or .html file.', type: 'error' });
+    isUploading.value = false;
+    return;
+  }
 
   try {
-    const response = await api.post(`/import/tradovate/${selectedAccountId.value}`, formData, {
+    const response = await api.post(endpoint, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -83,14 +101,14 @@ const pollImportStatus = (importRunId) => {
   <div class="trade-importer">
     <div class="file-input-section">
       <label for="file-upload" class="file-upload-label">
-        <span>Select up to 5 files</span>
+        <span>Select import file(s)</span>
       </label>
       <input
         id="file-upload"
         type="file"
         multiple
         @change="onFileChange"
-        accept=".csv"
+        accept=".csv,.html"
         :disabled="isUploading"
       />
       <div v-if="files.length" class="file-list">

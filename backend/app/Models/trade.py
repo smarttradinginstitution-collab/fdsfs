@@ -67,7 +67,7 @@ class Trade(Base):
     r_multiple: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     entry_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     exit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    position_size: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    volume: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     entry_timestamp: Mapped[Optional[Any]] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )

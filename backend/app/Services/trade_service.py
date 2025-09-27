@@ -27,21 +27,21 @@ class TradeService:
         pnl: Optional[float],
         entry_price: Optional[float],
         stop_loss_price: Optional[float],
-        position_size: Optional[float]
+        volume: Optional[float]
     ) -> Optional[float]:
         """
         Calculates the R-multiple for a trade.
         Returns the R-multiple as a float, or None if calculation is not possible.
         """
-        if pnl is None or entry_price is None or stop_loss_price is None or position_size is None:
+        if pnl is None or entry_price is None or stop_loss_price is None or volume is None:
             return None
 
         # Avoid calculation if essential values are zero
-        if position_size == 0 or entry_price == stop_loss_price:
+        if volume == 0 or entry_price == stop_loss_price:
             return None
 
         risk_per_share = abs(entry_price - stop_loss_price)
-        total_risk = risk_per_share * position_size
+        total_risk = risk_per_share * volume
 
         if total_risk == 0:
             return None # Avoid division by zero
@@ -115,7 +115,7 @@ class TradeService:
             pnl=trade_data.p_l,
             entry_price=trade_data.entry_price,
             stop_loss_price=trade_data.stop_loss_price,
-            position_size=trade_data.position_size
+            volume=trade_data.volume
         )
 
 
@@ -181,12 +181,12 @@ class TradeService:
             setattr(db_trade, key, value)
 
         # Recalculate R-Multiple if relevant fields are updated
-        if any(field in update_dict for field in ['p_l', 'entry_price', 'stop_loss_price', 'position_size']):
+        if any(field in update_dict for field in ['p_l', 'entry_price', 'stop_loss_price', 'volume']):
             db_trade.r_multiple = self._calculate_r_multiple(
                 pnl=db_trade.p_l,
                 entry_price=db_trade.entry_price,
                 stop_loss_price=db_trade.stop_loss_price,
-                position_size=db_trade.position_size
+                volume=db_trade.volume
             )
 
         if update_data.tag_ids is not None:

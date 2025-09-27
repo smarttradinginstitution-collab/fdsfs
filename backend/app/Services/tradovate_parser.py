@@ -82,7 +82,7 @@ class TradovateParser:
                     "exit_price": self._clean_price(exit_price_str),
                     "gross_p_l": gross_pnl,
                     "p_l": gross_pnl, # Temporarily set Net P&L to Gross P&L
-                    "position_size": float(row.get('qty', 0)),
+                    "volume": float(row.get('qty', 0)),
                     "dedupe_key": hashlib.sha256(dedupe_key_source.encode()).hexdigest(),
                     # These fields are not directly in the performance report but required by our model
                     "status": "closed",

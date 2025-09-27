@@ -11,17 +11,17 @@ from app.Models.import_run import ImportRun
 from app.Models.trade import Trade
 from app.Models.enums import ImportSourceType
 from app.Services.tradovate_parser import TradovateParser
+from app.Services.mt5_parser import Mt5Parser
 from app.Services.trade_service import TradeService
 
 
 class ImportService:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
-        self.parser = TradovateParser()
         self.trade_service = TradeService(db_session)
 
     async def create_initial_import_run(
-        self, user_id: uuid.UUID, trading_account_id: uuid.UUID, file_name: str
+        self, user_id: uuid.UUID, trading_account_id: uuid.UUID, file_name: str, source_type: ImportSourceType
     ) -> ImportRun:
         """
         Creates an initial record for an import run with 'queued' status.
@@ -29,7 +29,7 @@ class ImportService:
         new_run = ImportRun(
             user_id=user_id,
             trading_account_id=trading_account_id,
-            source_type="csv",
+            source_type=source_type,
             file_name=file_name,
             status="queued",
         )
@@ -44,10 +44,28 @@ class ImportService:
         """
         The main background task for processing a Tradovate CSV file.
         """
+        tradovate_parser = TradovateParser()
+        await self._process_import(import_run_id, file_content, tradovate_parser, "Failed to parse Tradovate file")
+
+    async def process_mt5_import(
+        self, import_run_id: uuid.UUID, file_content: bytes
+    ):
+        """
+        The main background task for processing an MT5 HTML file.
+        """
+        mt5_parser = Mt5Parser()
+        await self._process_import(import_run_id, file_content, mt5_parser, "Failed to parse MT5 file")
+
+    async def _process_import(
+        self, import_run_id: uuid.UUID, file_content: bytes, parser, error_message_prefix: str
+    ):
+        """
+        A generic method to process an import file using a given parser.
+        """
         # 1. Update status to 'parsing'
         import_run = await self.get_import_run(import_run_id)
         if not import_run:
-            return  # Or log an error
+            return
 
         import_run.status = "parsing"
         file_hash = hashlib.sha256(file_content).hexdigest()
@@ -56,13 +74,13 @@ class ImportService:
 
         # 2. Parse the file
         try:
-            parsed_trades = self.parser.parse_performance_report(file_content)
+            parsed_trades = parser.parse_performance_report(file_content)
             import_run.total_rows = len(parsed_trades)
             import_run.status = "applying"
             await self.db.commit()
         except Exception as e:
             import_run.status = "failed"
-            import_run.error_message = f"Failed to parse file: {e}"
+            import_run.error_message = f"{error_message_prefix}: {e}"
             await self.db.commit()
             return
 
@@ -79,7 +97,7 @@ class ImportService:
                 pnl=trade_data.get('p_l'),
                 entry_price=trade_data.get('entry_price'),
                 stop_loss_price=trade_data.get('stop_loss_price'),
-                position_size=trade_data.get('position_size')
+                volume=trade_data.get('volume')
             )
 
             # Database-agnostic "read-then-write" for UPSERT logic
@@ -102,7 +120,7 @@ class ImportService:
                 self.db.add(new_trade)
                 inserted_count += 1
 
-        await self.db.flush() # Flush to ensure all operations are pending before commit
+        await self.db.flush()
 
         # 4. Finalize the import run
         import_run.status = "applied"
