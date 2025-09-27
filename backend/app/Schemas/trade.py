@@ -52,7 +52,7 @@ class TradeBase(BaseModel):
     notes: Optional[str] = None
     entry_price: Optional[float] = None
     exit_price: Optional[float] = None
-    volume: Optional[float] = None
+    position_size: Optional[float] = None
     lowest_price_during_trade: Optional[float] = None
     highest_price_during_trade: Optional[float] = None
     direction: Optional[str] = None
@@ -106,7 +106,7 @@ class TradeFilters(BaseModel):
     direction: Optional[str] = None
     playbook_ids: Optional[List[UUID]] = None
     days_of_week: Optional[List[int]] = None
-    min_volume: Optional[float] = None
-    max_volume: Optional[float] = None
+    min_size: Optional[float] = None
+    max_size: Optional[float] = None
     tag_ids: Optional[List[UUID]] = None
     mistake_ids: Optional[List[UUID]] = None
