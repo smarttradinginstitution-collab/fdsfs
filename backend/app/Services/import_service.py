@@ -11,12 +11,14 @@ from app.Models.import_run import ImportRun
 from app.Models.trade import Trade
 from app.Models.enums import ImportSourceType
 from app.Services.tradovate_parser import TradovateParser
+from app.Services.trade_service import TradeService
 
 
 class ImportService:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
         self.parser = TradovateParser()
+        self.trade_service = TradeService(db_session)
 
     async def create_initial_import_run(
         self, user_id: uuid.UUID, trading_account_id: uuid.UUID, file_name: str
@@ -71,6 +73,14 @@ class ImportService:
         for trade_data in parsed_trades:
             trade_data["trading_account_id"] = import_run.trading_account_id
             trade_data["import_run_id"] = import_run.id
+
+            # Calculate R-multiple before saving
+            trade_data['r_multiple'] = self.trade_service._calculate_r_multiple(
+                pnl=trade_data.get('p_l'),
+                entry_price=trade_data.get('entry_price'),
+                stop_loss_price=trade_data.get('stop_loss_price'),
+                position_size=trade_data.get('position_size')
+            )
 
             # Database-agnostic "read-then-write" for UPSERT logic
             dedupe_key = trade_data.get("dedupe_key")

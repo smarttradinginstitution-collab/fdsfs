@@ -22,6 +22,32 @@ from app.Models.trade import Trade
 
 
 class TradeService:
+    def _calculate_r_multiple(
+        self,
+        pnl: Optional[float],
+        entry_price: Optional[float],
+        stop_loss_price: Optional[float],
+        position_size: Optional[float]
+    ) -> Optional[float]:
+        """
+        Calculates the R-multiple for a trade.
+        Returns the R-multiple as a float, or None if calculation is not possible.
+        """
+        if pnl is None or entry_price is None or stop_loss_price is None or position_size is None:
+            return None
+
+        # Avoid calculation if essential values are zero
+        if position_size == 0 or entry_price == stop_loss_price:
+            return None
+
+        risk_per_share = abs(entry_price - stop_loss_price)
+        total_risk = risk_per_share * position_size
+
+        if total_risk == 0:
+            return None # Avoid division by zero
+
+        return pnl / total_risk
+
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.repo = TradeRepository(db)
@@ -84,6 +110,15 @@ class TradeService:
         if 'symbol' in trade_dict:
             trade_dict['symbol_snapshot'] = trade_dict.pop('symbol')
 
+        # Calculate R-Multiple
+        trade_dict['r_multiple'] = self._calculate_r_multiple(
+            pnl=trade_data.p_l,
+            entry_price=trade_data.entry_price,
+            stop_loss_price=trade_data.stop_loss_price,
+            position_size=trade_data.position_size
+        )
+
+
         db_trade = Trade(**trade_dict)
 
         # Recupera o crea le entità correlate
@@ -144,6 +179,15 @@ class TradeService:
         update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
+
+        # Recalculate R-Multiple if relevant fields are updated
+        if any(field in update_dict for field in ['p_l', 'entry_price', 'stop_loss_price', 'position_size']):
+            db_trade.r_multiple = self._calculate_r_multiple(
+                pnl=db_trade.p_l,
+                entry_price=db_trade.entry_price,
+                stop_loss_price=db_trade.stop_loss_price,
+                position_size=db_trade.position_size
+            )
 
         if update_data.tag_ids is not None:
             db_trade.tags = await self._get_related_entities(general_account_id, Tag, update_data.tag_ids)
