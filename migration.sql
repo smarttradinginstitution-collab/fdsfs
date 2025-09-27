@@ -62,10 +62,4 @@ BEGIN
     END IF;
 END $$;
 
--- Step 6: Add new values to the 'import_source_type' enum.
--- This ensures the database accepts the new source types from the application.
--- The 'IF NOT EXISTS' clause prevents errors if the script is run more than once.
-ALTER TYPE public.import_source_type ADD VALUE IF NOT EXISTS 'TRADOVATE_CSV';
-ALTER TYPE public.import_source_type ADD VALUE IF NOT EXISTS 'MT5_HTML';
-
 -- End of script.

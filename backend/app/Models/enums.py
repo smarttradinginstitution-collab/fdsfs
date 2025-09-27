@@ -11,8 +11,6 @@ class TradeStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 class ImportSourceType(str, enum.Enum):
-    TRADOVATE_CSV = "TRADOVATE_CSV"
-    MT5_HTML = "MT5_HTML"
     CSV = "csv"
     HTML = "html"
     XML = "xml"

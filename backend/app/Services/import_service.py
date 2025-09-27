@@ -20,8 +20,8 @@ class ImportService:
         self.db = db_session
         self.trade_service = TradeService(db_session)
         self._parsers = {
-            ImportSourceType.TRADOVATE_CSV: TradovateParser(),
-            ImportSourceType.MT5_HTML: Mt5Parser(),
+            ImportSourceType.CSV: TradovateParser(),
+            ImportSourceType.HTML: Mt5Parser(),
         }
 
     async def create_initial_import_run(

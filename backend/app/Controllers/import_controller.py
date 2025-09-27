@@ -46,9 +46,9 @@ async def import_trades_from_file(
     # Determine the source type based on the file's content type or extension
     source_type = None
     if file.content_type == 'text/csv' or file.filename.lower().endswith('.csv'):
-        source_type = ImportSourceType.TRADOVATE_CSV
+        source_type = ImportSourceType.CSV
     elif file.content_type == 'text/html' or file.filename.lower().endswith(('.html', '.htm')):
-        source_type = ImportSourceType.MT5_HTML
+        source_type = ImportSourceType.HTML
 
     if source_type is None:
         raise HTTPException(
