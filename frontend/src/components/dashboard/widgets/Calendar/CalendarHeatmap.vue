@@ -171,7 +171,7 @@ const handleWeekClick = (weekIndex) => {
 }
 
 .day-cell:not(.placeholder):hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
   outline: 2px solid var(--semantic-color-border-focus);
 }
 
