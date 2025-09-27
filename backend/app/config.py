@@ -48,7 +48,8 @@ class Settings(BaseSettings):
         # Set di base per lo sviluppo, per garantire che funzioni localmente
         # a prescindere dal file .env
         origins = {
-            "http://localhost:5173"
+            "http://localhost:5173",
+            "http://127.0.0.1:5173", # Aggiunto per robustezza
         }
 
         if self.CORS_ORIGINS:
