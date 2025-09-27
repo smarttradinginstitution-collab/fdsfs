@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import DashboardView from '../views/DashboardView.vue';
 import AddTradeView from '../views/AddTradeView.vue';
+import AddAccountView from '../views/AddAccountView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -10,6 +11,12 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/LoginView.vue'),
       meta: { title: 'Login', public: true }
+    },
+    {
+      path: '/add-account',
+      name: 'add-account',
+      component: AddAccountView,
+      meta: { title: 'Add Account' },
     },
     {
       path: '/select-account',
@@ -58,48 +65,52 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const tradingAccountsStore = useTradingAccountsStore();
 
-  // Initialize auth store to ensure token is loaded from localStorage
+  // Ensure auth status is loaded from token
   if (!authStore.token && localStorage.getItem('token')) {
-    await authStore.initAuth(); // Ensures we have user and generalAccount info
-  }
-
-  // If user is authenticated but the list of trading accounts is empty, fetch them.
-  // This handles page reloads on any protected route.
-  if (authStore.isAuthenticated && tradingAccountsStore.tradingAccounts.length === 0) {
-      await tradingAccountsStore.fetchTradingAccounts();
+    await authStore.initAuth();
   }
 
   const isAuthenticated = authStore.isAuthenticated;
-  // Re-evaluate after fetching, in case fetchTradingAccounts cleared the selection
-  const hasSelectedTradingAccount = !!tradingAccountsStore.selectedTradingAccount;
   const authRequired = !to.meta.public;
 
+  // 1. Handle unauthenticated users trying to access protected routes
   if (authRequired && !isAuthenticated) {
-    // If a protected route is accessed without authentication (no token/GA), redirect to login.
-    return next('/login');
+    return next({ name: 'login', query: { redirect: to.fullPath } });
   }
 
+  // 2. Handle authenticated users
   if (isAuthenticated) {
-    // If the user is authenticated (has token and GA)
-    if (to.path === '/login') {
-      // and tries to access the login page, redirect them away.
-      return next(hasSelectedTradingAccount ? '/' : '/select-account');
+    // Redirect away from login page if already authenticated
+    if (to.name === 'login') {
+      return next({ name: 'dashboard' });
     }
 
-    // For any other protected route
-    if (authRequired) {
-      if (!hasSelectedTradingAccount && to.path !== '/select-account') {
-        // If the user hasn't selected a trading account yet, force them to the selection page.
-        return next('/select-account');
-      }
-      if (hasSelectedTradingAccount && to.path === '/select-account') {
-        // If user has an account and tries to go to selection, redirect to dashboard.
-        return next('/');
-      }
+    // Fetch trading accounts if they haven't been loaded yet.
+    // This is crucial for users who reload the page on a protected route.
+    if (tradingAccountsStore.tradingAccounts.length === 0) {
+      await tradingAccountsStore.fetchTradingAccounts();
+    }
+
+    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
+    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+
+    // Handle routing based on account status
+    if (to.name === 'add-account') {
+      // If user has accounts, they shouldn't be on the 'add-account' page
+      if (hasAccounts) return next({ name: 'dashboard' });
+    } else if (to.name === 'select-account') {
+      // If user has NO accounts, they must go to the 'add-account' page first
+      if (!hasAccounts) return next({ name: 'add-account' });
+      // If user has already selected an account, send them to the dashboard
+      if (hasSelectedAccount) return next({ name: 'dashboard' });
+    } else if (authRequired) {
+      // For any other protected page, enforce the setup flow
+      if (!hasAccounts) return next({ name: 'add-account' });
+      if (!hasSelectedAccount) return next({ name: 'select-account' });
     }
   }
 
-  // Otherwise, allow navigation.
+  // 3. If none of the above conditions apply, proceed with navigation
   next();
 });
 

@@ -33,6 +33,8 @@ class TradingAccountRepository:
             general_account_id=general_account_id,
             label=account_data.label,
             broker_id=account_data.broker_id,
+            initial_balance=account_data.initial_balance,
+            currency=account_data.currency,
         )
         self.db.add(db_account)
         await self.db.commit()

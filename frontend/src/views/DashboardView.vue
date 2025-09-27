@@ -19,15 +19,12 @@ import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
-import CreateAccountModal from '@/components/dashboard/modals/CreateAccountModal.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
-
-const isCreateAccountModalOpen = ref(false);
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -43,14 +40,6 @@ function handleAccountChange(accountId) {
   if (account) {
     tradingAccountsStore.selectTradingAccount(account);
   }
-}
-
-function openCreateAccountModal() {
-  isCreateAccountModalOpen.value = true;
-}
-
-function closeCreateAccountModal() {
-  isCreateAccountModalOpen.value = false;
 }
 
 const widgetComponents = {
@@ -126,11 +115,6 @@ watch(
         class="account-selector"
       />
 
-      <BaseButton variant="secondary" @click="openCreateAccountModal" data-testid="create-account-btn">
-        <PlusIcon />
-        <span class="button-text">Crea Account</span>
-      </BaseButton>
-
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>
@@ -176,11 +160,6 @@ watch(
     <!-- Modals -->
     <DailySummaryModal />
     <WeeklySummaryModal />
-    <CreateAccountModal
-      :is-open="isCreateAccountModalOpen"
-      @close="closeCreateAccountModal"
-      @account-created="closeCreateAccountModal"
-    />
 
     <!-- Stat Selector Panel -->
     <div
