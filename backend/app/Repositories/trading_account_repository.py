@@ -5,6 +5,7 @@ from uuid import UUID
 from typing import Optional, List
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.trading_account import TradingAccount
@@ -20,8 +21,12 @@ class TradingAccountRepository:
         return await self.db.get(TradingAccount, account_id)
 
     async def list_by_general_account_id(self, general_account_id: UUID) -> List[TradingAccount]:
-        """Elenca tutti i TradingAccount per un dato GeneralAccount."""
-        stmt = select(TradingAccount).where(TradingAccount.general_account_id == general_account_id)
+        """Elenca tutti i TradingAccount per un dato GeneralAccount, includendo il broker."""
+        stmt = (
+            select(TradingAccount)
+            .where(TradingAccount.general_account_id == general_account_id)
+            .options(selectinload(TradingAccount.broker))
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 

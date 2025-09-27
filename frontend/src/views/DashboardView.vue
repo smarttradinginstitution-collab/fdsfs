@@ -8,7 +8,6 @@ import RecentTradesTable from '../components/dashboard/widgets/Table/RecentTrade
 import DashboardZone from '../components/dashboard/zones/DashboardZone.vue';
 import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
-import BaseSelect from '../components/ui/BaseSelect.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import { useTradesStore } from '../stores/trades';
@@ -27,20 +26,6 @@ const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
 
 const layout = computed(() => dashboardLayoutStore.layout);
-
-const accountOptions = computed(() =>
-  tradingAccountsStore.tradingAccounts.map(acc => ({
-    value: acc.id,
-    text: acc.label || 'Senza nome'
-  }))
-);
-
-function handleAccountChange(accountId) {
-  const account = tradingAccountsStore.tradingAccounts.find(acc => acc.id === accountId);
-  if (account) {
-    tradingAccountsStore.selectTradingAccount(account);
-  }
-}
 
 const widgetComponents = {
   'vantageScore': VantageScoreWidget,
@@ -106,15 +91,6 @@ watch(
 <template>
   <div class="dashboard-view" :class="{ 'is-editing': uiStore.isLayoutEditing }">
     <div class="action-bar">
-      <!-- Account Selector Dropdown -->
-      <BaseSelect
-        :model-value="tradingAccountsStore.selectedTradingAccount?.id"
-        @update:model-value="handleAccountChange"
-        :options="accountOptions"
-        placeholder="Seleziona un account"
-        class="account-selector"
-      />
-
       <BaseButton variant="secondary" @click="uiStore.toggleLayoutEditing()">
         <SettingsIcon />
         <span class="button-text">{{ editButtonText }}</span>
@@ -184,10 +160,6 @@ watch(
   justify-content: flex-end;
   gap: var(--semantic-size-stack-sm);
   align-items: center; /* Allinea verticalmente gli elementi */
-}
-.account-selector {
-  min-width: 200px; /* Dà al selettore una larghezza minima */
-  margin-right: auto; /* Spinge gli altri bottoni a destra */
 }
 .grid-zone-wrapper {
   /* Styles for the wrapper if needed */

@@ -44,7 +44,7 @@ class TradingAccountService:
         self, claims: dict
     ) -> List[TradingAccountRead]:
         """
-        Elenca tutti i TradingAccount per l'utente corrente.
+        Elenca tutti i TradingAccount per l'utente corrente, includendo i dati del broker.
         """
         user_id = UUID(claims["sub"])
         general_account = await self.general_account_repo.get_by_user_id(user_id)
@@ -52,7 +52,18 @@ class TradingAccountService:
             return []
 
         db_accounts = await self.repo.list_by_general_account_id(general_account.id)
-        return [TradingAccountRead.from_orm(acc) for acc in db_accounts]
+
+        # Arricchisce i dati con il nome del broker
+        accounts_with_broker_info = []
+        for acc in db_accounts:
+            account_read = TradingAccountRead.from_orm(acc)
+            if acc.broker:
+                # Popola sia l'oggetto broker che il campo broker_name per flessibilità nel frontend
+                account_read.broker = acc.broker
+                account_read.broker_name = acc.broker.name
+            accounts_with_broker_info.append(account_read)
+
+        return accounts_with_broker_info
 
     async def get_trading_account_by_id(
         self, account_id: UUID, claims: dict
