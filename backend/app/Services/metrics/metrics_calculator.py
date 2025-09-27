@@ -21,94 +21,94 @@ class MetricsCalculator:
 
     def _convert_to_local_tz(self, dt_obj: datetime | str | None) -> datetime | None:
         """
-        Converte un oggetto datetime (o una stringa parsabile) da UTC al fuso orario
-        dell'utente. Assume che i datetime naive siano in UTC.
+        Converte un oggetto datetime (o una stringa parsabile) al fuso orario
+        dell'utente. Se il datetime è naive, lo considera UTC.
         """
         if dt_obj is None:
             return None
         if isinstance(dt_obj, str):
             dt_obj = parse(dt_obj)
 
-        # Rimuove il tzinfo se presente (es. da Z in ISO string), per trattarlo come naive
-        # e poi localizzarlo correttamente a UTC.
         if dt_obj.tzinfo:
-            dt_obj = dt_obj.replace(tzinfo=None)
-
-        # Ora è sicuramente naive, lo localizziamo a UTC
-        dt_obj_utc = pytz.utc.localize(dt_obj)
-
-        # Converte al fuso orario dell'utente
-        return dt_obj_utc.astimezone(self.tz)
+            return dt_obj.astimezone(self.tz)
+        else:
+            return pytz.utc.localize(dt_obj).astimezone(self.tz)
 
     @staticmethod
     def filter_trades(trades, filters):
         """
-        Filtra una lista di trade in base a criteri calcolati che non possono
-        essere gestiti a livello di database.
+        Filtra una lista di trade (oggetti o dizionari) in base a criteri calcolati.
         """
         if not filters:
             return trades
+
+        def get_attr(obj, key, default=None):
+            if isinstance(obj, dict):
+                return obj.get(key, default)
+            return getattr(obj, key, default)
 
         filtered_trades = []
         for trade in trades:
             # Duration filter
             min_dur, max_dur = filters.get('min_duration'), filters.get('max_duration')
-            if (min_dur is not None or max_dur is not None) and trade.get('entry_timestamp') and trade.get('exit_timestamp'):
-                duration_minutes = (trade['exit_timestamp'] - trade['entry_timestamp']).total_seconds() / 60
+            entry_ts = get_attr(trade, 'entry_timestamp')
+            exit_ts = get_attr(trade, 'exit_timestamp')
+            if (min_dur is not None or max_dur is not None) and entry_ts and exit_ts:
+                duration_minutes = (exit_ts - entry_ts).total_seconds() / 60
                 if (min_dur is not None and duration_minutes < min_dur) or \
                    (max_dur is not None and duration_minutes > max_dur):
-                    continue  # Skip trade
+                    continue
 
             # R-Multiple filter
             min_rr, max_rr = filters.get('min_rr'), filters.get('max_rr')
-            if min_rr is not None or max_rr is not None:
-                pnl = Decimal(trade.get('p_l') or 0)
-                entry = Decimal(trade.get('entry_price') or 0)
-                sl = Decimal(trade.get('stop_loss_price') or 0)
-                value_per_point = Decimal(trade.get('position_size') or 1)  # Simplified
-
-                potential_risk_points = abs(entry - sl) if entry and sl else Decimal(0)
-                if potential_risk_points > 0:
-                    initial_dollar_risk = potential_risk_points * value_per_point
-                    realized_rr = float(pnl / initial_dollar_risk) if initial_dollar_risk > 0 else 0.0
-                    if (min_rr is not None and realized_rr < min_rr) or \
-                       (max_rr is not None and realized_rr > max_rr):
-                        continue  # Skip trade
+            r_multiple = get_attr(trade, 'r_multiple')
+            if r_multiple is not None and (min_rr is not None or max_rr is not None):
+                if (min_rr is not None and r_multiple < min_rr) or \
+                   (max_rr is not None and r_multiple > max_rr):
+                    continue
 
             filtered_trades.append(trade)
 
         return filtered_trades
 
     def _prepare_trades(self):
-        """Pre-calcola MAE/MFE e converte le date per ogni trade."""
+        """
+        Pre-calcola P&L netto, MAE/MFE, ROI e converte le date per ogni trade.
+        Aggiunge questi valori come attributi dinamici all'oggetto trade.
+        """
         for trade in self.all_trades:
-            # Calcolo MAE/MFE
-            entry = Decimal(trade.get('entry_price', 0)) if trade.get('entry_price') is not None else Decimal(0)
-            lowest = Decimal(trade.get('lowest_price_during_trade', 0)) if trade.get('lowest_price_during_trade') is not None else Decimal(0)
-            highest = Decimal(trade.get('highest_price_during_trade', 0)) if trade.get('highest_price_during_trade') is not None else Decimal(0)
-            direction = trade.get('direction')
+            # 1. Calcolo P&L Netto
+            gross_pnl = Decimal(trade.gross_p_l) if trade.gross_p_l is not None else Decimal('0')
+            fees = Decimal(trade.fees) if trade.fees is not None else Decimal('0')
+            commissions = Decimal(trade.commissions) if trade.commissions is not None else Decimal('0')
+            trade.net_pnl = gross_pnl - fees - commissions
+
+            # 2. Calcolo MAE/MFE
+            entry = Decimal(trade.entry_price) if trade.entry_price is not None else Decimal(0)
+            lowest = Decimal(trade.lowest_price_during_trade) if trade.lowest_price_during_trade is not None else Decimal(0)
+            highest = Decimal(trade.highest_price_during_trade) if trade.highest_price_during_trade is not None else Decimal(0)
+            direction = trade.direction
             
             if entry > 0 and lowest > 0 and highest > 0 and direction:
                 if direction == 'Long':
-                    trade['mae_points'] = float(entry - lowest)
-                    trade['mfe_points'] = float(highest - entry)
+                    trade.mae_points = float(entry - lowest)
+                    trade.mfe_points = float(highest - entry)
                 elif direction == 'Short':
-                    trade['mae_points'] = float(highest - entry)
-                    trade['mfe_points'] = float(entry - lowest)
+                    trade.mae_points = float(highest - entry)
+                    trade.mfe_points = float(entry - lowest)
             else:
-                trade['mae_points'], trade['mfe_points'] = 0, 0
+                trade.mae_points, trade.mfe_points = 0, 0
 
-            # Net ROI
-            pnl = Decimal(trade.get('p_l')) if trade.get('p_l') is not None else Decimal('0')
-            entry_price = Decimal(trade.get('entry_price')) if trade.get('entry_price') is not None else Decimal('0')
-            position_size = Decimal(trade.get('position_size')) if trade.get('position_size') is not None else Decimal('0')
+            # 3. Net ROI
+            entry_price = Decimal(trade.entry_price) if trade.entry_price is not None else Decimal('0')
+            position_size = Decimal(trade.position_size) if trade.position_size is not None else Decimal('0')
             cost = entry_price * position_size
-            trade['net_roi'] = float((pnl / cost) * 100) if cost != 0 else 0.0
+            trade.net_roi = float((trade.net_pnl / cost) * 100) if cost != 0 else 0.0
 
-            # Conversione e localizzazione delle date
-            trade['created_at'] = self._convert_to_local_tz(trade.get('created_at'))
-            trade['entry_timestamp'] = self._convert_to_local_tz(trade.get('entry_timestamp'))
-            trade['exit_timestamp'] = self._convert_to_local_tz(trade.get('exit_timestamp'))
+            # 4. Conversione e localizzazione delle date (sovrascrive l'originale)
+            trade.created_at = self._convert_to_local_tz(trade.created_at)
+            trade.entry_timestamp = self._convert_to_local_tz(trade.entry_timestamp)
+            trade.exit_timestamp = self._convert_to_local_tz(trade.exit_timestamp)
 
     def _get_empty_response(self):
         """Struttura di default quando non ci sono trade."""
@@ -126,23 +126,22 @@ class MetricsCalculator:
         }
 
     def _calculate_base_stats(self):
-        """Statistiche di base (P&L, win/loss, etc.)."""
-        pnl_data = [Decimal(t['p_l']) if t.get('p_l') is not None else Decimal('0') for t in self.all_trades]
+        """Statistiche di base (P&L, win/loss, etc.) basate su net_pnl."""
+        pnl_data = [t.net_pnl for t in self.all_trades]
         winning_trades_pnl = [pnl for pnl in pnl_data if pnl > 0]
         losing_trades_pnl = [pnl for pnl in pnl_data if pnl < 0]
         breakeven_trades_count = len([pnl for pnl in pnl_data if pnl == 0])
-        winning_trades = [t for t in self.all_trades if t.get('p_l') is not None and Decimal(t['p_l']) > 0]
+        winning_trades = [t for t in self.all_trades if hasattr(t, 'net_pnl') and t.net_pnl > 0]
 
-        # Long/Short
         long_wins = long_losses = long_be = 0
         short_wins = short_losses = short_be = 0
         for trade in self.all_trades:
-            pnl = Decimal(trade.get('p_l', 0))
-            if trade.get('direction') == 'Long':
+            pnl = trade.net_pnl
+            if trade.direction == 'Long':
                 if pnl > 0: long_wins += 1
                 elif pnl < 0: long_losses += 1
                 else: long_be += 1
-            elif trade.get('direction') == 'Short':
+            elif trade.direction == 'Short':
                 if pnl > 0: short_wins += 1
                 elif pnl < 0: short_losses += 1
                 else: short_be += 1
@@ -208,62 +207,44 @@ class MetricsCalculator:
         """Statistiche avanzate (efficienza, R:R, drawdown, ecc.)."""
         sell_efficiencies, total_efficiencies, planned_rrs, realized_rrs = [], [], [], []
         for t in base_stats['winning_trades']:
-            entry_price = Decimal(t['entry_price']) if t.get('entry_price') is not None else None
-            exit_price = Decimal(t['exit_price']) if t.get('exit_price') is not None else None
-            mfe_points = Decimal(t['mfe_points']) if t.get('mfe_points') is not None else None
+            entry_price = Decimal(t.entry_price) if t.entry_price is not None else None
+            exit_price = Decimal(t.exit_price) if t.exit_price is not None else None
+            mfe_points = Decimal(t.mfe_points) if hasattr(t, 'mfe_points') and t.mfe_points is not None else None
 
             if mfe_points and mfe_points > 0 and entry_price is not None and exit_price is not None:
                 pnl_in_points = abs(exit_price - entry_price)
-                # Cap the realized profit at the maximum favorable excursion to prevent efficiency > 100%
                 pnl_in_points = min(pnl_in_points, mfe_points)
                 if mfe_points > 0:
                     sell_efficiencies.append(pnl_in_points / mfe_points)
 
         for t in self.all_trades:
-            if t.get('mfe_points') is not None and t.get('mae_points') is not None:
-                mfe_points, mae_points = Decimal(t['mfe_points']), Decimal(t['mae_points'])
+            if hasattr(t, 'mfe_points') and hasattr(t, 'mae_points') and t.mfe_points is not None and t.mae_points is not None:
+                mfe_points, mae_points = Decimal(t.mfe_points), Decimal(t.mae_points)
                 if (mfe_points + mae_points) > 0:
                     total_efficiencies.append(mfe_points / (mfe_points + mae_points))
 
-            entry = Decimal(t['entry_price']) if t.get('entry_price') is not None else Decimal('0')
-            sl = Decimal(t['stop_loss_price']) if t.get('stop_loss_price') is not None else Decimal('0')
-            tp = Decimal(t['take_profit_price']) if t.get('take_profit_price') is not None else Decimal('0')
-            exit_price = Decimal(t['exit_price']) if t.get('exit_price') is not None else Decimal('0')
-            direction = t.get('direction')
+            entry = Decimal(t.entry_price) if t.entry_price is not None else Decimal('0')
+            sl = Decimal(t.stop_loss_price) if t.stop_loss_price is not None else Decimal('0')
+            tp = Decimal(t.take_profit_price) if t.take_profit_price is not None else Decimal('0')
             potential_risk_points = abs(entry - sl) if entry and sl else Decimal(0)
 
             if potential_risk_points > 0:
-                pnl = Decimal(t.get('p_l') or 0)
-                position_size = Decimal(t.get('position_size') or 1)
-
-                # Infer value per point
-                value_per_point = Decimal(0)
-                if direction and entry and exit_price:
-                    pnl_in_points = (exit_price - entry) if direction == 'Long' else (entry - exit_price)
-                    if pnl_in_points != 0:
-                        value_per_point = abs(pnl / pnl_in_points)
-                if value_per_point == 0:
-                    value_per_point = position_size
-
-                initial_dollar_risk = potential_risk_points * value_per_point
                 potential_reward_points = abs(tp - entry) if tp and entry else Decimal(0)
                 planned_rrs.append(potential_reward_points / potential_risk_points)
 
-                if initial_dollar_risk > 0:
-                    realized_rrs.append(pnl / initial_dollar_risk)
+            if t.r_multiple is not None:
+                realized_rrs.append(Decimal(t.r_multiple))
 
-        # Ordinamento per data di entrata per coerenza
         fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
-        self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or fallback_date)
+        self.all_trades.sort(key=lambda x: x.entry_timestamp or fallback_date)
         safe_pnl_floats = [float(pnl) for pnl in base_stats['pnl_data']]
-        equity_curve_data = [{'date': (t.get('entry_timestamp') or fallback_date).strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
+        equity_curve_data = [{'date': (t.entry_timestamp or fallback_date).strftime('%d/%m/%Y'), 'pl': pnl} for t, pnl in zip(self.all_trades, np.cumsum(safe_pnl_floats))]
 
         equity_points = [0] + [p['pl'] for p in equity_curve_data]
         peak_array = np.maximum.accumulate(equity_points)
         drawdown = peak_array - equity_points
-        max_drawdown_abs = Decimal(np.max(drawdown))
+        max_drawdown_abs = Decimal(np.max(drawdown)) if drawdown.size > 0 else Decimal(0)
 
-        # Recovery Factor & Average Drawdown
         recovery_factor = base_stats['total_pl'] / max_drawdown_abs if max_drawdown_abs > 0 else Decimal('inf')
         all_drawdowns, in_drawdown = [], False
         current_dd_peak = equity_points[0]
@@ -279,17 +260,16 @@ class MetricsCalculator:
         max_dd_values = [max(dd) for dd in all_drawdowns if dd]
         average_drawdown = np.mean(max_dd_values) if max_dd_values else Decimal(0)
 
-        # Temporal metrics
         hold_times_minutes = []
         pnl_by_day_of_week = {i: Decimal(0) for i in range(7)}
         pnl_by_hour = {i: Decimal(0) for i in range(24)}
         for trade in self.all_trades:
-            entry, exit_ts = trade.get('entry_timestamp'), trade.get('exit_timestamp')
+            entry, exit_ts = trade.entry_timestamp, trade.exit_timestamp
             if entry and exit_ts:
                 hold_times_minutes.append((exit_ts - entry).total_seconds() / 60)
             if entry:
-                pnl_by_day_of_week[entry.weekday()] += Decimal(trade.get('p_l', 0))
-                pnl_by_hour[entry.hour] += Decimal(trade.get('p_l', 0))
+                pnl_by_day_of_week[entry.weekday()] += trade.net_pnl
+                pnl_by_hour[entry.hour] += trade.net_pnl
 
         average_hold_time = np.mean(hold_times_minutes) if hold_times_minutes else 0
         longest_trade_duration = max(hold_times_minutes) if hold_times_minutes else 0
@@ -297,25 +277,23 @@ class MetricsCalculator:
         performance_by_day_of_week = {day_names[i]: pnl for i, pnl in pnl_by_day_of_week.items()}
         performance_by_hour = {f"{h:02d}:00": pnl for h, pnl in pnl_by_hour.items()}
 
-        # Daily aggregates
         daily_pnl, daily_volume = {}, {}
         for trade in self.all_trades:
-            if trade.get('entry_timestamp'):
-                trade_date = trade['entry_timestamp'].date()
+            if trade.entry_timestamp:
+                trade_date = trade.entry_timestamp.date()
                 daily_pnl.setdefault(trade_date, Decimal(0))
                 daily_volume.setdefault(trade_date, Decimal(0))
-                pnl = Decimal(trade.get('p_l') or 0)
-                volume = Decimal(trade.get('position_size') or 0)
-                daily_pnl[trade_date] += pnl
+                volume = Decimal(trade.position_size) if trade.position_size is not None else Decimal('0')
+                daily_pnl[trade_date] += trade.net_pnl
                 daily_volume[trade_date] += volume
 
         daily_pnl_values = list(daily_pnl.values())
         winning_days_pnl = [p for p in daily_pnl_values if p > 0]
         losing_days_pnl = [p for p in daily_pnl_values if p < 0]
 
-        average_daily_pnl = np.mean(daily_pnl_values) if daily_pnl_values else Decimal(0)
-        average_winning_day_pnl = np.mean(winning_days_pnl) if winning_days_pnl else Decimal(0)
-        average_losing_day_pnl = np.mean(losing_days_pnl) if losing_days_pnl else Decimal(0)
+        average_daily_pnl = np.mean([float(v) for v in daily_pnl_values]) if daily_pnl_values else Decimal(0)
+        average_winning_day_pnl = np.mean([float(v) for v in winning_days_pnl]) if winning_days_pnl else Decimal(0)
+        average_losing_day_pnl = np.mean([float(v) for v in losing_days_pnl]) if losing_days_pnl else Decimal(0)
         largest_profitable_day = max(winning_days_pnl) if winning_days_pnl else Decimal(0)
         largest_losing_day = min(losing_days_pnl) if losing_days_pnl else Decimal(0)
         net_daily_pnl_chart = [{'date': d.strftime('%Y-%m-%d'), 'pnl': float(p)} for d, p in daily_pnl.items()]
@@ -325,7 +303,7 @@ class MetricsCalculator:
         losing_days = len(losing_days_pnl)
         breakeven_days = total_trading_days - winning_days - losing_days
         day_win_percentage = (Decimal(winning_days) / total_trading_days * 100) if total_trading_days > 0 else Decimal(0)
-        average_daily_volume = np.mean(list(daily_volume.values())) if daily_volume else Decimal(0)
+        average_daily_volume = np.mean([float(v) for v in daily_volume.values()]) if daily_volume else Decimal(0)
 
         sharpe = sortino = calmar = Decimal(0)
         skewness_val = kurtosis_val = Decimal(0)
@@ -337,29 +315,34 @@ class MetricsCalculator:
             skewness_val = skew(daily_returns)
             kurtosis_val = kurtosis(daily_returns)
             sharpe = Decimal(avg_return / volatility * np.sqrt(252)) if volatility > 0 else Decimal(0)
-            downside_std = np.std(daily_returns[daily_returns < 0]) or 0
+            downside_returns = daily_returns[daily_returns < 0]
+            downside_std = np.std(downside_returns) if downside_returns.any() else 0
             sortino = Decimal(avg_return / downside_std * np.sqrt(252)) if downside_std > 0 else Decimal(0)
 
             var_95 = Decimal(np.percentile(daily_returns, 5))
-            cvar_95 = Decimal(np.mean(daily_returns[daily_returns <= float(var_95)]))
+            cvar_95_returns = daily_returns[daily_returns <= float(var_95)]
+            cvar_95 = Decimal(np.mean(cvar_95_returns)) if cvar_95_returns.any() else Decimal(0)
 
             trade_dates = sorted(daily_pnl.keys())
-            trading_days = (trade_dates[-1] - trade_dates[0]).days
-            if trading_days > 0 and max_drawdown_abs > 0:
-                annualized_return = base_stats['total_pl'] * (Decimal('365') / Decimal(trading_days))
-                calmar = annualized_return / max_drawdown_abs
+            if trade_dates:
+                trading_days = (trade_dates[-1] - trade_dates[0]).days
+                if trading_days > 0 and max_drawdown_abs > 0:
+                    annualized_return = base_stats['total_pl'] * (Decimal('365') / Decimal(trading_days))
+                    calmar = annualized_return / max_drawdown_abs
 
-        # Streaks & consistency
         streaks_stats = self._calculate_streaks_and_consistency(base_stats['pnl_data'], daily_pnl_values)
+
+        peak_value = np.max(peak_array) if peak_array.size > 0 else 0
+        max_drawdown_pct = (max_drawdown_abs / Decimal(peak_value)) * 100 if peak_value > 0 else Decimal(0)
 
         results = {
             'avg_sell_efficiency': np.mean(sell_efficiencies) * 100 if sell_efficiencies else Decimal(0),
             'avg_total_efficiency': np.mean(total_efficiencies) * 100 if total_efficiencies else Decimal(0),
-            'avg_planned_rr': np.mean(planned_rrs) if planned_rrs else Decimal(0),
-            'avg_realized_rr': np.mean(realized_rrs) if realized_rrs else Decimal(0),
+            'avg_planned_rr': np.mean([float(r) for r in planned_rrs]) if planned_rrs else Decimal(0),
+            'avg_realized_rr': np.mean([float(r) for r in realized_rrs]) if realized_rrs else Decimal(0),
             'equity_curve_data': equity_curve_data,
             'max_drawdown_abs': max_drawdown_abs,
-            'max_drawdown_pct': (max_drawdown_abs / Decimal(peak_array[-1])) * 100 if (peak_array := np.maximum.accumulate([0] + [p['pl'] for p in equity_curve_data]))[-1] > 0 else Decimal(0),
+            'max_drawdown_pct': max_drawdown_pct,
             'sharpe_ratio': sharpe, 'sortino_ratio': sortino, 'calmar_ratio': calmar,
             'skewness': Decimal(skewness_val), 'kurtosis': Decimal(kurtosis_val),
             'var_95': abs(var_95), 'cvar_95': abs(cvar_95),
@@ -375,7 +358,7 @@ class MetricsCalculator:
             'breakeven_days': breakeven_days,
             'day_win_percentage': day_win_percentage,
             'average_daily_volume': Decimal(average_daily_volume),
-            'recovery_factor': base_stats['total_pl'] / max_drawdown_abs if max_drawdown_abs > 0 else Decimal('inf'),
+            'recovery_factor': recovery_factor,
             'average_drawdown': Decimal(average_drawdown),
             'average_hold_time': average_hold_time,
             'longest_trade_duration': longest_trade_duration,
@@ -396,15 +379,28 @@ class MetricsCalculator:
             elif pnl < 0:
                 current_losses += 1
                 current_wins = 0
-            else:
+            else: # Breakeven resets streaks
                 current_wins = current_losses = 0
             max_consecutive_wins = max(max_consecutive_wins, current_wins)
             max_consecutive_losses = max(max_consecutive_losses, current_losses)
 
         current_trade_streak = 0
         if pnl_data:
-            if pnl_data[-1] > 0: current_trade_streak = current_wins
-            elif pnl_data[-1] < 0: current_trade_streak = -current_losses
+            # Check the streak ending with the last trade
+            if pnl_data[-1] > 0:
+                # Count backwards for current win streak
+                s = 0
+                for p in reversed(pnl_data):
+                    if p > 0: s+=1
+                    else: break
+                current_trade_streak = s
+            elif pnl_data[-1] < 0:
+                # Count backwards for current loss streak
+                s = 0
+                for p in reversed(pnl_data):
+                    if p < 0: s+=1
+                    else: break
+                current_trade_streak = -s
 
         # Day streaks
         max_consecutive_winning_days = max_consecutive_losing_days = 0
@@ -423,11 +419,20 @@ class MetricsCalculator:
 
         current_day_streak = 0
         if daily_pnl_values:
-            if daily_pnl_values[-1] > 0: current_day_streak = current_winning_days
-            elif daily_pnl_values[-1] < 0: current_day_streak = -current_losing_days
+            if daily_pnl_values[-1] > 0:
+                s = 0
+                for p in reversed(daily_pnl_values):
+                    if p > 0: s += 1
+                    else: break
+                current_day_streak = s
+            elif daily_pnl_values[-1] < 0:
+                s = 0
+                for p in reversed(daily_pnl_values):
+                    if p < 0: s += 1
+                    else: break
+                current_day_streak = -s
 
-        # Consistency score (std dev dei PnL giornalieri)
-        consistency_score = np.std(daily_pnl_values) if daily_pnl_values else 0
+        consistency_score = np.std([float(v) for v in daily_pnl_values]) if daily_pnl_values else 0
 
         return {
             'max_consecutive_wins': max_consecutive_wins,
@@ -445,12 +450,8 @@ class MetricsCalculator:
         """
         if not self.all_trades:
             return {
-                'vantage_score': 0,
-                'profit_factor_score': 0,
-                'avg_win_loss_score': 0,
-                'max_drawdown_score': 0,
-                'win_rate_score': 0,
-                'consistency_score': 0,
+                'vantage_score': 0, 'profit_factor_score': 0, 'avg_win_loss_score': 0,
+                'max_drawdown_score': 0, 'win_rate_score': 0, 'consistency_score': 0,
                 'recovery_factor_score': 0
             }
 
@@ -458,21 +459,22 @@ class MetricsCalculator:
         advanced_stats = self._calculate_advanced_stats(base_stats)
         stats = {**base_stats, **advanced_stats}
 
-        # Scoring
-        pf = stats.get('profit_factor', 0)
-        if pf == float('inf') or pf >= 2.6: pf_score = 100
-        elif pf >= 2.2: pf_score = 80
-        elif pf >= 1.8: pf_score = 60
-        elif pf >= 1.5: pf_score = 40
-        elif pf > 1.0: pf_score = 20
+        pf = stats.get('profit_factor', Decimal(0))
+        if pf == Decimal('inf'): pf_score = 100
+        elif pf >= Decimal('2.6'): pf_score = 100
+        elif pf >= Decimal('2.2'): pf_score = 80
+        elif pf >= Decimal('1.8'): pf_score = 60
+        elif pf >= Decimal('1.5'): pf_score = 40
+        elif pf > Decimal('1.0'): pf_score = 20
         else: pf_score = 0
 
-        awl = stats.get('average_win_loss_ratio', 0)
-        if awl == float('inf') or awl >= 2.6: awl_score = 100
-        elif awl >= 2.2: awl_score = 80
-        elif awl >= 1.8: awl_score = 60
-        elif awl >= 1.5: awl_score = 40
-        elif awl > 1.0: awl_score = 20
+        awl = stats.get('average_win_loss_ratio', Decimal(0))
+        if awl == Decimal('inf'): awl_score = 100
+        elif awl >= Decimal('2.6'): awl_score = 100
+        elif awl >= Decimal('2.2'): awl_score = 80
+        elif awl >= Decimal('1.8'): awl_score = 60
+        elif awl >= Decimal('1.5'): awl_score = 40
+        elif awl > Decimal('1.0'): awl_score = 20
         else: awl_score = 0
 
         max_dd_pct = float(stats.get('max_drawdown_pct', 100))
@@ -490,20 +492,16 @@ class MetricsCalculator:
         elif total_profit > 0:
             consistency_score = 100
 
-        rf = float(stats.get('recovery_factor', 0))
-        if rf == float('inf') or rf >= 3.5: rf_score = 100
-        elif rf >= 2.5: rf_score = 80
-        elif rf >= 1.8: rf_score = 60
-        elif rf >= 1.0: rf_score = 40
+        rf = stats.get('recovery_factor', Decimal(0))
+        if rf == Decimal('inf') or rf >= Decimal('3.5'): rf_score = 100
+        elif rf >= Decimal('2.5'): rf_score = 80
+        elif rf >= Decimal('1.8'): rf_score = 60
+        elif rf >= Decimal('1.0'): rf_score = 40
         else: rf_score = 0
 
         vantage_score = (
-            (pf_score * 0.25) +
-            (awl_score * 0.20) +
-            (mdd_score * 0.20) +
-            (wr_score * 0.15) +
-            (consistency_score * 0.10) +
-            (rf_score * 0.10)
+            (pf_score * 0.25) + (awl_score * 0.20) + (mdd_score * 0.20) +
+            (wr_score * 0.15) + (consistency_score * 0.10) + (rf_score * 0.10)
         )
 
         return {
@@ -520,15 +518,21 @@ class MetricsCalculator:
         """Dati per grafici."""
         performance_by_setup = {}
         for t in self.all_trades:
-            setup_name = t.get('setup', "Non specificato")
-            performance_by_setup.setdefault(setup_name, Decimal(0))
-            pnl = Decimal(t['p_l']) if t.get('p_l') is not None else Decimal('0')
-            performance_by_setup[setup_name] += pnl
+            if hasattr(t, 'playbooks') and t.playbooks:
+                for playbook in t.playbooks:
+                    setup_name = playbook.title or "Non specificato"
+                    performance_by_setup.setdefault(setup_name, Decimal(0))
+                    performance_by_setup[setup_name] += t.net_pnl
+            else:
+                setup_name = "Non specificato"
+                performance_by_setup.setdefault(setup_name, Decimal(0))
+                performance_by_setup[setup_name] += t.net_pnl
         setup_chart_data = [{'setup': k, 'total_pl': float(v)} for k, v in performance_by_setup.items()]
 
         r_multiple_bins = [-np.inf, -2, -1, 0, 1, 2, 3, np.inf]
         r_multiple_labels = ["< -2R", "-2R..-1R", "-1R..0R", "0R..1R", "1R..2R", "2R..3R", "> 3R"]
-        counts, _ = np.histogram(advanced_stats.get('realized_rrs_list', []), bins=r_multiple_bins)
+        realized_rrs = advanced_stats.get('realized_rrs_list', [])
+        counts, _ = np.histogram(realized_rrs, bins=r_multiple_bins)
 
         pnl_by_day_data = advanced_stats.get('performance_by_day_of_week', {})
         pnl_by_hour_data = advanced_stats.get('performance_by_hour', {})
@@ -553,15 +557,16 @@ class MetricsCalculator:
         if not self.all_trades:
             return {'labels': [], 'data': []}
 
-        # Ordinamento per data di entrata, non di creazione, per la curva
         fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
-        self.all_trades.sort(key=lambda x: x.get('entry_timestamp') or fallback_date)
+        self.all_trades.sort(key=lambda x: x.entry_timestamp or fallback_date)
 
-        pnl_data = [Decimal(t.get('p_l', 0)) for t in self.all_trades]
+        pnl_data = [t.net_pnl for t in self.all_trades]
         cumulative_pnl = np.cumsum([float(p) for p in pnl_data])
 
-        # Usa la data di entrata come etichetta
-        labels = [t['entry_timestamp'].strftime('%Y-%m-%d %H:%M') for t in self.all_trades if t.get('entry_timestamp')]
+        labels = [
+            t.entry_timestamp.strftime('%Y-%m-%d %H:%M')
+            for t in self.all_trades if t.entry_timestamp
+        ]
 
         return {'labels': labels, 'data': list(cumulative_pnl)}
 
@@ -575,7 +580,7 @@ class MetricsCalculator:
                 "stats": {
                     "net_pnl": 0, "trade_count": 0, "winning_trades": 0,
                     "losing_trades": 0, "breakeven_trades": 0, "gross_profit": 0,
-                    "gross_loss": 0, "profit_factor": 0
+                    "gross_loss": 0, "profit_factor": 0, "profit_factor_label": "0.00", "win_rate": 0
                 },
                 "cumulative_pnl_series": {"labels": [], "data": []}
             }
@@ -583,12 +588,9 @@ class MetricsCalculator:
         base_stats = self._calculate_base_stats()
         equity_curve = self.calculate_equity_curve()
 
-        # _calculate_base_stats non ritorna total_win/total_loss, quindi li ricalcoliamo qui
-        # in modo efficiente dai pnl_data già calcolati.
-        winning_pnls = [p for p in base_stats['pnl_data'] if p > 0]
-        losing_pnls = [p for p in base_stats['pnl_data'] if p < 0]
-        gross_profit = sum(winning_pnls)
-        gross_loss = abs(sum(losing_pnls))
+        pnl_data = base_stats['pnl_data']
+        gross_profit = sum(p for p in pnl_data if p > 0)
+        gross_loss = abs(sum(p for p in pnl_data if p < 0))
 
         profit_factor = None
         profit_factor_label = "0.00"
@@ -597,10 +599,10 @@ class MetricsCalculator:
             profit_factor = float(pf_val)
             profit_factor_label = f"{pf_val:.2f}"
         elif gross_profit > 0:
-            profit_factor = None # JSON non supporta Inf
+            profit_factor = float('inf')
             profit_factor_label = "∞"
 
-        win_rate = (base_stats['winning_trades_count'] / base_stats['trade_count']) * 100 if base_stats['trade_count'] > 0 else 0
+        win_rate = float(base_stats['win_rate'])
 
         summary_stats = {
             "net_pnl": float(base_stats['total_pl']),
@@ -627,46 +629,30 @@ class MetricsCalculator:
         if not self.all_trades:
             return {
                 "general_stats": {"total_pnl": 0, "trade_count": 0, "winning_trades": 0, "losing_trades": 0, "breakeven_trades": 0, "gross_profit": 0, "gross_loss": 0, "total_risk": 0},
-                "daily_data": {},
-                "by_strategy": {},
-                "max_abs_pnl_by_strategy": 0.0,
-                "by_day_of_week": {},
-                "win_loss_days": {"winning_days": 0, "losing_days": 0, "breakeven_days": 0},
-                "monthly_totals": {},
-                "weekly_totals": {}
+                "daily_data": {}, "by_strategy": {}, "max_abs_pnl_by_strategy": 0.0,
+                "by_day_of_week": {}, "win_loss_days": {"winning_days": 0, "losing_days": 0, "breakeven_days": 0},
+                "monthly_totals": {}, "weekly_totals": {}
             }
-        # --- Dati di base ---
+
         total_pnl = Decimal(0)
         trade_count = len(self.all_trades)
-        winning_trades = 0
-        losing_trades = 0
-        breakeven_trades = 0
-        gross_profit = Decimal(0)
-        gross_loss = Decimal(0)
-        total_risk = Decimal(0)
+        winning_trades, losing_trades, breakeven_trades = 0, 0, 0
+        gross_profit, gross_loss, total_risk = Decimal(0), Decimal(0), Decimal(0)
 
-        # --- Dati aggregati ---
-        daily_data = {}
-        by_strategy = {}
-        monthly_totals = {}
-        weekly_totals = {}
-        # Usato per contare i giorni di trading unici per settimana
+        daily_data, by_strategy, monthly_totals, weekly_totals = {}, {}, {}, {}
         seen_days_per_week = {}
-        days_of_week_map = {0: 'Lunedì', 1: 'Martedì', 2: 'Mercoledì', 3: 'Giovedì', 4: 'Venerdì', 5: 'Sabato', 6: 'Domenica'}
-        by_day_of_week = {name: {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0, 'win_rate': 0} for name in days_of_week_map.values()}
+        days_map = {0: 'Lunedì', 1: 'Martedì', 2: 'Mercoledì', 3: 'Giovedì', 4: 'Venerdì', 5: 'Sabato', 6: 'Domenica'}
+        by_day_of_week = {name: {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0} for name in days_map.values()}
 
         for trade in self.all_trades:
-            pnl = Decimal(trade.get('p_l', 0))
-            # Il campo 'risk' non è nel modello DB, quindi lo calcoliamo se possibile
-            # o lo assumiamo a 0 se non calcolabile.
+            pnl = trade.net_pnl
             risk = Decimal(0)
-            entry = Decimal(trade.get('entry_price') or 0)
-            sl = Decimal(trade.get('stop_loss_price') or 0)
-            size = Decimal(trade.get('position_size') or 1)
+            entry = Decimal(trade.entry_price or 0)
+            sl = Decimal(trade.stop_loss_price or 0)
+            size = Decimal(trade.position_size or 1)
             if entry > 0 and sl > 0:
                 risk = abs(entry - sl) * size
 
-            # Aggiorna statistiche generali
             total_pnl += pnl
             total_risk += risk
             if pnl > 0:
@@ -678,85 +664,56 @@ class MetricsCalculator:
             else:
                 breakeven_trades += 1
 
-            # Aggrega per giorno
-            if trade.get('entry_timestamp'):
-                day_key = trade['entry_timestamp'].strftime('%Y-%m-%d')
-                if day_key not in daily_data:
-                    daily_data[day_key] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0, 'win_rate': 0}
+            if trade.entry_timestamp:
+                day_key = trade.entry_timestamp.strftime('%Y-%m-%d')
+                daily_data.setdefault(day_key, {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0})
                 daily_data[day_key]['total_pnl'] += pnl
                 daily_data[day_key]['trade_count'] += 1
-                if pnl > 0:
-                    daily_data[day_key]['winning_trades'] += 1
+                if pnl > 0: daily_data[day_key]['winning_trades'] += 1
 
-            # Aggrega per strategia
-            strategy = trade.get('setup') or 'N/A'
-            if strategy not in by_strategy:
-                by_strategy[strategy] = {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0, 'win_rate': 0}
-            by_strategy[strategy]['total_pnl'] += pnl
-            by_strategy[strategy]['trade_count'] += 1
-            if pnl > 0:
-                by_strategy[strategy]['winning_trades'] += 1
+                if hasattr(trade, 'playbooks') and trade.playbooks:
+                    for playbook in trade.playbooks:
+                        strategy = playbook.title or 'N/A'
+                        by_strategy.setdefault(strategy, {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0})
+                        by_strategy[strategy]['total_pnl'] += pnl
+                        by_strategy[strategy]['trade_count'] += 1
+                        if pnl > 0:
+                            by_strategy[strategy]['winning_trades'] += 1
+                else:
+                    strategy = 'N/A'
+                    by_strategy.setdefault(strategy, {'total_pnl': Decimal(0), 'trade_count': 0, 'winning_trades': 0})
+                    by_strategy[strategy]['total_pnl'] += pnl
+                    by_strategy[strategy]['trade_count'] += 1
+                    if pnl > 0:
+                        by_strategy[strategy]['winning_trades'] += 1
 
-            # Aggrega per giorno della settimana
-            if trade.get('entry_timestamp'):
-                day_name = days_of_week_map[trade['entry_timestamp'].weekday()]
+                day_name = days_map[trade.entry_timestamp.weekday()]
                 by_day_of_week[day_name]['total_pnl'] += pnl
                 by_day_of_week[day_name]['trade_count'] += 1
-                if pnl > 0:
-                    by_day_of_week[day_name]['winning_trades'] += 1
+                if pnl > 0: by_day_of_week[day_name]['winning_trades'] += 1
 
-            # Aggrega per mese
-            if trade.get('entry_timestamp'):
-                month_key = trade['entry_timestamp'].strftime('%Y-%m')
-                if month_key not in monthly_totals:
-                    monthly_totals[month_key] = Decimal(0)
-                monthly_totals[month_key] += pnl
+                month_key = trade.entry_timestamp.strftime('%Y-%m')
+                monthly_totals[month_key] = monthly_totals.get(month_key, Decimal(0)) + pnl
 
-            # Aggrega per settimana
-            if trade.get('entry_timestamp'):
-                week_key = trade['entry_timestamp'].strftime('%Y-W%V')
-                day_of_year = trade['entry_timestamp'].timetuple().tm_yday
-
-                if week_key not in weekly_totals:
-                    weekly_totals[week_key] = {'total_pnl': Decimal(0), 'trading_days': 0}
-                    seen_days_per_week[week_key] = set()
-
+                week_key = trade.entry_timestamp.strftime('%Y-W%V')
+                day_of_year = trade.entry_timestamp.timetuple().tm_yday
+                weekly_totals.setdefault(week_key, {'total_pnl': Decimal(0), 'trading_days': set()})
                 weekly_totals[week_key]['total_pnl'] += pnl
-                seen_days_per_week[week_key].add(day_of_year)
+                weekly_totals[week_key]['trading_days'].add(day_of_year)
 
-        # Calcola giorni di vincita/perdita
-        for week_key, days in seen_days_per_week.items():
-            weekly_totals[week_key]['trading_days'] = len(days)
+        for week_key, data in weekly_totals.items():
+            data['trading_days'] = len(data['trading_days'])
 
-        winning_days = 0
-        losing_days = 0
-        breakeven_days = 0
-        for day_stats in daily_data.values():
-            if day_stats['total_pnl'] > 0:
-                winning_days += 1
-            elif day_stats['total_pnl'] < 0:
-                losing_days += 1
-            else:
-                breakeven_days += 1
+        winning_days = sum(1 for day in daily_data.values() if day['total_pnl'] > 0)
+        losing_days = sum(1 for day in daily_data.values() if day['total_pnl'] < 0)
+        breakeven_days = len(daily_data) - winning_days - losing_days
 
-        # Calcola max_abs_pnl_by_strategy
-        max_abs_pnl_by_strategy = 0.0
-        if by_strategy:
-            # Calcoliamo il massimo P&L assoluto PRIMA di convertire i valori in float
-            max_abs_pnl_by_strategy = float(max(abs(s['total_pnl']) for s in by_strategy.values()))
+        max_abs_pnl_by_strategy = float(max(abs(s['total_pnl']) for s in by_strategy.values())) if by_strategy else 0.0
 
-        # Calcola win rate e converte Decimal in float per tutti i gruppi
         for group in [by_strategy, daily_data, by_day_of_week]:
             for stats in group.values():
-                if stats['trade_count'] > 0:
-                    stats['win_rate'] = (stats['winning_trades'] / stats['trade_count']) * 100
+                stats['win_rate'] = (stats['winning_trades'] / stats['trade_count']) * 100 if stats['trade_count'] > 0 else 0
                 stats['total_pnl'] = float(stats['total_pnl'])
-
-        for key, value in monthly_totals.items():
-            monthly_totals[key] = float(value)
-
-        for key, value in weekly_totals.items():
-            value['total_pnl'] = float(value['total_pnl'])
 
         return {
             "general_stats": {
@@ -769,8 +726,8 @@ class MetricsCalculator:
             "max_abs_pnl_by_strategy": max_abs_pnl_by_strategy,
             "by_day_of_week": by_day_of_week,
             "win_loss_days": {"winning_days": winning_days, "losing_days": losing_days, "breakeven_days": breakeven_days},
-            "monthly_totals": monthly_totals,
-            "weekly_totals": weekly_totals
+            "monthly_totals": {k: float(v) for k, v in monthly_totals.items()},
+            "weekly_totals": {k: {'total_pnl': float(v['total_pnl']), 'trading_days': v['trading_days']} for k, v in weekly_totals.items()}
         }
 
     def calculate_all_metrics(self):
@@ -783,14 +740,23 @@ class MetricsCalculator:
         chart_data = self._prepare_chart_data(advanced_stats)
 
         final_stats = {**base_stats, **advanced_stats}
+        # Rimuovi dati ridondanti o non necessari nel payload finale
         for k in ('winning_trades', 'realized_rrs_list', 'losing_trades_pnl', 'pnl_data'):
             final_stats.pop(k, None)
 
-        # Per la visualizzazione, i trade sono ordinati dal più recente al meno recente
+        # Converte tutti i Decimal in float per la serializzazione JSON
+        for key, value in final_stats.items():
+            if isinstance(value, Decimal):
+                final_stats[key] = float(value)
+            elif isinstance(value, dict):
+                 for sub_key, sub_value in value.items():
+                     if isinstance(sub_value, Decimal):
+                         value[sub_key] = float(sub_value)
+
         fallback_date = self._convert_to_local_tz(datetime(1970, 1, 1))
         display_trades = sorted(
             self.all_trades,
-            key=lambda x: x.get('entry_timestamp') or fallback_date,
+            key=lambda x: x.entry_timestamp or fallback_date,
             reverse=True
         )
 
