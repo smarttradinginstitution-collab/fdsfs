@@ -86,7 +86,7 @@ function selectAccount(account) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 1.2;
+  line-height: 1.1; /* Reduced for a more compact look */
 }
 
 .account-name, .account-item-name {
