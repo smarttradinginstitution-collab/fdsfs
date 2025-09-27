@@ -142,13 +142,13 @@ onMounted(() => {
 
 .account-name {
   font: var(--semantic-font-style-label-md);
-  font-size: 13px; // Dimensione custom come da richiesta originale
+  font-size: 9px; // Dimensione custom
   font-weight: 500;
   color: var(--semantic-color-text-primary);
 }
 
 .broker-name {
-  font-size: 11px; // Dimensione custom
+  font-size: 9px; // Dimensione custom
   color: var(--semantic-color-text-secondary);
 }
 
