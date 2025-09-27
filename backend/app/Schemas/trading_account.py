@@ -3,8 +3,9 @@ from __future__ import annotations
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from .broker import BrokerRead
 
 from pydantic import condecimal
 
@@ -16,9 +17,12 @@ class TradingAccountRead(BaseModel):
     created_at: datetime
     initial_balance: Optional[condecimal(max_digits=10, decimal_places=2)] = None
     currency: Optional[str] = None
+    broker_name: Optional[str] = Field(None, alias='broker_name')
+    broker: Optional[BrokerRead] = None
 
     class Config:
         from_attributes = True
+        allow_population_by_field_name = True
 
 
 class TradingAccountCreate(BaseModel):
