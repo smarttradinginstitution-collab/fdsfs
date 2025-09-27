@@ -217,7 +217,7 @@ async function submitAccount() {
 .add-account-card {
   padding: 1.5rem;
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   background-color: var(--semantic-color-surface-secondary);
@@ -246,7 +246,7 @@ async function submitAccount() {
   margin-bottom: 1.5rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   color: var(--semantic-color-text-primary);
   font-size: 1rem;
   transition: all 0.2s ease-in-out;
@@ -286,7 +286,7 @@ async function submitAccount() {
   padding: 1rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
@@ -356,7 +356,7 @@ async function submitAccount() {
   padding: 0.8rem 1rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   color: var(--semantic-color-text-primary);
   font-size: 1rem;
   transition: all 0.2s ease-in-out;
@@ -374,7 +374,7 @@ async function submitAccount() {
   background-color: var(--semantic-color-interactive-primary-default);
   color: var(--semantic-color-text-on-brand);
   border: none;
-  border-radius: var(--semantic-border-radius-md);
+  border-radius: var(--semantic-border-radius-interactive);
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
