@@ -9,13 +9,35 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Schemas.playbook import PlaybookCreate, PlaybookRead, PlaybookUpdate
+from app.Schemas.playbook import PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 
 
 class PlaybookController:
     def __init__(self) -> None:
         pass
+
+    async def list_all_playbooks_for_admin(
+        self,
+        db: AsyncSession = Depends(get_db),
+    ) -> List[PlaybookAdminRead]:
+        """
+        [Admin] Lista tutti i playbook, raggruppati per General Account.
+        """
+        repo = PlaybookRepository(db)
+        accounts = await repo.list_all_playbooks_grouped_by_account()
+
+        response_data = []
+        for acc in accounts:
+            if acc.user:  # Assicura che ci sia un utente associato
+                response_data.append(
+                    PlaybookAdminRead(
+                        general_account_id=acc.id,
+                        user_email=acc.user.email,
+                        playbooks=[PlaybookRead.from_orm(p) for p in acc.playbooks],
+                    )
+                )
+        return response_data
 
     async def list_my_playbooks(
         self,

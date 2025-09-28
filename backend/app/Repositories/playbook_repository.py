@@ -5,8 +5,10 @@ from typing import Optional, Sequence
 from uuid import UUID
 from sqlalchemy import select, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.Models.playbook import Playbook
+from app.Models.general_account import GeneralAccount
 from app.Schemas.playbook import PlaybookCreate, PlaybookUpdate
 
 
@@ -61,3 +63,19 @@ class PlaybookRepository:
         new_row = res_ins.scalar_one()
         await self.db.flush()
         return new_row
+
+    async def list_all_playbooks_grouped_by_account(self) -> Sequence[GeneralAccount]:
+        """
+        Lista tutti i GeneralAccount con i loro playbook e utenti associati.
+        Utile per l'endpoint admin.
+        """
+        stmt = (
+            select(GeneralAccount)
+            .options(
+                joinedload(GeneralAccount.user),
+                selectinload(GeneralAccount.playbooks)
+            )
+            .order_by(GeneralAccount.created_at.asc())
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().unique().all()
