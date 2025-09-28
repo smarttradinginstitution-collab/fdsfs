@@ -12,6 +12,7 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
+    from app.Models.trade import Trade
 
 
 class Tag(Base):
