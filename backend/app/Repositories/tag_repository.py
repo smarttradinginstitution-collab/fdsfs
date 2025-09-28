@@ -24,43 +24,33 @@ class TagRepository:
 
     async def create_tag(self, general_account_id: UUID, tag_data: TagCreate) -> Tag:
         """Crea un nuovo tag."""
-        stmt = (
-            insert(Tag)
-            .values(
-                general_account_id=general_account_id,
-                name=tag_data.name,
-                color=tag_data.color,
-            )
-            .returning(Tag)
+        db_tag = Tag(
+            **tag_data.model_dump(),
+            general_account_id=general_account_id
         )
-        res = await self.db.execute(stmt)
-        new_tag = res.scalar_one()
-        await self.db.flush()
-        return new_tag
+        self.db.add(db_tag)
+        await self.db.commit()
+        await self.db.refresh(db_tag)
+        return db_tag
 
-    async def update_tag(self, tag_id: UUID, tag_data: TagUpdate) -> Optional[Tag]:
+    async def update_tag(self, db_obj: Tag, tag_data: TagUpdate) -> Tag:
         """Aggiorna un tag esistente."""
         update_data = tag_data.model_dump(exclude_unset=True)
         if not update_data:
-            return await self.get_tag_by_id(tag_id) # Nessun dato da aggiornare
+            return db_obj
 
-        stmt = (
-            update(Tag)
-            .where(Tag.id == tag_id)
-            .values(**update_data)
-            .returning(Tag)
-        )
-        res = await self.db.execute(stmt)
-        updated_tag = res.scalar_one_or_none()
-        await self.db.flush()
-        return updated_tag
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
 
-    async def delete_tag_by_id(self, tag_id: UUID) -> bool:
-        """Elimina un tag per ID. Ritorna True se l'eliminazione ha avuto successo."""
-        stmt = delete(Tag).where(Tag.id == tag_id)
-        res = await self.db.execute(stmt)
-        await self.db.flush()
-        return res.rowcount > 0
+        self.db.add(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+        return db_obj
+
+    async def delete_tag(self, db_obj: Tag) -> None:
+        """Elimina un tag."""
+        await self.db.delete(db_obj)
+        await self.db.commit()
 
     async def list_tags_by_general_account_id(self, general_account_id: UUID) -> Sequence[Tag]:
         """Lista tutti i tag per un dato general_account_id."""

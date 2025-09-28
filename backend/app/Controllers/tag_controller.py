@@ -106,9 +106,8 @@ class TagController:
         if not current_user.is_admin and tag_to_update.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        updated_tag = await repo.update_tag(tag_id, tag_data)
+        updated_tag = await repo.update_tag(db_obj=tag_to_update, tag_data=tag_data)
         if not updated_tag:
-            # Questo caso può verificarsi se l'update non restituisce nulla, anche se dovrebbe.
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento del tag.")
 
         return TagRead.from_orm(updated_tag)
@@ -133,8 +132,6 @@ class TagController:
         if not current_user.is_admin and tag_to_delete.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        success = await repo.delete_tag_by_id(tag_id)
-        if not success:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'eliminazione del tag.")
+        await repo.delete_tag(db_obj=tag_to_delete)
 
         return {"ok": True, "detail": "Tag eliminato con successo."}
