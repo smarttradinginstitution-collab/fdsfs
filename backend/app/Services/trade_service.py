@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import Depends, HTTPException, status
+from datetime import date
 
 from app.Repositories.trade_repository import TradeRepository
 from app.Repositories.trading_account_repository import TradingAccountRepository
@@ -19,6 +20,11 @@ from app.Repositories.psychology_state_repository import PsychologyStateReposito
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Infrastructure.db import get_db
 from app.Models.trade import Trade
+from app.Models.tag import Tag
+from app.Models.mistake import Mistake
+from app.Models.playbook import Playbook
+from app.Models.news_impact import NewsImpact
+from app.Models.psychology_state import PsychologyState
 
 
 class TradeService:
@@ -87,6 +93,28 @@ class TradeService:
             entities.append(entity)
         return entities
 
+    async def _get_related_entities(self, general_account_id: UUID, model_class, entity_ids: List[UUID]) -> list:
+        """
+        Recupera un elenco di entità correlate tramite i loro ID, assicurando che appartengano
+        al general account corretto.
+        """
+        if not entity_ids:
+            return []
+
+        stmt = select(model_class).where(
+            model_class.id.in_(entity_ids),
+            model_class.general_account_id == general_account_id
+        )
+        result = await self.db.execute(stmt)
+        entities = result.scalars().all()
+
+        if len(entities) != len(set(entity_ids)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Uno o più ID di {model_class.__name__} non sono validi o non appartengono all'utente."
+            )
+        return entities
+
     async def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
         """Crea un nuovo trade per l'utente, gestendo le entità correlate tramite nome."""
         _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
@@ -124,7 +152,7 @@ class TradeService:
         # Recupera o crea le entità correlate
         db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
         db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        db_trade.playbooks = await self._get_or_create_related_entities(general_account_id, playbook_names, self.playbook_repo, "upsert_by_title", "title")
+        db_trade.playbooks = await self._get_or_create_related_entities(general_account_id, playbook_names, self.playbook_repo, "upsert_by_name", "name")
         db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
         db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
 

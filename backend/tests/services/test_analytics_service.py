@@ -31,8 +31,8 @@ async def setup_test_data(db_session: AsyncSession):
     await db_session.flush()
 
     # 2. Create Playbooks (Strategies)
-    playbook_a = Playbook(id=uuid4(), title="Breakout Strategy", general_account_id=general_account.id)
-    playbook_b = Playbook(id=uuid4(), title="Mean Reversion", general_account_id=general_account.id)
+    playbook_a = Playbook(id=uuid4(), name="Breakout Strategy", general_account_id=general_account.id)
+    playbook_b = Playbook(id=uuid4(), name="Mean Reversion", general_account_id=general_account.id)
 
     db_session.add_all([playbook_a, playbook_b])
     await db_session.flush()

@@ -241,14 +241,13 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 📖 PLAYBOOKS (protetto: user)
+# 📖 PLAYBOOKS (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import playbook_controller
+from app.Controllers import playbook_router
 
 router.include_router(
-    playbook_controller.router,
-    prefix="/api/v1/playbooks",
-    tags=["Playbooks"],
+    playbook_router.router,
+    prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
 

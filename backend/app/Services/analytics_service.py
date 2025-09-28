@@ -217,13 +217,13 @@ class AnalyticsService:
                 # --- By Strategy (Playbook) ---
                 if trade.playbooks:
                     for playbook in trade.playbooks:
-                        if playbook.title not in by_strategy:
-                            by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": 0.0, "winning_trades": 0}
+                        if playbook.name not in by_strategy:
+                            by_strategy[playbook.name] = {"trade_count": 0, "total_pnl": 0.0, "winning_trades": 0}
 
-                        by_strategy[playbook.title]["trade_count"] += 1
-                        by_strategy[playbook.title]["total_pnl"] += trade.p_l
+                        by_strategy[playbook.name]["trade_count"] += 1
+                        by_strategy[playbook.name]["total_pnl"] += trade.p_l
                         if trade.p_l > 0:
-                            by_strategy[playbook.title]["winning_trades"] += 1
+                            by_strategy[playbook.name]["winning_trades"] += 1
 
                 # --- By Day of Week ---
                 day_name = trade_date.strftime("%A")
