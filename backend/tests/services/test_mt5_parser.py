@@ -2,6 +2,7 @@
 import pytest
 from datetime import datetime
 from app.Services.mt5_parser import Mt5Parser
+from app.Models.enums import TradeDirection
 
 @pytest.fixture
 def parser():
@@ -107,33 +108,42 @@ def test_parse_valid_mt5_report(parser, valid_mt5_html_report):
 
     # Test first trade
     trade1 = trades[0]
-    assert trade1['entry_time'] == datetime(2025, 9, 22, 13, 42, 50)
-    assert trade1['position_id'] == '310402409'
-    assert trade1['symbol'] == 'XAUUSD'
-    assert trade1['trade_type'] == 'buy'
+    assert trade1['entry_timestamp'] == datetime(2025, 9, 22, 13, 42, 50)
+    assert trade1['external_id'] == '310402409'
+    assert trade1['symbol_snapshot'] == 'XAUUSD'
+    assert trade1['direction'] == TradeDirection.LONG
     assert trade1['position_size'] == 2.0
     assert trade1['entry_price'] == 3726.65
-    assert trade1['stop_loss'] == 3725.75
-    assert trade1['take_profit'] == 3727.20
-    assert trade1['exit_time'] == datetime(2025, 9, 22, 13, 43, 20)
+    assert trade1['stop_loss_price'] == 3725.75
+    assert trade1['take_profit_price'] == 3727.20
+    assert trade1['exit_timestamp'] == datetime(2025, 9, 22, 13, 43, 20)
     assert trade1['exit_price'] == 3725.65
-    assert trade1['commission'] == -10.44
-    assert trade1['swap'] == 0.00
-    assert trade1['p_l'] == -200.00
+    assert trade1['commissions'] == -10.44
+    assert trade1['fees'] == 0.00
+    assert trade1['gross_p_l'] == -200.00
+    # Net P&L = gross - commissions - fees = -200.00 - (-10.44) - 0.00
+    assert trade1['p_l'] == -189.56
     assert 'dedupe_key' in trade1
 
     # Test second trade
     trade2 = trades[1]
     assert trade2['position_size'] == 216.41
+    assert trade2['gross_p_l'] == -6565.88
+    assert trade2['commissions'] == 0.00
+    assert trade2['fees'] == 0.00
     assert trade2['p_l'] == -6565.88
 
-    # Test third trade (with empty S/L, T/P)
+    # Test third trade (with empty T/P)
     trade3 = trades[2]
     assert trade3['position_size'] == 0.01
     assert trade3['entry_price'] == 3784.83
-    assert trade3['stop_loss'] is None
-    assert trade3['take_profit'] is None
-    assert trade3['p_l'] == -1.96
+    assert trade3['stop_loss_price'] == 3782.99
+    assert trade3['take_profit_price'] is None
+    assert trade3['gross_p_l'] == -1.96
+    assert trade3['commissions'] == -0.06
+    assert trade3['fees'] == 0.00
+    # Net P&L = -1.96 - (-0.06) - 0.00
+    assert trade3['p_l'] == -1.90
 
 def test_parse_invalid_report_no_header(parser):
     """Test parsing an HTML file that is missing the 'Posizioni' header."""

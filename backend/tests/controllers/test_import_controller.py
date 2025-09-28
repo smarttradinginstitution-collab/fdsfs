@@ -27,7 +27,12 @@ async def setup_trading_account(client: AsyncClient, db_session: AsyncSession) -
     broker_id = await setup_broker(db_session)
     response = await client.post(
         "/api/v1/trading-accounts/",
-        json={"label": "Test Trading Account", "broker_id": broker_id}
+        json={
+            "label": "Test Trading Account",
+            "broker_id": broker_id,
+            "initial_balance": 100000,
+            "currency": "USD"
+        }
     )
     assert response.status_code == 201, response.text
     return response.json()["id"]
@@ -183,5 +188,5 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
     )
     inserted_trade = result.scalars().first()
     assert inserted_trade is not None
-    assert inserted_trade.p_l == -200.0
+    assert inserted_trade.p_l == -189.56
     assert inserted_trade.position_size == 2.0

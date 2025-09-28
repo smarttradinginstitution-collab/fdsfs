@@ -23,7 +23,12 @@ async def test_create_trading_account_fails_without_general_account(async_client
     broker_id = await setup_broker(db_session)
     response = await async_client.post(
         "/api/v1/trading-accounts/",
-        json={"label": "My First Trading Account", "broker_id": str(broker_id)}
+        json={
+            "label": "My First Trading Account",
+            "broker_id": str(broker_id),
+            "initial_balance": 100000,
+            "currency": "USD"
+        }
     )
     assert response.status_code == 403
 
@@ -42,7 +47,12 @@ async def test_create_and_get_trading_account(async_client: AsyncClient, db_sess
     label = "My Test Account"
     ta_response = await async_client.post(
         "/api/v1/trading-accounts/",
-        json={"label": label, "broker_id": str(broker_id)}
+        json={
+            "label": label,
+            "broker_id": str(broker_id),
+            "initial_balance": 100000,
+            "currency": "USD"
+        }
     )
     assert ta_response.status_code == 201
     data = ta_response.json()

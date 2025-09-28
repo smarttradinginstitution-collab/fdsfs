@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 from bs4 import BeautifulSoup
 
+from app.Models.enums import TradeDirection
+
 class Mt5Parser:
     def parse_performance_report(self, file_content: bytes):
         """
@@ -37,22 +39,44 @@ class Mt5Parser:
 
             trade_data = {}
             try:
-                trade_data['entry_time'] = self._parse_datetime(visible_cells[0].text.strip())
-                trade_data['position_id'] = visible_cells[1].text.strip()
-                trade_data['symbol'] = visible_cells[2].text.strip()
-                trade_data['trade_type'] = visible_cells[3].text.strip()
-                # Map MT5 'Volume' to 'position_size' to match the existing data model
+                # Correct field names to match the Trade model and Tradovate parser
+                trade_data['entry_timestamp'] = self._parse_datetime(visible_cells[0].text.strip())
+                trade_data['external_id'] = visible_cells[1].text.strip()
+                trade_data['symbol_snapshot'] = visible_cells[2].text.strip()
+
+                # Map trade type string to TradeDirection enum
+                trade_type_str = visible_cells[3].text.strip().lower()
+                if trade_type_str == 'buy':
+                    trade_data['direction'] = TradeDirection.LONG
+                elif trade_type_str == 'sell':
+                    trade_data['direction'] = TradeDirection.SHORT
+                else:
+                    # If direction is unknown, skip the trade
+                    continue
+
                 trade_data['position_size'] = self._parse_float(visible_cells[4].text.strip())
                 trade_data['entry_price'] = self._parse_float(visible_cells[5].text.strip())
-                trade_data['stop_loss'] = self._parse_float(visible_cells[6].text.strip())
-                trade_data['take_profit'] = self._parse_float(visible_cells[7].text.strip())
-                trade_data['exit_time'] = self._parse_datetime(visible_cells[8].text.strip())
+                trade_data['stop_loss_price'] = self._parse_float(visible_cells[6].text.strip())
+                trade_data['take_profit_price'] = self._parse_float(visible_cells[7].text.strip())
+                trade_data['exit_timestamp'] = self._parse_datetime(visible_cells[8].text.strip())
                 trade_data['exit_price'] = self._parse_float(visible_cells[9].text.strip())
-                trade_data['commission'] = self._parse_float(visible_cells[10].text.strip())
-                trade_data['swap'] = self._parse_float(visible_cells[11].text.strip())
-                trade_data['p_l'] = self._parse_float(visible_cells[12].text.strip())
 
-                trade_data['dedupe_key'] = f"mt5-{trade_data['position_id']}-{trade_data['exit_time']}"
+                commissions = self._parse_float(visible_cells[10].text.strip())
+                swap = self._parse_float(visible_cells[11].text.strip())
+                gross_pl = self._parse_float(visible_cells[12].text.strip())
+
+                trade_data['commissions'] = commissions
+                # Swap is a type of fee
+                trade_data['fees'] = swap
+                trade_data['gross_p_l'] = gross_pl
+
+                # Calculate Net P&L (p_l) based on gross, commissions, and fees (swap)
+                net_pl = (gross_pl or 0) - (commissions or 0) - (swap or 0)
+                trade_data['p_l'] = net_pl
+
+                # Use a consistent and robust deduplication key
+                exit_ts_str = trade_data['exit_timestamp'].isoformat() if trade_data['exit_timestamp'] else ''
+                trade_data['dedupe_key'] = f"mt5-{trade_data['external_id']}-{exit_ts_str}"
 
                 trades.append(trade_data)
             except (ValueError, IndexError) as e:
