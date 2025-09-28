@@ -67,6 +67,7 @@ async def import_tradovate_trades(
         user_id=user_id,
         trading_account_id=trading_account_id,
         file_name=performance_report_file.filename,
+        source_type="csv"
     )
 
     file_content = await performance_report_file.read()
@@ -74,6 +75,48 @@ async def import_tradovate_trades(
     # Add the processing to a background task
     background_tasks.add_task(
         import_service.process_tradovate_import,
+        import_run_id=initial_import_run.id,
+        file_content=file_content,
+    )
+
+    return initial_import_run
+
+@router.post(
+    "/mt5/{trading_account_id}",
+    response_model=ImportRunRead,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Import trades from MT5 HTML file"
+)
+async def import_mt5_trades(
+    trading_account_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    claims: dict = Depends(get_current_claims),
+):
+    """
+    Uploads a single MT5 HTML file to import trades.
+    """
+    if not file.filename.lower().endswith('.html'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The uploaded file must be an HTML file."
+        )
+
+    user_id = uuid.UUID(claims.get("sub"))
+    import_service = ImportService(db)
+
+    initial_import_run = await import_service.create_initial_import_run(
+        user_id=user_id,
+        trading_account_id=trading_account_id,
+        file_name=file.filename,
+        source_type="html",
+    )
+
+    file_content = await file.read()
+
+    background_tasks.add_task(
+        import_service.process_mt5_import,
         import_run_id=initial_import_run.id,
         file_content=file_content,
     )
