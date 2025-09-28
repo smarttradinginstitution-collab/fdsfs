@@ -24,8 +24,7 @@ class MistakeRead(BaseModel):
 
 class PlaybookRead(BaseModel):
     id: UUID
-    name: str
-    color: Optional[str]
+    title: str
 
     class Config:
         from_attributes = True

@@ -88,7 +88,6 @@ class TradeService:
         entities = []
         upsert_method = getattr(repo, upsert_method_name)
         for value in values:
-            # Passa l'argomento con il nome corretto (es. name=value, title=value, state=value)
             entity = await upsert_method(general_account_id=general_account_id, **{value_field_name: value})
             entities.append(entity)
         return entities
@@ -119,7 +118,6 @@ class TradeService:
         """Crea un nuovo trade per l'utente, gestendo le entità correlate tramite nome."""
         _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
-        # Gestione campi obsoleti per retrocompatibilità
         playbook_names = trade_data.playbooks or []
         if trade_data.setup and trade_data.setup not in playbook_names:
             playbook_names.append(trade_data.setup)
@@ -128,17 +126,14 @@ class TradeService:
         if trade_data.emotional_state and trade_data.emotional_state not in psychology_names:
             psychology_names.append(trade_data.emotional_state)
 
-        # Escludi i campi gestiti separatamente dal dizionario principale
         trade_dict = trade_data.model_dump(exclude={
             'tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states',
-            'setup', 'emotional_state' # Escludi anche i campi obsoleti
+            'setup', 'emotional_state'
         })
 
-        # Manually handle the symbol to symbol_snapshot mapping
         if 'symbol' in trade_dict:
             trade_dict['symbol_snapshot'] = trade_dict.pop('symbol')
 
-        # Calculate R-Multiple
         trade_dict['r_multiple'] = self._calculate_r_multiple(
             pnl=trade_data.p_l,
             entry_price=trade_data.entry_price,
@@ -146,13 +141,11 @@ class TradeService:
             position_size=trade_data.position_size
         )
 
-
         db_trade = Trade(**trade_dict)
 
-        # Recupera o crea le entità correlate
         db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
         db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        db_trade.playbooks = await self._get_or_create_related_entities(general_account_id, playbook_names, self.playbook_repo, "upsert_by_name", "name")
+        db_trade.playbooks = await self._get_or_create_related_entities(general_account_id, playbook_names, self.playbook_repo, "upsert_by_title", "title")
         db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
         db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
 
@@ -204,11 +197,10 @@ class TradeService:
 
         _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impact_ids', 'psychology_state_ids'})
+        update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impacts', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
-        # Recalculate R-Multiple if relevant fields are updated
         if any(field in update_dict for field in ['p_l', 'entry_price', 'stop_loss_price', 'position_size']):
             db_trade.r_multiple = self._calculate_r_multiple(
                 pnl=db_trade.p_l,

@@ -241,7 +241,7 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 📖 PLAYBOOKS (protetto: user/admin)
+# 📖 PLAYBOOKS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import playbook_router
 

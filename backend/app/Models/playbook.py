@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional, TYPE_CHECKING, Any
+from typing import Any, TYPE_CHECKING
 
-from sqlalchemy import String, ForeignKey, func, TIMESTAMP
+from sqlalchemy import String, TIMESTAMP, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,7 +12,6 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trade import Trade
 
 
 class Playbook(Base):
@@ -27,8 +26,7 @@ class Playbook(Base):
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True, default="#888888")
+    title: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
@@ -38,5 +36,5 @@ class Playbook(Base):
         "GeneralAccount", back_populates="playbooks"
     )
     trades: Mapped[list["Trade"]] = relationship(
-        secondary="public.trades_playbooks", back_populates="playbooks"
+        "Trade", secondary="public.trades_playbooks", back_populates="playbooks"
     )

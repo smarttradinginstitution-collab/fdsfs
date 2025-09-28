@@ -6,8 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from app.Controllers.playbook_controller import PlaybookController
-from app.Schemas.playbook import PlaybookRead, PlaybookCreate, PlaybookUpdate, PlaybookAdminRead
-from app.Router.auth import require_roles
+from app.Schemas.playbook import PlaybookRead, PlaybookCreate, PlaybookUpdate
 from app.Router.dependencies import get_current_user
 
 # ------------------------------------------------------------------------------
@@ -19,17 +18,6 @@ playbooks = PlaybookController()
 # Router
 # ------------------------------------------------------------------------------
 router = APIRouter()
-
-# ------------------------------------------------------------------------------
-# Rotte Admin
-# ------------------------------------------------------------------------------
-router.get(
-    "/admin/playbooks",
-    response_model=List[PlaybookAdminRead],
-    tags=["Playbooks", "Admin"],
-    summary="[Admin] Lista tutti i playbook di tutti gli account",
-    dependencies=[Depends(require_roles(["admin"]))],
-)(playbooks.list_all_playbooks_for_admin)
 
 # ------------------------------------------------------------------------------
 # Rotte Utente Autenticato (/me)

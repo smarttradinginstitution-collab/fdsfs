@@ -100,7 +100,7 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
     assert created_trade["mistakes"][0]["name"] == "FOMO"
 
     assert len(created_trade["playbooks"]) == 1
-    assert created_trade["playbooks"][0]["name"] == "Opening Range Breakout"
+    assert created_trade["playbooks"][0]["title"] == "Opening Range Breakout"
 
     trade_payload_2 = {
         "trading_account_id": trading_account_id,
