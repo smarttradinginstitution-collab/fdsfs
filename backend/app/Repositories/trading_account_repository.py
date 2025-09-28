@@ -17,8 +17,14 @@ class TradingAccountRepository:
         self.db = db
 
     async def get_by_id(self, account_id: UUID) -> Optional[TradingAccount]:
-        """Recupera un TradingAccount tramite il suo ID."""
-        return await self.db.get(TradingAccount, account_id)
+        """Recupera un TradingAccount tramite il suo ID, includendo il broker."""
+        stmt = (
+            select(TradingAccount)
+            .where(TradingAccount.id == account_id)
+            .options(selectinload(TradingAccount.broker))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
 
     async def list_by_general_account_id(self, general_account_id: UUID) -> List[TradingAccount]:
         """Elenca tutti i TradingAccount per un dato GeneralAccount, includendo il broker."""

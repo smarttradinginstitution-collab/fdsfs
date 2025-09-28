@@ -2,7 +2,7 @@
 from __future__ import annotations
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 # Schema di base con i campi comuni
@@ -25,3 +25,12 @@ class PlaybookRead(PlaybookBase):
     id: UUID
     general_account_id: UUID
     created_at: datetime
+
+
+class PlaybookAdminRead(BaseModel):
+    general_account_id: UUID
+    user_email: str
+    playbooks: List[PlaybookRead]
+
+    class Config:
+        from_attributes = True
