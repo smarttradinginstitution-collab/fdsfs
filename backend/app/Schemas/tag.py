@@ -26,3 +26,12 @@ class TagRead(TagBase):
 
     class Config:
         from_attributes = True
+
+
+class TagAdminRead(BaseModel):
+    general_account_id: UUID
+    user_email: str
+    tags: List[TagRead]
+
+    class Config:
+        from_attributes = True

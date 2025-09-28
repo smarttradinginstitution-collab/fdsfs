@@ -220,6 +220,17 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🏷️ TAGS (protetto: user/admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import tag_router
+
+router.include_router(
+    tag_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📥 IMPORT (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import import_controller
