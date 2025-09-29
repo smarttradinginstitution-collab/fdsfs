@@ -6,6 +6,7 @@ from datetime import date
 # --- Schemi per /performance/metrics ---
 class PerformanceStats(BaseModel):
     net_pnl: float = 0.0
+    roi_percentage: float = 0.0
     gross_profit: float = 0.0
     gross_loss: float = 0.0
     win_rate: float = 0.0
@@ -24,6 +25,7 @@ class PerformanceStats(BaseModel):
     max_consecutive_wins: int = 0
     max_consecutive_losses: int = 0
     max_drawdown_abs: float = 0.0
+    max_drawdown_percentage: float = 0.0
     sharpe_ratio: float = 0.0
     average_hold_time: float = 0.0 # in minuti
     avg_realized_rr: float = 0.0
