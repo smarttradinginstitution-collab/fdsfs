@@ -5,7 +5,7 @@ import PlusIcon from '@/components/icons/PlusIcon.vue';
 import ViewGridIcon from '@/components/icons/ViewGridIcon.vue';
 import ViewListIcon from '@/components/icons/ViewListIcon.vue';
 
-const emit = defineEmits(['update:layout']);
+const emit = defineEmits(['update:layout', 'create']);
 const currentLayout = ref('grid');
 
 function setLayout(layout) {
@@ -17,12 +17,10 @@ function setLayout(layout) {
 
 <template>
   <div class="playbook-controls">
-    <router-link :to="{ name: 'create-playbook' }" custom v-slot="{ navigate }">
-      <BaseButton variant="primary" @click="navigate">
-        <PlusIcon />
-        <span>Create New Playbook</span>
-      </BaseButton>
-    </router-link>
+    <BaseButton variant="primary" @click="$emit('create')">
+      <PlusIcon />
+      <span>Create New Playbook</span>
+    </BaseButton>
 
     <div class="layout-switchers">
       <BaseButton
