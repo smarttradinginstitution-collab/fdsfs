@@ -1,73 +1,61 @@
-<template>
-  <div class="playbook-controls">
-    <div class="left-controls">
-      <!-- Search bar can be added here later if needed -->
-    </div>
-    <div class="right-controls">
-      <div class="layout-switchers">
-        <button @click="setLayout('grid')" :class="{ active: currentLayout === 'grid' }">Grid</button>
-        <button @click="setLayout('list')" :class="{ active: currentLayout === 'list' }">List</button>
-      </div>
-      <button class="create-button">Create New Playbook</button>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, defineEmits } from 'vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import PlusIcon from '@/components/icons/PlusIcon.vue';
+import ViewGridIcon from '@/components/icons/ViewGridIcon.vue';
+import ViewListIcon from '@/components/icons/ViewListIcon.vue';
 
 const emit = defineEmits(['update:layout']);
-
 const currentLayout = ref('grid');
 
 function setLayout(layout) {
+  if (currentLayout.value === layout) return;
   currentLayout.value = layout;
   emit('update:layout', layout);
 }
 </script>
+
+<template>
+  <div class="playbook-controls">
+    <!-- The router-link for creation will be added later if needed -->
+    <BaseButton variant="primary">
+      <PlusIcon />
+      <span>Create New Playbook</span>
+    </BaseButton>
+
+    <div class="layout-switchers">
+      <BaseButton
+        :variant="currentLayout === 'grid' ? 'primary' : 'secondary'"
+        @click="setLayout('grid')"
+        aria-label="Grid Layout"
+      >
+        <ViewGridIcon />
+      </BaseButton>
+      <BaseButton
+        :variant="currentLayout === 'list' ? 'primary' : 'secondary'"
+        @click="setLayout('list')"
+        aria-label="List Layout"
+      >
+        <ViewListIcon />
+      </BaseButton>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .playbook-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0;
-}
-
-.right-controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+  width: 100%;
 }
 
 .layout-switchers {
   display: flex;
-  border: 1px solid #ccc;
-  border-radius: var(--semantic-border-radius-interactive);
-  overflow: hidden;
+  gap: var(--semantic-size-stack-xs);
 }
 
-.layout-switchers button {
-  padding: 0.5rem 1rem;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-}
-
-.layout-switchers button.active {
-  background-color: #e0e0e0;
-}
-
-.create-button {
-  padding: 0.5rem 1rem;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
-}
-
-/* Responsive behavior */
+/* Hide layout switchers on smaller screens, matching user requirements */
 @media (max-width: 1024px) {
   .layout-switchers {
     display: none;
