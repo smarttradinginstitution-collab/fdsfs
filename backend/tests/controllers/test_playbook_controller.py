@@ -26,26 +26,35 @@ async def test_create_and_get_playbook(async_client: AsyncClient):
     """
     await setup_general_account(async_client)
 
-    playbook_title = "My Test Playbook"
+    playbook_data = {
+        "title": "My Test Playbook",
+        "description": "This is a test description.",
+        "private": True
+    }
 
     # Create playbook
     create_response = await async_client.post(
         "/api/v1/me/playbooks",
-        json={"title": playbook_title}
+        json=playbook_data
     )
     assert create_response.status_code == 201
     created_data = create_response.json()
     playbook_id = created_data["id"]
 
-    assert created_data["title"] == playbook_title
+    assert created_data["title"] == playbook_data["title"]
+    assert created_data["description"] == playbook_data["description"]
+    assert created_data["private"] == playbook_data["private"]
     assert "general_account_id" in created_data
+    assert "rules_groups" in created_data
+    assert created_data["rules_groups"] == []
 
     # Get the playbook by ID
     get_response = await async_client.get(f"/api/v1/playbooks/{playbook_id}")
     assert get_response.status_code == 200
     get_data = get_response.json()
     assert get_data["id"] == playbook_id
-    assert get_data["title"] == playbook_title
+    assert get_data["title"] == playbook_data["title"]
+    assert get_data["description"] == playbook_data["description"]
 
 
 async def test_list_my_playbooks(async_client: AsyncClient):
@@ -55,8 +64,8 @@ async def test_list_my_playbooks(async_client: AsyncClient):
     await setup_general_account(async_client)
 
     # Create a couple of playbooks
-    await async_client.post("/api/v1/me/playbooks", json={"title": "Playbook One"})
-    await async_client.post("/api/v1/me/playbooks", json={"title": "Playbook Two"})
+    await async_client.post("/api/v1/me/playbooks", json={"title": "Playbook One", "description": "Desc 1"})
+    await async_client.post("/api/v1/me/playbooks", json={"title": "Playbook Two", "description": "Desc 2"})
 
     # List playbooks
     list_response = await async_client.get("/api/v1/me/playbooks")
@@ -77,24 +86,36 @@ async def test_update_playbook(async_client: AsyncClient):
     await setup_general_account(async_client)
 
     # Create a playbook
-    create_response = await async_client.post("/api/v1/me/playbooks", json={"title": "Original Title"})
+    create_response = await async_client.post(
+        "/api/v1/me/playbooks",
+        json={"title": "Original Title", "description": "Original Desc", "private": False}
+    )
     assert create_response.status_code == 201
     playbook_id = create_response.json()["id"]
 
     # Update the playbook
-    updated_title = "Updated Title"
+    update_data = {
+        "title": "Updated Title",
+        "description": "Updated Desc",
+        "private": True
+    }
     update_response = await async_client.put(
         f"/api/v1/playbooks/{playbook_id}",
-        json={"title": updated_title}
+        json=update_data
     )
     assert update_response.status_code == 200
-    updated_data = update_response.json()
-    assert updated_data["title"] == updated_title
+    updated_response_data = update_response.json()
+    assert updated_response_data["title"] == update_data["title"]
+    assert updated_response_data["description"] == update_data["description"]
+    assert updated_response_data["private"] == update_data["private"]
 
     # Verify the update
     get_response = await async_client.get(f"/api/v1/playbooks/{playbook_id}")
     assert get_response.status_code == 200
-    assert get_response.json()["title"] == updated_title
+    get_data = get_response.json()
+    assert get_data["title"] == update_data["title"]
+    assert get_data["description"] == update_data["description"]
+    assert get_data["private"] == update_data["private"]
 
 
 async def test_delete_playbook(async_client: AsyncClient):
@@ -104,7 +125,10 @@ async def test_delete_playbook(async_client: AsyncClient):
     await setup_general_account(async_client)
 
     # Create a playbook
-    create_response = await async_client.post("/api/v1/me/playbooks", json={"title": "To Be Deleted"})
+    create_response = await async_client.post(
+        "/api/v1/me/playbooks",
+        json={"title": "To Be Deleted", "description": "This will be deleted."}
+    )
     assert create_response.status_code == 201
     playbook_id = create_response.json()["id"]
 
