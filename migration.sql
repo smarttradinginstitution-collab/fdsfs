@@ -62,4 +62,5 @@ BEGIN
     END IF;
 END $$;
 
+-- Step 6: Add 'description' column to the 'mistakes' table.
 -- End of script.

@@ -252,6 +252,17 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# ❌ MISTAKES (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import mistake_router
+
+router.include_router(
+    mistake_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 🏢 BROKERS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import broker_controller
