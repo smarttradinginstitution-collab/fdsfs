@@ -70,8 +70,8 @@ export const usePlaybookStore = defineStore('playbooks', {
         // 2. Create the rule groups and their rules
         for (const [index, group] of ruleGroups.entries()) {
           const groupPayload = {
-            title: group.title,
-            order: index,
+            name_group: group.title, // Correct field name is name_group
+            playbook_id: newPlaybook.id,
           };
           const groupResponse = await apiClient.post(`/playbooks/${newPlaybook.id}/rule-groups/`, groupPayload);
           const newGroup = groupResponse.data;
@@ -79,6 +79,7 @@ export const usePlaybookStore = defineStore('playbooks', {
           for (const rule of group.rules) {
             const rulePayload = {
               description: rule.description,
+              rules_groups_playbook_id: newGroup.id, // Correct field name
             };
             await apiClient.post(`/rule-groups/${newGroup.id}/rules/`, rulePayload);
           }
