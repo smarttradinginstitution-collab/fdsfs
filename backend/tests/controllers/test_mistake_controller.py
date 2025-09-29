@@ -27,19 +27,17 @@ async def test_create_and_get_mistake(async_client: AsyncClient):
     await setup_general_account(async_client)
 
     mistake_name = "My Test Mistake"
-    mistake_description = "A detailed description of the mistake."
 
     # Create mistake
     create_response = await async_client.post(
         "/api/v1/me/mistakes",
-        json={"name": mistake_name, "description": mistake_description}
+        json={"name": mistake_name}
     )
     assert create_response.status_code == 201
     created_data = create_response.json()
     mistake_id = created_data["id"]
 
     assert created_data["name"] == mistake_name
-    assert created_data["description"] == mistake_description
     assert "general_account_id" in created_data
 
     # Get the mistake by ID
@@ -57,8 +55,8 @@ async def test_list_my_mistakes(async_client: AsyncClient):
     await setup_general_account(async_client)
 
     # Create a couple of mistakes
-    await async_client.post("/api/v1/me/mistakes", json={"name": "Mistake One", "description": "Desc 1"})
-    await async_client.post("/api/v1/me/mistakes", json={"name": "Mistake Two", "description": "Desc 2"})
+    await async_client.post("/api/v1/me/mistakes", json={"name": "Mistake One"})
+    await async_client.post("/api/v1/me/mistakes", json={"name": "Mistake Two"})
 
     # List mistakes
     list_response = await async_client.get("/api/v1/me/mistakes")
@@ -81,28 +79,25 @@ async def test_update_mistake(async_client: AsyncClient):
     # Create a mistake
     create_response = await async_client.post(
         "/api/v1/me/mistakes",
-        json={"name": "Original Name", "description": "Original Description"}
+        json={"name": "Original Name"}
     )
     assert create_response.status_code == 201
     mistake_id = create_response.json()["id"]
 
     # Update the mistake
     updated_name = "Updated Name"
-    updated_description = "Updated Description"
     update_response = await async_client.put(
         f"/api/v1/mistakes/{mistake_id}",
-        json={"name": updated_name, "description": updated_description}
+        json={"name": updated_name}
     )
     assert update_response.status_code == 200
     updated_data = update_response.json()
     assert updated_data["name"] == updated_name
-    assert updated_data["description"] == updated_description
 
     # Verify the update
     get_response = await async_client.get(f"/api/v1/mistakes/{mistake_id}")
     assert get_response.status_code == 200
     assert get_response.json()["name"] == updated_name
-    assert get_response.json()["description"] == updated_description
 
 
 async def test_delete_mistake(async_client: AsyncClient):

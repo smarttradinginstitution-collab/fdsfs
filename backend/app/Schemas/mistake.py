@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field
 
 class MistakeBase(BaseModel):
     name: str = Field(..., max_length=100)
-    description: Optional[str] = Field(default=None, max_length=500)
 
 
 class MistakeCreate(MistakeBase):
@@ -17,7 +16,6 @@ class MistakeCreate(MistakeBase):
 
 class MistakeUpdate(MistakeBase):
     name: Optional[str] = Field(default=None, max_length=100)
-    description: Optional[str] = Field(default=None, max_length=500)
 
 
 class MistakeRead(MistakeBase):

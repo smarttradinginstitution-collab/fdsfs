@@ -27,7 +27,6 @@ class Mistake(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=True)
-    description: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
