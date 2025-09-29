@@ -34,10 +34,8 @@ from app.Schemas.rule_playbook import RuleRead
 PlaybookRead.model_rebuild()
 RulesGroupRead.model_rebuild()
 
-
 # Repo per diagnostica ruoli
 from app.Repositories.user_role_repository import UserRoleRepository
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Istanze controller (stateless)
@@ -84,11 +82,9 @@ async def my_roles(
     roles_list = await repo.list_user_roles(user_id)
     return {"roles": [r.name for r in roles_list]}
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # 🔐 MFA (Multi-Factor Authentication)
 # ──────────────────────────────────────────────────────────────────────────────
-# Le rotte MFA sono protette da token, eccetto la verifica che usa un token AAL1 speciale
 from app.Schemas.auth_session import (
     VerifyMfaResponse,
     TotpEnrollResponse,
@@ -118,7 +114,7 @@ router_mfa.get(
 
 router_mfa.delete(
     "/factors/{factor_id}",
-    response_model=LogoutResponse, # Ritorna {ok: true}
+    response_model=LogoutResponse,  # Ritorna {ok: true}
     dependencies=[Depends(get_current_claims)],
 )(auth.delete_factor)
 
@@ -130,7 +126,6 @@ router_mfa.post(
 
 # Monta le rotte MFA dentro al router di autenticazione (es. /api/v1/auth/mfa/...)
 router_auth.include_router(router_mfa)
-
 
 # monta il blocco auth nel router principale
 router.include_router(router_auth)
@@ -215,7 +210,6 @@ router_dashboard.put("/layout", response_model=UserDashboardLayoutRead)(
 
 router.include_router(router_dashboard)
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # 💼 GENERAL ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -230,7 +224,7 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 🏷️ TAGS (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import tag_router
+from app.Router import tag_router
 
 router.include_router(
     tag_router.router,
@@ -251,9 +245,9 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 📖 PLAYBOOKS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import playbook_router
-from app.Controllers import rules_group_playbook_router
-from app.Controllers import rule_playbook_router
+from app.Router import playbook_router
+from app.Router import rules_group_playbook_router
+from app.Router import rule_playbook_router
 
 router.include_router(
     playbook_router.router,
@@ -287,11 +281,10 @@ router.include_router(
     dependencies=[Depends(get_current_claims)],
 )
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # ❌ MISTAKES (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import mistake_router
+from app.Router import mistake_router
 
 router.include_router(
     mistake_router.router,
@@ -302,7 +295,7 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 🧠 PSYCHOLOGY STATES (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import psychology_state_router
+from app.Router import psychology_state_router
 
 router.include_router(
     psychology_state_router.router,
@@ -331,7 +324,6 @@ router.include_router(
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 💹 TRADES (protetto: user)
