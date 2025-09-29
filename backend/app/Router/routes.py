@@ -300,6 +300,17 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🧠 PSYCHOLOGY STATES (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import psychology_state_router
+
+router.include_router(
+    psychology_state_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 🏢 BROKERS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Controllers import broker_controller
