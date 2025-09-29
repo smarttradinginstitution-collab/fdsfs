@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Optional
 
 from sqlalchemy import String, TIMESTAMP, ForeignKey, func, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
@@ -31,6 +31,8 @@ class Playbook(Base):
     title: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     private: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    color: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    icon_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )

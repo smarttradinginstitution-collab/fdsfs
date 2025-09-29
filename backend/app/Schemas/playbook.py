@@ -15,6 +15,8 @@ class PlaybookBase(BaseModel):
     title: Optional[str] = Field(None, description="The title of the playbook")
     description: Optional[str] = Field(None, description="The description of the playbook")
     private: Optional[bool] = Field(None, description="Whether the playbook is private")
+    color: Optional[str] = Field(None, description="The color associated with the playbook")
+    icon_name: Optional[str] = Field(None, description="The name of the icon associated with the playbook")
 
     class Config:
         from_attributes = True

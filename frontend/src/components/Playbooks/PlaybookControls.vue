@@ -17,11 +17,12 @@ function setLayout(layout) {
 
 <template>
   <div class="playbook-controls">
-    <!-- The router-link for creation will be added later if needed -->
-    <BaseButton variant="primary">
-      <PlusIcon />
-      <span>Create New Playbook</span>
-    </BaseButton>
+    <router-link :to="{ name: 'create-playbook' }" custom v-slot="{ navigate }">
+      <BaseButton variant="primary" @click="navigate">
+        <PlusIcon />
+        <span>Create New Playbook</span>
+      </BaseButton>
+    </router-link>
 
     <div class="layout-switchers">
       <BaseButton
