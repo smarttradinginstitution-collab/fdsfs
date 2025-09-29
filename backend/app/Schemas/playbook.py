@@ -30,6 +30,16 @@ class PlaybookCreate(PlaybookBase):
 class PlaybookUpdate(PlaybookBase):
     pass # title, description e private sono già opzionali in PlaybookBase
 
+# Schema per le statistiche calcolate di un playbook
+class PlaybookStats(BaseModel):
+    total_trades: int = 0
+    win_rate: float = 0.0
+    profit_factor: Optional[float] = None
+    expectancy: float = 0.0
+    avg_winner: float = 0.0
+    avg_loser: float = 0.0
+    net_pnl: float = 0.0
+
 # Schema per la lettura di un playbook (usato nelle risposte GET)
 class PlaybookRead(PlaybookBase):
     id: UUID
@@ -38,6 +48,7 @@ class PlaybookRead(PlaybookBase):
     description: str
     private: bool
     rules_groups: List["RulesGroupRead"] = []
+    stats: Optional[PlaybookStats] = None
 
 
 class PlaybookAdminRead(BaseModel):

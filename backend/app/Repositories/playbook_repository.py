@@ -37,6 +37,19 @@ class PlaybookRepository:
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
+    async def list_by_general_account_id_with_trades(self, general_account_id: UUID) -> Sequence[Playbook]:
+        stmt = (
+            select(Playbook)
+            .where(Playbook.general_account_id == general_account_id)
+            .options(
+                selectinload(Playbook.rules_groups),
+                selectinload(Playbook.trades)  # Eager load trades
+            )
+            .order_by(Playbook.title.asc())
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+
     async def create(self, playbook_in: PlaybookCreate, general_account_id: UUID) -> Playbook:
         db_playbook = Playbook(
             **playbook_in.model_dump(),

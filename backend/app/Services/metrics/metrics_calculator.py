@@ -100,6 +100,40 @@ class MetricsCalculator:
         }
         return metrics
 
+    def get_playbook_summary_metrics(self) -> Dict[str, Any]:
+        """
+        Calculates a summarized set of metrics, typically for a playbook.
+        This is ideal for getting quick stats without all the details.
+        """
+        if self.trade_count == 0:
+            return {
+                "total_trades": 0,
+                "win_rate": 0.0,
+                "profit_factor": None,
+                "expectancy": 0.0,
+                "avg_winner": 0.0,
+                "avg_loser": 0.0,
+                "net_pnl": 0.0,
+            }
+
+        win_rate = (self.winning_trades_count / self.trade_count) * 100
+        avg_winner = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else 0
+        avg_loser = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else 0
+
+        expectancy = self._calculate_expectancy(win_rate, avg_winner, avg_loser)
+
+        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
+
+        return {
+            "total_trades": self.trade_count,
+            "win_rate": win_rate,
+            "profit_factor": profit_factor,
+            "expectancy": expectancy,
+            "avg_winner": avg_winner,
+            "avg_loser": avg_loser,
+            "net_pnl": self.net_pnl,
+        }
+
     def _get_default_metrics(self) -> Dict[str, Any]:
         """Returns a dictionary with default values for when there are no trades."""
         default_processed = {
