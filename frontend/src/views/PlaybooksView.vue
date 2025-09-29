@@ -1,8 +1,8 @@
 <template>
   <div class="playbooks-view">
-    <PlaybookControls @update:layout="updateLayout" @create="toggleModal(true)" />
+    <PlaybookControls @update:layout="updateLayout" @create="isModalOpen = true" />
     <PlaybookList :playbooks="playbookStore.allPlaybooks" :layout="layout" :is-loading="playbookStore.isLoading" />
-    <CreatePlaybookModal v-if="isModalOpen" @close="toggleModal(false)" />
+    <CreatePlaybookModal v-if="isModalOpen" @close="isModalOpen = false" />
   </div>
 </template>
 
@@ -16,11 +16,7 @@ import CreatePlaybookModal from '@/components/Playbooks/CreatePlaybookModal.vue'
 const playbookStore = usePlaybookStore();
 
 const isModalOpen = ref(false);
-const layout = ref('grid'); // Default layout
-
-const toggleModal = (state) => {
-  isModalOpen.value = state;
-};
+const layout = ref('grid');
 
 function updateLayout(newLayout) {
   layout.value = newLayout;
