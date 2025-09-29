@@ -4,9 +4,20 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class BrokerRead(BaseModel):
-    id: UUID
+class BrokerBase(BaseModel):
     name: str
+
+
+class BrokerCreate(BrokerBase):
+    pass
+
+
+class BrokerUpdate(BrokerBase):
+    pass
+
+
+class BrokerRead(BrokerBase):
+    id: UUID
 
     class Config:
         from_attributes = True
