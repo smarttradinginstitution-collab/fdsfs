@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
@@ -33,9 +33,10 @@ async def get_performance_metrics(
     trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    setups: Optional[List[str]] = Query(None),
     service: AnalyticsService = Depends(),
 ):
-    return await service.get_performance_metrics(trading_account_id, start_date, end_date)
+    return await service.get_performance_metrics(trading_account_id, start_date, end_date, setups)
 
 @router.get("/calendar/data/{trading_account_id}", response_model=List[CalendarDayData])
 async def get_calendar_data(
@@ -43,45 +44,50 @@ async def get_calendar_data(
     start_date: date,
     end_date: date,
     user_timezone: str,
+    setups: Optional[List[str]] = Query(None),
     service: AnalyticsService = Depends(),
 ):
-    return await service.get_calendar_data(trading_account_id, start_date, end_date, user_timezone)
+    return await service.get_calendar_data(trading_account_id, start_date, end_date, user_timezone, setups)
 
 @router.get("/processed-stats/{trading_account_id}", response_model=ProcessedStats)
 async def get_processed_stats(
     trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    setups: Optional[List[str]] = Query(None),
     service: AnalyticsService = Depends(),
 ):
-    return await service.get_processed_stats(trading_account_id, start_date, end_date)
+    return await service.get_processed_stats(trading_account_id, start_date, end_date, setups)
 
 @router.get("/vantage-score/{trading_account_id}", response_model=VantageScoreData)
 async def get_vantage_score(
     trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    setups: Optional[List[str]] = Query(None),
     service: AnalyticsService = Depends(),
 ):
-    return await service.get_vantage_score(trading_account_id, start_date, end_date)
+    return await service.get_vantage_score(trading_account_id, start_date, end_date, setups)
 
 @router.get("/equity-curve/{trading_account_id}", response_model=EquityCurveData)
 async def get_equity_curve(
     trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    setups: Optional[List[str]] = Query(None),
     service: AnalyticsService = Depends(),
 ):
-    return await service.get_equity_curve(trading_account_id, start_date, end_date)
+    return await service.get_equity_curve(trading_account_id, start_date, end_date, setups)
 
 @router.get("/summary/{trading_account_id}", response_model=TradeSummary)
 async def get_trade_summary(
     trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    setups: Optional[List[str]] = Query(None),
     service: AnalyticsService = Depends(),
 ):
-    return await service.get_trade_summary(trading_account_id, start_date, end_date)
+    return await service.get_trade_summary(trading_account_id, start_date, end_date, setups)
 
 
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)

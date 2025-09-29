@@ -32,9 +32,9 @@ class AnalyticsService:
         self.trade_repo = TradeRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
 
-    async def _get_calculator(self, trading_account_id: UUID, start_date: date, end_date: date) -> MetricsCalculator:
+    async def _get_calculator(self, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]] = None) -> MetricsCalculator:
         """Helper method to get trades and instantiate the calculator."""
-        trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date)
+        trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date, setups)
         trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
 
         initial_balance = trading_account.initial_balance if trading_account else 0.0
@@ -42,12 +42,12 @@ class AnalyticsService:
         return MetricsCalculator(trades, initial_balance)
 
     async def get_performance_metrics(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]] = None
     ) -> PerformanceMetrics:
         """
         Calculates and returns main performance metrics.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date, setups)
         all_metrics = calculator.get_all_metrics()
 
         # Map calculator results to the PerformanceStats Pydantic schema
@@ -80,23 +80,23 @@ class AnalyticsService:
         return PerformanceMetrics(stats=stats)
 
     async def get_calendar_data(
-        self, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str
+        self, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str, setups: Optional[List[str]] = None
     ) -> List[CalendarDayData]:
         """
         Returns data aggregated by day for the calendar view.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date, setups)
         calendar_data = calculator.calculate_calendar_data()
 
         return [CalendarDayData(**item) for item in calendar_data]
 
     async def get_processed_stats(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]] = None
     ) -> ProcessedStats:
         """
         Returns aggregated stats like 'by_strategy', 'by_day_of_week', etc.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date, setups)
         processed_data = calculator.calculate_processed_stats()
 
         # Map the nested dictionary to the required Pydantic models
@@ -113,13 +113,13 @@ class AnalyticsService:
         )
 
     async def get_vantage_score(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]] = None
     ) -> VantageScoreData:
         """
         Calculates and returns the Vantage Score and its components.
         This logic remains here as it's a specific interpretation of the base metrics.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date, setups)
         metrics = calculator.get_all_metrics()
 
         if metrics["trade_count"] < 5:
@@ -160,24 +160,24 @@ class AnalyticsService:
         )
 
     async def get_equity_curve(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]] = None
     ) -> EquityCurveData:
         """
         Returns data for the equity curve chart.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date, setups)
         equity_curve_data = calculator.calculate_equity_curve()
         return EquityCurveData(**equity_curve_data)
 
     async def get_trade_summary(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_id: UUID, start_date: date, end_date: date, setups: Optional[List[str]] = None
     ) -> TradeSummary:
         """
         Returns a complete summary of trades for a given period.
         """
         # We can call the other methods in this service to build the summary
-        performance_metrics = await self.get_performance_metrics(trading_account_id, start_date, end_date)
-        equity_curve = await self.get_equity_curve(trading_account_id, start_date, end_date)
+        performance_metrics = await self.get_performance_metrics(trading_account_id, start_date, end_date, setups)
+        equity_curve = await self.get_equity_curve(trading_account_id, start_date, end_date, setups)
 
         return TradeSummary(
             stats=performance_metrics.stats,

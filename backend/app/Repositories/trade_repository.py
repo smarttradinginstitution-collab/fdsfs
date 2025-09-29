@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.trade import Trade
+from app.Models.playbook import Playbook
 from app.Schemas.trade import TradeCreate, TradeUpdate
 
 
@@ -53,9 +54,10 @@ class TradeRepository:
         self,
         trading_account_id: UUID,
         start_date: date,
-        end_date: date
+        end_date: date,
+        setups: Optional[List[str]] = None,
     ) -> List[Trade]:
-        """Recupera i trade filtrati per un intervallo di date, includendo l'intero giorno di fine."""
+        """Recupera i trade filtrati per un intervallo di date e, opzionalmente, per playbook."""
         from datetime import datetime, time
 
         start_datetime = datetime.combine(start_date, time.min)
@@ -64,8 +66,12 @@ class TradeRepository:
         query = self._get_trade_query().where(
             Trade.trading_account_id == trading_account_id,
             Trade.entry_timestamp >= start_datetime,
-            Trade.entry_timestamp <= end_datetime
+            Trade.entry_timestamp <= end_datetime,
         )
+
+        if setups:
+            query = query.join(Trade.playbooks).where(Playbook.title.in_(setups))
+
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
