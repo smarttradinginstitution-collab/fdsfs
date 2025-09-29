@@ -35,7 +35,6 @@ from .trade import Trade
 from .broker_platform import BrokerPlatform
 from .trades_mistakes import TradesMistakes
 from .trades_news_impacts import TradesNewsImpacts
-from .trades_playbooks import TradesPlaybooks
 from .trades_psychology import TradesPsychology
 from .trades_tags import TradesTags
 
@@ -61,7 +60,6 @@ __all__ = [
     "BrokerPlatform",
     "TradesMistakes",
     "TradesNewsImpacts",
-    "TradesPlaybooks",
     "TradesPsychology",
     "TradesTags",
 ]
