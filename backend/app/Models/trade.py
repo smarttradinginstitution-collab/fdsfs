@@ -60,6 +60,12 @@ class Trade(Base):
         ForeignKey("public.import_runs.id"),
         nullable=True
     )
+    playbook_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.playbooks.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
 # Core trade data
     gross_p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
@@ -123,15 +129,13 @@ class Trade(Base):
     asset: Mapped[Optional["Asset"]] = relationship("Asset", back_populates="trades")
     platform: Mapped[Optional["Platform"]] = relationship("Platform", back_populates="trades")
     import_run: Mapped[Optional["ImportRun"]] = relationship("ImportRun", back_populates="trades")
+    playbook: Mapped[Optional["Playbook"]] = relationship("Playbook", back_populates="trades")
 
     tags: Mapped[list["Tag"]] = relationship(
         secondary="public.trades_tags", back_populates="trades"
     )
     mistakes: Mapped[list["Mistake"]] = relationship(
         "Mistake", secondary="public.trades_mistakes", back_populates="trades"
-    )
-    playbooks: Mapped[list["Playbook"]] = relationship(
-        "Playbook", secondary="public.trades_playbooks", back_populates="trades"
     )
     news_impacts: Mapped[list["NewsImpact"]] = relationship(
         "NewsImpact", secondary="public.trades_news_impacts", back_populates="trades"

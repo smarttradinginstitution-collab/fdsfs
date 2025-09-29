@@ -23,7 +23,7 @@ class TradeRepository:
             .options(
                 joinedload(Trade.tags),
                 joinedload(Trade.mistakes),
-                joinedload(Trade.playbooks),
+                joinedload(Trade.playbook),
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
                 joinedload(Trade.asset),
@@ -46,6 +46,12 @@ class TradeRepository:
     ) -> List[Trade]:
         """Elenca tutti i trade per un dato trading account."""
         query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
+    async def list_by_playbook_id(self, playbook_id: UUID) -> List[Trade]:
+        """Elenca tutti i trade per un dato playbook."""
+        query = self._get_trade_query().where(Trade.playbook_id == playbook_id)
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 

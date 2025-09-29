@@ -22,13 +22,6 @@ class MistakeRead(BaseModel):
     class Config:
         from_attributes = True
 
-class PlaybookRead(BaseModel):
-    id: UUID
-    title: str
-
-    class Config:
-        from_attributes = True
-
 class NewsImpactRead(BaseModel):
     id: UUID
     title: str
@@ -65,20 +58,20 @@ class TradeBase(BaseModel):
 
 class TradeCreate(TradeBase):
     trading_account_id: UUID
+    playbook_id: Optional[UUID] = None
     # Campi per compatibilità con il frontend attuale
     setup: Optional[str] = None
     emotional_state: Optional[str] = None
     tags: Optional[List[str]] = Field(default_factory=list)
     mistakes: Optional[List[str]] = Field(default_factory=list)
-    playbooks: Optional[List[str]] = Field(default_factory=list)
     news_impacts: Optional[List[str]] = Field(default_factory=list)
     psychology_states: Optional[List[str]] = Field(default_factory=list)
 
 
 class TradeUpdate(TradeBase):
+    playbook_id: Optional[UUID] = None
     tag_ids: Optional[List[UUID]] = None  # Se presente, sostituisce le associazioni
     mistake_ids: Optional[List[UUID]] = None
-    playbook_ids: Optional[List[UUID]] = None
     news_impact_ids: Optional[List[UUID]] = None
     psychology_state_ids: Optional[List[UUID]] = None
 
@@ -91,9 +84,9 @@ class TradeRead(TradeBase):
     duration_minutes: Optional[float] = None
     r_multiple: Optional[float] = None
 
+    playbook_id: Optional[UUID] = None
     tags: List[TagRead] = []
     mistakes: List[MistakeRead] = []
-    playbooks: List[PlaybookRead] = []
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
 
@@ -104,7 +97,7 @@ class TradeRead(TradeBase):
 class TradeFilters(BaseModel):
     symbol: Optional[str] = None
     direction: Optional[str] = None
-    playbook_ids: Optional[List[UUID]] = None
+    playbook_id: Optional[UUID] = None
     days_of_week: Optional[List[int]] = None
     min_size: Optional[float] = None
     max_size: Optional[float] = None

@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Schemas.playbook import PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead
-from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
+from app.Schemas.trade import TradeRead
+from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser, get_current_claims
+from app.Services.trade_service import TradeService
 
 
 class PlaybookController:
@@ -71,6 +73,17 @@ class PlaybookController:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         return PlaybookRead.from_orm(playbook)
+
+    async def list_trades_for_playbook(
+        self,
+        playbook_id: UUID,
+        claims: dict = Depends(get_current_claims),
+        trade_service: TradeService = Depends(),
+    ) -> List[TradeRead]:
+        """
+        Lista tutti i trade associati a un playbook specifico, verificando la proprietà.
+        """
+        return await trade_service.list_trades_by_playbook(claims, playbook_id)
 
     async def create_playbook(
         self,
