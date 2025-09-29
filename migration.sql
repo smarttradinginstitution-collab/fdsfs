@@ -62,4 +62,9 @@ BEGIN
     END IF;
 END $$;
 
+-- Step 6: Add 'description' column to the 'mistakes' table.
+-- This column will store an optional, detailed description of the mistake.
+ALTER TABLE public.mistakes
+ADD COLUMN description TEXT;
+
 -- End of script.
