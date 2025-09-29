@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import CloseIcon from '@/components/icons/CloseIcon.vue';
+import ArrowLeftIcon from '@/components/icons/ArrowLeftIcon.vue';
 import Stepper from '@/components/ui/Stepper.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
@@ -12,7 +12,8 @@ import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 
-const router = useRouter();
+const emit = defineEmits(['close']);
+
 const playbookStore = usePlaybookStore();
 const ruleGroupManagerRef = ref(null);
 
@@ -35,17 +36,21 @@ const steps = [
 
 const isLastStep = computed(() => currentStep.value === steps.length - 1);
 
+const goBack = () => {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+  }
+};
+
 const closeModal = () => {
-  router.push({ name: 'playbooks' });
+  emit('close');
 };
 
 const handleNext = () => {
-  // If it's the first step, save details to the store and move to the next step
   if (currentStep.value === 0) {
     playbookStore.setNewPlaybookDetails(playbookData.value);
     currentStep.value++;
   } else if (isLastStep.value) {
-    // This will now be the final save action
     submitPlaybookWithRules();
   }
 };
@@ -60,8 +65,8 @@ const submitPlaybookWithRules = async () => {
   error.value = null;
   try {
     const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
-    router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
+    await playbookStore.createPlaybookWithRules(ruleGroups);
+    closeModal(); // Close the modal on success
   } catch (err) {
     console.error("Failed to create playbook with rules:", err);
     error.value = playbookStore.error || 'An unknown error occurred during save.';
@@ -69,32 +74,24 @@ const submitPlaybookWithRules = async () => {
     isLoading.value = false;
   }
 };
-
-const submitPlaybook = async () => {
-  isLoading.value = true;
-  error.value = null;
-  try {
-    const newPlaybook = await playbookStore.createPlaybook(playbookData.value);
-    router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
-  } catch (err) {
-    console.error("Failed to create playbook:", err);
-    error.value = playbookStore.error || 'An unknown error occurred.';
-  } finally {
-    isLoading.value = false;
-  }
-};
 </script>
 
 <template>
-  <div class="create-playbook-overlay" @click.self="closeModal">
+  <div class="create-playbook-overlay">
     <div class="create-playbook-modal">
       <BaseWidget>
         <template #header>
           <div class="modal-header">
-            <div class="header-placeholder"></div>
-            <IconButton @click="closeModal" aria-label="Close" :disabled="isLoading">
-              <CloseIcon />
-            </IconButton>
+            <div class="header-left-controls">
+              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="isLoading">
+                <ArrowLeftIcon />
+              </IconButton>
+            </div>
+            <div class="header-right-controls">
+              <IconButton @click="closeModal" aria-label="Close" :disabled="isLoading">
+                <CloseIcon />
+              </IconButton>
+            </div>
           </div>
         </template>
         <div class="modal-content">
@@ -179,8 +176,9 @@ const submitPlaybook = async () => {
   width: 100%;
 }
 
-.header-placeholder {
-  flex-grow: 1;
+.header-left-controls {
+  /* This ensures the layout doesn't shift when the back button appears */
+  min-width: 36px;
 }
 
 .modal-content {
