@@ -23,7 +23,7 @@ class TradeRepository:
             .options(
                 joinedload(Trade.tags),
                 joinedload(Trade.mistakes),
-                joinedload(Trade.playbooks),
+                joinedload(Trade.playbook),
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
                 joinedload(Trade.asset),

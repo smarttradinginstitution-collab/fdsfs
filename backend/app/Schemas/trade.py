@@ -70,7 +70,7 @@ class TradeCreate(TradeBase):
     emotional_state: Optional[str] = None
     tags: Optional[List[str]] = Field(default_factory=list)
     mistakes: Optional[List[str]] = Field(default_factory=list)
-    playbooks: Optional[List[str]] = Field(default_factory=list)
+    playbook: Optional[str] = None
     news_impacts: Optional[List[str]] = Field(default_factory=list)
     psychology_states: Optional[List[str]] = Field(default_factory=list)
 
@@ -78,7 +78,7 @@ class TradeCreate(TradeBase):
 class TradeUpdate(TradeBase):
     tag_ids: Optional[List[UUID]] = None  # Se presente, sostituisce le associazioni
     mistake_ids: Optional[List[UUID]] = None
-    playbook_ids: Optional[List[UUID]] = None
+    playbook_id: Optional[UUID] = None
     news_impact_ids: Optional[List[UUID]] = None
     psychology_state_ids: Optional[List[UUID]] = None
 
@@ -93,7 +93,7 @@ class TradeRead(TradeBase):
 
     tags: List[TagRead] = []
     mistakes: List[MistakeRead] = []
-    playbooks: List[PlaybookRead] = []
+    playbook: Optional[PlaybookRead] = None
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
 
@@ -104,7 +104,7 @@ class TradeRead(TradeBase):
 class TradeFilters(BaseModel):
     symbol: Optional[str] = None
     direction: Optional[str] = None
-    playbook_ids: Optional[List[UUID]] = None
+    playbook_id: Optional[UUID] = None
     days_of_week: Optional[List[int]] = None
     min_size: Optional[float] = None
     max_size: Optional[float] = None
