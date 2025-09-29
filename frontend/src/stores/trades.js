@@ -436,7 +436,6 @@ export const useTradesStore = defineStore('trades', {
 
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = {
-        trading_account_id: selectedAccount.id, // Aggiungi trading_account_id
         start_date: toYYYYMMDD(dateRange.startDate),
         end_date: toYYYYMMDD(dateRange.endDate),
         user_timezone: userTimezone,
@@ -449,7 +448,7 @@ export const useTradesStore = defineStore('trades', {
       try {
         // Eseguiamo le due chiamate in parallelo per efficienza
         const [summaryResponse, tradesResponse] = await Promise.all([
-          apiClient.get('/trades/summary', { params }),
+          apiClient.get(`/trades/summary/${selectedAccount.id}`, { params }),
           apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params })
         ]);
 
