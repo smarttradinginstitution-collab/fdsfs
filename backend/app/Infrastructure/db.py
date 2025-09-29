@@ -36,7 +36,6 @@ from app.Models.trade import Trade
 from app.Models.trading_account import TradingAccount
 from app.Models.trades_mistakes import TradesMistakes
 from app.Models.trades_news_impacts import TradesNewsImpacts
-from app.Models.trades_playbooks import TradesPlaybooks
 from app.Models.trades_psychology import TradesPsychology
 from app.Models.trades_tags import TradesTags
 from app.Models.user_dashboard_layout import UserDashboardLayout
