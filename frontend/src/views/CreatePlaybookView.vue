@@ -10,9 +10,11 @@ import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 
 const router = useRouter();
 const playbookStore = usePlaybookStore();
+const ruleGroupManagerRef = ref(null);
 
 // Form state
 const playbookData = ref({
@@ -38,10 +40,33 @@ const closeModal = () => {
 };
 
 const handleNext = () => {
-  if (isLastStep.value) {
-    submitPlaybook();
-  } else {
+  // If it's the first step, save details to the store and move to the next step
+  if (currentStep.value === 0) {
+    playbookStore.setNewPlaybookDetails(playbookData.value);
     currentStep.value++;
+  } else if (isLastStep.value) {
+    // This will now be the final save action
+    submitPlaybookWithRules();
+  }
+};
+
+const submitPlaybookWithRules = async () => {
+  if (!ruleGroupManagerRef.value?.ruleGroups) {
+    error.value = "Could not find rule groups data.";
+    return;
+  }
+
+  isLoading.value = true;
+  error.value = null;
+  try {
+    const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
+    const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
+    router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
+  } catch (err) {
+    console.error("Failed to create playbook with rules:", err);
+    error.value = playbookStore.error || 'An unknown error occurred during save.';
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -107,11 +132,9 @@ const submitPlaybook = async () => {
             </div>
           </div>
 
-          <!-- Step 2: Rules (Placeholder) -->
+          <!-- Step 2: Rules -->
           <div v-if="currentStep === 1" class="form-content">
-            <div class="placeholder-content">
-              <p>Rule configuration will be available in a future update.</p>
-            </div>
+            <RuleGroupManager ref="ruleGroupManagerRef" />
           </div>
 
 
@@ -120,7 +143,7 @@ const submitPlaybook = async () => {
           <div class="form-actions">
             <BaseButton variant="secondary" @click="closeModal" :disabled="isLoading">Cancel</BaseButton>
             <BaseButton variant="primary" @click="handleNext" :is-loading="isLoading">
-              {{ isLastStep ? 'Finish' : 'Next' }}
+              {{ isLastStep ? 'Save' : 'Next' }}
             </BaseButton>
           </div>
         </div>

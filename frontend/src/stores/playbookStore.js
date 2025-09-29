@@ -7,6 +7,8 @@ export const usePlaybookStore = defineStore('playbooks', {
     playbooks: [],
     isLoading: false,
     error: null,
+    // Holds the data from Step 1 of the creation process
+    newPlaybookData: null,
   }),
 
   getters: {
@@ -45,6 +47,64 @@ export const usePlaybookStore = defineStore('playbooks', {
       } finally {
         this.isLoading = false;
       }
+    },
+
+    /**
+     * Creates a complete playbook with its rule groups and rules.
+     * @param {Array} ruleGroups - The array of rule groups and their rules from the UI.
+     * @returns {object} The newly created playbook.
+     */
+    async createPlaybookWithRules(ruleGroups) {
+      if (!this.newPlaybookData) {
+        throw new Error("Playbook details from step 1 are missing.");
+      }
+
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        // 1. Create the playbook
+        const playbookResponse = await apiClient.post('/me/playbooks', this.newPlaybookData);
+        const newPlaybook = playbookResponse.data;
+
+        // 2. Create the rule groups and their rules
+        for (const [index, group] of ruleGroups.entries()) {
+          const groupPayload = {
+            title: group.title,
+            order: index,
+          };
+          const groupResponse = await apiClient.post(`/playbooks/${newPlaybook.id}/rule-groups/`, groupPayload);
+          const newGroup = groupResponse.data;
+
+          for (const rule of group.rules) {
+            const rulePayload = {
+              description: rule.description,
+            };
+            await apiClient.post(`/rule-groups/${newGroup.id}/rules/`, rulePayload);
+          }
+        }
+
+        // Add the new playbook to the store and clear the temp data
+        this.playbooks.unshift(newPlaybook);
+        this.newPlaybookData = null;
+
+        return newPlaybook;
+
+      } catch (err) {
+        console.error('Error creating playbook with rules:', err);
+        this.error = err.response?.data?.detail || 'A complex error occurred during playbook creation.';
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    /**
+     * Stores the details from the first step of the playbook creation form.
+     * @param {object} details - The playbook details from the form.
+     */
+    setNewPlaybookDetails(details) {
+      this.newPlaybookData = details;
     },
 
     /**
