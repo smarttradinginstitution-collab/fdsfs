@@ -129,32 +129,23 @@ class MetricsCalculator:
     def calculate_equity_curve(self) -> Dict[str, List[Any]]:
         """
         Calculates the equity curve, starting from the initial balance.
-        The first point is the initial balance itself.
+        A data point is generated for each trade to show intra-day progression.
         """
-        labels = []
-        # The equity curve starts with the initial balance, even before any trades.
         equity_data = [self.initial_balance]
         current_balance = self.initial_balance
 
-        # We need a label for the initial balance point.
-        # If there are trades, we use the date of the first trade.
-        # If not, we don't add any labels, as there's only one data point.
-        if self.trades:
-            initial_label = self.trades[0].entry_timestamp.date()
-            labels.append(initial_label)
+        # The label for the initial data point is the date of the first trade, or today if no trades.
+        start_date = self.trades[0].entry_timestamp.date() if self.trades else date.today()
+        labels = [start_date]
 
         for trade in self.trades:
             if trade.p_l is not None:
                 current_balance += trade.p_l
-                trade_date = (trade.exit_timestamp or trade.entry_timestamp).date()
+                equity_data.append(current_balance)
 
-                # If the trade date is the same as the last label, update the last data point.
-                # Otherwise, add a new data point. This groups P&L by day.
-                if labels and labels[-1] == trade_date:
-                    equity_data[-1] = current_balance
-                else:
-                    labels.append(trade_date)
-                    equity_data.append(current_balance)
+                # Each new data point needs a label
+                trade_date = (trade.exit_timestamp or trade.entry_timestamp).date()
+                labels.append(trade_date)
 
         return {"labels": labels, "data": equity_data}
 
