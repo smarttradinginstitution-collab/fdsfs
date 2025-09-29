@@ -116,7 +116,7 @@ export const useTradesStore = defineStore('trades', {
       const averageHoldTime = parseFloat(stats.average_hold_time);
 
       // Calcoli per le metriche mancanti
-      const initialBalance = selectedAccount.initial_balance ?? 0;
+      const initialBalance = parseFloat(selectedAccount.initial_balance ?? 0);
       const currentBalance = initialBalance + totalPnl;
       const peakBalance = this.equityCurve?.data?.length > 0 ? Math.max(...this.equityCurve.data) : initialBalance;
 
