@@ -118,16 +118,14 @@ class TradeService:
         """Crea un nuovo trade per l'utente, gestendo le entità correlate tramite nome."""
         _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
-        playbook_names = trade_data.playbooks or []
-        if trade_data.setup and trade_data.setup not in playbook_names:
-            playbook_names.append(trade_data.setup)
+        playbook_name = trade_data.playbook or trade_data.setup
 
         psychology_names = trade_data.psychology_states or []
         if trade_data.emotional_state and trade_data.emotional_state not in psychology_names:
             psychology_names.append(trade_data.emotional_state)
 
         trade_dict = trade_data.model_dump(exclude={
-            'tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states',
+            'tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states',
             'setup', 'emotional_state'
         })
 
@@ -143,15 +141,17 @@ class TradeService:
 
         db_trade = Trade(**trade_dict)
 
+        if playbook_name:
+            db_trade.playbook = await self.playbook_repo.upsert_by_title(general_account_id, title=playbook_name)
+
         db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
         db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        db_trade.playbooks = await self._get_or_create_related_entities(general_account_id, playbook_names, self.playbook_repo, "upsert_by_title", "title")
         db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
         db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
 
         self.db.add(db_trade)
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states', 'asset'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
 
         return TradeRead.from_orm(db_trade)
 
@@ -197,7 +197,7 @@ class TradeService:
 
         _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_ids', 'news_impacts', 'psychology_state_ids'})
+        update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_id', 'news_impacts', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
@@ -209,19 +209,26 @@ class TradeService:
                 position_size=db_trade.position_size
             )
 
+        if "playbook_id" in update_data.model_fields_set:
+            if update_data.playbook_id is None:
+                db_trade.playbook_id = None
+            else:
+                playbook = await self.playbook_repo.get_by_id(update_data.playbook_id, general_account_id)
+                if not playbook:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found")
+                db_trade.playbook_id = playbook.id
+
         if update_data.tag_ids is not None:
             db_trade.tags = await self._get_related_entities(general_account_id, Tag, update_data.tag_ids)
         if update_data.mistake_ids is not None:
             db_trade.mistakes = await self._get_related_entities(general_account_id, Mistake, update_data.mistake_ids)
-        if update_data.playbook_ids is not None:
-            db_trade.playbooks = await self._get_related_entities(general_account_id, Playbook, update_data.playbook_ids)
         if update_data.news_impact_ids is not None:
             db_trade.news_impacts = await self._get_related_entities(general_account_id, NewsImpact, update_data.news_impact_ids)
         if update_data.psychology_state_ids is not None:
             db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbooks', 'news_impacts', 'psychology_states', 'asset'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
 
         return TradeRead.from_orm(db_trade)
 

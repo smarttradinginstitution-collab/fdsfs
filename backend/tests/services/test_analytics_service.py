@@ -40,18 +40,18 @@ async def setup_test_data(db_session: AsyncSession):
     # 3. Create a series of Trades
     trades_data = [
         # Giorno 1 (Lunedì): Win, Win
-        {"p_l": 100, "entry_ts": datetime(2023, 10, 16, 9, 0), "exit_ts": datetime(2023, 10, 16, 10, 0), "playbooks": [playbook_a]},
-        {"p_l": 150, "entry_ts": datetime(2023, 10, 16, 11, 0), "exit_ts": datetime(2023, 10, 16, 12, 30), "playbooks": [playbook_b]},
+        {"p_l": 100, "entry_ts": datetime(2023, 10, 16, 9, 0), "exit_ts": datetime(2023, 10, 16, 10, 0), "playbook": playbook_a},
+        {"p_l": 150, "entry_ts": datetime(2023, 10, 16, 11, 0), "exit_ts": datetime(2023, 10, 16, 12, 30), "playbook": playbook_b},
         # Giorno 2 (Martedì): Loss
-        {"p_l": -50, "entry_ts": datetime(2023, 10, 17, 9, 0), "exit_ts": datetime(2023, 10, 17, 9, 45), "playbooks": [playbook_a]},
+        {"p_l": -50, "entry_ts": datetime(2023, 10, 17, 9, 0), "exit_ts": datetime(2023, 10, 17, 9, 45), "playbook": playbook_a},
         # Giorno 3 (Mercoledì): Win, Loss, Loss
-        {"p_l": 200, "entry_ts": datetime(2023, 10, 18, 10, 0), "exit_ts": datetime(2023, 10, 18, 15, 0), "playbooks": [playbook_a]},
-        {"p_l": -70, "entry_ts": datetime(2023, 10, 18, 15, 0), "exit_ts": datetime(2023, 10, 18, 16, 0), "playbooks": [playbook_b]},
-        {"p_l": -80, "entry_ts": datetime(2023, 10, 18, 16, 0), "exit_ts": datetime(2023, 10, 18, 17, 0), "playbooks": [playbook_b]},
+        {"p_l": 200, "entry_ts": datetime(2023, 10, 18, 10, 0), "exit_ts": datetime(2023, 10, 18, 15, 0), "playbook": playbook_a},
+        {"p_l": -70, "entry_ts": datetime(2023, 10, 18, 15, 0), "exit_ts": datetime(2023, 10, 18, 16, 0), "playbook": playbook_b},
+        {"p_l": -80, "entry_ts": datetime(2023, 10, 18, 16, 0), "exit_ts": datetime(2023, 10, 18, 17, 0), "playbook": playbook_b},
         # Giorno 4 (Giovedì): Breakeven
-        {"p_l": 0, "entry_ts": datetime(2023, 10, 19, 9, 0), "exit_ts": datetime(2023, 10, 19, 10, 0), "playbooks": []},
+        {"p_l": 0, "entry_ts": datetime(2023, 10, 19, 9, 0), "exit_ts": datetime(2023, 10, 19, 10, 0), "playbook": None},
         # Giorno 5 (Venerdì, mese diverso): Win
-        {"p_l": 300, "entry_ts": datetime(2023, 11, 3, 10, 0), "exit_ts": datetime(2023, 11, 3, 14, 0), "playbooks": [playbook_a]},
+        {"p_l": 300, "entry_ts": datetime(2023, 11, 3, 10, 0), "exit_ts": datetime(2023, 11, 3, 14, 0), "playbook": playbook_a},
     ]
 
     for data in trades_data:
@@ -61,7 +61,7 @@ async def setup_test_data(db_session: AsyncSession):
             p_l=data["p_l"],
             entry_timestamp=data["entry_ts"],
             exit_timestamp=data["exit_ts"],
-            playbooks=data["playbooks"]
+            playbook=data["playbook"]
         )
         db_session.add(trade)
 

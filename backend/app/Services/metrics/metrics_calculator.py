@@ -314,13 +314,14 @@ class MetricsCalculator:
             if not trade.entry_timestamp or trade.p_l is None: continue
             trade_date = trade.entry_timestamp.date()
 
-            if trade.playbooks:
-                for playbook in trade.playbooks:
-                    if playbook.title not in by_strategy:
-                        by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": 0.0, "winning_trades": 0}
-                    by_strategy[playbook.title]["trade_count"] += 1
-                    by_strategy[playbook.title]["total_pnl"] += trade.p_l
-                    if trade.p_l > 0: by_strategy[playbook.title]["winning_trades"] += 1
+            if trade.playbook:
+                playbook = trade.playbook
+                if playbook.title not in by_strategy:
+                    by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": 0.0, "winning_trades": 0}
+                by_strategy[playbook.title]["trade_count"] += 1
+                by_strategy[playbook.title]["total_pnl"] += trade.p_l
+                if trade.p_l > 0:
+                    by_strategy[playbook.title]["winning_trades"] += 1
 
             day_name = trade_date.strftime("%A")
             by_day_of_week[day_name]["total_pnl"] += trade.p_l

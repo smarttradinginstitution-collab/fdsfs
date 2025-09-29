@@ -74,7 +74,7 @@ async def test_create_and_get_trade(async_client: AsyncClient, db_session: Async
 
 async def test_create_trade_with_related_entities_by_name(async_client: AsyncClient, db_session: AsyncSession):
     """
-    Testa la creazione di un trade con entità correlate (tags, mistakes, playbooks)
+    Testa la creazione di un trade con entità correlate (tags, mistakes, playbook)
     passando i loro nomi come stringhe, come farebbe il frontend.
     """
     trading_account_id = await setup_trading_account(async_client, db_session)
@@ -86,7 +86,7 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
         "direction": "SHORT",
         "tags": ["Good Entry", "News-Driven"],
         "mistakes": ["FOMO"],
-        "playbooks": ["Opening Range Breakout"]
+        "playbook": "Opening Range Breakout"
     }
     create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
     assert create_response.status_code == 201
@@ -99,8 +99,8 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
     assert len(created_trade["mistakes"]) == 1
     assert created_trade["mistakes"][0]["name"] == "FOMO"
 
-    assert len(created_trade["playbooks"]) == 1
-    assert created_trade["playbooks"][0]["title"] == "Opening Range Breakout"
+    assert created_trade["playbook"] is not None
+    assert created_trade["playbook"]["title"] == "Opening Range Breakout"
 
     trade_payload_2 = {
         "trading_account_id": trading_account_id,

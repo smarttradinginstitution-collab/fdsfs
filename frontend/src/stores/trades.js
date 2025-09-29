@@ -21,7 +21,7 @@ const mapBackendTradeToFrontend = (trade) => ({
   type: trade.direction,
   pnl: trade.p_l,
   date: trade.entry_timestamp,
-  strategy: trade.playbooks?.length > 0 ? trade.playbooks[0].title : 'N/A', // Usa il primo playbook come strategia
+  strategy: trade.playbook?.title ?? 'N/A',
   risk: trade.risk, // Assumendo che 'risk' esista o venga calcolato
   instrument: 'Stocks', // Da rendere dinamico se necessario
   commission: trade.commission, // Assumendo che esista
@@ -560,7 +560,7 @@ export const useTradesStore = defineStore('trades', {
           trading_account_id: selectedAccount.id, // Aggiungi l'ID del conto di trading
           symbol: tradeData.ticker,
           p_l: tradeData.pnl,
-          playbook_ids: tradeData.playbook_ids || [], // Usa playbook_ids
+          playbook: tradeData.playbook,
           direction: tradeData.direction,
           entry_price: tradeData.entry_price,
           exit_price: tradeData.exit_price,
