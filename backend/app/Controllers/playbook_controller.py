@@ -9,8 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Schemas.playbook import PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead
+from app.Schemas.playbook import PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
+from app.Services.metrics.metrics_calculator import MetricsCalculator
 
 
 class PlaybookController:
@@ -45,11 +46,25 @@ class PlaybookController:
         db: AsyncSession = Depends(get_db),
     ) -> List[PlaybookRead]:
         """
-        Lista tutti i playbook dell'utente autenticato.
+        Lista tutti i playbook dell'utente autenticato, arricchiti con le statistiche.
         """
         repo = PlaybookRepository(db)
-        playbooks = await repo.list_by_general_account_id(general_account_id)
-        return [PlaybookRead.from_orm(p) for p in playbooks]
+        playbooks = await repo.list_by_general_account_id_with_trades(general_account_id)
+
+        response_playbooks = []
+        for playbook in playbooks:
+            # Calcola le statistiche per ogni playbook
+            # L'initial_balance non è rilevante per le metriche del playbook, quindi passiamo 0.0
+            calculator = MetricsCalculator(trades=playbook.trades, initial_balance=0.0)
+            stats_data = calculator.get_playbook_summary_metrics()
+
+            # Crea lo schema di risposta e popola le statistiche
+            playbook_read = PlaybookRead.from_orm(playbook)
+            playbook_read.stats = PlaybookStats(**stats_data)
+
+            response_playbooks.append(playbook_read)
+
+        return response_playbooks
 
     async def get_playbook(
         self,
