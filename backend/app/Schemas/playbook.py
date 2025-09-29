@@ -5,9 +5,16 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
+# La classe RulesGroupRead verrà importata in seguito.
+# Pydantic e FastAPI gestiscono i forward reference (stringhe)
+# in modo da non dover importare subito.
+
+
 # Schema di base con i campi comuni
 class PlaybookBase(BaseModel):
     title: Optional[str] = Field(None, description="The title of the playbook")
+    description: Optional[str] = Field(None, description="The description of the playbook")
+    private: Optional[bool] = Field(None, description="Whether the playbook is private")
 
     class Config:
         from_attributes = True
@@ -15,16 +22,22 @@ class PlaybookBase(BaseModel):
 # Schema per la creazione di un playbook (usato nel body delle richieste POST)
 class PlaybookCreate(PlaybookBase):
     title: str = Field(..., description="The title of the playbook is required for creation")
+    description: str = Field(..., description="The description of the playbook is required")
+    private: bool = Field(False, description="Whether the playbook is private. Defaults to False")
+
 
 # Schema per l'aggiornamento di un playbook (usato nel body delle richieste PUT/PATCH)
 class PlaybookUpdate(PlaybookBase):
-    pass # title è già opzionale in PlaybookBase
+    pass # title, description e private sono già opzionali in PlaybookBase
 
 # Schema per la lettura di un playbook (usato nelle risposte GET)
 class PlaybookRead(PlaybookBase):
     id: UUID
     general_account_id: UUID
     created_at: datetime
+    description: str
+    private: bool
+    rules_groups: List["RulesGroupRead"] = []
 
 
 class PlaybookAdminRead(BaseModel):
@@ -34,3 +47,8 @@ class PlaybookAdminRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Alla fine, quando tutti i modelli sono definiti, si può fare:
+# PlaybookRead.model_rebuild()
+# Ma con FastAPI, questo viene gestito automaticamente.
