@@ -39,9 +39,7 @@ class Playbook(Base):
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="playbooks"
     )
-    trades: Mapped[list["Trade"]] = relationship(
-        "Trade", secondary="public.trades_playbooks", back_populates="playbooks"
-    )
+    trades: Mapped[list["Trade"]] = relationship("Trade", back_populates="playbook")
     rules_groups: Mapped[list[RulesGroupPlaybook]] = relationship(
         "RulesGroupPlaybook",
         back_populates="playbook",

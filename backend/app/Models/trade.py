@@ -130,9 +130,13 @@ class Trade(Base):
     mistakes: Mapped[list["Mistake"]] = relationship(
         "Mistake", secondary="public.trades_mistakes", back_populates="trades"
     )
-    playbooks: Mapped[list["Playbook"]] = relationship(
-        "Playbook", secondary="public.trades_playbooks", back_populates="trades"
+    playbook_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.playbooks.id"),
+        nullable=True,
     )
+
+    playbook: Mapped[Optional["Playbook"]] = relationship("Playbook", back_populates="trades")
     news_impacts: Mapped[list["NewsImpact"]] = relationship(
         "NewsImpact", secondary="public.trades_news_impacts", back_populates="trades"
     )
