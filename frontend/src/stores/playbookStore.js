@@ -46,5 +46,28 @@ export const usePlaybookStore = defineStore('playbooks', {
         this.isLoading = false;
       }
     },
+
+    /**
+     * Creates a new playbook.
+     * @param {object} playbookData - The data for the new playbook.
+     * @returns {object} The newly created playbook from the API.
+     */
+    async createPlaybook(playbookData) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.post('/me/playbooks', playbookData);
+        const newPlaybook = response.data;
+        // Add the new playbook to the start of the local list for immediate UI update
+        this.playbooks.unshift(newPlaybook);
+        return newPlaybook;
+      } catch (err) {
+        console.error('Error creating playbook:', err);
+        this.error = err.response?.data?.detail || 'Failed to create playbook.';
+        throw err; // Re-throw the error so the component can catch it
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

@@ -47,12 +47,11 @@ const layoutClass = computed(() => {
 
 .playbook-list {
   display: grid;
-  gap: 1rem;
+  gap: var(--semantic-size-stack-lg);
 }
 
 /* Grid layout for desktop */
 .layout-grid {
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   /* As per user request, max 2 columns */
   grid-template-columns: repeat(2, 1fr);
 }

@@ -28,8 +28,10 @@ onMounted(() => {
 
 <style scoped>
 .playbooks-view {
+  width: 100%;
+  padding: var(--semantic-size-inset-xl);
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Spacing between controls and list */
+  gap: var(--semantic-size-stack-lg);
 }
 </style>
