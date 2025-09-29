@@ -52,8 +52,8 @@ const selectColor = (color) => {
 }
 
 .color-option {
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
@@ -69,13 +69,13 @@ const selectColor = (color) => {
 
 .color-option.is-selected {
   border-color: var(--semantic-color-border-focus);
-  box-shadow: 0 0 0 2px var(--semantic-color-surface-primary), 0 0 0 4px var(--semantic-color-border-focus);
+  box-shadow: 0 0 0 1px var(--semantic-color-surface-primary), 0 0 0 3px var(--semantic-color-border-focus);
 }
 
 .checkmark {
   color: white;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   font-weight: bold;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 </style>

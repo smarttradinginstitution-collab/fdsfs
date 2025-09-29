@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
@@ -18,27 +18,38 @@ const playbookStore = usePlaybookStore();
 const playbookData = ref({
   title: '',
   description: '',
-  color: '#4A90E2', // Default color
-  icon_name: 'BuildingLibraryIcon', // Default icon
+  color: '#4A90E2',
+  icon_name: 'BuildingLibraryIcon',
   private: false,
 });
 const isLoading = ref(false);
 const error = ref(null);
 
 const currentStep = ref(0);
-const steps = ['Setup', 'Rules'];
+const steps = [
+  { title: 'Setup', description: 'Personalize your playbook' },
+  { title: 'Rules', description: 'Define your entry/exit criteria' },
+];
+
+const isLastStep = computed(() => currentStep.value === steps.length - 1);
 
 const closeModal = () => {
   router.push({ name: 'playbooks' });
 };
 
-const goToNextStep = async () => {
+const handleNext = () => {
+  if (isLastStep.value) {
+    submitPlaybook();
+  } else {
+    currentStep.value++;
+  }
+};
+
+const submitPlaybook = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    // Call the store action to create the playbook
     const newPlaybook = await playbookStore.createPlaybook(playbookData.value);
-    // On success, navigate to the detail page of the new playbook
     router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
   } catch (err) {
     console.error("Failed to create playbook:", err);
@@ -64,43 +75,53 @@ const goToNextStep = async () => {
         <div class="modal-content">
           <Stepper :steps="steps" :current-step="currentStep" />
 
-          <div class="form-section">
-            <h3 class="section-title">Color</h3>
-            <ColorSelector v-model="playbookData.color" />
+          <!-- Step 1: Setup -->
+          <div v-if="currentStep === 0" class="form-content">
+            <div class="form-section">
+              <h3 class="section-title">Color</h3>
+              <ColorSelector v-model="playbookData.color" />
+            </div>
+            <div class="form-section">
+              <h3 class="section-title">Icon</h3>
+              <IconSelector v-model="playbookData.icon_name" />
+            </div>
+            <div class="form-section">
+              <BaseInput
+                v-model="playbookData.title"
+                label="Playbook Name"
+                placeholder="e.g., 'Opening Range Breakout'"
+                id="playbook-title"
+                :disabled="isLoading"
+              />
+            </div>
+            <div class="form-section">
+              <BaseInput
+                v-model="playbookData.description"
+                label="Description"
+                placeholder="Describe the strategy, entry/exit criteria, etc."
+                id="playbook-description"
+                type="textarea"
+                :rows="4"
+                :disabled="isLoading"
+              />
+            </div>
           </div>
 
-          <div class="form-section">
-            <h3 class="section-title">Icon</h3>
-            <IconSelector v-model="playbookData.icon_name" />
+          <!-- Step 2: Rules (Placeholder) -->
+          <div v-if="currentStep === 1" class="form-content">
+            <div class="placeholder-content">
+              <p>Rule configuration will be available in a future update.</p>
+            </div>
           </div>
 
-          <div class="form-section">
-            <BaseInput
-              v-model="playbookData.title"
-              label="Playbook Name"
-              placeholder="e.g., 'Opening Range Breakout'"
-              id="playbook-title"
-              :disabled="isLoading"
-            />
-          </div>
-
-          <div class="form-section">
-             <BaseInput
-              v-model="playbookData.description"
-              label="Description"
-              placeholder="Describe the strategy, entry/exit criteria, etc."
-              id="playbook-description"
-              type="textarea"
-              :rows="4"
-              :disabled="isLoading"
-            />
-          </div>
 
           <div v-if="error" class="error-message">{{ error }}</div>
 
           <div class="form-actions">
             <BaseButton variant="secondary" @click="closeModal" :disabled="isLoading">Cancel</BaseButton>
-            <BaseButton variant="primary" @click="goToNextStep" :is-loading="isLoading">Next</BaseButton>
+            <BaseButton variant="primary" @click="handleNext" :is-loading="isLoading">
+              {{ isLastStep ? 'Finish' : 'Next' }}
+            </BaseButton>
           </div>
         </div>
       </BaseWidget>
@@ -145,6 +166,12 @@ const goToNextStep = async () => {
   gap: var(--semantic-size-stack-lg);
 }
 
+.form-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--semantic-size-stack-lg);
+}
+
 .form-section {
   display: flex;
   flex-direction: column;
@@ -172,5 +199,15 @@ const goToNextStep = async () => {
   padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
   text-align: center;
+}
+
+.placeholder-content {
+    text-align: center;
+    padding: var(--semantic-size-inset-xl);
+    color: var(--semantic-color-text-secondary);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

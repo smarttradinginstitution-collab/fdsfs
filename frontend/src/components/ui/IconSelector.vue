@@ -61,8 +61,8 @@ const selectIcon = (iconName) => {
 }
 
 .icon-option {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   border: 1px solid var(--semantic-color-border-default);
@@ -87,7 +87,7 @@ const selectIcon = (iconName) => {
 }
 
 .icon-svg {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 </style>
