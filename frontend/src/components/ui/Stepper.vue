@@ -21,7 +21,10 @@ const props = defineProps({
       :class="['step-item', { 'is-active': index === currentStep, 'is-complete': index < currentStep }]"
     >
       <div class="step-circle">{{ index + 1 }}</div>
-      <div class="step-label">{{ step }}</div>
+      <div class="step-details">
+        <div class="step-label">{{ step.title }}</div>
+        <div v-if="step.description" class="step-description">{{ step.description }}</div>
+      </div>
     </div>
   </div>
 </template>
@@ -37,8 +40,8 @@ const props = defineProps({
 
 .step-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: var(--semantic-size-stack-sm);
   color: var(--semantic-color-text-disabled);
   transition: color 0.3s ease;
 }
@@ -53,12 +56,22 @@ const props = defineProps({
   align-items: center;
   justify-content: center;
   font: var(--semantic-font-style-body-md-bold);
-  margin-bottom: var(--semantic-size-stack-xs);
+  flex-shrink: 0; /* Prevent circle from shrinking */
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+.step-details {
+  display: flex;
+  flex-direction: column;
+}
+
 .step-label {
+  font: var(--semantic-font-style-body-md-bold);
+}
+
+.step-description {
   font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
 }
 
 /* Active Step Styling */
@@ -80,7 +93,8 @@ const props = defineProps({
   color: var(--semantic-color-text-success);
 }
 
-.step-item.is-complete .step-label {
+.step-item.is-complete .step-label,
+.step-item.is-complete .step-description {
   color: var(--semantic-color-text-secondary);
 }
 </style>
