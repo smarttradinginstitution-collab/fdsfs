@@ -60,10 +60,15 @@ export const useTradesStore = defineStore('trades', {
     },
 
     allDashboardStats() {
-      if (!this.dashboardStats) {
-        const emptyStat = (key, label, category, value = 'N/A') => ({ key, label, category, value, changeType: 'neutral' });
-        return {
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+
+      // Restituisce un set completo di statistiche vuote per evitare errori di rendering
+      // se i dati non sono ancora stati caricati o se non c'è un account selezionato.
+      const emptyStat = (key, label, category, value = 'N/A') => ({ key, label, category, value, changeType: 'neutral' });
+      const emptyStats = {
           netPnl: { ...emptyStat('netPnl', 'Net P&L', 'Profitability', '$0.00'), changeType: 'neutral' },
+          roi: { key: 'roi', label: 'ROI', category: 'Profitability', value: '0.00%', changeType: 'neutral' },
           winRate: { key: 'winRate', label: 'Win Rate', category: 'Ratios & Efficiency', value: 'N/A', wins: 0, losses: 0, breakevens: 0, changeType: 'neutral' },
           trades: emptyStat('trades', 'Trades', 'Consistency', '0'),
           profitFactor: emptyStat('profitFactor', 'Profit Factor', 'Ratios & Efficiency'),
@@ -76,18 +81,24 @@ export const useTradesStore = defineStore('trades', {
           maxConsecutiveWins: emptyStat('maxConsecutiveWins', 'Max Consec. Wins', 'Consistency', '0'),
           maxConsecutiveLosses: emptyStat('maxConsecutiveLosses', 'Max Consec. Losses', 'Consistency', '0'),
           avgRealizedRr: emptyStat('avgRealizedRr', 'Avg. Realized R:R', 'Ratios & Efficiency'),
-          maxDrawdownAbs: emptyStat('maxDrawdownAbs', 'Max Drawdown', 'Risk Management', '$0.00'),
+          maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: '$0.00 (0.00%)', changeType: 'neutral' },
           sharpeRatio: emptyStat('sharpeRatio', 'Sharpe Ratio', 'Ratios & Efficiency'),
           averageHoldTime: emptyStat('averageHoldTime', 'Avg. Hold Time', 'Other', '0 min'),
-        };
+          initialBalance: emptyStat('initialBalance', 'Initial Balance', 'Core', '$0.00'),
+          currentBalance: emptyStat('currentBalance', 'Current Balance', 'Core', '$0.00'),
+          peakBalance: emptyStat('peakBalance', 'Peak Balance', 'Core', '$0.00'),
+      };
+
+      if (!this.dashboardStats || !selectedAccount) {
+        return emptyStats;
       }
 
       const stats = this.dashboardStats.stats;
-      const totalPnl = parseFloat(stats.net_pnl); // Corretto da total_pl
+      const totalPnl = parseFloat(stats.net_pnl);
       const tradeCount = stats.trade_count;
-      const winningTrades = stats.winning_trades; // Corretto da winning_trades_count
-      const losingTrades = stats.losing_trades; // Corretto da losing_trades_count
-      const breakEvenTrades = stats.breakeven_trades; // Corretto da breakeven_trades_count
+      const winningTrades = stats.winning_trades;
+      const losingTrades = stats.losing_trades;
+      const breakEvenTrades = stats.breakeven_trades;
       const winRate = parseFloat(stats.win_rate);
       const avgWin = parseFloat(stats.avg_win);
       const avgLoss = parseFloat(stats.avg_loss);
@@ -99,11 +110,20 @@ export const useTradesStore = defineStore('trades', {
       const maxConsecutiveLosses = stats.max_consecutive_losses;
       const avgRealizedRr = parseFloat(stats.avg_realized_rr);
       const maxDrawdownAbs = parseFloat(stats.max_drawdown_abs);
+      const maxDrawdownPerc = parseFloat(stats.max_drawdown_percentage);
+      const roi = parseFloat(stats.roi_percentage);
       const sharpeRatio = parseFloat(stats.sharpe_ratio);
       const averageHoldTime = parseFloat(stats.average_hold_time);
 
+      // Calcoli per le metriche mancanti
+      const initialBalance = parseFloat(selectedAccount.initial_balance ?? 0);
+      const currentBalance = initialBalance + totalPnl;
+      const peakBalance = this.equityCurve?.data?.length > 0 ? Math.max(...this.equityCurve.data) : initialBalance;
+
       return {
+        ...emptyStats, // Inizia con un oggetto completo per garantire che tutte le chiavi esistano
         netPnl: { key: 'netPnl', label: 'Net P&L', category: 'Profitability', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, changeType: totalPnl >= 0 ? 'positive' : 'negative' },
+        roi: { key: 'roi', label: 'ROI', category: 'Profitability', value: `${roi.toFixed(2)}%`, changeType: roi >= 0 ? 'positive' : 'negative' },
         avgWin: { key: 'avgWin', label: 'Avg. Win', category: 'Profitability', value: `$${avgWin.toFixed(2)}`, changeType: 'neutral' },
         avgLoss: { key: 'avgLoss', label: 'Avg. Loss', category: 'Profitability', value: `$${avgLoss.toFixed(2)}`, changeType: 'neutral' },
         avgTradePnl: { key: 'avgTradePnl', label: 'Avg. Trade P&L', category: 'Profitability', value: `$${avgTradePnl.toFixed(2)}`, changeType: 'neutral' },
@@ -116,13 +136,17 @@ export const useTradesStore = defineStore('trades', {
         avgRealizedRr: { key: 'avgRealizedRr', label: 'Avg. Realized R:R', category: 'Ratios & Efficiency', value: `${avgRealizedRr.toFixed(2)}`, changeType: 'neutral' },
         sharpeRatio: { key: 'sharpeRatio', label: 'Sharpe Ratio', category: 'Ratios & Efficiency', value: `${sharpeRatio.toFixed(2)}`, changeType: 'neutral' },
 
-        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)}`, changeType: 'neutral' },
+        maxDrawdownAbs: { key: 'maxDrawdownAbs', label: 'Max Drawdown', category: 'Risk Management', value: `$${maxDrawdownAbs.toFixed(2)} (${maxDrawdownPerc.toFixed(2)}%)`, changeType: 'neutral' },
 
         trades: { key: 'trades', label: 'Trades', category: 'Consistency', value: String(tradeCount), changeType: 'neutral' },
         maxConsecutiveWins: { key: 'maxConsecutiveWins', label: 'Max Consec. Wins', category: 'Consistency', value: String(maxConsecutiveWins), changeType: 'neutral' },
         maxConsecutiveLosses: { key: 'maxConsecutiveLosses', label: 'Max Consec. Losses', category: 'Consistency', value: String(maxConsecutiveLosses), changeType: 'neutral' },
 
         averageHoldTime: { key: 'averageHoldTime', label: 'Avg. Hold Time', category: 'Other', value: `${averageHoldTime.toFixed(0)} min`, changeType: 'neutral' },
+
+        initialBalance: { key: 'initialBalance', label: 'Initial Balance', category: 'Core', value: `$${initialBalance.toFixed(2)}`, changeType: 'neutral' },
+        currentBalance: { key: 'currentBalance', label: 'Current Balance', category: 'Core', value: `$${currentBalance.toFixed(2)}`, changeType: currentBalance >= initialBalance ? 'positive' : 'negative' },
+        peakBalance: { key: 'peakBalance', label: 'Peak Balance', category: 'Core', value: `$${peakBalance.toFixed(2)}`, changeType: 'neutral' },
       };
     },
 
@@ -329,7 +353,8 @@ export const useTradesStore = defineStore('trades', {
       if (!authStore.isAuthenticated) return;
 
       try {
-        const response = await apiClient.get(`/playbooks/`);
+        // CORREZIONE: L'endpoint corretto per i playbook dell'utente è /me/playbooks
+        const response = await apiClient.get(`/me/playbooks`);
         this.playbooks = response.data;
       } catch (error) {
         console.error('Errore nel recupero dei playbook:', error);
@@ -453,7 +478,7 @@ export const useTradesStore = defineStore('trades', {
 
       const filterStore = useFilterStore();
       const params = {
-        trading_account_id: selectedAccount.id, // Aggiungi trading_account_id
+        // Rimuoviamo trading_account_id dai parametri, verrà inserito nell'URL
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -463,7 +488,8 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/trades/performance/metrics', { params });
+        // L'ID del conto è ora parte dell'URL, come per le altre chiamate
+        const response = await apiClient.get(`/trades/performance/metrics/${selectedAccount.id}`, { params });
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -479,7 +505,6 @@ export const useTradesStore = defineStore('trades', {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const params = {
-        trading_account_id: selectedAccount.id, // Aggiungi trading_account_id
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
         user_timezone: userTimezone,
@@ -490,7 +515,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/trades/calendar/data', { params });
+        const response = await apiClient.get(`/trades/calendar/data/${selectedAccount.id}`, { params });
         this.calendarData = response.data;
       } catch (error) {
         console.error('Error fetching calendar data:', error);
@@ -504,7 +529,6 @@ export const useTradesStore = defineStore('trades', {
 
       const filterStore = useFilterStore();
       const params = {
-        trading_account_id: selectedAccount.id,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -513,7 +537,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/trades/vantage-score', { params });
+        const response = await apiClient.get(`/trades/vantage-score/${selectedAccount.id}`, { params });
         this.vantageScore = response.data;
       } catch (error) {
         console.error('Error fetching vantage score:', error);
@@ -589,7 +613,6 @@ export const useTradesStore = defineStore('trades', {
 
       const filterStore = useFilterStore();
       const params = {
-        trading_account_id: selectedAccount.id,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -598,7 +621,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/trades/processed-stats', { params });
+        const response = await apiClient.get(`/trades/processed-stats/${selectedAccount.id}`, { params });
         this.processedStats = response.data;
       } catch (error) {
         console.error('Error fetching processed stats:', error);
@@ -613,7 +636,6 @@ export const useTradesStore = defineStore('trades', {
 
       const filterStore = useFilterStore();
       const params = {
-        trading_account_id: selectedAccount.id,
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -622,7 +644,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get('/trades/equity-curve', { params });
+        const response = await apiClient.get(`/trades/equity-curve/${selectedAccount.id}`, { params });
         this.equityCurve = response.data;
       } catch (error) {
         console.error('Error fetching equity curve:', error);

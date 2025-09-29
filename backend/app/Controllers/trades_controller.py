@@ -28,7 +28,7 @@ router = APIRouter(
 
 # --- Endpoint di Analisi ---
 
-@router.get("/performance/metrics", response_model=PerformanceMetrics)
+@router.get("/performance/metrics/{trading_account_id}", response_model=PerformanceMetrics)
 async def get_performance_metrics(
     trading_account_id: UUID,
     start_date: date,
@@ -37,7 +37,7 @@ async def get_performance_metrics(
 ):
     return await service.get_performance_metrics(trading_account_id, start_date, end_date)
 
-@router.get("/calendar/data", response_model=List[CalendarDayData])
+@router.get("/calendar/data/{trading_account_id}", response_model=List[CalendarDayData])
 async def get_calendar_data(
     trading_account_id: UUID,
     start_date: date,
@@ -47,7 +47,7 @@ async def get_calendar_data(
 ):
     return await service.get_calendar_data(trading_account_id, start_date, end_date, user_timezone)
 
-@router.get("/processed-stats", response_model=ProcessedStats)
+@router.get("/processed-stats/{trading_account_id}", response_model=ProcessedStats)
 async def get_processed_stats(
     trading_account_id: UUID,
     start_date: date,
@@ -56,7 +56,7 @@ async def get_processed_stats(
 ):
     return await service.get_processed_stats(trading_account_id, start_date, end_date)
 
-@router.get("/vantage-score", response_model=VantageScoreData)
+@router.get("/vantage-score/{trading_account_id}", response_model=VantageScoreData)
 async def get_vantage_score(
     trading_account_id: UUID,
     start_date: date,
@@ -65,7 +65,7 @@ async def get_vantage_score(
 ):
     return await service.get_vantage_score(trading_account_id, start_date, end_date)
 
-@router.get("/equity-curve", response_model=EquityCurveData)
+@router.get("/equity-curve/{trading_account_id}", response_model=EquityCurveData)
 async def get_equity_curve(
     trading_account_id: UUID,
     start_date: date,
@@ -74,7 +74,7 @@ async def get_equity_curve(
 ):
     return await service.get_equity_curve(trading_account_id, start_date, end_date)
 
-@router.get("/summary", response_model=TradeSummary)
+@router.get("/summary/{trading_account_id}", response_model=TradeSummary)
 async def get_trade_summary(
     trading_account_id: UUID,
     start_date: date,
