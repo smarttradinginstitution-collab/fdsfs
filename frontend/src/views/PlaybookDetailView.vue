@@ -128,11 +128,14 @@ const chartData = computed(() => {
   const equityCurve = store.currentPlaybookAnalytics?.equity_curve;
   if (!equityCurve) return { labels: [], datasets: [] };
 
+  // Get color values from CSS tokens to make the chart theme-aware
+  const primaryRgb = getComputedStyle(document.documentElement).getPropertyValue('--semantic-color-interactive-primary-rgb').trim();
+
   // Create a gradient for the background fill
   const ctx = document.createElement('canvas').getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, 'rgba(7, 153, 146, 0.4)'); // Teal-like color from screenshot
-  gradient.addColorStop(1, 'rgba(7, 153, 146, 0)');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 280); // Use the new chart height
+  gradient.addColorStop(0, `rgba(${primaryRgb}, 0.4)`);
+  gradient.addColorStop(1, `rgba(${primaryRgb}, 0)`);
 
   return {
     labels: equityCurve.labels,
@@ -140,52 +143,58 @@ const chartData = computed(() => {
       {
         label: 'Cumulative P&L',
         backgroundColor: gradient,
-        borderColor: 'rgba(7, 153, 146, 1)',
+        borderColor: `rgb(${primaryRgb})`,
         data: equityCurve.data,
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: 'rgba(7, 153, 146, 1)',
+        pointBackgroundColor: `rgb(${primaryRgb})`,
         pointBorderColor: '#fff',
         pointHoverRadius: 7,
         pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(7, 153, 146, 1)',
+        pointHoverBorderColor: `rgb(${primaryRgb})`,
       },
     ],
   };
 });
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      mode: 'index',
-      intersect: false,
-      callbacks: {
-        label: (context) => ` ${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
-      }
-    },
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { color: 'var(--semantic-color-text-secondary)' },
-    },
-    y: {
-      grid: { color: 'var(--semantic-color-border-muted)' },
-      ticks: {
-        color: 'var(--semantic-color-text-secondary)',
-        callback: (value) => formatCurrency(value)
-      },
-    },
-  },
-}));
+const chartOptions = computed(() => {
+    // Get color values from CSS tokens to make the chart theme-aware
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--semantic-color-text-secondary').trim();
+    const mutedBorderColor = getComputedStyle(document.documentElement).getPropertyValue('--semantic-color-border-muted').trim();
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: (context) => ` ${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
+                }
+            },
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { color: textColor },
+            },
+            y: {
+                grid: { color: mutedBorderColor },
+                ticks: {
+                    color: textColor,
+                    callback: (value) => formatCurrency(value)
+                },
+            },
+        },
+    };
+});
 </script>
 
 <style scoped>
 .playbook-detail-view {
-  padding: 1rem 2rem;
+  padding: 2rem;
   color: var(--semantic-color-text-primary);
   display: flex;
   flex-direction: column;
@@ -247,22 +256,24 @@ const chartOptions = computed(() => ({
     border: 1px solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-surface);
     box-shadow: var(--semantic-effect-shadow-elevation-low);
-    padding: var(--semantic-size-inset-lg);
+    padding: var(--semantic-size-inset-md);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--semantic-size-stack-md);
 }
 
 .metrics-header {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    /* Reduce header impact */
+    margin-bottom: -0.5rem;
 }
 
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
+    gap: var(--semantic-size-stack-lg) var(--semantic-size-stack-md);
 }
 
 .settings-button {
@@ -281,10 +292,10 @@ const chartOptions = computed(() => ({
 }
 
 .chart-section {
-  margin-top: 2rem;
+  margin-top: var(--semantic-size-stack-lg);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--semantic-size-stack-sm);
 }
 
 .chart-title {
@@ -294,7 +305,7 @@ const chartOptions = computed(() => ({
 }
 
 .chart-container {
-  height: 350px;
+  height: 280px;
   position: relative;
 }
 

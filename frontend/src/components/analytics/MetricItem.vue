@@ -40,7 +40,7 @@ const { info } = useMetricInfo(props.metricKey);
 }
 
 .metric-value {
-  font: var(--semantic-font-style-heading-lg);
+  font: var(--semantic-font-style-heading-md);
   color: var(--semantic-color-text-primary);
   font-weight: 600;
 }
