@@ -21,20 +21,30 @@
         <div v-if="!isEditing" class="header-right">
           <ActionsMenu>
             <div class="menu-item" @click="startEditing">Edit</div>
-            <div class="menu-item menu-item-danger" @click="isDeleteModalVisible = true">Delete</div>
+            <div class="menu-item menu-item-danger" @click="isGroupDeleteModalVisible = true">Delete</div>
           </ActionsMenu>
         </div>
       </div>
     </template>
 
     <div class="widget-body-content">
+      <!-- Modal for deleting the entire group -->
       <ConfirmationModal
-        :show="isDeleteModalVisible"
+        :show="isGroupDeleteModalVisible"
         title="Delete Rule Group"
         :message="`Are you sure you want to delete the group '${group.name_group}'? This will also delete all rules within it.`"
-        @close="isDeleteModalVisible = false"
+        @close="isGroupDeleteModalVisible = false"
         @confirm="confirmDeleteGroup"
       />
+      <!-- Modal for deleting a single rule -->
+      <ConfirmationModal
+        :show="isRuleDeleteModalVisible"
+        title="Delete Rule"
+        message="Are you sure you want to delete this rule? This action cannot be undone."
+        @close="isRuleDeleteModalVisible = false"
+        @confirm="confirmDeleteRule"
+      />
+
       <div class="rules-table">
         <div class="table-header">
           <span class="col-rule">Rule</span>
@@ -52,7 +62,7 @@
           @end="onRuleDragEnd"
         >
           <template #item="{ element: rule }">
-            <RuleRow :rule="rule" />
+            <RuleRow :rule="rule" @delete="promptDeleteRule" />
           </template>
         </draggable>
         <RuleCreator v-if="store.creatingRuleInGroupId === group.id" :group-id="group.id" />
@@ -129,15 +139,33 @@ const saveEdit = async () => {
   isEditing.value = false; // The store action will trigger a refresh
 };
 
-// --- Delete confirmation ---
-const isDeleteModalVisible = ref(false);
-
+// --- Delete confirmation for Group ---
+const isGroupDeleteModalVisible = ref(false);
 const confirmDeleteGroup = async () => {
   await store.deleteRuleGroup({
     playbookId: props.group.playbook_id,
     groupId: props.group.id,
   });
-  isDeleteModalVisible.value = false; // The store action refreshes the list
+  isGroupDeleteModalVisible.value = false;
+};
+
+// --- Delete confirmation for Rule ---
+const isRuleDeleteModalVisible = ref(false);
+const ruleToDelete = ref(null);
+
+const promptDeleteRule = (rule) => {
+  ruleToDelete.value = rule;
+  isRuleDeleteModalVisible.value = true;
+};
+
+const confirmDeleteRule = async () => {
+  if (!ruleToDelete.value) return;
+  await store.deleteRule({
+    playbookId: props.group.playbook_id,
+    ruleId: ruleToDelete.value.id,
+  });
+  isRuleDeleteModalVisible.value = false;
+  ruleToDelete.value = null;
 };
 </script>
 
