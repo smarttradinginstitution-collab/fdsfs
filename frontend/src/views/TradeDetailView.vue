@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
 import BaseCard from '@/components/ui/BaseCard.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
-import TradeRulesManager from '@/components/trades/TradeRulesManager.vue';
 
 const route = useRoute();
 const tradesStore = useTradesStore();
@@ -36,9 +35,6 @@ onMounted(() => {
           <div><strong>Position Size:</strong> {{ trade.position_size }}</div>
         </div>
       </BaseCard>
-
-      <!-- Rule Selection Component -->
-      <TradeRulesManager :trade="trade" />
     </div>
     <div v-else>
       <h1 class="view-title">Trade Not Found</h1>

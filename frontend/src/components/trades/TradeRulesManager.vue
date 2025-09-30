@@ -22,7 +22,6 @@ const fetchPlaybookRules = async (playbookId) => {
   if (!playbookId) return;
   try {
     // This assumes an endpoint exists to get rule groups (with rules) for a playbook.
-    // Based on the backend plan, this should be GET /playbooks/{playbook_id}/rule-groups/
     const response = await apiClient.get(`/playbooks/${playbookId}/rule-groups/`);
     // Flatten the rules from all groups into a single list
     allRules.value = response.data.flatMap(group => group.rules);

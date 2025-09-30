@@ -21,6 +21,8 @@ from .playbook import Playbook
 from .psychology_state import PsychologyState
 from .tag import Tag
 from .user_dashboard_layout import UserDashboardLayout
+from .rules_group_playbook import RulesGroupPlaybook
+from .rule_playbook import RulePlaybook
 
 # New or modified models with dependencies
 from .platform import Platform
@@ -37,6 +39,7 @@ from .trades_mistakes import TradesMistakes
 from .trades_news_impacts import TradesNewsImpacts
 from .trades_psychology import TradesPsychology
 from .trades_tags import TradesTags
+from .trades_rules import TradesRules
 
 __all__ = [
     "AuthUser",
@@ -62,4 +65,7 @@ __all__ = [
     "TradesNewsImpacts",
     "TradesPsychology",
     "TradesTags",
+    "RulesGroupPlaybook",
+    "RulePlaybook",
+    "TradesRules",
 ]
