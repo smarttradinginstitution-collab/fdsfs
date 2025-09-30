@@ -1,22 +1,19 @@
 <template>
-  <div class="loading-spinner"></div>
+  <div class="spinner"></div>
 </template>
 
 <style scoped>
-.loading-spinner {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+.spinner {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-  -webkit-animation: spin 1s ease-in-out infinite;
+  border: 8px solid var(--semantic-color-surface-subtle);
+  border-top-color: var(--semantic-color-action-primary-default);
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   to {
-    -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
   }
 }
