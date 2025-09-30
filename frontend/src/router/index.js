@@ -49,6 +49,12 @@ const router = createRouter({
       meta: { title: 'Playbooks' },
     },
     {
+      path: '/playbooks/new',
+      name: 'playbook-create',
+      component: () => import('../views/CreatePlaybookView.vue'),
+      meta: { title: 'Create Playbook' },
+    },
+    {
       path: '/playbooks/:id',
       name: 'playbook-detail',
       component: () => import('../views/PlaybookDetailView.vue'),

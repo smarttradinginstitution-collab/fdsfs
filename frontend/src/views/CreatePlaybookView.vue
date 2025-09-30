@@ -1,20 +1,19 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import IconButton from '@/components/ui/IconButton.vue';
-import CloseIcon from '@/components/icons/CloseIcon.vue';
 import ArrowLeftIcon from '@/components/icons/ArrowLeftIcon.vue';
 import Stepper from '@/components/ui/Stepper.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import RuleGroupManager from './RuleGroupManager.vue';
+import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 
-const emit = defineEmits(['close', 'save-success']);
-
+const router = useRouter();
 const playbookStore = usePlaybookStore();
 const uiStore = useUiStore();
 const ruleGroupManagerRef = ref(null);
@@ -36,8 +35,8 @@ const steps = [
 
 const isLastStep = computed(() => currentStep.value === steps.length - 1);
 
-const closeModal = () => {
-  emit('close');
+const cancelCreation = () => {
+  router.push('/playbooks');
 };
 
 const goBack = () => {
@@ -50,7 +49,6 @@ const handleNext = () => {
   if (isLastStep.value) {
     submitPlaybookWithRules();
   } else {
-    // Store the data from Step 1 before proceeding
     playbookStore.setNewPlaybookDetails(playbookData.value);
     currentStep.value++;
   }
@@ -67,8 +65,7 @@ const submitPlaybookWithRules = async () => {
   try {
     const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
     const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
-    emit('save-success', newPlaybook);
-    closeModal();
+    router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
   } catch (err) {
     console.error("Failed to create playbook with rules:", err);
     error.value = playbookStore.error || 'An unknown error occurred during save.';
@@ -76,28 +73,23 @@ const submitPlaybookWithRules = async () => {
     uiStore.hideLoader();
   }
 };
-
 </script>
 
 <template>
-  <div class="create-playbook-overlay">
-    <div class="create-playbook-modal">
+  <div class="create-playbook-view">
+    <div class="create-playbook-container">
       <BaseWidget>
         <template #header>
-          <div class="modal-header">
+          <div class="page-header">
             <div class="header-left-controls">
               <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="uiStore.isAppLoading">
                 <ArrowLeftIcon />
               </IconButton>
             </div>
-            <div class="header-right-controls">
-              <IconButton @click="closeModal" aria-label="Close" :disabled="uiStore.isAppLoading">
-                <CloseIcon />
-              </IconButton>
-            </div>
+            <!-- Header title can be added here if needed -->
           </div>
         </template>
-        <div class="modal-content">
+        <div class="page-content">
           <Stepper :steps="steps" :current-step="currentStep" />
 
           <!-- Step 1: Setup -->
@@ -141,7 +133,7 @@ const submitPlaybookWithRules = async () => {
           <div v-if="error" class="error-message">{{ error }}</div>
 
           <div class="form-actions">
-            <BaseButton variant="secondary" @click="closeModal" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
+            <BaseButton variant="secondary" @click="cancelCreation" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
             <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
               {{ isLastStep ? 'Save' : 'Next' }}
             </BaseButton>
@@ -153,26 +145,22 @@ const submitPlaybookWithRules = async () => {
 </template>
 
 <style scoped>
-.create-playbook-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
+.create-playbook-view {
   width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: var(--semantic-size-stack-lg);
+  align-items: flex-start;
+  padding: var(--semantic-size-inset-xl);
+  background-color: var(--semantic-color-surface-primary);
 }
 
-.create-playbook-modal {
+.create-playbook-container {
   width: 100%;
   max-width: 600px;
 }
 
-.modal-header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -183,7 +171,7 @@ const submitPlaybookWithRules = async () => {
   min-width: 36px;
 }
 
-.modal-content {
+.page-content {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
