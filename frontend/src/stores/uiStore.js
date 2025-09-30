@@ -204,6 +204,7 @@ export const useUiStore = defineStore('ui', () => {
   return {
     theme, // Export theme state
     toggleTheme, // Export theme action
+    initTheme, // Export init function
     isSidebarCollapsed,
     isMobileMenuOpen,
     isLayoutEditing,
