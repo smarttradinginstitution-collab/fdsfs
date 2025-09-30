@@ -70,7 +70,7 @@ const updateRule = (updatedRule) => {
                 />
             </template>
         </draggable>
-      <BaseButton variant="tertiary" @click="addRule" class="add-rule-btn">+ Create new rule</BaseButton>
+      <BaseButton variant="secondary" @click="addRule" class="add-rule-btn">+ Create new rule</BaseButton>
     </div>
   </div>
 </template>

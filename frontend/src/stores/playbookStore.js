@@ -68,7 +68,9 @@ export const usePlaybookStore = defineStore('playbooks', {
           }
         }
 
-        this.playbooks.unshift(newPlaybook);
+        // Instead of manually adding the playbook, fetch the full, updated list
+        // This ensures all data, including calculated stats, is consistent.
+        await this.fetchPlaybooks();
         this.newPlaybookData = null;
         return newPlaybook;
 
