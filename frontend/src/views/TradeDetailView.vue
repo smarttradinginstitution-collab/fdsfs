@@ -2,7 +2,7 @@
 import { onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
-import BaseCard from '@/components/ui/BaseCard.vue';
+import BaseWidget from '@/components/layout/BaseWidget.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const route = useRoute();
@@ -24,7 +24,7 @@ onMounted(() => {
     <LoadingSpinner v-if="isLoading" />
     <div v-else-if="trade">
       <h1 class="view-title">Trade: {{ trade.symbol }}</h1>
-      <BaseCard>
+      <BaseWidget>
         <div class="trade-details-grid">
           <div><strong>Side:</strong> {{ trade.direction }}</div>
           <div><strong>Net P&L:</strong> {{ trade.p_l }}</div>
@@ -34,7 +34,7 @@ onMounted(() => {
           <div><strong>Exit Price:</strong> {{ trade.exit_price }}</div>
           <div><strong>Position Size:</strong> {{ trade.position_size }}</div>
         </div>
-      </BaseCard>
+      </BaseWidget>
     </div>
     <div v-else>
       <h1 class="view-title">Trade Not Found</h1>

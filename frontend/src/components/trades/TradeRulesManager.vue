@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from 'vue';
 import apiClient from '@/services/api';
 import { useUiStore } from '@/stores/uiStore';
-import BaseCard from '@/components/ui/BaseCard.vue';
+import BaseWidget from '@/components/layout/BaseWidget.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 
 const props = defineProps({
@@ -68,7 +68,7 @@ watch(() => props.trade, (newTrade) => {
 </script>
 
 <template>
-  <BaseCard>
+  <BaseWidget>
     <h2 class="card-title">Followed Rules</h2>
     <div v-if="!trade.playbook">
         <p>This trade is not associated with a playbook.</p>
@@ -98,7 +98,7 @@ watch(() => props.trade, (newTrade) => {
         Save Rules
       </BaseButton>
     </div>
-  </BaseCard>
+  </BaseWidget>
 </template>
 
 <style scoped>
