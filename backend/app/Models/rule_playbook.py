@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from app.Models.rules_group_playbook import RulesGroupPlaybook
     from app.Models.trade import Trade
 
+from app.Models.trades_rules import trades_rules_table
+
 
 class RulePlaybook(Base):
     __tablename__ = "rules_playbook"
@@ -37,5 +39,5 @@ class RulePlaybook(Base):
         "RulesGroupPlaybook", back_populates="rules"
     )
     trades: Mapped[list["Trade"]] = relationship(
-        "Trade", secondary="public.trades_rules", back_populates="rules"
+        "Trade", secondary=trades_rules_table, back_populates="rules"
     )
