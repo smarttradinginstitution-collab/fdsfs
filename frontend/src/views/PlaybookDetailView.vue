@@ -32,7 +32,7 @@
       <div v-else-if="store.error" class="error-state">
         <p>Error: {{ store.error }}</p>
       </div>
-      <div v-else-if="store.currentPlaybookAnalytics" class="analytics-content">
+      <div v-else-if="store.currentPlaybookAnalytics" class="analytics-card">
         <div class="metrics-header">
             <button class="settings-button" aria-label="Settings">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 1.25rem; height: 1.25rem;">
@@ -233,10 +233,15 @@ const chartOptions = computed(() => ({
 }
 
 .view-content {
-  background-color: var(--semantic-color-surface-default);
+  /* The background is now on the card, not the whole content area */
 }
 
-.analytics-content {
+.analytics-card {
+    background-color: var(--semantic-color-surface-primary);
+    border: 1px solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-surface);
+    box-shadow: var(--semantic-effect-shadow-elevation-low);
+    padding: var(--semantic-size-inset-lg);
     display: flex;
     flex-direction: column;
     gap: 1rem;
