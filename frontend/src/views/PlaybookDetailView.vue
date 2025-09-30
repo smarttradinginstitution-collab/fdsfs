@@ -177,7 +177,7 @@ const chartOptions = computed(() => {
         },
         scales: {
             x: {
-                grid: { display: false },
+                grid: { color: mutedBorderColor },
                 ticks: { color: textColor },
             },
             y: {
