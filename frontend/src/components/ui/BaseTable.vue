@@ -41,7 +41,7 @@ const tableClass = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id">
+        <tr v-for="item in items" :key="item.id" @click="$emit('row-click', item)" class="table-row">
           <td v-for="header in headers" :key="header.key" :data-label="header.text">
             <slot :name="header.key" :item="item">
               {{ item[header.key] }}
@@ -57,6 +57,9 @@ const tableClass = computed(() => {
 .table-container {
   width: 100%;
   overflow-x: auto; /* Aggiunge lo scroll orizzontale se la tabella è troppo larga */
+}
+.table-row {
+    cursor: pointer;
 }
 .table {
   width: 100%;

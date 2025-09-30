@@ -9,17 +9,18 @@
 
 <script setup>
 // --- IMPORTAZIONI ---
-
-// Importiamo lo store Pinia dei trade per accedere alla lista dei dati.
+import { useRouter } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
-// Importiamo il nostro componente riutilizzabile `BaseTable` per visualizzare i dati.
 import BaseTable from '@/components/ui/BaseTable.vue';
 
 
 // --- LOGICA DEL COMPONENTE ---
-
-// Creiamo un'istanza dello store per poterlo usare nel template.
+const router = useRouter();
 const tradesStore = useTradesStore();
+
+const handleRowClick = (trade) => {
+  router.push({ name: 'TradeDetail', params: { id: trade.id } });
+};
 </script>
 
 <template>
@@ -32,12 +33,12 @@ const tradesStore = useTradesStore();
     Qui usiamo il nostro componente `BaseTable`.
     - `:headers` riceve la lista delle intestazioni dal getter dello store.
     - `:items` riceve la lista dei trade direttamente dallo stato dello store.
-    Questo mostra la potenza di avere uno store centralizzato e componenti riutilizzabili:
-    la vista diventa molto semplice e si occupa solo di "assemblare" i pezzi.
+    - `@row-click` gestisce la navigazione al dettaglio del trade.
     -->
     <BaseTable
       :headers="tradesStore.tradeHeaders"
       :items="tradesStore.trades"
+      @row-click="handleRowClick"
     />
   </div>
 </template>

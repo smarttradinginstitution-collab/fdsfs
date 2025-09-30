@@ -10,6 +10,7 @@ from fastapi import HTTPException, status
 from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.rule_playbook import RuleRead, TradeRulesUpdate
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -135,6 +136,25 @@ class TradesController:
                 detail="Trade non trovato o non appartenente all'utente.",
             )
         return updated_trade
+
+    async def get_trade_rules(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> List[RuleRead]:
+        """Recupera le regole associate a un trade."""
+        return await service.get_trade_rules(claims, trade_id)
+
+    async def update_trade_rules(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        update_data: TradeRulesUpdate,
+        service: TradeService,
+    ) -> List[RuleRead]:
+        """Aggiorna le regole associate a un trade."""
+        return await service.update_trade_rules(claims, trade_id, update_data.rule_ids)
 
     async def delete_trade(
         self,

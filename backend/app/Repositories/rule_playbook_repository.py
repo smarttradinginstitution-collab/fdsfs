@@ -1,12 +1,13 @@
 # app/Repositories/rule_playbook_repository.py
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.rule_playbook import RulePlaybook
+from app.Models.rules_group_playbook import RulesGroupPlaybook
 from app.Schemas.rule_playbook import RuleCreate, RuleUpdate
 
 
@@ -29,6 +30,25 @@ class RulePlaybookRepository:
         )
         res = await self.db.execute(stmt)
         return res.scalars().all()
+
+    async def get_by_ids_and_playbook_id(self, rule_ids: List[UUID], playbook_id: UUID) -> Sequence[RulePlaybook]:
+        """
+        Recupera una lista di regole tramite i loro ID, assicurandosi che appartengano
+        al playbook specificato.
+        """
+        if not rule_ids:
+            return []
+
+        stmt = (
+            select(RulePlaybook)
+            .join(RulesGroupPlaybook)
+            .where(
+                RulePlaybook.id.in_(rule_ids),
+                RulesGroupPlaybook.playbook_id == playbook_id
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
     async def create(self, rule_in: RuleCreate) -> RulePlaybook:
         db_rule = RulePlaybook(

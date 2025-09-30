@@ -17,12 +17,15 @@ from app.Repositories.mistake_repository import MistakeRepository
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
+from app.Repositories.rule_playbook_repository import RulePlaybookRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Schemas.rule_playbook import RuleRead
 from app.Infrastructure.db import get_db
 from app.Models.trade import Trade
 from app.Models.tag import Tag
 from app.Models.mistake import Mistake
 from app.Models.playbook import Playbook
+from app.Models.rule_playbook import RulePlaybook
 from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
 
@@ -64,6 +67,7 @@ class TradeService:
         self.playbook_repo = PlaybookRepository(db)
         self.news_impact_repo = NewsImpactRepository(db)
         self.psychology_state_repo = PsychologyStateRepository(db)
+        self.rule_playbook_repo = RulePlaybookRepository(db)
 
     async def _validate_and_get_trading_account(self, claims: dict, trading_account_id: UUID) -> tuple[UUID, UUID]:
         """Verifica che il trading account esista e appartenga all'utente."""
@@ -231,6 +235,41 @@ class TradeService:
         await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
 
         return TradeRead.from_orm(db_trade)
+
+    async def get_trade_rules(self, claims: dict, trade_id: UUID) -> List[RuleRead]:
+        """Recupera le regole associate a un trade specifico."""
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Trade non trovato.")
+
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        return [RuleRead.from_orm(rule) for rule in db_trade.rules]
+
+    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> List[RuleRead]:
+        """Aggiorna le regole associate a un trade."""
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Trade non trovato.")
+
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        if not db_trade.playbook_id:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Il trade non è associato a nessun playbook.")
+
+        # Validazione che le regole appartengano al playbook del trade
+        valid_rules = await self.rule_playbook_repo.get_by_ids_and_playbook_id(rule_ids, db_trade.playbook_id)
+        if len(valid_rules) != len(set(rule_ids)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Una o più regole non sono valide o non appartengono al playbook del trade."
+            )
+
+        db_trade.rules = valid_rules
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['rules'])
+
+        return [RuleRead.from_orm(rule) for rule in db_trade.rules]
 
     async def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
         """Elimina un trade, verificando l'appartenenza."""

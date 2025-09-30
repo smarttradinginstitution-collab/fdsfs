@@ -14,6 +14,7 @@ from app.Services.analytics_service import AnalyticsService
 from app.Router.auth import get_current_claims
 
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.rule_playbook import RuleRead, TradeRulesUpdate
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -137,6 +138,27 @@ async def update_trade(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade(claims, trade_id, trade_data, service)
+
+
+@router.get("/{trade_id}/rules", response_model=List[RuleRead])
+async def get_trade_rules(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    """Get all rules associated with a specific trade."""
+    return await controller.get_trade_rules(claims, trade_id, service)
+
+
+@router.put("/{trade_id}/rules", response_model=List[RuleRead])
+async def update_trade_rules(
+    trade_id: UUID,
+    update_data: TradeRulesUpdate,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    """Update the list of rules associated with a specific trade."""
+    return await controller.update_trade_rules(claims, trade_id, update_data, service)
 
 
 @router.delete("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)

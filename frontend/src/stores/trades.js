@@ -38,6 +38,7 @@ const mapBackendTradeToFrontend = (trade) => ({
 export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
+    selectedTrade: null,
     playbooks: [], // Sostituisce 'setups'
     dashboardStats: null,
     calendarData: [],
@@ -677,6 +678,20 @@ export const useTradesStore = defineStore('trades', {
           uiStore.hideLoader();
           uiStore.setInitialLoadPending(false);
         }
+      }
+    },
+
+    async fetchTradeById(tradeId) {
+      this.isLoading = true;
+      this.selectedTrade = null;
+      try {
+        const response = await apiClient.get(`/trades/${tradeId}`);
+        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+      } catch (error) {
+        console.error(`Error fetching trade ${tradeId}:`, error);
+        // Optionally handle the error, e.g., show a notification
+      } finally {
+        this.isLoading = false;
       }
     },
   },

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
+    from app.Models.rule_playbook import RulePlaybook
 
 
 class Trade(Base):
@@ -131,6 +132,9 @@ class Trade(Base):
 
     tags: Mapped[list["Tag"]] = relationship(
         secondary="public.trades_tags", back_populates="trades"
+    )
+    rules: Mapped[list["RulePlaybook"]] = relationship(
+        "RulePlaybook", secondary="public.trades_rules", back_populates="trades"
     )
     mistakes: Mapped[list["Mistake"]] = relationship(
         "Mistake", secondary="public.trades_mistakes", back_populates="trades"

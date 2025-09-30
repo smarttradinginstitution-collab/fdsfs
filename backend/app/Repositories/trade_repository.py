@@ -26,6 +26,7 @@ class TradeRepository:
                 joinedload(Trade.playbook),
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
+                joinedload(Trade.rules),
                 joinedload(Trade.asset),
             )
         )

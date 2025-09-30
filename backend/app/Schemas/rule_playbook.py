@@ -2,7 +2,7 @@
 from __future__ import annotations
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 # Schema di base con i campi comuni
@@ -27,3 +27,8 @@ class RuleRead(RuleBase):
     rules_groups_playbook_id: UUID
     rule: str
     created_at: datetime
+
+
+# Schema for updating the rules associated with a trade
+class TradeRulesUpdate(BaseModel):
+    rule_ids: List[UUID] = Field(..., description="A list of rule IDs to associate with the trade")
