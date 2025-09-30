@@ -247,22 +247,24 @@ const chartOptions = computed(() => ({
     border: 1px solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-surface);
     box-shadow: var(--semantic-effect-shadow-elevation-low);
-    padding: var(--semantic-size-inset-lg);
+    padding: var(--semantic-size-inset-md);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--semantic-size-stack-md);
 }
 
 .metrics-header {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    /* Reduce header impact */
+    margin-bottom: -0.5rem;
 }
 
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
+    gap: var(--semantic-size-stack-lg) var(--semantic-size-stack-md);
 }
 
 .settings-button {
@@ -281,10 +283,10 @@ const chartOptions = computed(() => ({
 }
 
 .chart-section {
-  margin-top: 2rem;
+  margin-top: var(--semantic-size-stack-lg);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--semantic-size-stack-sm);
 }
 
 .chart-title {
@@ -294,7 +296,7 @@ const chartOptions = computed(() => ({
 }
 
 .chart-container {
-  height: 350px;
+  height: 280px;
   position: relative;
 }
 
