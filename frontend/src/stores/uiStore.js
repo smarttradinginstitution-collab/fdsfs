@@ -19,6 +19,7 @@ export const useUiStore = defineStore('ui', () => {
   const isWeeklySummaryModalOpen = ref(false);
   const theme = ref('light');
   const isAppLoading = ref(false);
+  const loaderMessage = ref('');
 
   // --- RESPONSIVE LOGIC ---
   const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
@@ -92,8 +93,14 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   // --- GLOBAL LOADER ACTIONS ---
-  function showLoader() { isAppLoading.value = true; }
-  function hideLoader() { isAppLoading.value = false; }
+  function showLoader(message = '') {
+    loaderMessage.value = message;
+    isAppLoading.value = true;
+  }
+  function hideLoader() {
+    isAppLoading.value = false;
+    loaderMessage.value = '';
+  }
 
   // Initialize the theme when the store is created
   initTheme();
@@ -115,6 +122,7 @@ export const useUiStore = defineStore('ui', () => {
     isWeeklySummaryModalOpen,
     isStatSelectorVisible,
     isAppLoading,
+    loaderMessage,
     showLoader,
     hideLoader,
     toggleStatSelector,

@@ -7,7 +7,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 8px solid var(--semantic-color-surface-subtle);
+  /* Use a more opaque color for the track to ensure visibility */
+  border: 8px solid var(--semantic-color-surface-secondary);
   border-top-color: var(--semantic-color-action-primary-default);
   animation: spin 1s linear infinite;
 }

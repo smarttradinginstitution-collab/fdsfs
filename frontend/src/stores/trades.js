@@ -6,7 +6,8 @@
 import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
 import { useAuthStore } from './auth';
-import { useTradingAccountsStore } from './tradingAccounts'; // Importa il nuovo store
+import { useTradingAccountsStore } from './tradingAccounts';
+import { useUiStore } from './uiStore';
 import apiClient from '../services/api';
 
 /**
@@ -655,6 +656,7 @@ export const useTradesStore = defineStore('trades', {
      * Azione master per caricare tutti i dati della dashboard in parallelo.
      */
     async fetchAllDataForDashboard() {
+      const uiStore = useUiStore();
       this.isLoading = true;
       try {
         await Promise.allSettled([
@@ -663,11 +665,12 @@ export const useTradesStore = defineStore('trades', {
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
-          this.fetchPlaybooks(), // Riabilita la chiamata con la nuova funzione
+          this.fetchPlaybooks(),
           this.fetchVantageScore(),
         ]);
       } finally {
         this.isLoading = false;
+        uiStore.hideLoader(); // Nasconde il loader globale
       }
     },
   },
