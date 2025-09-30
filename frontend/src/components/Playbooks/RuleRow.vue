@@ -22,7 +22,7 @@
       <div class="col-action">
         <ActionsMenu>
           <div class="menu-item" @click="startEditing">Edit</div>
-          <div class="menu-item menu-item-danger">Delete</div>
+          <div class="menu-item menu-item-danger" @click="emit('delete', rule)">Delete</div>
         </ActionsMenu>
       </div>
     </template>
@@ -35,24 +35,16 @@
       </div>
     </template>
   </div>
-  <ConfirmationModal
-    :show="isDeleteModalVisible"
-    title="Delete Rule"
-    :message="`Are you sure you want to delete this rule? This action cannot be undone.`"
-    @close="isDeleteModalVisible = false"
-    @confirm="confirmDeleteRule"
-  />
 </template>
 
 <script setup>
-import { defineProps, ref, nextTick } from 'vue';
+import { defineProps, ref, nextTick, defineEmits } from 'vue';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useRoute } from 'vue-router';
 import { formatCurrency, formatPercentage, formatNumber } from '@/services/formatters.js';
 import ActionsMenu from '@/components/ui/ActionsMenu.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 
 const props = defineProps({
   rule: {
@@ -60,6 +52,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(['delete']);
 
 const store = usePlaybookStore();
 const route = useRoute();
@@ -98,17 +92,6 @@ const saveEdit = async () => {
     rule: editedText.value,
   });
   isEditing.value = false;
-};
-
-// --- Delete confirmation ---
-const isDeleteModalVisible = ref(false);
-
-const confirmDeleteRule = async () => {
-  await store.deleteRule({
-    playbookId: route.params.id,
-    ruleId: props.rule.id,
-  });
-  isDeleteModalVisible.value = false;
 };
 </script>
 

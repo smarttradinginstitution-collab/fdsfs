@@ -14,27 +14,39 @@
               @keyup.enter="saveEdit"
               @keyup.esc="cancelEditing"
             />
-            <BaseButton size="sm" @click="saveEdit">Save</BaseButton>
-            <BaseButton size="sm" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
+            <BaseButton size="small" @click="saveEdit">Save</BaseButton>
+            <BaseButton size="small" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
           </div>
         </div>
         <div v-if="!isEditing" class="header-right">
           <ActionsMenu>
             <div class="menu-item" @click="startEditing">Edit</div>
-            <div class="menu-item menu-item-danger" @click="isDeleteModalVisible = true">Delete</div>
+            <div class="menu-item menu-item-danger" @click="isGroupDeleteModalVisible = true">Delete</div>
           </ActionsMenu>
         </div>
       </div>
     </template>
 
     <div class="widget-body-content">
+      <!-- Modal for deleting the entire group -->
       <ConfirmationModal
-        :show="isDeleteModalVisible"
+        :show="isGroupDeleteModalVisible"
         title="Delete Rule Group"
         :message="`Are you sure you want to delete the group '${group.name_group}'? This will also delete all rules within it.`"
-        @close="isDeleteModalVisible = false"
-        @confirm="confirmDeleteGroup"
+        @close="isGroupDeleteModalVisible = false"
+        @confirm="handleConfirmDeleteGroup"
+        @closed="onGroupModalClosed"
       />
+      <!-- Modal for deleting a single rule -->
+      <ConfirmationModal
+        :show="isRuleDeleteModalVisible"
+        title="Delete Rule"
+        message="Are you sure you want to delete this rule? This action cannot be undone."
+        @close="isRuleDeleteModalVisible = false"
+        @confirm="handleConfirmDeleteRule"
+        @closed="onRuleModalClosed"
+      />
+
       <div class="rules-table">
         <div class="table-header">
           <span class="col-rule">Rule</span>
@@ -52,7 +64,7 @@
           @end="onRuleDragEnd"
         >
           <template #item="{ element: rule }">
-            <RuleRow :rule="rule" />
+            <RuleRow :rule="rule" @delete="promptDeleteRule" />
           </template>
         </draggable>
         <RuleCreator v-if="store.creatingRuleInGroupId === group.id" :group-id="group.id" />
@@ -129,15 +141,42 @@ const saveEdit = async () => {
   isEditing.value = false; // The store action will trigger a refresh
 };
 
-// --- Delete confirmation ---
-const isDeleteModalVisible = ref(false);
-
-const confirmDeleteGroup = async () => {
+// --- Delete confirmation for Group ---
+const isGroupDeleteModalVisible = ref(false);
+const handleConfirmDeleteGroup = () => {
+  // Step 1: Just close the modal. The actual deletion is handled by the `onGroupModalClosed` event handler.
+  isGroupDeleteModalVisible.value = false;
+};
+const onGroupModalClosed = async () => {
+  // Step 2: Modal has finished its closing animation. Now it's safe to delete and refetch.
   await store.deleteRuleGroup({
     playbookId: props.group.playbook_id,
     groupId: props.group.id,
   });
-  isDeleteModalVisible.value = false; // The store action refreshes the list
+};
+
+// --- Delete confirmation for Rule ---
+const isRuleDeleteModalVisible = ref(false);
+const ruleToDelete = ref(null);
+
+const promptDeleteRule = (rule) => {
+  ruleToDelete.value = rule;
+  isRuleDeleteModalVisible.value = true;
+};
+
+const handleConfirmDeleteRule = () => {
+  // Step 1: Close the modal.
+  isRuleDeleteModalVisible.value = false;
+};
+
+const onRuleModalClosed = async () => {
+  // Step 2: Modal is closed. Now delete the rule.
+  if (!ruleToDelete.value) return;
+  await store.deleteRule({
+    playbookId: props.group.playbook_id,
+    ruleId: ruleToDelete.value.id,
+  });
+  ruleToDelete.value = null; // Clean up
 };
 </script>
 

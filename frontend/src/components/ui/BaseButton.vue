@@ -11,8 +11,8 @@ import { computed } from 'vue';
 const props = defineProps({
   variant: {
     type: String,
-    default: 'primary', // 'primary' o 'secondary'
-    validator: (value) => ['primary', 'secondary'].includes(value),
+    default: 'primary', // 'primary', 'secondary', or 'danger'
+    validator: (value) => ['primary', 'secondary', 'danger'].includes(value),
   },
   size: {
     type: String,
@@ -80,5 +80,14 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 .button--secondary:hover {
   background-color: var(--semantic-color-surface-secondary);
   border-color: var(--semantic-color-border-subtle);
+}
+
+/* Variante Danger */
+.button--danger {
+  background-color: var(--semantic-color-danger-default);
+  color: var(--semantic-color-text-on-brand);
+}
+.button--danger:hover {
+  background-color: var(--semantic-color-danger-hover);
 }
 </style>
