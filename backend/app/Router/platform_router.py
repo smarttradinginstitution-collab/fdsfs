@@ -9,12 +9,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Controllers.platform_controller import PlatformController
 from app.Infrastructure.db import get_db
+from app.Router.auth import require_roles
 from app.Schemas.platform import Platform, PlatformCreate, PlatformSummary, PlatformUpdate
 
 router = APIRouter(prefix="/platforms", tags=["Platforms"])
 
 
-@router.post("/", response_model=Platform, status_code=201)
+@router.post(
+    "/",
+    response_model=Platform,
+    status_code=201,
+    dependencies=[Depends(require_roles(["admin"]))],
+)
 async def create_platform(
     platform_in: PlatformCreate,
     db: AsyncSession = Depends(get_db),
@@ -59,7 +65,11 @@ async def read_platform_summary(
     return await PlatformController(db).get_platform_summary(platform_id)
 
 
-@router.put("/{platform_id}", response_model=Platform)
+@router.put(
+    "/{platform_id}",
+    response_model=Platform,
+    dependencies=[Depends(require_roles(["admin"]))],
+)
 async def update_platform(
     platform_id: uuid.UUID,
     platform_in: PlatformUpdate,
@@ -71,7 +81,11 @@ async def update_platform(
     return await PlatformController(db).update_platform(platform_id, platform_in)
 
 
-@router.delete("/{platform_id}", response_model=Platform)
+@router.delete(
+    "/{platform_id}",
+    response_model=Platform,
+    dependencies=[Depends(require_roles(["admin"]))],
+)
 async def delete_platform(
     platform_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
