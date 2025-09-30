@@ -29,7 +29,7 @@ function formatCurrency(value) {
       <template #header>
         <div class="card-header">
           <h3 class="widget-title">{{ playbook.title }}</h3>
-          <span class="trade-count">{{ playbook.stats?.total_trades ?? 0 }} Trades</span>
+          <span class="trade-count">{{ playbook.stats.total_trades }} Trades</span>
         </div>
       </template>
 
@@ -37,33 +37,33 @@ function formatCurrency(value) {
         <!-- Win Rate with Doughnut Chart -->
         <div class="stat-item win-rate-stat">
           <div class="donut-chart-container">
-            <DoughnutChart :percentage="playbook.stats?.win_rate ?? 0" />
+            <DoughnutChart :percentage="playbook.stats.win_rate" />
           </div>
           <div class="stat-value-label">
-            <span class="value">{{ (playbook.stats?.win_rate ?? 0).toFixed(1) }}%</span>
+            <span class="value">{{ playbook.stats.win_rate.toFixed(1) }}%</span>
             <span class="label">Win Rate</span>
           </div>
         </div>
 
         <!-- Other Stats -->
         <div class="stat-item">
-          <span class="value">{{ formatCurrency(playbook.stats?.net_pnl ?? 0) }}</span>
+          <span class="value">{{ formatCurrency(playbook.stats.net_pnl) }}</span>
           <span class="label">Net PnL</span>
         </div>
         <div class="stat-item">
-          <span class="value">{{ playbook.stats?.profit_factor ? playbook.stats.profit_factor.toFixed(2) : 'N/A' }}</span>
+          <span class="value">{{ playbook.stats.profit_factor ? playbook.stats.profit_factor.toFixed(2) : '∞' }}</span>
           <span class="label">Profit Factor</span>
         </div>
         <div class="stat-item">
-          <span class="value">{{ formatCurrency(playbook.stats?.expectancy ?? 0) }}</span>
+          <span class="value">{{ formatCurrency(playbook.stats.expectancy) }}</span>
           <span class="label">Expectancy</span>
         </div>
         <div class="stat-item">
-          <span class="value">{{ formatCurrency(playbook.stats?.avg_winner ?? 0) }}</span>
+          <span class="value">{{ formatCurrency(playbook.stats.avg_winner) }}</span>
           <span class="label">Avg. Winner</span>
         </div>
         <div class="stat-item">
-          <span class="value">{{ formatCurrency(playbook.stats?.avg_loser ?? 0) }}</span>
+          <span class="value">{{ formatCurrency(playbook.stats.avg_loser) }}</span>
           <span class="label">Avg. Loser</span>
         </div>
       </div>

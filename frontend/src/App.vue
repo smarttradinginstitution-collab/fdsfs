@@ -1,15 +1,19 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import AppSidebar from './components/layout/AppSidebar.vue';
 import DashboardHeader from './components/layout/DashboardHeader.vue';
 import MainLayout from './components/layout/MainLayout.vue';
 import ToastNotification from './components/ui/ToastNotification.vue';
 import { useUiStore } from './stores/uiStore';
-import FullScreenLoader from './components/ui/FullScreenLoader.vue';
 
 const uiStore = useUiStore();
 const route = useRoute();
+
+// Initialize the theme as soon as the app mounts
+onMounted(() => {
+  uiStore.initTheme();
+});
 
 const pageTitle = computed(() => route.meta.title || 'Trade Vantage');
 
@@ -52,9 +56,6 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
     <!-- Toast Notification -->
     <ToastNotification />
   </div>
-
-  <!-- Global Full Screen Loader -->
-  <FullScreenLoader v-if="uiStore.isAppLoading" />
 </template>
 
 <style lang="scss">

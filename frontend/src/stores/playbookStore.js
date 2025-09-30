@@ -7,76 +7,64 @@ export const usePlaybookStore = defineStore('playbooks', {
     playbooks: [],
     isLoading: false,
     error: null,
-    newPlaybookData: null,
   }),
 
   getters: {
+    /**
+     * Returns all playbooks, useful for selectors or lists.
+     * @param {object} state - The current state.
+     * @returns {Array} The list of playbooks.
+     */
     allPlaybooks(state) {
       return state.playbooks;
     },
   },
 
   actions: {
+    /**
+     * Fetches the user's playbooks from the backend, including calculated stats.
+     */
     async fetchPlaybooks() {
       const authStore = useAuthStore();
       if (!authStore.isAuthenticated) {
+        console.log("User not authenticated. Skipping playbook fetch.");
         return;
       }
+
       this.isLoading = true;
       this.error = null;
       try {
         const response = await apiClient.get('/me/playbooks');
+        // The backend now returns playbooks with a 'stats' object.
+        // No special mapping is needed if the frontend can use the structure directly.
         this.playbooks = response.data;
       } catch (err) {
+        console.error('Error fetching playbooks:', err);
         this.error = err.response?.data?.detail || 'An unexpected error occurred.';
+        this.playbooks = []; // Reset on error
       } finally {
         this.isLoading = false;
       }
     },
 
-    setNewPlaybookDetails(details) {
-      this.newPlaybookData = details;
-    },
-
-    async createPlaybookWithRules(ruleGroups) {
-      if (!this.newPlaybookData) {
-        throw new Error("Playbook details from step 1 are missing.");
-      }
+    /**
+     * Creates a new playbook.
+     * @param {object} playbookData - The data for the new playbook.
+     * @returns {object} The newly created playbook from the API.
+     */
+    async createPlaybook(playbookData) {
       this.isLoading = true;
       this.error = null;
       try {
-        // Step 1: Create the playbook
-        const playbookResponse = await apiClient.post('/me/playbooks', this.newPlaybookData);
-        const newPlaybook = playbookResponse.data;
-
-        // Step 2: Create the rule groups
-        for (const group of ruleGroups) {
-          const groupPayload = {
-            name_group: group.title, // Correct field for group name
-            playbook_id: newPlaybook.id,
-          };
-          const groupResponse = await apiClient.post(`/playbooks/${newPlaybook.id}/rule-groups/`, groupPayload);
-          const newGroup = groupResponse.data;
-
-          // Step 3: Create the rules for each group
-          for (const rule of group.rules) {
-            const rulePayload = {
-              rule: rule.description, // Correct field for rule text
-              rules_groups_playbook_id: newGroup.id,
-            };
-            await apiClient.post(`/rule-groups/${newGroup.id}/rules/`, rulePayload);
-          }
-        }
-
-        // Instead of manually adding the playbook, fetch the full, updated list
-        // This ensures all data, including calculated stats, is consistent.
-        await this.fetchPlaybooks();
-        this.newPlaybookData = null;
+        const response = await apiClient.post('/me/playbooks', playbookData);
+        const newPlaybook = response.data;
+        // Add the new playbook to the start of the local list for immediate UI update
+        this.playbooks.unshift(newPlaybook);
         return newPlaybook;
-
       } catch (err) {
-        this.error = err.response?.data?.detail || 'An error occurred during playbook creation.';
-        throw err;
+        console.error('Error creating playbook:', err);
+        this.error = err.response?.data?.detail || 'Failed to create playbook.';
+        throw err; // Re-throw the error so the component can catch it
       } finally {
         this.isLoading = false;
       }
