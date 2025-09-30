@@ -59,7 +59,7 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
   </div>
 
   <!-- Global Full Screen Loader -->
-  <FullScreenLoader v-if="uiStore.isAppLoading" />
+  <FullScreenLoader v-if="uiStore.isAppLoading" :message="uiStore.loaderMessage" />
 </template>
 
 <style lang="scss">
