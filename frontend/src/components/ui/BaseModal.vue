@@ -29,7 +29,7 @@ const props = defineProps({
 // Definiamo un evento `close` per permettere al componente genitore
 // di sapere quando l'utente vuole chiudere la modale (es. cliccando
 // sullo sfondo o sul pulsante di chiusura).
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'closed']);
 
 // --- LOGICA ---
 // Osserviamo la prop `show` per applicare/rimuovere una classe al body.
@@ -72,7 +72,7 @@ export default {
     Il `name="modal-fade"` si collega alle classi CSS sottostanti
     (`.modal-fade-enter-active`, ecc.) per creare un effetto di dissolvenza.
     -->
-    <Transition name="modal-fade">
+    <Transition name="modal-fade" @after-leave="emit('closed')">
       <!--
       Il contenitore principale della modale viene mostrato solo se `show` è true.
       - `@click.self`: Questo modificatore fa sì che l'evento `click` si attivi

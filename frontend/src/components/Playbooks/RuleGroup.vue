@@ -34,7 +34,8 @@
         title="Delete Rule Group"
         :message="`Are you sure you want to delete the group '${group.name_group}'? This will also delete all rules within it.`"
         @close="isGroupDeleteModalVisible = false"
-        @confirm="confirmDeleteGroup"
+        @confirm="handleConfirmDeleteGroup"
+        @closed="onGroupModalClosed"
       />
       <!-- Modal for deleting a single rule -->
       <ConfirmationModal
@@ -42,7 +43,8 @@
         title="Delete Rule"
         message="Are you sure you want to delete this rule? This action cannot be undone."
         @close="isRuleDeleteModalVisible = false"
-        @confirm="confirmDeleteRule"
+        @confirm="handleConfirmDeleteRule"
+        @closed="onRuleModalClosed"
       />
 
       <div class="rules-table">
@@ -141,10 +143,12 @@ const saveEdit = async () => {
 
 // --- Delete confirmation for Group ---
 const isGroupDeleteModalVisible = ref(false);
-const confirmDeleteGroup = async () => {
-  // First, hide the modal to allow it to clean up the scroll lock
+const handleConfirmDeleteGroup = () => {
+  // Step 1: Just close the modal. The actual deletion is handled by the `onGroupModalClosed` event handler.
   isGroupDeleteModalVisible.value = false;
-  // Then, perform the delete action which refreshes the list
+};
+const onGroupModalClosed = async () => {
+  // Step 2: Modal has finished its closing animation. Now it's safe to delete and refetch.
   await store.deleteRuleGroup({
     playbookId: props.group.playbook_id,
     groupId: props.group.id,
@@ -160,19 +164,19 @@ const promptDeleteRule = (rule) => {
   isRuleDeleteModalVisible.value = true;
 };
 
-const confirmDeleteRule = async () => {
-  if (!ruleToDelete.value) return;
-  const ruleIdToDelete = ruleToDelete.value.id;
-
-  // First, hide the modal to allow it to clean up
+const handleConfirmDeleteRule = () => {
+  // Step 1: Close the modal.
   isRuleDeleteModalVisible.value = false;
-  ruleToDelete.value = null;
+};
 
-  // Then, perform the delete action
+const onRuleModalClosed = async () => {
+  // Step 2: Modal is closed. Now delete the rule.
+  if (!ruleToDelete.value) return;
   await store.deleteRule({
     playbookId: props.group.playbook_id,
-    ruleId: ruleIdToDelete,
+    ruleId: ruleToDelete.value.id,
   });
+  ruleToDelete.value = null; // Clean up
 };
 </script>
 
