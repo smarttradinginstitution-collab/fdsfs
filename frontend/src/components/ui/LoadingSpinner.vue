@@ -20,7 +20,7 @@
 .bar {
   width: 6px;
   height: 100%;
-  background-color: var(--semantic-color-action-primary-default);
+  background-color: var(--semantic-color-interactive-primary-default);
   animation: equalizer 1.2s infinite ease-in-out;
   transform-origin: bottom;
 }
