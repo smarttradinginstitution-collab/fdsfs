@@ -657,6 +657,7 @@ export const useTradesStore = defineStore('trades', {
      */
     async fetchAllDataForDashboard() {
       const uiStore = useUiStore();
+      uiStore.showLoader('Stiamo calcolando i tuoi dati...');
       this.isLoading = true;
       try {
         await Promise.allSettled([
