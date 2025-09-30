@@ -1,52 +1,321 @@
 <template>
   <div class="playbook-detail-view">
-    <h1>Playbook Detail Page</h1>
-    <p>Details for Playbook with ID: <strong>{{ playbookId }}</strong></p>
-    <div class="placeholder-content">
-      <p>This page is under construction.</p>
-      <p>Full editing and rule management features for this playbook will be available here soon.</p>
-    </div>
+    <!-- Header -->
+    <header class="view-header">
+      <div class="breadcrumb">
+        <router-link to="/playbooks">Playbook</router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span v-if="!store.isAnalyticsLoading && store.currentPlaybookAnalytics" class="breadcrumb-current">{{ store.currentPlaybookAnalytics.title }}</span>
+        <span v-else class="breadcrumb-current">Loading...</span>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-overview">Overview</span>
+      </div>
+      <div class="header-actions">
+        <BaseButton variant="secondary">Share</BaseButton>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <a href="#" class="tab-item active">Overview</a>
+      <a href="#" class="tab-item">Playbook Rules</a>
+      <a href="#" class="tab-item">Executed Trades</a>
+      <a href="#" class="tab-item">Missed Trades</a>
+      <a href="#" class="tab-item">Notes</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="view-content">
+      <div v-if="store.isAnalyticsLoading" class="loading-state">
+        <p>Loading analytics...</p>
+      </div>
+      <div v-else-if="store.error" class="error-state">
+        <p>Error: {{ store.error }}</p>
+      </div>
+      <div v-else-if="store.currentPlaybookAnalytics" class="analytics-content">
+        <div class="metrics-header">
+            <button class="settings-button" aria-label="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 1.25rem; height: 1.25rem;">
+                  <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.532 1.532 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.532 1.532 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        <div class="metrics-grid">
+            <StatCard v-for="metric in formattedMetrics" :key="metric.key" :stat="metric" />
+        </div>
+
+        <div class="chart-section">
+          <h3 class="chart-title">Daily Net Cumulative P&L</h3>
+          <div class="chart-container">
+            <Line v-if="store.currentPlaybookAnalytics?.equity_curve?.data?.length" :data="chartData" :options="chartOptions" />
+            <div v-else class="chart-placeholder">No data to display.</div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { usePlaybookStore } from '@/stores/playbookStore';
+import StatCard from '@/components/dashboard/widgets/StatCard/index.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters';
+import { Line } from 'vue-chartjs';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const route = useRoute();
-const playbookId = ref(null);
+const store = usePlaybookStore();
+
+const playbookId = computed(() => route.params.id);
 
 onMounted(() => {
-  playbookId.value = route.params.id;
+  if (playbookId.value) {
+    store.fetchPlaybookAnalytics(playbookId.value);
+  }
 });
+
+const formattedMetrics = computed(() => {
+  const metrics = store.currentPlaybookAnalytics?.metrics;
+  if (!metrics) return [];
+
+  return [
+    { key: 'netPnl', label: 'Net P&L', value: formatCurrency(metrics.net_pnl) },
+    { key: 'trades', label: 'Trades', value: formatNumber(metrics.trades) },
+    { key: 'winRate', label: 'Win Rate %', value: formatPercentage(metrics.win_rate) },
+    { key: 'profitFactor', label: 'Profit Factor', value: metrics.profit_factor ? formatNumber(metrics.profit_factor, 2) : 'N/A' },
+    { key: 'missedTrades', label: 'Missed Trades', value: formatNumber(metrics.missed_trades) },
+    { key: 'expectancy', label: 'Expectancy', value: formatCurrency(metrics.expectancy) },
+    { key: 'rulesFollowed', label: 'Rules Followed', value: formatPercentage(metrics.rules_followed) },
+    { key: 'avgWinner', label: 'Average Winner', value: formatCurrency(metrics.average_winner) },
+    { key: 'avgLoser', label: 'Average Loser', value: formatCurrency(metrics.average_loser) },
+    { key: 'largestProfit', label: 'Largest Profit', value: formatCurrency(metrics.largest_profit) },
+    { key: 'largestLoss', label: 'Largest Loss', value: formatCurrency(metrics.largest_loss) },
+    { key: 'totalRMultiple', label: 'Total R Multiple', value: formatNumber(metrics.total_r_multiple, 2) },
+  ];
+});
+
+const chartData = computed(() => {
+  const equityCurve = store.currentPlaybookAnalytics?.equity_curve;
+  if (!equityCurve) return { labels: [], datasets: [] };
+
+  // Create a gradient for the background fill
+  const ctx = document.createElement('canvas').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(7, 153, 146, 0.4)'); // Teal-like color from screenshot
+  gradient.addColorStop(1, 'rgba(7, 153, 146, 0)');
+
+  return {
+    labels: equityCurve.labels,
+    datasets: [
+      {
+        label: 'Cumulative P&L',
+        backgroundColor: gradient,
+        borderColor: 'rgba(7, 153, 146, 1)',
+        data: equityCurve.data,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: 'rgba(7, 153, 146, 1)',
+        pointBorderColor: '#fff',
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgba(7, 153, 146, 1)',
+      },
+    ],
+  };
+});
+
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      callbacks: {
+        label: (context) => ` ${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
+      }
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: 'var(--semantic-color-text-secondary)' },
+    },
+    y: {
+      grid: { color: 'var(--semantic-color-border-muted)' },
+      ticks: {
+        color: 'var(--semantic-color-text-secondary)',
+        callback: (value) => formatCurrency(value)
+      },
+    },
+  },
+}));
 </script>
 
 <style scoped>
 .playbook-detail-view {
-  padding: 2rem;
+  padding: 1rem 2rem;
   color: var(--semantic-color-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-h1 {
-  font: var(--semantic-font-style-heading-xl);
-  margin-bottom: 1rem;
+.view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-p {
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font: var(--semantic-font-style-body-lg);
-  margin-bottom: 2rem;
 }
 
-.placeholder-content {
-  border: 1px dashed var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-container);
-  padding: 2rem;
-  text-align: center;
-  background-color: var(--semantic-color-surface-secondary);
+.breadcrumb-separator {
+  color: var(--semantic-color-text-placeholder);
 }
 
-.placeholder-content p {
-  margin: 0.5rem 0;
+.breadcrumb-current {
+    color: var(--semantic-color-text-primary);
+    font-weight: 500;
+}
+
+.breadcrumb-overview {
+    color: var(--semantic-color-text-secondary);
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--semantic-color-border-default);
+}
+
+.tab-item {
+  padding: 0.5rem 1rem;
+  text-decoration: none;
   color: var(--semantic-color-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; /* Aligns with the container border */
+}
+
+.tab-item.active {
+  color: var(--semantic-color-text-primary);
+  border-bottom-color: var(--semantic-color-primary-default);
+  font-weight: 500;
+}
+
+.view-content {
+  background-color: var(--semantic-color-surface-default);
+}
+
+.analytics-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.metrics-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+}
+
+.settings-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--semantic-color-text-secondary);
+}
+
+.loading-state, .error-state {
+    text-align: center;
+    padding: 4rem;
+    font: var(--semantic-font-style-body-lg);
+    color: var(--semantic-color-text-secondary);
+}
+
+.chart-section {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chart-title {
+  font: var(--semantic-font-style-body-lg);
+  color: var(--semantic-color-text-primary);
+  font-weight: 500;
+}
+
+.chart-container {
+  height: 350px;
+  position: relative;
+}
+
+.chart-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: var(--semantic-border-radius-container);
+  background-color: var(--semantic-color-surface-secondary);
+  color: var(--semantic-color-text-secondary);
+  font: var(--semantic-font-style-body-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .playbook-detail-view {
+    padding: 1rem;
+  }
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
 }
 </style>

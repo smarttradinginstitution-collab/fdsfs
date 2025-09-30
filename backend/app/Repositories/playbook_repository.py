@@ -27,6 +27,18 @@ class PlaybookRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def get_by_id_with_trades(self, playbook_id: UUID) -> Optional[Playbook]:
+        stmt = (
+            select(Playbook)
+            .where(Playbook.id == playbook_id)
+            .options(
+                selectinload(Playbook.trades),
+                joinedload(Playbook.general_account) # Per il controllo utente
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[Playbook]:
         stmt = (
             select(Playbook)

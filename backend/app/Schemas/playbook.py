@@ -65,3 +65,31 @@ class PlaybookAdminRead(BaseModel):
 # Alla fine, quando tutti i modelli sono definiti, si può fare:
 # PlaybookRead.model_rebuild()
 # Ma con FastAPI, questo viene gestito automaticamente.
+
+
+# --- Schemi per la pagina di dettaglio del Playbook ---
+
+from app.Schemas.analytics import EquityCurveData
+
+class PlaybookAnalyticsMetrics(BaseModel):
+    net_pnl: float = Field(0.0, description="Net Profit and Loss")
+    trades: int = Field(0, description="Total number of trades")
+    win_rate: float = Field(0.0, description="Win rate percentage")
+    profit_factor: Optional[float] = Field(None, description="Profit factor")
+    missed_trades: int = Field(0, description="Number of missed trades")
+    expectancy: float = Field(0.0, description="Expectancy per trade")
+    rules_followed: float = Field(0.0, description="Percentage of rules followed")
+    average_winner: float = Field(0.0, description="Average winning trade")
+    average_loser: float = Field(0.0, description="Average losing trade")
+    largest_profit: float = Field(0.0, description="Largest single profit")
+    largest_loss: float = Field(0.0, description="Largest single loss")
+    total_r_multiple: float = Field(0.0, description="Sum of all R-multiples")
+
+class PlaybookAnalytics(BaseModel):
+    id: UUID
+    title: str
+    metrics: PlaybookAnalyticsMetrics
+    equity_curve: EquityCurveData
+
+    class Config:
+        from_attributes = True

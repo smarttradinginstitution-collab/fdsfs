@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from app.Controllers.playbook_controller import PlaybookController
-from app.Schemas.playbook import PlaybookRead, PlaybookCreate, PlaybookUpdate, PlaybookAdminRead
+from app.Schemas.playbook import PlaybookRead, PlaybookCreate, PlaybookUpdate, PlaybookAdminRead, PlaybookAnalytics
 from app.Router.auth import require_roles
 from app.Router.dependencies import get_current_user
 
@@ -60,6 +60,13 @@ router.get(
     tags=["Playbooks"],
     summary="Recupera un playbook per ID",
 )(playbooks.get_playbook)
+
+router.get(
+    "/playbooks/{playbook_id}/analytics",
+    response_model=PlaybookAnalytics,
+    tags=["Playbooks"],
+    summary="Recupera i dati analitici di un playbook",
+)(playbooks.get_playbook_analytics)
 
 router.put(
     "/playbooks/{playbook_id}",
