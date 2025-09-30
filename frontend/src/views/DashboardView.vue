@@ -49,7 +49,11 @@ const editButtonText = computed(() => {
 
 // --- Data Fetching ---
 onMounted(() => {
-  tradesStore.fetchAllDataForDashboard();
+  // Solo se è il caricamento iniziale dopo il login, avvia il fetch dei dati.
+  // Gli aggiornamenti successivi sono gestiti dai watchers.
+  if (uiStore.isInitialLoadPending) {
+    tradesStore.fetchAllDataForDashboard();
+  }
   dashboardLayoutStore.fetchLayout();
 });
 

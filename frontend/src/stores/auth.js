@@ -155,7 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch { /* noop */ }
 
     const uiStore = useUiStore();
-    uiStore.setInitialLoadPending(false); // Resetta lo stato del caricamento iniziale
+    uiStore.setInitialLoadPending(false);
 
     user.value = null;
     token.value = null;

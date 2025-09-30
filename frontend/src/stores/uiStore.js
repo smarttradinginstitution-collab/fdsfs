@@ -20,7 +20,7 @@ export const useUiStore = defineStore('ui', () => {
   const theme = ref('light');
   const isAppLoading = ref(false);
   const loaderMessage = ref('');
-  const isInitialLoadPending = ref(false); // Nuovo stato
+  const isInitialLoadPending = ref(false);
 
   // --- RESPONSIVE LOGIC ---
   const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
