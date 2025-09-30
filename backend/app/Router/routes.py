@@ -222,6 +222,17 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 💻 PLATFORMS (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import platform_router
+
+router.include_router(
+    platform_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 🏷️ TAGS (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import tag_router

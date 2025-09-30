@@ -9,7 +9,7 @@ import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy import JSON
+from sqlalchemy import JSON, select
 from sqlalchemy.ext.compiler import compiles
 
 from app.main import app
@@ -78,29 +78,56 @@ async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         yield session
 
+# Fixture for a regular authenticated user client
 @pytest.fixture
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """
-    Fixture for an async client, overriding db and auth dependencies.
-    """
-    mock_user_id = uuid.uuid4()
-    mock_user_email = "test@example.com"
+    async for client in _get_client_for_user(db_session, is_admin=False):
+        yield client
 
+# Fixture for an admin authenticated user client
+@pytest.fixture
+async def admin_async_client(
+    db_session: AsyncSession,
+) -> AsyncGenerator[AsyncClient, None]:
+    async for client in _get_client_for_user(db_session, is_admin=True):
+        yield client
+
+
+# Helper generator to avoid code duplication
+async def _get_client_for_user(
+    db_session: AsyncSession, is_admin: bool
+) -> AsyncGenerator[AsyncClient, None]:
+    """
+    Helper to generate a client for a user with or without admin role.
+    """
+    user_id = uuid.uuid4()
+    user_email = f"testuser_{'admin' if is_admin else 'user'}@example.com"
+
+    # Ensure the user and their role exist in the test DB
+    user = AuthUser(id=user_id, email=user_email, is_sso_user=False, is_anonymous=False)
+    db_session.add(user)
+
+    if is_admin:
+        # Get or create the admin role
+        admin_role_result = await db_session.execute(select(role.Role).filter_by(name="admin"))
+        admin_role = admin_role_result.scalar_one_or_none()
+        if not admin_role:
+            admin_role = role.Role(name="admin", description="Administrator")
+            db_session.add(admin_role)
+            await db_session.flush() # Flush to get ID before creating user_role
+
+        # Assign admin role to user
+        user_admin_role = user_role.UserRole(user_id=user_id, role_id=admin_role.id)
+        db_session.add(user_admin_role)
+
+    await db_session.commit()
+
+    # Override dependencies
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     async def override_get_current_claims() -> dict:
-        user = await db_session.get(AuthUser, mock_user_id)
-        if not user:
-            user = AuthUser(
-                id=mock_user_id,
-                email=mock_user_email,
-                is_sso_user=False,
-                is_anonymous=False,
-            )
-            db_session.add(user)
-            await db_session.commit()
-        return {"sub": str(mock_user_id), "email": mock_user_email}
+        return {"sub": str(user_id), "email": user_email}
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_claims] = override_get_current_claims
@@ -108,4 +135,5 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
+    # Clean up overrides
     app.dependency_overrides.clear()
