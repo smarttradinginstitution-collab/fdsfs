@@ -27,18 +27,20 @@ async def create_platform(
 ):
     """
     Create a new platform.
+
+    **(Admin only)**
     """
     return await PlatformController(db).create_platform(platform_in)
 
 
-@router.get("/", response_model=List[Platform])
+@router.get("/", response_model=List[PlatformSummary])
 async def read_platforms(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
 ):
     """
-    Retrieve all platforms with pagination.
+    Retrieve all platforms with their associated brokers.
     """
     return await PlatformController(db).get_all_platforms(skip=skip, limit=limit)
 
@@ -54,17 +56,6 @@ async def read_platform(
     return await PlatformController(db).get_platform_by_id(platform_id)
 
 
-@router.get("/{platform_id}/summary", response_model=PlatformSummary)
-async def read_platform_summary(
-    platform_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Retrieve a single platform with its associated brokers.
-    """
-    return await PlatformController(db).get_platform_summary(platform_id)
-
-
 @router.put(
     "/{platform_id}",
     response_model=Platform,
@@ -77,6 +68,8 @@ async def update_platform(
 ):
     """
     Update an existing platform.
+
+    **(Admin only)**
     """
     return await PlatformController(db).update_platform(platform_id, platform_in)
 
@@ -92,5 +85,7 @@ async def delete_platform(
 ):
     """
     Delete a platform by its ID.
+
+    **(Admin only)**
     """
     return await PlatformController(db).delete_platform(platform_id)

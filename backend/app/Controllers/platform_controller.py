@@ -26,12 +26,6 @@ class PlatformController:
     async def get_all_platforms(self, skip: int, limit: int) -> list[Platform]:
         return await self.platform_repo.get_multi(skip=skip, limit=limit)
 
-    async def get_platform_summary(self, platform_id: uuid.UUID) -> Platform:
-        platform = await self.platform_repo.get_summary(platform_id)
-        if not platform:
-            raise HTTPException(status_code=404, detail="Platform not found")
-        return platform
-
     async def create_platform(self, platform_in: PlatformCreate) -> Platform:
         existing_platform = await self.platform_repo.get_by_name(platform_in.name)
         if existing_platform:
@@ -54,10 +48,7 @@ class PlatformController:
     async def update_platform(
         self, platform_id: uuid.UUID, platform_in: PlatformUpdate
     ) -> Platform:
-        # Eagerly load the platform with its brokers to prevent lazy loading issues
-        platform = await self.platform_repo.get_summary(platform_id)
-        if not platform:
-            raise HTTPException(status_code=404, detail="Platform not found")
+        platform = await self.get_platform_by_id(platform_id)
 
         if platform_in.name and platform_in.name != platform.name:
             existing_platform = await self.platform_repo.get_by_name(platform_in.name)

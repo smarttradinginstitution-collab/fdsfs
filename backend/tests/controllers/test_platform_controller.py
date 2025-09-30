@@ -99,17 +99,28 @@ async def test_delete_platform_as_non_admin(
 # /platforms/ - Public READ routes
 # --------------------------------------------------------------------------
 
-async def test_read_platforms_as_non_admin(
+async def test_read_platforms_with_brokers(
     async_client: AsyncClient, db_session: AsyncSession
 ):
-    db_session.add(Platform(name="Platform A"))
-    db_session.add(Platform(name="Platform B"))
+    broker = Broker(name="Associated Broker")
+    platform = Platform(name="Platform with Broker", brokers=[broker])
+    db_session.add(platform)
     await db_session.commit()
 
     response = await async_client.get("/api/v1/platforms/")
     assert response.status_code == 200
     data = response.json()
-    assert len(data) >= 2
+
+    # Find our platform in the list and check its brokers
+    found = False
+    for p in data:
+        if p["name"] == "Platform with Broker":
+            found = True
+            assert len(p["brokers"]) == 1
+            assert p["brokers"][0]["name"] == "Associated Broker"
+            break
+    assert found, "Test platform not found in the list"
+
 
 async def test_read_platform_as_non_admin(
     async_client: AsyncClient, db_session: AsyncSession
@@ -123,19 +134,3 @@ async def test_read_platform_as_non_admin(
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Platform to Read"
-
-async def test_read_platform_summary_as_non_admin(
-    async_client: AsyncClient, db_session: AsyncSession
-):
-    broker = Broker(name="Broker for Summary")
-    platform = Platform(name="Platform for Summary", brokers=[broker])
-    db_session.add(platform)
-    await db_session.commit()
-    await db_session.refresh(platform)
-
-    response = await async_client.get(f"/api/v1/platforms/{platform.id}/summary")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["name"] == "Platform for Summary"
-    assert len(data["brokers"]) == 1
-    assert data["brokers"][0]["name"] == "Broker for Summary"
