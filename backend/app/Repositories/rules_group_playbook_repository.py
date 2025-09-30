@@ -1,12 +1,13 @@
 # app/Repositories/rules_group_playbook_repository.py
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.Models.rule_playbook import RulePlaybook
 from app.Models.rules_group_playbook import RulesGroupPlaybook
 from app.Schemas.rules_group_playbook import RulesGroupCreate, RulesGroupUpdate
 
@@ -30,11 +31,26 @@ class RulesGroupPlaybookRepository:
         stmt = (
             select(RulesGroupPlaybook)
             .where(RulesGroupPlaybook.playbook_id == playbook_id)
-            .options(selectinload(RulesGroupPlaybook.rules)) # Eager load rules
-            .order_by(RulesGroupPlaybook.created_at.asc())
+            .options(
+                selectinload(RulesGroupPlaybook.rules)
+                .selectinload(RulePlaybook.trades)
+            )
+            .order_by(RulesGroupPlaybook.order.asc(), RulesGroupPlaybook.created_at.asc())
         )
         res = await self.db.execute(stmt)
-        return res.scalars().all()
+        return res.scalars().unique().all()
+
+    async def bulk_update_order(self, group_ids: List[UUID]) -> None:
+        """
+        Updates the 'order' field for a list of rule groups in a single transaction.
+        """
+        for index, group_id in enumerate(group_ids):
+            stmt = select(RulesGroupPlaybook).where(RulesGroupPlaybook.id == group_id)
+            result = await self.db.execute(stmt)
+            group = result.scalars().first()
+            if group:
+                group.order = index
+        await self.db.commit()
 
     async def create(self, group_in: RulesGroupCreate) -> RulesGroupPlaybook:
         db_group = RulesGroupPlaybook(

@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from app.Controllers.rules_group_playbook_controller import RulesGroupPlaybookController
-from app.Schemas.rules_group_playbook import RulesGroupCreate, RulesGroupRead, RulesGroupUpdate
+from app.Schemas.rules_group_playbook import RulesGroupCreate, RulesGroupRead, RulesGroupUpdate, RulesGroupReorder
 
 # Controller instance
 controller = RulesGroupPlaybookController()
@@ -29,6 +29,13 @@ router.post(
     status_code=201,
     summary="Create a new rule group for a playbook",
 )(controller.create_group_for_playbook)
+
+router.put(
+    "/reorder",
+    status_code=200,
+    summary="Reorder rule groups for a playbook",
+    response_model=dict,
+)(controller.reorder_groups)
 
 
 # Router for individual rule groups (by group ID)

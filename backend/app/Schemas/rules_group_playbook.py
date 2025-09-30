@@ -6,7 +6,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 # Forward reference per RuleRead, che verrà definito in un altro file.
-# from app.Schemas.rule_playbook import RuleRead
+from app.Schemas.rule_playbook import RuleRead
 
 # Schema di base con i campi comuni
 class RulesGroupBase(BaseModel):
@@ -24,15 +24,21 @@ class RulesGroupCreate(RulesGroupBase):
 class RulesGroupUpdate(RulesGroupBase):
     pass # name_group è già opzionale in RulesGroupBase
 
+
+# Schema for reordering rule groups
+class RulesGroupReorder(BaseModel):
+    group_ids: List[UUID] = Field(..., description="An ordered list of rule group IDs.")
+
+
 # Schema per la lettura di un gruppo (usato nelle risposte GET)
 # Questo includerà le regole associate.
 class RulesGroupRead(RulesGroupBase):
     id: UUID
     playbook_id: UUID
     name_group: str
+    order: Optional[int] = None
     created_at: datetime
-    rules: List["RuleRead"] = []
+    rules: List[RuleRead] = []
 
-# Necessario per aggiornare i forward reference dopo che tutti i modelli sono stati caricati.
-# FastAPI di solito lo gestisce automaticamente.
-# RulesGroupRead.model_rebuild()
+# Rebuild the model to resolve the forward reference to RuleRead
+RulesGroupRead.model_rebuild()

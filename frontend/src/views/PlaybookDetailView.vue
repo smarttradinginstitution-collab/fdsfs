@@ -8,66 +8,92 @@
         <span v-if="!store.isAnalyticsLoading && store.currentPlaybookAnalytics" class="breadcrumb-current">{{ store.currentPlaybookAnalytics.title }}</span>
         <span v-else class="breadcrumb-current">Loading...</span>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-overview">Overview</span>
+        <span class="breadcrumb-overview">{{ activeTab }}</span>
       </div>
       <div class="header-actions">
-        <BaseButton variant="secondary">Share</BaseButton>
+        <BaseButton v-if="activeTab === 'Playbook Rules'">+ Create Group</BaseButton>
+        <BaseButton v-else variant="secondary">Share</BaseButton>
       </div>
     </header>
 
     <!-- Tabs -->
     <nav class="tabs">
-      <a href="#" class="tab-item active">Overview</a>
-      <a href="#" class="tab-item">Playbook Rules</a>
-      <a href="#" class="tab-item">Executed Trades</a>
-      <a href="#" class="tab-item">Missed Trades</a>
-      <a href="#" class="tab-item">Notes</a>
+      <a
+        v-for="tab in tabs"
+        :key="tab"
+        href="#"
+        class="tab-item"
+        :class="{ active: activeTab === tab }"
+        @click.prevent="selectTab(tab)"
+      >
+        {{ tab }}
+      </a>
     </nav>
 
     <!-- Main Content -->
     <main class="view-content">
-      <div v-if="store.isAnalyticsLoading" class="loading-state">
-        <p>Loading analytics...</p>
-      </div>
-      <div v-else-if="store.error" class="error-state">
-        <p>Error: {{ store.error }}</p>
-      </div>
-      <div v-else-if="store.currentPlaybookAnalytics" class="analytics-card">
-        <div class="metrics-header">
-            <button class="settings-button" aria-label="Settings">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 1.25rem; height: 1.25rem;">
-                  <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.532 1.532 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.532 1.532 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-                </svg>
-            </button>
+      <!-- Overview Tab -->
+      <div v-if="activeTab === 'Overview'">
+        <div v-if="store.isAnalyticsLoading" class="loading-state">
+          <p>Loading analytics...</p>
         </div>
-        <div class="metrics-grid">
-            <MetricItem
-              v-for="metric in formattedMetrics"
-              :key="metric.key"
-              :label="metric.label"
-              :value="metric.value"
-              :metricKey="metric.key"
-            />
+        <div v-else-if="store.error" class="error-state">
+          <p>Error: {{ store.error }}</p>
         </div>
+        <div v-else-if="store.currentPlaybookAnalytics" class="analytics-card">
+          <div class="metrics-header">
+              <button class="settings-button" aria-label="Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 1.25rem; height: 1.25rem;">
+                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.532 1.532 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.532 1.532 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                  </svg>
+              </button>
+          </div>
+          <div class="metrics-grid">
+              <MetricItem
+                v-for="metric in formattedMetrics"
+                :key="metric.key"
+                :label="metric.label"
+                :value="metric.value"
+                :metricKey="metric.key"
+              />
+          </div>
 
-        <div class="chart-section">
-          <h3 class="chart-title">Daily Net Cumulative P&L</h3>
-          <div class="chart-container">
-            <Line v-if="store.currentPlaybookAnalytics?.equity_curve?.data?.length" :data="chartData" :options="chartOptions" />
-            <div v-else class="chart-placeholder">No data to display.</div>
+          <div class="chart-section">
+            <h3 class="chart-title">Daily Net Cumulative P&L</h3>
+            <div class="chart-container">
+              <Line v-if="store.currentPlaybookAnalytics?.equity_curve?.data?.length" :data="chartData" :options="chartOptions" />
+              <div v-else class="chart-placeholder">No data to display.</div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Playbook Rules Tab -->
+      <div v-if="activeTab === 'Playbook Rules'">
+        <PlaybookRulesTab />
+      </div>
+
+      <!-- Other Tabs Placeholders -->
+      <div v-if="activeTab === 'Executed Trades'">
+        <p>Executed Trades will be displayed here.</p>
+      </div>
+      <div v-if="activeTab === 'Missed Trades'">
+        <p>Missed Trades will be displayed here.</p>
+      </div>
+      <div v-if="activeTab === 'Notes'">
+        <p>Notes will be displayed here.</p>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import MetricItem from '@/components/analytics/MetricItem.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import PlaybookRulesTab from '@/components/Playbooks/PlaybookRulesTab.vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 import { Line } from 'vue-chartjs';
 import {
@@ -98,8 +124,18 @@ const store = usePlaybookStore();
 
 const playbookId = computed(() => route.params.id);
 
+// Tab management
+const tabs = ['Overview', 'Playbook Rules', 'Executed Trades', 'Missed Trades', 'Notes'];
+const activeTab = ref('Playbook Rules'); // Set "Playbook Rules" as the default active tab.
+
+const selectTab = (tabName) => {
+  activeTab.value = tabName;
+  // Future logic for fetching data for other tabs can go here.
+};
+
 onMounted(() => {
   if (playbookId.value) {
+    // Fetch analytics for the overview tab regardless
     store.fetchPlaybookAnalytics(playbookId.value);
   }
 });

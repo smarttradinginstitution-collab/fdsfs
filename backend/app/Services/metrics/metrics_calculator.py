@@ -6,6 +6,7 @@ import numpy as np
 from datetime import date
 
 from app.Models.trade import Trade
+from app.Models.rule_playbook import RulePlaybook
 
 class MetricsCalculator:
     """
@@ -356,4 +357,45 @@ class MetricsCalculator:
             "win_loss_days": win_loss_days,
             "monthly_totals": monthly_totals,
             "weekly_totals": weekly_totals
+        }
+
+    @staticmethod
+    def calculate_for_rule(rule: RulePlaybook, total_playbook_trades: int) -> Dict[str, Any]:
+        """
+        Calculates performance metrics for a single rule based on the trades that followed it.
+        """
+        trades_followed = rule.trades
+        num_trades_followed = len(trades_followed)
+
+        # Calculate Follow Rate
+        # This is calculated first as it's independent of P/L
+        follow_rate = (num_trades_followed / total_playbook_trades) * 100 if total_playbook_trades > 0 else 0.0
+
+        if num_trades_followed == 0:
+            return {
+                "follow_rate": follow_rate,
+                "net_pnl": 0.0,
+                "profit_factor": None,
+                "win_rate": 0.0
+            }
+
+        # Calculate Net P/L
+        net_pnl = sum(trade.p_l for trade in trades_followed if trade.p_l is not None)
+
+        # Calculate Win Rate
+        winning_trades = [t for t in trades_followed if t.p_l is not None and t.p_l > 0]
+        win_rate = (len(winning_trades) / num_trades_followed) * 100 if num_trades_followed > 0 else 0.0
+
+        # Calculate Profit Factor
+        gross_profit = sum(t.p_l for t in winning_trades)
+        losing_trades = [t for t in trades_followed if t.p_l is not None and t.p_l < 0]
+        gross_loss = abs(sum(t.p_l for t in losing_trades))
+
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
+
+        return {
+            "follow_rate": follow_rate,
+            "net_pnl": net_pnl,
+            "profit_factor": profit_factor,
+            "win_rate": win_rate
         }
