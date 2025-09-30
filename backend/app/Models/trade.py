@@ -31,7 +31,8 @@ if TYPE_CHECKING:
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
     from app.Models.rule_playbook import RulePlaybook
-    from app.Models.trades_rules import trades_rules_table
+
+from app.Models.trades_rules import trades_rules_table
 
 
 class Trade(Base):

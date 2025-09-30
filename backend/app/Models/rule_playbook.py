@@ -10,11 +10,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
 
+from app.Models.trades_rules import trades_rules_table
+
 if TYPE_CHECKING:
     from app.Models.rules_group_playbook import RulesGroupPlaybook
     from app.Models.trade import Trade
-
-from app.Models.trades_rules import trades_rules_table
 
 
 class RulePlaybook(Base):
