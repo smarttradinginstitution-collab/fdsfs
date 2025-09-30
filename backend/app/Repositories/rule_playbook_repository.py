@@ -1,7 +1,7 @@
 # app/Repositories/rule_playbook_repository.py
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,10 +25,22 @@ class RulePlaybookRepository:
         stmt = (
             select(RulePlaybook)
             .where(RulePlaybook.rules_groups_playbook_id == group_id)
-            .order_by(RulePlaybook.created_at.asc())
+            .order_by(RulePlaybook.order.asc(), RulePlaybook.created_at.asc())
         )
         res = await self.db.execute(stmt)
         return res.scalars().all()
+
+    async def bulk_update_order(self, rule_ids: List[UUID]) -> None:
+        """
+        Updates the 'order' field for a list of rules in a single transaction.
+        """
+        for index, rule_id in enumerate(rule_ids):
+            stmt = select(RulePlaybook).where(RulePlaybook.id == rule_id)
+            result = await self.db.execute(stmt)
+            rule = result.scalars().first()
+            if rule:
+                rule.order = index
+        await self.db.commit()
 
     async def create(self, rule_in: RuleCreate) -> RulePlaybook:
         db_rule = RulePlaybook(

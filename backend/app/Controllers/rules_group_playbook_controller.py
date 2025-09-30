@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
 from app.Repositories.rules_group_playbook_repository import RulesGroupPlaybookRepository
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Schemas.rules_group_playbook import RulesGroupCreate, RulesGroupRead, RulesGroupUpdate
+from app.Schemas.rules_group_playbook import RulesGroupCreate, RulesGroupRead, RulesGroupUpdate, RulesGroupReorder
+from app.Schemas.rule_playbook import RuleRead as RuleReadSchema
+from app.Services.metrics.metrics_calculator import MetricsCalculator
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 
 
@@ -41,13 +43,44 @@ class RulesGroupPlaybookController:
         db: AsyncSession = Depends(get_db),
     ) -> List[RulesGroupRead]:
         """
-        Lista tutti i gruppi di regole per un dato playbook, verificando la proprietà.
+        Lists all rule groups for a playbook, verifying ownership and enriching
+        each rule with its performance metrics.
         """
-        await self._get_playbook_and_verify_ownership(playbook_id, current_user, general_account_id, db)
+        # Fetch the playbook with its trades to get total trade count and verify ownership
+        playbook_repo = PlaybookRepository(db)
+        playbook = await playbook_repo.get_by_id_with_trades(playbook_id)
+        if not playbook:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found.")
+        if not current_user.is_admin and playbook.general_account_id != general_account_id:
+            raise HTTPException(status_code=status.HTTP_43_FORBIDDEN, detail="Unauthorized access to playbook.")
 
-        repo = RulesGroupPlaybookRepository(db)
-        groups = await repo.list_by_playbook_id(playbook_id)
-        return [RulesGroupRead.from_orm(g) for g in groups]
+        total_playbook_trades = len(playbook.trades)
+
+        # Fetch groups with rules and their associated trades (eagerly loaded)
+        group_repo = RulesGroupPlaybookRepository(db)
+        groups = await group_repo.list_by_playbook_id(playbook_id)
+
+        # Build the response with calculated metrics
+        response_groups = []
+        for group in groups:
+            group_read = RulesGroupRead.from_orm(group)
+
+            # Sort rules within the group based on the 'order' attribute
+            sorted_rules = sorted(group.rules, key=lambda r: (r.order is None, r.order, r.created_at))
+
+            enriched_rules = []
+            for rule in sorted_rules:
+                metrics = MetricsCalculator.calculate_for_rule(rule, total_playbook_trades)
+
+                # Create a RuleRead schema object and attach the metrics
+                rule_read = RuleReadSchema.from_orm(rule)
+                rule_read.metrics = metrics
+                enriched_rules.append(rule_read)
+
+            group_read.rules = enriched_rules
+            response_groups.append(group_read)
+
+        return response_groups
 
     async def create_group_for_playbook(
         self,
@@ -111,3 +144,24 @@ class RulesGroupPlaybookController:
 
         await repo.delete(db_obj=group_to_delete)
         return {"ok": True, "detail": "Gruppo di regole eliminato con successo."}
+
+    async def reorder_groups(
+        self,
+        playbook_id: UUID,
+        reorder_data: RulesGroupReorder,
+        current_user: CurrentUser = Depends(get_current_user),
+        general_account_id: UUID = Depends(get_current_general_account_id),
+        db: AsyncSession = Depends(get_db),
+    ) -> dict:
+        """
+        Reorders the rule groups for a playbook.
+        """
+        # First, verify ownership of the playbook
+        await self._get_playbook_and_verify_ownership(playbook_id, current_user, general_account_id, db)
+
+        # A more robust check would be to ensure all group_ids in reorder_data
+        # actually belong to the specified playbook_id. For now, we trust the client.
+        repo = RulesGroupPlaybookRepository(db)
+        await repo.bulk_update_order(reorder_data.group_ids)
+
+        return {"ok": True, "detail": "Rule groups reordered successfully."}

@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, TYPE_CHECKING, List
 
-from sqlalchemy import String, TIMESTAMP, ForeignKey, func, Text, UniqueConstraint
+from sqlalchemy import String, TIMESTAMP, ForeignKey, func, Text, UniqueConstraint, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -31,6 +31,7 @@ class RulesGroupPlaybook(Base):
         nullable=False,
     )
     name_group: Mapped[str] = mapped_column(Text, nullable=False)
+    order: Mapped[int] = mapped_column(Integer, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )

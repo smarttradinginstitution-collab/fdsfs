@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, List
 
 from sqlalchemy import (
     Text,
@@ -20,6 +20,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
 from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
 
+from app.Models.rule_playbook import trades_rules_association
+
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
     from app.Models.asset import Asset
@@ -30,6 +32,7 @@ if TYPE_CHECKING:
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
+    from app.Models.rule_playbook import RulePlaybook
 
 
 class Trade(Base):
@@ -141,4 +144,9 @@ class Trade(Base):
     )
     psychology_states: Mapped[list["PsychologyState"]] = relationship(
         "PsychologyState", secondary="public.trades_psychology", back_populates="trades"
+    )
+    rules_followed: Mapped[List["RulePlaybook"]] = relationship(
+        "RulePlaybook",
+        secondary=trades_rules_association,
+        back_populates="trades"
     )

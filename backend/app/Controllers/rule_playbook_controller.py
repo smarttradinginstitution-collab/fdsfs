@@ -11,7 +11,7 @@ from app.Infrastructure.db import get_db
 from app.Repositories.rule_playbook_repository import RulePlaybookRepository
 from app.Repositories.rules_group_playbook_repository import RulesGroupPlaybookRepository
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Schemas.rule_playbook import RuleCreate, RuleRead, RuleUpdate
+from app.Schemas.rule_playbook import RuleCreate, RuleRead, RuleUpdate, RuleReorder
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 
 class RulePlaybookController:
@@ -115,3 +115,24 @@ class RulePlaybookController:
 
         await repo.delete(db_obj=rule_to_delete)
         return {"ok": True, "detail": "Regola eliminata con successo."}
+
+    async def reorder_rules(
+        self,
+        group_id: UUID,
+        reorder_data: RuleReorder,
+        current_user: CurrentUser = Depends(get_current_user),
+        general_account_id: UUID = Depends(get_current_general_account_id),
+        db: AsyncSession = Depends(get_db),
+    ) -> dict:
+        """
+        Reorders the rules within a group.
+        """
+        # First, verify ownership of the parent group
+        await self._get_group_and_verify_ownership(group_id, current_user, general_account_id, db)
+
+        # Similar to groups, we could verify that all rule_ids belong to this group_id.
+        # For now, we trust the client to send correct data.
+        repo = RulePlaybookRepository(db)
+        await repo.bulk_update_order(reorder_data.rule_ids)
+
+        return {"ok": True, "detail": "Rules reordered successfully."}

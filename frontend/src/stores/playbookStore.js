@@ -12,6 +12,11 @@ export const usePlaybookStore = defineStore('playbooks', {
     // Analytics for the detail page
     currentPlaybookAnalytics: null,
     isAnalyticsLoading: false,
+
+    // State for the Playbook Rules tab
+    ruleGroups: [],
+    isRuleGroupsLoading: false,
+    ruleGroupsError: null,
   }),
 
   getters: {
@@ -102,6 +107,45 @@ export const usePlaybookStore = defineStore('playbooks', {
         this.error = err.response?.data?.detail || 'An unexpected error occurred fetching playbook analytics.';
       } finally {
         this.isAnalyticsLoading = false;
+      }
+    },
+
+    async fetchRuleGroups(playbookId) {
+      this.isRuleGroupsLoading = true;
+      this.ruleGroupsError = null;
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}/rule-groups/`);
+        this.ruleGroups = response.data;
+      } catch (err) {
+        console.error(`Error fetching rule groups for playbook ${playbookId}:`, err);
+        this.ruleGroupsError = err.response?.data?.detail || 'An unexpected error occurred fetching rule groups.';
+        this.ruleGroups = []; // Reset on error
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
+    async reorderRuleGroups(playbookId, group_ids) {
+      try {
+        await apiClient.put(`/playbooks/${playbookId}/rule-groups/reorder`, { group_ids });
+        // No need to refetch, optimistic update is handled by vuedraggable's v-model.
+        // A full refetch could cause a jarring UI update.
+      } catch (err) {
+        console.error('Error reordering rule groups:', err);
+        // Optionally, dispatch an error to the UI and refetch to revert the change
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to save new group order.';
+        this.fetchRuleGroups(playbookId); // Revert UI on failure
+      }
+    },
+
+    async reorderRules({ playbookId, groupId, rule_ids }) {
+      try {
+        await apiClient.put(`/rule-groups/${groupId}/rules/reorder`, { rule_ids });
+      } catch (err) {
+        console.error('Error reordering rules:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to save new rule order.';
+        // Re-fetch the entire group structure to ensure consistency on failure
+        this.fetchRuleGroups(playbookId);
       }
     },
   },
