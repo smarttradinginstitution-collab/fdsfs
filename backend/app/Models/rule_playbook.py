@@ -1,4 +1,3 @@
-# app/Models/rule_playbook.py
 from __future__ import annotations
 
 import uuid
@@ -9,6 +8,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
+
+from app.Models.trades_rules import trades_rules_table
 
 if TYPE_CHECKING:
     from app.Models.rules_group_playbook import RulesGroupPlaybook
@@ -37,5 +38,5 @@ class RulePlaybook(Base):
         "RulesGroupPlaybook", back_populates="rules"
     )
     trades: Mapped[list["Trade"]] = relationship(
-        "Trade", secondary="public.trades_rules", back_populates="rules"
+        "Trade", secondary=trades_rules_table, back_populates="rules"
     )
