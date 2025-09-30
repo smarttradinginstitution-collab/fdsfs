@@ -23,31 +23,26 @@ const isMfaStep = ref(false); // Nuovo stato per gestire il flusso MFA
 
 async function handleLogin() {
   errorMessage.value = '';
-  uiStore.showLoader('Stiamo calcolando i tuoi dati...');
   try {
     const result = await authStore.login(email.value, password.value);
     if (result.mfaRequired) {
       isMfaStep.value = true; // Mostra il form per l'OTP
-      uiStore.hideLoader(); // Nasconde il loader per permettere l'inserimento OTP
     }
-    // Se non è richiesta MFA, la redirezione e la gestione del loader avvengono altrove
+    // Se non è richiesta MFA, la redirezione avviene nello store
   } catch (error) {
     errorMessage.value = error.response?.data?.detail || 'Credenziali non valide o errore inatteso.';
     console.error(error);
-    uiStore.hideLoader();
   }
 }
 
 async function handleMfaVerification() {
   errorMessage.value = '';
-  uiStore.showLoader('Stiamo calcolando i tuoi dati...');
   try {
     await authStore.verifyMfaAndLogin(otpCode.value);
-    // La redirezione e la gestione del loader avvengono altrove
+    // La redirezione avviene nello store dopo la verifica
   } catch (error) {
     errorMessage.value = error.response?.data?.detail || 'Codice OTP non valido o errore inatteso.';
     console.error(error);
-    uiStore.hideLoader();
   }
 }
 </script>

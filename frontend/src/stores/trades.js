@@ -657,6 +657,9 @@ export const useTradesStore = defineStore('trades', {
      */
     async fetchAllDataForDashboard() {
       const uiStore = useUiStore();
+      if (uiStore.isInitialLoadPending) {
+        uiStore.showLoader('Stiamo calcolando i tuoi dati...');
+      }
       this.isLoading = true;
       try {
         await Promise.allSettled([
@@ -670,7 +673,10 @@ export const useTradesStore = defineStore('trades', {
         ]);
       } finally {
         this.isLoading = false;
-        uiStore.hideLoader(); // Nasconde il loader globale
+        if (uiStore.isInitialLoadPending) {
+          uiStore.hideLoader();
+          uiStore.setInitialLoadPending(false);
+        }
       }
     },
   },

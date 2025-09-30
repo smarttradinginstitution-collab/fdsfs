@@ -20,6 +20,7 @@ export const useUiStore = defineStore('ui', () => {
   const theme = ref('light');
   const isAppLoading = ref(false);
   const loaderMessage = ref('');
+  const isInitialLoadPending = ref(false);
 
   // --- RESPONSIVE LOGIC ---
   const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
@@ -102,6 +103,10 @@ export const useUiStore = defineStore('ui', () => {
     loaderMessage.value = '';
   }
 
+  function setInitialLoadPending(status) {
+    isInitialLoadPending.value = status;
+  }
+
   // Initialize the theme when the store is created
   initTheme();
 
@@ -123,8 +128,10 @@ export const useUiStore = defineStore('ui', () => {
     isStatSelectorVisible,
     isAppLoading,
     loaderMessage,
+    isInitialLoadPending,
     showLoader,
     hideLoader,
+    setInitialLoadPending,
     toggleStatSelector,
     closeStatSelector,
     toggleLayoutEditing,
