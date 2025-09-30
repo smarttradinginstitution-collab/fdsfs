@@ -142,11 +142,13 @@ const saveEdit = async () => {
 // --- Delete confirmation for Group ---
 const isGroupDeleteModalVisible = ref(false);
 const confirmDeleteGroup = async () => {
+  // First, hide the modal to allow it to clean up the scroll lock
+  isGroupDeleteModalVisible.value = false;
+  // Then, perform the delete action which refreshes the list
   await store.deleteRuleGroup({
     playbookId: props.group.playbook_id,
     groupId: props.group.id,
   });
-  isGroupDeleteModalVisible.value = false;
 };
 
 // --- Delete confirmation for Rule ---
@@ -160,12 +162,17 @@ const promptDeleteRule = (rule) => {
 
 const confirmDeleteRule = async () => {
   if (!ruleToDelete.value) return;
-  await store.deleteRule({
-    playbookId: props.group.playbook_id,
-    ruleId: ruleToDelete.value.id,
-  });
+  const ruleIdToDelete = ruleToDelete.value.id;
+
+  // First, hide the modal to allow it to clean up
   isRuleDeleteModalVisible.value = false;
   ruleToDelete.value = null;
+
+  // Then, perform the delete action
+  await store.deleteRule({
+    playbookId: props.group.playbook_id,
+    ruleId: ruleIdToDelete,
+  });
 };
 </script>
 
