@@ -16,8 +16,8 @@
     <div class="col-metric-placeholder"></div>
     <div class="col-action">
       <div class="actions">
-        <BaseButton @click="onSave" size="sm" :disabled="!ruleText.trim()">Save</BaseButton>
-        <BaseButton @click="onCancel" size="sm" variant="secondary">Cancel</BaseButton>
+        <BaseButton @click="onSave" size="small" :disabled="!ruleText.trim()">Save</BaseButton>
+        <BaseButton @click="onCancel" size="small" variant="secondary">Cancel</BaseButton>
       </div>
     </div>
   </div>

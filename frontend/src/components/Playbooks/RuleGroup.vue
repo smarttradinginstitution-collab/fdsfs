@@ -14,8 +14,8 @@
               @keyup.enter="saveEdit"
               @keyup.esc="cancelEditing"
             />
-            <BaseButton size="sm" @click="saveEdit">Save</BaseButton>
-            <BaseButton size="sm" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
+            <BaseButton size="small" @click="saveEdit">Save</BaseButton>
+            <BaseButton size="small" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
           </div>
         </div>
         <div v-if="!isEditing" class="header-right">
