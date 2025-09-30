@@ -62,7 +62,7 @@ import { useRoute } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import StatCard from '@/components/dashboard/widgets/StatCard/index.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters';
+import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,

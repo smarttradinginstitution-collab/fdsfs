@@ -2,6 +2,7 @@
 import { defineProps } from 'vue';
 import BaseWidget from '../layout/BaseWidget.vue';
 import DoughnutChart from './DoughnutChart.vue';
+import { formatCurrency } from '@/services/formatters.js';
 
 const props = defineProps({
   playbook: {
@@ -9,18 +10,6 @@ const props = defineProps({
     required: true,
   },
 });
-
-// Helper to format currency values
-function formatCurrency(value) {
-  if (typeof value !== 'number') {
-    return '$0.00';
-  }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 </script>
 
 <template>
