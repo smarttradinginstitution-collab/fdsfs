@@ -55,12 +55,6 @@ const router = createRouter({
       meta: { title: 'Playbook Detail' },
     },
     {
-      path: '/playbooks/create',
-      name: 'create-playbook',
-      component: () => import('../views/CreatePlaybookView.vue'),
-      meta: { title: 'Create Playbook' },
-    },
-    {
       path: '/analytics',
       name: 'analytics',
       component: () => import('../views/AnalyticsView.vue'),
