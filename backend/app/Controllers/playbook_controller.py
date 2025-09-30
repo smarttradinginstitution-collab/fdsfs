@@ -9,9 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Schemas.playbook import PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats
+from app.Schemas.playbook import (
+    PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
+)
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 from app.Services.metrics.metrics_calculator import MetricsCalculator
+from app.Services.playbook_analytics_service import PlaybookAnalyticsService
 
 
 class PlaybookController:
@@ -150,3 +153,27 @@ class PlaybookController:
         await repo.delete(db_obj=playbook_to_delete)
 
         return {"ok": True, "detail": "Playbook eliminato con successo."}
+
+    async def get_playbook_analytics(
+        self,
+        playbook_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> PlaybookAnalytics:
+        """
+        Recupera le statistiche e i dati analitici per un singolo playbook.
+        """
+        service = PlaybookAnalyticsService(db)
+        analytics_data = await service.get_playbook_analytics(
+            playbook_id=playbook_id,
+            current_user_id=current_user.id,
+            is_admin=current_user.is_admin
+        )
+
+        if not analytics_data:
+            # La logica del servizio ritorna None se il playbook non esiste o l'utente non ha accesso
+            # Potremmo distinguere i due casi, ma per ora un 404 generico è sufficiente
+            # e più sicuro (non rivela l'esistenza di una risorsa).
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook non trovato o accesso negato.")
+
+        return analytics_data

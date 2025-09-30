@@ -9,6 +9,9 @@ export const usePlaybookStore = defineStore('playbooks', {
     error: null,
     // Holds the data from Step 1 of the creation process
     newPlaybookData: null,
+    // Analytics for the detail page
+    currentPlaybookAnalytics: null,
+    isAnalyticsLoading: false,
   }),
 
   getters: {
@@ -84,6 +87,21 @@ export const usePlaybookStore = defineStore('playbooks', {
         throw err;
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async fetchPlaybookAnalytics(playbookId) {
+      this.isAnalyticsLoading = true;
+      this.error = null;
+      this.currentPlaybookAnalytics = null; // Reset before fetching
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}/analytics`);
+        this.currentPlaybookAnalytics = response.data;
+      } catch (err) {
+        console.error(`Error fetching analytics for playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An unexpected error occurred fetching playbook analytics.';
+      } finally {
+        this.isAnalyticsLoading = false;
       }
     },
   },
