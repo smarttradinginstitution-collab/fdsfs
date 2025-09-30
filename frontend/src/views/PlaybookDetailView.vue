@@ -177,11 +177,17 @@ const chartOptions = computed(() => {
         },
         scales: {
             x: {
-                grid: { color: mutedBorderColor },
+                grid: {
+                    display: true,
+                    color: mutedBorderColor,
+                },
                 ticks: { color: textColor },
             },
             y: {
-                grid: { color: mutedBorderColor },
+                grid: {
+                    display: true,
+                    color: mutedBorderColor,
+                },
                 ticks: {
                     color: textColor,
                     callback: (value) => formatCurrency(value)
