@@ -41,7 +41,13 @@
             </button>
         </div>
         <div class="metrics-grid">
-            <StatCard v-for="metric in formattedMetrics" :key="metric.key" :stat="metric" />
+            <MetricItem
+              v-for="metric in formattedMetrics"
+              :key="metric.key"
+              :label="metric.label"
+              :value="metric.value"
+              :metricKey="metric.key"
+            />
         </div>
 
         <div class="chart-section">
@@ -60,7 +66,7 @@
 import { onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
-import StatCard from '@/components/dashboard/widgets/StatCard/index.vue';
+import MetricItem from '@/components/analytics/MetricItem.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 import { Line } from 'vue-chartjs';
