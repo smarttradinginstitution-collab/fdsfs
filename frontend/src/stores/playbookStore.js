@@ -17,6 +17,8 @@ export const usePlaybookStore = defineStore('playbooks', {
     ruleGroups: [],
     isRuleGroupsLoading: false,
     ruleGroupsError: null,
+    isCreatingGroup: false, // Flag to show/hide the inline group creator
+    creatingRuleInGroupId: null, // ID of the group where a rule is being created
   }),
 
   getters: {
@@ -146,6 +148,98 @@ export const usePlaybookStore = defineStore('playbooks', {
         this.ruleGroupsError = err.response?.data?.detail || 'Failed to save new rule order.';
         // Re-fetch the entire group structure to ensure consistency on failure
         this.fetchRuleGroups(playbookId);
+      }
+    },
+
+    async createRuleGroup({ playbookId, name_group }) {
+      this.isRuleGroupsLoading = true; // Use the same loading state for consistency
+      try {
+        await apiClient.post(`/playbooks/${playbookId}/rule-groups/`, {
+          playbook_id: playbookId,
+          name_group,
+        });
+        await this.fetchRuleGroups(playbookId); // Refresh the list
+      } catch (err) {
+        console.error('Error creating rule group:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to create new group.';
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
+    async createRule({ playbookId, groupId, rule }) {
+      this.isRuleGroupsLoading = true;
+      try {
+        await apiClient.post(`/rule-groups/${groupId}/rules/`, {
+          rules_groups_playbook_id: groupId,
+          rule,
+        });
+        await this.fetchRuleGroups(playbookId); // Refresh the entire list
+      } catch (err) {
+        console.error('Error creating rule:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to create new rule.';
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
+    setCreatingGroup(isCreating) {
+      this.isCreatingGroup = isCreating;
+    },
+
+    setCreatingRuleInGroup(groupId) {
+      this.creatingRuleInGroupId = groupId;
+    },
+
+    async updateRuleGroup({ playbookId, groupId, name_group }) {
+      this.isRuleGroupsLoading = true;
+      try {
+        await apiClient.put(`/rule-groups/${groupId}`, { name_group });
+        await this.fetchRuleGroups(playbookId);
+      } catch (err) {
+        console.error('Error updating rule group:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to update group.';
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
+    async deleteRuleGroup({ playbookId, groupId }) {
+      this.isRuleGroupsLoading = true;
+      try {
+        await apiClient.delete(`/rule-groups/${groupId}`);
+        await this.fetchRuleGroups(playbookId);
+      } catch (err) {
+        console.error('Error deleting rule group:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to delete group.';
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
+    async updateRule({ playbookId, ruleId, rule }) {
+      this.isRuleGroupsLoading = true;
+      try {
+        await apiClient.put(`/rules/${ruleId}`, { rule });
+        await this.fetchRuleGroups(playbookId);
+      } catch (err) {
+        console.error('Error updating rule:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to update rule.';
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
+    async deleteRule({ playbookId, ruleId }) {
+      this.isRuleGroupsLoading = true;
+      try {
+        await apiClient.delete(`/rules/${ruleId}`);
+        await this.fetchRuleGroups(playbookId);
+      } catch (err) {
+        console.error('Error deleting rule:', err);
+        this.ruleGroupsError = err.response?.data?.detail || 'Failed to delete rule.';
+      } finally {
+        this.isRuleGroupsLoading = false;
       }
     },
   },
