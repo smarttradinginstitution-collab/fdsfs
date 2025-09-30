@@ -39,7 +39,7 @@ from .trades_mistakes import TradesMistakes
 from .trades_news_impacts import TradesNewsImpacts
 from .trades_psychology import TradesPsychology
 from .trades_tags import TradesTags
-from .trades_rules import TradesRules
+from .trades_rules import trades_rules_table
 
 __all__ = [
     "AuthUser",
@@ -67,5 +67,5 @@ __all__ = [
     "TradesTags",
     "RulesGroupPlaybook",
     "RulePlaybook",
-    "TradesRules",
+    "trades_rules_table",
 ]
