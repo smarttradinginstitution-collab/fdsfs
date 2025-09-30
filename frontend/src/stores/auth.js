@@ -8,6 +8,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
+import { useUiStore } from './uiStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -83,6 +84,8 @@ export const useAuthStore = defineStore('auth', () => {
     } else {
       const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
       if (authSuccessful) {
+        const uiStore = useUiStore();
+        uiStore.setInitialLoadPending(true);
         await loadCurrentRoleName();
         router.push('/select-account');
       }
@@ -102,6 +105,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
     if (authSuccessful) {
+      const uiStore = useUiStore();
+      uiStore.setInitialLoadPending(true);
       await loadCurrentRoleName();
       router.push('/select-account');
     }
@@ -148,6 +153,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await apiClient.post('/auth/logout');
     } catch { /* noop */ }
+
+    const uiStore = useUiStore();
+    uiStore.setInitialLoadPending(false); // Resetta lo stato del caricamento iniziale
 
     user.value = null;
     token.value = null;

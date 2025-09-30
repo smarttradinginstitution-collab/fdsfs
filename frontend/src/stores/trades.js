@@ -657,7 +657,10 @@ export const useTradesStore = defineStore('trades', {
      */
     async fetchAllDataForDashboard() {
       const uiStore = useUiStore();
-      uiStore.showLoader('Stiamo calcolando i tuoi dati...');
+      // Mostra il loader solo se è il caricamento iniziale post-login.
+      if (uiStore.isInitialLoadPending) {
+        uiStore.showLoader('Stiamo calcolando i tuoi dati...');
+      }
       this.isLoading = true;
       try {
         await Promise.allSettled([
@@ -671,7 +674,11 @@ export const useTradesStore = defineStore('trades', {
         ]);
       } finally {
         this.isLoading = false;
-        uiStore.hideLoader(); // Nasconde il loader globale
+        // Se era il caricamento iniziale, nascondi il loader e resetta il flag.
+        if (uiStore.isInitialLoadPending) {
+          uiStore.hideLoader();
+          uiStore.setInitialLoadPending(false);
+        }
       }
     },
   },
