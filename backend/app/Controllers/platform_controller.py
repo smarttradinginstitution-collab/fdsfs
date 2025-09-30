@@ -26,6 +26,11 @@ class PlatformController:
     async def get_all_platforms(self, skip: int, limit: int) -> list[Platform]:
         return await self.platform_repo.get_multi(skip=skip, limit=limit)
 
+    async def get_all_platforms_with_brokers(
+        self, skip: int, limit: int
+    ) -> list[Platform]:
+        return await self.platform_repo.get_multi_with_brokers(skip=skip, limit=limit)
+
     async def create_platform(self, platform_in: PlatformCreate) -> Platform:
         existing_platform = await self.platform_repo.get_by_name(platform_in.name)
         if existing_platform:

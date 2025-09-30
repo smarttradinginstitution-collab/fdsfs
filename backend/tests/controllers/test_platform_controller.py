@@ -99,6 +99,22 @@ async def test_delete_platform_as_non_admin(
 # /platforms/ - Public READ routes
 # --------------------------------------------------------------------------
 
+async def test_read_platforms_without_brokers(
+    async_client: AsyncClient, db_session: AsyncSession
+):
+    db_session.add(Platform(name="Platform Simple"))
+    await db_session.commit()
+
+    response = await async_client.get("/api/v1/platforms/")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    # Check that the 'brokers' key is not in the simple response
+    for p in data:
+        if p["name"] == "Platform Simple":
+            assert "brokers" not in p
+            break
+
 async def test_read_platforms_with_brokers(
     async_client: AsyncClient, db_session: AsyncSession
 ):
@@ -107,22 +123,21 @@ async def test_read_platforms_with_brokers(
     db_session.add(platform)
     await db_session.commit()
 
-    response = await async_client.get("/api/v1/platforms/")
+    response = await async_client.get("/api/v1/platforms/brokers/")
     assert response.status_code == 200
     data = response.json()
 
-    # Find our platform in the list and check its brokers
     found = False
     for p in data:
         if p["name"] == "Platform with Broker":
             found = True
+            assert "brokers" in p
             assert len(p["brokers"]) == 1
             assert p["brokers"][0]["name"] == "Associated Broker"
             break
     assert found, "Test platform not found in the list"
 
-
-async def test_read_platform_as_non_admin(
+async def test_read_single_platform(
     async_client: AsyncClient, db_session: AsyncSession
 ):
     platform = Platform(name="Platform to Read")

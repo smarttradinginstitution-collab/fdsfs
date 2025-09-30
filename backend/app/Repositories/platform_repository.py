@@ -29,6 +29,12 @@ class PlatformRepository:
     async def get_multi(
         self, skip: int = 0, limit: int = 100
     ) -> list[Platform]:
+        result = await self.db.execute(select(Platform).offset(skip).limit(limit))
+        return result.scalars().all()
+
+    async def get_multi_with_brokers(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[Platform]:
         result = await self.db.execute(
             select(Platform)
             .options(joinedload(Platform.brokers))

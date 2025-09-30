@@ -33,8 +33,20 @@ async def create_platform(
     return await PlatformController(db).create_platform(platform_in)
 
 
-@router.get("/", response_model=List[PlatformSummary])
+@router.get("/", response_model=List[Platform])
 async def read_platforms(
+    db: AsyncSession = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
+):
+    """
+    Retrieve all platforms.
+    """
+    return await PlatformController(db).get_all_platforms(skip=skip, limit=limit)
+
+
+@router.get("/brokers/", response_model=List[PlatformSummary])
+async def read_platforms_with_brokers(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
@@ -42,7 +54,9 @@ async def read_platforms(
     """
     Retrieve all platforms with their associated brokers.
     """
-    return await PlatformController(db).get_all_platforms(skip=skip, limit=limit)
+    return await PlatformController(db).get_all_platforms_with_brokers(
+        skip=skip, limit=limit
+    )
 
 
 @router.get("/{platform_id}", response_model=Platform)
