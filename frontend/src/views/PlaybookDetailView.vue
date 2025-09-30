@@ -11,7 +11,7 @@
         <span class="breadcrumb-overview">{{ activeTab }}</span>
       </div>
       <div class="header-actions">
-        <BaseButton v-if="activeTab === 'Playbook Rules'">+ Create Group</BaseButton>
+        <BaseButton v-if="activeTab === 'Playbook Rules'" @click="store.setCreatingGroup(true)">+ Create Group</BaseButton>
         <BaseButton v-else variant="secondary">Share</BaseButton>
       </div>
     </header>

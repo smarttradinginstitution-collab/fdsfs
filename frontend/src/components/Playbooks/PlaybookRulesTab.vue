@@ -7,6 +7,7 @@
       <p>Error: {{ store.ruleGroupsError }}</p>
     </div>
     <div v-else class="rules-content">
+      <RuleGroupCreator v-if="store.isCreatingGroup" />
       <draggable
         v-if="localRuleGroups.length > 0"
         v-model="localRuleGroups"
@@ -34,6 +35,7 @@ import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import RuleGroup from './RuleGroup.vue';
 import draggable from 'vuedraggable';
+import RuleGroupCreator from './RuleGroupCreator.vue';
 
 const store = usePlaybookStore();
 const route = useRoute();
