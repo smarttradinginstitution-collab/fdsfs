@@ -39,7 +39,7 @@ const updateRule = (updatedRule) => {
     if (index !== -1) {
         localGroup.value.rules[index] = updatedRule;
     }
-}
+};
 </script>
 
 <template>
@@ -48,11 +48,17 @@ const updateRule = (updatedRule) => {
       <div class="drag-handle">
         <DragHandleIcon />
       </div>
-      <div v-if="!isEditing" class="group-title">{{ localGroup.title }}</div>
-      <BaseInput v-else v-model="localGroup.title" @blur="isEditing = false" class="title-input"/>
+      <BaseInput
+        v-if="isEditing"
+        v-model="localGroup.title"
+        @blur="isEditing = false"
+        @keyup.enter="isEditing = false"
+        class="title-input"
+      />
+      <div v-else class="group-title" @click="isEditing = true">{{ localGroup.title }}</div>
       <div class="header-actions">
         <button @click="isEditing = !isEditing" class="action-btn">{{ isEditing ? 'Save' : 'Edit' }}</button>
-        <button @click="$emit('delete:group')" class="action-btn delete">Delete</button>
+        <button @click="$emit('delete:group')" class="action-btn delete-btn">Delete</button>
       </div>
     </div>
     <div class="rules-container">
@@ -70,7 +76,7 @@ const updateRule = (updatedRule) => {
                 />
             </template>
         </draggable>
-      <BaseButton variant="tertiary" @click="addRule" class="add-rule-btn">+ Create new rule</BaseButton>
+      <BaseButton variant="secondary" size="small" @click="addRule" class="add-rule-btn">+ Create new rule</BaseButton>
     </div>
   </div>
 </template>
@@ -102,6 +108,7 @@ const updateRule = (updatedRule) => {
   font: var(--semantic-font-style-body-xl-bold);
   color: var(--semantic-color-text-primary);
   flex-grow: 1;
+  cursor: text;
 }
 
 .title-input {
@@ -119,14 +126,15 @@ const updateRule = (updatedRule) => {
   cursor: pointer;
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
+  padding: 4px;
 }
 .action-btn:hover {
     color: var(--semantic-color-text-primary);
 }
-.action-btn.delete {
+.action-btn.delete-btn {
     color: var(--semantic-color-text-danger);
 }
-.action-btn.delete:hover {
+.action-btn.delete-btn:hover {
     color: var(--semantic-color-text-danger-hover);
 }
 

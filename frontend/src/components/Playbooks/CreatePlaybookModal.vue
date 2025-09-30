@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { usePlaybookStore } from '@/stores/playbookStore';
+import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import CloseIcon from '@/components/icons/CloseIcon.vue';
@@ -10,14 +11,14 @@ import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
+import RuleGroupManager from './RuleGroupManager.vue';
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'save-success']);
 
 const playbookStore = usePlaybookStore();
+const uiStore = useUiStore();
 const ruleGroupManagerRef = ref(null);
 
-// Form state
 const playbookData = ref({
   title: '',
   description: '',
@@ -25,7 +26,6 @@ const playbookData = ref({
   icon_name: 'BuildingLibraryIcon',
   private: false,
 });
-const isLoading = ref(false);
 const error = ref(null);
 
 const currentStep = ref(0);
@@ -36,22 +36,23 @@ const steps = [
 
 const isLastStep = computed(() => currentStep.value === steps.length - 1);
 
+const closeModal = () => {
+  emit('close');
+};
+
 const goBack = () => {
   if (currentStep.value > 0) {
     currentStep.value--;
   }
 };
 
-const closeModal = () => {
-  emit('close');
-};
-
 const handleNext = () => {
-  if (currentStep.value === 0) {
+  if (isLastStep.value) {
+    submitPlaybookWithRules();
+  } else {
+    // Store the data from Step 1 before proceeding
     playbookStore.setNewPlaybookDetails(playbookData.value);
     currentStep.value++;
-  } else if (isLastStep.value) {
-    submitPlaybookWithRules();
   }
 };
 
@@ -61,19 +62,21 @@ const submitPlaybookWithRules = async () => {
     return;
   }
 
-  isLoading.value = true;
+  uiStore.showLoader();
   error.value = null;
   try {
     const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    await playbookStore.createPlaybookWithRules(ruleGroups);
-    closeModal(); // Close the modal on success
+    const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
+    emit('save-success', newPlaybook);
+    closeModal();
   } catch (err) {
     console.error("Failed to create playbook with rules:", err);
     error.value = playbookStore.error || 'An unknown error occurred during save.';
   } finally {
-    isLoading.value = false;
+    uiStore.hideLoader();
   }
 };
+
 </script>
 
 <template>
@@ -83,12 +86,12 @@ const submitPlaybookWithRules = async () => {
         <template #header>
           <div class="modal-header">
             <div class="header-left-controls">
-              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="isLoading">
+              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="uiStore.isAppLoading">
                 <ArrowLeftIcon />
               </IconButton>
             </div>
             <div class="header-right-controls">
-              <IconButton @click="closeModal" aria-label="Close" :disabled="isLoading">
+              <IconButton @click="closeModal" aria-label="Close" :disabled="uiStore.isAppLoading">
                 <CloseIcon />
               </IconButton>
             </div>
@@ -113,7 +116,7 @@ const submitPlaybookWithRules = async () => {
                 label="Playbook Name"
                 placeholder="e.g., 'Opening Range Breakout'"
                 id="playbook-title"
-                :disabled="isLoading"
+                :disabled="uiStore.isAppLoading"
               />
             </div>
             <div class="form-section">
@@ -124,7 +127,7 @@ const submitPlaybookWithRules = async () => {
                 id="playbook-description"
                 type="textarea"
                 :rows="4"
-                :disabled="isLoading"
+                :disabled="uiStore.isAppLoading"
               />
             </div>
           </div>
@@ -138,8 +141,8 @@ const submitPlaybookWithRules = async () => {
           <div v-if="error" class="error-message">{{ error }}</div>
 
           <div class="form-actions">
-            <BaseButton variant="secondary" @click="closeModal" :disabled="isLoading">Cancel</BaseButton>
-            <BaseButton variant="primary" @click="handleNext" :is-loading="isLoading">
+            <BaseButton variant="secondary" @click="closeModal" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
+            <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
               {{ isLastStep ? 'Save' : 'Next' }}
             </BaseButton>
           </div>
@@ -177,7 +180,6 @@ const submitPlaybookWithRules = async () => {
 }
 
 .header-left-controls {
-  /* This ensures the layout doesn't shift when the back button appears */
   min-width: 36px;
 }
 
@@ -220,15 +222,5 @@ const submitPlaybookWithRules = async () => {
   padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
   text-align: center;
-}
-
-.placeholder-content {
-    text-align: center;
-    padding: var(--semantic-size-inset-xl);
-    color: var(--semantic-color-text-secondary);
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 </style>

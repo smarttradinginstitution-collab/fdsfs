@@ -26,7 +26,6 @@ watch(localRule, (newRule) => {
     <BaseInput
       v-model="localRule.description"
       placeholder="Enter rule description..."
-      maxlength="40"
       class="rule-input"
     />
     <IconButton @click="$emit('delete:rule')" class="delete-btn" aria-label="Delete rule">

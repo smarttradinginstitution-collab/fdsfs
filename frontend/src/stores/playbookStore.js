@@ -7,6 +7,7 @@ export const usePlaybookStore = defineStore('playbooks', {
     playbooks: [],
     isLoading: false,
     error: null,
+    // Holds the data from Step 1 of the creation process
     newPlaybookData: null,
   }),
 
@@ -20,6 +21,7 @@ export const usePlaybookStore = defineStore('playbooks', {
     async fetchPlaybooks() {
       const authStore = useAuthStore();
       if (!authStore.isAuthenticated) {
+        console.log("User not authenticated. Skipping playbook fetch.");
         return;
       }
       this.isLoading = true;
@@ -28,7 +30,9 @@ export const usePlaybookStore = defineStore('playbooks', {
         const response = await apiClient.get('/me/playbooks');
         this.playbooks = response.data;
       } catch (err) {
+        console.error('Error fetching playbooks:', err);
         this.error = err.response?.data?.detail || 'An unexpected error occurred.';
+        this.playbooks = [];
       } finally {
         this.isLoading = false;
       }
@@ -40,8 +44,9 @@ export const usePlaybookStore = defineStore('playbooks', {
 
     async createPlaybookWithRules(ruleGroups) {
       if (!this.newPlaybookData) {
-        throw new Error("Playbook details from step 1 are missing.");
+        throw new Error("Playbook details from Step 1 are missing.");
       }
+
       this.isLoading = true;
       this.error = null;
       try {
@@ -52,7 +57,7 @@ export const usePlaybookStore = defineStore('playbooks', {
         // Step 2: Create the rule groups
         for (const group of ruleGroups) {
           const groupPayload = {
-            name_group: group.title, // Correct field for group name
+            name_group: group.title, // Correct field name for the group title
             playbook_id: newPlaybook.id,
           };
           const groupResponse = await apiClient.post(`/playbooks/${newPlaybook.id}/rule-groups/`, groupPayload);
@@ -61,18 +66,20 @@ export const usePlaybookStore = defineStore('playbooks', {
           // Step 3: Create the rules for each group
           for (const rule of group.rules) {
             const rulePayload = {
-              rule: rule.description, // Correct field for rule text
+              rule: rule.description, // Correct field name for the rule text
               rules_groups_playbook_id: newGroup.id,
             };
             await apiClient.post(`/rule-groups/${newGroup.id}/rules/`, rulePayload);
           }
         }
 
-        this.playbooks.unshift(newPlaybook);
+        // Fetch the updated list to ensure data consistency
+        await this.fetchPlaybooks();
         this.newPlaybookData = null;
         return newPlaybook;
 
       } catch (err) {
+        console.error('Error creating playbook with rules:', err);
         this.error = err.response?.data?.detail || 'An error occurred during playbook creation.';
         throw err;
       } finally {
