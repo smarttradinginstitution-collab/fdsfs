@@ -185,7 +185,7 @@ const chartOptions = computed(() => ({
 
 <style scoped>
 .playbook-detail-view {
-  padding: 1rem 2rem;
+  padding: 2rem;
   color: var(--semantic-color-text-primary);
   display: flex;
   flex-direction: column;
