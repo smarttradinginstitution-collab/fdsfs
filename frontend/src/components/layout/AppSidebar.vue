@@ -15,6 +15,13 @@ import ThemeToggle from '../ui/ThemeToggle.vue';
 import MfaModal from '../mfa/MfaModal.vue'; // Importa la nuova modale
 import { computed, ref } from 'vue';
 
+// Importiamo le icone necessarie
+import ViewGridIcon from '../icons/ViewGridIcon.vue';
+import BuildingLibraryIcon from '../icons/BuildingLibraryIcon.vue';
+import ViewListIcon from '../icons/ViewListIcon.vue';
+import SparkleIcon from '../icons/SparkleIcon.vue';
+import SettingsIcon from '../icons/SettingsIcon.vue';
+
 // --- STORE ---
 const uiStore = useUiStore();
 const authStore = useAuthStore();
@@ -35,10 +42,11 @@ function openMfaModal(mode) {
 // Dati per i link di navigazione.
 // Usare un array rende più facile gestire l'aggiunta di icone in futuro.
 const navLinks = [
-  { to: '/', text: 'Dashboard', icon: 'D' },
-  { to: '/trades', text: 'Trades', icon: 'T' },
-  { to: '/analytics', text: 'Analytics', icon: 'A' },
-  { to: '#', text: 'Settings', icon: 'S' },
+  { to: '/', text: 'Dashboard', icon: ViewGridIcon },
+  { to: '/playbooks', text: 'Playbooks', icon: BuildingLibraryIcon },
+  { to: '/trades', text: 'Trades', icon: ViewListIcon },
+  { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
+  { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
 </script>
 
@@ -69,7 +77,7 @@ const navLinks = [
         class="nav-item"
         @click="uiStore.closeMobileMenu"
       >
-        <span class="nav-icon">{{ link.icon }}</span>
+        <component :is="link.icon" class="nav-icon" />
         <span v-if="!uiStore.isSidebarCollapsed" class="nav-text">{{ link.text }}</span>
       </RouterLink>
     </nav>
@@ -203,9 +211,9 @@ const navLinks = [
   justify-content: center;
 }
 .nav-icon {
-  font-weight: bold;
-  min-width: 20px;
-  text-align: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0; /* Impedisce all'icona di restringersi */
 }
 
 .nav-item:hover,
