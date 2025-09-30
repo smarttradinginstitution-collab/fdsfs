@@ -8,6 +8,11 @@
 -->
 
 <script setup>
+import { ref } from 'vue';
+
+// --- REFS ---
+const inputElement = ref(null);
+
 // --- PROPS ---
 // Definiamo le "props" che questo componente può accettare dall'esterno.
 defineProps({
@@ -46,6 +51,15 @@ function onInput(event) {
   // Questo aggiorna la variabile collegata con `v-model` nel componente genitore.
   emit('update:modelValue', event.target.value);
 }
+
+// --- EXPOSE ---
+// Esponiamo la funzione `focus` per permettere al genitore di focalizzare
+// programmaticamente questo campo di input.
+defineExpose({
+  focus: () => {
+    inputElement.value?.focus();
+  },
+});
 </script>
 
 <template>
@@ -55,6 +69,7 @@ function onInput(event) {
     <label v-if="label" class="input-label">{{ label }}</label>
     <!-- Questo è il campo di input HTML. -->
     <input
+      ref="inputElement"
       :type="type"
       :value="modelValue"
       :placeholder="placeholder"
