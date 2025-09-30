@@ -20,6 +20,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
 from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
 
+from app.Models.rule_playbook import trades_rules_association
+
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
     from app.Models.asset import Asset
@@ -30,7 +32,7 @@ if TYPE_CHECKING:
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
-    from app.Models.rule_playbook import RulePlaybook, trades_rules_association
+    from app.Models.rule_playbook import RulePlaybook
 
 
 class Trade(Base):
