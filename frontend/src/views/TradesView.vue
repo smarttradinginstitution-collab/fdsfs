@@ -2,8 +2,7 @@
 // =============================================================================
 // FILE: views/TradesView.vue
 // DESCRIZIONE: Questo componente rappresenta la "vista" della pagina "My Trades".
-// Il suo unico scopo è mostrare una tabella con la lista completa di tutti
-// i trade registrati dall'utente.
+// Mostra un dashboard di KPI e una tabella con la lista dei trade.
 // =============================================================================
 -->
 
@@ -34,18 +33,24 @@ onMounted(() => {
 
 // --- COMPUTED PROPERTIES PER LE STATISTICHE ---
 const kpiStats = computed(() => {
+    // Default structure to prevent rendering errors before data is loaded
+    const defaultStat = (key, label) => ({ key, label, value: 'N/A', changeType: 'neutral' });
+    const emptyStats = {
+        netCumulativePnl: { ...defaultStat('netCumulativePnl', 'Net Cumulative P&L'), series: [] },
+        profitFactor: defaultStat('profitFactor', 'Profit Factor'),
+        winPercentage: { ...defaultStat('winPercentage', 'Win %'), wins: 0, losses: 0 },
+        avgWinLoss: { ...defaultStat('avgWinLoss', 'Avg Win/Loss Trade'), avgWin: 0, avgLoss: 0 },
+    };
+
     if (!kpiDashboardData.value) {
-        // Return a default structure to prevent rendering errors
-        const defaultStat = { value: 'N/A', changeType: 'neutral', label: '' };
-        return {
-            netCumulativePnl: { ...defaultStat, key: 'netCumulativePnl', label: 'Net Cumulative P&L', series: [] },
-            profitFactor: { ...defaultStat, key: 'profitFactor', label: 'Profit Factor' },
-            winPercentage: { ...defaultStat, key: 'winPercentage', label: 'Win %', wins: 0, losses: 0 },
-            avgWinLoss: { ...defaultStat, key: 'avgWinLoss', label: 'Avg Win/Loss', avgWin: 0, avgLoss: 0 },
-        };
+        return emptyStats;
     }
 
     const data = kpiDashboardData.value;
+
+    // Calculate Avg Win/Loss Ratio
+    const avgWinLossRatio = data.avgLoss !== 0 ? Math.abs(data.avgWin / data.avgLoss) : 0;
+
     return {
         netCumulativePnl: {
             key: 'netCumulativePnl',
@@ -71,7 +76,7 @@ const kpiStats = computed(() => {
         avgWinLoss: {
             key: 'avgWinLoss',
             label: 'Avg Win/Loss Trade',
-            value: 'N/A', // Questo valore non viene mostrato, il grafico mostra i dettagli
+            value: formatNumber(avgWinLossRatio, 2), // The calculated ratio is the main value
             avgWin: data.avgWin,
             avgLoss: data.avgLoss,
             changeType: 'neutral',
@@ -108,6 +113,8 @@ const kpiStats = computed(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--semantic-size-stack-md);
+  /* This ensures all cards in the grid stretch to the same height */
+  align-items: stretch;
 }
 
 /* Responsive adjustments for smaller screens */
