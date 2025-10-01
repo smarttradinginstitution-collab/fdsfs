@@ -102,9 +102,9 @@ const saveEdit = async () => {
   grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
   gap: 1rem;
   align-items: center;
-  padding: 0.75rem 0; /* No horizontal padding, alignment is by grid */
+  padding: 0.5rem 0; /* Reduced vertical padding */
   border-bottom: 1px solid var(--semantic-color-border-default);
-  font: var(--semantic-font-style-body-lg);
+  font: var(--semantic-font-style-body-md); /* Reduced font size */
 }
 
 .rule-row:last-child {

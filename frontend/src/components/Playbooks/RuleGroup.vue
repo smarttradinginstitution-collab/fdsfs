@@ -168,7 +168,7 @@ const onRuleModalClosed = async () => {
 
 <style scoped>
 .rule-group-container {
-  padding: var(--semantic-size-inset-lg);
+  padding: var(--semantic-size-inset-md); /* Reduced padding for a more compact feel */
   /* The border is now on the rules list itself, so the bottom border here is removed. */
 }
 
@@ -176,7 +176,7 @@ const onRuleModalClosed = async () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: var(--semantic-size-stack-md);
+  margin-bottom: var(--semantic-size-stack-sm); /* Reduced margin */
 }
 
 .drag-handle {
@@ -212,7 +212,7 @@ const onRuleModalClosed = async () => {
 }
 
 .group-footer {
-  margin-top: var(--semantic-size-stack-sm);
+  margin-top: var(--semantic-size-stack-xs); /* Extra reduced margin */
 }
 
 .create-rule-btn {
@@ -220,7 +220,7 @@ const onRuleModalClosed = async () => {
   border: none;
   color: var(--semantic-color-text-secondary);
   cursor: pointer;
-  font: var(--semantic-font-style-body-lg);
+  font: var(--semantic-font-style-body-md); /* Reduced font size */
   padding: 0.25rem;
   margin-left: 3rem; /* Align with rule text */
 }
