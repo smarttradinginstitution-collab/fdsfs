@@ -236,11 +236,11 @@ const chartOptions = computed(() => {
 
 <style scoped>
 .playbook-detail-view {
-  padding: 2rem;
+  padding: 1rem; /* Reduced padding */
   color: var(--semantic-color-text-primary);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem; /* Reduced gap */
 }
 
 .view-header {
@@ -253,7 +253,7 @@ const chartOptions = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font: var(--semantic-font-style-body-lg);
+  font: var(--semantic-font-style-body-md); /* Reduced font size */
 }
 
 .breadcrumb-separator {
@@ -276,7 +276,7 @@ const chartOptions = computed(() => {
 }
 
 .tab-item {
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem; /* Reduced padding */
   text-decoration: none;
   color: var(--semantic-color-text-secondary);
   border-bottom: 2px solid transparent;
@@ -298,10 +298,10 @@ const chartOptions = computed(() => {
     border: 1px solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-surface);
     box-shadow: var(--semantic-effect-shadow-elevation-low);
-    padding: var(--semantic-size-inset-md);
+    padding: var(--semantic-size-inset-sm); /* Reduced padding */
     display: flex;
     flex-direction: column;
-    gap: var(--semantic-size-stack-md);
+    gap: var(--semantic-size-stack-sm); /* Reduced gap */
 }
 
 .metrics-header {
@@ -315,7 +315,7 @@ const chartOptions = computed(() => {
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: var(--semantic-size-stack-lg) var(--semantic-size-stack-md);
+    gap: var(--semantic-size-stack-md) var(--semantic-size-stack-sm); /* Reduced gap */
 }
 
 .settings-button {
@@ -334,10 +334,10 @@ const chartOptions = computed(() => {
 }
 
 .chart-section {
-  margin-top: var(--semantic-size-stack-lg);
+  margin-top: var(--semantic-size-stack-md); /* Reduced margin */
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--semantic-size-stack-xs); /* Reduced gap */
 }
 
 .chart-title {
