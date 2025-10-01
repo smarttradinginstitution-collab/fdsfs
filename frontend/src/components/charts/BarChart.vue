@@ -10,7 +10,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-const props = defineProps({
+defineProps({
   chartData: {
     type: Object,
     required: true,

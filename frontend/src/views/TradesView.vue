@@ -14,7 +14,7 @@
 import { useTradesStore } from '@/stores/trades';
 // Importiamo il nostro componente riutilizzabile `BaseTable` per visualizzare i dati.
 import BaseTable from '@/components/ui/BaseTable.vue';
-// Importiamo il nuovo componente della dashboard KPI.
+// Importiamo la nuova dashboard KPI.
 import KpiDashboard from '@/components/KpiDashboard.vue';
 
 

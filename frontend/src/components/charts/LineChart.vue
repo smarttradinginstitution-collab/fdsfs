@@ -7,7 +7,6 @@ import {
   PointElement,
   LineElement,
   Tooltip,
-  Legend,
   Filler,
 } from 'chart.js';
 
@@ -17,11 +16,10 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Legend,
   Filler
 );
 
-const props = defineProps({
+defineProps({
   chartData: {
     type: Object,
     required: true,

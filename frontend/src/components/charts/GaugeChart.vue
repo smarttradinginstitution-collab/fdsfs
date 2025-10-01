@@ -4,7 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip);
 
-const props = defineProps({
+defineProps({
   chartData: {
     type: Object,
     required: true,
