@@ -1,7 +1,7 @@
 <template>
   <div class="rule-row" :class="{ 'is-editing': isEditing }">
     <!-- Col 1: Drag Handle -->
-    <span class="drag-handle drag-handle-rule">&#x2630;</span>
+    <span class="drag-handle drag-handle-rule">&#x2832;</span>
 
     <!-- Col 2: Rule Text / Input -->
     <div class="col-rule-text">
@@ -114,7 +114,9 @@ const saveEdit = async () => {
 .drag-handle {
   cursor: grab;
   color: var(--semantic-color-text-placeholder);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .col-rule-text {
@@ -127,7 +129,9 @@ const saveEdit = async () => {
 }
 
 .col-action {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* --- Edit Mode Styles --- */

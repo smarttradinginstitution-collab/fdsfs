@@ -2,7 +2,7 @@
   <div class="rule-group-container">
     <!-- Group Header -->
     <div class="group-header">
-      <span class="drag-handle drag-handle-group">&#x2630;</span>
+      <span class="drag-handle drag-handle-group">&#x2832;</span>
       <div v-if="!isEditing" class="title-container">
         <h3 class="group-title">{{ group.name_group }}</h3>
         <ActionsMenu>
@@ -183,6 +183,8 @@ const onRuleModalClosed = async () => {
   cursor: grab;
   color: var(--semantic-color-text-placeholder);
   padding: 0 0.5rem; /* Make it easier to grab */
+  display: flex;
+  align-items: center;
 }
 
 .title-container {
