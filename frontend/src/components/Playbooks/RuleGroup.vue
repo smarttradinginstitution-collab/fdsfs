@@ -5,13 +5,13 @@
       <span class="drag-handle drag-handle-group">
         <DragHandleIcon />
       </span>
-      <div v-if="!isEditing" class="title-container">
+      <template v-if="!isEditing">
         <h3 class="group-title">{{ group.name_group }}</h3>
-        <ActionsMenu>
+        <ActionsMenu class="group-actions">
           <div class="menu-item" @click="startEditing">Edit</div>
           <div class="menu-item menu-item-danger" @click="isGroupDeleteModalVisible = true">Delete</div>
         </ActionsMenu>
-      </div>
+      </template>
       <div v-else class="edit-container">
         <BaseInput
           ref="inputRef"
@@ -69,7 +69,6 @@ import { defineProps, ref, watch, nextTick } from 'vue';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import RuleRow from './RuleRow.vue';
 import draggable from 'vuedraggable';
-import BaseWidget from '@/components/layout/BaseWidget.vue';
 import ActionsMenu from '@/components/ui/ActionsMenu.vue';
 import RuleCreator from './RuleCreator.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -86,7 +85,6 @@ const props = defineProps({
 
 const store = usePlaybookStore();
 
-// --- Drag-and-drop for rules ---
 const localRules = ref([]);
 watch(() => props.group.rules, (newRules) => {
   localRules.value = [...newRules];
@@ -101,7 +99,6 @@ const onRuleDragEnd = async () => {
   });
 };
 
-// --- Inline editing for group title ---
 const isEditing = ref(false);
 const editedName = ref(props.group.name_group);
 const inputRef = ref(null);
@@ -127,24 +124,20 @@ const saveEdit = async () => {
     groupId: props.group.id,
     name_group: editedName.value,
   });
-  isEditing.value = false; // The store action will trigger a refresh
+  isEditing.value = false;
 };
 
-// --- Delete confirmation for Group ---
 const isGroupDeleteModalVisible = ref(false);
 const handleConfirmDeleteGroup = () => {
-  // Step 1: Just close the modal. The actual deletion is handled by the `onGroupModalClosed` event handler.
   isGroupDeleteModalVisible.value = false;
 };
 const onGroupModalClosed = async () => {
-  // Step 2: Modal has finished its closing animation. Now it's safe to delete and refetch.
   await store.deleteRuleGroup({
     playbookId: props.group.playbook_id,
     groupId: props.group.id,
   });
 };
 
-// --- Delete confirmation for Rule ---
 const isRuleDeleteModalVisible = ref(false);
 const ruleToDelete = ref(null);
 
@@ -154,52 +147,46 @@ const promptDeleteRule = (rule) => {
 };
 
 const handleConfirmDeleteRule = () => {
-  // Step 1: Close the modal.
   isRuleDeleteModalVisible.value = false;
 };
 
 const onRuleModalClosed = async () => {
-  // Step 2: Modal is closed. Now delete the rule.
   if (!ruleToDelete.value) return;
   await store.deleteRule({
     playbookId: props.group.playbook_id,
     ruleId: ruleToDelete.value.id,
   });
-  ruleToDelete.value = null; // Clean up
+  ruleToDelete.value = null;
 };
 </script>
 
 <style scoped>
 .rule-group-container {
-  padding: var(--semantic-size-inset-md); /* Reduced padding for a more compact feel */
-  /* The border is now on the rules list itself, so the bottom border here is removed. */
+  padding: var(--semantic-size-inset-md);
 }
 
 .group-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: var(--semantic-size-stack-sm); /* Reduced margin */
+  margin-bottom: var(--semantic-size-stack-sm);
 }
 
 .drag-handle {
   cursor: grab;
   color: var(--semantic-color-text-placeholder);
-  padding: 0 0.5rem; /* Make it easier to grab */
-  display: flex;
-  align-items: center;
+  padding: 0 0.5rem;
 }
 
-.title-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-grow: 1;
+.drag-handle :deep(svg) {
+  display: block; /* The definitive fix for vertical alignment */
 }
 
 .group-title {
   font: var(--semantic-font-style-heading-h5);
   color: var(--semantic-color-text-primary);
+  flex-grow: 1;
+  margin: 0; /* Reset default browser margins */
 }
 
 .edit-container {
@@ -212,12 +199,12 @@ const onRuleModalClosed = async () => {
 .rules-list {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
-  overflow: hidden; /* Ensures the border radius is applied to child elements */
-  padding: 0 var(--semantic-size-inset-lg); /* Horizontal padding for the content inside */
+  overflow: hidden;
+  padding: 0 var(--semantic-size-inset-lg);
 }
 
 .group-footer {
-  margin-top: var(--semantic-size-stack-xs); /* Extra reduced margin */
+  margin-top: var(--semantic-size-stack-xs);
 }
 
 .create-rule-btn {
@@ -225,9 +212,9 @@ const onRuleModalClosed = async () => {
   border: none;
   color: var(--semantic-color-text-secondary);
   cursor: pointer;
-  font: var(--semantic-font-style-body-md); /* Reduced font size */
+  font: var(--semantic-font-style-body-md);
   padding: 0.25rem;
-  margin-left: 3rem; /* Align with rule text */
+  margin-left: 3rem;
 }
 
 .create-rule-btn:hover {

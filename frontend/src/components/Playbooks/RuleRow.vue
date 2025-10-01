@@ -69,7 +69,6 @@ const formatProfitFactor = (value) => {
   return formatNumber(value, 2);
 };
 
-// --- Inline editing for rule text ---
 const isEditing = ref(false);
 const editedText = ref(props.rule.rule);
 const inputRef = ref(null);
@@ -103,11 +102,11 @@ const saveEdit = async () => {
 .rule-row {
   display: grid;
   grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
-  gap: 0.75rem; /* Further reduced gap */
+  gap: 0.75rem;
   align-items: center;
-  padding: 0.25rem 0; /* Further reduced vertical padding */
+  padding: 0.25rem 0;
   border-bottom: 1px solid var(--semantic-color-border-default);
-  font: var(--semantic-font-style-body-sm); /* Further reduced font size */
+  font: var(--semantic-font-style-body-sm);
 }
 
 .rule-row:last-child {
@@ -120,6 +119,10 @@ const saveEdit = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.drag-handle :deep(svg) {
+  display: block; /* The definitive fix for vertical alignment */
 }
 
 .col-rule-text {
@@ -137,7 +140,6 @@ const saveEdit = async () => {
   justify-content: center;
 }
 
-/* --- Edit Mode Styles --- */
 .rule-row.is-editing {
   background-color: var(--semantic-color-surface-hover);
 }
