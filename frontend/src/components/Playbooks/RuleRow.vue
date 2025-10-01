@@ -102,7 +102,7 @@ const saveEdit = async () => {
   grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
   gap: 1rem;
   align-items: center;
-  padding: 0.75rem var(--semantic-size-inset-lg);
+  padding: 0.75rem 0; /* No horizontal padding, alignment is by grid */
   border-bottom: 1px solid var(--semantic-color-border-default);
   font: var(--semantic-font-style-body-lg);
 }
@@ -136,7 +136,6 @@ const saveEdit = async () => {
 }
 
 .rule-row.is-editing .col-rule-text {
-  /* The input is in here, span it across its column */
   grid-column: 2 / 3;
 }
 
@@ -145,7 +144,6 @@ const saveEdit = async () => {
 }
 
 .edit-actions-container {
-  /* Span from the third column to the end, replacing metrics and actions */
   grid-column: 3 / -1;
   display: flex;
   justify-content: flex-end;

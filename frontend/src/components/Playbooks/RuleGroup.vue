@@ -1,7 +1,26 @@
 <template>
-  <div class="rule-group-section">
-    <!-- Group Header Row -->
-    <RuleGroupRow :group="group" @delete="isGroupDeleteModalVisible = true" />
+  <div class="rule-group-container">
+    <!-- Group Header -->
+    <div class="group-header">
+      <span class="drag-handle drag-handle-group">&#x2630;</span>
+      <div v-if="!isEditing" class="title-container">
+        <h3 class="group-title">{{ group.name_group }}</h3>
+        <ActionsMenu>
+          <div class="menu-item" @click="startEditing">Edit</div>
+          <div class="menu-item menu-item-danger" @click="isGroupDeleteModalVisible = true">Delete</div>
+        </ActionsMenu>
+      </div>
+      <div v-else class="edit-container">
+        <BaseInput
+          ref="inputRef"
+          v-model="editedName"
+          @keyup.enter="saveEdit"
+          @keyup.esc="cancelEditing"
+        />
+        <BaseButton size="small" @click="saveEdit">Save</BaseButton>
+        <BaseButton size="small" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
+      </div>
+    </div>
 
     <!-- Modals -->
     <ConfirmationModal
@@ -22,36 +41,38 @@
     />
 
     <!-- Rules List -->
-    <draggable
-      v-model="localRules"
-      class="rules-list"
-      item-key="id"
-      handle=".drag-handle-rule"
-      @end="onRuleDragEnd"
-    >
-      <template #item="{ element: rule }">
-        <RuleRow :rule="rule" @delete="promptDeleteRule" />
-      </template>
-    </draggable>
-
-    <!-- Rule Creator -->
-    <RuleCreator v-if="store.creatingRuleInGroupId === group.id" :group-id="group.id" />
-
-    <!-- Footer for creating a new rule -->
-    <div class="group-footer">
-      <button class="create-rule-btn" @click="store.setCreatingRuleInGroup(group.id)">+ Create new rule</button>
+    <div class="rules-list">
+      <draggable
+        v-model="localRules"
+        item-key="id"
+        handle=".drag-handle-rule"
+        @end="onRuleDragEnd"
+      >
+        <template #item="{ element: rule }">
+          <RuleRow :rule="rule" @delete="promptDeleteRule" />
+        </template>
+      </draggable>
+      <RuleCreator v-if="store.creatingRuleInGroupId === group.id" :group-id="group.id" />
     </div>
+
+    <!-- Footer -->
+    <footer class="group-footer">
+      <button class="create-rule-btn" @click="store.setCreatingRuleInGroup(group.id)">+ Create new rule</button>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { defineProps, ref, watch } from 'vue';
+import { defineProps, ref, watch, nextTick } from 'vue';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import RuleRow from './RuleRow.vue';
 import draggable from 'vuedraggable';
+import BaseWidget from '@/components/layout/BaseWidget.vue';
+import ActionsMenu from '@/components/ui/ActionsMenu.vue';
 import RuleCreator from './RuleCreator.vue';
+import BaseInput from '@/components/ui/BaseInput.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
-import RuleGroupRow from './RuleGroupRow.vue'; // New component
 
 const props = defineProps({
   group: {
@@ -77,12 +98,43 @@ const onRuleDragEnd = async () => {
   });
 };
 
+// --- Inline editing for group title ---
+const isEditing = ref(false);
+const editedName = ref(props.group.name_group);
+const inputRef = ref(null);
+
+const startEditing = async () => {
+  editedName.value = props.group.name_group;
+  isEditing.value = true;
+  await nextTick();
+  inputRef.value?.focus();
+};
+
+const cancelEditing = () => {
+  isEditing.value = false;
+};
+
+const saveEdit = async () => {
+  if (!editedName.value.trim() || editedName.value.trim() === props.group.name_group) {
+    cancelEditing();
+    return;
+  }
+  await store.updateRuleGroup({
+    playbookId: props.group.playbook_id,
+    groupId: props.group.id,
+    name_group: editedName.value,
+  });
+  isEditing.value = false; // The store action will trigger a refresh
+};
+
 // --- Delete confirmation for Group ---
 const isGroupDeleteModalVisible = ref(false);
 const handleConfirmDeleteGroup = () => {
+  // Step 1: Just close the modal. The actual deletion is handled by the `onGroupModalClosed` event handler.
   isGroupDeleteModalVisible.value = false;
 };
 const onGroupModalClosed = async () => {
+  // Step 2: Modal has finished its closing animation. Now it's safe to delete and refetch.
   await store.deleteRuleGroup({
     playbookId: props.group.playbook_id,
     groupId: props.group.id,
@@ -99,38 +151,64 @@ const promptDeleteRule = (rule) => {
 };
 
 const handleConfirmDeleteRule = () => {
+  // Step 1: Close the modal.
   isRuleDeleteModalVisible.value = false;
 };
 
 const onRuleModalClosed = async () => {
+  // Step 2: Modal is closed. Now delete the rule.
   if (!ruleToDelete.value) return;
   await store.deleteRule({
     playbookId: props.group.playbook_id,
     ruleId: ruleToDelete.value.id,
   });
-  ruleToDelete.value = null;
+  ruleToDelete.value = null; // Clean up
 };
 </script>
 
 <style scoped>
-/* The main container for a group and its rules */
-.rule-group-section {
-  /* No border/background here, as it's part of the parent table now */
+.rule-group-container {
+  padding: var(--semantic-size-inset-lg);
+  border-bottom: 1px solid var(--semantic-color-border-default);
+}
+.rule-group-container:last-child {
+  border-bottom: none;
 }
 
-/* The list of rules doesn't need special styling, rows have their own */
-.rules-list {
-  /* This class is for the draggable component */
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--semantic-size-stack-md);
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--semantic-color-text-placeholder);
+  padding: 0 0.5rem; /* Make it easier to grab */
+}
+
+.title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-grow: 1;
+}
+
+.group-title {
+  font: var(--semantic-font-style-heading-h5);
+  color: var(--semantic-color-text-primary);
+}
+
+.edit-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-grow: 1;
 }
 
 .group-footer {
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-lg);
-  border-bottom: 1px solid var(--semantic-color-border-default);
-}
-
-/* The last group should not have a bottom border on its footer */
-.rule-group-section:last-of-type .group-footer {
-  border-bottom: none;
+  margin-top: var(--semantic-size-stack-sm);
 }
 
 .create-rule-btn {
@@ -139,8 +217,8 @@ const onRuleModalClosed = async () => {
   color: var(--semantic-color-text-secondary);
   cursor: pointer;
   font: var(--semantic-font-style-body-lg);
-  padding: 0.25rem 0.75rem; /* Make it easier to click */
-  margin-left: 2.2rem; /* Align with rule text, past the drag handle */
+  padding: 0.25rem;
+  margin-left: 3rem; /* Align with rule text */
 }
 
 .create-rule-btn:hover {
