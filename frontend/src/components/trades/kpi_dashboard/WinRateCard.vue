@@ -5,8 +5,8 @@ import { formatPercentage } from '@/services/formatters';
 
 // Component imports
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import HeaderInfoButton from '@/components/ui/HeaderInfoButton.vue';
-import WinRateGauge from './WinRateGauge.vue'; // This will be created next
+import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
+import WinRateGauge from './WinRateGauge.vue';
 
 // --- PROPS ---
 const props = defineProps({
@@ -25,10 +25,15 @@ const formattedWinRate = computed(() => formatPercentage(winRate.value));
 <template>
   <BaseWidget class="kpi-card">
     <template #header>
-      <div class="header-content">
-        <span>Win %</span>
-        <HeaderInfoButton :title="info.title" :text="info.description" />
-      </div>
+        <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+            <template #title>
+                <span class="header-title">Win %</span>
+            </template>
+            <template #content>
+                <h4 class="info-overlay-title">{{ info.title }}</h4>
+                <p class="info-overlay-text">{{ info.description }}</p>
+            </template>
+        </HeaderInfoOverlay>
     </template>
 
     <div class="widget-main-content">
@@ -52,11 +57,7 @@ const formattedWinRate = computed(() => formatPercentage(winRate.value));
     border-bottom: none;
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+.header-title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
@@ -78,5 +79,16 @@ const formattedWinRate = computed(() => formatPercentage(winRate.value));
 .chart-container {
   width: 80px;
   height: 40px;
+}
+
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>

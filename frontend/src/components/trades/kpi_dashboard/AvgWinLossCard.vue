@@ -5,7 +5,7 @@ import { formatCurrency } from '@/services/formatters';
 
 // Component imports
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import HeaderInfoButton from '@/components/ui/HeaderInfoButton.vue';
+import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
 
 // --- PROPS ---
 const props = defineProps({
@@ -40,10 +40,15 @@ const lossPercentage = computed(() => {
 <template>
   <BaseWidget class="kpi-card">
     <template #header>
-      <div class="header-content">
-        <span>Avg win/loss trade</span>
-        <HeaderInfoButton :title="info.title" :text="info.description" />
-      </div>
+      <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+        <template #title>
+          <span class="header-title">Avg win/loss trade</span>
+        </template>
+        <template #content>
+          <h4 class="info-overlay-title">{{ info.title }}</h4>
+          <p class="info-overlay-text">{{ info.description }}</p>
+        </template>
+      </HeaderInfoOverlay>
     </template>
 
     <div class="widget-main-content">
@@ -73,11 +78,7 @@ const lossPercentage = computed(() => {
     border-bottom: none;
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+.header-title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
@@ -135,5 +136,16 @@ const lossPercentage = computed(() => {
 }
 .loss-label {
     color: var(--semantic-color-feedback-negative-text);
+}
+
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>

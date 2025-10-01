@@ -4,8 +4,8 @@ import { useMetricInfo } from '@/composables/useMetricInfo';
 
 // Component imports
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import HeaderInfoButton from '@/components/ui/HeaderInfoButton.vue';
-import GaugeChart from './GaugeChart.vue'; // This will be created next
+import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
+import GaugeChart from './GaugeChart.vue';
 
 // --- PROPS ---
 const props = defineProps({
@@ -28,10 +28,15 @@ const profitFactorLabel = computed(() => {
 <template>
   <BaseWidget class="kpi-card">
     <template #header>
-      <div class="header-content">
-        <span>Profit Factor</span>
-        <HeaderInfoButton :title="info.title" :text="info.description" />
-      </div>
+        <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+            <template #title>
+                <span class="header-title">Profit Factor</span>
+            </template>
+            <template #content>
+                <h4 class="info-overlay-title">{{ info.title }}</h4>
+                <p class="info-overlay-text">{{ info.description }}</p>
+            </template>
+        </HeaderInfoOverlay>
     </template>
 
     <div class="widget-main-content">
@@ -55,11 +60,7 @@ const profitFactorLabel = computed(() => {
     border-bottom: none; /* No border for these cards */
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+.header-title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
@@ -81,5 +82,16 @@ const profitFactorLabel = computed(() => {
 .chart-container {
   width: 80px; /* Fixed width for gauge charts */
   height: 40px; /* Half height for semi-circle */
+}
+
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>

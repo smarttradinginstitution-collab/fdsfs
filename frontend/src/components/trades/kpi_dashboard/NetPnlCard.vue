@@ -5,8 +5,8 @@ import { formatCurrency } from '@/services/formatters';
 
 // Component imports
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import HeaderInfoButton from '@/components/ui/HeaderInfoButton.vue';
-import PnlLineChart from './PnlLineChart.vue'; // This will be created next
+import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
+import PnlLineChart from './PnlLineChart.vue';
 
 // --- PROPS ---
 const props = defineProps({
@@ -15,7 +15,6 @@ const props = defineProps({
 });
 
 // --- COMPOSABLES ---
-// Using a static key 'netPnl' to fetch the correct description
 const { info } = useMetricInfo('netPnl');
 
 // --- COMPUTED ---
@@ -42,13 +41,18 @@ const chartData = computed(() => ({
 <template>
   <BaseWidget class="net-pnl-card">
     <template #header>
-      <div class="header-content">
-        <div class="title-group">
-          <span>Net Cumulative P&L</span>
-          <span class="trade-count-badge">{{ stats.trade_count }}</span>
-        </div>
-        <HeaderInfoButton :title="info.title" :text="info.description" />
-      </div>
+        <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+            <template #title>
+                <div class="title-group">
+                    <span class="header-title">Net Cumulative P&L</span>
+                    <span class="trade-count-badge">{{ stats.trade_count }}</span>
+                </div>
+            </template>
+            <template #content>
+                <h4 class="info-overlay-title">{{ info.title }}</h4>
+                <p class="info-overlay-text">{{ info.description }}</p>
+            </template>
+        </HeaderInfoOverlay>
     </template>
 
     <div class="widget-main-content">
@@ -74,11 +78,7 @@ const chartData = computed(() => ({
     padding: var(--semantic-size-inset-md);
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+.header-title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
@@ -121,5 +121,16 @@ const chartData = computed(() => ({
   flex-grow: 1;
   min-height: 80px; /* Ensure chart has some space */
   position: relative;
+}
+
+.info-overlay-title {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.info-overlay-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  line-height: var(--base-font-line-height-tight);
 }
 </style>
