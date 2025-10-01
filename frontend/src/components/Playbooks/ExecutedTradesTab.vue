@@ -164,17 +164,17 @@ const prevPage = () => {
 
 .trades-table th,
 .trades-table td {
-  padding: var(--semantic-size-inset-md);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   text-align: left;
   border-bottom: 1px solid var(--semantic-color-border-default);
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-primary);
 }
 
 .trades-table th {
   background-color: var(--semantic-color-surface-secondary);
-  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .trades-table tbody tr:last-child td {
@@ -227,7 +227,7 @@ const prevPage = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--semantic-size-inset-md);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-lg);
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   border-top: 1px solid var(--semantic-color-border-default);
@@ -236,15 +236,14 @@ const prevPage = () => {
 .pagination-controls {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--semantic-size-stack-sm);
 }
 
 .pagination-controls button {
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
-  width: 2rem;
-  height: 2rem;
+  padding: var(--semantic-size-inset-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
