@@ -8,7 +8,7 @@ import NetPnlCard from './NetPnlCard.vue';
 import ProfitFactorCard from './ProfitFactorCard.vue';
 import WinRateCard from './WinRateCard.vue';
 import AvgWinLossCard from './AvgWinLossCard.vue';
-import BaseSpinner from '@/components/ui/BaseSpinner.vue';
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const tradesStore = useTradesStore();
 const { isKpiLoading, kpiDashboardData } = storeToRefs(tradesStore);
@@ -20,7 +20,7 @@ const pnlOverTime = computed(() => kpiDashboardData.value?.pnl_over_time);
 
 <template>
   <div v-if="isKpiLoading" class="kpi-dashboard-loading">
-    <BaseSpinner />
+    <LoadingSpinner />
   </div>
   <div v-else-if="stats" class="kpi-dashboard">
     <!-- Net Cumulative P&L Card -->
