@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, status
 
 from app.Controllers.playbook_controller import PlaybookController
 from app.Schemas.playbook import PlaybookRead, PlaybookCreate, PlaybookUpdate, PlaybookAdminRead, PlaybookAnalytics
+from app.Schemas.trade import TradeRead
 from app.Router.auth import require_roles
 from app.Router.dependencies import get_current_user
 
@@ -81,3 +82,10 @@ router.delete(
     tags=["Playbooks"],
     summary="Elimina un playbook per ID",
 )(playbooks.delete_playbook)
+
+router.get(
+    "/playbooks/{playbook_id}/trades",
+    response_model=List[TradeRead],
+    tags=["Playbooks"],
+    summary="Recupera i trade eseguiti per un playbook",
+)(playbooks.list_trades_for_playbook)
