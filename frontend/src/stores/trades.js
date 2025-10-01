@@ -41,6 +41,7 @@ export const useTradesStore = defineStore('trades', {
     playbookTrades: [], // Trades specifici per un playbook
     playbooks: [], // Sostituisce 'setups'
     dashboardStats: null,
+    kpiDashboardData: null,
     calendarData: [],
     processedStats: null,
     equityCurve: null,
@@ -361,6 +362,25 @@ export const useTradesStore = defineStore('trades', {
       } catch (error) {
         console.error('Errore nel recupero dei playbook:', error);
         this.playbooks = []; // Resetta in caso di errore
+      }
+    },
+
+    async fetchKpiDashboardData() {
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) {
+        this.kpiDashboardData = null;
+        console.log("Nessun trading account selezionato. KPI data non caricati.");
+        return;
+      }
+
+      // Non imposto isLoading qui per non interferire con il loader principale della pagina
+      try {
+        const response = await apiClient.get(`/trades/kpi-dashboard/${selectedAccount.id}`);
+        this.kpiDashboardData = response.data;
+      } catch (error) {
+        console.error('Errore nel recupero dei dati KPI per la dashboard:', error);
+        this.kpiDashboardData = null; // Resetta in caso di errore
       }
     },
 

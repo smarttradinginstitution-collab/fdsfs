@@ -9,57 +9,117 @@
 
 <script setup>
 // --- IMPORTAZIONI ---
-
-// Importiamo lo store Pinia dei trade per accedere alla lista dei dati.
+import { onMounted, computed } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useTradesStore } from '@/stores/trades';
-// Importiamo il nostro componente riutilizzabile `BaseTable` per visualizzare i dati.
+import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters';
+import TradesStatCard from '@/components/dashboard/widgets/TradesStatCard.vue';
 import BaseTable from '@/components/ui/BaseTable.vue';
 
-
 // --- LOGICA DEL COMPONENTE ---
-
-// Creiamo un'istanza dello store per poterlo usare nel template.
 const tradesStore = useTradesStore();
+const tradingAccountsStore = useTradingAccountsStore();
+
+const { kpiDashboardData, trades } = storeToRefs(tradesStore);
+const { selectedTradingAccount } = storeToRefs(tradingAccountsStore);
+
+// --- DATA FETCHING ---
+onMounted(() => {
+  if (selectedTradingAccount.value) {
+    tradesStore.fetchKpiDashboardData();
+    tradesStore.fetchTrades();
+  }
+});
+
+// --- COMPUTED PROPERTIES PER LE STATISTICHE ---
+const kpiStats = computed(() => {
+    if (!kpiDashboardData.value) {
+        // Return a default structure to prevent rendering errors
+        const defaultStat = { value: 'N/A', changeType: 'neutral', label: '' };
+        return {
+            netCumulativePnl: { ...defaultStat, key: 'netCumulativePnl', label: 'Net Cumulative P&L', series: [] },
+            profitFactor: { ...defaultStat, key: 'profitFactor', label: 'Profit Factor' },
+            winPercentage: { ...defaultStat, key: 'winPercentage', label: 'Win %', wins: 0, losses: 0 },
+            avgWinLoss: { ...defaultStat, key: 'avgWinLoss', label: 'Avg Win/Loss', avgWin: 0, avgLoss: 0 },
+        };
+    }
+
+    const data = kpiDashboardData.value;
+    return {
+        netCumulativePnl: {
+            key: 'netCumulativePnl',
+            label: 'Net Cumulative P&L',
+            value: formatCurrency(data.netCumulativePnl.total),
+            changeType: data.netCumulativePnl.total >= 0 ? 'positive' : 'negative',
+            series: data.netCumulativePnl.series,
+        },
+        profitFactor: {
+            key: 'profitFactor',
+            label: 'Profit Factor',
+            value: data.profitFactor ? formatNumber(data.profitFactor, 2) : '∞',
+            changeType: 'neutral',
+        },
+        winPercentage: {
+            key: 'winPercentage',
+            label: 'Win %',
+            value: formatPercentage(data.winPercentage),
+            wins: data.winningTrades,
+            losses: data.losingTrades,
+            changeType: 'neutral',
+        },
+        avgWinLoss: {
+            key: 'avgWinLoss',
+            label: 'Avg Win/Loss Trade',
+            value: 'N/A', // Questo valore non viene mostrato, il grafico mostra i dettagli
+            avgWin: data.avgWin,
+            avgLoss: data.avgLoss,
+            changeType: 'neutral',
+        },
+    };
+});
 </script>
 
 <template>
-  <!-- Il template definisce la struttura HTML della pagina. -->
   <div class="trades-view">
-    <!-- Un semplice titolo per la pagina. -->
-    <h1 class="view-title">My Trades</h1>
-
-    <!--
-    Qui usiamo il nostro componente `BaseTable`.
-    - `:headers` riceve la lista delle intestazioni dal getter dello store.
-    - `:items` riceve la lista dei trade direttamente dallo stato dello store.
-    Questo mostra la potenza di avere uno store centralizzato e componenti riutilizzabili:
-    la vista diventa molto semplice e si occupa solo di "assemblare" i pezzi.
-    -->
+    <div class="kpi-dashboard">
+        <TradesStatCard :stat="kpiStats.netCumulativePnl" />
+        <TradesStatCard :stat="kpiStats.profitFactor" />
+        <TradesStatCard :stat="kpiStats.winPercentage" />
+        <TradesStatCard :stat="kpiStats.avgWinLoss" />
+    </div>
     <BaseTable
       :headers="tradesStore.tradeHeaders"
-      :items="tradesStore.trades"
+      :items="trades"
     />
   </div>
 </template>
 
 <style scoped>
-/*
-Gli stili "scoped" si applicano solo a questo componente.
-In questo caso, sono stati rimossi perché la dashboard-view non esiste in questo file.
-Se fossero necessari stili specifici, andrebbero qui. Esempio:
-.trades-view {
-  padding: var(--semantic-size-inset-xl);
-}
-*/
 .trades-view {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
-  padding: var(--semantic-size-inset-xl); /* Aggiunto padding per coerenza */
-  flex-grow: 1; /* Aggiunto per occupare lo spazio disponibile */
+  padding: var(--semantic-size-inset-xl);
+  flex-grow: 1;
 }
-.view-title {
-  font: var(--semantic-font-style-heading-h3);
-  color: var(--semantic-color-text-primary);
+
+.kpi-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--semantic-size-stack-md);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1200px) {
+  .kpi-dashboard {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-dashboard {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

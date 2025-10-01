@@ -81,3 +81,43 @@ class ProcessedStats(BaseModel):
     win_loss_days: WinLossDays
     monthly_totals: Dict[str, float]
     weekly_totals: Dict[str, Dict[str, Any]]
+
+# --- Schemi per /trades/kpi-dashboard ---
+
+class CumulativePnlPoint(BaseModel):
+    """Rappresenta un singolo punto dati nel grafico P&L cumulativo."""
+    trade_order: int
+    cumulative_pnl: float
+
+class NetCumulativePnlData(BaseModel):
+    """Contiene i dati per la card Net Cumulative P&L."""
+    total: float
+    series: List[CumulativePnlPoint]
+
+class KpiDashboardData(BaseModel):
+    """Schema per i dati del KPI Dashboard nella pagina Trades."""
+    net_cumulative_pnl: NetCumulativePnlData = Field(..., alias="netCumulativePnl")
+    profit_factor: Optional[float] = Field(..., alias="profitFactor")
+    win_percentage: float = Field(..., alias="winPercentage")
+    winning_trades: int = Field(..., alias="winningTrades")
+    losing_trades: int = Field(..., alias="losingTrades")
+    avg_win: float = Field(..., alias="avgWin")
+    avg_loss: float = Field(..., alias="avgLoss")
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "netCumulativePnl": {
+                    "total": 1374183.95,
+                    "series": [
+                        { "trade_order": 1, "cumulative_pnl": 500.50 },
+                        { "trade_order": 2, "cumulative_pnl": 1200.75 },
+                    ]
+                },
+                "profitFactor": 5.68,
+                "winPercentage": 66.67,
+                "avgWin": 13023.90,
+                "avgLoss": -4584.78
+            }
+        }

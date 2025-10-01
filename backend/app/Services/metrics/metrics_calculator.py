@@ -135,6 +135,53 @@ class MetricsCalculator:
             "net_pnl": self.net_pnl,
         }
 
+    def get_kpi_dashboard_metrics(self) -> Dict[str, Any]:
+        """
+        Calculates and returns the specific set of metrics required for the
+        main KPI dashboard on the Trades page.
+        """
+        if self.trade_count == 0:
+            return {
+                "net_cumulative_pnl": {"total": 0.0, "series": []},
+                "profit_factor": None,
+                "win_percentage": 0.0,
+                "avg_win": 0.0,
+                "avg_loss": 0.0,
+            }
+
+        win_percentage = (self.winning_trades_count / self.trade_count) * 100
+        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
+        avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else 0
+        # Avg loss is stored as a positive value in gross_loss, so we make it negative for the response.
+        avg_loss = -(self.gross_loss / self.losing_trades_count) if self.losing_trades_count > 0 else 0
+
+        cumulative_pnl_series = self._calculate_cumulative_pnl_series()
+
+        return {
+            "net_cumulative_pnl": {
+                "total": self.net_pnl,
+                "series": cumulative_pnl_series,
+            },
+            "profit_factor": profit_factor,
+            "win_percentage": win_percentage,
+            "winning_trades": self.winning_trades_count,
+            "losing_trades": self.losing_trades_count,
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+        }
+
+    def _calculate_cumulative_pnl_series(self) -> List[Dict[str, Any]]:
+        """
+        Generates the series of data points for the cumulative P&L chart.
+        """
+        series = []
+        cumulative_pnl = 0.0
+        for i, trade in enumerate(self.trades):
+            if trade.p_l is not None:
+                cumulative_pnl += trade.p_l
+                series.append({"trade_order": i + 1, "cumulative_pnl": cumulative_pnl})
+        return series
+
     def _get_default_metrics(self) -> Dict[str, Any]:
         """Returns a dictionary with default values for when there are no trades."""
         default_processed = {

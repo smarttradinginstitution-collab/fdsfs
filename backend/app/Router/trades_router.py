@@ -21,6 +21,7 @@ from app.Schemas.analytics import (
     VantageScoreData,
     EquityCurveData,
     TradeSummary,
+    KpiDashboardData,
 )
 
 controller = TradesController()
@@ -91,6 +92,18 @@ async def get_trade_summary(
     service: AnalyticsService = Depends(),
 ):
     return await controller.get_trade_summary(trading_account_id, start_date, end_date, service)
+
+
+@router.get("/kpi-dashboard/{trading_account_id}", response_model=KpiDashboardData)
+async def get_kpi_dashboard(
+    trading_account_id: UUID,
+    service: AnalyticsService = Depends(),
+):
+    """
+    Restituisce i dati aggregati per il KPI Dashboard nella pagina Trades.
+    Utilizza tutti i trade dell'account, senza filtri di data.
+    """
+    return await controller.get_kpi_dashboard(trading_account_id, service)
 
 
 # --- CRUD Trades ---

@@ -19,7 +19,8 @@ from app.Schemas.analytics import (
     EquityCurveData,
     StrategyPerformance,
     WinLossDays,
-    TradeSummary
+    TradeSummary,
+    KpiDashboardData
 )
 
 class AnalyticsService:
@@ -33,13 +34,29 @@ class AnalyticsService:
         self.trading_account_repo = TradingAccountRepository(db)
 
     async def _get_calculator(self, trading_account_id: UUID, start_date: date, end_date: date) -> MetricsCalculator:
-        """Helper method to get trades and instantiate the calculator."""
+        """Helper method to get date-filtered trades and instantiate the calculator."""
         trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date)
         trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
 
         initial_balance = trading_account.initial_balance if trading_account else 0.0
 
         return MetricsCalculator(trades, initial_balance)
+
+    async def _get_full_calculator(self, trading_account_id: UUID) -> MetricsCalculator:
+        """Helper method to get all trades for an account and instantiate the calculator."""
+        trades = await self.trade_repo.list_by_trading_account_id(trading_account_id)
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+        initial_balance = trading_account.initial_balance if trading_account else 0.0
+        return MetricsCalculator(trades, initial_balance)
+
+    async def get_kpi_dashboard_data(self, trading_account_id: UUID) -> KpiDashboardData:
+        """
+        Calculates and returns the specific metrics for the KPI dashboard.
+        This uses all trades for the account, ignoring date filters.
+        """
+        calculator = await self._get_full_calculator(trading_account_id)
+        kpi_metrics = calculator.get_kpi_dashboard_metrics()
+        return KpiDashboardData(**kpi_metrics)
 
     async def get_performance_metrics(
         self, trading_account_id: UUID, start_date: date, end_date: date
