@@ -4,9 +4,10 @@ from __future__ import annotations
 import uuid
 from typing import Any, Optional, TYPE_CHECKING
 
-from sqlalchemy import String, TIMESTAMP, ForeignKey, func
+from sqlalchemy import String, TIMESTAMP, ForeignKey, func, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.schema import FetchedValue
 
 from app.Infrastructure.db import Base
 
@@ -25,6 +26,10 @@ class Asset(Base):
     )
     symbol: Mapped[Optional[str]] = mapped_column(String)
     name: Mapped[Optional[str]] = mapped_column(String)
+    symbol_norm: Mapped[Optional[str]] = mapped_column(
+        Text, server_default=FetchedValue(), nullable=True
+    )
+    market: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     asset_class_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.asset_classes.id"),
