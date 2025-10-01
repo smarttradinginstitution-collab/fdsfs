@@ -679,5 +679,30 @@ export const useTradesStore = defineStore('trades', {
         }
       }
     },
+
+    async deleteTrade(tradeId) {
+      this.isLoading = true;
+      try {
+        await apiClient.delete(`/trades/${tradeId}`);
+
+        // Remove the trade from the local state
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades.splice(index, 1);
+        }
+
+        // Refresh related data
+        await this.fetchAllDataForDashboard();
+
+      } catch (error) {
+        console.error('Error deleting trade:', error);
+        // Optionally, show a toast notification to the user
+        const uiStore = useUiStore();
+        uiStore.showToast({ message: 'Failed to delete trade.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

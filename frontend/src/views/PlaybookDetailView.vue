@@ -73,10 +73,12 @@
         <PlaybookRulesTab />
       </div>
 
-      <!-- Other Tabs Placeholders -->
+      <!-- Executed Trades Tab -->
       <div v-if="activeTab === 'Executed Trades'">
-        <p>Executed Trades will be displayed here.</p>
+        <ExecutedTradesTab />
       </div>
+
+      <!-- Other Tabs Placeholders -->
       <div v-if="activeTab === 'Missed Trades'">
         <p>Missed Trades will be displayed here.</p>
       </div>
@@ -94,6 +96,7 @@ import { usePlaybookStore } from '@/stores/playbookStore';
 import MetricItem from '@/components/analytics/MetricItem.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import PlaybookRulesTab from '@/components/Playbooks/PlaybookRulesTab.vue';
+import ExecutedTradesTab from '@/components/Playbooks/ExecutedTradesTab.vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 import { Line } from 'vue-chartjs';
 import {
