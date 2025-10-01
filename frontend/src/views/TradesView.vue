@@ -14,6 +14,8 @@
 import { useTradesStore } from '@/stores/trades';
 // Importiamo il nostro componente riutilizzabile `BaseTable` per visualizzare i dati.
 import BaseTable from '@/components/ui/BaseTable.vue';
+// Importiamo il nuovo componente della dashboard KPI.
+import KpiDashboard from '@/components/KpiDashboard.vue';
 
 
 // --- LOGICA DEL COMPONENTE ---
@@ -26,7 +28,10 @@ const tradesStore = useTradesStore();
   <!-- Il template definisce la struttura HTML della pagina. -->
   <div class="trades-view">
     <!-- Un semplice titolo per la pagina. -->
-    <h1 class="view-title">My Trades</h1>
+    <h1 class="view-title">Trade Log</h1>
+
+    <!-- Inseriamo la nuova dashboard KPI in cima alla pagina -->
+    <KpiDashboard />
 
     <!--
     Qui usiamo il nostro componente `BaseTable`.
