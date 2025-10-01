@@ -10,6 +10,7 @@
       v-for="playbook in playbooks"
       :key="playbook.id"
       :playbook="playbook"
+      :layout="layout"
     />
   </div>
 </template>
