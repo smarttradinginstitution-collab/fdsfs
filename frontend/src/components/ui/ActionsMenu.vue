@@ -1,5 +1,5 @@
 <template>
-  <PopoverMenu class="actions-menu">
+  <PopoverMenu class="actions-menu" style="position: relative; z-index: 10;">
     <template #trigger="{ toggle }">
       <button @click.stop="toggle" class="trigger-button">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="icon">
@@ -8,8 +8,8 @@
       </button>
     </template>
     <template #content="{ close }">
-      <div class="menu-content" @click="close">
-        <slot></slot>
+      <div class="menu-content" @click.stop>
+        <slot :close-menu="close"></slot>
       </div>
     </template>
   </PopoverMenu>

@@ -91,7 +91,7 @@ onMounted(() => {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  overflow: hidden;
+  /* overflow: hidden; */ /* This was clipping the actions menu popover */
 }
 
 .table-header {

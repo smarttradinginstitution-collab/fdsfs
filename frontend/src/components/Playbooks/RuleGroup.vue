@@ -8,8 +8,10 @@
       <template v-if="!isEditing">
         <h3 class="group-title">{{ group.name_group }}</h3>
         <ActionsMenu class="group-actions">
-          <div class="menu-item" @click="startEditing">Edit</div>
-          <div class="menu-item menu-item-danger" @click="isGroupDeleteModalVisible = true">Delete</div>
+          <template #default="{ closeMenu }">
+            <div class="menu-item" @click="() => { startEditing(); closeMenu(); }">Edit</div>
+            <div class="menu-item menu-item-danger" @click="() => { isGroupDeleteModalVisible = true; closeMenu(); }">Delete</div>
+          </template>
         </ActionsMenu>
       </template>
       <div v-else class="edit-container">
@@ -199,7 +201,7 @@ const onRuleModalClosed = async () => {
 .rules-list {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
-  overflow: hidden;
+  /* overflow: hidden; */ /* This was clipping the actions menu popover */
   padding: 0 var(--semantic-size-inset-lg);
 }
 
