@@ -100,11 +100,11 @@ const saveEdit = async () => {
 .rule-row {
   display: grid;
   grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
-  gap: 1rem;
+  gap: 0.75rem; /* Further reduced gap */
   align-items: center;
-  padding: 0.5rem 0; /* Reduced vertical padding */
+  padding: 0.25rem 0; /* Further reduced vertical padding */
   border-bottom: 1px solid var(--semantic-color-border-default);
-  font: var(--semantic-font-style-body-md); /* Reduced font size */
+  font: var(--semantic-font-style-body-sm); /* Further reduced font size */
 }
 
 .rule-row:last-child {
