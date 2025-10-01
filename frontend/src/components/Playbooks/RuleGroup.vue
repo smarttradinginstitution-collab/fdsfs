@@ -201,7 +201,7 @@ const onRuleModalClosed = async () => {
 .rules-list {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
-  overflow: hidden;
+  /* overflow: hidden; */ /* This was clipping the actions menu popover */
   padding: 0 var(--semantic-size-inset-lg);
 }
 
