@@ -1,7 +1,5 @@
 <script setup>
 import { computed } from 'vue';
-<script setup>
-import { computed } from 'vue';
 import GaugeChart from './StatCard/GaugeChart.vue';
 import WinLossDonutChart from './StatCard/WinLossDonutChart.vue';
 import MiniPnlLineChart from './StatCard/MiniPnlLineChart.vue';

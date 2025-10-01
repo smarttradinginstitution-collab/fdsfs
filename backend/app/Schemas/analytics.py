@@ -117,6 +117,8 @@ class KpiDashboardData(BaseModel):
                 },
                 "profitFactor": 5.68,
                 "winPercentage": 66.67,
+                "winningTrades": 20,
+                "losingTrades": 10,
                 "avgWin": 13023.90,
                 "avgLoss": -4584.78
             }

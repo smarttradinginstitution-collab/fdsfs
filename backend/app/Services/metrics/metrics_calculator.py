@@ -145,11 +145,13 @@ class MetricsCalculator:
                 "net_cumulative_pnl": {"total": 0.0, "series": []},
                 "profit_factor": None,
                 "win_percentage": 0.0,
+                "winning_trades": 0,
+                "losing_trades": 0,
                 "avg_win": 0.0,
                 "avg_loss": 0.0,
             }
 
-        win_percentage = (self.winning_trades_count / self.trade_count) * 100
+        win_percentage = (self.winning_trades_count / self.trade_count) * 100 if self.trade_count > 0 else 0
         profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
         avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else 0
         # Avg loss is stored as a positive value in gross_loss, so we make it negative for the response.
