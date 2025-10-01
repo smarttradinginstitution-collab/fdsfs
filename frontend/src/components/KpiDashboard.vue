@@ -135,13 +135,16 @@ const barOptions = {
     <p>{{ error }}</p>
   </div>
   <div v-else-if="summaryData" class="kpi-dashboard">
-    <!-- Card 1: Net Cumulative P&L -->
-    <KpiCard class="card-layout-horizontal">
-      <div class="text-content">
+    <!-- Card 1: Net Cumulative P&L (New 3-Row Layout) -->
+    <KpiCard class="pnl-card-layout">
+      <div class="pnl-header">
         <h3 class="card-title">Net Cumulative P&L</h3>
+        <span class="trade-badge">{{ summaryData.stats.trade_count }} trades</span>
+      </div>
+      <div class="pnl-metric">
         <p class="metric-value">{{ formatCurrency(summaryData.stats.net_pnl) }}</p>
       </div>
-      <div class="chart-content line-chart-wrapper">
+      <div class="pnl-chart-area">
         <LineChart :chart-data="pnlLineChartData" :chart-options="pnlLineChartOptions" />
       </div>
     </KpiCard>
@@ -208,7 +211,42 @@ const barOptions = {
   line-height: 1.1;
 }
 
-/* --- Card 1, 2, 3: Horizontal Layout --- */
+/* --- Card 1: PnL 3-Row Layout --- */
+.pnl-card-layout {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--semantic-size-stack-xs); /* Space between rows */
+}
+
+.pnl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.trade-badge {
+  background-color: var(--semantic-color-surface-secondary);
+  padding: var(--semantic-size-badge-padding-y, 4px) var(--semantic-size-badge-padding-x, 8px);
+  border-radius: var(--semantic-border-radius-tag, 999px);
+  font: var(--semantic-font-style-label-sm, 12px);
+  color: var(--semantic-color-text-secondary);
+}
+
+.pnl-metric {
+  /* This row is dedicated to the main metric value */
+  padding-top: var(--semantic-size-stack-xxs);
+  padding-bottom: var(--semantic-size-stack-sm);
+}
+
+.pnl-chart-area {
+  flex-grow: 1;
+  width: 100%;
+  min-height: 70px; /* Give the chart area a minimum height */
+}
+
+
+/* --- Card 2 & 3: Horizontal Layout --- */
 .card-layout-horizontal {
   flex-direction: row;
   align-items: center;
