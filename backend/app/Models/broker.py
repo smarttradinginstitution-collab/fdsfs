@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
     from app.Models.platform import Platform
     from app.Models.asset_alias import AssetAlias
+    from app.Models.broker_asset_class import BrokerAssetClass
 
 class Broker(Base):
     __tablename__ = "brokers"
@@ -36,4 +37,9 @@ class Broker(Base):
     )
     asset_aliases: Mapped[list["AssetAlias"]] = relationship(
         "AssetAlias", back_populates="broker", cascade="all, delete-orphan"
+    )
+    asset_classes_association: Mapped[list["BrokerAssetClass"]] = relationship(
+        "BrokerAssetClass",
+        back_populates="broker",
+        cascade="all, delete-orphan",
     )

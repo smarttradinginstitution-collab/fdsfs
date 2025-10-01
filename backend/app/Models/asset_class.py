@@ -12,6 +12,7 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.asset import Asset
+    from app.Models.broker_asset_class import BrokerAssetClass
 
 
 class AssetClass(Base):
@@ -29,4 +30,7 @@ class AssetClass(Base):
     # Relazioni
     assets: Mapped[list["Asset"]] = relationship(
         "Asset", back_populates="asset_class"
+    )
+    brokers_association: Mapped[list[BrokerAssetClass]] = relationship(
+        "BrokerAssetClass", back_populates="asset_class"
     )
