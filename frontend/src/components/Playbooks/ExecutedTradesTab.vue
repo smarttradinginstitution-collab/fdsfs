@@ -89,7 +89,8 @@ const executedTrades = computed(() => {
   if (!tradesStore.trades || tradesStore.trades.length === 0) {
     return [];
   }
-  return tradesStore.trades.filter(trade => trade.playbook_id === playbookId.value);
+  // Corrected the filter to check the nested playbook object's ID.
+  return tradesStore.trades.filter(trade => trade.playbook?.id === playbookId.value);
 });
 
 const formatDate = (timestamp) => {
