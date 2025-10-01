@@ -45,6 +45,8 @@ export const useTradesStore = defineStore('trades', {
     processedStats: null,
     equityCurve: null,
     vantageScore: null, // Dati per il VantageScoreWidget
+    kpiDashboardData: null, // Dati per il nuovo KPI Dashboard
+    isKpiLoading: false,
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
@@ -656,6 +658,36 @@ export const useTradesStore = defineStore('trades', {
     /**
      * Azione master per caricare tutti i dati della dashboard in parallelo.
      */
+    async fetchKpiDashboardData() {
+      this.isKpiLoading = true;
+      const tradingAccountsStore = useTradingAccountsStore();
+      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      if (!selectedAccount) {
+        this.kpiDashboardData = null;
+        this.isKpiLoading = false;
+        return;
+      }
+
+      const filterStore = useFilterStore();
+      const params = {
+        start_date: filterStore.startDate?.toISOString().split('T')[0],
+        end_date: filterStore.endDate?.toISOString().split('T')[0],
+      };
+
+      try {
+        const response = await apiClient.get(`/trades/kpi-dashboard/${selectedAccount.id}`, { params });
+        this.kpiDashboardData = response.data;
+      } catch (error) {
+        console.error('Error fetching KPI dashboard data:', error);
+        this.kpiDashboardData = null;
+      } finally {
+        this.isKpiLoading = false;
+      }
+    },
+
+    /**
+     * Azione master per caricare tutti i dati della dashboard in parallelo.
+     */
     async fetchAllDataForDashboard() {
       const uiStore = useUiStore();
       if (uiStore.isInitialLoadPending) {
@@ -671,6 +703,7 @@ export const useTradesStore = defineStore('trades', {
           this.fetchEquityCurve(),
           this.fetchPlaybooks(),
           this.fetchVantageScore(),
+          this.fetchKpiDashboardData(), // Aggiunto il fetch dei dati per i KPI
         ]);
       } finally {
         this.isLoading = false;

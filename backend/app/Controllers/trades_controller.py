@@ -17,6 +17,7 @@ from app.Schemas.analytics import (
     VantageScoreData,
     EquityCurveData,
     TradeSummary,
+    KpiDashboardData,
 )
 
 
@@ -82,6 +83,15 @@ class TradesController:
         service: AnalyticsService,
     ) -> TradeSummary:
         return await service.get_trade_summary(trading_account_id, start_date, end_date)
+
+    async def get_kpi_dashboard_data(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date,
+        service: AnalyticsService,
+    ) -> KpiDashboardData:
+        return await service.get_kpi_dashboard_data(trading_account_id, start_date, end_date)
 
     # --- CRUD Trades ---
     async def create_trade(

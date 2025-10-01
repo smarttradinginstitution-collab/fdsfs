@@ -59,6 +59,17 @@ class TradeSummary(BaseModel):
     stats: PerformanceStats
     cumulative_pnl_series: EquityCurveData
 
+
+# --- Schemi per KPI Dashboard ---
+class PnlOverTimeData(BaseModel):
+    labels: List[int]  # Numero progressivo del trade
+    data: List[float]  # PnL cumulativo
+
+
+class KpiDashboardData(BaseModel):
+    stats: PerformanceStats
+    pnl_over_time: PnlOverTimeData
+
 # --- Schemi per /processed-stats ---
 class StrategyPerformance(BaseModel):
     trade_count: int

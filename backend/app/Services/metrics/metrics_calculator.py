@@ -184,6 +184,24 @@ class MetricsCalculator:
 
         return {"labels": labels, "data": equity_data}
 
+    def calculate_pnl_over_time_by_trade(self) -> Dict[str, List[Any]]:
+        """
+        Calculates the cumulative P&L curve against the number of trades.
+        The x-axis represents the progressive trade number.
+        """
+        # Start with the initial balance as the first data point (trade 0)
+        cumulative_pnl_data = [self.initial_balance]
+        current_pnl = self.initial_balance
+
+        for trade in self.trades:
+            if trade.p_l is not None:
+                current_pnl += trade.p_l
+                cumulative_pnl_data.append(current_pnl)
+
+        # Labels are progressive trade numbers, starting from 0 for the initial balance.
+        labels = list(range(len(cumulative_pnl_data)))
+
+        return {"labels": labels, "data": cumulative_pnl_data}
 
     def calculate_max_drawdown(self, equity_curve: List[float]) -> (float, float):
         """

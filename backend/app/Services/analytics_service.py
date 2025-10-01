@@ -19,7 +19,9 @@ from app.Schemas.analytics import (
     EquityCurveData,
     StrategyPerformance,
     WinLossDays,
-    TradeSummary
+    TradeSummary,
+    KpiDashboardData,
+    PnlOverTimeData,
 )
 
 class AnalyticsService:
@@ -183,3 +185,49 @@ class AnalyticsService:
             stats=performance_metrics.stats,
             cumulative_pnl_series=equity_curve
         )
+
+    async def get_kpi_dashboard_data(
+        self, trading_account_id: UUID, start_date: date, end_date: date
+    ) -> KpiDashboardData:
+        """
+        Calculates and returns all data required for the KPI dashboard.
+        """
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        all_metrics = calculator.get_all_metrics()
+        pnl_over_time = calculator.calculate_pnl_over_time_by_trade()
+
+        # Map base metrics to the PerformanceStats schema
+        stats = PerformanceStats(
+            net_pnl=all_metrics["net_pnl"],
+            roi_percentage=all_metrics["roi_percentage"],
+            gross_profit=all_metrics["gross_profit"],
+            gross_loss=all_metrics["gross_loss"],
+            win_rate=all_metrics["win_rate"],
+            trade_count=all_metrics["trade_count"],
+            winning_trades=all_metrics["winning_trades"],
+            losing_trades=all_metrics["losing_trades"],
+            breakeven_trades=all_metrics["breakeven_trades"],
+            profit_factor=all_metrics["profit_factor"],
+            profit_factor_label=all_metrics["profit_factor_label"],
+            avg_win=all_metrics["avg_win"],
+            avg_loss=all_metrics["avg_loss"],
+            largest_profit=all_metrics["largest_profit"],
+            largest_loss=all_metrics["largest_loss"],
+            max_consecutive_wins=all_metrics["max_consecutive_wins"],
+            max_consecutive_losses=all_metrics["max_consecutive_losses"],
+            average_hold_time=all_metrics["average_hold_time"],
+            expectancy=all_metrics["expectancy"],
+            average_trade_pnl=all_metrics["average_trade_pnl"],
+            avg_realized_rr=all_metrics["avg_realized_rr"],
+            max_drawdown_abs=all_metrics["max_drawdown_abs"],
+            max_drawdown_percentage=all_metrics["max_drawdown_percentage"],
+            sharpe_ratio=all_metrics["sharpe_ratio"]
+        )
+
+        # Map P&L over time data
+        pnl_data = PnlOverTimeData(
+            labels=pnl_over_time["labels"],
+            data=pnl_over_time["data"]
+        )
+
+        return KpiDashboardData(stats=stats, pnl_over_time=pnl_data)
