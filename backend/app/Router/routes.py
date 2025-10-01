@@ -222,6 +222,40 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 📦 ASSET CLASSES (protetto: user/admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import asset_class_router
+
+router.include_router(
+    asset_class_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 📈 ASSETS (protetto: user/admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import asset_router
+
+router.include_router(
+    asset_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 🔗 ASSET ALIASES (protetto: admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import asset_alias_router
+
+router.include_router(
+    asset_alias_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+router.include_router(
+    asset_alias_router.asset_nested_router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 💻 PLATFORMS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import platform_router

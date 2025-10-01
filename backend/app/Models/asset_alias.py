@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Optional, TYPE_CHECKING
 
-from sqlalchemy import TIMESTAMP, ForeignKey, func, Text
+from sqlalchemy import TIMESTAMP, ForeignKey, func, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,7 @@ class AssetAlias(Base):
         UUID(as_uuid=True), ForeignKey("public.platforms.id", ondelete="CASCADE"), nullable=True
     )
     alias: Mapped[str] = mapped_column(Text, nullable=False)
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default='false')
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
