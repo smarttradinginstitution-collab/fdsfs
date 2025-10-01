@@ -4,6 +4,7 @@ import uuid
 from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.Models.broker_asset_class import BrokerAssetClass
 from app.Schemas.broker_asset_class import BrokerAssetClassCreate
@@ -42,7 +43,11 @@ class BrokerAssetClassRepository:
         return result.scalars().first()
 
     async def list_by_broker_id(self, broker_id: uuid.UUID) -> List[BrokerAssetClass]:
-        """Lists all associations for a given broker."""
-        stmt = select(BrokerAssetClass).where(BrokerAssetClass.broker_id == broker_id)
+        """Lists all associations for a given broker, with asset classes eagerly loaded."""
+        stmt = (
+            select(BrokerAssetClass)
+            .where(BrokerAssetClass.broker_id == broker_id)
+            .options(selectinload(BrokerAssetClass.asset_class))
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
