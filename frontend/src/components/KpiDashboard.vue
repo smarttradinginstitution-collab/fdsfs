@@ -215,7 +215,7 @@ const barOptions = {
 .pnl-card-layout {
   flex-direction: column;
   justify-content: flex-start;
-  gap: var(--semantic-size-stack-xs); /* Space between rows */
+  gap: var(--base-size-fluid-spacing-xs); /* Fluid Gap */
 }
 
 .pnl-header {
@@ -227,22 +227,21 @@ const barOptions = {
 
 .trade-badge {
   background-color: var(--semantic-color-surface-secondary);
-  padding: var(--semantic-size-badge-padding-y, 4px) var(--semantic-size-badge-padding-x, 8px);
+  padding: var(--base-size-fluid-spacing-badge-padding-y) var(--base-size-fluid-spacing-badge-padding-x); /* Fluid Padding */
   border-radius: var(--semantic-border-radius-tag, 999px);
-  font: var(--semantic-font-style-label-sm, 12px);
+  font: var(--semantic-font-style-label-md); /* Corrected to fluid font token */
   color: var(--semantic-color-text-secondary);
 }
 
 .pnl-metric {
-  /* This row is dedicated to the main metric value */
-  padding-top: var(--semantic-size-stack-xxs);
-  padding-bottom: var(--semantic-size-stack-sm);
+  padding-top: var(--base-size-fluid-spacing-xxs); /* Fluid Padding */
+  padding-bottom: var(--base-size-fluid-spacing-sm); /* Fluid Padding */
 }
 
 .pnl-chart-area {
   flex-grow: 1;
   width: 100%;
-  min-height: 70px; /* Give the chart area a minimum height */
+  min-height: 70px;
 }
 
 
@@ -251,13 +250,13 @@ const barOptions = {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--base-size-fluid-spacing-md); /* Fluid Gap */
 }
 
 .text-content {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xxs);
+  gap: var(--base-size-fluid-spacing-xxs); /* Fluid Gap */
 }
 
 .chart-content {
@@ -278,7 +277,7 @@ const barOptions = {
 .card-layout-vertical {
   flex-direction: column;
   justify-content: space-between;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--base-size-fluid-spacing-sm); /* Fluid Gap */
 }
 
 .top-row {
@@ -290,12 +289,12 @@ const barOptions = {
 .bottom-row {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
+  gap: var(--base-size-fluid-spacing-xs); /* Fluid Gap */
 }
 
 .bar-chart-wrapper {
   width: 100%;
-  height: 24px; /* Explicit height for the bar container */
+  height: 24px;
 }
 
 .bar-labels {
