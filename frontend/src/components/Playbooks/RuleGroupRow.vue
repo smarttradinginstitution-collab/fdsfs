@@ -1,27 +1,38 @@
 <template>
   <div class="group-row" :class="{ 'is-editing': isEditing }">
-    <div class="group-row-content">
-      <span class="drag-handle drag-handle-group">&#x2630;</span>
-      <div v-if="!isEditing" class="title-container">
+    <!-- Col 1: Drag Handle -->
+    <span class="drag-handle drag-handle-group">&#x2630;</span>
+
+    <!-- Normal Mode -->
+    <template v-if="!isEditing">
+      <div class="title-container">
         <h3 class="group-title">{{ group.name_group }}</h3>
       </div>
-      <div v-else class="edit-container">
+      <!-- This spacer ensures the actions menu aligns to the last column -->
+      <div class="spacer"></div>
+      <div class="actions-container">
+        <ActionsMenu>
+          <div class="menu-item" @click="startEditing">Edit</div>
+          <div class="menu-item menu-item-danger" @click="$emit('delete')">Delete</div>
+        </ActionsMenu>
+      </div>
+    </template>
+
+    <!-- Editing Mode -->
+    <template v-else>
+      <div class="edit-container">
         <BaseInput
           ref="inputRef"
           v-model="editedName"
           @keyup.enter="saveEdit"
           @keyup.esc="cancelEditing"
         />
+      </div>
+      <div class="edit-actions">
         <BaseButton size="small" @click="saveEdit">Save</BaseButton>
         <BaseButton size="small" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
       </div>
-    </div>
-    <div v-if="!isEditing" class="header-right">
-      <ActionsMenu>
-        <div class="menu-item" @click="startEditing">Edit</div>
-        <div class="menu-item menu-item-danger" @click="$emit('delete')">Delete</div>
-      </ActionsMenu>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -75,26 +86,29 @@ const saveEdit = async () => {
 
 <style scoped>
 .group-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  /* A simpler grid to align with the main table's handle, content, and action columns */
+  grid-template-columns: 40px 1fr 60px;
+  gap: 1rem;
   align-items: center;
   padding: 0.75rem var(--semantic-size-inset-lg);
   background-color: var(--semantic-color-surface-secondary);
   border-bottom: 1px solid var(--semantic-color-border-default);
-  font: var(--semantic-font-style-heading-h5);
-  color: var(--semantic-color-text-primary);
-}
-
-.group-row-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-grow: 1;
 }
 
 .drag-handle {
   cursor: grab;
   color: var(--semantic-color-text-placeholder);
+  text-align: center;
+}
+
+.group-title {
+  font: var(--semantic-font-style-heading-h5);
+  color: var(--semantic-color-text-primary);
+}
+
+.actions-container {
+  text-align: center;
 }
 
 .edit-container {
@@ -102,10 +116,5 @@ const saveEdit = async () => {
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-}
-
-.header-right {
-  /* Aligns with the action column in the rule rows */
-  padding-right: 4px;
 }
 </style>

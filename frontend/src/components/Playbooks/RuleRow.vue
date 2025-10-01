@@ -1,7 +1,10 @@
 <template>
   <div class="rule-row" :class="{ 'is-editing': isEditing }">
-    <div class="col-rule">
-      <span class="drag-handle drag-handle-rule">&#x2630;</span>
+    <!-- Col 1: Drag Handle -->
+    <span class="drag-handle drag-handle-rule">&#x2630;</span>
+
+    <!-- Col 2: Rule Text / Input -->
+    <div class="col-rule-text">
       <div v-if="!isEditing" class="rule-text">{{ rule.rule }}</div>
       <BaseInput
         v-else
@@ -28,12 +31,10 @@
     </template>
 
     <!-- Save/Cancel Actions (Editing Mode) -->
-    <template v-else>
-      <div class="edit-actions-container">
-        <BaseButton size="sm" @click="saveEdit" :disabled="!editedText.trim()">Save</BaseButton>
-        <BaseButton size="sm" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
-      </div>
-    </template>
+    <div v-if="isEditing" class="edit-actions-container">
+      <BaseButton size="sm" @click="saveEdit" :disabled="!editedText.trim()">Save</BaseButton>
+      <BaseButton size="sm" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
+    </div>
   </div>
 </template>
 
@@ -98,7 +99,7 @@ const saveEdit = async () => {
 <style scoped>
 .rule-row {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) repeat(4, minmax(0, 1fr)) 40px;
+  grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
   gap: 1rem;
   align-items: center;
   padding: 0.75rem var(--semantic-size-inset-lg);
@@ -110,16 +111,14 @@ const saveEdit = async () => {
   border-bottom: none;
 }
 
-.col-rule {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--semantic-color-text-primary);
-}
-
 .drag-handle {
   cursor: grab;
   color: var(--semantic-color-text-placeholder);
+  text-align: center;
+}
+
+.col-rule-text {
+  color: var(--semantic-color-text-primary);
 }
 
 .col-metric {
@@ -131,17 +130,14 @@ const saveEdit = async () => {
   text-align: center;
 }
 
-.kebab-menu {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.5rem;
-  color: var(--semantic-color-text-secondary);
-}
-
 /* --- Edit Mode Styles --- */
 .rule-row.is-editing {
   background-color: var(--semantic-color-surface-hover);
+}
+
+.rule-row.is-editing .col-rule-text {
+  /* The input is in here, span it across its column */
+  grid-column: 2 / 3;
 }
 
 .edit-input {
@@ -149,7 +145,8 @@ const saveEdit = async () => {
 }
 
 .edit-actions-container {
-  grid-column: 2 / -1; /* Span from the second column to the end */
+  /* Span from the third column to the end, replacing metrics and actions */
+  grid-column: 3 / -1;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;

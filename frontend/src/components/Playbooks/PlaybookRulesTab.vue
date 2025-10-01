@@ -11,9 +11,10 @@
       <div class="rules-table-container">
         <!-- Global Table Header -->
         <div class="table-header">
-          <span class="col-rule">Rule</span>
+          <span class="col-rule-header"></span> <!-- Empty space for drag handle column -->
+          <span class="col-main-header">Rule</span>
           <span class="col-metric">Follow Rate</span>
-          <span class="col-metric">Net Profit / Loss</span>
+          <span class="col-metric">Net P/L</span>
           <span class="col-metric">Profit Factor</span>
           <span class="col-metric">Win Rate</span>
           <span class="col-action"></span>
@@ -95,14 +96,11 @@ onMounted(() => {
 
 .table-header {
   display: grid;
-  /* Match this with the RuleRow grid */
-  grid-template-columns: minmax(0, 3fr) repeat(4, minmax(0, 1fr)) 40px;
+  grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
   gap: 1rem;
   padding: 0.75rem var(--semantic-size-inset-lg);
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
