@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps } from 'vue';
+import { defineProps, computed } from 'vue';
 import BaseWidget from '../layout/BaseWidget.vue';
 import DoughnutChart from './DoughnutChart.vue';
 import { formatCurrency } from '@/services/formatters.js';
@@ -9,6 +9,14 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  layout: {
+    type: String,
+    default: 'grid',
+  },
+});
+
+const statsGridClass = computed(() => {
+  return props.layout === 'grid' ? 'layout-grid' : '';
 });
 </script>
 
@@ -22,7 +30,7 @@ const props = defineProps({
         </div>
       </template>
 
-      <div class="stats-grid">
+      <div class="stats-grid" :class="statsGridClass">
         <!-- Win Rate with Doughnut Chart -->
         <div class="stat-item win-rate-stat">
           <div class="donut-chart-container">
@@ -104,6 +112,11 @@ const props = defineProps({
   /* Use the widget's content padding, no extra top padding needed */
   padding: var(--semantic-size-inset-lg);
   padding-top: var(--semantic-size-stack-lg);
+}
+
+/* When in grid view, force a 3-column layout for the stats */
+.stats-grid.layout-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .stat-item {
