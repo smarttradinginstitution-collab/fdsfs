@@ -169,10 +169,7 @@ const onRuleModalClosed = async () => {
 <style scoped>
 .rule-group-container {
   padding: var(--semantic-size-inset-lg);
-  border-bottom: 1px solid var(--semantic-color-border-default);
-}
-.rule-group-container:last-child {
-  border-bottom: none;
+  /* The border is now on the rules list itself, so the bottom border here is removed. */
 }
 
 .group-header {
@@ -205,6 +202,13 @@ const onRuleModalClosed = async () => {
   align-items: center;
   gap: 0.5rem;
   flex-grow: 1;
+}
+
+.rules-list {
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  overflow: hidden; /* Ensures the border radius is applied to child elements */
+  padding: 0 var(--semantic-size-inset-lg); /* Horizontal padding for the content inside */
 }
 
 .group-footer {
