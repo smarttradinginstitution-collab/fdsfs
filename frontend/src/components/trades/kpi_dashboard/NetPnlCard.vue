@@ -26,12 +26,12 @@ const chartData = computed(() => ({
   datasets: [
     {
       data: props.pnlData.data,
-      borderColor: pnlIsPositive.value ? 'var(--semantic-color-chart-profit)' : 'var(--semantic-color-chart-loss)',
-      backgroundColor: pnlIsPositive.value ? 'var(--semantic-color-chart-profit-transparent)' : 'var(--semantic-color-chart-loss-transparent)',
+      borderColor: 'rgba(34, 197, 94, 1)',
+      backgroundColor: 'rgba(34, 197, 94, 0.1)',
       fill: true,
       tension: 0.4,
-      pointRadius: 0, // Hide points
-      borderWidth: 2,
+      pointRadius: 0,
+      borderWidth: 1.5,
     },
   ],
 }));
@@ -39,57 +39,60 @@ const chartData = computed(() => ({
 </script>
 
 <template>
-  <BaseWidget class="net-pnl-card">
-    <template #header>
-        <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
-            <template #title>
-                <div class="title-group">
-                    <span class="header-title">Net Cumulative P&L</span>
-                    <span class="trade-count-badge">{{ stats.trade_count }}</span>
-                </div>
-            </template>
+  <div class="stat-card-container">
+    <div class="header">
+        <div class="title-group">
+            <span class="title">Net Cumulative P&L</span>
+            <span class="badge">{{ stats.trade_count }}</span>
+        </div>
+         <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
             <template #content>
                 <h4 class="info-overlay-title">{{ info.title }}</h4>
                 <p class="info-overlay-text">{{ info.description }}</p>
             </template>
         </HeaderInfoOverlay>
-    </template>
-
-    <div class="widget-main-content">
-      <p class="pnl-value" :class="{ 'positive': pnlIsPositive, 'negative': !pnlIsPositive }">
-        {{ formattedPnl }}
-      </p>
-      <div class="chart-container">
-        <PnlLineChart v-if="pnlData.labels.length > 1" :chart-data="chartData" />
-      </div>
     </div>
-  </BaseWidget>
+
+    <div class="content">
+        <p class="value">{{ formattedPnl }}</p>
+        <div class="chart-wrapper">
+            <PnlLineChart v-if="pnlData && pnlData.labels.length > 1" :chart-data="chartData" />
+        </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.net-pnl-card :deep(.widget-content) {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* Align content to the bottom */
-}
-.net-pnl-card :deep(.widget-header) {
-    min-height: auto;
-    padding: var(--semantic-size-inset-md);
+.stat-card-container {
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-md);
+  display: grid;
+  grid-template-rows: auto 1fr; /* Header auto, content 1fr */
+  height: 100%;
 }
 
-.header-title {
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--semantic-size-stack-sm);
 }
 
 .title-group {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--semantic-size-stack-xs);
 }
 
-.trade-count-badge {
+.title {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+}
+
+.badge {
   font: var(--semantic-font-style-body-xxs);
   background-color: var(--semantic-color-surface-sunken);
   color: var(--semantic-color-text-secondary);
@@ -97,32 +100,28 @@ const chartData = computed(() => ({
   border-radius: var(--semantic-border-radius-tag);
 }
 
-.widget-main-content {
-  padding: var(--semantic-size-inset-md);
-  padding-top: 0;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
+.content {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Value auto, chart 1fr */
+    align-items: flex-end; /* Align items to the bottom */
+    gap: var(--semantic-size-gutter-md);
+    height: 100%;
 }
 
-.pnl-value {
+.value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
-  margin-bottom: var(--semantic-size-stack-sm);
-}
-.pnl-value.positive {
-  color: var(--semantic-color-feedback-positive-text);
-}
-.pnl-value.negative {
-  color: var(--semantic-color-feedback-negative-text);
+  line-height: 1; /* Adjust line height to prevent extra space */
 }
 
-.chart-container {
-  flex-grow: 1;
-  min-height: 80px; /* Ensure chart has some space */
+.chart-wrapper {
   position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 60px; /* Give chart a minimum height */
 }
 
+/* Info Overlay Styling */
 .info-overlay-title {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);

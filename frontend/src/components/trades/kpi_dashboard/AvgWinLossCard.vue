@@ -4,7 +4,6 @@ import { useMetricInfo } from '@/composables/useMetricInfo';
 import { formatCurrency } from '@/services/formatters';
 
 // Component imports
-import BaseWidget from '@/components/layout/BaseWidget.vue';
 import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
 
 // --- PROPS ---
@@ -21,106 +20,101 @@ const avgWin = computed(() => props.stats.avg_win ?? 0);
 const avgLoss = computed(() => props.stats.avg_loss ?? 0);
 
 const formattedAvgWin = computed(() => formatCurrency(avgWin.value));
-const formattedAvgLoss = computed(() => formatCurrency(avgLoss.value));
+const formattedAvgLoss = computed(() => `-${formatCurrency(avgLoss.value)}`);
 
 const total = computed(() => avgWin.value + avgLoss.value);
 
 const winPercentage = computed(() => {
-  if (total.value === 0) return 50; // Default to 50/50 if no data
-  return (avgWin.value / total.value) * 100;
-});
-
-const lossPercentage = computed(() => {
   if (total.value === 0) return 50;
-  return (avgLoss.value / total.value) * 100;
+  return (avgWin.value / total.value) * 100;
 });
 
 </script>
 
 <template>
-  <BaseWidget class="kpi-card">
-    <template #header>
-      <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
-        <template #title>
-          <span class="header-title">Avg win/loss trade</span>
-        </template>
-        <template #content>
-          <h4 class="info-overlay-title">{{ info.title }}</h4>
-          <p class="info-overlay-text">{{ info.description }}</p>
-        </template>
-      </HeaderInfoOverlay>
-    </template>
+  <div class="stat-card-container">
+    <div class="header">
+        <span class="title">Avg win/loss trade</span>
+        <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+            <template #content>
+                <h4 class="info-overlay-title">{{ info.title }}</h4>
+                <p class="info-overlay-text">{{ info.description }}</p>
+            </template>
+        </HeaderInfoOverlay>
+    </div>
 
-    <div class="widget-main-content">
-      <p class="stat-value">{{ avgRR }}</p>
-      <div class="bar-and-labels">
+    <div class="content">
+      <p class="value">{{ avgRR }}</p>
+      <div class="bar-area">
         <div class="bar-container">
-          <div class="bar-segment win-bar" :style="{ width: winPercentage + '%' }"></div>
-          <div class="bar-segment loss-bar" :style="{ width: lossPercentage + '%' }"></div>
+          <div class="win-bar" :style="{ width: winPercentage + '%' }"></div>
         </div>
         <div class="labels-container">
-          <span class="label win-label">{{ formattedAvgWin }}</span>
-          <span class="label loss-label">{{ formattedAvgLoss }}</span>
+          <span class="label-win">{{ formattedAvgWin }}</span>
+          <span class="label-loss">{{ formattedAvgLoss }}</span>
         </div>
       </div>
     </div>
-  </BaseWidget>
+  </div>
 </template>
 
 <style scoped>
-.kpi-card :deep(.widget-content) {
-  padding: 0;
-  padding-top: var(--semantic-size-inset-lg);
-}
-.kpi-card :deep(.widget-header) {
-    min-height: auto;
-    padding: var(--semantic-size-inset-md);
-    border-bottom: none;
+.stat-card-container {
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-md);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.header-title {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--semantic-size-stack-sm);
+}
+
+.title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
-.widget-main-content {
-  padding: var(--semantic-size-inset-md);
-  padding-top: 0;
+.content {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-md);
+  justify-content: center; /* Center content vertically */
+  flex-grow: 1;
+  gap: var(--semantic-size-stack-xs);
 }
 
-.stat-value {
+.value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
+  line-height: 1;
 }
 
-.bar-and-labels {
+.bar-area {
     display: flex;
     flex-direction: column;
-    gap: var(--semantic-size-stack-xs);
+    gap: var(--semantic-size-stack-xxs);
 }
 
 .bar-container {
-  display: flex;
   width: 100%;
   height: 8px;
+  background-color: var(--semantic-color-chart-loss);
   border-radius: var(--semantic-border-radius-pill);
   overflow: hidden;
 }
 
-.bar-segment {
-  height: 100%;
-  transition: width 0.3s ease-in-out;
-}
-
 .win-bar {
+  height: 100%;
   background-color: var(--semantic-color-chart-profit);
-}
-
-.loss-bar {
-  background-color: var(--semantic-color-chart-loss);
+  border-radius: var(--semantic-border-radius-pill);
+  transition: width 0.4s ease-out;
 }
 
 .labels-container {
@@ -128,16 +122,17 @@ const lossPercentage = computed(() => {
   justify-content: space-between;
 }
 
-.label {
-  font: var(--semantic-font-style-body-sm);
+.label-win, .label-loss {
+  font: var(--semantic-font-style-body-xs);
 }
-.win-label {
-    color: var(--semantic-color-feedback-positive-text);
+.label-win {
+  color: var(--semantic-color-feedback-positive-text);
 }
-.loss-label {
-    color: var(--semantic-color-feedback-negative-text);
+.label-loss {
+  color: var(--semantic-color-feedback-negative-text);
 }
 
+/* Info Overlay Styling */
 .info-overlay-title {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);

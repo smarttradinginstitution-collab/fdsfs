@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import { useMetricInfo } from '@/composables/useMetricInfo';
 
 // Component imports
-import BaseWidget from '@/components/layout/BaseWidget.vue';
 import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
 import GaugeChart from './GaugeChart.vue';
 
@@ -26,64 +25,69 @@ const profitFactorLabel = computed(() => {
 </script>
 
 <template>
-  <BaseWidget class="kpi-card">
-    <template #header>
+  <div class="stat-card-container">
+    <div class="header">
+        <span class="title">Profit Factor</span>
         <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
-            <template #title>
-                <span class="header-title">Profit Factor</span>
-            </template>
             <template #content>
                 <h4 class="info-overlay-title">{{ info.title }}</h4>
                 <p class="info-overlay-text">{{ info.description }}</p>
             </template>
         </HeaderInfoOverlay>
-    </template>
+    </div>
 
-    <div class="widget-main-content">
-      <p class="stat-value">{{ profitFactorLabel }}</p>
-      <div class="chart-container">
+    <div class="content">
+      <p class="value">{{ profitFactorLabel }}</p>
+      <div class="chart-wrapper">
         <GaugeChart :value="profitFactor" :max-value="5" />
       </div>
     </div>
-  </BaseWidget>
+  </div>
 </template>
 
 <style scoped>
-/* Reusable styles for the simple KPI cards */
-.kpi-card :deep(.widget-content) {
-  padding: 0;
-  padding-top: var(--semantic-size-inset-lg);
-}
-.kpi-card :deep(.widget-header) {
-    min-height: auto;
-    padding: var(--semantic-size-inset-md);
-    border-bottom: none; /* No border for these cards */
+.stat-card-container {
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-md);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.header-title {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--semantic-size-stack-sm);
+}
+
+.title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
-.widget-main-content {
-  padding: var(--semantic-size-inset-md);
-  padding-top: 0;
+.content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--semantic-size-gutter-md);
+  flex-grow: 1; /* Make content take up available space */
 }
 
-.stat-value {
+.value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
+  line-height: 1;
 }
 
-.chart-container {
-  width: 80px; /* Fixed width for gauge charts */
-  height: 40px; /* Half height for semi-circle */
+.chart-wrapper {
+  width: 90px;
+  height: 45px; /* Half of width for semi-circle */
 }
 
+/* Info Overlay Styling */
 .info-overlay-title {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);

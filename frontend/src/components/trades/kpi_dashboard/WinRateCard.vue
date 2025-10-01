@@ -4,7 +4,6 @@ import { useMetricInfo } from '@/composables/useMetricInfo';
 import { formatPercentage } from '@/services/formatters';
 
 // Component imports
-import BaseWidget from '@/components/layout/BaseWidget.vue';
 import HeaderInfoOverlay from '@/components/ui/HeaderInfoOverlay.vue';
 import WinRateGauge from './WinRateGauge.vue';
 
@@ -23,64 +22,69 @@ const formattedWinRate = computed(() => formatPercentage(winRate.value));
 </script>
 
 <template>
-  <BaseWidget class="kpi-card">
-    <template #header>
+  <div class="stat-card-container">
+    <div class="header">
+        <span class="title">Win %</span>
         <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
-            <template #title>
-                <span class="header-title">Win %</span>
-            </template>
             <template #content>
                 <h4 class="info-overlay-title">{{ info.title }}</h4>
                 <p class="info-overlay-text">{{ info.description }}</p>
             </template>
         </HeaderInfoOverlay>
-    </template>
+    </div>
 
-    <div class="widget-main-content">
-      <p class="stat-value">{{ formattedWinRate }}</p>
-      <div class="chart-container">
+    <div class="content">
+      <p class="value">{{ formattedWinRate }}</p>
+      <div class="chart-wrapper">
         <WinRateGauge :win-rate="winRate" />
       </div>
     </div>
-  </BaseWidget>
+  </div>
 </template>
 
 <style scoped>
-/* Reusing styles from ProfitFactorCard.vue for consistency */
-.kpi-card :deep(.widget-content) {
-  padding: 0;
-  padding-top: var(--semantic-size-inset-lg);
-}
-.kpi-card :deep(.widget-header) {
-    min-height: auto;
-    padding: var(--semantic-size-inset-md);
-    border-bottom: none;
+.stat-card-container {
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-md);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.header-title {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--semantic-size-stack-sm);
+}
+
+.title {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
-.widget-main-content {
-  padding: var(--semantic-size-inset-md);
-  padding-top: 0;
+.content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--semantic-size-gutter-md);
+  flex-grow: 1;
 }
 
-.stat-value {
+.value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
+  line-height: 1;
 }
 
-.chart-container {
-  width: 80px;
-  height: 40px;
+.chart-wrapper {
+  width: 60px; /* Slightly smaller for the full circle gauge */
+  height: 60px;
 }
 
+/* Info Overlay Styling */
 .info-overlay-title {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);
