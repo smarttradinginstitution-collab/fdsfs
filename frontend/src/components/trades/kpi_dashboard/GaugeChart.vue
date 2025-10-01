@@ -13,7 +13,7 @@ const props = defineProps({
   },
   maxValue: {
     type: Number,
-    default: 5, // Default max for Profit Factor
+    default: 5,
   },
 });
 
@@ -27,8 +27,8 @@ const chartData = computed(() => {
       {
         data: [safeValue, remaining],
         backgroundColor: [
-          'var(--semantic-color-chart-profit)', // Color for the value
-          'var(--semantic-color-surface-sunken)', // Color for the remainder
+          '#22c55e', // Hardcoded color for profit (green-500)
+          '#e9e9ea', // Hardcoded color for remainder (gray-100)
         ],
         borderColor: 'transparent',
         borderWidth: 0,
@@ -40,12 +40,12 @@ const chartData = computed(() => {
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  rotation: -90, // Start from the top
-  circumference: 180, // Make it a semi-circle
-  cutout: '75%', // Adjust thickness of the gauge
+  rotation: -90,
+  circumference: 180,
+  cutout: '75%',
   plugins: {
     tooltip: {
-      enabled: false, // Disable tooltips
+      enabled: false,
     },
   },
 };

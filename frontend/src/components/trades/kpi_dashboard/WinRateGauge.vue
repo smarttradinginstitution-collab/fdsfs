@@ -23,8 +23,8 @@ const chartData = computed(() => {
       {
         data: [wr, lossRate],
         backgroundColor: [
-          'var(--semantic-color-chart-profit)', // Color for win portion
-          'var(--semantic-color-chart-loss)',   // Color for loss portion
+          '#22c55e', // Hardcoded color for win portion (green-500)
+          '#ef4444',   // Hardcoded color for loss portion (red-500)
         ],
         borderColor: 'transparent',
         borderWidth: 0,
