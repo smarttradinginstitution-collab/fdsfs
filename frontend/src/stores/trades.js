@@ -38,6 +38,7 @@ const mapBackendTradeToFrontend = (trade) => ({
 export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
+    playbookTrades: [], // Trades specifici per un playbook
     playbooks: [], // Sostituisce 'setups'
     dashboardStats: null,
     calendarData: [],
@@ -700,6 +701,19 @@ export const useTradesStore = defineStore('trades', {
         const uiStore = useUiStore();
         uiStore.showToast({ message: 'Failed to delete trade.', type: 'danger' });
         throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchTradesByPlaybook(playbookId) {
+      this.isLoading = true;
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}/trades`);
+        this.playbookTrades = response.data.map(mapBackendTradeToFrontend);
+      } catch (error) {
+        console.error(`Errore nel recupero dei trade per il playbook ${playbookId}:`, error);
+        this.playbookTrades = [];
       } finally {
         this.isLoading = false;
       }

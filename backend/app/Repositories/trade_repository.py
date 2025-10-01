@@ -49,6 +49,12 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def list_by_playbook_id(self, playbook_id: UUID) -> List[Trade]:
+        """Elenca tutti i trade per un dato playbook."""
+        query = self._get_trade_query().where(Trade.playbook_id == playbook_id)
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def get_filtered_trades(
         self,
         trading_account_id: UUID,

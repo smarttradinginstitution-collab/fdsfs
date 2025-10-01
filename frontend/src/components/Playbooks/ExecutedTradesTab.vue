@@ -82,16 +82,12 @@ const tradesStore = useTradesStore();
 const playbookId = computed(() => route.params.id);
 
 onMounted(() => {
-  tradesStore.fetchTrades();
+  if (playbookId.value) {
+    tradesStore.fetchTradesByPlaybook(playbookId.value);
+  }
 });
 
-const executedTrades = computed(() => {
-  if (!tradesStore.trades || tradesStore.trades.length === 0) {
-    return [];
-  }
-  // The trade object has a direct `playbook_id`, not a nested object.
-  return tradesStore.trades.filter(trade => trade.playbook_id === playbookId.value);
-});
+const executedTrades = computed(() => tradesStore.playbookTrades);
 
 const formatDate = (timestamp) => {
   if (!timestamp) return 'N/A';

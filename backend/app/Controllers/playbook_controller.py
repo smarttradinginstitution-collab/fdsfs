@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
+from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.playbook import (
     PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
 )
+from app.Schemas.trade import TradeRead
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 from app.Services.playbook_analytics_service import PlaybookAnalyticsService
@@ -177,3 +179,26 @@ class PlaybookController:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook non trovato o accesso negato.")
 
         return analytics_data
+
+    async def list_trades_for_playbook(
+        self,
+        playbook_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        general_account_id: UUID = Depends(get_current_general_account_id),
+        db: AsyncSession = Depends(get_db),
+    ) -> List[TradeRead]:
+        """
+        Recupera tutti i trade associati a un playbook specifico, verificando la proprietà.
+        """
+        playbook_repo = PlaybookRepository(db)
+        playbook = await playbook_repo.get_by_id(playbook_id)
+
+        if not playbook:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook non trovato.")
+
+        if not current_user.is_admin and playbook.general_account_id != general_account_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
+
+        trade_repo = TradeRepository(db)
+        trades = await trade_repo.list_by_playbook_id(playbook_id)
+        return [TradeRead.from_orm(trade) for trade in trades]
