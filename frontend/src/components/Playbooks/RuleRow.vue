@@ -26,8 +26,10 @@
       <div class="col-metric">{{ formatPercentage(rule.metrics.win_rate) }}</div>
       <div class="col-action">
         <ActionsMenu>
-          <div class="menu-item" @click="startEditing">Edit</div>
-          <div class="menu-item menu-item-danger" @click="emit('delete', rule)">Delete</div>
+          <template #default="{ closeMenu }">
+            <div class="menu-item" @click="() => { startEditing(); closeMenu(); }">Edit</div>
+            <div class="menu-item menu-item-danger" @click="() => { emit('delete', rule); closeMenu(); }">Delete</div>
+          </template>
         </ActionsMenu>
       </div>
     </template>

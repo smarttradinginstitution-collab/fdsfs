@@ -8,8 +8,8 @@
       </button>
     </template>
     <template #content="{ close }">
-      <div class="menu-content" @click="close">
-        <slot></slot>
+      <div class="menu-content" @click.stop>
+        <slot :close-menu="close"></slot>
       </div>
     </template>
   </PopoverMenu>
