@@ -11,12 +11,13 @@
       <div class="rules-table-container">
         <!-- Global Table Header -->
         <div class="table-header">
-          <span class="col-rule">Rule</span>
+          <span></span> <!-- Spacer for handle -->
+          <span class="col-main-header">Rule</span>
           <span class="col-metric">Follow Rate</span>
-          <span class="col-metric">Net Profit / Loss</span>
+          <span class="col-metric">Net P/L</span>
           <span class="col-metric">Profit Factor</span>
           <span class="col-metric">Win Rate</span>
-          <span class="col-action"></span>
+          <span></span> <!-- Spacer for actions -->
         </div>
 
         <!-- Groups and Rules -->
@@ -34,7 +35,7 @@
         </draggable>
 
         <!-- Empty State -->
-        <div v-else class="empty-state-internal">
+        <div v-else class="empty-state">
           <p>No rule groups have been created for this playbook yet.</p>
           <p>Click "+ Create Group" to get started.</p>
         </div>
@@ -90,30 +91,27 @@ onMounted(() => {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  overflow: hidden; /* Ensures child borders don't poke out of rounded corners */
+  overflow: hidden;
 }
 
 .table-header {
   display: grid;
-  /* Match this with the RuleRow grid */
-  grid-template-columns: minmax(0, 3fr) repeat(4, minmax(0, 1fr)) 40px;
+  grid-template-columns: 40px 4fr repeat(4, 1.5fr) 60px;
   gap: 1rem;
   padding: 0.75rem var(--semantic-size-inset-lg);
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
-.col-metric {
+.table-header .col-metric {
   text-align: right;
 }
 
-/* No gap needed for the new design */
 .groups-container {
   display: flex;
   flex-direction: column;
+  /* No gap, groups are continuous */
 }
 
 .loading-state, .error-state {
@@ -126,7 +124,7 @@ onMounted(() => {
   border: 1px solid var(--semantic-color-border-default);
 }
 
-.empty-state-internal {
+.empty-state {
   text-align: center;
   padding: 4rem;
   font: var(--semantic-font-style-body-lg);
