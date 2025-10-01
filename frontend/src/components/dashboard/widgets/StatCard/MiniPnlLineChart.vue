@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
 
@@ -14,28 +14,43 @@ const props = defineProps({
   },
 });
 
+// --- REFS ---
+const chartBackgroundColor = ref('transparent'); // Default transparent background
+const chartBorderColor = ref('transparent');
+
+// --- LIFECYCLE HOOKS ---
+onMounted(() => {
+  // This code runs only on the client, after the component is mounted
+  // and has access to the DOM and computed styles.
+  const style = getComputedStyle(document.documentElement);
+  const profitRgb = style.getPropertyValue('--semantic-color-chart-profit-rgb').trim();
+
+  chartBorderColor.value = `rgba(${profitRgb}, 1)`;
+
+  const ctx = document.createElement('canvas').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 80);
+  gradient.addColorStop(0, `rgba(${profitRgb}, 0.3)`);
+  gradient.addColorStop(1, `rgba(${profitRgb}, 0)`);
+
+  chartBackgroundColor.value = gradient;
+});
+
+
 // --- CHART DATA & OPTIONS ---
 const chartData = computed(() => {
   const labels = props.series.map(p => p.trade_order);
   const data = props.series.map(p => p.cumulative_pnl);
-
-  // Create a gradient for the background fill
-  const ctx = document.createElement('canvas').getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 0, 80); // Adjust gradient height
-  gradient.addColorStop(0, `rgba(var(--semantic-color-chart-profit-rgb), 0.3)`);
-  gradient.addColorStop(1, `rgba(var(--semantic-color-chart-profit-rgb), 0)`);
-
 
   return {
     labels: labels,
     datasets: [
       {
         data: data,
-        borderColor: 'var(--semantic-color-chart-profit)',
-        backgroundColor: gradient,
+        borderColor: chartBorderColor.value,
+        backgroundColor: chartBackgroundColor.value,
         tension: 0.4,
         fill: true,
-        pointRadius: 0, // No points on the line
+        pointRadius: 0,
         borderWidth: 2,
       },
     ],
@@ -63,15 +78,14 @@ const chartOptions = {
 
 <template>
   <div class="mini-chart-container">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line v-if="chartBackgroundColor !== 'transparent'" :data="chartData" :options="chartOptions" />
   </div>
 </template>
 
 <style scoped>
 .mini-chart-container {
-  /* Set a specific height and width for the chart area */
   width: 100%;
-  height: 60px; /* Adjust height as needed */
+  height: 60px;
   position: relative;
 }
 </style>
