@@ -133,12 +133,13 @@ const props = defineProps({
 }
 
 .stat-item .value {
-  font: var(--semantic-font-style-heading-sm);
+  font: var(--semantic-font-style-body-sm);
+  font-weight: 600; /* Medium weight to make it stand out */
   color: var(--semantic-color-text-primary);
 }
 
 .stat-item .label {
-  font: var(--semantic-font-style-body-xs);
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 </style>
