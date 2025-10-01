@@ -79,7 +79,7 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 const route = useRoute();
 const tradesStore = useTradesStore();
 
-const playbookId = computed(() => parseInt(route.params.id, 10));
+const playbookId = computed(() => route.params.id);
 
 onMounted(() => {
   tradesStore.fetchTrades();
