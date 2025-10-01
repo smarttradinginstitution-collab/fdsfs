@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import apiClient from '@/services/api';
 import KpiCard from '@/components/ui/KpiCard.vue';
 // Chart components will be used in the next step, but I'll import them now.
