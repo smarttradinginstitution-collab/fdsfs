@@ -200,7 +200,7 @@ const barOptions = {
 
 /* Base Card Title Style */
 .card-title {
-  font: var(--semantic-font-style-heading-sm);
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
@@ -208,7 +208,7 @@ const barOptions = {
 .metric-value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
-  line-height: 1.1;
+  line-height: 0.4;
 }
 
 /* --- Card 1: PnL 3-Row Layout --- */
@@ -229,7 +229,7 @@ const barOptions = {
   background-color: var(--semantic-color-surface-secondary);
   padding: var(--base-size-fluid-spacing-badge-padding-y) var(--base-size-fluid-spacing-badge-padding-x); /* Fluid Padding */
   border-radius: var(--semantic-border-radius-tag, 999px);
-  font: var(--semantic-font-style-label-md); /* Corrected to fluid font token */
+  font: var(--semantic-font-style-label-sm); /* Corrected to fluid font token */
   color: var(--semantic-color-text-secondary);
 }
 
@@ -239,9 +239,12 @@ const barOptions = {
 }
 
 .pnl-chart-area {
+  margin-top: -38px;
+  margin-bottom: -10px; /* Adjust to pull chart closer */
   flex-grow: 1;
   width: 100%;
-  min-height: 70px;
+  min-height: 40px;
+  height: 70px;
 }
 
 
@@ -269,8 +272,8 @@ const barOptions = {
 }
 
 .gauge-chart-wrapper {
-  width: var(--semantic-size-component-stat-card-chart-width);
-  height: var(--semantic-size-component-stat-card-chart-width);
+  width: 80px;
+  height: 60px;
 }
 
 /* --- Card 4: Vertical Layout --- */
