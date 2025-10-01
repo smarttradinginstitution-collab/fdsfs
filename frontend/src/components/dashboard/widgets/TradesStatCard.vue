@@ -3,9 +3,9 @@ import { computed } from 'vue';
 import GaugeChart from './StatCard/GaugeChart.vue';
 import WinLossDonutChart from './StatCard/WinLossDonutChart.vue';
 import MiniPnlLineChart from './StatCard/MiniPnlLineChart.vue';
+import AvgWinLossBarChart from './StatCard/AvgWinLossBarChart.vue';
 import HeaderInfoOverlay from '../../ui/HeaderInfoOverlay.vue';
 import { useMetricInfo } from '../../../composables/useMetricInfo.js';
-import { formatCurrency } from '../../../services/formatters.js';
 
 // --- PROPS ---
 const props = defineProps({
@@ -35,50 +35,57 @@ const isAvgWinLoss = computed(() => props.stat.key === 'avgWinLoss');
 // Dynamic classes for applying different layouts
 const cardLayoutClass = computed(() => ({
   'stat-card': true,
-  'stat-card--pnl': isNetPnl.value,
-  'stat-card--avg-win-loss': isAvgWinLoss.value,
+  'layout--pnl': isNetPnl.value,
+  'layout--centered': isProfitFactor.value || isWinRate.value || isAvgWinLoss.value,
 }));
 </script>
 
 <template>
   <div :class="cardLayoutClass">
-    <div class="header">
-      <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
-        <template #title>
-          <div v-if="isWinRate" class="win-rate-label">
-            <span class="stat-label">Win %</span>
-            <div class="badges">
-              <span class="badge win">{{ stat.wins }}</span>
-              <span class="badge loss">{{ stat.losses }}</span>
-            </div>
-          </div>
-          <p v-else class="stat-label">{{ stat.label }}</p>
-        </template>
-        <template #content>
-          <h4 class="info-overlay-title">{{ info.title }}</h4>
-          <p class="info-overlay-text">{{ info.description }}</p>
-        </template>
-      </HeaderInfoOverlay>
-    </div>
-
-    <div class="body">
-      <p :class="valueClasses">{{ stat.value }}</p>
-
-      <!-- Conditional rendering for different chart types and layouts -->
-      <div v-if="isNetPnl" class="chart-container-full">
-        <MiniPnlLineChart :series="stat.series" />
+    <!-- Default Layout: Centered side-by-side -->
+    <template v-if="isProfitFactor || isWinRate || isAvgWinLoss">
+      <div class="text-content">
+        <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+            <template #title>
+                <div v-if="isWinRate" class="win-rate-label">
+                    <span class="stat-label">Win %</span>
+                    <div class="badges">
+                        <span class="badge win">{{ stat.wins }}</span>
+                        <span class="badge loss">{{ stat.losses }}</span>
+                    </div>
+                </div>
+                <p v-else class="stat-label">{{ stat.label }}</p>
+            </template>
+            <template #content>
+                <h4 class="info-overlay-title">{{ info.title }}</h4>
+                <p class="info-overlay-text">{{ info.description }}</p>
+            </template>
+        </HeaderInfoOverlay>
+        <p :class="valueClasses">{{ stat.value }}</p>
       </div>
-
-      <div v-else-if="isAvgWinLoss" class="avg-details">
-        <span class="avg-value win">{{ formatCurrency(stat.avgWin) }}</span>
-        <span class="avg-value loss">{{ formatCurrency(stat.avgLoss) }}</span>
-      </div>
-
-      <div v-else class="chart-container-side">
+      <div class="chart-content">
         <WinLossDonutChart v-if="isWinRate" :wins="stat.wins" :losses="stat.losses" :breakevens="stat.breakevens" />
         <GaugeChart v-if="isProfitFactor" :value="numericValue" />
+        <AvgWinLossBarChart v-if="isAvgWinLoss" :avgWin="stat.avgWin" :avgLoss="stat.avgLoss" />
       </div>
-    </div>
+    </template>
+
+    <!-- P&L Layout: Text on top, full-width chart below -->
+    <template v-if="isNetPnl">
+        <div class="text-content-full">
+            <HeaderInfoOverlay :aria-label="`Learn more about ${info.title}`">
+                <template #title><p class="stat-label">{{ stat.label }}</p></template>
+                 <template #content>
+                    <h4 class="info-overlay-title">{{ info.title }}</h4>
+                    <p class="info-overlay-text">{{ info.description }}</p>
+                </template>
+            </HeaderInfoOverlay>
+            <p :class="valueClasses">{{ stat.value }}</p>
+        </div>
+        <div class="chart-content-full">
+            <MiniPnlLineChart :series="stat.series" />
+        </div>
+    </template>
   </div>
 </template>
 
@@ -90,73 +97,47 @@ const cardLayoutClass = computed(() => ({
   border: var(--semantic-border-width-default) solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
   transition: box-shadow var(--semantic-animation-duration-interactive) var(--semantic-animation-easing-exit);
 }
-
 .stat-card:hover {
   box-shadow: var(--semantic-effect-shadow-elevation-medium);
 }
 
-.header {
-  white-space: nowrap;
+/* --- Layout: Centered (for Gauge/Donut/AvgWinLoss) --- */
+.layout--centered {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 }
-
-.body {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: flex-end;
-  width: 100%;
-  flex-grow: 1;
-}
-
-/* --- Layout Variation: P&L Card --- */
-.stat-card--pnl .body {
-  grid-template-columns: 1fr;
-  align-content: space-between;
-}
-.chart-container-full {
-  width: 100%;
-  margin-top: var(--semantic-size-stack-sm);
-}
-
-/* --- Layout Variation: Avg Win/Loss Card --- */
-.stat-card--avg-win-loss .body {
+.layout--centered .text-content {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Align items to the bottom */
+    gap: var(--semantic-size-stack-xs);
 }
-.avg-details {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: var(--semantic-size-stack-sm);
-}
-.avg-value {
-  font: var(--semantic-font-style-body-sm);
-  font-weight: 500;
-}
-.avg-value.win {
-  color: var(--semantic-color-feedback-positive-text);
-}
-.avg-value.loss {
-  color: var(--semantic-color-feedback-negative-text);
+.layout--centered .chart-content {
+    width: var(--semantic-size-component-stat-card-chart-width-desktop);
+    flex-shrink: 0;
 }
 
-
-/* --- Default Chart Container --- */
-.chart-container-side {
-  width: var(--semantic-size-component-stat-card-chart-width-desktop);
+/* --- Layout: P&L --- */
+.layout--pnl {
+    flex-direction: column;
+    justify-content: space-between;
 }
-
+.layout--pnl .text-content-full {
+    width: 100%;
+}
+.layout--pnl .chart-content-full {
+    width: 100%;
+    margin-top: var(--semantic-size-stack-sm);
+}
 
 /* --- General Text Styles --- */
 .stat-label {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
+  white-space: nowrap;
 }
-
 .stat-value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
@@ -195,7 +176,7 @@ const cardLayoutClass = computed(() => ({
 }
 
 /* --- Header Overlay --- */
-.header :deep(.title-container) {
+:deep(.title-container) {
   align-items: center;
   justify-content: flex-start;
   gap: var(--semantic-size-stack-xxs);

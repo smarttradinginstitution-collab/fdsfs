@@ -38,7 +38,7 @@ const kpiStats = computed(() => {
     const emptyStats = {
         netCumulativePnl: { ...defaultStat('netCumulativePnl', 'Net Cumulative P&L'), series: [] },
         profitFactor: defaultStat('profitFactor', 'Profit Factor'),
-        winPercentage: { ...defaultStat('winPercentage', 'Win %'), wins: 0, losses: 0 },
+        winPercentage: { ...defaultStat('winPercentage', 'Win %'), wins: 0, losses: 0, breakevens: 0 },
         avgWinLoss: { ...defaultStat('avgWinLoss', 'Avg Win/Loss Trade'), avgWin: 0, avgLoss: 0 },
     };
 
@@ -71,6 +71,7 @@ const kpiStats = computed(() => {
             value: formatPercentage(data.winPercentage),
             wins: data.winningTrades,
             losses: data.losingTrades,
+            breakevens: data.trade_count - data.winningTrades - data.losingTrades,
             changeType: 'neutral',
         },
         avgWinLoss: {
