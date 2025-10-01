@@ -8,13 +8,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.broker_repository import BrokerRepository
+from app.Repositories.asset_class_repository import AssetClassRepository
+from app.Repositories.broker_asset_class_repository import BrokerAssetClassRepository
 from app.Models.broker import Broker
+from app.Models.asset_class import AssetClass
+from app.Models.broker_asset_class import BrokerAssetClass
 from app.Schemas.broker import BrokerCreate, BrokerUpdate
+from app.Schemas.broker_asset_class import BrokerAssetClassCreate
 
 
 class BrokerService:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.repo = BrokerRepository(db)
+        self.asset_class_repo = AssetClassRepository(db)
+        self.broker_asset_class_repo = BrokerAssetClassRepository(db)
 
     async def create_broker(self, data: BrokerCreate) -> Broker:
         """Creates a new broker."""
@@ -81,3 +88,56 @@ class BrokerService:
             )
 
         await self.repo.delete(broker)
+
+    async def get_associated_asset_classes(
+        self, broker_id: uuid.UUID
+    ) -> List[AssetClass]:
+        """Returns a list of asset classes associated with a broker."""
+        await self.get_broker_by_id(broker_id)  # Ensure broker exists
+        associations = await self.broker_asset_class_repo.list_by_broker_id(broker_id)
+        return [assoc.asset_class for assoc in associations]
+
+    async def add_asset_class_to_broker(
+        self, broker_id: uuid.UUID, data: BrokerAssetClassCreate
+    ) -> BrokerAssetClass:
+        """Associates an asset class with a broker."""
+        await self.get_broker_by_id(broker_id)
+
+        asset_class = await self.asset_class_repo.get(data.asset_class_id)
+        if not asset_class:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Asset class not found.",
+            )
+
+        existing_assoc = (
+            await self.broker_asset_class_repo.get_by_broker_and_asset_class(
+                broker_id, data.asset_class_id
+            )
+        )
+        if existing_assoc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This asset class is already associated with the broker.",
+            )
+
+        return await self.broker_asset_class_repo.create(broker_id, data)
+
+    async def remove_asset_class_from_broker(
+        self, broker_id: uuid.UUID, asset_class_id: uuid.UUID
+    ) -> None:
+        """Disassociates an asset class from a broker."""
+        await self.get_broker_by_id(broker_id)
+
+        association = (
+            await self.broker_asset_class_repo.get_by_broker_and_asset_class(
+                broker_id, asset_class_id
+            )
+        )
+        if not association:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="This asset class is not associated with the broker.",
+            )
+
+        await self.broker_asset_class_repo.delete(association)
