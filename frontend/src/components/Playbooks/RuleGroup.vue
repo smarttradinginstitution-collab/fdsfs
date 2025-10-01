@@ -2,7 +2,9 @@
   <div class="rule-group-container">
     <!-- Group Header -->
     <div class="group-header">
-      <span class="drag-handle drag-handle-group">&#x2832;</span>
+      <span class="drag-handle drag-handle-group">
+        <DragHandleIcon />
+      </span>
       <div v-if="!isEditing" class="title-container">
         <h3 class="group-title">{{ group.name_group }}</h3>
         <ActionsMenu>
@@ -73,6 +75,7 @@ import RuleCreator from './RuleCreator.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import DragHandleIcon from '@/components/icons/DragHandleIcon.vue';
 
 const props = defineProps({
   group: {

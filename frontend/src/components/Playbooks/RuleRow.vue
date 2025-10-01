@@ -1,7 +1,9 @@
 <template>
   <div class="rule-row" :class="{ 'is-editing': isEditing }">
     <!-- Col 1: Drag Handle -->
-    <span class="drag-handle drag-handle-rule">&#x2832;</span>
+    <span class="drag-handle drag-handle-rule">
+      <DragHandleIcon />
+    </span>
 
     <!-- Col 2: Rule Text / Input -->
     <div class="col-rule-text">
@@ -46,6 +48,7 @@ import { formatCurrency, formatPercentage, formatNumber } from '@/services/forma
 import ActionsMenu from '@/components/ui/ActionsMenu.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import DragHandleIcon from '@/components/icons/DragHandleIcon.vue';
 
 const props = defineProps({
   rule: {
