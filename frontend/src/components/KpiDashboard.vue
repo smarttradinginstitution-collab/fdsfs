@@ -16,8 +16,16 @@ const dashboardEl = ref(null);
 // Reactive refs for resolved CSS color variables, with fallbacks.
 const positiveColor = ref('rgb(34, 197, 94)');
 const negativeColor = ref('rgb(239, 68, 68)');
-const positiveColorRgb = ref('34, 197, 94');
-const tertiaryColorRgb = ref('107, 114, 128');
+const tertiaryColor = ref('rgb(107, 114, 128)');
+
+/**
+ * Extracts the numeric 'r, g, b' values from a CSS 'rgb(r, g, b)' string.
+ * @param {string} rgbString - The color string (e.g., "rgb(34, 197, 94)").
+ * @returns {string} The numeric part (e.g., "34, 197, 94").
+ */
+const getRgbValues = (rgbString) => {
+  return rgbString.match(/\(([^)]+)\)/)?.[1] || '0, 0, 0';
+};
 
 // Hardcoded values as per requirements
 const tradingAccountId = '323aacbc-b72c-4129-a403-bb45d81e09b1';
@@ -50,8 +58,7 @@ onMounted(async () => {
     const styles = getComputedStyle(dashboardEl.value);
     positiveColor.value = styles.getPropertyValue('--semantic-color-feedback-positive-text').trim();
     negativeColor.value = styles.getPropertyValue('--semantic-color-feedback-negative-text').trim();
-    positiveColorRgb.value = styles.getPropertyValue('--semantic-color-feedback-positive-text-rgb').trim();
-    tertiaryColorRgb.value = styles.getPropertyValue('--semantic-color-text-tertiary-rgb').trim();
+    tertiaryColor.value = styles.getPropertyValue('--semantic-color-text-tertiary').trim();
   }
 });
 
@@ -69,7 +76,7 @@ const pnlLineChartData = computed(() => {
     datasets: [{
       data: series.data,
       borderColor: positiveColor.value,
-      backgroundColor: `rgba(${positiveColorRgb.value}, 0.1)`,
+      backgroundColor: `rgba(${getRgbValues(positiveColor.value)}, 0.1)`,
       tension: 0.4,
       fill: true,
       pointRadius: 0,
@@ -92,7 +99,7 @@ const createGaugeData = (value, max) => {
       data: [normalizedValue, max - normalizedValue],
       backgroundColor: [
         positiveColor.value,
-        `rgba(${tertiaryColorRgb.value}, 0.2)`,
+        `rgba(${getRgbValues(tertiaryColor.value)}, 0.2)`,
       ],
       borderWidth: 0,
       circumference: 180,
