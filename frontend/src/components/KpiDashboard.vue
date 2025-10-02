@@ -330,7 +330,7 @@ const doughnutOptions = {
 
 .card-title-wrapper {
   display: flex;
-  align-items: center;
+  align-items: baseline; /* Use baseline alignment for perfect text-to-icon centering */
   gap: var(--base-size-fluid-spacing-xs);
 }
 
