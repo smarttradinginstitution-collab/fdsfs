@@ -43,6 +43,12 @@ const router = createRouter({
       meta: { title: 'Trades' },
     },
     {
+      path: '/report/:id',
+      name: 'report-detail',
+      component: () => import('../views/ReportView.vue'),
+      meta: { title: 'Report Detail' },
+    },
+    {
       path: '/playbooks',
       name: 'playbooks',
       component: () => import('../views/PlaybooksView.vue'),
