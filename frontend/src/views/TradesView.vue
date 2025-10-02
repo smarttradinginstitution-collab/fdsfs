@@ -134,9 +134,10 @@ const getPnlClass = (pnl) => {
 
 .status-pill {
   display: inline-block;
-  padding: var(--semantic-size-inset-squished-xs); // Spaziatura interna della pillola
-  border-radius: var(--semantic-border-radius-tag); // Forma a pillola
+  padding: var(--semantic-size-inset-squished-sm); // Aumentato il padding per un aspetto migliore
+  border-radius: var(--semantic-border-radius-tag);
   font: var(--semantic-font-style-label-sm);
+  line-height: 1; // Migliora l'allineamento verticale del testo
   text-transform: uppercase;
 
   &.status-win {

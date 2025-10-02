@@ -109,32 +109,39 @@ th {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
   text-align: left;
-  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md); // Padding verticale e orizzontale
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  vertical-align: middle; // Allineamento verticale
-  background-color: var(--semantic-color-surface-primary); // Colore di sfondo dell'header
+  vertical-align: middle;
+  background-color: var(--semantic-color-surface-primary);
+}
+
+/* Applichiamo il border radius solo agli angoli esterni dell'header */
+thead th:first-child {
+  border-top-left-radius: var(--semantic-border-radius-surface);
+}
+thead th:last-child {
+  border-top-right-radius: var(--semantic-border-radius-surface);
 }
 
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
-  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md); // Padding verticale e orizzontale
-  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default); // Stesso bordo dell'header
-  vertical-align: middle; // Allineamento verticale
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  vertical-align: middle;
 }
 
-/* Rimuoviamo il bordo superiore di default per evitare doppie linee */
 td {
-  border-top:   none;
+  border-top: none;
 }
 
-/* Coloriamo una riga sì e una no, a partire dalla seconda riga di dati */
+/* Colore più trasparente per le righe alternate */
 tbody tr:nth-child(even) {
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: rgba(0, 0, 0, 0.02); /* Token non disponibile, usiamo un valore diretto e sottile */
 }
 
 tbody tr:hover {
-  background-color: var(--semantic-color-surface-tertiary);
+  background-color: rgba(0, 0, 0, 0.04); /* Leggermente più scuro per l'hover */
 }
 
 /* Stile per le righe selezionate */
