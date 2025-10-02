@@ -11,6 +11,13 @@ import BarChart from '@/components/charts/BarChart.vue';
 const summaryData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
+const dashboardEl = ref(null);
+
+// Reactive refs for resolved CSS color variables, with fallbacks.
+const positiveColor = ref('rgb(34, 197, 94)');
+const negativeColor = ref('rgb(239, 68, 68)');
+const positiveColorRgb = ref('34, 197, 94');
+const tertiaryColorRgb = ref('107, 114, 128');
 
 // Hardcoded values as per requirements
 const tradingAccountId = '323aacbc-b72c-4129-a403-bb45d81e09b1';
@@ -35,7 +42,18 @@ const fetchSummaryData = async () => {
 };
 
 // Fetch data when the component is mounted
-onMounted(fetchSummaryData);
+onMounted(async () => {
+  await fetchSummaryData();
+
+  // After the component is mounted and data is fetched, resolve the CSS variables
+  if (dashboardEl.value) {
+    const styles = getComputedStyle(dashboardEl.value);
+    positiveColor.value = styles.getPropertyValue('--semantic-color-feedback-positive-text').trim();
+    negativeColor.value = styles.getPropertyValue('--semantic-color-feedback-negative-text').trim();
+    positiveColorRgb.value = styles.getPropertyValue('--semantic-color-feedback-positive-text-rgb').trim();
+    tertiaryColorRgb.value = styles.getPropertyValue('--semantic-color-text-tertiary-rgb').trim();
+  }
+});
 
 // ---- Chart Data & Options ----
 
@@ -50,8 +68,8 @@ const pnlLineChartData = computed(() => {
     labels: series.labels,
     datasets: [{
       data: series.data,
-      borderColor: 'var(--semantic-color-feedback-positive-text)',
-      backgroundColor: 'rgba(var(--semantic-color-feedback-positive-text-rgb), 0.1)',
+      borderColor: positiveColor.value,
+      backgroundColor: `rgba(${positiveColorRgb.value}, 0.1)`,
       tension: 0.4,
       fill: true,
       pointRadius: 0,
@@ -73,8 +91,8 @@ const createGaugeData = (value, max) => {
     datasets: [{
       data: [normalizedValue, max - normalizedValue],
       backgroundColor: [
-        'var(--semantic-color-feedback-positive-text)',
-        'rgba(var(--semantic-color-text-tertiary-rgb), 0.2)',
+        positiveColor.value,
+        `rgba(${tertiaryColorRgb.value}, 0.2)`,
       ],
       borderWidth: 0,
       circumference: 180,
@@ -103,8 +121,8 @@ const avgWinLossBarData = computed(() => {
         datasets: [{
             data: [avg_win, Math.abs(avg_loss)],
             backgroundColor: [
-                'var(--semantic-color-feedback-positive-text)',
-                'var(--semantic-color-feedback-negative-text)',
+                positiveColor.value,
+                negativeColor.value,
             ],
             borderWidth: 0,
             borderRadius: 4,
@@ -134,7 +152,7 @@ const barOptions = {
   <div v-else-if="error" class="error-state">
     <p>{{ error }}</p>
   </div>
-  <div v-else-if="summaryData" class="kpi-dashboard">
+  <div v-else-if="summaryData" ref="dashboardEl" class="kpi-dashboard">
     <!-- Card 1: Net Cumulative P&L (New 3-Row Layout) -->
     <KpiCard class="pnl-card-layout">
       <div class="pnl-header">
