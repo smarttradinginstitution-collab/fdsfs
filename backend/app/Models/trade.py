@@ -50,7 +50,7 @@ class Trade(Base):
     )
     asset_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("public.assets.id"),
+        ForeignKey("public.assets.id", ondelete="SET NULL"),
         nullable=True,
     )
     platform_id: Mapped[Optional[uuid.UUID]] = mapped_column(

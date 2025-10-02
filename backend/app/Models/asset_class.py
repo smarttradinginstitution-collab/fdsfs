@@ -29,8 +29,8 @@ class AssetClass(Base):
 
     # Relazioni
     assets: Mapped[list["Asset"]] = relationship(
-        "Asset", back_populates="asset_class"
+        "Asset", back_populates="asset_class", cascade="all, delete-orphan"
     )
     brokers_association: Mapped[list[BrokerAssetClass]] = relationship(
-        "BrokerAssetClass", back_populates="asset_class"
+        "BrokerAssetClass", back_populates="asset_class", cascade="all, delete-orphan"
     )
