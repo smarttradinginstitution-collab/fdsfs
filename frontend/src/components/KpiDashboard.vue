@@ -20,15 +20,37 @@ const tertiaryColor = ref('rgb(107, 114, 128)');
 const colorsResolved = ref(false); // Flag to prevent race condition
 
 /**
- * Extracts the numeric 'r, g, b' values from a CSS 'rgb(r, g, b)' string.
- * This is a more robust implementation that avoids regex.
- * @param {string} rgbString - The color string (e.g., "rgb(34, 197, 94)").
+ * Converts any valid CSS color string (rgb or hex) into its numeric 'r, g, b' components.
+ * @param {string} colorString - The color string (e.g., "rgb(34, 197, 94)" or "#22c55e").
  * @returns {string} The numeric part (e.g., "34, 197, 94").
  */
-const getRgbValues = (rgbString) => {
-  if (!rgbString || !rgbString.includes('rgb')) return '0, 0, 0';
-  // Extracts the content between the first '(' and the last ')'
-  return rgbString.substring(rgbString.indexOf('(') + 1, rgbString.lastIndexOf(')'));
+const getRgbValues = (colorString) => {
+  if (!colorString) return '0, 0, 0';
+
+  // Handle rgb(r, g, b) format
+  if (colorString.startsWith('rgb')) {
+    return colorString.substring(colorString.indexOf('(') + 1, colorString.lastIndexOf(')'));
+  }
+
+  // Handle hex format (#RRGGBB or #RGB)
+  if (colorString.startsWith('#')) {
+    let hex = colorString.slice(1);
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    if (hex.length === 3) {
+      hex = hex.split('').map(char => char + char).join('');
+    }
+
+    if (hex.length === 6) {
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      return `${r}, ${g}, ${b}`;
+    }
+  }
+
+  // Fallback for other formats or errors
+  console.warn(`Could not parse color: ${colorString}, falling back to black.`);
+  return '0, 0, 0';
 };
 
 // Hardcoded values as per requirements
