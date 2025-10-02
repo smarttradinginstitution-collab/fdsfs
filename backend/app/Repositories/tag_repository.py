@@ -50,8 +50,14 @@ class TagRepository:
         await self.db.commit()
 
     async def list_tags_by_general_account_id(self, general_account_id: UUID) -> Sequence[Tag]:
-        """Lista tutti i tag per un dato general_account_id."""
-        stmt = select(Tag).where(Tag.general_account_id == general_account_id).order_by(Tag.name.asc())
+        """Lists all tags for a given general_account_id by joining through TagsGroup."""
+        from app.Models.tags_group import TagsGroup
+        stmt = (
+            select(Tag)
+            .join(TagsGroup, Tag.group_id == TagsGroup.id)
+            .where(TagsGroup.general_account_id == general_account_id)
+            .order_by(Tag.name.asc())
+        )
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
