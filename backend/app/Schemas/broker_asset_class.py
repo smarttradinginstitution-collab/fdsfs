@@ -16,4 +16,4 @@ class BrokerAssetClassRead(BaseModel):
     asset_class_id: uuid.UUID
 
     class Config:
-        orm_mode = True
+        from_attributes = True
