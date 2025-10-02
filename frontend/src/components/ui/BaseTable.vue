@@ -8,6 +8,10 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+// --- COMPOSABLES ---
+const router = useRouter();
 
 // --- PROPS ---
 const props = defineProps({
@@ -56,6 +60,19 @@ const getCellAlignment = (header) => {
   }
   return '';
 };
+
+const handleRowClick = (item, event) => {
+  // Impedisce la navigazione se il click avviene su un elemento interattivo
+  // come un input, un bottone o un link, per non sovrascrivere il loro comportamento.
+  if (event.target.closest('input, button, a')) {
+    return;
+  }
+
+  // Procede con la navigazione solo se l'elemento ha un ID.
+  if (item && item.id) {
+    router.push({ name: 'report-detail', params: { id: item.id } });
+  }
+};
 </script>
 
 <template>
@@ -75,7 +92,12 @@ const getCellAlignment = (header) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id" :class="{ 'selected-row': selected.includes(item.id) }">
+        <tr
+          v-for="item in items"
+          :key="item.id"
+          :class="{ 'selected-row': selected.includes(item.id) }"
+          @click="handleRowClick(item, $event)"
+        >
           <td v-for="header in headers" :key="header.key" :data-label="header.text" :style="getCellAlignment(header)">
             <slot :name="header.key" :item="item">
               <!-- Logica per la cella checkbox -->
@@ -175,6 +197,7 @@ tbody tr:hover {
 
 tbody tr:hover {
   background-color: var(--semantic-color-surface-secondary);
+  cursor: pointer;
 }
 
 /* === Stili per la Responsività === */
