@@ -137,23 +137,30 @@ const pnlLineChartOptions = {
   scales: { x: { display: false }, y: { display: false } },
 };
 
-// 2. Meter Charts (Doughnut/Gauge) - Refactored for clarity
+// 2. Meter Charts (Doughnut/Gauge) - Final Color Logic
 const createMeterData = (value, max) => {
   const normalizedValue = Math.min(Math.max(value, 0), max);
   return {
     datasets: [{
       data: [normalizedValue, max - normalizedValue],
       backgroundColor: [
-        positiveColor.value,
-        `rgba(${getRgbValues(tertiaryColor.value)}, 0.2)`,
+        positiveColor.value, // Value part is always green
+        negativeColor.value, // Empty part is always red
       ],
       borderWidth: 0,
     }]
   };
 };
 
-const profitFactorChartData = computed(() => createMeterData(summaryData.value?.stats?.profit_factor || 0, 10));
-const winPercentageChartData = computed(() => createMeterData(summaryData.value?.stats?.win_rate || 0, 100));
+const profitFactorChartData = computed(() => {
+  if (!summaryData.value) return { datasets: [] };
+  return createMeterData(summaryData.value.stats.profit_factor || 0, 10);
+});
+
+const winPercentageChartData = computed(() => {
+  if (!summaryData.value) return { datasets: [] };
+  return createMeterData(summaryData.value.stats.win_rate || 0, 100);
+});
 
 const gaugeOptions = {
   responsive: true,
@@ -173,36 +180,7 @@ const doughnutOptions = {
 };
 
 
-// 3. Avg Win/Loss Bar Chart
-const avgWinLossBarData = computed(() => {
-    if (!summaryData.value?.stats) return { labels: [], datasets: [] };
-    const { avg_win, avg_loss } = summaryData.value.stats;
-    return {
-        labels: ['Win', 'Loss'],
-        datasets: [{
-            data: [avg_win, Math.abs(avg_loss)],
-            backgroundColor: [
-                positiveColor.value,
-                negativeColor.value,
-            ],
-            borderWidth: 0,
-            borderRadius: 4,
-        }]
-    }
-});
-
-const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false }
-    },
-    scales: {
-        x: { display: false, grid: { display: false } },
-        y: { display: false, grid: { display: false } }
-    }
-};
+// 3. Avg Win/Loss Bar Chart - This is now handled with CSS Flexbox, so no chart config is needed.
 
 </script>
 
@@ -251,20 +229,22 @@ const barOptions = {
     </KpiCard>
 
     <!-- Card 4: Avg win/loss trade -->
-    <KpiCard class="card-layout-vertical">
-        <div class="top-row">
-            <h3 class="card-title">Avg win/loss trade</h3>
-            <p class="metric-value">{{ (summaryData.stats.avg_win / Math.abs(summaryData.stats.avg_loss)).toFixed(2) }}</p>
+    <KpiCard class="avg-win-loss-layout">
+      <div class="card-header">
+        <h3 class="card-title">Avg win/loss trade</h3>
+        <p class="main-metric-value">{{ (summaryData.stats.avg_win / Math.abs(summaryData.stats.avg_loss)).toFixed(2) }}</p>
+      </div>
+
+      <div class="chart-block">
+        <div class="segmented-bar">
+          <div class="win-segment" :style="{ flexGrow: summaryData.stats.avg_win }"></div>
+          <div class="loss-segment" :style="{ flexGrow: Math.abs(summaryData.stats.avg_loss) }"></div>
         </div>
-        <div class="bottom-row">
-            <div class="bar-chart-wrapper">
-                <BarChart :chart-data="avgWinLossBarData" :chart-options="barOptions" />
-            </div>
-            <div class="bar-labels">
-                <span class="avg-win">{{ formatCurrency(summaryData.stats.avg_win) }}</span>
-                <span class="avg-loss">{{ formatCurrency(summaryData.stats.avg_loss) }}</span>
-            </div>
+        <div class="bar-labels">
+          <span class="avg-win">{{ formatCurrency(summaryData.stats.avg_win) }}</span>
+          <span class="avg-loss">{{ formatCurrency(summaryData.stats.avg_loss) }}</span>
         </div>
+      </div>
     </KpiCard>
   </div>
 </template>
@@ -355,34 +335,66 @@ const barOptions = {
   height: 60px;
 }
 
-/* --- Card 4: Vertical Layout --- */
-.card-layout-vertical {
+/* --- Sostituzione per Card 4: Layout Avg Win/Loss --- */
+
+/* Contenitore principale della card, impilato verticalmente */
+.avg-win-loss-layout {
   flex-direction: column;
-  justify-content: space-between;
-  gap: var(--base-size-fluid-spacing-sm); /* Fluid Gap */
+  justify-content: flex-start; /* Allinea il contenuto in alto */
+  gap: var(--base-size-fluid-spacing-sm); /* Spazio tra header e blocco grafico */
 }
 
-.top-row {
+/* Riga 1: Contiene titolo e valore principale */
+.card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.bottom-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--base-size-fluid-spacing-xs); /* Fluid Gap */
-}
-
-.bar-chart-wrapper {
+  justify-content: space-between; /* Spinge titolo e valore ai lati opposti */
+  align-items: flex-start; /* Allinea in alto */
   width: 100%;
-  height: 24px;
 }
 
+/* Stile per il valore principale (es. 2.75) */
+.main-metric-value {
+  /* Assicurati che i token per font e colore siano corretti */
+  font: var(--semantic-font-style-metric-display);
+  color: var(--semantic-color-text-primary);
+  line-height: 1; /* Aggiusta la linea per un allineamento pulito */
+}
+
+/* Riga 2: Contiene la barra e le sue etichette */
+.chart-block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--base-size-fluid-spacing-xs); /* Spazio tra barra ed etichette */
+}
+
+/* Contenitore della barra segmentata */
+.segmented-bar {
+  display: flex; /* FONDAMENTALE per creare i segmenti */
+  width: 100%;
+  height: 8px; /* Altezza della barra ridotta */
+  border-radius: var(--semantic-border-radius-tag, 999px); /* Angoli arrotondati */
+  overflow: hidden; /* Nasconde gli angoli interni dei segmenti */
+}
+
+/* Stile del segmento VERDE */
+.win-segment {
+  background-color: var(--semantic-color-feedback-positive-text);
+  height: 100%;
+}
+
+/* Stile del segmento ROSSO */
+.loss-segment {
+  background-color: var(--semantic-color-feedback-negative-text);
+  height: 100%;
+}
+
+/* Contenitore per le etichette sotto la barra */
 .bar-labels {
-    display: flex;
-    justify-content: space-between;
-    font: var(--semantic-font-style-data-numeric);
+  display: flex;
+  justify-content: space-between; /* Spinge le etichette ai lati */
+  width: 100%;
+  font: var(--semantic-font-style-body-sm); /* Usa un font di corpo standard */
 }
 
 .avg-win {
