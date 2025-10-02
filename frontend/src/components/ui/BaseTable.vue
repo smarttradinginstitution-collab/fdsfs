@@ -19,17 +19,43 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  // Nuova prop per controllare la dimensione del font
   size: {
     type: String,
     default: 'medium',
     validator: (value) => ['medium', 'small', 'x-small'].includes(value),
-  }
+  },
+  // v-model per le righe selezionate
+  selected: {
+    type: Array,
+    default: () => [],
+  },
 });
 
+// --- EMITS ---
+const emit = defineEmits(['update:selected']);
+
+// --- LOGICA DEL COMPONENTE ---
 const tableClass = computed(() => {
   return ['table', `table--${props.size}`];
 });
+
+// Controlla se tutte le righe sono selezionate per lo stato del checkbox principale
+const allSelected = computed({
+  get() {
+    return props.items.length > 0 && props.selected.length === props.items.length;
+  },
+  set(value) {
+    const selectedIds = value ? props.items.map(item => item.id) : [];
+    emit('update:selected', selectedIds);
+  }
+});
+
+const getCellAlignment = (header) => {
+  if (header.align) {
+    return `text-align: ${header.align};`;
+  }
+  return '';
+};
 </script>
 
 <template>
@@ -37,14 +63,28 @@ const tableClass = computed(() => {
     <table :class="tableClass">
       <thead>
         <tr>
-          <th v-for="header in headers" :key="header.key">{{ header.text }}</th>
+          <th v-for="header in headers" :key="header.key" :style="getCellAlignment(header)">
+            <!-- Se la colonna è 'checkbox', mostra il checkbox "seleziona tutto" -->
+            <template v-if="header.key === 'checkbox'">
+              <input type="checkbox" v-model="allSelected" />
+            </template>
+            <template v-else>
+              {{ header.text }}
+            </template>
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id">
-          <td v-for="header in headers" :key="header.key" :data-label="header.text">
+        <tr v-for="item in items" :key="item.id" :class="{ 'selected-row': selected.includes(item.id) }">
+          <td v-for="header in headers" :key="header.key" :data-label="header.text" :style="getCellAlignment(header)">
             <slot :name="header.key" :item="item">
-              {{ item[header.key] }}
+              <!-- Logica per la cella checkbox -->
+              <template v-if="header.key === 'checkbox'">
+                <input type="checkbox" :value="item.id" :checked="selected.includes(item.id)" @change="$emit('update:selected', selected.includes(item.id) ? selected.filter(id => id !== item.id) : [...selected, item.id])"/>
+              </template>
+              <template v-else>
+                {{ item[header.key] }}
+              </template>
             </slot>
           </td>
         </tr>
@@ -69,16 +109,44 @@ th {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
   text-align: left;
-  padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid
-    var(--semantic-color-border-default);
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  vertical-align: middle;
+  background-color: var(--semantic-color-surface-primary);
 }
+
+/* Applichiamo il border radius solo agli angoli esterni dell'header */
+thead th:first-child {
+  border-top-left-radius: var(--semantic-border-radius-surface);
+}
+thead th:last-child {
+  border-top-right-radius: var(--semantic-border-radius-surface);
+}
+
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
-  padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid
-    var(--semantic-color-border-subtle);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  vertical-align: middle;
+}
+
+td {
+  border-top: none;
+}
+
+/* Colore più trasparente per le righe alternate */
+tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02); /* Token non disponibile, usiamo un valore diretto e sottile */
+}
+
+tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.04); /* Leggermente più scuro per l'hover */
+}
+
+/* Stile per le righe selezionate */
+.selected-row {
+  background-color: var(--semantic-color-surface-secondary-selected); // Un token ipotetico, da creare se non esiste
 }
 
 /* Stili per la dimensione piccola */
