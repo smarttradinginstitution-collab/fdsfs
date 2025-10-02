@@ -320,10 +320,17 @@ export const useTradesStore = defineStore('trades', {
     },
 
     tradeHeaders: () => [
-      { key: 'symbol', text: 'Ticker' },
-      { key: 'direction', text: 'Side' },
-      { key: 'p_l', text: 'Net P&L' },
-      { key: 'entry_timestamp', text: 'Date' },
+      { key: 'checkbox', text: '' }, // Per la checkbox
+      { key: 'entry_timestamp', text: 'Open Date' },
+      { key: 'symbol', text: 'Symbol' },
+      { key: 'status', text: 'Status' },
+      { key: 'exit_timestamp', text: 'Close Date' },
+      { key: 'entry_price', text: 'Entry Price', align: 'right' },
+      { key: 'exit_price', text: 'Exit Price', align: 'right' },
+      { key: 'p_l', text: 'Net P&L', align: 'right' },
+      { key: 'net_roi', text: 'Net ROI', align: 'right' },
+      { key: 'vantage_insights', text: 'Vantage Insights' },
+      { key: 'setups', text: 'Setups' },
     ],
 
     calendarControlsData() {
@@ -700,6 +707,30 @@ export const useTradesStore = defineStore('trades', {
         // Optionally, show a toast notification to the user
         const uiStore = useUiStore();
         uiStore.showToast({ message: 'Failed to delete trade.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async deleteSelectedTrades(tradeIds) {
+      this.isLoading = true;
+      const uiStore = useUiStore();
+      try {
+        // Usa Promise.all per inviare le richieste di cancellazione in parallelo
+        await Promise.all(tradeIds.map(id => apiClient.delete(`/trades/${id}`)));
+
+        // Rimuovi i trade dallo stato locale
+        this.trades = this.trades.filter(trade => !tradeIds.includes(trade.id));
+
+        uiStore.showToast({ message: `${tradeIds.length} trades cancellati con successo.`, type: 'success' });
+
+        // Aggiorna i dati della dashboard
+        await this.fetchAllDataForDashboard();
+
+      } catch (error) {
+        console.error('Errore nella cancellazione dei trade selezionati:', error);
+        uiStore.showToast({ message: 'Impossibile cancellare i trade selezionati.', type: 'danger' });
         throw error;
       } finally {
         this.isLoading = false;

@@ -8,63 +8,153 @@
 -->
 
 <script setup>
-// --- IMPORTAZIONI ---
-
-// Importiamo lo store Pinia dei trade per accedere alla lista dei dati.
+import { ref, computed } from 'vue';
 import { useTradesStore } from '@/stores/trades';
-// Importiamo il nostro componente riutilizzabile `BaseTable` per visualizzare i dati.
 import BaseTable from '@/components/ui/BaseTable.vue';
-// Importiamo la nuova dashboard KPI.
 import KpiDashboard from '@/components/KpiDashboard.vue';
+import BaseButton from '@/components/ui/BaseButton.vue'; // Importiamo il componente bottone
+import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
+// --- STORE E STATO LOCALE ---
+const tradesStore = useTradesStore();
+const selectedTrades = ref([]); // Stato per le righe selezionate
 
 // --- LOGICA DEL COMPONENTE ---
+const handleBulkDelete = () => {
+  if (selectedTrades.value.length === 0) {
+    alert('Nessun trade selezionato.');
+    return;
+  }
+  if (confirm(`Sei sicuro di voler cancellare ${selectedTrades.value.length} trade? L'azione è irreversibile.`)) {
+    tradesStore.deleteSelectedTrades(selectedTrades.value);
+    selectedTrades.value = []; // Pulisce la selezione dopo la cancellazione
+  }
+};
 
-// Creiamo un'istanza dello store per poterlo usare nel template.
-const tradesStore = useTradesStore();
+const getStatusClass = (pnl) => {
+  if (pnl > 0) return 'status-win';
+  if (pnl < 0) return 'status-loss';
+  return 'status-breakeven';
+};
+
+const getPnlClass = (pnl) => {
+  if (pnl > 0) return 'pnl-positive';
+  if (pnl < 0) return 'pnl-negative';
+  return '';
+};
 </script>
 
 <template>
-  <!-- Il template definisce la struttura HTML della pagina. -->
   <div class="trades-view">
-    <!-- Un semplice titolo per la pagina. -->
     <h1 class="view-title">Trade Log</h1>
-
-    <!-- Inseriamo la nuova dashboard KPI in cima alla pagina -->
     <KpiDashboard />
 
-    <!--
-    Qui usiamo il nostro componente `BaseTable`.
-    - `:headers` riceve la lista delle intestazioni dal getter dello store.
-    - `:items` riceve la lista dei trade direttamente dallo stato dello store.
-    Questo mostra la potenza di avere uno store centralizzato e componenti riutilizzabili:
-    la vista diventa molto semplice e si occupa solo di "assemblare" i pezzi.
-    -->
+    <div class="table-actions">
+      <BaseButton
+        @click="handleBulkDelete"
+        variant="secondary"
+        :disabled="selectedTrades.length === 0"
+      >
+        Bulk Actions
+      </BaseButton>
+    </div>
+
     <BaseTable
       :headers="tradesStore.tradeHeaders"
       :items="tradesStore.trades"
-    />
+      v-model:selected="selectedTrades"
+    >
+      <!-- Slot per la cella dello stato -->
+      <template #status="{ item }">
+        <span class="status-pill" :class="getStatusClass(item.p_l)">
+          {{ item.p_l > 0 ? 'WIN' : 'LOSS' }}
+        </span>
+      </template>
+
+      <!-- Slot per le date -->
+      <template #entry_timestamp="{ item }">
+        {{ formatDate(item.entry_timestamp) }}
+      </template>
+      <template #exit_timestamp="{ item }">
+        {{ formatDate(item.exit_timestamp) }}
+      </template>
+
+      <!-- Slot per i valori numerici -->
+      <template #entry_price="{ item }">
+        {{ item.entry_price ? `$${item.entry_price.toFixed(2)}` : '-' }}
+      </template>
+      <template #exit_price="{ item }">
+        {{ item.exit_price ? `$${item.exit_price.toFixed(2)}` : '-' }}
+      </template>
+
+      <!-- Slot per Net P&L con colore condizionale -->
+      <template #p_l="{ item }">
+        <span :class="getPnlClass(item.p_l)">
+          {{ formatCurrency(item.p_l) }}
+        </span>
+      </template>
+
+      <!-- Slot per Net ROI con colore condizionale -->
+      <template #net_roi="{ item }">
+         <span :class="getPnlClass(item.p_l)">
+          {{ formatPercentage(item.net_roi) }}
+        </span>
+      </template>
+
+      <!-- Slot per colonne senza dati -->
+      <template #vantage_insights="{ item }">
+        -
+      </template>
+      <template #setups="{ item }">
+        {{ item.strategy || '-' }}
+      </template>
+    </BaseTable>
   </div>
 </template>
 
-<style scoped>
-/*
-Gli stili "scoped" si applicano solo a questo componente.
-In questo caso, sono stati rimossi perché la dashboard-view non esiste in questo file.
-Se fossero necessari stili specifici, andrebbero qui. Esempio:
-.trades-view {
-  padding: var(--semantic-size-inset-xl);
-}
-*/
+<style lang="scss" scoped>
 .trades-view {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
-  padding: var(--semantic-size-inset-xl); /* Aggiunto padding per coerenza */
-  flex-grow: 1; /* Aggiunto per occupare lo spazio disponibile */
+  padding: var(--semantic-size-inset-xl);
+  flex-grow: 1;
 }
+
 .view-title {
   font: var(--semantic-font-style-heading-h3);
   color: var(--semantic-color-text-primary);
+}
+
+.table-actions {
+  display: flex;
+  justify-content: flex-end; // Allinea il pulsante a destra
+  padding-bottom: var(--semantic-size-stack-md); // Spazio sotto il pulsante
+}
+
+.status-pill {
+  display: inline-block;
+  padding: var(--semantic-size-inset-squished-xs); // Spaziatura interna della pillola
+  border-radius: var(--semantic-border-radius-tag); // Forma a pillola
+  font: var(--semantic-font-style-label-sm);
+  text-transform: uppercase;
+
+  &.status-win {
+    background-color: var(--semantic-color-feedback-positive-surface);
+    color: var(--semantic-color-feedback-positive-text);
+  }
+
+  &.status-loss {
+    background-color: var(--semantic-color-feedback-negative-surface);
+    color: var(--semantic-color-feedback-negative-text);
+  }
+}
+
+.pnl-positive {
+  color: var(--semantic-color-feedback-positive-text);
+}
+
+.pnl-negative {
+  color: var(--semantic-color-feedback-negative-text);
 }
 </style>

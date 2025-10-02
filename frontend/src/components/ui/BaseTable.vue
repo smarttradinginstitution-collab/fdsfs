@@ -19,17 +19,43 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  // Nuova prop per controllare la dimensione del font
   size: {
     type: String,
     default: 'medium',
     validator: (value) => ['medium', 'small', 'x-small'].includes(value),
-  }
+  },
+  // v-model per le righe selezionate
+  selected: {
+    type: Array,
+    default: () => [],
+  },
 });
 
+// --- EMITS ---
+const emit = defineEmits(['update:selected']);
+
+// --- LOGICA DEL COMPONENTE ---
 const tableClass = computed(() => {
   return ['table', `table--${props.size}`];
 });
+
+// Controlla se tutte le righe sono selezionate per lo stato del checkbox principale
+const allSelected = computed({
+  get() {
+    return props.items.length > 0 && props.selected.length === props.items.length;
+  },
+  set(value) {
+    const selectedIds = value ? props.items.map(item => item.id) : [];
+    emit('update:selected', selectedIds);
+  }
+});
+
+const getCellAlignment = (header) => {
+  if (header.align) {
+    return `text-align: ${header.align};`;
+  }
+  return '';
+};
 </script>
 
 <template>
@@ -37,14 +63,28 @@ const tableClass = computed(() => {
     <table :class="tableClass">
       <thead>
         <tr>
-          <th v-for="header in headers" :key="header.key">{{ header.text }}</th>
+          <th v-for="header in headers" :key="header.key" :style="getCellAlignment(header)">
+            <!-- Se la colonna è 'checkbox', mostra il checkbox "seleziona tutto" -->
+            <template v-if="header.key === 'checkbox'">
+              <input type="checkbox" v-model="allSelected" />
+            </template>
+            <template v-else>
+              {{ header.text }}
+            </template>
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id">
-          <td v-for="header in headers" :key="header.key" :data-label="header.text">
+        <tr v-for="item in items" :key="item.id" :class="{ 'selected-row': selected.includes(item.id) }">
+          <td v-for="header in headers" :key="header.key" :data-label="header.text" :style="getCellAlignment(header)">
             <slot :name="header.key" :item="item">
-              {{ item[header.key] }}
+              <!-- Logica per la cella checkbox -->
+              <template v-if="header.key === 'checkbox'">
+                <input type="checkbox" :value="item.id" :checked="selected.includes(item.id)" @change="$emit('update:selected', selected.includes(item.id) ? selected.filter(id => id !== item.id) : [...selected, item.id])"/>
+              </template>
+              <template v-else>
+                {{ item[header.key] }}
+              </template>
             </slot>
           </td>
         </tr>
@@ -66,19 +106,35 @@ const tableClass = computed(() => {
 
 /* Stili di default (medium) */
 th {
-  font: var(--semantic-font-style-label-md);
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
+  text-transform: uppercase; // Testo maiuscolo come da requisito
   text-align: left;
   padding: var(--semantic-size-inset-md);
-  border-bottom: var(--base-border-width-1) solid
-    var(--semantic-color-border-default);
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  vertical-align: middle; // Allineamento verticale
 }
+
 td {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-primary);
-  padding: var(--semantic-size-inset-md);
-  border-top: var(--base-border-width-1) solid
-    var(--semantic-color-border-subtle);
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md); // Padding verticale e orizzontale
+  border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default); // Stesso bordo dell'header
+  vertical-align: middle; // Allineamento verticale
+}
+
+/* Rimuoviamo il bordo superiore di default per evitare doppie linee */
+td {
+  border-top: none;
+}
+
+tbody tr:hover {
+  background-color: var(--semantic-color-surface-secondary);
+}
+
+/* Stile per le righe selezionate */
+.selected-row {
+  background-color: var(--semantic-color-surface-secondary-selected); // Un token ipotetico, da creare se non esiste
 }
 
 /* Stili per la dimensione piccola */
