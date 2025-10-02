@@ -6,6 +6,9 @@ import KpiCard from '@/components/ui/KpiCard.vue';
 import LineChart from '@/components/charts/LineChart.vue';
 import GaugeChart from '@/components/charts/GaugeChart.vue';
 import BarChart from '@/components/charts/BarChart.vue';
+import PopoverMenu from '@/components/ui/PopoverMenu.vue';
+import IconButton from '@/components/ui/IconButton.vue';
+import InfoIcon from '@/components/icons/InfoIcon.vue';
 
 // Component State
 const summaryData = ref(null);
@@ -192,10 +195,24 @@ const doughnutOptions = {
     <p>{{ error }}</p>
   </div>
   <div v-else-if="summaryData" ref="dashboardEl" class="kpi-dashboard">
-    <!-- Card 1: Net Cumulative P&L (New 3-Row Layout) -->
+    <!-- Card 1: Net Cumulative P&L -->
     <KpiCard class="pnl-card-layout">
       <div class="pnl-header">
-        <h3 class="card-title">Net Cumulative P&L</h3>
+        <div class="card-title-wrapper">
+          <h3 class="card-title">Net Cumulative P&L</h3>
+          <PopoverMenu>
+            <template #trigger="{ toggle }">
+              <IconButton @click.stop="toggle" aria-label="Net Cumulative P&L Information" size="small" class="info-button">
+                <InfoIcon />
+              </IconButton>
+            </template>
+            <template #content>
+              <div class="popover-content">
+                The total net profit or loss (P&L) from all trades over a specific period. It's the account's bottom-line performance.
+              </div>
+            </template>
+          </PopoverMenu>
+        </div>
         <span class="trade-badge">{{ summaryData.stats.trade_count }} trades</span>
       </div>
       <div class="pnl-metric">
@@ -209,7 +226,21 @@ const doughnutOptions = {
     <!-- Card 2: Profit Factor -->
     <KpiCard class="card-layout-horizontal">
       <div class="text-content">
-        <h3 class="card-title">Profit Factor</h3>
+        <div class="card-title-wrapper">
+          <h3 class="card-title">Profit Factor</h3>
+          <PopoverMenu>
+            <template #trigger="{ toggle }">
+              <IconButton @click.stop="toggle" aria-label="Profit Factor Information" size="small" class="info-button">
+                <InfoIcon />
+              </IconButton>
+            </template>
+            <template #content>
+              <div class="popover-content">
+                Measures profitability by dividing the total gross profits by the total gross losses. A value over 1.0 indicates a profitable system.
+              </div>
+            </template>
+          </PopoverMenu>
+        </div>
         <p class="metric-value">{{ summaryData.stats.profit_factor.toFixed(2) }}</p>
       </div>
       <div class="chart-content gauge-chart-wrapper">
@@ -220,7 +251,21 @@ const doughnutOptions = {
     <!-- Card 3: Win % -->
     <KpiCard class="card-layout-horizontal">
       <div class="text-content">
-        <h3 class="card-title">Win %</h3>
+        <div class="card-title-wrapper">
+          <h3 class="card-title">Win %</h3>
+          <PopoverMenu>
+            <template #trigger="{ toggle }">
+              <IconButton @click.stop="toggle" aria-label="Win % Information" size="small" class="info-button">
+                <InfoIcon />
+              </IconButton>
+            </template>
+            <template #content>
+              <div class="popover-content">
+                The percentage of total trades that were closed for a profit, indicating the frequency of success.
+              </div>
+            </template>
+          </PopoverMenu>
+        </div>
         <p class="metric-value">{{ summaryData.stats.win_rate.toFixed(2) }}%</p>
       </div>
       <div class="chart-content gauge-chart-wrapper">
@@ -231,10 +276,23 @@ const doughnutOptions = {
     <!-- Card 4: Avg win/loss trade -->
     <KpiCard class="avg-win-loss-layout">
       <div class="card-header">
-        <h3 class="card-title">Avg win/loss trade</h3>
+        <div class="card-title-wrapper">
+          <h3 class="card-title">Avg win/loss trade</h3>
+          <PopoverMenu>
+            <template #trigger="{ toggle }">
+              <IconButton @click.stop="toggle" aria-label="Average win/loss trade Information" size="small" class="info-button">
+                <InfoIcon />
+              </IconButton>
+            </template>
+            <template #content>
+              <div class="popover-content">
+                The ratio of the average profit on winning trades to the average loss on losing trades. It measures the risk/reward relationship of the strategy.
+              </div>
+            </template>
+          </PopoverMenu>
+        </div>
         <p class="main-metric-value">{{ (summaryData.stats.avg_win / Math.abs(summaryData.stats.avg_loss)).toFixed(2) }}</p>
       </div>
-
       <div class="chart-block">
         <div class="segmented-bar">
           <div class="win-segment" :style="{ flexGrow: summaryData.stats.avg_win }"></div>
@@ -268,6 +326,26 @@ const doughnutOptions = {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
   line-height: 0.4;
+}
+
+.card-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--base-size-fluid-spacing-xs);
+}
+
+.info-button {
+  color: var(--semantic-color-text-tertiary);
+}
+.info-button:hover {
+  color: var(--semantic-color-text-primary);
+}
+
+.popover-content {
+  padding: var(--semantic-size-inset-sm);
+  max-width: 250px;
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
 }
 
 /* --- Card 1: PnL 3-Row Layout --- */
