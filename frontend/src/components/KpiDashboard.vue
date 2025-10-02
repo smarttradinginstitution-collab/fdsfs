@@ -138,13 +138,13 @@ const pnlLineChartOptions = {
 };
 
 // 2. Meter Charts (Doughnut/Gauge) - Refactored for clarity
-const createMeterData = (value, max) => {
+const createMeterData = (value, max, color) => {
   const normalizedValue = Math.min(Math.max(value, 0), max);
   return {
     datasets: [{
       data: [normalizedValue, max - normalizedValue],
       backgroundColor: [
-        positiveColor.value,
+        color,
         `rgba(${getRgbValues(tertiaryColor.value)}, 0.2)`,
       ],
       borderWidth: 0,
@@ -152,8 +152,19 @@ const createMeterData = (value, max) => {
   };
 };
 
-const profitFactorChartData = computed(() => createMeterData(summaryData.value?.stats?.profit_factor || 0, 10));
-const winPercentageChartData = computed(() => createMeterData(summaryData.value?.stats?.win_rate || 0, 100));
+const profitFactorChartData = computed(() => {
+  if (!summaryData.value) return { datasets: [] };
+  const value = summaryData.value.stats.profit_factor || 0;
+  const color = value >= 1 ? positiveColor.value : negativeColor.value;
+  return createMeterData(value, 10, color);
+});
+
+const winPercentageChartData = computed(() => {
+  if (!summaryData.value) return { datasets: [] };
+  const value = summaryData.value.stats.win_rate || 0;
+  const color = value >= 50 ? positiveColor.value : negativeColor.value;
+  return createMeterData(value, 100, color);
+});
 
 const gaugeOptions = {
   responsive: true,
