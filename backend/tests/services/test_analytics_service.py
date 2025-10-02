@@ -149,3 +149,28 @@ async def test_get_processed_stats_integration(db_session: AsyncSession, setup_t
     monthly = result.monthly_totals
     assert monthly["2023-10"] == pytest.approx(250.0)
     assert monthly["2023-11"] == pytest.approx(300.0)
+
+async def test_get_vantage_score_integration(db_session: AsyncSession, setup_test_data: uuid4):
+    """
+    Test that the Vantage Score is calculated correctly in an integration environment.
+    """
+    # Arrange
+    trading_account_id = setup_test_data
+    service = AnalyticsService(db=db_session)
+
+    # Act
+    result = await service.get_vantage_score(
+        trading_account_id=trading_account_id,
+        start_date=date(2023, 1, 1),
+        end_date=date(2023, 12, 31)
+    )
+
+    # Assert
+    assert isinstance(result.vantage_score, int)
+    assert 0 <= result.vantage_score <= 100
+    assert isinstance(result.win_rate_score, int)
+    assert isinstance(result.profit_factor_score, int)
+    assert isinstance(result.avg_win_loss_score, int)
+    assert isinstance(result.recovery_factor_score, int)
+    assert isinstance(result.max_drawdown_score, int)
+    assert isinstance(result.consistency_score, int)

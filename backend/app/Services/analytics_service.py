@@ -128,17 +128,21 @@ class AnalyticsService:
                                     max_drawdown_score=0, consistency_score=0)
 
         def normalize(value, min_val, max_val, invert=False):
-            value = max(min_val, min(value, max_val))
-            denominator = max_val - min_val
-            if denominator == 0: return 0
-            score = ((value - min_val) / denominator) * 100
-            return 100 - score if invert else score
+            f_value = float(value)
+            f_min_val = float(min_val)
+            f_max_val = float(max_val)
+
+            f_value = max(f_min_val, min(f_value, f_max_val))
+            denominator = f_max_val - f_min_val
+            if denominator == 0: return 0.0
+            score = ((f_value - f_min_val) / denominator) * 100.0
+            return 100.0 - score if invert else score
 
         win_rate_score = normalize(metrics["win_rate"], 0, 100)
         profit_factor_score = normalize(metrics["profit_factor"] or 0, 0, 5)
-        avg_win_loss_ratio = (metrics["avg_win"] / metrics["avg_loss"]) if metrics["avg_loss"] > 0 else 5.0
+        avg_win_loss_ratio = (metrics["avg_win"] / metrics["avg_loss"]) if metrics["avg_loss"] > 0 else Decimal('5.0')
         avg_win_loss_score = normalize(avg_win_loss_ratio, 0, 5)
-        recovery_factor = (metrics["net_pnl"] / metrics["max_drawdown_abs"]) if metrics["max_drawdown_abs"] > 0 else 0
+        recovery_factor = (float(metrics["net_pnl"]) / metrics["max_drawdown_abs"]) if metrics["max_drawdown_abs"] > 0 else 0.0
         recovery_factor_score = normalize(recovery_factor, 0, 10)
 
         # Use the new max_drawdown_percentage from the calculator
