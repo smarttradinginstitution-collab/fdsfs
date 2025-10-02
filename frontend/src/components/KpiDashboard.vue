@@ -21,11 +21,14 @@ const colorsResolved = ref(false); // Flag to prevent race condition
 
 /**
  * Extracts the numeric 'r, g, b' values from a CSS 'rgb(r, g, b)' string.
+ * This is a more robust implementation that avoids regex.
  * @param {string} rgbString - The color string (e.g., "rgb(34, 197, 94)").
  * @returns {string} The numeric part (e.g., "34, 197, 94").
  */
 const getRgbValues = (rgbString) => {
-  return rgbString.match(/\(([^)]+)\)/)?.[1] || '0, 0, 0';
+  if (!rgbString || !rgbString.includes('rgb')) return '0, 0, 0';
+  // Extracts the content between the first '(' and the last ')'
+  return rgbString.substring(rgbString.indexOf('(') + 1, rgbString.lastIndexOf(')'));
 };
 
 // Hardcoded values as per requirements
