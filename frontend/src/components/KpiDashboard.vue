@@ -11,6 +11,47 @@ import BarChart from '@/components/charts/BarChart.vue';
 const summaryData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
+const dashboardEl = ref(null);
+
+// Reactive refs for resolved CSS color variables, with fallbacks.
+const positiveColor = ref('rgb(34, 197, 94)');
+const negativeColor = ref('rgb(239, 68, 68)');
+const tertiaryColor = ref('rgb(107, 114, 128)');
+const colorsResolved = ref(false); // Flag to prevent race condition
+
+/**
+ * Converts any valid CSS color string (rgb or hex) into its numeric 'r, g, b' components.
+ * @param {string} colorString - The color string (e.g., "rgb(34, 197, 94)" or "#22c55e").
+ * @returns {string} The numeric part (e.g., "34, 197, 94").
+ */
+const getRgbValues = (colorString) => {
+  if (!colorString) return '0, 0, 0';
+
+  // Handle rgb(r, g, b) format
+  if (colorString.startsWith('rgb')) {
+    return colorString.substring(colorString.indexOf('(') + 1, colorString.lastIndexOf(')'));
+  }
+
+  // Handle hex format (#RRGGBB or #RGB)
+  if (colorString.startsWith('#')) {
+    let hex = colorString.slice(1);
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    if (hex.length === 3) {
+      hex = hex.split('').map(char => char + char).join('');
+    }
+
+    if (hex.length === 6) {
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      return `${r}, ${g}, ${b}`;
+    }
+  }
+
+  // Fallback for other formats or errors
+  console.warn(`Could not parse color: ${colorString}, falling back to black.`);
+  return '0, 0, 0';
+};
 
 // Hardcoded values as per requirements
 const tradingAccountId = '323aacbc-b72c-4129-a403-bb45d81e09b1';
@@ -35,7 +76,18 @@ const fetchSummaryData = async () => {
 };
 
 // Fetch data when the component is mounted
-onMounted(fetchSummaryData);
+onMounted(async () => {
+  await fetchSummaryData();
+
+  // After the component is mounted and data is fetched, resolve the CSS variables
+  if (dashboardEl.value) {
+    const styles = getComputedStyle(dashboardEl.value);
+    positiveColor.value = styles.getPropertyValue('--semantic-color-feedback-positive-text').trim();
+    negativeColor.value = styles.getPropertyValue('--semantic-color-feedback-negative-text').trim();
+    tertiaryColor.value = styles.getPropertyValue('--semantic-color-text-tertiary').trim();
+    colorsResolved.value = true; // Signal that colors are ready
+  }
+});
 
 // ---- Chart Data & Options ----
 
@@ -44,17 +96,36 @@ const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'curre
 
 // 1. P&L Line Chart
 const pnlLineChartData = computed(() => {
-  if (!summaryData.value?.cumulative_pnl_series) return { labels: [], datasets: [] };
+  // Guard against running before data and colors are ready, preventing race conditions.
+  if (!summaryData.value || !colorsResolved.value) {
+    return { labels: [], datasets: [] };
+  }
+
   const series = summaryData.value.cumulative_pnl_series;
+  const netPnl = summaryData.value.stats.net_pnl;
+
+  // Conditionally choose the color based on P&L
+  const chartColor = netPnl >= 0 ? positiveColor.value : negativeColor.value;
+
   return {
     labels: series.labels,
     datasets: [{
       data: series.data,
-      borderColor: 'var(--semantic-color-feedback-positive-text)',
-      backgroundColor: 'rgba(var(--semantic-color-feedback-positive-text-rgb), 0.1)',
+      borderColor: chartColor,
       tension: 0.4,
       fill: true,
       pointRadius: 0,
+      backgroundColor: (context) => {
+        const { ctx, chartArea } = context.chart;
+        if (!chartArea) {
+          return 'rgba(0,0,0,0)'; // Fallback
+        }
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        const rgb = getRgbValues(chartColor);
+        gradient.addColorStop(0, `rgba(${rgb}, 0.4)`); // Top color
+        gradient.addColorStop(1, `rgba(${rgb}, 0)`);   // Bottom color (fully transparent)
+        return gradient;
+      },
     }],
   };
 });
@@ -73,8 +144,8 @@ const createGaugeData = (value, max) => {
     datasets: [{
       data: [normalizedValue, max - normalizedValue],
       backgroundColor: [
-        'var(--semantic-color-feedback-positive-text)',
-        'rgba(var(--semantic-color-text-tertiary-rgb), 0.2)',
+        positiveColor.value,
+        `rgba(${getRgbValues(tertiaryColor.value)}, 0.2)`,
       ],
       borderWidth: 0,
       circumference: 180,
@@ -103,8 +174,8 @@ const avgWinLossBarData = computed(() => {
         datasets: [{
             data: [avg_win, Math.abs(avg_loss)],
             backgroundColor: [
-                'var(--semantic-color-feedback-positive-text)',
-                'var(--semantic-color-feedback-negative-text)',
+                positiveColor.value,
+                negativeColor.value,
             ],
             borderWidth: 0,
             borderRadius: 4,
@@ -134,7 +205,7 @@ const barOptions = {
   <div v-else-if="error" class="error-state">
     <p>{{ error }}</p>
   </div>
-  <div v-else-if="summaryData" class="kpi-dashboard">
+  <div v-else-if="summaryData" ref="dashboardEl" class="kpi-dashboard">
     <!-- Card 1: Net Cumulative P&L (New 3-Row Layout) -->
     <KpiCard class="pnl-card-layout">
       <div class="pnl-header">
@@ -200,7 +271,7 @@ const barOptions = {
 
 /* Base Card Title Style */
 .card-title {
-  font: var(--semantic-font-style-heading-sm);
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
@@ -208,7 +279,7 @@ const barOptions = {
 .metric-value {
   font: var(--semantic-font-style-metric-display);
   color: var(--semantic-color-text-primary);
-  line-height: 1.1;
+  line-height: 0.4;
 }
 
 /* --- Card 1: PnL 3-Row Layout --- */
@@ -229,7 +300,7 @@ const barOptions = {
   background-color: var(--semantic-color-surface-secondary);
   padding: var(--base-size-fluid-spacing-badge-padding-y) var(--base-size-fluid-spacing-badge-padding-x); /* Fluid Padding */
   border-radius: var(--semantic-border-radius-tag, 999px);
-  font: var(--semantic-font-style-label-md); /* Corrected to fluid font token */
+  font: var(--semantic-font-style-label-sm); /* Corrected to fluid font token */
   color: var(--semantic-color-text-secondary);
 }
 
@@ -239,9 +310,12 @@ const barOptions = {
 }
 
 .pnl-chart-area {
+  margin-top: -38px;
+  margin-bottom: -10px; /* Adjust to pull chart closer */
   flex-grow: 1;
   width: 100%;
-  min-height: 70px;
+  min-height: 40px;
+  height: 70px;
 }
 
 
@@ -269,8 +343,8 @@ const barOptions = {
 }
 
 .gauge-chart-wrapper {
-  width: var(--semantic-size-component-stat-card-chart-width);
-  height: var(--semantic-size-component-stat-card-chart-width);
+  width: 80px;
+  height: 60px;
 }
 
 /* --- Card 4: Vertical Layout --- */
