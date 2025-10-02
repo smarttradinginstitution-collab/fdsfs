@@ -71,15 +71,27 @@ const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'curre
 const pnlLineChartData = computed(() => {
   if (!summaryData.value?.cumulative_pnl_series) return { labels: [], datasets: [] };
   const series = summaryData.value.cumulative_pnl_series;
+
   return {
     labels: series.labels,
     datasets: [{
       data: series.data,
       borderColor: positiveColor.value,
-      backgroundColor: `rgba(${getRgbValues(positiveColor.value)}, 0.1)`,
       tension: 0.4,
       fill: true,
       pointRadius: 0,
+      backgroundColor: (context) => {
+        const { ctx, chartArea } = context.chart;
+        if (!chartArea) {
+          // Return a fallback if the chart area isn't available yet
+          return 'rgba(0,0,0,0)';
+        }
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        const rgb = getRgbValues(positiveColor.value);
+        gradient.addColorStop(0, `rgba(${rgb}, 0.4)`); // Top color
+        gradient.addColorStop(1, `rgba(${rgb}, 0)`);   // Bottom color (fully transparent)
+        return gradient;
+      },
     }],
   };
 });
