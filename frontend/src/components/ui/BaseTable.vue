@@ -106,13 +106,13 @@ const getCellAlignment = (header) => {
 
 /* Stili di default (medium) */
 th {
-  font: var(--semantic-font-style-label-sm);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
-  text-transform: uppercase; // Testo maiuscolo come da requisito
   text-align: left;
-  padding: var(--semantic-size-inset-md);
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md); // Padding verticale e orizzontale
   border-bottom: var(--base-border-width-1) solid var(--semantic-color-border-default);
   vertical-align: middle; // Allineamento verticale
+  background-color: var(--semantic-color-surface-primary); // Colore di sfondo dell'header
 }
 
 td {
@@ -125,11 +125,16 @@ td {
 
 /* Rimuoviamo il bordo superiore di default per evitare doppie linee */
 td {
-  border-top: none;
+  border-top:   none;
+}
+
+/* Coloriamo una riga sì e una no, a partire dalla seconda riga di dati */
+tbody tr:nth-child(even) {
+  background-color: var(--semantic-color-surface-secondary);
 }
 
 tbody tr:hover {
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--semantic-color-surface-tertiary);
 }
 
 /* Stile per le righe selezionate */
