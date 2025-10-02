@@ -13,7 +13,7 @@ from app.Infrastructure.db import Base
 if TYPE_CHECKING:
     from app.Models.auth_user import AuthUser
     from app.Models.trading_account import TradingAccount
-    from app.Models.tag import Tag
+    from app.Models.tags_group import TagsGroup
     from app.Models.mistake import Mistake
     from app.Models.psychology_state import PsychologyState
     from app.Models.news_impact import NewsImpact
@@ -43,7 +43,9 @@ class GeneralAccount(Base):
     trading_accounts: Mapped[list["TradingAccount"]] = relationship(
         "TradingAccount", back_populates="general_account"
     )
-    tags: Mapped[list["Tag"]] = relationship("Tag", back_populates="general_account")
+    tags_groups: Mapped[list["TagsGroup"]] = relationship(
+        "TagsGroup", back_populates="general_account"
+    )
     mistakes: Mapped[list["Mistake"]] = relationship(
         "Mistake", back_populates="general_account"
     )

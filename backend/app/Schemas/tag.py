@@ -12,7 +12,7 @@ class TagBase(BaseModel):
 
 
 class TagCreate(TagBase):
-    pass
+    group_id: UUID
 
 
 class TagUpdate(TagBase):
@@ -22,16 +22,7 @@ class TagUpdate(TagBase):
 
 class TagRead(TagBase):
     id: UUID
-    general_account_id: UUID
-
-    class Config:
-        from_attributes = True
-
-
-class TagAdminRead(BaseModel):
-    general_account_id: UUID
-    user_email: str
-    tags: List[TagRead]
+    group_id: UUID
 
     class Config:
         from_attributes = True

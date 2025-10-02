@@ -80,60 +80,67 @@ async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
 
 # Fixture for a regular authenticated user client
 @pytest.fixture
-async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    async for client in _get_client_for_user(db_session, is_admin=False):
+async def async_client(authenticated_client_factory):
+    async with authenticated_client_factory(is_admin=False) as client:
+        yield client
+
+# Fixture for another regular authenticated user client
+@pytest.fixture
+async def other_user_async_client(authenticated_client_factory):
+    async with authenticated_client_factory(is_admin=False) as client:
         yield client
 
 # Fixture for an admin authenticated user client
 @pytest.fixture
-async def admin_async_client(
-    db_session: AsyncSession,
-) -> AsyncGenerator[AsyncClient, None]:
-    async for client in _get_client_for_user(db_session, is_admin=True):
+async def admin_async_client(authenticated_client_factory):
+    async with authenticated_client_factory(is_admin=True) as client:
         yield client
 
 
-# Helper generator to avoid code duplication
-async def _get_client_for_user(
-    db_session: AsyncSession, is_admin: bool
-) -> AsyncGenerator[AsyncClient, None]:
-    """
-    Helper to generate a client for a user with or without admin role.
-    """
-    user_id = uuid.uuid4()
-    user_email = f"testuser_{'admin' if is_admin else 'user'}@example.com"
+from contextlib import asynccontextmanager
 
-    # Ensure the user and their role exist in the test DB
+# Helper to create a user and return their claims
+async def create_test_user(db_session: AsyncSession, is_admin: bool) -> dict:
+    user_id = uuid.uuid4()
+    user_type = 'admin' if is_admin else 'user'
+    user_email = f"testuser_{user_type}_{uuid.uuid4()}@example.com"
+
     user = AuthUser(id=user_id, email=user_email, is_sso_user=False, is_anonymous=False)
     db_session.add(user)
 
     if is_admin:
-        # Get or create the admin role
         admin_role_result = await db_session.execute(select(role.Role).filter_by(name="admin"))
         admin_role = admin_role_result.scalar_one_or_none()
         if not admin_role:
             admin_role = role.Role(name="admin", description="Administrator")
             db_session.add(admin_role)
-            await db_session.flush() # Flush to get ID before creating user_role
-
-        # Assign admin role to user
+            await db_session.flush()
         user_admin_role = user_role.UserRole(user_id=user_id, role_id=admin_role.id)
         db_session.add(user_admin_role)
 
     await db_session.commit()
+    return {"sub": str(user_id), "email": user_email}
 
-    # Override dependencies
-    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-        yield db_session
+@pytest.fixture
+async def authenticated_client_factory(db_session: AsyncSession):
+    @asynccontextmanager
+    async def factory(is_admin: bool = False):
+        claims = await create_test_user(db_session, is_admin)
 
-    async def override_get_current_claims() -> dict:
-        return {"sub": str(user_id), "email": user_email}
+        async def override_get_db():
+            yield db_session
 
-    app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_current_claims] = override_get_current_claims
+        async def override_get_current_claims():
+            return claims
 
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
+        original_overrides = app.dependency_overrides.copy()
+        app.dependency_overrides[get_db] = override_get_db
+        app.dependency_overrides[get_current_claims] = override_get_current_claims
 
-    # Clean up overrides
-    app.dependency_overrides.clear()
+        try:
+            async with AsyncClient(app=app, base_url="http://test", follow_redirects=True) as client:
+                yield client
+        finally:
+            app.dependency_overrides = original_overrides
+
+    return factory

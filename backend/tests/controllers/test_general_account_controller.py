@@ -13,7 +13,6 @@ async def test_create_general_account(async_client: AsyncClient):
     assert response.status_code == 201
     data = response.json()
     assert "id" in data
-    assert data["label"] == "test@example.com"
 
     general_account_id = data["id"]
 

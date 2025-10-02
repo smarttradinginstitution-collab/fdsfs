@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
-    from app.Models.general_account import GeneralAccount
+    from app.Models.tags_group import TagsGroup
     from app.Models.trade import Trade
 
 
@@ -22,21 +22,19 @@ class Tag(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    general_account_id: Mapped[uuid.UUID] = mapped_column(
+    group_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
+        ForeignKey("public.tags_groups.id", ondelete="CASCADE"),
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
     color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True, default="#888888")
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relazioni
-    general_account: Mapped["GeneralAccount"] = relationship(
-        "GeneralAccount", back_populates="tags"
-    )
+    # Relationships
+    group: Mapped["TagsGroup"] = relationship("TagsGroup", back_populates="tags")
     trades: Mapped[list["Trade"]] = relationship(
         secondary="public.trades_tags", back_populates="tags"
     )
