@@ -74,12 +74,11 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 /* Variante Secondaria */
 .button--secondary {
   background-color: var(--semantic-color-surface-primary);
-  color: var(--semantic-color-text-interactive);
+  color: var(--semantic-color-text-secondary); /* Allineato al colore del testo di DropdownButton */
   border-color: var(--semantic-color-border-default);
 }
 .button--secondary:hover {
-  background-color: var(--semantic-color-surface-secondary);
-  border-color: var(--semantic-color-border-subtle);
+  background-color: var(--semantic-color-surface-secondary); /* Rimosso il cambio di bordo per coerenza */
 }
 
 /* Variante Danger */
