@@ -17,6 +17,7 @@ const dashboardEl = ref(null);
 const positiveColor = ref('rgb(34, 197, 94)');
 const negativeColor = ref('rgb(239, 68, 68)');
 const tertiaryColor = ref('rgb(107, 114, 128)');
+const colorsResolved = ref(false); // Flag to prevent race condition
 
 /**
  * Extracts the numeric 'r, g, b' values from a CSS 'rgb(r, g, b)' string.
@@ -59,6 +60,7 @@ onMounted(async () => {
     positiveColor.value = styles.getPropertyValue('--semantic-color-feedback-positive-text').trim();
     negativeColor.value = styles.getPropertyValue('--semantic-color-feedback-negative-text').trim();
     tertiaryColor.value = styles.getPropertyValue('--semantic-color-text-tertiary').trim();
+    colorsResolved.value = true; // Signal that colors are ready
   }
 });
 
@@ -69,25 +71,32 @@ const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'curre
 
 // 1. P&L Line Chart
 const pnlLineChartData = computed(() => {
-  if (!summaryData.value?.cumulative_pnl_series) return { labels: [], datasets: [] };
+  // Guard against running before data and colors are ready, preventing race conditions.
+  if (!summaryData.value || !colorsResolved.value) {
+    return { labels: [], datasets: [] };
+  }
+
   const series = summaryData.value.cumulative_pnl_series;
+  const netPnl = summaryData.value.stats.net_pnl;
+
+  // Conditionally choose the color based on P&L
+  const chartColor = netPnl >= 0 ? positiveColor.value : negativeColor.value;
 
   return {
     labels: series.labels,
     datasets: [{
       data: series.data,
-      borderColor: positiveColor.value,
+      borderColor: chartColor,
       tension: 0.4,
       fill: true,
       pointRadius: 0,
       backgroundColor: (context) => {
         const { ctx, chartArea } = context.chart;
         if (!chartArea) {
-          // Return a fallback if the chart area isn't available yet
-          return 'rgba(0,0,0,0)';
+          return 'rgba(0,0,0,0)'; // Fallback
         }
         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-        const rgb = getRgbValues(positiveColor.value);
+        const rgb = getRgbValues(chartColor);
         gradient.addColorStop(0, `rgba(${rgb}, 0.4)`); // Top color
         gradient.addColorStop(1, `rgba(${rgb}, 0)`);   // Bottom color (fully transparent)
         return gradient;
