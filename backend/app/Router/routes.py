@@ -270,6 +270,13 @@ router.include_router(
 # 🏷️ TAGS (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import tag_router
+from app.Router import tags_group_router
+
+router.include_router(
+    tags_group_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
 
 router.include_router(
     tag_router.router,

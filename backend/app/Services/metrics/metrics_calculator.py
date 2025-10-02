@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from typing import List, Dict, Optional, Any
 import numpy as np
-from datetime import date
+from datetime import date, datetime
+from decimal import Decimal
 
 from app.Models.trade import Trade
 from app.Models.rule_playbook import RulePlaybook
@@ -15,8 +16,11 @@ class MetricsCalculator:
     """
 
     def __init__(self, trades: List[Trade], initial_balance: float):
-        self.trades = sorted(trades, key=lambda t: t.exit_timestamp or t.entry_timestamp)
-        self.initial_balance = initial_balance if initial_balance is not None else 0.0
+        self.trades = sorted(
+            trades,
+            key=lambda t: t.exit_timestamp or t.entry_timestamp or datetime.min
+        )
+        self.initial_balance = Decimal(initial_balance) if initial_balance is not None else Decimal('0.0')
         self.pnl_series = [t.p_l for t in self.trades if t.p_l is not None]
         self.trade_count = len(self.pnl_series)
 
@@ -26,14 +30,14 @@ class MetricsCalculator:
     def _calculate_basic_stats(self):
         """Pre-calculates basic statistics used by multiple methods."""
         if self.trade_count == 0:
-            self.net_pnl = 0.0
+            self.net_pnl = Decimal('0.0')
             self.winning_trades_list = []
             self.losing_trades_list = []
             self.winning_trades_count = 0
             self.losing_trades_count = 0
             self.breakeven_trades_count = 0
-            self.gross_profit = 0.0
-            self.gross_loss = 0.0
+            self.gross_profit = Decimal('0.0')
+            self.gross_loss = Decimal('0.0')
             return
 
         self.net_pnl = sum(self.pnl_series)
@@ -45,7 +49,6 @@ class MetricsCalculator:
 
         total_classified = self.winning_trades_count + self.losing_trades_count
         self.breakeven_trades_count = len(self.trades) - total_classified
-
 
         self.gross_profit = sum(t.p_l for t in self.winning_trades_list)
         self.gross_loss = abs(sum(t.p_l for t in self.losing_trades_list))
@@ -61,8 +64,8 @@ class MetricsCalculator:
         # Core Metrics
         equity_curve_data = self.calculate_equity_curve()
         max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(equity_curve_data['data'])
-        avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else 0
-        avg_loss = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else 0
+        avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else Decimal('0')
+        avg_loss = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else Decimal('0')
         win_rate = (self.winning_trades_count / self.trade_count) * 100 if self.trade_count > 0 else 0
         profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
 
@@ -239,10 +242,11 @@ class MetricsCalculator:
                 trades_with_duration += 1
         return (total_hold_time / trades_with_duration) / 60 if trades_with_duration > 0 else 0
 
-    def _calculate_expectancy(self, win_rate, avg_win, avg_loss) -> float:
+    def _calculate_expectancy(self, win_rate, avg_win, avg_loss) -> Decimal:
         """Calculates the expectancy."""
-        loss_rate = (self.losing_trades_count / self.trade_count) if self.trade_count > 0 else 0
-        return ((win_rate / 100) * avg_win) - (loss_rate * avg_loss)
+        win_rate_dec = Decimal(win_rate) / Decimal(100)
+        loss_rate = Decimal(self.losing_trades_count / self.trade_count) if self.trade_count > 0 else Decimal(0)
+        return (win_rate_dec * avg_win) - (loss_rate * avg_loss)
 
     def _calculate_avg_realized_rr(self) -> float:
         """Calculates the average realized R:R multiple."""
@@ -296,20 +300,20 @@ class MetricsCalculator:
                 iso_year, iso_week, _ = trade_date.isocalendar()
                 week_key = f"{iso_year}-W{iso_week:02d}"
                 if week_key not in weekly_totals:
-                    weekly_totals[week_key] = {"total_pnl": 0.0, "trading_days": set()}
-                weekly_totals[week_key]["total_pnl"] += trade.p_l or 0
+                    weekly_totals[week_key] = {"total_pnl": Decimal('0.0'), "trading_days": set()}
+                weekly_totals[week_key]["total_pnl"] += trade.p_l or Decimal('0.0')
                 weekly_totals[week_key]["trading_days"].add(trade_date)
 
         for week_key, data in weekly_totals.items():
             weekly_totals[week_key]["trading_days"] = len(data["trading_days"])
 
         by_strategy: Dict[str, Dict[str, Any]] = {}
-        by_day_of_week: Dict[str, Dict[str, float]] = {
-            day: {"total_pnl": 0.0, "trade_count": 0}
+        by_day_of_week: Dict[str, Dict[str, Decimal]] = {
+            day: {"total_pnl": Decimal('0.0'), "trade_count": 0}
             for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         }
-        daily_pnl: Dict[date, float] = {}
-        monthly_totals: Dict[str, float] = {}
+        daily_pnl: Dict[date, Decimal] = {}
+        monthly_totals: Dict[str, Decimal] = {}
 
         for trade in self.trades:
             if not trade.entry_timestamp or trade.p_l is None: continue
@@ -318,7 +322,7 @@ class MetricsCalculator:
             if trade.playbook:
                 playbook = trade.playbook
                 if playbook.title not in by_strategy:
-                    by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": 0.0, "winning_trades": 0}
+                    by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": Decimal('0.0'), "winning_trades": 0}
                 by_strategy[playbook.title]["trade_count"] += 1
                 by_strategy[playbook.title]["total_pnl"] += trade.p_l
                 if trade.p_l > 0:
@@ -328,11 +332,11 @@ class MetricsCalculator:
             by_day_of_week[day_name]["total_pnl"] += trade.p_l
             by_day_of_week[day_name]["trade_count"] += 1
 
-            if trade_date not in daily_pnl: daily_pnl[trade_date] = 0.0
+            if trade_date not in daily_pnl: daily_pnl[trade_date] = Decimal('0.0')
             daily_pnl[trade_date] += trade.p_l
 
             month_key = trade_date.strftime("%Y-%m")
-            if month_key not in monthly_totals: monthly_totals[month_key] = 0.0
+            if month_key not in monthly_totals: monthly_totals[month_key] = Decimal('0.0')
             monthly_totals[month_key] += trade.p_l
 
         winning_days = sum(1 for pnl in daily_pnl.values() if pnl > 0)

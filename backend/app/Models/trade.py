@@ -71,7 +71,7 @@ class Trade(Base):
 
 # Core trade data
     gross_p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    p_l: Mapped[Optional[float]] = mapped_column(Float, nullable=True) # Questo è il P&L Netto
+    p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True) # Questo è il P&L Netto
     r_multiple: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     entry_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     exit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)

@@ -188,5 +188,5 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
     )
     inserted_trade = result.scalars().first()
     assert inserted_trade is not None
-    assert inserted_trade.p_l == -189.56
+    assert float(inserted_trade.p_l) == -189.56
     assert inserted_trade.position_size == 2.0

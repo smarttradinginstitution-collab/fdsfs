@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 from uuid import UUID
 from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload, joinedload, contains_eager
 
 from app.Models.tag import Tag
 from app.Models.general_account import GeneralAccount
@@ -18,16 +18,13 @@ class TagRepository:
 
     async def get_tag_by_id(self, tag_id: UUID) -> Optional[Tag]:
         """Recupera un tag specifico per ID."""
-        stmt = select(Tag).where(Tag.id == tag_id).limit(1)
+        stmt = select(Tag).where(Tag.id == tag_id).options(joinedload(Tag.group)).limit(1)
         res = await self.db.execute(stmt)
         return res.scalars().first()
 
-    async def create_tag(self, general_account_id: UUID, tag_data: TagCreate) -> Tag:
+    async def create_tag(self, tag_data: TagCreate) -> Tag:
         """Crea un nuovo tag."""
-        db_tag = Tag(
-            **tag_data.model_dump(),
-            general_account_id=general_account_id
-        )
+        db_tag = Tag(**tag_data.model_dump())
         self.db.add(db_tag)
         await self.db.commit()
         await self.db.refresh(db_tag)
@@ -58,38 +55,45 @@ class TagRepository:
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
-    async def list_all_tags_grouped_by_account(self) -> Sequence[GeneralAccount]:
-        """
-        Lista tutti i GeneralAccount con i loro tag e utenti associati.
-        Utile per l'endpoint admin.
-        """
-        stmt = (
-            select(GeneralAccount)
-            .options(
-                joinedload(GeneralAccount.user),
-                selectinload(GeneralAccount.tags)
-            )
-            .order_by(GeneralAccount.created_at.asc())
-        )
-        res = await self.db.execute(stmt)
-        return res.scalars().unique().all()
-
     async def upsert_by_name(self, general_account_id: UUID, name: str, color: Optional[str] = None) -> Tag:
-        """
-        Cerca un tag per nome; se esiste, lo aggiorna (opzionalmente); altrimenti lo crea.
-        Mantenuto per compatibilità con altre parti del sistema (es. import).
-        """
-        stmt = select(Tag).where(Tag.general_account_id == general_account_id, Tag.name == name).limit(1)
-        res = await self.db.execute(stmt)
-        row = res.scalars().first()
-        if row:
-            if color and row.color != color:
-                row.color = color
-                await self.db.flush()
-            return row
+        from app.Models.tags_group import TagsGroup
 
-        stmt_ins = insert(Tag).values(general_account_id=general_account_id, name=name, color=color).returning(Tag)
-        res_ins = await self.db.execute(stmt_ins)
-        new_row = res_ins.scalar_one()
-        await self.db.flush()
-        return new_row
+        # 1. Find or create a default group for the general account
+        group_stmt = select(TagsGroup).where(
+            TagsGroup.general_account_id == general_account_id,
+            TagsGroup.name == "Default"
+        ).limit(1)
+        res_group = await self.db.execute(group_stmt)
+        group = res_group.scalars().first()
+
+        if not group:
+            group = TagsGroup(
+                general_account_id=general_account_id,
+                name="Default",
+                description="Default group for tags created on the fly."
+            )
+            self.db.add(group)
+            await self.db.flush()
+            await self.db.refresh(group)
+
+        # 2. Find tag by name within that group
+        tag_stmt = select(Tag).where(Tag.group_id == group.id, Tag.name == name).limit(1)
+        res_tag = await self.db.execute(tag_stmt)
+        tag = res_tag.scalars().first()
+
+        if tag:
+            if color and tag.color != color:
+                tag.color = color
+                self.db.add(tag)
+                await self.db.commit()
+                await self.db.refresh(tag)
+            return tag
+
+        # 3. Create tag if it does not exist
+        new_tag = Tag(name=name, color=color, group_id=group.id)
+        self.db.add(new_tag)
+        await self.db.commit()
+
+        # Re-fetch the tag to ensure the group relationship is loaded, preventing lazy-load errors.
+        created_tag = await self.get_tag_by_id(new_tag.id)
+        return created_tag

@@ -8,35 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.tag_repository import TagRepository
-from app.Schemas.tag import TagCreate, TagRead, TagUpdate, TagAdminRead
+from app.Repositories.tags_group_repository import TagsGroupRepository
+from app.Schemas.tag import TagCreate, TagRead, TagUpdate
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 
 
 class TagController:
     def __init__(self) -> None:
         pass
-
-    async def list_all_tags_for_admin(
-        self,
-        db: AsyncSession = Depends(get_db),
-    ) -> List[TagAdminRead]:
-        """
-        [Admin] Lista tutti i tag, raggruppati per General Account.
-        """
-        repo = TagRepository(db)
-        accounts = await repo.list_all_tags_grouped_by_account()
-
-        response_data = []
-        for acc in accounts:
-            if acc.user: # Assicura che ci sia un utente associato
-                response_data.append(
-                    TagAdminRead(
-                        general_account_id=acc.id,
-                        user_email=acc.user.email,
-                        tags=[TagRead.from_orm(t) for t in acc.tags]
-                    )
-                )
-        return response_data
 
     async def list_my_tags(
         self,
@@ -67,7 +46,7 @@ class TagController:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag non trovato.")
 
         # Verifica ownership (o se l'utente è admin)
-        if not current_user.is_admin and tag.general_account_id != general_account_id:
+        if not tag.group or (not current_user.is_admin and tag.group.general_account_id != general_account_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         return TagRead.from_orm(tag)
@@ -81,8 +60,19 @@ class TagController:
         """
         Crea un nuovo tag per l'utente autenticato.
         """
-        repo = TagRepository(db)
-        new_tag = await repo.create_tag(general_account_id, tag_data)
+        # Verify that the group exists and belongs to the user
+        tags_group_repo = TagsGroupRepository(db)
+        group = await tags_group_repo.get_tags_group_by_id(
+            tag_data.group_id, general_account_id
+        )
+        if not group:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Tags Group not found or access denied.",
+            )
+
+        tag_repo = TagRepository(db)
+        new_tag = await tag_repo.create_tag(tag_data)
         return TagRead.from_orm(new_tag)
 
     async def update_tag(
@@ -103,7 +93,7 @@ class TagController:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag non trovato.")
 
         # Verifica ownership (o se l'utente è admin)
-        if not current_user.is_admin and tag_to_update.general_account_id != general_account_id:
+        if not tag_to_update.group or (not current_user.is_admin and tag_to_update.group.general_account_id != general_account_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         updated_tag = await repo.update_tag(db_obj=tag_to_update, tag_data=tag_data)
@@ -129,7 +119,7 @@ class TagController:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag non trovato.")
 
         # Verifica ownership (o se l'utente è admin)
-        if not current_user.is_admin and tag_to_delete.general_account_id != general_account_id:
+        if not tag_to_delete.group or (not current_user.is_admin and tag_to_delete.group.general_account_id != general_account_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         await repo.delete_tag(db_obj=tag_to_delete)
