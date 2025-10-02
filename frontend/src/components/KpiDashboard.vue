@@ -372,7 +372,7 @@ const doughnutOptions = {
 .segmented-bar {
   display: flex; /* FONDAMENTALE per creare i segmenti */
   width: 100%;
-  height: 16px; /* Altezza della barra */
+  height: 8px; /* Altezza della barra ridotta */
   border-radius: var(--semantic-border-radius-tag, 999px); /* Angoli arrotondati */
   overflow: hidden; /* Nasconde gli angoli interni dei segmenti */
 }
@@ -394,7 +394,7 @@ const doughnutOptions = {
   display: flex;
   justify-content: space-between; /* Spinge le etichette ai lati */
   width: 100%;
-  font: var(--semantic-font-style-data-numeric); /* Usa il font per dati numerici */
+  font: var(--semantic-font-style-body-sm); /* Usa un font di corpo standard */
 }
 
 .avg-win {
