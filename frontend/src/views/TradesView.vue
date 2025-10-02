@@ -134,10 +134,10 @@ const getPnlClass = (pnl) => {
 
 .status-pill {
   display: inline-block;
-  padding: var(--semantic-size-inset-squished-sm); // Aumentato il padding per un aspetto migliore
+  padding: var(--semantic-size-badge-padding-y) var(--semantic-size-badge-padding-x); // Uso i token specifici per i badge per un controllo migliore
   border-radius: var(--semantic-border-radius-tag);
   font: var(--semantic-font-style-label-sm);
-  line-height: 1; // Migliora l'allineamento verticale del testo
+  line-height: 1;
   text-transform: uppercase;
 
   &.status-win {
