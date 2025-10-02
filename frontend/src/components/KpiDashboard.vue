@@ -137,8 +137,8 @@ const pnlLineChartOptions = {
   scales: { x: { display: false }, y: { display: false } },
 };
 
-// 2. Gauge Charts (Profit Factor & Win %)
-const createGaugeData = (value, max) => {
+// 2. Meter Charts (Doughnut/Gauge) - Refactored for clarity
+const createMeterData = (value, max) => {
   const normalizedValue = Math.min(Math.max(value, 0), max);
   return {
     datasets: [{
@@ -148,20 +148,28 @@ const createGaugeData = (value, max) => {
         `rgba(${getRgbValues(tertiaryColor.value)}, 0.2)`,
       ],
       borderWidth: 0,
-      circumference: 180,
-      rotation: 270,
     }]
   };
 };
 
-const profitFactorGaugeData = computed(() => createGaugeData(summaryData.value?.stats?.profit_factor || 0, 10));
-const winPercentageGaugeData = computed(() => createGaugeData(summaryData.value?.stats?.win_rate || 0, 100));
+const profitFactorChartData = computed(() => createMeterData(summaryData.value?.stats?.profit_factor || 0, 10));
+const winPercentageChartData = computed(() => createMeterData(summaryData.value?.stats?.win_rate || 0, 100));
 
 const gaugeOptions = {
   responsive: true,
   maintainAspectRatio: false,
   cutout: '80%',
-  plugins: { tooltip: { enabled: false } }
+  plugins: { tooltip: { enabled: false } },
+  circumference: 180, // Presentation option for semi-circle
+  rotation: 270,      // Presentation option for semi-circle
+};
+
+const doughnutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '80%',
+  plugins: { tooltip: { enabled: false } },
+  circumference: 360, // Presentation option for full circle
 };
 
 
@@ -227,7 +235,7 @@ const barOptions = {
         <p class="metric-value">{{ summaryData.stats.profit_factor.toFixed(2) }}</p>
       </div>
       <div class="chart-content gauge-chart-wrapper">
-        <GaugeChart :chart-data="profitFactorGaugeData" :chart-options="gaugeOptions" />
+        <GaugeChart :chart-data="profitFactorChartData" :chart-options="doughnutOptions" />
       </div>
     </KpiCard>
 
@@ -238,7 +246,7 @@ const barOptions = {
         <p class="metric-value">{{ summaryData.stats.win_rate.toFixed(2) }}%</p>
       </div>
       <div class="chart-content gauge-chart-wrapper">
-        <GaugeChart :chart-data="winPercentageGaugeData" :chart-options="gaugeOptions" />
+        <GaugeChart :chart-data="winPercentageChartData" :chart-options="gaugeOptions" />
       </div>
     </KpiCard>
 
