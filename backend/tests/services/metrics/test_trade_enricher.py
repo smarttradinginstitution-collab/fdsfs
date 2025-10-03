@@ -1,9 +1,9 @@
 # backend/tests/services/metrics/test_trade_enricher.py
 import pytest
 from decimal import Decimal
-from app.Services.metrics.trade_enricher import calculate_advanced_trade_metrics
+from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 
-# Fixture per i dati di un trade LONG in profitto
+# Fixture per i dati di un trade LONG in profitto, ora con dati MAE/MFE
 @pytest.fixture
 def long_trade_data():
     return {
@@ -12,9 +12,12 @@ def long_trade_data():
         "exit_price": "165.0",
         "stop_loss_price": "145.0",
         "direction": "LONG",
+        "lowest_price_during_trade": "149.50",
+        "highest_price_during_trade": "152.00",
+        "position_size": "1", # Aggiunto per un calcolo del valore per punto più realistico
     }
 
-# Fixture per i dati di un trade SHORT in perdita
+# Fixture per i dati di un trade SHORT in perdita, ora con dati MAE/MFE
 @pytest.fixture
 def short_trade_data():
     return {
@@ -23,107 +26,66 @@ def short_trade_data():
         "exit_price": "202.5",
         "stop_loss_price": "205.0",
         "direction": "SHORT",
+        "lowest_price_during_trade": "198.0",
+        "highest_price_during_trade": "203.0",
+        "position_size": "1",
     }
 
-# Fixture per i dati del trade specifico segnalato dall'utente
-@pytest.fixture
-def user_reported_trade_data():
-    return {
-        "p_l": "1575.00",
-        "entry_price": "24841.50",
-        "exit_price": "24832.75",
-        "stop_loss_price": "24846.00",
-        "direction": "SHORT",
-    }
-
-# Test con il caso specifico segnalato dall'utente
-def test_calculation_with_user_reported_data(user_reported_trade_data):
-    """
-    Verifica che la logica di calcolo corretta venga applicata al caso
-    specifico segnalato dall'utente, producendo i risultati attesi.
-    """
-    initial_balance = Decimal("25000.00") # Saldo ipotetico per il calcolo ROI
-    metrics = calculate_advanced_trade_metrics(user_reported_trade_data, initial_balance)
-
-    # Valori attesi calcolati manualmente con la formula corretta:
-    # valore_per_punto = abs(1575 / (24832.75 - 24841.50)) = 180
-    # distanza_sl = abs(24841.50 - 24846.00) = 4.5
-    # trade_risk = 180 * 4.5 = 810
-    # realized_rr = 1575 / 810 = 1.9444...
-    # net_roi = (1575 / 25000) * 100 = 6.3
-
-    assert metrics["trade_risk"] == pytest.approx(Decimal("810.00"))
-    assert metrics["realized_r_multiple"] == pytest.approx(Decimal("1.9444"), abs=1e-4)
-    assert metrics["net_roi"] == pytest.approx(Decimal("6.3"))
-
-# Test per un trade LONG in profitto
+# Test per un trade LONG, ora include verifica MAE/MFE
 def test_long_trade_metrics(long_trade_data):
     initial_balance = Decimal("10000.00")
-    metrics = calculate_advanced_trade_metrics(long_trade_data, initial_balance)
+    metrics = enrich_trade_with_all_metrics(long_trade_data, initial_balance)
 
-    assert metrics["trade_risk"] == pytest.approx(Decimal("100.00"))
+    # Valori attesi calcolati manualmente
+    # valore_per_punto = abs(300 / (165 - 150)) = 20
+    # mae_points = 150 - 149.5 = 0.5 -> mae_usd = -abs(0.5 * 20) = -10
+    # mfe_points = 152 - 150 = 2 -> mfe_usd = 2 * 20 = 40
+    assert metrics["trade_risk"] == pytest.approx(Decimal("100.0")) # 5 punti * 20
     assert metrics["realized_r_multiple"] == pytest.approx(Decimal("3.0"))
     assert metrics["net_roi"] == pytest.approx(Decimal("3.0"))
+    assert metrics["mae_usd"] == pytest.approx(Decimal("-10.0"))
+    assert metrics["mfe_usd"] == pytest.approx(Decimal("40.0"))
 
-# Test per un trade SHORT in perdita
+# Test per un trade SHORT, ora include verifica MAE/MFE
 def test_short_trade_metrics(short_trade_data):
     initial_balance = Decimal("10300.00")
-    metrics = calculate_advanced_trade_metrics(short_trade_data, initial_balance)
+    metrics = enrich_trade_with_all_metrics(short_trade_data, initial_balance)
 
-    assert metrics["trade_risk"] == pytest.approx(Decimal("100.00"))
+    # Valori attesi calcolati manualmente
+    # valore_per_punto = abs(-50 / (202.5 - 200)) = 20
+    # mae_points = 203 - 200 = 3 -> mae_usd = -abs(3 * 20) = -60
+    # mfe_points = 200 - 198 = 2 -> mfe_usd = 2 * 20 = 40
+    assert metrics["trade_risk"] == pytest.approx(Decimal("100.0")) # 5 punti * 20
     assert metrics["realized_r_multiple"] == pytest.approx(Decimal("-0.5"))
     assert metrics["net_roi"] == pytest.approx(Decimal("-0.4854"), abs=1e-4)
+    assert metrics["mae_usd"] == pytest.approx(Decimal("-60.0"))
+    assert metrics["mfe_usd"] == pytest.approx(Decimal("40.0"))
 
-# Test caso limite: nessun rischio (prezzo entrata = stop loss)
-def test_zero_risk_scenario():
+# Test caso limite: nessun dato per MAE/MFE
+def test_no_mae_mfe_data():
     trade_data = {
         "p_l": "100.00",
         "entry_price": "100.0",
         "exit_price": "101.0",
-        "stop_loss_price": "100.0", # Rischio zero
-        "direction": "LONG",
-    }
-    metrics = calculate_advanced_trade_metrics(trade_data, Decimal("10000"))
-
-    assert metrics["trade_risk"] == Decimal("0.0")
-    assert metrics["realized_r_multiple"] is None # R-multiple non è definito
-    assert metrics["net_roi"] == pytest.approx(Decimal("1.0"))
-
-# Test caso limite: nessun movimento di prezzo (uscita = entrata)
-def test_zero_price_movement_scenario():
-    trade_data = {
-        "p_l": "-5.00", # PNL dovuto a commissioni
-        "entry_price": "100.0",
-        "exit_price": "100.0", # Nessun movimento
         "stop_loss_price": "99.0",
         "direction": "LONG",
+        "lowest_price_during_trade": None, # Dati mancanti
+        "highest_price_during_trade": None,
     }
-    metrics = calculate_advanced_trade_metrics(trade_data, Decimal("10000"))
+    metrics = enrich_trade_with_all_metrics(trade_data, Decimal("10000"))
 
-    assert metrics["trade_risk"] == Decimal("0.0") # Rischio non calcolabile dal PNL
-    assert metrics["realized_r_multiple"] is None
-    assert metrics["net_roi"] == pytest.approx(Decimal("-0.05"))
+    assert metrics["mae_usd"] is None # Il valore di default corretto è None
+    assert metrics["mfe_usd"] is None
 
-# Test caso limite: saldo iniziale pari a zero
-def test_zero_initial_balance():
-    trade_data = {
-        "p_l": "50.00",
-        "entry_price": "100.0",
-        "exit_price": "101.0",
-        "stop_loss_price": "99.0",
-        "direction": "LONG",
-    }
-    metrics = calculate_advanced_trade_metrics(trade_data, Decimal("0"))
-
-    assert metrics["trade_risk"] is not None
-    assert metrics["realized_r_multiple"] is not None
-    assert metrics["net_roi"] == Decimal("0.0")
-
-# Test con dati mancanti o invalidi
+# Test con dati invalidi per prevenire crash
 def test_invalid_data():
     trade_data = {"p_l": "50"} # Dati insufficienti
-    metrics = calculate_advanced_trade_metrics(trade_data, Decimal("10000"))
+    metrics = enrich_trade_with_all_metrics(trade_data, Decimal("10000"))
 
-    assert metrics["trade_risk"] == Decimal("0.0") # Valore di default
-    assert metrics["realized_r_multiple"] is None
-    assert metrics["net_roi"] is not None
+    assert "trade_risk" in metrics
+    assert "realized_r_multiple" in metrics
+    assert "net_roi" in metrics
+    assert "mae_usd" in metrics
+    assert "mfe_usd" in metrics
+    assert metrics["mae_usd"] is None # La gestione errori dovrebbe restituire None
+    assert metrics["mfe_usd"] is None

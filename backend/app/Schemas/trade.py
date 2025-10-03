@@ -95,6 +95,8 @@ class TradeRead(TradeBase):
     r_multiple: Optional[float] = None
     net_roi: Optional[float] = None
     trade_risk: Optional[float] = None
+    mae_usd: Optional[float] = None
+    mfe_usd: Optional[float] = None
 
     tags: List[TagRead] = []
     mistakes: List[MistakeRead] = []

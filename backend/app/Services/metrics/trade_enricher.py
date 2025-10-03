@@ -1,79 +1,68 @@
 # app/Services/metrics/trade_enricher.py
 from decimal import Decimal, InvalidOperation
+from typing import Dict, Any
 
-def calculate_advanced_trade_metrics(trade_data: dict, initial_balance: Decimal) -> dict:
+def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: Decimal) -> Dict[str, Any]:
     """
-    Calcola metriche avanzate per un singolo trade (Trade Risk, Realized RR, Net ROI)
-    utilizzando la logica di calcolo fornita.
-
-    Args:
-        trade_data (dict): Un dizionario contenente i dati del trade.
-                           Campi richiesti: 'entry_price', 'exit_price', 'stop_loss_price',
-                           'p_l', 'direction'.
-        initial_balance (Decimal): Il saldo iniziale del conto di trading per il calcolo del ROI.
-
-    Returns:
-        dict: Un dizionario contenente le metriche calcolate.
+    Calcola tutte le metriche avanzate per un singolo trade, inclusi Rischio, ROI, R-Multiple, e MAE/MFE.
+    Restituisce un dizionario contenente solo le metriche calcolate.
     """
     try:
         entry = Decimal(trade_data.get('entry_price') or 0)
         exit_p = Decimal(trade_data.get('exit_price') or 0)
         sl = Decimal(trade_data.get('stop_loss_price') or 0)
         pnl = Decimal(trade_data.get('p_l') or 0)
-    except (InvalidOperation, TypeError) as e:
-        # Se i dati non sono validi, restituisce metriche nulle
+        lowest = Decimal(trade_data.get('lowest_price_during_trade') or 0)
+        highest = Decimal(trade_data.get('highest_price_during_trade') or 0)
+        position_size = Decimal(trade_data.get('position_size') or 1)
+        direction = trade_data.get('direction')
+    except (InvalidOperation, TypeError):
         return {
-            "trade_risk": None,
-            "realized_r_multiple": None,
-            "net_roi": None
+            "trade_risk": None, "realized_r_multiple": None, "net_roi": None,
+            "mae_usd": None, "mfe_usd": None
         }
 
-    # --- Controlli di sicurezza per evitare divisioni per zero o logica errata ---
-    if entry == exit_p or entry == sl or pnl is None:
-        return {
-            "trade_risk": Decimal('0.0'),
-            "realized_r_multiple": None, # Non calcolabile se il rischio è zero
-            "net_roi": (pnl / initial_balance) * 100 if initial_balance != 0 else Decimal('0.0')
-        }
-
-    # --- 1. Calcolo del Rischio Monetario (Trade Risk) ---
-    # Calcoliamo il "valore monetario" di un singolo punto di movimento del prezzo
-    # Usiamo il PNL diviso per la distanza in punti tra entrata e uscita
+    # --- Calcolo Valore per Punto ---
     price_movement = exit_p - entry
-    if price_movement == 0:
-        # Se non c'è movimento di prezzo, il rischio non può essere derivato dal PNL.
-        # Potrebbe essere un trade a commissione zero, ma per sicurezza lo impostiamo a 0.
-        trade_risk = Decimal('0.0')
-    else:
+    value_per_point = Decimal(0)
+    if price_movement != 0 and pnl != 0:
         value_per_point = abs(pnl / price_movement)
 
-        # Distanza in punti dello stop loss dall'entrata
-        sl_distance_points = abs(entry - sl)
+    # Fallback per asset come le azioni dove il PnL non è basato sui punti
+    if value_per_point == 0:
+        value_per_point = position_size if position_size > 0 else Decimal(1)
 
-        # Rischio monetario totale per il trade
+
+    # --- Calcolo Rischio, ROI, R-Multiple ---
+    trade_risk = None
+    realized_r_multiple = None
+
+    sl_distance_points = abs(entry - sl)
+    if sl_distance_points > 0:
         trade_risk = sl_distance_points * value_per_point
+        if trade_risk > 0:
+            realized_r_multiple = pnl / trade_risk
 
+    net_roi = (pnl / initial_balance) * 100 if initial_balance > 0 else Decimal(0)
 
-    # --- 2. Calcolo del Realized R-Multiple ---
-    if trade_risk != 0:
-        realized_r_multiple = pnl / trade_risk
-    else:
-        # Se il rischio è zero, l'R-multiple non è definito.
-        # Potrebbe essere infinito se c'è un PNL, ma None è più sicuro.
-        realized_r_multiple = None
+    # --- Calcolo MAE/MFE in USD ---
+    mae_usd = None
+    mfe_usd = None
+    if entry > 0 and lowest > 0 and highest > 0 and direction:
+        if direction.upper() == 'LONG':
+            mae_points = entry - lowest
+            mfe_points = highest - entry
+        else:  # SHORT
+            mae_points = highest - entry
+            mfe_points = entry - lowest
 
-    # --- 3. Calcolo del Net ROI (Return on Investment) ---
-    if initial_balance != 0:
-        net_roi = (pnl / initial_balance) * 100
-    else:
-        net_roi = Decimal('0.0')
+        mae_usd = -abs(mae_points * value_per_point)
+        mfe_usd = mfe_points * value_per_point
 
-
-    # --- Creazione del dizionario con i risultati ---
-    metriche = {
+    return {
         "trade_risk": trade_risk,
         "realized_r_multiple": realized_r_multiple,
-        "net_roi": net_roi
+        "net_roi": net_roi,
+        "mae_usd": mae_usd,
+        "mfe_usd": mfe_usd,
     }
-
-    return metriche

@@ -26,11 +26,11 @@ from app.Models.mistake import Mistake
 from app.Models.playbook import Playbook
 from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
-from app.Services.metrics.trade_enricher import calculate_advanced_trade_metrics
+from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 
 
 class TradeService:
-    # All calculation logic is now centralized in `calculate_advanced_trade_metrics`.
+    # All calculation logic is now centralized in `enrich_trade_with_all_metrics`.
     # The private methods _calculate_r_multiple, _calculate_trade_risk,
     # and _calculate_net_roi have been removed.
 
@@ -117,11 +117,12 @@ class TradeService:
             trade_dict['symbol_snapshot'] = trade_dict.pop('symbol')
 
         # Calcola l'R-Multiple corretto da salvare nel DB
-        advanced_metrics = calculate_advanced_trade_metrics(
+        # Calcola tutte le metriche per ottenere l'r_multiple da salvare
+        all_metrics = enrich_trade_with_all_metrics(
             trade_data=trade_dict,
             initial_balance=Decimal(trading_account.initial_balance or '0.0')
         )
-        r_multiple = advanced_metrics.get("realized_r_multiple")
+        r_multiple = all_metrics.get("realized_r_multiple")
         trade_dict['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
         db_trade = Trade(**trade_dict)
@@ -154,25 +155,35 @@ class TradeService:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Dettagli del conto di trading non trovati.")
 
         trade_data_dict = {
-            "entry_price": trade.entry_price, "exit_price": trade.exit_price,
-            "stop_loss_price": trade.stop_loss_price, "p_l": trade.p_l,
-            "direction": trade.direction.value if trade.direction else None
+            "entry_price": trade.entry_price,
+            "exit_price": trade.exit_price,
+            "stop_loss_price": trade.stop_loss_price,
+            "p_l": trade.p_l,
+            "direction": trade.direction.value if trade.direction else None,
+            "lowest_price_during_trade": trade.lowest_price_during_trade,
+            "highest_price_during_trade": trade.highest_price_during_trade,
+            "position_size": trade.position_size,
         }
 
-        advanced_metrics = calculate_advanced_trade_metrics(
+        all_metrics = enrich_trade_with_all_metrics(
             trade_data=trade_data_dict,
             initial_balance=Decimal(trading_account.initial_balance or '0.0')
         )
 
         trade_read = TradeRead.from_orm(trade)
-        # Convert Decimal to float for correct serialization
-        trade_risk = advanced_metrics.get("trade_risk")
-        net_roi = advanced_metrics.get("net_roi")
-        realized_r_multiple = advanced_metrics.get("realized_r_multiple")
 
-        trade_read.trade_risk = float(trade_risk) if trade_risk is not None else None
-        trade_read.net_roi = float(net_roi) if net_roi is not None else None
-        trade_read.r_multiple = float(realized_r_multiple) if realized_r_multiple is not None else None
+        # Populate all calculated fields, converting Decimal to float for serialization
+        # and mapping dictionary keys to the correct Pydantic model fields.
+        mappings = {
+            "realized_r_multiple": "r_multiple",
+            "trade_risk": "trade_risk",
+            "net_roi": "net_roi",
+            "mae_usd": "mae_usd",
+            "mfe_usd": "mfe_usd",
+        }
+        for metric_key, model_field in mappings.items():
+            value = all_metrics.get(metric_key)
+            setattr(trade_read, model_field, float(value) if value is not None else None)
 
         return trade_read
 
@@ -222,11 +233,11 @@ class TradeService:
                 "stop_loss_price": db_trade.stop_loss_price, "p_l": db_trade.p_l,
                 "direction": db_trade.direction.value if db_trade.direction else None
             }
-            advanced_metrics = calculate_advanced_trade_metrics(
+            all_metrics = enrich_trade_with_all_metrics(
                 trade_data=trade_data_for_calc,
                 initial_balance=Decimal(trading_account.initial_balance or '0.0')
             )
-            r_multiple = advanced_metrics.get("realized_r_multiple")
+            r_multiple = all_metrics.get("realized_r_multiple")
             db_trade.r_multiple = float(r_multiple) if r_multiple is not None else None
 
         if "playbook_id" in update_data.model_fields_set:
