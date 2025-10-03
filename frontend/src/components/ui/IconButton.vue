@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 
+const emit = defineEmits(['click']);
+
 const props = defineProps({
   size: {
     type: String,
@@ -17,7 +19,7 @@ const sizeClasses = computed(() => `icon-button--${props.size}`);
 </script>
 
 <template>
-  <button :class="['icon-button', sizeClasses]" :aria-label="ariaLabel">
+  <button :class="['icon-button', sizeClasses]" :aria-label="ariaLabel" @click="$emit('click', $event)">
     <slot></slot>
   </button>
 </template>

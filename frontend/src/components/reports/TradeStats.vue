@@ -31,6 +31,7 @@ const displayStats = computed(() => {
   const totalFees = (t.fees || 0) + (t.commissions || 0);
   addStat('Commissions & Fees', formatCurrency(totalFees * -1), { style: 'pnl-negative' });
 
+  addStat('Net ROI', formatPercentage(t.net_roi), { style: t.net_roi >= 0 ? 'pnl-positive' : 'pnl-negative' });
   addStat('Gross P&L', formatCurrency(t.gross_p_l));
 
   addStat('Take Profit', formatCurrency(t.take_profit_price));
