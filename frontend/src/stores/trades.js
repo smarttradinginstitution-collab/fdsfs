@@ -48,9 +48,29 @@ export const useTradesStore = defineStore('trades', {
     isLoading: false,
     isSummaryLoading: false,
     activeSummary: null,
+    selectedTrade: null,
+    isTradeLoading: false,
   }),
 
   getters: {
+    getPreviousTradeId(state) {
+      if (!state.selectedTrade || state.trades.length < 2) {
+        return null;
+      }
+      const sortedTrades = [...state.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const currentIndex = sortedTrades.findIndex(t => t.id === state.selectedTrade.id);
+      return currentIndex > 0 ? sortedTrades[currentIndex - 1].id : null;
+    },
+
+    getNextTradeId(state) {
+      if (!state.selectedTrade || state.trades.length < 2) {
+        return null;
+      }
+      const sortedTrades = [...state.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const currentIndex = sortedTrades.findIndex(t => t.id === state.selectedTrade.id);
+      return currentIndex !== -1 && currentIndex < sortedTrades.length - 1 ? sortedTrades[currentIndex + 1].id : null;
+    },
+
     netPnl(state) {
       return state.trades.reduce((sum, trade) => sum + trade.pnl, 0);
     },
@@ -747,6 +767,47 @@ export const useTradesStore = defineStore('trades', {
         this.playbookTrades = [];
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async fetchTradeById(tradeId) {
+      this.isTradeLoading = true;
+      try {
+        const response = await apiClient.get(`/trades/${tradeId}`);
+        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+      } catch (error) {
+        console.error(`Errore nel recupero del trade ${tradeId}:`, error);
+        this.selectedTrade = null;
+        // Potremmo voler mostrare un errore all'utente qui
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async updateTrade(tradeId, payload) {
+      this.isTradeLoading = true;
+      try {
+        const response = await apiClient.patch(`/trades/${tradeId}`, payload);
+        const updatedTrade = mapBackendTradeToFrontend(response.data);
+
+        // Update the selected trade with the new data
+        this.selectedTrade = updatedTrade;
+
+        // Also update the trade in the main list
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index] = updatedTrade;
+        }
+
+        const uiStore = useUiStore();
+        uiStore.showToast({ message: 'Trade updated successfully!', type: 'success' });
+
+      } catch (error) {
+        console.error('Error updating trade:', error);
+        const uiStore = useUiStore();
+        uiStore.showToast({ message: 'Failed to update trade.', type: 'danger' });
+      } finally {
+        this.isTradeLoading = false;
       }
     },
   },

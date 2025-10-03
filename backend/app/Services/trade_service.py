@@ -54,6 +54,50 @@ class TradeService:
 
         return pnl / total_risk
 
+    def _calculate_trade_risk(
+        self,
+        pnl: Optional[float],
+        entry_price: Optional[float],
+        exit_price: Optional[float],
+        stop_loss_price: Optional[float]
+    ) -> Optional[float]:
+        """
+        Calcola il Rischio del Trade usando la formula custom.
+        Trade_Risk = abs((PNL_realizzato / (prezzo_uscita - prezzo_entrata)) * (prezzo_entrata - prezzo_stop_loss))
+        """
+        if pnl is None or entry_price is None or exit_price is None or stop_loss_price is None:
+            return None
+
+        # Converte i Decimal in float per il calcolo
+        pnl_f = float(pnl)
+        entry_price_f = float(entry_price)
+        exit_price_f = float(exit_price)
+        stop_loss_price_f = float(stop_loss_price)
+
+        price_difference = exit_price_f - entry_price_f
+        if price_difference == 0:
+            return None # Evita divisione per zero
+
+        risk_per_share = entry_price_f - stop_loss_price_f
+
+        trade_risk = abs((pnl_f / price_difference) * risk_per_share)
+        return trade_risk
+
+    def _calculate_net_roi(
+        self,
+        pnl: Optional[float],
+        initial_balance: Optional[float]
+    ) -> Optional[float]:
+        """
+        Calcola il Net ROI in percentuale.
+        Net ROI = (Net P&L / Initial Balance) * 100
+        """
+        if pnl is None or initial_balance is None or initial_balance == 0:
+            return None
+
+        # Converte pnl (Decimal) in float prima della divisione
+        return (float(pnl) / float(initial_balance)) * 100
+
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.repo = TradeRepository(db)
@@ -156,14 +200,38 @@ class TradeService:
         return TradeRead.from_orm(db_trade)
 
     async def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
-        """Recupera un singolo trade, verificando l'appartenenza."""
+        """Recupera un singolo trade, verificando l'appartenenza e arricchendolo con dati calcolati."""
         trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not trade:
             return None
 
-        await self._validate_and_get_trading_account(claims, trade.trading_account_id)
+        trading_account_id, _ = await self._validate_and_get_trading_account(claims, trade.trading_account_id)
 
-        return TradeRead.from_orm(trade)
+        # Recupera il trading account per ottenere il bilancio iniziale
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+        if not trading_account:
+            # Questo non dovrebbe accadere se _validate_and_get_trading_account funziona
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Dettagli del conto di trading non trovati.")
+
+        # Calcola i valori aggiuntivi
+        trade_risk = self._calculate_trade_risk(
+            pnl=trade.p_l,
+            entry_price=trade.entry_price,
+            exit_price=trade.exit_price,
+            stop_loss_price=trade.stop_loss_price
+        )
+
+        net_roi = self._calculate_net_roi(
+            pnl=trade.p_l,
+            initial_balance=trading_account.initial_balance
+        )
+
+        # Crea lo schema di risposta e popola i campi calcolati
+        trade_read = TradeRead.from_orm(trade)
+        trade_read.trade_risk = trade_risk
+        trade_read.net_roi = net_roi
+
+        return trade_read
 
     async def list_trades_by_trading_account(
         self,
