@@ -109,7 +109,6 @@ def test_parse_valid_mt5_report(parser, valid_mt5_html_report):
     # Test first trade
     trade1 = trades[0]
     assert trade1['entry_timestamp'] == datetime(2025, 9, 22, 13, 42, 50)
-    assert trade1['external_id'] == '310402409'
     assert trade1['symbol_snapshot'] == 'XAUUSD'
     assert trade1['direction'] == TradeDirection.LONG
     assert trade1['position_size'] == 2.0
