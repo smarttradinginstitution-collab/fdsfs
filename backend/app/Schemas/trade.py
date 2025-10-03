@@ -88,8 +88,13 @@ class TradeRead(TradeBase):
     created_at: datetime
     trading_account_id: UUID
 
+    gross_p_l: Optional[float] = None
+    fees: Optional[float] = None
+    commissions: Optional[float] = None
     duration_minutes: Optional[float] = None
     r_multiple: Optional[float] = None
+    net_roi: Optional[float] = None
+    trade_risk: Optional[float] = None
 
     tags: List[TagRead] = []
     mistakes: List[MistakeRead] = []
