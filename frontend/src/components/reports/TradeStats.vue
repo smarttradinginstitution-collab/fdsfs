@@ -81,11 +81,23 @@ const displayStats = computed(() => {
       value: t.playbook ? t.playbook.title : 'Select Playbook',
       interactive: !t.playbook
     },
+    // Planned Target
+    {
+      label: 'Planned Target',
+      value: t.planned_target != null ? formatCurrency(t.planned_target) : placeholder,
+      style: 'pnl-positive'
+    },
     // Trade Risk
     {
       label: 'Trade Risk',
       value: t.trade_risk != null ? formatCurrency(t.trade_risk) : placeholder,
       style: 'pnl-negative'
+    },
+    // Planned R-multiple
+    {
+      label: 'Planned R-multiple',
+      value: t.planned_r_multiple != null ? `${formatNumber(t.planned_r_multiple, 2)} R` : '- R',
+      style: 'pnl-positive'
     },
     // Realized R-Multiple
     {

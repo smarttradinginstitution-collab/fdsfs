@@ -180,6 +180,8 @@ class TradeService:
             "net_roi": "net_roi",
             "mae_usd": "mae_usd",
             "mfe_usd": "mfe_usd",
+            "planned_target": "planned_target",
+            "planned_r_multiple": "planned_r_multiple",
         }
         for metric_key, model_field in mappings.items():
             value = all_metrics.get(metric_key)
