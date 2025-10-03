@@ -73,6 +73,12 @@ const router = createRouter({
       meta: { title: 'Analytics' },
     },
     {
+      path: '/notebook',
+      name: 'notebook',
+      component: () => import('../views/NotebookView.vue'),
+      meta: { title: 'Notebook' },
+    },
+    {
       path: '/component-test',
       name: 'component-test',
       component: () => import('../views/ComponentTestView.vue'),

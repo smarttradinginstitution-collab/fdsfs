@@ -222,6 +222,16 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 📓 NOTEBOOK (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import notebook_router
+
+router.include_router(
+    notebook_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📦 ASSET CLASSES (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import asset_class_router
