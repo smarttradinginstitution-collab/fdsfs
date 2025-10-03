@@ -139,15 +139,9 @@ watch(() => route.params.id, (newId) => {
         <!-- Left Column -->
         <div class="left-column">
           <BaseWidget class="stats-widget">
-          <div class="stats-header">
-            <h3>Statistics</h3>
-            <IconButton @click="openEditModal" class="edit-button" aria-label="Edit Trade Details">
-              <PencilIcon />
-            </IconButton>
-          </div>
             <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
               <template #stats>
-                <TradeStats :trade="trade" />
+              <TradeStats :trade="trade" @open-edit-modal="openEditModal" />
             </template>
             <template #playbook>
               <div>Contenuto Playbook</div>

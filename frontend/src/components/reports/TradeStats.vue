@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
+import IconButton from '@/components/ui/IconButton.vue';
+import PencilIcon from '@/components/icons/PencilIcon.vue';
 
 const props = defineProps({
   trade: {
@@ -8,6 +10,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(['open-edit-modal']);
 
 const displayStats = computed(() => {
   if (!props.trade) return [];
@@ -21,6 +25,7 @@ const displayStats = computed(() => {
     }
   };
 
+  // Special case for Net P&L, which gets a unique class and the edit button
   addStat('Net P&L', formatCurrency(t.p_l), {
     style: t.p_l >= 0 ? 'pnl-positive' : 'pnl-negative',
     specialClass: 'net-pnl-stat'
@@ -37,17 +42,16 @@ const displayStats = computed(() => {
   addStat('Take Profit', formatCurrency(t.take_profit_price));
   addStat('Stop Loss', formatCurrency(t.stop_loss_price), { style: 'pnl-negative' });
 
-  // MAE / MFE Logic
   if (t.highest_price_during_trade !== null && t.lowest_price_during_trade !== null) {
     const maeMfePayload = {
-      isMaeMfe: true, // Special flag for unique rendering
+      isMaeMfe: true,
       mae: { value: '', style: 'pnl-negative' },
       mfe: { value: '', style: 'pnl-positive' }
     };
     if (t.direction === 'LONG') {
       maeMfePayload.mae.value = formatCurrency(t.lowest_price_during_trade);
       maeMfePayload.mfe.value = formatCurrency(t.highest_price_during_trade);
-    } else { // SHORT
+    } else {
       maeMfePayload.mae.value = formatCurrency(t.highest_price_during_trade);
       maeMfePayload.mfe.value = formatCurrency(t.lowest_price_during_trade);
     }
@@ -84,7 +88,13 @@ const displayStats = computed(() => {
 <template>
   <div class="trade-stats-list">
     <div v-for="stat in displayStats" :key="stat.label" :class="['stat-item', stat.specialClass]">
-      <span class="stat-label">{{ stat.label }}</span>
+
+      <div class="stat-label-wrapper">
+        <span class="stat-label">{{ stat.label }}</span>
+        <IconButton v-if="stat.specialClass === 'net-pnl-stat'" @click="$emit('open-edit-modal')" aria-label="Edit Details">
+            <PencilIcon />
+        </IconButton>
+      </div>
 
       <div v-if="stat.isMaeMfe" class="mae-mfe-values">
           <span :class="['stat-value', 'pill', stat.mae.style]">{{ stat.mae.value }}</span>
@@ -111,6 +121,12 @@ const displayStats = computed(() => {
   align-items: center;
   padding: var(--semantic-size-inset-sm) 0;
   border-bottom: 1px solid var(--semantic-color-border-subtle);
+}
+
+.stat-label-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .stat-label {
@@ -164,13 +180,13 @@ const displayStats = computed(() => {
 .net-pnl-stat {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--semantic-size-stack-xxs);
   padding-bottom: var(--semantic-size-inset-md);
   margin-bottom: var(--semantic-size-stack-sm);
   border-bottom: 1px solid var(--semantic-color-border-default);
 
-  .stat-label {
+  .stat-label-wrapper {
     font: var(--semantic-font-style-label-md);
   }
 

@@ -786,8 +786,9 @@ export const useTradesStore = defineStore('trades', {
 
     async updateTrade(tradeId, payload) {
       this.isTradeLoading = true;
+      const uiStore = useUiStore();
       try {
-        const response = await apiClient.patch(`/trades/${tradeId}`, payload);
+        const response = await apiClient.put(`/trades/${tradeId}`, payload);
         const updatedTrade = mapBackendTradeToFrontend(response.data);
 
         // Update the selected trade with the new data
@@ -799,13 +800,11 @@ export const useTradesStore = defineStore('trades', {
           this.trades[index] = updatedTrade;
         }
 
-        const uiStore = useUiStore();
-        uiStore.showToast({ message: 'Trade updated successfully!', type: 'success' });
+        uiStore.showNotification({ message: 'Trade updated successfully!', type: 'success' });
 
       } catch (error) {
         console.error('Error updating trade:', error);
-        const uiStore = useUiStore();
-        uiStore.showToast({ message: 'Failed to update trade.', type: 'danger' });
+        uiStore.showNotification({ message: 'Failed to update trade.', type: 'danger' });
       } finally {
         this.isTradeLoading = false;
       }
