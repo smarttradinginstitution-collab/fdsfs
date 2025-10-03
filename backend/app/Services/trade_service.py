@@ -19,90 +19,20 @@ from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Infrastructure.db import get_db
+from decimal import Decimal
 from app.Models.trade import Trade
 from app.Models.tag import Tag
 from app.Models.mistake import Mistake
 from app.Models.playbook import Playbook
 from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
+from app.Services.metrics.trade_enricher import calculate_advanced_trade_metrics
 
 
 class TradeService:
-    def _calculate_r_multiple(
-        self,
-        pnl: Optional[float],
-        entry_price: Optional[float],
-        stop_loss_price: Optional[float],
-        position_size: Optional[float]
-    ) -> Optional[float]:
-        """
-        Calculates the R-multiple for a trade.
-        Returns the R-multiple as a float, or None if calculation is not possible.
-        """
-        if pnl is None or entry_price is None or stop_loss_price is None or position_size is None:
-            return None
-
-        # Convert all decimal values to float for calculation
-        pnl_f = float(pnl)
-        entry_price_f = float(entry_price)
-        stop_loss_price_f = float(stop_loss_price)
-        position_size_f = float(position_size)
-
-        # Avoid calculation if essential values are zero
-        if position_size_f == 0 or entry_price_f == stop_loss_price_f:
-            return None
-
-        risk_per_share = abs(entry_price_f - stop_loss_price_f)
-        total_risk = risk_per_share * position_size_f
-
-        if total_risk == 0:
-            return None # Avoid division by zero
-
-        return pnl_f / total_risk
-
-    def _calculate_trade_risk(
-        self,
-        pnl: Optional[float],
-        entry_price: Optional[float],
-        exit_price: Optional[float],
-        stop_loss_price: Optional[float]
-    ) -> Optional[float]:
-        """
-        Calcola il Rischio del Trade usando la formula custom.
-        Trade_Risk = abs((PNL_realizzato / (prezzo_uscita - prezzo_entrata)) * (prezzo_entrata - prezzo_stop_loss))
-        """
-        if pnl is None or entry_price is None or exit_price is None or stop_loss_price is None:
-            return None
-
-        # Converte i Decimal in float per il calcolo
-        pnl_f = float(pnl)
-        entry_price_f = float(entry_price)
-        exit_price_f = float(exit_price)
-        stop_loss_price_f = float(stop_loss_price)
-
-        price_difference = exit_price_f - entry_price_f
-        if price_difference == 0:
-            return None # Evita divisione per zero
-
-        risk_per_share = entry_price_f - stop_loss_price_f
-
-        trade_risk = abs((pnl_f / price_difference) * risk_per_share)
-        return trade_risk
-
-    def _calculate_net_roi(
-        self,
-        pnl: Optional[float],
-        initial_balance: Optional[float]
-    ) -> Optional[float]:
-        """
-        Calcola il Net ROI in percentuale.
-        Net ROI = (Net P&L / Initial Balance) * 100
-        """
-        if pnl is None or initial_balance is None or initial_balance == 0:
-            return None
-
-        # Converte pnl (Decimal) in float prima della divisione
-        return (float(pnl) / float(initial_balance)) * 100
+    # All calculation logic is now centralized in `calculate_advanced_trade_metrics`.
+    # The private methods _calculate_r_multiple, _calculate_trade_risk,
+    # and _calculate_net_roi have been removed.
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -165,11 +95,15 @@ class TradeService:
         return entities
 
     async def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
-        """Crea un nuovo trade per l'utente, gestendo le entità correlate tramite nome."""
-        _, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
+        """Crea un nuovo trade per l'utente, calcolando e salvando l'R-Multiple corretto."""
+        trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
+
+        # Recupera il trading account per ottenere il bilancio iniziale per i calcoli
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+        if not trading_account:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Trading Account non trovato per il calcolo delle metriche.")
 
         playbook_name = trade_data.playbook or trade_data.setup
-
         psychology_names = trade_data.psychology_states or []
         if trade_data.emotional_state and trade_data.emotional_state not in psychology_names:
             psychology_names.append(trade_data.emotional_state)
@@ -182,12 +116,13 @@ class TradeService:
         if 'symbol' in trade_dict:
             trade_dict['symbol_snapshot'] = trade_dict.pop('symbol')
 
-        trade_dict['r_multiple'] = self._calculate_r_multiple(
-            pnl=trade_data.p_l,
-            entry_price=trade_data.entry_price,
-            stop_loss_price=trade_data.stop_loss_price,
-            position_size=trade_data.position_size
+        # Calcola l'R-Multiple corretto da salvare nel DB
+        advanced_metrics = calculate_advanced_trade_metrics(
+            trade_data=trade_dict,
+            initial_balance=Decimal(trading_account.initial_balance or '0.0')
         )
+        r_multiple = advanced_metrics.get("realized_r_multiple")
+        trade_dict['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
         db_trade = Trade(**trade_dict)
 
@@ -207,35 +142,37 @@ class TradeService:
 
     async def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
         """Recupera un singolo trade, verificando l'appartenenza e arricchendolo con dati calcolati."""
-        trade = await self.repo.get_trade_by_id_simple(trade_id)
+        # Utilizza il nuovo metodo del repository per garantire che tutti i dati siano caricati
+        trade = await self.repo.get_trade_for_details_view(trade_id)
         if not trade:
             return None
 
         trading_account_id, _ = await self._validate_and_get_trading_account(claims, trade.trading_account_id)
 
-        # Recupera il trading account per ottenere il bilancio iniziale
         trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
         if not trading_account:
-            # Questo non dovrebbe accadere se _validate_and_get_trading_account funziona
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Dettagli del conto di trading non trovati.")
 
-        # Calcola i valori aggiuntivi
-        trade_risk = self._calculate_trade_risk(
-            pnl=trade.p_l,
-            entry_price=trade.entry_price,
-            exit_price=trade.exit_price,
-            stop_loss_price=trade.stop_loss_price
+        trade_data_dict = {
+            "entry_price": trade.entry_price, "exit_price": trade.exit_price,
+            "stop_loss_price": trade.stop_loss_price, "p_l": trade.p_l,
+            "direction": trade.direction.value if trade.direction else None
+        }
+
+        advanced_metrics = calculate_advanced_trade_metrics(
+            trade_data=trade_data_dict,
+            initial_balance=Decimal(trading_account.initial_balance or '0.0')
         )
 
-        net_roi = self._calculate_net_roi(
-            pnl=trade.p_l,
-            initial_balance=trading_account.initial_balance
-        )
-
-        # Crea lo schema di risposta e popola i campi calcolati
         trade_read = TradeRead.from_orm(trade)
-        trade_read.trade_risk = trade_risk
-        trade_read.net_roi = net_roi
+        # Convert Decimal to float for correct serialization
+        trade_risk = advanced_metrics.get("trade_risk")
+        net_roi = advanced_metrics.get("net_roi")
+        realized_r_multiple = advanced_metrics.get("realized_r_multiple")
+
+        trade_read.trade_risk = float(trade_risk) if trade_risk is not None else None
+        trade_read.net_roi = float(net_roi) if net_roi is not None else None
+        trade_read.r_multiple = float(realized_r_multiple) if realized_r_multiple is not None else None
 
         return trade_read
 
@@ -263,25 +200,34 @@ class TradeService:
         return [TradeRead.from_orm(trade) for trade in trades]
 
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
-        """Aggiorna un trade esistente."""
-
+        """Aggiorna un trade esistente e ricalcola le metriche se necessario."""
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not db_trade:
             return None
 
-        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_id', 'news_impacts', 'psychology_state_ids'})
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
-        if any(field in update_dict for field in ['p_l', 'entry_price', 'stop_loss_price', 'position_size']):
-            db_trade.r_multiple = self._calculate_r_multiple(
-                pnl=db_trade.p_l,
-                entry_price=db_trade.entry_price,
-                stop_loss_price=db_trade.stop_loss_price,
-                position_size=db_trade.position_size
+        recalculation_fields = ['p_l', 'entry_price', 'stop_loss_price', 'exit_price']
+        if any(field in update_dict for field in recalculation_fields):
+            trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+            if not trading_account:
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Dettagli del conto di trading non trovati per ricalcolo.")
+
+            trade_data_for_calc = {
+                "entry_price": db_trade.entry_price, "exit_price": db_trade.exit_price,
+                "stop_loss_price": db_trade.stop_loss_price, "p_l": db_trade.p_l,
+                "direction": db_trade.direction.value if db_trade.direction else None
+            }
+            advanced_metrics = calculate_advanced_trade_metrics(
+                trade_data=trade_data_for_calc,
+                initial_balance=Decimal(trading_account.initial_balance or '0.0')
             )
+            r_multiple = advanced_metrics.get("realized_r_multiple")
+            db_trade.r_multiple = float(r_multiple) if r_multiple is not None else None
 
         if "playbook_id" in update_data.model_fields_set:
             if update_data.playbook_id is None:

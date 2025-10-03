@@ -2,6 +2,7 @@
 import uuid
 import hashlib
 from typing import List, Dict, Any
+from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
@@ -13,12 +14,15 @@ from app.Models.enums import ImportSourceType
 from app.Services.tradovate_parser import TradovateParser
 from app.Services.mt5_parser import Mt5Parser
 from app.Services.trade_service import TradeService
+from app.Services.metrics.trade_enricher import calculate_advanced_trade_metrics
+from app.Repositories.trading_account_repository import TradingAccountRepository
 
 
 class ImportService:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
         self.trade_service = TradeService(db_session)
+        self.trading_account_repo = TradingAccountRepository(db_session)
 
     async def create_initial_import_run(
         self, user_id: uuid.UUID, trading_account_id: uuid.UUID, file_name: str, source_type: str = "csv"
@@ -49,6 +53,9 @@ class ImportService:
         if not import_run:
             return  # Or log an error
 
+        trading_account = await self.trading_account_repo.get_by_id(import_run.trading_account_id)
+        initial_balance = Decimal(trading_account.initial_balance if trading_account else '0.0')
+
         import_run.status = "parsing"
         file_hash = hashlib.sha256(file_content).hexdigest()
         import_run.file_sha256 = file_hash
@@ -76,12 +83,12 @@ class ImportService:
             trade_data["import_run_id"] = import_run.id
 
             # Calculate R-multiple before saving
-            trade_data['r_multiple'] = self.trade_service._calculate_r_multiple(
-                pnl=trade_data.get('p_l'),
-                entry_price=trade_data.get('entry_price'),
-                stop_loss_price=trade_data.get('stop_loss_price'),
-                position_size=trade_data.get('position_size')
+            advanced_metrics = calculate_advanced_trade_metrics(
+                trade_data=trade_data,
+                initial_balance=initial_balance
             )
+            r_multiple = advanced_metrics.get("realized_r_multiple")
+            trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             # Database-agnostic "read-then-write" for UPSERT logic
             dedupe_key = trade_data.get("dedupe_key")
@@ -124,6 +131,9 @@ class ImportService:
         if not import_run:
             return
 
+        trading_account = await self.trading_account_repo.get_by_id(import_run.trading_account_id)
+        initial_balance = Decimal(trading_account.initial_balance if trading_account else '0.0')
+
         import_run.status = "parsing"
         file_hash = hashlib.sha256(file_content).hexdigest()
         import_run.file_sha256 = file_hash
@@ -148,12 +158,12 @@ class ImportService:
             trade_data["trading_account_id"] = import_run.trading_account_id
             trade_data["import_run_id"] = import_run.id
 
-            trade_data['r_multiple'] = self.trade_service._calculate_r_multiple(
-                pnl=trade_data.get('p_l'),
-                entry_price=trade_data.get('entry_price'),
-                stop_loss_price=trade_data.get('stop_loss_price'),
-                position_size=trade_data.get('position_size')
+            advanced_metrics = calculate_advanced_trade_metrics(
+                trade_data=trade_data,
+                initial_balance=initial_balance
             )
+            r_multiple = advanced_metrics.get("realized_r_multiple")
+            trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             dedupe_key = trade_data.get("dedupe_key")
             result = await self.db.execute(select(Trade).where(Trade.dedupe_key == dedupe_key))
