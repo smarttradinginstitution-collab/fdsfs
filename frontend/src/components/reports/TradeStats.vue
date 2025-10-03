@@ -67,12 +67,12 @@ const displayStats = computed(() => {
       label: 'MAE / MFE',
       isMaeMfe: true,
       mae: {
-        value: t.lowest_price_during_trade != null ? formatCurrency(t.direction === 'LONG' ? t.lowest_price_during_trade : t.highest_price_during_trade) : placeholder,
-        style: t.lowest_price_during_trade != null ? 'pnl-negative' : ''
+        value: t.mae_usd != null ? formatCurrency(t.mae_usd) : placeholder,
+        style: 'pnl-negative' // Always red
       },
       mfe: {
-        value: t.highest_price_during_trade != null ? formatCurrency(t.direction === 'LONG' ? t.highest_price_during_trade : t.lowest_price_during_trade) : placeholder,
-        style: t.highest_price_during_trade != null ? 'pnl-positive' : ''
+        value: t.mfe_usd != null ? formatCurrency(t.mfe_usd) : placeholder,
+        style: 'pnl-positive' // Always green
       }
     },
     // Playbook
