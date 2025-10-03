@@ -158,6 +158,7 @@ class TradeService:
             "entry_price": trade.entry_price,
             "exit_price": trade.exit_price,
             "stop_loss_price": trade.stop_loss_price,
+            "take_profit_price": trade.take_profit_price,
             "p_l": trade.p_l,
             "direction": trade.direction.value if trade.direction else None,
             "lowest_price_during_trade": trade.lowest_price_during_trade,
