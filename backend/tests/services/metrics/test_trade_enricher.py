@@ -85,3 +85,16 @@ def test_no_price_movement_returns_none_for_monetary_metrics():
     assert metrics["planned_target"] is None
     # planned_r_multiple potrebbe essere calcolabile se SL e TP sono presenti
     assert metrics["net_roi"] is not None
+
+def test_planned_target_fallback_with_zero_pnl(long_trade_data):
+    """Verifica che Planned Target usi position_size come fallback quando PNL è zero."""
+    long_trade_data["p_l"] = "0.0"
+    long_trade_data["exit_price"] = long_trade_data["entry_price"] # Simula trade aperto
+    long_trade_data["position_size"] = "10" # Unità per il calcolo
+
+    metrics = enrich_trade_with_all_metrics(long_trade_data, initial_balance=Decimal("10000"))
+
+    # Valore atteso:
+    # valore_per_punto fallback a position_size = 10
+    # planned_target = abs(120 - 100) * 10 = 200
+    assert metrics["planned_target"] == pytest.approx(Decimal("200.0"))

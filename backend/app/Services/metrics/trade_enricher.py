@@ -17,24 +17,27 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         lowest = Decimal(trade_data.get('lowest_price_during_trade') or 0)
         highest = Decimal(trade_data.get('highest_price_during_trade') or 0)
         direction = trade_data.get('direction')
+        position_size = Decimal(trade_data.get('position_size') or 1)
     except (InvalidOperation, TypeError):
         return {
             "trade_risk": None, "realized_r_multiple": None, "net_roi": None,
             "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None
         }
 
-    # --- Calcolo Valore per Punto ---
-    price_movement = exit_p - entry
+    # --- Calcolo Valore per Punto (con fallback a position_size) ---
     value_per_point = Decimal(0)
-    can_calculate_monetary = False
+    price_movement = exit_p - entry
     if price_movement != 0 and pnl != 0:
         value_per_point = abs(pnl / price_movement)
-        can_calculate_monetary = True
+    elif position_size > 0:
+        value_per_point = position_size
+
+    can_calculate_monetary = value_per_point > 0
 
     # --- Calcoli di base ---
     net_roi = (pnl / initial_balance) * 100 if initial_balance > 0 else Decimal(0)
-    sl_distance_points = abs(entry - sl) if sl > 0 else Decimal(0)
-    tp_distance_points = abs(tp - entry) if tp > 0 else Decimal(0)
+    sl_distance_points = abs(entry - sl) if entry > 0 and sl > 0 else Decimal(0)
+    tp_distance_points = abs(tp - entry) if entry > 0 and tp > 0 else Decimal(0)
 
     # --- Calcolo Metriche Pianificate ---
     planned_target = None
@@ -51,7 +54,7 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         trade_risk = sl_distance_points * value_per_point
 
     realized_r_multiple = None
-    if trade_risk is not None and trade_risk > 0:
+    if trade_risk is not None and trade_risk > 0 and pnl != 0:
         realized_r_multiple = pnl / trade_risk
 
     # --- Calcolo MAE/MFE Monetario ---
@@ -61,13 +64,12 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         if direction.upper() == 'LONG':
             mae_points = entry - lowest
             mfe_points = highest - entry
-            mae_usd = mae_points * value_per_point
-            mfe_usd = mfe_points * value_per_point
-        elif direction.upper() == 'SHORT':
+        else:  # SHORT
             mae_points = highest - entry
             mfe_points = entry - lowest
-            mae_usd = mae_points * value_per_point
-            mfe_usd = mfe_points * value_per_point
+
+        mae_usd = mae_points * value_per_point
+        mfe_usd = mfe_points * value_per_point
 
     return {
         "trade_risk": trade_risk,
