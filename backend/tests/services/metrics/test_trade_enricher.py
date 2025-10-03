@@ -113,3 +113,17 @@ def test_empty_string_in_optional_fields_is_handled(long_trade_data):
     # Le altre metriche dovrebbero ancora essere calcolate
     assert metrics["net_roi"] is not None
     assert metrics["mae_usd"] is not None
+
+def test_planned_r_multiple_with_zero_pnl(long_trade_data):
+    """Verifica che Planned R-Multiple sia calcolato anche con PNL zero, se i prezzi sono presenti."""
+    long_trade_data["p_l"] = "0.0" # Simula un trade aperto
+    long_trade_data["position_size"] = None # Assicura che non ci sia fallback per il valore monetario
+
+    metrics = enrich_trade_with_all_metrics(long_trade_data, initial_balance=Decimal("10000"))
+
+    # Il Planned R-Multiple dipende solo dai prezzi, quindi deve essere calcolato.
+    # planned_r = abs(120 - 100) / abs(100 - 95) = 20 / 5 = 4
+    assert metrics["planned_r_multiple"] == pytest.approx(Decimal("4.0"))
+
+    # Il target monetario, invece, non è calcolabile senza PNL o position_size, quindi deve essere None.
+    assert metrics["planned_target"] is None

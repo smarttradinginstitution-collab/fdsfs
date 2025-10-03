@@ -1,93 +1,78 @@
 # app/Services/metrics/trade_enricher.py
 from decimal import Decimal, InvalidOperation
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
-def _sanitize_decimal(value: Any) -> Decimal:
-    """Converte un valore in Decimal, trattando None e stringhe vuote come 0."""
+def _to_decimal_or_none(value: Any) -> Optional[Decimal]:
+    """Converte un valore in Decimal, restituendo None se il valore è nullo, vuoto o non valido."""
     if value is None or value == '':
-        return Decimal('0')
-    return Decimal(value)
+        return None
+    try:
+        return Decimal(value)
+    except InvalidOperation:
+        return None
 
 def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: Decimal) -> Dict[str, Any]:
     """
-    Calcola tutte le metriche avanzate per un singolo trade, inclusi Rischio, ROI, R-Multiple,
-    MAE/MFE monetario, Planned Target e Planned R-Multiple.
-    Restituisce un dizionario contenente solo le metriche calcolate.
+    Calcola tutte le metriche avanzate per un singolo trade con una logica di calcolo robusta e corretta.
     """
-    try:
-        # Sanitize all numeric inputs to prevent crashes on empty strings
-        entry = _sanitize_decimal(trade_data.get('entry_price'))
-        exit_p = _sanitize_decimal(trade_data.get('exit_price'))
-        sl = _sanitize_decimal(trade_data.get('stop_loss_price'))
-        tp = _sanitize_decimal(trade_data.get('take_profit_price'))
-        pnl = _sanitize_decimal(trade_data.get('p_l'))
-        lowest = _sanitize_decimal(trade_data.get('lowest_price_during_trade'))
-        highest = _sanitize_decimal(trade_data.get('highest_price_during_trade'))
-        position_size = _sanitize_decimal(trade_data.get('position_size'))
-        if position_size == 0:
-            position_size = Decimal('1') # Default to 1 if size is 0 or not provided
+    # --- Inizializzazione di tutte le metriche a None ---
+    metrics = {
+        "trade_risk": None, "realized_r_multiple": None, "net_roi": None,
+        "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None
+    }
 
-        direction = trade_data.get('direction')
+    # --- Parsing sicuro dei dati di input ---
+    entry = _to_decimal_or_none(trade_data.get('entry_price'))
+    exit_p = _to_decimal_or_none(trade_data.get('exit_price'))
+    sl = _to_decimal_or_none(trade_data.get('stop_loss_price'))
+    tp = _to_decimal_or_none(trade_data.get('take_profit_price'))
+    pnl = _to_decimal_or_none(trade_data.get('p_l'))
+    lowest = _to_decimal_or_none(trade_data.get('lowest_price_during_trade'))
+    highest = _to_decimal_or_none(trade_data.get('highest_price_during_trade'))
+    position_size = _to_decimal_or_none(trade_data.get('position_size'))
+    direction = trade_data.get('direction')
 
-    except (InvalidOperation, TypeError):
-        return {
-            "trade_risk": None, "realized_r_multiple": None, "net_roi": None,
-            "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None
-        }
+    # --- 1. Calcolo del Planned R-Multiple (Opzione A: basato solo sui prezzi) ---
+    if entry and sl and tp:
+        sl_distance_points = abs(entry - sl)
+        tp_distance_points = abs(tp - entry)
+        if sl_distance_points > 0:
+            metrics["planned_r_multiple"] = tp_distance_points / sl_distance_points
 
-    # --- Calcolo Valore per Punto (con fallback a position_size) ---
-    value_per_point = Decimal(0)
-    price_movement = exit_p - entry
-    if price_movement != 0 and pnl != 0:
-        value_per_point = abs(pnl / price_movement)
-    elif position_size > 0:
+    # --- 2. Calcolo del Valore Monetario per Punto (necessario per le altre metriche) ---
+    value_per_point = None
+    if pnl is not None and exit_p and entry and (exit_p - entry) != 0:
+        value_per_point = abs(pnl / (exit_p - entry))
+    elif position_size:
         value_per_point = position_size
 
-    can_calculate_monetary = value_per_point > 0
+    # --- 3. Calcolo di tutte le altre metriche (se possibile) ---
+    if value_per_point:
+        # Planned Target (Opzione B)
+        if tp and entry:
+            metrics["planned_target"] = abs(tp - entry) * value_per_point
 
-    # --- Calcoli di base ---
-    net_roi = (pnl / initial_balance) * 100 if initial_balance > 0 else Decimal(0)
-    sl_distance_points = abs(entry - sl) if entry > 0 and sl > 0 else Decimal(0)
-    tp_distance_points = abs(tp - entry) if entry > 0 and tp > 0 else Decimal(0)
+        # Trade Risk
+        if sl and entry:
+            metrics["trade_risk"] = abs(entry - sl) * value_per_point
 
-    # --- Calcolo Metriche Pianificate ---
-    planned_target = None
-    if can_calculate_monetary and tp_distance_points > 0:
-        planned_target = tp_distance_points * value_per_point
+        # Realized R-Multiple
+        if metrics["trade_risk"] and metrics["trade_risk"] > 0 and pnl is not None:
+            metrics["realized_r_multiple"] = pnl / metrics["trade_risk"]
 
-    planned_r_multiple = None
-    if sl_distance_points > 0 and tp_distance_points > 0:
-        planned_r_multiple = tp_distance_points / sl_distance_points
+        # MAE/MFE Monetario
+        if entry and lowest and highest and direction:
+            if direction.upper() == 'LONG':
+                mae_points = entry - lowest
+                mfe_points = highest - entry
+            else: # SHORT
+                mae_points = highest - entry
+                mfe_points = entry - lowest
+            metrics["mae_usd"] = mae_points * value_per_point
+            metrics["mfe_usd"] = mfe_points * value_per_point
 
-    # --- Calcolo Metriche Realizzate ---
-    trade_risk = None
-    if can_calculate_monetary and sl_distance_points > 0:
-        trade_risk = sl_distance_points * value_per_point
+    # --- 4. Calcolo Net ROI (indipendente dal resto) ---
+    if pnl is not None and initial_balance > 0:
+        metrics["net_roi"] = (pnl / initial_balance) * 100
 
-    realized_r_multiple = None
-    if trade_risk is not None and trade_risk > 0 and pnl != 0:
-        realized_r_multiple = pnl / trade_risk
-
-    # --- Calcolo MAE/MFE Monetario ---
-    mae_usd = None
-    mfe_usd = None
-    if can_calculate_monetary and entry > 0 and lowest > 0 and highest > 0 and direction:
-        if direction.upper() == 'LONG':
-            mae_points = entry - lowest
-            mfe_points = highest - entry
-        else:  # SHORT
-            mae_points = highest - entry
-            mfe_points = entry - lowest
-
-        mae_usd = mae_points * value_per_point
-        mfe_usd = mfe_points * value_per_point
-
-    return {
-        "trade_risk": trade_risk,
-        "realized_r_multiple": realized_r_multiple,
-        "net_roi": net_roi,
-        "mae_usd": mae_usd,
-        "mfe_usd": mfe_usd,
-        "planned_target": planned_target,
-        "planned_r_multiple": planned_r_multiple,
-    }
+    return metrics
