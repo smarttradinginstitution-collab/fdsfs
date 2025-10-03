@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from app.Models.psychology_state import PsychologyState
     from app.Models.news_impact import NewsImpact
     from app.Models.playbook import Playbook
+    from app.Models.notebook_folder import NotebookFolder
+    from app.Models.note import Note
 
 
 class GeneralAccount(Base):
@@ -57,4 +59,10 @@ class GeneralAccount(Base):
     )
     playbooks: Mapped[list["Playbook"]] = relationship(
         "Playbook", back_populates="general_account"
+    )
+    notebook_folders: Mapped[list["NotebookFolder"]] = relationship(
+        "NotebookFolder", back_populates="general_account"
+    )
+    notes: Mapped[list["Note"]] = relationship(
+        "Note", back_populates="general_account"
     )

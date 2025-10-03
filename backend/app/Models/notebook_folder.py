@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+import uuid
+from typing import Any, TYPE_CHECKING, List
+
+from sqlalchemy import String, TIMESTAMP, func, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.Infrastructure.db import Base
+from app.Models.enums import FolderType
+
+if TYPE_CHECKING:
+    from app.Models.general_account import GeneralAccount
+    from app.Models.note import Note
+
+
+class NotebookFolder(Base):
+    __tablename__ = "notebook_folders"
+    __table_args__ = {"schema": "public"}
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    general_account_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    folder_type: Mapped[FolderType] = mapped_column(
+        String, nullable=False, default=FolderType.USER.value
+    )
+    created_at: Mapped[Any] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[Any] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Relationships
+    general_account: Mapped["GeneralAccount"] = relationship(
+        "GeneralAccount", back_populates="notebook_folders"
+    )
+    notes: Mapped[List["Note"]] = relationship(
+        "Note",
+        back_populates="folder",
+        cascade="all, delete-orphan",
+    )

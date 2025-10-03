@@ -16,3 +16,7 @@ class ImportSourceType(str, enum.Enum):
     XML = "xml"
     API = "api"
     MANUAL = "manual"
+
+class FolderType(str, enum.Enum):
+    USER = "USER"
+    SYSTEM = "SYSTEM"
