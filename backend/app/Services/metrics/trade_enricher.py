@@ -1,12 +1,15 @@
 # app/Services/metrics/trade_enricher.py
 from decimal import Decimal, InvalidOperation
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
-def _sanitize_decimal(value: Any) -> Decimal:
-    """Converte un valore in Decimal, trattando None e stringhe vuote come 0."""
+def _to_decimal_or_none(value: Any) -> Optional[Decimal]:
+    """Converte un valore in Decimal, restituendo None se il valore è nullo, vuoto o non valido."""
     if value is None or value == '':
-        return Decimal('0')
-    return Decimal(value)
+        return None
+    try:
+        return Decimal(value)
+    except InvalidOperation:
+        return None
 
 def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: Decimal) -> Dict[str, Any]:
     """
@@ -35,14 +38,31 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
             "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None
         }
 
-    # --- Calcolo Valore per Punto (con fallback a position_size) ---
-    value_per_point = Decimal(0)
-    price_movement = exit_p - entry
-    if price_movement != 0 and pnl != 0:
-        value_per_point = abs(pnl / price_movement)
-    elif position_size > 0:
+    # --- Parsing sicuro dei dati di input ---
+    entry = _to_decimal_or_none(trade_data.get('entry_price'))
+    exit_p = _to_decimal_or_none(trade_data.get('exit_price'))
+    sl = _to_decimal_or_none(trade_data.get('stop_loss_price'))
+    tp = _to_decimal_or_none(trade_data.get('take_profit_price'))
+    pnl = _to_decimal_or_none(trade_data.get('p_l'))
+    lowest = _to_decimal_or_none(trade_data.get('lowest_price_during_trade'))
+    highest = _to_decimal_or_none(trade_data.get('highest_price_during_trade'))
+    position_size = _to_decimal_or_none(trade_data.get('position_size'))
+    direction = trade_data.get('direction')
+
+    # --- 1. Calcolo del Planned R-Multiple (Opzione A: basato solo sui prezzi) ---
+    if entry and sl and tp:
+        sl_distance_points = abs(entry - sl)
+        tp_distance_points = abs(tp - entry)
+        if sl_distance_points > 0:
+            metrics["planned_r_multiple"] = tp_distance_points / sl_distance_points
+
+    # --- 2. Calcolo del Valore Monetario per Punto (necessario per le altre metriche) ---
+    value_per_point = None
+    if pnl is not None and exit_p and entry and (exit_p - entry) != 0:
+        value_per_point = abs(pnl / (exit_p - entry))
+    elif position_size:
         value_per_point = position_size
-    
+
     can_calculate_monetary = value_per_point > 0
 
     # --- Calcoli di base ---
@@ -78,16 +98,12 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         else:  # SHORT
             mae_points = highest - entry
             mfe_points = entry - lowest
-        
+
         mae_usd = mae_points * value_per_point
         mfe_usd = mfe_points * value_per_point
 
-    return {
-        "trade_risk": trade_risk,
-        "realized_r_multiple": realized_r_multiple,
-        "net_roi": net_roi,
-        "mae_usd": mae_usd,
-        "mfe_usd": mfe_usd,
-        "planned_target": planned_target,
-        "planned_r_multiple": planned_r_multiple,
-    }
+    # --- 4. Calcolo Net ROI (indipendente dal resto) ---
+    if pnl is not None and initial_balance > 0:
+        metrics["net_roi"] = (pnl / initial_balance) * 100
+
+    return metrics
