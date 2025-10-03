@@ -17,68 +17,127 @@ const displayStats = computed(() => {
   if (!props.trade) return [];
 
   const t = props.trade;
-  const stats = [];
+  const placeholder = '$ -';
+  const rMultiplePlaceholder = '0.00 R';
 
-  const addStat = (label, value, options = {}) => {
-    if (value !== null && value !== undefined && value !== '') {
-      stats.push({ label, value, ...options });
-    }
-  };
-
-  // Special case for Net P&L, which gets a unique class and the edit button
-  addStat('Net P&L', formatCurrency(t.p_l), {
-    style: t.p_l >= 0 ? 'pnl-positive' : 'pnl-negative',
-    specialClass: 'net-pnl-stat'
-  });
-
-  addStat('Side', t.direction);
-
-  const totalFees = (t.fees || 0) + (t.commissions || 0);
-  addStat('Commissions & Fees', formatCurrency(totalFees * -1), { style: 'pnl-negative' });
-
-  addStat('Net ROI', formatPercentage(t.net_roi), { style: t.net_roi >= 0 ? 'pnl-positive' : 'pnl-negative' });
-  addStat('Gross P&L', formatCurrency(t.gross_p_l));
-
-  addStat('Take Profit', formatCurrency(t.take_profit_price));
-  addStat('Stop Loss', formatCurrency(t.stop_loss_price), { style: 'pnl-negative' });
-
-  if (t.highest_price_during_trade !== null && t.lowest_price_during_trade !== null) {
-    const maeMfePayload = {
+  // Define a static structure for all stats
+  const stats = [
+    // Net P&L
+    {
+      label: 'Net P&L',
+      value: formatCurrency(t.p_l),
+      style: t.p_l >= 0 ? 'pnl-positive' : 'pnl-negative',
+      specialClass: 'net-pnl-stat'
+    },
+    // Side
+    {
+      label: 'Side',
+      value: t.direction || '-'
+    },
+    // Commissions & Fees
+    {
+      label: 'Commissions & Fees',
+      value: formatCurrency((t.fees || 0) + (t.commissions || 0) * -1),
+      style: 'pnl-negative'
+    },
+    // Net ROI
+    {
+      label: 'Net ROI',
+      value: t.net_roi != null ? formatPercentage(t.net_roi) : '0.00%',
+      style: t.net_roi >= 0 ? 'pnl-positive' : 'pnl-negative'
+    },
+    // Gross P&L
+    {
+      label: 'Gross P&L',
+      value: t.gross_p_l != null ? formatCurrency(t.gross_p_l) : placeholder
+    },
+    // Take Profit
+    {
+      label: 'Take Profit',
+      value: t.take_profit_price != null ? formatCurrency(t.take_profit_price) : placeholder
+    },
+    // Stop Loss
+    {
+      label: 'Stop Loss',
+      value: t.stop_loss_price != null ? formatCurrency(t.stop_loss_price) : placeholder,
+      style: 'pnl-negative'
+    },
+    // MAE / MFE
+    {
+      label: 'MAE / MFE',
       isMaeMfe: true,
-      mae: { value: '', style: 'pnl-negative' },
-      mfe: { value: '', style: 'pnl-positive' }
-    };
-    if (t.direction === 'LONG') {
-      maeMfePayload.mae.value = formatCurrency(t.lowest_price_during_trade);
-      maeMfePayload.mfe.value = formatCurrency(t.highest_price_during_trade);
-    } else {
-      maeMfePayload.mae.value = formatCurrency(t.highest_price_during_trade);
-      maeMfePayload.mfe.value = formatCurrency(t.lowest_price_during_trade);
+      mae: {
+        value: t.mae_usd != null ? formatCurrency(t.mae_usd) : placeholder,
+        style: 'pnl-negative' // Always red
+      },
+      mfe: {
+        value: t.mfe_usd != null ? formatCurrency(t.mfe_usd) : placeholder,
+        style: 'pnl-positive' // Always green
+      }
+    },
+    // Playbook
+    {
+      label: 'Playbook',
+      value: t.playbook ? t.playbook.title : 'Select Playbook',
+      interactive: !t.playbook
+    },
+    // Planned Target
+    {
+      label: 'Planned Target',
+      value: t.planned_target != null ? formatCurrency(t.planned_target) : placeholder,
+      style: 'pnl-positive'
+    },
+    // Trade Risk
+    {
+      label: 'Trade Risk',
+      value: t.trade_risk != null ? formatCurrency(t.trade_risk) : placeholder,
+      style: 'pnl-negative'
+    },
+    // Planned R-multiple
+    {
+      label: 'Planned R-multiple',
+      value: t.planned_r_multiple != null ? `${formatNumber(t.planned_r_multiple, 2)} R` : '- R',
+      style: 'pnl-positive'
+    },
+    // Realized R-Multiple
+    {
+      label: 'Realized R-Multiple',
+      value: t.r_multiple != null ? `${formatNumber(t.r_multiple, 2)} R` : rMultiplePlaceholder,
+      style: t.r_multiple >= 0 ? 'pnl-positive' : 'pnl-negative'
+    },
+    // Average Entry
+    {
+      label: 'Average Entry',
+      value: t.entry_price != null ? formatCurrency(t.entry_price) : placeholder
+    },
+    // Average Exit
+    {
+      label: 'Average Exit',
+      value: t.exit_price != null ? formatCurrency(t.exit_price) : placeholder
+    },
+    // Entry Time
+    {
+      label: 'Entry Time',
+      value: t.entry_timestamp ? new Date(t.entry_timestamp).toLocaleTimeString('en-GB') : '-'
+    },
+    // Exit Time
+    {
+      label: 'Exit Time',
+      value: t.exit_timestamp ? new Date(t.exit_timestamp).toLocaleTimeString('en-GB') : '-'
+    },
+    // Confluences (Example of placeholder for interactive elements)
+    {
+      label: 'Confluences',
+      value: t.tags && t.tags.length > 0 ? t.tags.map(tag => tag.name).join(', ') : 'Select tag',
+      interactive: !(t.tags && t.tags.length > 0)
+    },
+    // Entry Timeframe
+    {
+      label: 'Entry Timeframe',
+      value: 'Select Timeframe', // Assuming this is always interactive for now
+      interactive: true
     }
-    addStat('MAE / MFE', '', maeMfePayload);
-  }
-
-  if (t.playbook) {
-    addStat('Playbook', t.playbook.title);
-  } else {
-     addStat('Playbook', 'Select Playbook', { interactive: true });
-  }
-
-  addStat('Trade Risk', formatCurrency(t.trade_risk), { style: 'pnl-negative' });
-  addStat('Realized R-Multiple', `${formatNumber(t.r_multiple, 2)} R`, { style: t.r_multiple >= 0 ? 'pnl-positive' : 'pnl-negative' });
-
-  addStat('Average Entry', formatCurrency(t.entry_price));
-  addStat('Average Exit', formatCurrency(t.exit_price));
-
-  if(t.entry_timestamp) {
-    addStat('Entry Time', new Date(t.entry_timestamp).toLocaleTimeString('en-GB'));
-  }
-  if(t.exit_timestamp) {
-    addStat('Exit Time', new Date(t.exit_timestamp).toLocaleTimeString('en-GB'));
-  }
-
-  addStat('Confluences', 'Select tag', { interactive: true });
-  addStat('Entry Timeframe', 'Select Timeframe', { interactive: true });
+  ];
 
   return stats;
 });

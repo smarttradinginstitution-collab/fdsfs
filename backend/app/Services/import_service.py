@@ -14,7 +14,7 @@ from app.Models.enums import ImportSourceType
 from app.Services.tradovate_parser import TradovateParser
 from app.Services.mt5_parser import Mt5Parser
 from app.Services.trade_service import TradeService
-from app.Services.metrics.trade_enricher import calculate_advanced_trade_metrics
+from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 from app.Repositories.trading_account_repository import TradingAccountRepository
 
 
@@ -83,11 +83,11 @@ class ImportService:
             trade_data["import_run_id"] = import_run.id
 
             # Calculate R-multiple before saving
-            advanced_metrics = calculate_advanced_trade_metrics(
+            all_metrics = enrich_trade_with_all_metrics(
                 trade_data=trade_data,
                 initial_balance=initial_balance
             )
-            r_multiple = advanced_metrics.get("realized_r_multiple")
+            r_multiple = all_metrics.get("realized_r_multiple")
             trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             # Database-agnostic "read-then-write" for UPSERT logic
@@ -158,11 +158,11 @@ class ImportService:
             trade_data["trading_account_id"] = import_run.trading_account_id
             trade_data["import_run_id"] = import_run.id
 
-            advanced_metrics = calculate_advanced_trade_metrics(
+            all_metrics = enrich_trade_with_all_metrics(
                 trade_data=trade_data,
                 initial_balance=initial_balance
             )
-            r_multiple = advanced_metrics.get("realized_r_multiple")
+            r_multiple = all_metrics.get("realized_r_multiple")
             trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             dedupe_key = trade_data.get("dedupe_key")
