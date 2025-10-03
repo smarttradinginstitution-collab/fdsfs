@@ -141,7 +141,7 @@ watch(() => route.params.id, (newId) => {
           <BaseWidget class="stats-widget">
           <div class="stats-header">
             <h3>Statistics</h3>
-            <IconButton @click="openEditModal" class="edit-button">
+            <IconButton @click="openEditModal" class="edit-button" aria-label="Edit Trade Details">
               <PencilIcon />
             </IconButton>
           </div>
