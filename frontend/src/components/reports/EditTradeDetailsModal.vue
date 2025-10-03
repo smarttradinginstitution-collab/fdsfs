@@ -52,7 +52,7 @@ const closeModal = () => {
 </script>
 
 <template>
-  <BaseModal :model-value="modelValue" @update:modelValue="closeModal" title="Edit Trade Details">
+  <BaseModal :show="modelValue" @close="closeModal" title="Edit Trade Details">
     <form @submit.prevent="handleSave" class="edit-trade-form">
       <div class="form-grid">
         <BaseInput
