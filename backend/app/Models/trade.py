@@ -101,7 +101,6 @@ class Trade(Base):
     external_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     dedupe_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     symbol_snapshot: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    asset_name_snapshot: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Optional fields
     stop_loss_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
@@ -112,9 +111,6 @@ class Trade(Base):
     highest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
         Numeric, nullable=True
     )
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    notes_pre_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    notes_post_trade: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Timestamps
     created_at: Mapped[Any] = mapped_column(

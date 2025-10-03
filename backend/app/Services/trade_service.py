@@ -103,18 +103,12 @@ class TradeService:
         if not trading_account:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Trading Account non trovato per il calcolo delle metriche.")
 
-        playbook_name = trade_data.playbook or trade_data.setup
+        playbook_name = trade_data.playbook
         psychology_names = trade_data.psychology_states or []
-        if trade_data.emotional_state and trade_data.emotional_state not in psychology_names:
-            psychology_names.append(trade_data.emotional_state)
 
         trade_dict = trade_data.model_dump(exclude={
             'tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states',
-            'setup', 'emotional_state'
         })
-
-        if 'symbol' in trade_dict:
-            trade_dict['symbol_snapshot'] = trade_dict.pop('symbol')
 
         # Calcola l'R-Multiple corretto da salvare nel DB
         # Calcola tutte le metriche per ottenere l'r_multiple da salvare
