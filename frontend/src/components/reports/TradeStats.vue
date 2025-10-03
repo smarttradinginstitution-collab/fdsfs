@@ -81,8 +81,9 @@ const displayStats = computed(() => {
 }
 
 .stat-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: var(--semantic-size-stack-md);
   align-items: center;
   padding: var(--semantic-size-inset-sm) 0;
   border-bottom: 1px solid var(--semantic-color-border-subtle);
