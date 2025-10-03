@@ -5,6 +5,7 @@ import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
 import { useTradesStore } from '@/stores/trades';
 
 // --- STATE ---
