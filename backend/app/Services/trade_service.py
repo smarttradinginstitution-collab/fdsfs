@@ -42,17 +42,23 @@ class TradeService:
         if pnl is None or entry_price is None or stop_loss_price is None or position_size is None:
             return None
 
+        # Convert all decimal values to float for calculation
+        pnl_f = float(pnl)
+        entry_price_f = float(entry_price)
+        stop_loss_price_f = float(stop_loss_price)
+        position_size_f = float(position_size)
+
         # Avoid calculation if essential values are zero
-        if position_size == 0 or entry_price == stop_loss_price:
+        if position_size_f == 0 or entry_price_f == stop_loss_price_f:
             return None
 
-        risk_per_share = abs(entry_price - stop_loss_price)
-        total_risk = risk_per_share * position_size
+        risk_per_share = abs(entry_price_f - stop_loss_price_f)
+        total_risk = risk_per_share * position_size_f
 
         if total_risk == 0:
             return None # Avoid division by zero
 
-        return pnl / total_risk
+        return pnl_f / total_risk
 
     def _calculate_trade_risk(
         self,
