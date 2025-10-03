@@ -11,15 +11,18 @@ import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
 import { useTradesStore } from '@/stores/trades';
+import { useNotebookStore } from '@/stores/notebookStore';
 
 // --- STATE ---
 const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
+const notebookStore = useNotebookStore();
 
 const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
+const editableContent = ref(null);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -35,8 +38,8 @@ const rightColumnTabs = [
 
 // --- COMPUTED ---
 const trade = computed(() => tradesStore.selectedTrade);
-const isLoading = computed(() => tradesStore.isTradeLoading);
-const error = ref(null); // Potremmo collegarlo a uno stato di errore dello store
+const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders);
+const error = ref(null);
 
 const tradeDate = computed(() => {
   if (!trade.value?.entry_timestamp) return '';
@@ -49,19 +52,29 @@ const tradeDate = computed(() => {
   });
 });
 
+const tradeNotesFolder = computed(() => notebookStore.folders.find(f => f.name === 'Trade Notes'));
+const dailyJournalFolder = computed(() => notebookStore.folders.find(f => f.name === 'Daily Journal'));
+
+const currentTradeNote = computed(() => {
+  if (!trade.value || !tradeNotesFolder.value) return null;
+  return tradeNotesFolder.value.notes.find(n => n.trade_id === trade.value.id);
+});
+
+const currentDailyJournalNote = computed(() => {
+    if (!trade.value || !dailyJournalFolder.value) return null;
+    const noteTitle = `Journal - ${tradeDate.value}`;
+    return dailyJournalFolder.value.notes.find(n => n.title === noteTitle);
+});
+
 // --- METHODS ---
 const handlePrevious = () => {
   const prevId = tradesStore.getPreviousTradeId;
-  if (prevId) {
-    router.push({ name: 'report-detail', params: { id: prevId } });
-  }
+  if (prevId) router.push({ name: 'report-detail', params: { id: prevId } });
 };
 
 const handleNext = () => {
   const nextId = tradesStore.getNextTradeId;
-  if (nextId) {
-    router.push({ name: 'report-detail', params: { id: nextId } });
-  }
+  if (nextId) router.push({ name: 'report-detail', params: { id: nextId } });
 };
 
 const openEditModal = () => {
@@ -69,29 +82,42 @@ const openEditModal = () => {
 };
 
 const handleUpdateTradeDetails = (payload) => {
-  if (trade.value) {
-    tradesStore.updateTrade(trade.value.id, payload);
-  }
+  if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
 };
 
-const editableNotes = ref('');
-watch(trade, (newTrade) => {
-  if (newTrade) {
-    editableNotes.value = newTrade.notes || '';
-  }
-}, { immediate: true });
+const handleSaveNotes = async () => {
+  if (!trade.value || !editableContent.value) return;
 
-const handleSaveNotes = () => {
-  if (trade.value) {
-    tradesStore.updateTrade(trade.value.id, { notes: editableNotes.value });
+  if (rightColumnActiveTab.value === 'trade-note') {
+    const noteData = {
+      title: `${trade.value.symbol_snapshot} - ${tradeDate.value}`,
+      content: editableContent.value,
+      trade_id: trade.value.id,
+      folder_id: tradeNotesFolder.value.id,
+    };
+    if (currentTradeNote.value) {
+      await notebookStore.updateNote(currentTradeNote.value.id, noteData);
+    } else {
+      await notebookStore.createNote(noteData);
+    }
+  } else if (rightColumnActiveTab.value === 'daily-journal') {
+    const noteData = {
+      title: `Journal - ${tradeDate.value}`,
+      content: editableContent.value,
+      folder_id: dailyJournalFolder.value.id,
+    };
+    if (currentDailyJournalNote.value) {
+        await notebookStore.updateNote(currentDailyJournalNote.value.id, noteData);
+    } else {
+        await notebookStore.createNote(noteData);
+    }
   }
+  // Optionally, add a success toast here
 };
 
 const fetchRequiredData = async (id) => {
-  // Assicurati che l'elenco completo dei trade sia caricato per la navigazione
-  if (tradesStore.trades.length === 0) {
-    await tradesStore.fetchTrades();
-  }
+  if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
+  if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
   await tradesStore.fetchTradeById(id);
 };
 
@@ -101,10 +127,16 @@ onMounted(() => {
 });
 
 watch(() => route.params.id, (newId) => {
-  if (newId) {
-    fetchRequiredData(newId);
-  }
+  if (newId) fetchRequiredData(newId);
 });
+
+watch([rightColumnActiveTab, trade], () => {
+  if (rightColumnActiveTab.value === 'trade-note') {
+    editableContent.value = currentTradeNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
+  } else if (rightColumnActiveTab.value === 'daily-journal') {
+    editableContent.value = currentDailyJournalNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
+  }
+}, { immediate: true, deep: true });
 
 </script>
 
@@ -164,11 +196,8 @@ watch(() => route.params.id, (newId) => {
               <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
               <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
             </div>
-            <div v-if="rightColumnActiveTab === 'trade-note'" class="editor-container">
-              <RichTextEditor v-model="editableNotes" />
-            </div>
-            <div v-if="rightColumnActiveTab === 'daily-journal'">
-              <p>Daily Journal content to be implemented.</p>
+            <div class="editor-container">
+              <RichTextEditor v-model="editableContent" />
             </div>
             </div>
         </BaseWidget>

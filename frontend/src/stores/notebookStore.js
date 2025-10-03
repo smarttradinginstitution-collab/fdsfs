@@ -37,7 +37,6 @@ export const useNotebookStore = defineStore('notebook', {
         if (!this.selectedFolderId && this.folders.length > 0) {
           this.selectFolder(this.folders[0].id);
         } else if (this.selectedFolderId) {
-          // If a folder is selected, ensure its notes are loaded
           this.fetchNotesForFolder(this.selectedFolderId);
         } else {
           this.notes = [];
@@ -57,6 +56,7 @@ export const useNotebookStore = defineStore('notebook', {
         const response = await apiClient.post('/notebook/folders', folderData);
         this.folders.push(response.data);
         this.selectFolder(response.data.id);
+        return response.data;
       } catch (err) {
         console.error('Error creating folder:', err);
         this.error = err.response?.data?.detail || 'Failed to create folder.';
@@ -80,6 +80,25 @@ export const useNotebookStore = defineStore('notebook', {
         }
     },
 
+    async saveFolderTemplate({ folderId, templateContent }) {
+      this.isLoadingFolders = true;
+      try {
+        const response = await apiClient.put(`/notebook/folders/${folderId}`, {
+          template_content: templateContent,
+        });
+        const folderIndex = this.folders.findIndex(f => f.id === folderId);
+        if (folderIndex !== -1) {
+          this.folders[folderIndex] = response.data;
+        }
+      } catch (err) {
+        console.error('Error saving folder template:', err);
+        this.error = err.response?.data?.detail || 'Failed to save template.';
+        throw err;
+      } finally {
+        this.isLoadingFolders = false;
+      }
+    },
+
     // --- NOTE ACTIONS ---
 
     async fetchNotesForFolder(folderId) {
@@ -92,13 +111,12 @@ export const useNotebookStore = defineStore('notebook', {
         try {
             const response = await apiClient.post('/notebook/notes', noteData);
             const newNote = response.data;
-            // Add the new note to the local state for immediate UI update
             this.notes.unshift(newNote);
-            // Also add it to the folder's internal notes list
             const parentFolder = this.folders.find(f => f.id === newNote.folder_id);
             if (parentFolder) {
                 parentFolder.notes.unshift(newNote);
             }
+            return newNote; // Return the created note
         } catch (err) {
             console.error('Error creating note:', err);
             this.error = err.response?.data?.detail || 'Failed to create note.';
@@ -113,7 +131,6 @@ export const useNotebookStore = defineStore('notebook', {
         try {
             const response = await apiClient.put(`/notebook/notes/${noteId}`, noteData);
             const updatedNote = response.data;
-            // Update the note in the local lists
             const noteIndex = this.notes.findIndex(n => n.id === noteId);
             if (noteIndex !== -1) {
                 this.notes[noteIndex] = updatedNote;
@@ -125,6 +142,7 @@ export const useNotebookStore = defineStore('notebook', {
                     parentFolder.notes[folderNoteIndex] = updatedNote;
                 }
             }
+            return updatedNote; // Return the updated note
         } catch (err) {
             console.error('Error updating note:', err);
             this.error = err.response?.data?.detail || 'Failed to update note.';
@@ -138,7 +156,6 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingNotes = true;
         try {
             await apiClient.delete(`/notebook/notes/${noteId}`);
-            // Remove from local state for immediate UI update
             this.notes = this.notes.filter(n => n.id !== noteId);
             const parentFolder = this.folders.find(f => f.id === this.selectedFolderId);
             if (parentFolder) {

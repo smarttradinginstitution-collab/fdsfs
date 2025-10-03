@@ -4,6 +4,7 @@
       <input v-model="editableTitle" class="title-input" />
       <div class="actions">
         <button @click="saveNote" class="button-save">Save</button>
+        <button @click="saveAsTemplate" class="button-secondary">Save as Template</button>
         <button @click="cancelEdit" class="button-cancel">Cancel</button>
       </div>
     </div>
@@ -12,18 +13,18 @@
 </template>
 
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue';
+import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import { useNotebookStore } from '../../stores/notebookStore';
 
 const store = useNotebookStore();
-const note = store.selectedNote;
+const note = computed(() => store.selectedNote);
 
-const editableTitle = ref(note ? note.title : '');
+const editableTitle = ref(note.value ? note.value.title : '');
 
 const editor = useEditor({
-  content: note ? note.content : '',
+  content: note.value ? note.value.content : '',
   extensions: [StarterKit],
   editorProps: {
     attributes: {
@@ -32,26 +33,41 @@ const editor = useEditor({
   },
 });
 
-watch(() => store.selectedNote, (newNote) => {
+watch(note, (newNote) => {
   if (newNote && editor.value) {
     editableTitle.value = newNote.title;
-    // Check if content is different to avoid unnecessary updates and cursor jumps
     if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-        editor.value.commands.setContent(newNote.content);
+        editor.value.commands.setContent(newNote.content, false);
     }
   }
-});
+}, { deep: true });
+
 
 const saveNote = async () => {
-    if (!editor.value) return;
+    if (!editor.value || !note.value) return;
     try {
-        await store.updateNote(note.id, {
+        await store.updateNote(note.value.id, {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
-        store.deselectNote(); // Go back to the list view
+        store.deselectNote();
     } catch (error) {
         console.error("Failed to save note:", error);
+    }
+};
+
+const saveAsTemplate = async () => {
+    if (!editor.value || !note.value) return;
+    if (confirm("Save the current content as the template for this folder? This will overwrite any existing template.")) {
+        try {
+            await store.saveFolderTemplate({
+                folderId: note.value.folder_id,
+                templateContent: editor.value.getJSON(),
+            });
+            // Optionally, show a success toast
+        } catch (error) {
+            console.error("Failed to save template:", error);
+        }
     }
 };
 
@@ -99,21 +115,28 @@ onBeforeUnmount(() => {
     gap: 0.5rem;
 }
 
-.button-save, .button-cancel {
+.button-save, .button-cancel, .button-secondary {
     padding: 0.5rem 1rem;
     border-radius: var(--semantic-border-radius-interactive);
     cursor: pointer;
-    border: none;
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
 }
 
 .button-save {
     background-color: var(--semantic-color-interactive-primary-default);
     color: white;
+    border-color: transparent;
 }
 
-.button-cancel {
+.button-cancel, .button-secondary {
     background-color: var(--semantic-color-surface-secondary);
     color: var(--semantic-color-text-primary);
+    border-color: var(--semantic-color-border-default);
+}
+
+.button-cancel:hover, .button-secondary:hover {
+    background-color: var(--semantic-color-surface-tertiary);
 }
 
 .tiptap-editor {
