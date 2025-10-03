@@ -161,3 +161,58 @@ async def test_list_trades_with_date_filter(async_client: AsyncClient, db_sessio
     assert response_unfiltered.status_code == 200
     unfiltered_data = response_unfiltered.json()
     assert len(unfiltered_data) == 3
+
+
+async def test_get_trade_with_correctly_calculated_metrics(async_client: AsyncClient, db_session: AsyncSession):
+    """
+    Testa che il recupero di un singolo trade tramite API includa le metriche
+    (trade_risk, net_roi, r_multiple) calcolate correttamente, verificando
+    che il problema di data-loading sia risolto.
+    """
+    trading_account_id = await setup_trading_account(async_client, db_session)
+
+    # Dati del trade che causava l'errore, con PNL e SL/TP
+    trade_payload = {
+        "trading_account_id": trading_account_id,
+        "symbol_snapshot": "ESZ23",
+        "direction": "SHORT",
+        "status": "closed",
+        "p_l": 1575.00,
+        "entry_price": 24841.50,
+        "exit_price": 24832.75,
+        "stop_loss_price": 24846.00,
+    }
+
+    create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
+    assert create_response.status_code == 201
+    trade_id = create_response.json()["id"]
+
+    # Azione: Recupera il trade tramite l'endpoint GET
+    get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
+    assert get_response.status_code == 200
+    trade_details = get_response.json()
+
+    # Valori attesi (basati sulla logica di calcolo corretta)
+    # initial_balance dal setup è 100000
+    # trade_risk = abs(1575 / (24832.75 - 24841.50)) * abs(24841.50 - 24846.00) = 810
+    # net_roi = (1575 / 100000) * 100 = 1.575
+    # r_multiple = 1575 / 810 = 1.9444...
+
+    # Verifica: Assicurati che i campi calcolati non siano None o 0.0
+    assert trade_details["trade_risk"] is not None
+    assert trade_details["net_roi"] is not None
+    assert trade_details["r_multiple"] is not None
+
+    # Converte i valori in float per la comparazione, risolvendo il TypeError
+    trade_risk_float = float(trade_details["trade_risk"])
+    net_roi_float = float(trade_details["net_roi"])
+    r_multiple_float = float(trade_details["r_multiple"])
+
+    assert trade_risk_float > 0
+    assert net_roi_float > 0
+    assert r_multiple_float > 0
+
+    # Verifica: Controlla che i valori calcolati siano corretti
+    assert trade_risk_float == pytest.approx(810.0)
+    assert net_roi_float == pytest.approx(1.575)
+    assert r_multiple_float == pytest.approx(1.9444, abs=1e-4)

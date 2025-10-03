@@ -81,6 +81,28 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.scalars().first()
 
+    async def get_trade_for_details_view(self, trade_id: UUID) -> Optional[Trade]:
+        """
+        Recupera un trade per ID, caricando esplicitamente tutte le relazioni e i campi
+        necessari per la vista dettagliata e i calcoli delle metriche.
+        Questo previene problemi di lazy-loading con la sessione asincrona.
+        """
+        query = (
+            select(Trade)
+            .where(Trade.id == trade_id)
+            .options(
+                # Eager load all relationships needed for the detail view
+                joinedload(Trade.tags),
+                joinedload(Trade.mistakes),
+                joinedload(Trade.playbook),
+                joinedload(Trade.news_impacts),
+                joinedload(Trade.psychology_states),
+                joinedload(Trade.asset),
+            )
+        )
+        result = await self.db.execute(query)
+        return result.scalars().first()
+
     async def add_and_commit(self, db_trade: Trade) -> Trade:
         """Aggiunge, committa e refresha un'istanza di trade."""
         self.db.add(db_trade)

@@ -141,7 +141,8 @@ class TradeService:
 
     async def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
         """Recupera un singolo trade, verificando l'appartenenza e arricchendolo con dati calcolati."""
-        trade = await self.repo.get_trade_by_id_simple(trade_id)
+        # Utilizza il nuovo metodo del repository per garantire che tutti i dati siano caricati
+        trade = await self.repo.get_trade_for_details_view(trade_id)
         if not trade:
             return None
 
