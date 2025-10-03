@@ -26,7 +26,7 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         position_size = _sanitize_decimal(trade_data.get('position_size'))
         if position_size == 0:
             position_size = Decimal('1') # Default to 1 if size is 0 or not provided
-
+        
         direction = trade_data.get('direction')
 
     except (InvalidOperation, TypeError):
@@ -42,7 +42,7 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         value_per_point = abs(pnl / price_movement)
     elif position_size > 0:
         value_per_point = position_size
-
+    
     can_calculate_monetary = value_per_point > 0
 
     # --- Calcoli di base ---
@@ -78,7 +78,7 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
         else:  # SHORT
             mae_points = highest - entry
             mfe_points = entry - lowest
-
+        
         mae_usd = mae_points * value_per_point
         mfe_usd = mfe_points * value_per_point
 
