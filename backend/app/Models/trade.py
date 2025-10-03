@@ -105,7 +105,7 @@ class Trade(Base):
 
     # Optional fields
     stop_loss_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    take_profit_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    take_profit_price: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     lowest_price_during_trade: Mapped[Optional[Numeric]] = mapped_column(
         Numeric, nullable=True
     )
