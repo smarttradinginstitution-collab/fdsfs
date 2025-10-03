@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
+import IconButton from '@/components/ui/IconButton.vue';
+import PencilIcon from '@/components/icons/PencilIcon.vue';
 
 const props = defineProps({
   trade: {
@@ -9,20 +11,21 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['open-edit-modal']);
+
 const displayStats = computed(() => {
   if (!props.trade) return [];
 
   const t = props.trade;
   const stats = [];
 
-  // Helper function to add a stat only if its value is valid
   const addStat = (label, value, options = {}) => {
     if (value !== null && value !== undefined && value !== '') {
       stats.push({ label, value, ...options });
     }
   };
 
-  // Special case for Net P&L, which gets a unique class for styling
+  // Special case for Net P&L, which gets a unique class and the edit button
   addStat('Net P&L', formatCurrency(t.p_l), {
     style: t.p_l >= 0 ? 'pnl-positive' : 'pnl-negative',
     specialClass: 'net-pnl-stat'
@@ -35,6 +38,25 @@ const displayStats = computed(() => {
 
   addStat('Net ROI', formatPercentage(t.net_roi), { style: t.net_roi >= 0 ? 'pnl-positive' : 'pnl-negative' });
   addStat('Gross P&L', formatCurrency(t.gross_p_l));
+
+  addStat('Take Profit', formatCurrency(t.take_profit_price));
+  addStat('Stop Loss', formatCurrency(t.stop_loss_price), { style: 'pnl-negative' });
+
+  if (t.highest_price_during_trade !== null && t.lowest_price_during_trade !== null) {
+    const maeMfePayload = {
+      isMaeMfe: true,
+      mae: { value: '', style: 'pnl-negative' },
+      mfe: { value: '', style: 'pnl-positive' }
+    };
+    if (t.direction === 'LONG') {
+      maeMfePayload.mae.value = formatCurrency(t.lowest_price_during_trade);
+      maeMfePayload.mfe.value = formatCurrency(t.highest_price_during_trade);
+    } else {
+      maeMfePayload.mae.value = formatCurrency(t.highest_price_during_trade);
+      maeMfePayload.mfe.value = formatCurrency(t.lowest_price_during_trade);
+    }
+    addStat('MAE / MFE', '', maeMfePayload);
+  }
 
   if (t.playbook) {
     addStat('Playbook', t.playbook.title);
@@ -66,8 +88,20 @@ const displayStats = computed(() => {
 <template>
   <div class="trade-stats-list">
     <div v-for="stat in displayStats" :key="stat.label" :class="['stat-item', stat.specialClass]">
-      <span class="stat-label">{{ stat.label }}</span>
-      <span :class="['stat-value', stat.style, { 'is-interactive': stat.interactive }]">
+
+      <div class="stat-label-wrapper">
+        <span class="stat-label">{{ stat.label }}</span>
+        <IconButton v-if="stat.specialClass === 'net-pnl-stat'" @click="$emit('open-edit-modal')" aria-label="Edit Details">
+            <PencilIcon />
+        </IconButton>
+      </div>
+
+      <div v-if="stat.isMaeMfe" class="mae-mfe-values">
+          <span :class="['stat-value', 'pill', stat.mae.style]">{{ stat.mae.value }}</span>
+          <span :class="['stat-value', 'pill', stat.mfe.style]">{{ stat.mfe.value }}</span>
+      </div>
+
+      <span v-else :class="['stat-value', stat.style, { 'is-interactive': stat.interactive }]">
         {{ stat.value }}
       </span>
     </div>
@@ -81,11 +115,18 @@ const displayStats = computed(() => {
 }
 
 .stat-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: var(--semantic-size-stack-md);
   align-items: center;
   padding: var(--semantic-size-inset-sm) 0;
   border-bottom: 1px solid var(--semantic-color-border-subtle);
+}
+
+.stat-label-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .stat-label {
@@ -114,16 +155,38 @@ const displayStats = computed(() => {
   }
 }
 
+.mae-mfe-values {
+  display: flex;
+  gap: var(--semantic-size-stack-xs);
+}
+
+.pill {
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-tag);
+  font: var(--semantic-font-style-label-sm);
+
+  &.pnl-positive {
+    background-color: var(--semantic-color-feedback-positive-surface);
+    color: var(--semantic-color-feedback-positive-text);
+  }
+
+  &.pnl-negative {
+    background-color: var(--semantic-color-feedback-negative-surface);
+    color: var(--semantic-color-feedback-negative-text);
+  }
+}
+
 // Special styling for the main Net P&L stat
 .net-pnl-stat {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--semantic-size-stack-xxs);
   padding-bottom: var(--semantic-size-inset-md);
   margin-bottom: var(--semantic-size-stack-sm);
   border-bottom: 1px solid var(--semantic-color-border-default);
 
-  .stat-label {
+  .stat-label-wrapper {
     font: var(--semantic-font-style-label-md);
   }
 
