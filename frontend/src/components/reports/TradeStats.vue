@@ -59,8 +59,7 @@ const displayStats = computed(() => {
     // Stop Loss
     {
       label: 'Stop Loss',
-      value: t.stop_loss_price != null ? formatCurrency(t.stop_loss_price) : placeholder,
-      style: 'pnl-negative'
+      value: t.stop_loss_price != null ? formatCurrency(t.stop_loss_price) : placeholder
     },
     // MAE / MFE
     {
