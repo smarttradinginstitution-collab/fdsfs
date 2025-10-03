@@ -56,35 +56,53 @@ const toggleOrderedList = () => editor.value.chain().focus().toggleOrderedList()
 
 <style lang="scss">
 .rich-text-editor {
-  border: 1px solid var(--semantic-color-border-neutral-subtle);
-  border-radius: var(--semantic-border-radius-actions-sm);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
   background-color: var(--semantic-color-surface-primary);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .toolbar {
   display: flex;
-  gap: var(--semantic-size-gap-sm);
+  flex-wrap: wrap;
+  gap: var(--semantic-size-stack-xs);
   padding: var(--semantic-size-inset-sm);
-  border-bottom: 1px solid var(--semantic-color-border-neutral-subtle);
+  border-bottom: 1px solid var(--semantic-color-border-default);
 
   button {
     font-weight: bold;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
+    border-radius: var(--semantic-border-radius-interactive);
     border: 1px solid transparent;
-    background: none;
+    background-color: transparent;
+    color: var(--semantic-color-text-secondary);
     cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--semantic-color-surface-secondary);
+      color: var(--semantic-color-text-primary);
+    }
 
     &.is-active {
-      background-color: var(--semantic-color-surface-secondary);
+      background-color: var(--semantic-color-interactive-primary-default);
+      color: var(--semantic-color-text-on-brand);
     }
   }
 }
 
 .prose-mirror-editor {
   padding: var(--semantic-size-inset-md);
-  min-height: 200px;
+  flex-grow: 1;
   outline: none;
+  overflow-y: auto;
+  line-height: var(--base-font-line-height-loose);
+
+  > :first-child {
+    margin-top: 0;
+  }
 
   p {
     margin-bottom: 1em;
@@ -93,6 +111,11 @@ const toggleOrderedList = () => editor.value.chain().focus().toggleOrderedList()
   ul, ol {
     padding-left: 1.5rem;
     margin-bottom: 1em;
+  }
+
+  h1, h2, h3 {
+    margin-bottom: 0.5em;
+    font-weight: var(--base-font-weight-semibold);
   }
 }
 </style>
