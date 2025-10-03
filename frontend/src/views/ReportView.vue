@@ -226,7 +226,7 @@ watch(() => route.params.id, (newId) => {
 .report-content {
   display: flex;
   flex-grow: 1;
-  gap: var(--semantic-size-gap-lg);
+  gap: var(--semantic-size-stack-lg);
   min-height: 0; // Fix per flexbox in contenitori scrollabili
 }
 
