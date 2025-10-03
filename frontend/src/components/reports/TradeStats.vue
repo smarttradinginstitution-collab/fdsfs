@@ -42,12 +42,17 @@ const displayStats = computed(() => {
   addStat('Take Profit', formatCurrency(t.take_profit_price));
   addStat('Stop Loss', formatCurrency(t.stop_loss_price), { style: 'pnl-negative' });
 
-  if (t.highest_price_during_trade !== null && t.lowest_price_during_trade !== null) {
-    const maeMfePayload = {
-      isMaeMfe: true,
-      mae: { value: '', style: 'pnl-negative' },
-      mfe: { value: '', style: 'pnl-positive' }
-    };
+  // Always add MAE / MFE stat, with a placeholder if data is missing.
+  const maeMfePayload = {
+    isMaeMfe: true,
+    mae: { value: '$ -', style: '' },
+    mfe: { value: '$ -', style: '' }
+  };
+
+  if (t.highest_price_during_trade != null && t.lowest_price_during_trade != null) {
+    maeMfePayload.mae.style = 'pnl-negative';
+    maeMfePayload.mfe.style = 'pnl-positive';
+
     if (t.direction === 'LONG') {
       maeMfePayload.mae.value = formatCurrency(t.lowest_price_during_trade);
       maeMfePayload.mfe.value = formatCurrency(t.highest_price_during_trade);
@@ -55,8 +60,8 @@ const displayStats = computed(() => {
       maeMfePayload.mae.value = formatCurrency(t.highest_price_during_trade);
       maeMfePayload.mfe.value = formatCurrency(t.lowest_price_during_trade);
     }
-    addStat('MAE / MFE', '', maeMfePayload);
   }
+  addStat('MAE / MFE', '', maeMfePayload);
 
   if (t.playbook) {
     addStat('Playbook', t.playbook.title);
