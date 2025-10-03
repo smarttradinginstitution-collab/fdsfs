@@ -7,6 +7,9 @@ import PillTabs from '@/components/ui/PillTabs.vue';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
+import IconButton from '@/components/ui/IconButton.vue';
+import PencilIcon from '@/components/icons/PencilIcon.vue';
+import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
 import { useTradesStore } from '@/stores/trades';
 
 // --- STATE ---
@@ -16,6 +19,7 @@ const tradesStore = useTradesStore();
 
 const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
+const isEditModalOpen = ref(false);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -57,6 +61,16 @@ const handleNext = () => {
   const nextId = tradesStore.getNextTradeId;
   if (nextId) {
     router.push({ name: 'report-detail', params: { id: nextId } });
+  }
+};
+
+const openEditModal = () => {
+  isEditModalOpen.value = true;
+};
+
+const handleUpdateTradeDetails = (payload) => {
+  if (trade.value) {
+    tradesStore.updateTrade(trade.value.id, payload);
   }
 };
 
@@ -125,6 +139,12 @@ watch(() => route.params.id, (newId) => {
         <!-- Left Column -->
         <div class="left-column">
           <BaseWidget class="stats-widget">
+          <div class="stats-header">
+            <h3>Statistics</h3>
+            <IconButton @click="openEditModal" class="edit-button">
+              <PencilIcon />
+            </IconButton>
+          </div>
             <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
               <template #stats>
                 <TradeStats :trade="trade" />
@@ -164,6 +184,13 @@ watch(() => route.params.id, (newId) => {
     <div v-else class="empty-state">
       <p>Trade not found.</p>
     </div>
+
+    <EditTradeDetailsModal
+      v-if="trade"
+      v-model="isEditModalOpen"
+      :trade="trade"
+      @save="handleUpdateTradeDetails"
+    />
   </div>
 </template>
 
@@ -253,6 +280,18 @@ watch(() => route.params.id, (newId) => {
   // Override BaseWidget's default padding if it has any
   // This lets our internal layout control the spacing.
   padding: var(--semantic-size-inset-lg);
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--semantic-size-stack-sm);
+
+  h3 {
+    font: var(--semantic-font-style-heading-md);
+    color: var(--semantic-color-text-primary);
+  }
 }
 
 .right-column-content {

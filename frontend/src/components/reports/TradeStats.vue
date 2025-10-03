@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
+import { formatCurrency, formatNumber } from '@/services/formatters.js';
 
 const props = defineProps({
   trade: {
@@ -15,14 +15,12 @@ const displayStats = computed(() => {
   const t = props.trade;
   const stats = [];
 
-  // Helper function to add a stat only if its value is valid
   const addStat = (label, value, options = {}) => {
     if (value !== null && value !== undefined && value !== '') {
       stats.push({ label, value, ...options });
     }
   };
 
-  // Special case for Net P&L, which gets a unique class for styling
   addStat('Net P&L', formatCurrency(t.p_l), {
     style: t.p_l >= 0 ? 'pnl-positive' : 'pnl-negative',
     specialClass: 'net-pnl-stat'
@@ -33,8 +31,27 @@ const displayStats = computed(() => {
   const totalFees = (t.fees || 0) + (t.commissions || 0);
   addStat('Commissions & Fees', formatCurrency(totalFees * -1), { style: 'pnl-negative' });
 
-  addStat('Net ROI', formatPercentage(t.net_roi), { style: t.net_roi >= 0 ? 'pnl-positive' : 'pnl-negative' });
   addStat('Gross P&L', formatCurrency(t.gross_p_l));
+
+  addStat('Take Profit', formatCurrency(t.take_profit_price));
+  addStat('Stop Loss', formatCurrency(t.stop_loss_price), { style: 'pnl-negative' });
+
+  // MAE / MFE Logic
+  if (t.highest_price_during_trade !== null && t.lowest_price_during_trade !== null) {
+    const maeMfePayload = {
+      isMaeMfe: true, // Special flag for unique rendering
+      mae: { value: '', style: 'pnl-negative' },
+      mfe: { value: '', style: 'pnl-positive' }
+    };
+    if (t.direction === 'LONG') {
+      maeMfePayload.mae.value = formatCurrency(t.lowest_price_during_trade);
+      maeMfePayload.mfe.value = formatCurrency(t.highest_price_during_trade);
+    } else { // SHORT
+      maeMfePayload.mae.value = formatCurrency(t.highest_price_during_trade);
+      maeMfePayload.mfe.value = formatCurrency(t.lowest_price_during_trade);
+    }
+    addStat('MAE / MFE', '', maeMfePayload);
+  }
 
   if (t.playbook) {
     addStat('Playbook', t.playbook.title);
@@ -67,7 +84,13 @@ const displayStats = computed(() => {
   <div class="trade-stats-list">
     <div v-for="stat in displayStats" :key="stat.label" :class="['stat-item', stat.specialClass]">
       <span class="stat-label">{{ stat.label }}</span>
-      <span :class="['stat-value', stat.style, { 'is-interactive': stat.interactive }]">
+
+      <div v-if="stat.isMaeMfe" class="mae-mfe-values">
+          <span :class="['stat-value', 'pill', stat.mae.style]">{{ stat.mae.value }}</span>
+          <span :class="['stat-value', 'pill', stat.mfe.style]">{{ stat.mfe.value }}</span>
+      </div>
+
+      <span v-else :class="['stat-value', stat.style, { 'is-interactive': stat.interactive }]">
         {{ stat.value }}
       </span>
     </div>
@@ -112,6 +135,27 @@ const displayStats = computed(() => {
     &:hover {
       text-decoration: underline;
     }
+  }
+}
+
+.mae-mfe-values {
+  display: flex;
+  gap: var(--semantic-size-stack-xs);
+}
+
+.pill {
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-tag);
+  font: var(--semantic-font-style-label-sm);
+
+  &.pnl-positive {
+    background-color: var(--semantic-color-feedback-positive-surface);
+    color: var(--semantic-color-feedback-positive-text);
+  }
+
+  &.pnl-negative {
+    background-color: var(--semantic-color-feedback-negative-surface);
+    color: var(--semantic-color-feedback-negative-text);
   }
 }
 
