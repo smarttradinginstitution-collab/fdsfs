@@ -10,7 +10,7 @@ class Mt5Parser:
         """
         Parses the HTML content of an MT5 performance report.
         """
-        soup = BeautifulSoup(file_content, 'lxml')
+        soup = BeautifulSoup(file_content, 'html.parser')
 
         positions_header_div = soup.find('div', string='Posizioni')
         if not positions_header_div:
@@ -41,7 +41,7 @@ class Mt5Parser:
             try:
                 # Correct field names to match the Trade model and Tradovate parser
                 trade_data['entry_timestamp'] = self._parse_datetime(visible_cells[0].text.strip())
-                # external_id was in visible_cells[1]
+                trade_data['external_id'] = visible_cells[1].text.strip()
                 trade_data['symbol_snapshot'] = visible_cells[2].text.strip()
 
                 # Map trade type string to TradeDirection enum
@@ -75,19 +75,8 @@ class Mt5Parser:
                 trade_data['p_l'] = net_pl
 
                 # Use a consistent and robust deduplication key
-                entry_ts_str = trade_data['entry_timestamp'].isoformat() if trade_data.get('entry_timestamp') else ''
-                exit_ts_str = trade_data['exit_timestamp'].isoformat() if trade_data.get('exit_timestamp') else ''
-
-                dedupe_parts = [
-                    'mt5',
-                    trade_data.get('symbol_snapshot', ''),
-                    entry_ts_str,
-                    exit_ts_str,
-                    str(trade_data.get('position_size', '')),
-                    str(trade_data.get('entry_price', '')),
-                    str(trade_data.get('exit_price', ''))
-                ]
-                trade_data['dedupe_key'] = "-".join(filter(None, dedupe_parts))
+                exit_ts_str = trade_data['exit_timestamp'].isoformat() if trade_data['exit_timestamp'] else ''
+                trade_data['dedupe_key'] = f"mt5-{trade_data['external_id']}-{exit_ts_str}"
 
                 trades.append(trade_data)
             except (ValueError, IndexError) as e:

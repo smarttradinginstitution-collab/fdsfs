@@ -98,6 +98,7 @@ class Trade(Base):
     currency: Mapped[Optional[str]] = mapped_column(String(3), nullable=True)
 
     # Import-related fields
+    external_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     dedupe_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     symbol_snapshot: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
