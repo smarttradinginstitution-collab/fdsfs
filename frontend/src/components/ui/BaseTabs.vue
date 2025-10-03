@@ -46,12 +46,12 @@ const selectTab = (tabId) => {
 
 .tabs-header {
   display: flex;
-  border-bottom: 1px solid var(--semantic-color-border-neutral-subtle);
+  border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
 .tab-button {
   padding: var(--semantic-size-inset-md);
-  font: var(--semantic-font-style-body-lg);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
   background-color: transparent;
   border: none;
@@ -65,7 +65,7 @@ const selectTab = (tabId) => {
 
   &.is-active {
     color: var(--semantic-color-text-primary);
-    font-weight: 600;
+    font-weight: var(--base-font-weight-semibold);
 
     &::after {
       content: '';
@@ -74,12 +74,12 @@ const selectTab = (tabId) => {
       left: 0;
       right: 0;
       height: 2px;
-      background-color: var(--semantic-color-action-primary-default);
+      background-color: var(--semantic-color-interactive-primary-default);
     }
   }
 }
 
 .tab-content {
-  padding-top: var(--semantic-size-gap-lg);
+  padding-top: var(--semantic-size-stack-lg);
 }
 </style>

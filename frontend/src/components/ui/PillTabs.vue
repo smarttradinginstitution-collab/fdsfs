@@ -35,16 +35,16 @@ const selectTab = (tabId) => {
 <style lang="scss" scoped>
 .pill-tabs {
   display: flex;
-  gap: var(--semantic-size-gap-sm);
+  gap: var(--semantic-size-stack-sm);
 }
 
 .pill-tab-button {
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-md);
-  font: var(--semantic-font-style-body-sm-bold);
+  font: var(--semantic-font-style-button-label-small);
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-primary);
-  border: 1px solid var(--semantic-color-border-neutral-subtle);
-  border-radius: var(--semantic-border-radius-actions-sm);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -56,7 +56,7 @@ const selectTab = (tabId) => {
   &.is-active {
     background-color: var(--semantic-color-surface-secondary);
     color: var(--semantic-color-text-primary);
-    border-color: var(--semantic-color-border-neutral-strong);
+    border-color: var(--semantic-color-border-default);
   }
 }
 </style>

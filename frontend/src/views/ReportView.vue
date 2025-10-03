@@ -175,20 +175,20 @@ watch(() => route.params.id, (newId) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: var(--semantic-size-gap-lg);
-  border-bottom: 1px solid var(--semantic-color-border-neutral-subtle);
+  padding-bottom: var(--semantic-size-inset-lg);
+  border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
 .navigation-controls,
 .action-buttons {
   display: flex;
-  gap: var(--semantic-size-gap-md);
+  gap: var(--semantic-size-stack-sm);
 }
 
 .trade-identifier {
   text-align: center;
   .asset-name {
-    font: var(--semantic-font-style-heading-h2);
+    font: var(--semantic-font-style-heading-xl);
     color: var(--semantic-color-text-primary);
   }
   .trade-date {
@@ -197,19 +197,24 @@ watch(() => route.params.id, (newId) => {
   }
 }
 
-// Stile base per i pulsanti, da migliorare con un componente BaseButton
+// Stili per i pulsanti di azione, in attesa di un eventuale componente base
 .nav-button, .action-button {
-  // Stili segnaposto
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-actions-sm);
-  border: 1px solid var(--semantic-color-border-neutral-strong);
+  border-radius: var(--semantic-border-radius-interactive);
+  border: 1px solid var(--semantic-color-border-default);
   background-color: var(--semantic-color-surface-primary);
   color: var(--semantic-color-text-primary);
   cursor: pointer;
-  font: var(--semantic-font-style-body-sm-bold);
+  font: var(--semantic-font-style-button-label-medium);
+  transition: background-color 0.2s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--semantic-color-surface-secondary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
