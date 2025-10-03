@@ -45,7 +45,6 @@ router.put(
 
 router.delete(
     "/folders/{folder_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a notebook folder",
 )(notebook_controller.delete_folder)
 
@@ -73,6 +72,5 @@ router.put(
 
 router.delete(
     "/notes/{note_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a note",
 )(notebook_controller.delete_note)
