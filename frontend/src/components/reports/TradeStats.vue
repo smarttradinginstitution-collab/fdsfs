@@ -157,6 +157,7 @@ const displayStats = computed(() => {
 
       <div v-if="stat.isMaeMfe" class="mae-mfe-values">
           <span :class="['stat-value', 'pill', stat.mae.style]">{{ stat.mae.value }}</span>
+          /
           <span :class="['stat-value', 'pill', stat.mfe.style]">{{ stat.mfe.value }}</span>
       </div>
 
@@ -221,7 +222,7 @@ const displayStats = computed(() => {
 
 .pill {
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-tag);
+  border-radius: var(--semantic-border-radius-interactive);
   font: var(--semantic-font-style-label-sm);
 
   &.pnl-positive {
