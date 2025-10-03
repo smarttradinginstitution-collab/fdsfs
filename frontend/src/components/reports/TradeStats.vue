@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { formatCurrency, formatNumber } from '@/services/formatters.js';
+import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 
 const props = defineProps({
   trade: {
