@@ -87,7 +87,8 @@ class ImportService:
                 trade_data=trade_data,
                 initial_balance=initial_balance
             )
-            trade_data['r_multiple'] = advanced_metrics.get("realized_r_multiple")
+            r_multiple = advanced_metrics.get("realized_r_multiple")
+            trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             # Database-agnostic "read-then-write" for UPSERT logic
             dedupe_key = trade_data.get("dedupe_key")
@@ -161,7 +162,8 @@ class ImportService:
                 trade_data=trade_data,
                 initial_balance=initial_balance
             )
-            trade_data['r_multiple'] = advanced_metrics.get("realized_r_multiple")
+            r_multiple = advanced_metrics.get("realized_r_multiple")
+            trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             dedupe_key = trade_data.get("dedupe_key")
             result = await self.db.execute(select(Trade).where(Trade.dedupe_key == dedupe_key))

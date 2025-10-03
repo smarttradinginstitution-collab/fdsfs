@@ -121,7 +121,8 @@ class TradeService:
             trade_data=trade_dict,
             initial_balance=Decimal(trading_account.initial_balance or '0.0')
         )
-        trade_dict['r_multiple'] = advanced_metrics.get("realized_r_multiple")
+        r_multiple = advanced_metrics.get("realized_r_multiple")
+        trade_dict['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
         db_trade = Trade(**trade_dict)
 
@@ -164,9 +165,14 @@ class TradeService:
         )
 
         trade_read = TradeRead.from_orm(trade)
-        trade_read.trade_risk = advanced_metrics.get("trade_risk")
-        trade_read.net_roi = advanced_metrics.get("net_roi")
-        trade_read.r_multiple = advanced_metrics.get("realized_r_multiple")
+        # Convert Decimal to float for correct serialization
+        trade_risk = advanced_metrics.get("trade_risk")
+        net_roi = advanced_metrics.get("net_roi")
+        realized_r_multiple = advanced_metrics.get("realized_r_multiple")
+
+        trade_read.trade_risk = float(trade_risk) if trade_risk is not None else None
+        trade_read.net_roi = float(net_roi) if net_roi is not None else None
+        trade_read.r_multiple = float(realized_r_multiple) if realized_r_multiple is not None else None
 
         return trade_read
 
@@ -220,7 +226,8 @@ class TradeService:
                 trade_data=trade_data_for_calc,
                 initial_balance=Decimal(trading_account.initial_balance or '0.0')
             )
-            db_trade.r_multiple = advanced_metrics.get("realized_r_multiple")
+            r_multiple = advanced_metrics.get("realized_r_multiple")
+            db_trade.r_multiple = float(r_multiple) if r_multiple is not None else None
 
         if "playbook_id" in update_data.model_fields_set:
             if update_data.playbook_id is None:
