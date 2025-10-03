@@ -13,6 +13,12 @@ const router = createRouter({
       meta: { title: 'Login', public: true }
     },
     {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('../views/SignupView.vue'),
+      meta: { title: 'Registrati', public: true }
+    },
+    {
       path: '/add-account',
       name: 'add-account',
       component: AddAccountView,

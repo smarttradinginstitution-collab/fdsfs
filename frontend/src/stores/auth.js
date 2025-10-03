@@ -169,6 +169,19 @@ export const useAuthStore = defineStore('auth', () => {
     router.push('/login');
   }
 
+  async function register(firstName, email, password) {
+    const payload = {
+      email,
+      password,
+      user_meta: {
+        first_name: firstName,
+      },
+    };
+    // apiClient.post lancerà un'eccezione in caso di errore (es. 4xx, 5xx),
+    // che verrà gestita dal componente che chiama questa action.
+    await apiClient.post('/auth/register', payload);
+  }
+
   async function initAuth() {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
@@ -208,5 +221,6 @@ export const useAuthStore = defineStore('auth', () => {
     verifyAndEnableMfa,
     disableMfa,
     unenrollMfa,
+    register,
   };
 });

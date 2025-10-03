@@ -102,11 +102,35 @@ async function handleMfaVerification() {
           Verifica Codice
         </BaseButton>
       </form>
+
+      <div class="signup-link">
+        <p>
+          Non hai un account?
+          <router-link :to="{ name: 'signup' }">Registrati</router-link>
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.signup-link {
+  margin-top: var(--semantic-size-stack-lg);
+  text-align: center;
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+}
+
+.signup-link a {
+  color: var(--semantic-color-text-interactive);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
 .login-view {
   display: flex;
   justify-content: center;
