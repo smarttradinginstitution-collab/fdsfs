@@ -10,7 +10,7 @@ class Mt5Parser:
         """
         Parses the HTML content of an MT5 performance report.
         """
-        soup = BeautifulSoup(file_content, 'html.parser')
+        soup = BeautifulSoup(file_content, 'lxml')
 
         positions_header_div = soup.find('div', string='Posizioni')
         if not positions_header_div:
