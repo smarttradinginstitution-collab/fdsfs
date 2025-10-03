@@ -6,6 +6,7 @@ import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseWidget from '@/components/layout/BaseWidget.vue';
 import { useTradesStore } from '@/stores/trades';
 
 // --- STATE ---
@@ -123,9 +124,10 @@ watch(() => route.params.id, (newId) => {
       <main class="report-content">
         <!-- Left Column -->
         <div class="left-column">
-          <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
-            <template #stats>
-              <TradeStats :trade="trade" />
+          <BaseWidget class="stats-widget">
+            <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
+              <template #stats>
+                <TradeStats :trade="trade" />
             </template>
             <template #playbook>
               <div>Contenuto Playbook</div>
@@ -137,22 +139,25 @@ watch(() => route.params.id, (newId) => {
               <div>Contenuto Attachments</div>
             </template>
           </BaseTabs>
+          </BaseWidget>
         </div>
 
         <!-- Right Column -->
         <div class="right-column">
+        <BaseWidget class="notes-widget">
           <div class="right-column-content">
-          <div class="notes-header">
-            <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-            <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
-          </div>
+            <div class="notes-header">
+              <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
+              <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+            </div>
             <div v-if="rightColumnActiveTab === 'trade-note'" class="editor-container">
-            <RichTextEditor v-model="editableNotes" />
+              <RichTextEditor v-model="editableNotes" />
             </div>
             <div v-if="rightColumnActiveTab === 'daily-journal'">
-            <p>Daily Journal content to be implemented.</p>
+              <p>Daily Journal content to be implemented.</p>
             </div>
-          </div>
+            </div>
+        </BaseWidget>
         </div>
       </main>
     </div>
@@ -225,16 +230,29 @@ watch(() => route.params.id, (newId) => {
   min-height: 0; // Fix per flexbox in contenitori scrollabili
 }
 
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .left-column {
   flex: 0 0 40%;
-  // background-color: rgba(255, 0, 0, 0.1); // DEBUG
 }
 
 .right-column {
   flex: 1;
+}
+
+.stats-widget,
+.notes-widget {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  // Override BaseWidget's default padding if it has any
+  // This lets our internal layout control the spacing.
+  padding: var(--semantic-size-inset-lg);
 }
 
 .right-column-content {
