@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useUiStore } from '@/stores/uiStore';
 import { useTradesStore } from '@/stores/trades';
+import { useNotebookStore } from '@/stores/notebookStore';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import IconButton from '@/components/ui/IconButton.vue';
@@ -12,12 +14,47 @@ import BaseTable from '@/components/ui/BaseTable.vue'; // Import BaseTable
 
 const uiStore = useUiStore();
 const tradesStore = useTradesStore();
+const notebookStore = useNotebookStore();
+const router = useRouter();
 
 const summaryData = computed(() => tradesStore.activeSummary);
 const isLoading = computed(() => tradesStore.isSummaryLoading);
 
 const handleClose = () => {
   uiStore.closeDailySummaryModal();
+};
+
+const handleAddDailyNote = async () => {
+  if (!summaryData.value || !summaryData.value.startDate) return;
+
+  if (notebookStore.folders.length === 0) {
+    await notebookStore.fetchFolders();
+  }
+
+  const dailyJournalFolder = notebookStore.folders.find(f => f.name === 'Daily Journal');
+  if (!dailyJournalFolder) {
+    console.error("Daily Journal folder not found.");
+    return;
+  }
+
+  const noteTitle = `Journal - ${formattedDate.value}`;
+  let noteToEdit = dailyJournalFolder.notes.find(n => n.title === noteTitle);
+
+  if (!noteToEdit) {
+    // createNote now returns the created note, so we don't need to refetch.
+    noteToEdit = await notebookStore.createNote({
+      folder_id: dailyJournalFolder.id,
+      title: noteTitle,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] }
+    });
+  }
+
+  if (noteToEdit) {
+    notebookStore.selectFolder(dailyJournalFolder.id);
+    notebookStore.selectNote(noteToEdit.id);
+    router.push({ name: 'notebook' });
+    handleClose();
+  }
 };
 
 const pnlStyle = (pnl) => {
@@ -84,7 +121,7 @@ const formatDuration = (minutes) => {
             <span class="date">{{ formattedDate }}</span>
             <span :style="pnlStyle(summaryData.stats.net_pnl)">Net P&L {{ formattedPnl(summaryData.stats.net_pnl) }}</span>
           </div>
-          <BaseButton variant="secondary" size="small">Add Note</BaseButton>
+          <BaseButton variant="secondary" size="small" @click="handleAddDailyNote">Add Note</BaseButton>
         </div>
         <div class="header-right">
           <IconButton aria-label="AI Assistant" size="small"><SparkleIcon /></IconButton>

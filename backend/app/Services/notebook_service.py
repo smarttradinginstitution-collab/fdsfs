@@ -10,12 +10,22 @@ from app.Repositories.note_repository import NoteRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Models.notebook_folder import NotebookFolder
 from app.Models.note import Note
+from app.Models.enums import FolderType
 from app.Schemas.notebook import (
     NotebookFolderCreate,
     NotebookFolderUpdate,
     NoteCreate,
     NoteUpdate,
 )
+
+# Define system folders as a constant
+SYSTEM_FOLDERS = [
+    "Daily Journal",
+    "Weekly Notes",
+    "Trade Notes",
+    "Sessions Recap",
+    "Backtesting Session Note Folder",
+]
 
 class NotebookService:
     """Service layer for notebook operations."""
@@ -36,11 +46,27 @@ class NotebookService:
             )
         return general_account.id
 
+    async def _ensure_system_folders_exist(self, general_account_id: UUID):
+        """Checks for and creates missing system folders."""
+        for folder_name in SYSTEM_FOLDERS:
+            existing_folder = await self.folder_repo.find_by_name_and_account(
+                name=folder_name, general_account_id=general_account_id
+            )
+            if not existing_folder:
+                new_folder = NotebookFolder(
+                    name=folder_name,
+                    general_account_id=general_account_id,
+                    folder_type=FolderType.SYSTEM,
+                )
+                self.db.add(new_folder)
+        await self.db.commit()
+
     # --- Folder Operations ---
 
     async def get_all_folders(self, user_id: UUID):
-        """Get all folders for the current user."""
+        """Get all folders for the current user, ensuring system folders are created."""
         general_account_id = await self._get_general_account_id(user_id)
+        await self._ensure_system_folders_exist(general_account_id)
         return await self.folder_repo.list_by_general_account_id(general_account_id)
 
     async def get_folder(self, folder_id: UUID, user_id: UUID) -> NotebookFolder:
@@ -56,19 +82,23 @@ class NotebookService:
     async def create_folder(self, folder_in: NotebookFolderCreate, user_id: UUID) -> NotebookFolder:
         """Create a new folder for the user."""
         general_account_id = await self._get_general_account_id(user_id)
-        # Here you could add a check for duplicate folder names if needed
         return await self.folder_repo.create(folder_in, general_account_id)
 
     async def update_folder(
         self, folder_id: UUID, folder_in: NotebookFolderUpdate, user_id: UUID
     ) -> NotebookFolder:
         """Update a folder, ensuring it belongs to the user."""
-        folder = await self.get_folder(folder_id, user_id) # Reuse validation
+        folder = await self.get_folder(folder_id, user_id)
         return await self.folder_repo.update(folder, folder_in)
 
     async def delete_folder(self, folder_id: UUID, user_id: UUID) -> None:
         """Delete a folder, ensuring it belongs to the user."""
-        folder = await self.get_folder(folder_id, user_id) # Reuse validation
+        folder = await self.get_folder(folder_id, user_id)
+        if folder.folder_type == FolderType.SYSTEM:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="System folders cannot be deleted.",
+            )
         await self.folder_repo.delete(folder)
 
     # --- Note Operations ---
@@ -86,16 +116,15 @@ class NotebookService:
     async def create_note(self, note_in: NoteCreate, user_id: UUID) -> Note:
         """Create a new note, ensuring the parent folder belongs to the user."""
         general_account_id = await self._get_general_account_id(user_id)
-        # Validate that the parent folder exists and belongs to the user
         await self.get_folder(note_in.folder_id, user_id)
         return await self.note_repo.create(note_in, general_account_id)
 
     async def update_note(self, note_id: UUID, note_in: NoteUpdate, user_id: UUID) -> Note:
         """Update a note, ensuring it belongs to the user."""
-        note = await self.get_note(note_id, user_id) # Reuse validation
+        note = await self.get_note(note_id, user_id)
         return await self.note_repo.update(note, note_in)
 
     async def delete_note(self, note_id: UUID, user_id: UUID) -> None:
         """Delete a note, ensuring it belongs to the user."""
-        note = await self.get_note(note_id, user_id) # Reuse validation
+        note = await self.get_note(note_id, user_id)
         await self.note_repo.delete(note)

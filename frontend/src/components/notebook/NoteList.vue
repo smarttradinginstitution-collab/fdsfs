@@ -46,10 +46,14 @@ const selectNote = (noteId) => {
 const handleCreateNote = () => {
     const newNoteTitle = prompt("Enter a title for the new note:");
     if (newNoteTitle && newNoteTitle.trim()) {
+        // Check if the selected folder has a template
+        const templateContent = store.selectedFolder?.template_content;
+        const noteContent = templateContent || { type: 'doc', content: [{ type: 'paragraph' }] };
+
         store.createNote({
             folder_id: store.selectedFolderId,
             title: newNoteTitle.trim(),
-            content: { type: 'doc', content: [{ type: 'paragraph' }] } // Default empty Tiptap content
+            content: noteContent
         });
     }
 };

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, TYPE_CHECKING, List
+from typing import Any, TYPE_CHECKING, List, Optional
 
 from sqlalchemy import String, TIMESTAMP, func, ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
@@ -34,6 +34,7 @@ class NotebookFolder(Base):
         nullable=False,
         default=FolderType.USER,
     )
+    template_content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )

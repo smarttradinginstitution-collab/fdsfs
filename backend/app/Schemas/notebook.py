@@ -36,6 +36,7 @@ class NoteRead(NoteBase):
 
 class NotebookFolderBase(BaseModel):
     name: Optional[str] = Field(None, description="The name of the folder")
+    template_content: Optional[Dict[str, Any]] = Field(None, description="The template content for notes in this folder")
 
     class Config:
         from_attributes = True
@@ -54,3 +55,4 @@ class NotebookFolderRead(NotebookFolderBase):
     updated_at: datetime
     name: str
     notes: List[NoteRead] = []
+    template_content: Optional[Dict[str, Any]] = None

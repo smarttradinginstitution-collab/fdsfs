@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.Models.notebook_folder import NotebookFolder
+from app.Models.enums import FolderType
 from app.Schemas.notebook import NotebookFolderCreate, NotebookFolderUpdate
 
 
@@ -24,6 +25,15 @@ class NotebookFolderRepository:
             select(NotebookFolder)
             .where(NotebookFolder.id == folder_id)
             .options(selectinload(NotebookFolder.notes))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
+    async def find_by_name_and_account(self, name: str, general_account_id: UUID) -> NotebookFolder | None:
+        """Find a folder by name for a specific general account."""
+        stmt = select(NotebookFolder).where(
+            NotebookFolder.name == name,
+            NotebookFolder.general_account_id == general_account_id
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
