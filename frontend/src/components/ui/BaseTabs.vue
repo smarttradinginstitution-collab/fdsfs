@@ -50,8 +50,8 @@ const selectTab = (tabId) => {
 }
 
 .tab-button {
-  padding: var(--semantic-size-inset-md);
-  font: var(--semantic-font-style-label-md);
+  padding: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
   background-color: transparent;
   border: none;

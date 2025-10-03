@@ -117,6 +117,7 @@ const displayStats = computed(() => {
 
 // Special styling for the main Net P&L stat
 .net-pnl-stat {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--semantic-size-stack-xxs);

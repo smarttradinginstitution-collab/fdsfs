@@ -238,7 +238,7 @@ watch(() => route.params.id, (newId) => {
 }
 
 .left-column {
-  flex: 0 0 40%;
+  flex: 0 0 33%;
 }
 
 .right-column {
