@@ -2,6 +2,12 @@
 from decimal import Decimal, InvalidOperation
 from typing import Dict, Any
 
+def _sanitize_decimal(value: Any) -> Decimal:
+    """Converte un valore in Decimal, trattando None e stringhe vuote come 0."""
+    if value is None or value == '':
+        return Decimal('0')
+    return Decimal(value)
+
 def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: Decimal) -> Dict[str, Any]:
     """
     Calcola tutte le metriche avanzate per un singolo trade, inclusi Rischio, ROI, R-Multiple,
@@ -9,15 +15,20 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
     Restituisce un dizionario contenente solo le metriche calcolate.
     """
     try:
-        entry = Decimal(trade_data.get('entry_price') or 0)
-        exit_p = Decimal(trade_data.get('exit_price') or 0)
-        sl = Decimal(trade_data.get('stop_loss_price') or 0)
-        tp = Decimal(trade_data.get('take_profit_price') or 0)
-        pnl = Decimal(trade_data.get('p_l') or 0)
-        lowest = Decimal(trade_data.get('lowest_price_during_trade') or 0)
-        highest = Decimal(trade_data.get('highest_price_during_trade') or 0)
+        # Sanitize all numeric inputs to prevent crashes on empty strings
+        entry = _sanitize_decimal(trade_data.get('entry_price'))
+        exit_p = _sanitize_decimal(trade_data.get('exit_price'))
+        sl = _sanitize_decimal(trade_data.get('stop_loss_price'))
+        tp = _sanitize_decimal(trade_data.get('take_profit_price'))
+        pnl = _sanitize_decimal(trade_data.get('p_l'))
+        lowest = _sanitize_decimal(trade_data.get('lowest_price_during_trade'))
+        highest = _sanitize_decimal(trade_data.get('highest_price_during_trade'))
+        position_size = _sanitize_decimal(trade_data.get('position_size'))
+        if position_size == 0:
+            position_size = Decimal('1') # Default to 1 if size is 0 or not provided
+
         direction = trade_data.get('direction')
-        position_size = Decimal(trade_data.get('position_size') or 1)
+
     except (InvalidOperation, TypeError):
         return {
             "trade_risk": None, "realized_r_multiple": None, "net_roi": None,

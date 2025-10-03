@@ -98,3 +98,18 @@ def test_planned_target_fallback_with_zero_pnl(long_trade_data):
     # valore_per_punto fallback a position_size = 10
     # planned_target = abs(120 - 100) * 10 = 200
     assert metrics["planned_target"] == pytest.approx(Decimal("200.0"))
+
+def test_empty_string_in_optional_fields_is_handled(long_trade_data):
+    """Verifica che le stringhe vuote nei campi opzionali vengano gestite correttamente."""
+    long_trade_data["take_profit_price"] = ""
+    long_trade_data["stop_loss_price"] = "" # Rende non calcolabili le metriche pianificate e di rischio
+
+    metrics = enrich_trade_with_all_metrics(long_trade_data, initial_balance=Decimal("10000"))
+
+    assert metrics["planned_target"] is None
+    assert metrics["planned_r_multiple"] is None
+    assert metrics["trade_risk"] is None
+    assert metrics["realized_r_multiple"] is None # Dipende dal trade_risk
+    # Le altre metriche dovrebbero ancora essere calcolate
+    assert metrics["net_roi"] is not None
+    assert metrics["mae_usd"] is not None
