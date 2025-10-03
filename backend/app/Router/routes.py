@@ -213,10 +213,10 @@ router.include_router(router_dashboard)
 # ──────────────────────────────────────────────────────────────────────────────
 # 💼 GENERAL ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import general_account_controller
+from app.Router import general_account_router
 
 router.include_router(
-    general_account_controller.router,
+    general_account_router.router,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
@@ -287,10 +287,11 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 📥 IMPORT (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import import_controller
+from app.Router import import_router
 
 router.include_router(
-    import_controller.router,
+    import_router.router,
+    prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
 
@@ -358,10 +359,10 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 🏢 BROKERS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import broker_controller
+from app.Router import broker_router
 
 router.include_router(
-    broker_controller.router,
+    broker_router.router,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
@@ -369,10 +370,10 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 📈 TRADING ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Controllers import trading_account_controller
+from app.Router import trading_account_router
 
 router.include_router(
-    trading_account_controller.router,
+    trading_account_router.router,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )

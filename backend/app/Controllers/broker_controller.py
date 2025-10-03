@@ -1,146 +1,118 @@
 # app/Controllers/broker_controller.py
+# Questo file contiene la logica di business per la gestione dei broker.
+# Non contiene definizioni di rotte (APIRouter), ma solo le funzioni che vengono
+# chiamate dagli endpoint definiti nel file di routing corrispondente.
 from __future__ import annotations
 
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, status
 
+from fastapi import Depends
+
+# Importa i servizi che contengono la logica di interazione con il database.
 from app.Services.broker_service import BrokerService
-from app.Schemas.broker import BrokerRead, BrokerCreate, BrokerUpdate
-from app.Schemas.asset_class import AssetClassRead
-from app.Schemas.broker_asset_class import BrokerAssetClassCreate, BrokerAssetClassRead
-from app.Router.auth import require_roles
-
-router = APIRouter(
-    prefix="/brokers",
-    tags=["Brokers"],
-    responses={404: {"description": "Not found"}},
-)
+# Importa gli schemi Pydantic per la validazione dei dati.
+from app.Schemas.broker import BrokerCreate, BrokerUpdate
+from app.Schemas.broker_asset_class import BrokerAssetClassCreate
 
 
-@router.post(
-    "/",
-    response_model=BrokerRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Create a new broker (admin only)",
-    dependencies=[Depends(require_roles(["admin"]))],
-)
+# ==============================================================================
+# FUNZIONI DEL CONTROLLER
+# ==============================================================================
+# Ogni funzione corrisponde a un'operazione specifica e delega il lavoro
+# pesante al BrokerService. L'uso di `Depends()` permette a FastAPI di
+# iniettare un'istanza del servizio in ogni chiamata.
+
 async def create_broker(
     broker_data: BrokerCreate,
     service: BrokerService = Depends(),
 ):
     """
-    Creates a new broker.
-    - **name**: The name of the broker (must be unique).
+    Crea un nuovo broker.
+    - **broker_data**: Dati del broker da creare, validati tramite lo schema Pydantic.
+    - **service**: Istanza del BrokerService iniettata da FastAPI.
     """
+    # Delega la creazione al servizio.
     return await service.create_broker(broker_data)
 
 
-@router.get("/", response_model=List[BrokerRead], summary="Get all brokers")
 async def get_all_brokers(
     service: BrokerService = Depends(),
 ):
     """
-    Retrieves a list of all available brokers.
+    Recupera la lista di tutti i broker disponibili.
     """
+    # Delega il recupero della lista al servizio.
     return await service.get_all_brokers()
 
 
-@router.get("/{broker_id}", response_model=BrokerRead, summary="Get a broker by ID")
 async def get_broker_by_id(
     broker_id: uuid.UUID,
     service: BrokerService = Depends(),
 ):
     """
-    Retrieves a single broker by its unique ID.
+    Recupera un singolo broker tramite il suo ID.
     """
+    # Delega il recupero del singolo broker al servizio.
     return await service.get_broker_by_id(broker_id)
 
 
-@router.put(
-    "/{broker_id}",
-    response_model=BrokerRead,
-    summary="Update a broker (admin only)",
-    dependencies=[Depends(require_roles(["admin"]))],
-)
 async def update_broker(
     broker_id: uuid.UUID,
     broker_data: BrokerUpdate,
     service: BrokerService = Depends(),
 ):
     """
-    Updates a broker's name.
-    - **name**: The new name for the broker (must be unique).
+    Aggiorna i dati di un broker esistente.
     """
+    # Delega l'aggiornamento al servizio.
     return await service.update_broker(broker_id, broker_data)
 
 
-@router.delete(
-    "/{broker_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a broker (admin only)",
-    dependencies=[Depends(require_roles(["admin"]))],
-)
 async def delete_broker(
     broker_id: uuid.UUID,
     service: BrokerService = Depends(),
 ):
     """
-    Deletes a broker by its unique ID.
-    Deletion will fail if the broker is associated with any other resources.
+    Elimina un broker tramite il suo ID.
     """
+    # Delega l'eliminazione al servizio.
     await service.delete_broker(broker_id)
+    # Per le operazioni DELETE, è comune non restituire alcun contenuto.
     return None
 
 
-@router.get(
-    "/{broker_id}/asset-classes",
-    response_model=List[AssetClassRead],
-    summary="Get associated asset classes for a broker (admin only)",
-    dependencies=[Depends(require_roles(["admin"]))],
-)
 async def get_associated_asset_classes(
     broker_id: uuid.UUID,
     service: BrokerService = Depends(),
 ):
     """
-    Retrieves a list of asset classes associated with a specific broker.
+    Recupera le classi di asset associate a un broker specifico.
     """
+    # Delega l'operazione al servizio.
     return await service.get_associated_asset_classes(broker_id)
 
 
-@router.post(
-    "/{broker_id}/asset-classes",
-    response_model=BrokerAssetClassRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Associate an asset class with a broker (admin only)",
-    dependencies=[Depends(require_roles(["admin"]))],
-)
 async def add_asset_class_to_broker(
     broker_id: uuid.UUID,
     association_data: BrokerAssetClassCreate,
     service: BrokerService = Depends(),
 ):
     """
-    Associates an asset class with a broker.
-    - **asset_class_id**: The ID of the asset class to associate.
+    Associa una classe di asset a un broker.
     """
+    # Delega l'associazione al servizio.
     return await service.add_asset_class_to_broker(broker_id, association_data)
 
 
-@router.delete(
-    "/{broker_id}/asset-classes/{asset_class_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Disassociate an asset class from a broker (admin only)",
-    dependencies=[Depends(require_roles(["admin"]))],
-)
 async def remove_asset_class_from_broker(
     broker_id: uuid.UUID,
     asset_class_id: uuid.UUID,
     service: BrokerService = Depends(),
 ):
     """
-    Disassociates an asset class from a broker by their unique IDs.
+    Disassocia una classe di asset da un broker.
     """
+    # Delega la disassociazione al servizio.
     await service.remove_asset_class_from_broker(broker_id, asset_class_id)
+    # Anche in questo caso, non è necessario restituire contenuto.
     return None
