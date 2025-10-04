@@ -84,7 +84,7 @@ onMounted(() => {
 }
 
 // Responsive adjustments
-@include respond-below(lg) {
+@include media-down(lg) {
   .notebook-layout {
     grid-template-columns: 280px 1fr;
     .main-pane {
@@ -95,7 +95,7 @@ onMounted(() => {
   }
 }
 
-@include respond-below(md) {
+@include media-down(md) {
   .notebook-layout {
     // Stack columns on mobile
     grid-template-columns: 1fr;
