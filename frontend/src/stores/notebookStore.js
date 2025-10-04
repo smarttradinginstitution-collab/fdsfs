@@ -14,8 +14,6 @@ export const useNotebookStore = defineStore('notebook', {
   }),
 
   getters: {
-    allFolders: (state) => state.folders,
-    notesInSelectedFolder: (state) => state.notes,
     selectedFolder: (state) => {
       return state.folders.find(f => f.id === state.selectedFolderId) || null;
     },
@@ -34,12 +32,15 @@ export const useNotebookStore = defineStore('notebook', {
         const response = await apiClient.get('/notebook/folders');
         this.folders = response.data;
 
-        if (!this.selectedFolderId && this.folders.length > 0) {
-          this.selectFolder(this.folders[0].id);
-        } else if (this.selectedFolderId) {
-          this.fetchNotesForFolder(this.selectedFolderId);
-        } else {
-          this.notes = [];
+        // If no folder is selected, or the selected one no longer exists,
+        // select the first folder by default.
+        const selectedFolderExists = this.folders.some(f => f.id === this.selectedFolderId);
+        if (!this.selectedFolderId || !selectedFolderExists) {
+          if (this.folders.length > 0) {
+            this.selectFolder(this.folders[0].id);
+          } else {
+            this.notes = []; // No folders, so no notes
+          }
         }
       } catch (err) {
         console.error('Error fetching notebook folders:', err);
@@ -70,7 +71,12 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingFolders = true;
         try {
             await apiClient.delete(`/notebook/folders/${folderId}`);
-            await this.fetchFolders();
+            // If the deleted folder was the selected one, clear selection
+            if (this.selectedFolderId === folderId) {
+                this.selectedFolderId = null;
+                this.selectedNoteId = null;
+            }
+            await this.fetchFolders(); // Refetch to update list and select a new default
         } catch (err) {
             console.error('Error deleting folder:', err);
             this.error = err.response?.data?.detail || 'Failed to delete folder.';
@@ -83,13 +89,10 @@ export const useNotebookStore = defineStore('notebook', {
     async saveFolderTemplate({ folderId, templateContent }) {
       this.isLoadingFolders = true;
       try {
-        const response = await apiClient.put(`/notebook/folders/${folderId}`, {
+        await apiClient.put(`/notebook/folders/${folderId}`, {
           template_content: templateContent,
         });
-        const folderIndex = this.folders.findIndex(f => f.id === folderId);
-        if (folderIndex !== -1) {
-          this.folders[folderIndex] = response.data;
-        }
+        // No need to update folder object directly, just show success
       } catch (err) {
         console.error('Error saving folder template:', err);
         this.error = err.response?.data?.detail || 'Failed to save template.';
@@ -102,21 +105,27 @@ export const useNotebookStore = defineStore('notebook', {
     // --- NOTE ACTIONS ---
 
     async fetchNotesForFolder(folderId) {
-        const folder = this.folders.find(f => f.id === folderId);
-        this.notes = folder ? [...folder.notes].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)) : [];
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get(`/notebook/folders/${folderId}/notes`);
+        this.notes = response.data;
+      } catch (err) {
+        console.error(`Error fetching notes for folder ${folderId}:`, err);
+        this.error = err.response?.data?.detail || 'Failed to fetch notes.';
+        this.notes = [];
+      } finally {
+        this.isLoadingNotes = false;
+      }
     },
 
     async createNote(noteData) {
         this.isLoadingNotes = true;
         try {
             const response = await apiClient.post('/notebook/notes', noteData);
-            const newNote = response.data;
-            const parentFolder = this.folders.find(f => f.id === newNote.folder_id);
-            if (parentFolder) {
-                parentFolder.notes.unshift(newNote);
-                this.fetchNotesForFolder(parentFolder.id); // Refresh the view
-            }
-            return newNote;
+            // After creating, refetch the notes for the folder to get the updated list
+            await this.fetchNotesForFolder(noteData.folder_id);
+            return response.data;
         } catch (err) {
             console.error('Error creating note:', err);
             this.error = err.response?.data?.detail || 'Failed to create note.';
@@ -130,16 +139,11 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingNotes = true;
         try {
             const response = await apiClient.put(`/notebook/notes/${noteId}`, noteData);
-            const updatedNote = response.data;
-            const parentFolder = this.folders.find(f => f.id === updatedNote.folder_id);
-            if (parentFolder) {
-                const noteIndex = parentFolder.notes.findIndex(n => n.id === noteId);
-                if (noteIndex !== -1) {
-                    parentFolder.notes[noteIndex] = updatedNote;
-                }
-                this.fetchNotesForFolder(parentFolder.id); // Refresh the view
+            // After updating, refetch notes for the current folder
+            if (this.selectedFolderId) {
+              await this.fetchNotesForFolder(this.selectedFolderId);
             }
-            return updatedNote;
+            return response.data;
         } catch (err) {
             console.error('Error updating note:', err);
             this.error = err.response?.data?.detail || 'Failed to update note.';
@@ -153,10 +157,9 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingNotes = true;
         try {
             await apiClient.delete(`/notebook/notes/${noteId}`);
-            const parentFolder = this.folders.find(f => f.id === this.selectedFolderId);
-            if (parentFolder) {
-                parentFolder.notes = parentFolder.notes.filter(n => n.id !== noteId);
-                this.fetchNotesForFolder(parentFolder.id); // Refresh the view
+            // After deleting, refetch notes for the current folder
+            if (this.selectedFolderId) {
+              await this.fetchNotesForFolder(this.selectedFolderId);
             }
         } catch (err) {
             console.error('Error deleting note:', err);
@@ -171,32 +174,26 @@ export const useNotebookStore = defineStore('notebook', {
       const journalFolderName = 'Daily Journal';
       let journalFolder = this.folders.find(f => f.name === journalFolderName);
 
-      // If the folder doesn't exist, create it.
       if (!journalFolder) {
         try {
-          journalFolder = await this.createFolder({ name: journalFolderName, color: '#F5A623' }); // Default orange color
+          journalFolder = await this.createFolder({ name: journalFolderName, color: '#F5A623' });
         } catch (err) {
-          console.error('Failed to create Daily Journal folder:', err);
           this.error = 'Could not create the Daily Journal folder.';
-          return; // Stop if folder creation fails
+          return;
         }
       }
 
-      // Format the date for the note title, e.g., "Log: 2024-10-04"
-      const formattedDate = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      const formattedDate = date.toLocaleDateString('en-CA');
       const noteTitle = `Log: ${formattedDate}`;
 
-      // Create the new note in the journal folder
       try {
         await this.createNote({
           folder_id: journalFolder.id,
           title: noteTitle,
           content: { type: 'doc', content: [{ type: 'paragraph' }] },
         });
-        // After creating the note, select the folder to show the new note
         this.selectFolder(journalFolder.id);
       } catch (err) {
-        console.error('Failed to create daily log note:', err);
         this.error = 'Could not create the daily log note.';
       }
     },

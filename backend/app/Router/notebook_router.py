@@ -49,6 +49,12 @@ router.delete(
     summary="Delete a notebook folder",
 )(notebook_controller.delete_folder)
 
+router.get(
+    "/folders/{folder_id}/notes",
+    response_model=List[NoteRead],
+    summary="List all notes for a specific folder",
+)(notebook_controller.list_notes_for_folder)
+
 
 # --- Notes Endpoints ---
 
