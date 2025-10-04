@@ -47,10 +47,21 @@ class Settings(BaseSettings):
         """
         # Set di base per lo sviluppo, per garantire che funzioni localmente
         # a prescindere dal file .env
+        # Set di base per lo sviluppo, per garantire che funzioni localmente
+        # a prescindere dal file .env. Aggiungiamo più porte comuni per Vite.
         origins = {
             "http://localhost:5173",
-            "http://127.0.0.1:5173", # Aggiunto per robustezza
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://127.0.0.1:5175",
         }
+
+        # Per lo sviluppo, è spesso utile permettere tutte le origini.
+        # In produzione, questa logica dovrebbe essere più restrittiva.
+        if self.ENV == "dev":
+            origins.add("*")
 
         if self.CORS_ORIGINS:
             # Aggiunge le origini definite nell'ambiente
