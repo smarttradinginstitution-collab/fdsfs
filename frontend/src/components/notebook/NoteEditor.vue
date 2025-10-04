@@ -48,13 +48,13 @@ import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Typography from '@tiptap/extension-typography';
-import { useNotebookStore } from '../../stores/notebookStore';
+import { useNotebookStore } from '@/stores/notebookStore';
 
-import BaseButton from '../ui/BaseButton.vue';
-import TiptapToolbar from './TiptapToolbar.vue';
-import SummaryPanel from './SummaryPanel.vue';
-import IconSave from '../icons/IconSave.vue';
-import IconDotsVertical from '../icons/IconDotsVertical.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import TiptapToolbar from '@/components/notebook/TiptapToolbar.vue';
+import SummaryPanel from '@/components/notebook/SummaryPanel.vue';
+import IconSave from '@/components/icons/IconSave.vue';
+import IconDotsVertical from '@/components/icons/IconDotsVertical.vue';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);

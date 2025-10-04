@@ -45,16 +45,15 @@
 </template>
 
 <script setup>
-// These icons will be created in the next steps
-import IconBold from '../icons/IconBold.vue';
-import IconItalic from '../icons/IconItalic.vue';
-import IconUnderline from '../icons/IconUnderline.vue';
-import IconStrikethrough from '../icons/IconStrikethrough.vue';
-import IconListUl from '../icons/IconListUl.vue';
-import IconListOl from '../icons/IconListOl.vue';
-import IconAlignLeft from '../icons/IconAlignLeft.vue';
-import IconAlignCenter from '../icons/IconAlignCenter.vue';
-import IconAlignRight from '../icons/IconAlignRight.vue';
+import IconBold from '@/components/icons/IconBold.vue';
+import IconItalic from '@/components/icons/IconItalic.vue';
+import IconUnderline from '@/components/icons/IconUnderline.vue';
+import IconStrikethrough from '@/components/icons/IconStrikethrough.vue';
+import IconListUl from '@/components/icons/IconListUl.vue';
+import IconListOl from '@/components/icons/IconListOl.vue';
+import IconAlignLeft from '@/components/icons/IconAlignLeft.vue';
+import IconAlignCenter from '@/components/icons/IconAlignCenter.vue';
+import IconAlignRight from '@/components/icons/IconAlignRight.vue';
 
 defineProps({
   editor: {
