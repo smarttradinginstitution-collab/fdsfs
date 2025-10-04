@@ -16,9 +16,6 @@
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
-import Blockquote from '@tiptap/extension-blockquote';
-import CodeBlock from '@tiptap/extension-code-block';
-import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Mention from '@tiptap/extension-mention';
@@ -34,9 +31,6 @@ const editor = useEditor({
   content: note.value ? note.value.content : '',
   extensions: [
     StarterKit,
-    Blockquote,
-    CodeBlock,
-    HorizontalRule,
     TaskList,
     TaskItem.configure({
       nested: true,
