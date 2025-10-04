@@ -167,6 +167,40 @@ export const useNotebookStore = defineStore('notebook', {
         }
     },
 
+    async logDay(date) {
+      const journalFolderName = 'Daily Journal';
+      let journalFolder = this.folders.find(f => f.name === journalFolderName);
+
+      // If the folder doesn't exist, create it.
+      if (!journalFolder) {
+        try {
+          journalFolder = await this.createFolder({ name: journalFolderName, color: '#F5A623' }); // Default orange color
+        } catch (err) {
+          console.error('Failed to create Daily Journal folder:', err);
+          this.error = 'Could not create the Daily Journal folder.';
+          return; // Stop if folder creation fails
+        }
+      }
+
+      // Format the date for the note title, e.g., "Log: 2024-10-04"
+      const formattedDate = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      const noteTitle = `Log: ${formattedDate}`;
+
+      // Create the new note in the journal folder
+      try {
+        await this.createNote({
+          folder_id: journalFolder.id,
+          title: noteTitle,
+          content: { type: 'doc', content: [{ type: 'paragraph' }] },
+        });
+        // After creating the note, select the folder to show the new note
+        this.selectFolder(journalFolder.id);
+      } catch (err) {
+        console.error('Failed to create daily log note:', err);
+        this.error = 'Could not create the daily log note.';
+      }
+    },
+
     // --- SELECTION ACTIONS ---
 
     selectFolder(folderId) {

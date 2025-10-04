@@ -36,6 +36,7 @@ class NoteRead(NoteBase):
 
 class NotebookFolderBase(BaseModel):
     name: Optional[str] = Field(None, description="The name of the folder")
+    color: Optional[str] = Field(None, description="The hex color code for the folder")
     template_content: Optional[Dict[str, Any]] = Field(None, description="The template content for notes in this folder")
 
     class Config:
@@ -54,5 +55,7 @@ class NotebookFolderRead(NotebookFolderBase):
     created_at: datetime
     updated_at: datetime
     name: str
+    color: Optional[str] = None
     notes: List[NoteRead] = []
+    note_count: int = Field(0, description="The number of notes in the folder")
     template_content: Optional[Dict[str, Any]] = None

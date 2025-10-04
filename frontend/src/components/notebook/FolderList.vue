@@ -1,164 +1,322 @@
 <template>
   <div class="folder-list-container">
     <div class="header">
-      <h2 class="text-lg font-semibold text-white">Folders</h2>
-      <button @click="isCreating = true" class="add-folder-button">+</button>
+      <h1 class="title">Notebook</h1>
     </div>
 
-    <div v-if="isCreating" class="create-folder-form">
-      <input
-        v-model="newFolderName"
-        @keyup.enter="handleCreateFolder"
-        @keyup.esc="isCreating = false"
-        placeholder="New folder name..."
-        class="input-new-folder"
-        ref="createInput"
-      />
-      <button @click="handleCreateFolder" class="button-save">Save</button>
-      <button @click="isCreating = false" class="button-cancel">Cancel</button>
-    </div>
-
-    <div v-if="store.isLoadingFolders" class="loading-spinner">Loading...</div>
-    <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
-
-    <ul v-else class="folders">
-      <li
-        v-for="folder in store.folders"
-        :key="folder.id"
-        @click="selectFolder(folder.id)"
-        class="folder-item"
-        :class="{ 'is-selected': store.selectedFolderId === folder.id }"
+    <!-- Actions -->
+    <div class="actions">
+      <BaseButton class="action-button" variant="primary" @click="isAddFolderModalOpen = true">
+        <PlusIcon class="icon" />
+        Add folder
+      </BaseButton>
+      <VueDatePicker
+        v-model="logDayDate"
+        @update:model-value="handleLogDay"
+        :enable-time-picker="false"
+        auto-apply
+        dark
+        :teleport="true"
+        placeholder="Log Day"
+        class="log-day-picker"
       >
-        <span>{{ folder.name }}</span>
-        <button @click.stop="handleDeleteFolder(folder.id)" class="delete-button">🗑️</button>
-      </li>
-    </ul>
+        <template #trigger>
+          <BaseButton class="action-button" variant="secondary">
+            <CalendarIcon class="icon" />
+            Log day
+          </BaseButton>
+        </template>
+      </VueDatePicker>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <SearchIcon class="search-icon" />
+      <input type="text" placeholder="Search notes..." class="search-input" />
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navigation">
+      <!-- Folders Section (Collapsible) -->
+      <div class="nav-section">
+        <button @click="toggleFolders" class="section-header">
+          <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !foldersOpen }" />
+          <span>Folders</span>
+        </button>
+        <ul v-show="foldersOpen" class="folder-list">
+          <li v-if="store.isLoadingFolders">Loading...</li>
+          <li
+            v-for="folder in store.folders"
+            :key="folder.id"
+            @click="selectFolder(folder.id)"
+            class="folder-item"
+            :class="{ 'is-selected': store.selectedFolderId === folder.id }"
+          >
+            <div class="folder-info">
+              <span class="folder-color-dot" :style="{ backgroundColor: folder.color }"></span>
+              <span class="folder-name">{{ folder.name }}</span>
+            </div>
+            <span class="note-count-badge">{{ folder.note_count }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Other Links -->
+      <div class="nav-section">
+        <a href="#" class="nav-item">My notes</a>
+        <a href="#" class="nav-item">Tags</a>
+      </div>
+    </nav>
+
+    <!-- Footer -->
+    <div class="footer">
+      <a href="#" class="nav-item">
+        <TrashIcon class="icon" />
+        Recently Deleted
+      </a>
+    </div>
+
+    <!-- Add Folder Modal -->
+    <AddFolderModal
+      :is-open="isAddFolderModalOpen"
+      @close="isAddFolderModalOpen = false"
+      @create="handleCreateFolder"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue';
+import { ref } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
+import BaseButton from '../ui/BaseButton.vue';
+import AddFolderModal from './AddFolderModal.vue';
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+import { PlusIcon, CalendarIcon, SearchIcon, ChevronDownIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 const store = useNotebookStore();
+const foldersOpen = ref(true);
+const isAddFolderModalOpen = ref(false);
+const logDayDate = ref(null);
 
-const isCreating = ref(false);
-const newFolderName = ref('');
-const createInput = ref(null);
-
-watch(isCreating, (val) => {
-  if (val) {
-    nextTick(() => {
-      createInput.value?.focus();
-    });
-  }
-});
-
-const handleCreateFolder = async () => {
-  if (!newFolderName.value.trim()) return;
-  try {
-    await store.createFolder({ name: newFolderName.value });
-    newFolderName.value = '';
-    isCreating.value = false;
-  } catch (error) {
-    // Error is handled in the store, maybe show a toast here in the future
-    console.error("Failed to create folder:", error);
-  }
-};
-
-const handleDeleteFolder = async (folderId) => {
-    if (confirm('Are you sure you want to delete this folder and all its notes?')) {
-        try {
-            await store.deleteFolder(folderId);
-        } catch (error) {
-            console.error("Failed to delete folder:", error);
-        }
-    }
+const toggleFolders = () => {
+  foldersOpen.value = !foldersOpen.value;
 };
 
 const selectFolder = (folderId) => {
   store.selectFolder(folderId);
 };
 
+const handleCreateFolder = async (folderData) => {
+  try {
+    await store.createFolder(folderData);
+    isAddFolderModalOpen.value = false;
+  } catch (error) {
+    console.error('Failed to create folder from component:', error);
+  }
+};
+
+const handleLogDay = async (date) => {
+  if (!date) return;
+  try {
+    await store.logDay(date);
+  } catch (error) {
+    // The store handles the error state, but we can log it here for debugging
+    console.error("Error logging day from component:", error);
+  } finally {
+    logDayDate.value = null; // Reset the picker's state
+  }
+};
+
 </script>
 
 <style lang="scss" scoped>
-/* Basic styling, will be improved with semantic tokens later */
+@import '../../assets/css/mixins';
+
 .folder-list-container {
-  padding: 1rem;
-  background-color: var(--base-color-gray-800);
-  border-right: 1px solid var(--semantic-color-border-default);
-  height: 100%;
-}
-
-.header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  height: 100%;
+  gap: 1rem;
+}
+
+.header .title {
+  @include text-xl;
+  font-weight: 600;
+  color: var(--semantic-color-text-primary);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-button {
+  flex-grow: 1;
+  .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.search-bar {
+  position: relative;
+}
+
+.search-input {
+  @include text-md;
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem; // Left padding for icon
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-interactive);
+  color: var(--semantic-color-text-primary);
+  &:focus {
+    outline: none;
+    border-color: var(--semantic-color-border-focus);
+  }
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--semantic-color-text-secondary);
+}
+
+.navigation {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+.nav-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header {
+  @include text-sm;
+  display: flex;
   align-items: center;
-  margin-bottom: 1rem;
-}
-
-.add-folder-button {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: white;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--semantic-color-text-secondary);
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
-  font-size: 1.5rem;
   cursor: pointer;
+  padding: 0.25rem 0;
+  margin-bottom: 0.5rem;
 }
 
-.create-folder-form {
-  margin-bottom: 1rem;
+.chevron-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease-in-out;
+  &.is-rotated {
+    transform: rotate(-90deg);
+  }
 }
 
-.input-new-folder {
-    width: 100%;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    background-color: var(--semantic-color-surface-secondary);
-    border: 1px solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-interactive);
-    color: var(--semantic-color-text-primary);
-}
-
-.folders {
+.folder-list {
   list-style: none;
   padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .folder-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0.5rem;
-  cursor: pointer;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--semantic-border-radius-interactive);
-  transition: background-color 0.2s;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary);
   }
 
   &.is-selected {
-    background-color: var(--semantic-color-interactive-primary-default);
-    color: white;
+    background-color: var(--semantic-color-surface-selected);
+    color: var(--semantic-color-text-primary);
   }
 }
 
-.delete-button {
-    background: none;
-    border: none;
-    color: var(--semantic-color-text-danger);
-    cursor: pointer;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.2s;
+.folder-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.folder-item:hover .delete-button {
-    visibility: visible;
-    opacity: 1;
+.folder-color-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--semantic-color-border-default);
+}
+
+.folder-name {
+  @include text-md;
+  font-weight: 500;
+}
+
+.note-count-badge {
+  @include text-sm;
+  color: var(--semantic-color-text-secondary);
+  background-color: var(--semantic-color-surface-secondary);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--semantic-border-radius-pill);
+}
+
+.nav-item {
+  @include text-md;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--semantic-color-text-primary);
+  text-decoration: none;
+  border-radius: var(--semantic-border-radius-interactive);
+  font-weight: 500;
+
+  &:hover {
+    background-color: var(--semantic-color-surface-secondary);
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--semantic-color-text-secondary);
+  }
+}
+
+.footer {
+  margin-top: auto; // Pushes to the bottom
+}
+
+// Style overrides for VueDatePicker
+.log-day-picker {
+  flex-grow: 1;
+
+  :global(.dp__theme_dark) {
+    --dp-background-color: var(--semantic-color-surface-secondary);
+    --dp-text-color: var(--semantic-color-text-primary);
+    --dp-hover-color: var(--semantic-color-surface-tertiary);
+    --dp-hover-text-color: var(--semantic-color-text-primary);
+    --dp-primary-color: var(--semantic-color-interactive-primary-default);
+    --dp-primary-text-color: var(--semantic-color-text-on-primary);
+    --dp-border-color: var(--semantic-color-border-default);
+    --dp-border-color-hover: var(--semantic-color-border-focus);
+    --dp-icon-color: var(--semantic-color-text-secondary);
+  }
 }
 </style>
