@@ -37,8 +37,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/_mixins.scss';
-@import '@/styles/_breakpoints.scss';
+@import '../styles/_mixins.scss';
+@import '../styles/_breakpoints.scss';
 
 .notebook-layout {
   display: grid;
