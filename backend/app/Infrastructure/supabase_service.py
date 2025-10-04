@@ -131,7 +131,14 @@ async def register_user(
         if not upd.get("error") and isinstance(upd.get("user"), dict):
             res["user"] = upd["user"]
 
+    # Debugging: Stampa i valori delle impostazioni per verificare la configurazione
+    print(f"--- DEBUG: Verificando auto-conferma ---")
+    print(f"ENV: {settings.ENV}")
+    print(f"AUTH_AUTO_CONFIRM_DEV: {settings.AUTH_AUTO_CONFIRM_DEV}")
+    print(f"------------------------------------")
+
     if settings.ENV == "dev" and settings.AUTH_AUTO_CONFIRM_DEV:
+        print("--- DEBUG: Eseguendo auto-conferma... ---")
         conf = await admin_confirm_user(user_id)
         if not conf.get("error") and isinstance(conf.get("user"), dict):
             res["user"] = conf["user"]

@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     SUPABASE_PROJECT_URL: str
     SUPABASE_KEY: str
-    AUTH_AUTO_CONFIRM_DEV: bool = True
+    AUTH_AUTO_CONFIRM_DEV: bool = False
 
     def assemble_db_url(self) -> str:
         if self.DATABASE_URL:
