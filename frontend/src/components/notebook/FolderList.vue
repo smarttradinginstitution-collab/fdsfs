@@ -4,22 +4,11 @@
       <h1 class="title">Notebook</h1>
     </header>
 
-    <div class="actions-toolbar">
-      <BaseButton
-        variant="primary"
-        class="add-folder-button"
-        @click="isCreating = true"
-      >
-        <IconPlus />
-        <span>Add folder</span>
-      </BaseButton>
-      <div class="search-wrapper">
-        <IconSearch class="search-icon" />
-        <input type="text" placeholder="Search notes..." class="search-input" />
-      </div>
+    <div class="search-wrapper">
+      <IconSearch class="search-icon" />
+      <input type="text" placeholder="Search notes..." class="search-input" />
     </div>
 
-    <!-- Create Folder Form -->
     <div v-if="isCreating" class="create-folder-form">
       <input
         v-model="newFolderName"
@@ -36,59 +25,57 @@
     </div>
 
     <nav class="navigation-menu">
-      <!-- Loading and Error States -->
-      <div v-if="store.isLoadingFolders" class="loading-spinner">Loading...</div>
-      <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
-
-      <!-- Folder List -->
-      <ul v-else class="folders-list">
-        <li class="nav-item">
-          <IconBookOpen />
-          <span>All notes</span>
+      <ul class="nav-list">
+        <li class="nav-item" @click="isCreating = true">
+          <IconFolderPlus class="nav-icon" />
+          <span>Add folder</span>
         </li>
-        <li class="nav-item">
-          <IconTag />
-          <span>Tags</span>
+        <li class="nav-item" @click="logDay">
+          <IconCalendar class="nav-icon" />
+          <span>Log day</span>
         </li>
+      </ul>
 
-        <!-- Accordion for Folders -->
+      <ul class="nav-list accordions">
         <li class="accordion">
           <div class="accordion-header" @click="toggleAccordion('folders')">
-            <span>Folders</span>
-            <IconChevronDown :class="{ 'is-rotated': accordions.folders }" />
+            <div class="header-content">
+              <IconFolder class="nav-icon" />
+              <span>Folders</span>
+            </div>
+            <IconChevronDown class="chevron-icon" :class="{ 'is-rotated': accordions.folders }" />
           </div>
           <ul v-show="accordions.folders" class="accordion-content">
-            <li
-              v-for="folder in userFolders"
-              :key="folder.id"
-              @click="selectFolder(folder.id)"
-              class="folder-item"
-              :class="{ 'is-selected': store.selectedFolderId === folder.id }"
-            >
+            <li v-for="folder in systemFolders" :key="folder.id" @click="selectFolder(folder.id)" class="folder-item">
               <span>{{ folder.name }}</span>
-              <button @click.stop="handleDeleteFolder(folder.id)" class="delete-button">...</button>
             </li>
           </ul>
         </li>
 
-        <!-- System Folders -->
-        <li
-            v-for="folder in systemFolders"
-            :key="folder.id"
-            @click="selectFolder(folder.id)"
-            class="nav-item"
-            :class="{ 'is-selected': store.selectedFolderId === folder.id }"
-        >
-            <IconJournal />
+        <li class="section-header">My notes</li>
+        <ul class="accordion-content" style="display: block;">
+          <li v-for="folder in userFolders" :key="folder.id" @click="selectFolder(folder.id)" class="folder-item" :class="{ 'is-selected': store.selectedFolderId === folder.id }">
             <span>{{ folder.name }}</span>
             <span v-if="folder.notes.length > 0" class="badge">{{ folder.notes.length }}</span>
+          </li>
+        </ul>
+
+        <li class="accordion">
+           <div class="accordion-header" @click="toggleAccordion('tags')">
+            <div class="header-content">
+              <IconTag class="nav-icon" />
+              <span>Tags</span>
+            </div>
+            <IconChevronDown class="chevron-icon" :class="{ 'is-rotated': !accordions.tags }" />
+          </div>
+          <!-- Tags content would go here -->
         </li>
       </ul>
     </nav>
 
     <footer class="sidebar-footer">
       <a href="#" @click.prevent="showDeleted" class="footer-link">
-        <IconTrash />
+        <IconTrash class="nav-icon" />
         <span>Recently Deleted</span>
       </a>
     </footer>
@@ -100,12 +87,12 @@ import { ref, computed, nextTick, watch, reactive } from 'vue';
 import { useNotebookStore } from '@/stores/notebookStore';
 import { FolderType } from '@/models/enums';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import IconPlus from '@/components/icons/PlusIcon.vue';
+import IconFolderPlus from '@/components/icons/IconFolderPlus.vue';
+import IconCalendar from '@/components/icons/CalendarIcon.vue';
 import IconSearch from '@/components/icons/IconSearch.vue';
-import IconBookOpen from '@/components/icons/BookOpenIcon.vue';
+import IconFolder from '@/components/icons/IconFolder.vue';
 import IconTag from '@/components/icons/IconTag.vue';
 import IconChevronDown from '@/components/icons/ChevronDownIcon.vue';
-import IconJournal from '@/components/icons/IconJournal.vue';
 import IconTrash from '@/components/icons/TrashIcon.vue';
 
 
@@ -115,7 +102,8 @@ const newFolderName = ref('');
 const createInput = ref(null);
 
 const accordions = reactive({
-  folders: true, // Default to open
+  folders: true,
+  tags: false,
 });
 
 const userFolders = computed(() => store.folders.filter(f => f.folder_type === FolderType.USER));
@@ -133,12 +121,6 @@ const handleCreateFolder = async () => {
   isCreating.value = false;
 };
 
-const handleDeleteFolder = async (folderId) => {
-  if (confirm('Are you sure you want to delete this folder?')) {
-    await store.deleteFolder(folderId);
-  }
-};
-
 const selectFolder = (folderId) => {
   store.selectFolder(folderId);
 };
@@ -147,9 +129,11 @@ const toggleAccordion = (name) => {
   accordions[name] = !accordions[name];
 };
 
+const logDay = () => {
+  console.log("This should probably create a new note in a 'Daily Log' folder");
+};
+
 const showDeleted = () => {
-  // This will be implemented later. It will fetch and show deleted items.
-  console.log("Show recently deleted items");
   store.showDeleted(); // Placeholder for store action
 };
 </script>
@@ -159,29 +143,13 @@ const showDeleted = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--semantic-color-surface-primary);
-  color: var(--semantic-color-text-primary);
-}
-
-.main-header {
-  padding-bottom: var(--fluid-spacing-m);
-  .title {
-    font-size: var(--fluid-font-size-xl);
-    font-weight: 600;
-  }
-}
-
-.actions-toolbar {
-  display: flex;
-  flex-direction: column;
+  padding: var(--fluid-spacing-m);
   gap: var(--fluid-spacing-m);
-  margin-bottom: var(--fluid-spacing-l);
 }
 
-.add-folder-button {
-  width: 100%;
-  justify-content: center;
-  gap: var(--fluid-spacing-xs);
+.main-header .title {
+  font-size: var(--fluid-font-size-xl);
+  font-weight: 600;
 }
 
 .search-wrapper {
@@ -192,8 +160,7 @@ const showDeleted = () => {
     top: 50%;
     transform: translateY(-50%);
     color: var(--semantic-color-text-secondary);
-    width: 18px;
-    height: 18px;
+    width: 18px; height: 18px;
   }
   .search-input {
     width: 100%;
@@ -213,97 +180,145 @@ const showDeleted = () => {
 .navigation-menu {
   flex-grow: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fluid-spacing-l);
 }
 
-.folders-list {
+.nav-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fluid-spacing-xs);
 }
 
-.nav-item, .accordion-header, .folder-item {
+.nav-item, .accordion-header {
   display: flex;
   align-items: center;
-  gap: var(--fluid-spacing-m);
-  padding: var(--fluid-spacing-s) var(--fluid-spacing-xs);
+  gap: var(--fluid-spacing-s);
+  padding: var(--fluid-spacing-s);
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: background-color 0.2s ease;
+  font-weight: 500;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary-hover);
   }
 
-  &.is-selected {
-    background-color: var(--semantic-color-interactive-primary-default);
-    color: var(--semantic-color-text-on-primary);
-  }
-
-  svg {
+  .nav-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    color: var(--semantic-color-text-secondary);
   }
 }
 
 .accordion-header {
   justify-content: space-between;
-  font-weight: 600;
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--fluid-spacing-s);
+  }
+  .chevron-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease-in-out;
+    &.is-rotated {
+      transform: rotate(180deg);
+    }
+  }
 }
 
 .accordion-content {
   list-style: none;
-  padding-left: var(--fluid-spacing-l);
+  padding-left: var(--fluid-spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--fluid-spacing-xxs);
+  margin-top: var(--fluid-spacing-xs);
 }
 
 .folder-item {
+  display: flex;
   justify-content: space-between;
-  .delete-button {
-    background: none;
-    border: none;
-    color: var(--semantic-color-text-secondary);
-    visibility: hidden;
-    opacity: 0;
-    &:hover {
-      color: var(--semantic-color-text-danger);
-    }
+  align-items: center;
+  padding: var(--fluid-spacing-s);
+  border-radius: var(--semantic-border-radius-interactive);
+  cursor: pointer;
+  font-size: var(--fluid-font-size-m);
+  color: var(--semantic-color-text-secondary);
+  font-weight: 400;
+
+  &:hover {
+    background-color: var(--semantic-color-surface-secondary-hover);
+    color: var(--semantic-color-text-primary);
   }
-  &:hover .delete-button {
-    visibility: visible;
-    opacity: 1;
+  &.is-selected {
+    background-color: var(--semantic-color-interactive-primary-default);
+    color: var(--semantic-color-text-on-primary);
+    font-weight: 500;
   }
+}
+
+.section-header {
+  font-size: var(--fluid-font-size-s);
+  font-weight: 600;
+  color: var(--semantic-color-text-secondary);
+  padding: var(--fluid-spacing-m) var(--fluid-spacing-s) var(--fluid-spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .badge {
-  margin-left: auto;
   font-size: var(--fluid-font-size-xs);
   padding: 2px 6px;
-  border-radius: 8px;
+  border-radius: var(--semantic-border-radius-full);
   background-color: var(--semantic-color-surface-tertiary);
+  color: var(--semantic-color-text-secondary);
 }
-
-.is-selected .badge {
-    background-color: var(--semantic-color-surface-primary);
-    color: var(--semantic-color-text-primary);
+.folder-item.is-selected .badge {
+  background-color: var(--semantic-color-surface-primary);
+  color: var(--semantic-color-text-primary);
 }
 
 .sidebar-footer {
   padding-top: var(--fluid-spacing-m);
   border-top: 1px solid var(--semantic-color-border-default);
+
+  .footer-link {
+    display: flex;
+    align-items: center;
+    gap: var(--fluid-spacing-s);
+    padding: var(--fluid-spacing-s);
+    text-decoration: none;
+    color: var(--semantic-color-text-secondary);
+    border-radius: var(--semantic-border-radius-interactive);
+
+    &:hover {
+      background-color: var(--semantic-color-surface-secondary-hover);
+      color: var(--semantic-color-text-primary);
+    }
+  }
 }
 
-.footer-link {
-  display: flex;
-  align-items: center;
-  gap: var(--fluid-spacing-m);
-  padding: var(--fluid-spacing-s);
-  text-decoration: none;
-  color: var(--semantic-color-text-secondary);
-  border-radius: var(--semantic-border-radius-interactive);
-
-  &:hover {
-    background-color: var(--semantic-color-surface-secondary-hover);
+.create-folder-form {
+  margin-top: var(--fluid-spacing-m);
+  .input-new-folder {
+    width: 100%;
+    padding: var(--fluid-spacing-s);
+    margin-bottom: var(--fluid-spacing-s);
+    background-color: var(--semantic-color-surface-secondary);
+    border: 1px solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-interactive);
     color: var(--semantic-color-text-primary);
+  }
+  .form-actions {
+    display: flex;
+    gap: var(--fluid-spacing-s);
   }
 }
 </style>
