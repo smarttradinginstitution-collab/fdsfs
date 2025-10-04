@@ -54,6 +54,7 @@ const commandItems = [
 ];
 
 const suggestion = {
+  char: '/',
   items: ({ query }) => {
     return commandItems.filter(item => item.title.toLowerCase().startsWith(query.toLowerCase()));
   },
