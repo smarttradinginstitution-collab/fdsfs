@@ -121,13 +121,11 @@ const handleLogDay = async (date) => {
   try {
     await store.logDay(date);
   } catch (error) {
-    // The store handles the error state, but we can log it here for debugging
     console.error("Error logging day from component:", error);
   } finally {
-    logDayDate.value = null; // Reset the picker's state
+    logDayDate.value = null;
   }
 };
-
 </script>
 
 <style lang="scss" scoped>
@@ -139,8 +137,7 @@ const handleLogDay = async (date) => {
 }
 
 .header .title {
-  @include text-xl;
-  font-weight: 600;
+  font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
 }
 
@@ -162,9 +159,9 @@ const handleLogDay = async (date) => {
 }
 
 .search-input {
-  @include text-md;
+  font: var(--semantic-font-style-label-md);
   width: 100%;
-  padding: 0.5rem 0.75rem 0.5rem 2.25rem; // Left padding for icon
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
@@ -199,11 +196,10 @@ const handleLogDay = async (date) => {
 }
 
 .section-header {
-  @include text-sm;
+  font: var(--semantic-font-style-label-sm);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 500;
   color: var(--semantic-color-text-secondary);
   background: none;
   border: none;
@@ -263,12 +259,11 @@ const handleLogDay = async (date) => {
 }
 
 .folder-name {
-  @include text-md;
-  font-weight: 500;
+  font: var(--semantic-font-style-label-md);
 }
 
 .note-count-badge {
-  @include text-sm;
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-secondary);
   padding: 0.125rem 0.5rem;
@@ -276,7 +271,7 @@ const handleLogDay = async (date) => {
 }
 
 .nav-item {
-  @include text-md;
+  font: var(--semantic-font-style-label-md);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -284,7 +279,6 @@ const handleLogDay = async (date) => {
   color: var(--semantic-color-text-primary);
   text-decoration: none;
   border-radius: var(--semantic-border-radius-interactive);
-  font-weight: 500;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary);
@@ -298,10 +292,9 @@ const handleLogDay = async (date) => {
 }
 
 .footer {
-  margin-top: auto; // Pushes to the bottom
+  margin-top: auto;
 }
 
-// Style overrides for VueDatePicker
 .log-day-picker {
   flex-grow: 1;
 
