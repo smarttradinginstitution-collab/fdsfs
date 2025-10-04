@@ -31,7 +31,7 @@
 
     <!-- Search -->
     <div class="search-bar">
-      <SearchIcon class="search-icon" />
+      <MagnifyingGlassIcon class="search-icon" />
       <input type="text" placeholder="Search notes..." class="search-input" />
     </div>
 
@@ -92,7 +92,7 @@ import BaseButton from '../ui/BaseButton.vue';
 import AddFolderModal from './AddFolderModal.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { PlusIcon, CalendarIcon, SearchIcon, ChevronDownIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, CalendarIcon, MagnifyingGlassIcon, ChevronDownIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 const store = useNotebookStore();
 const foldersOpen = ref(true);
