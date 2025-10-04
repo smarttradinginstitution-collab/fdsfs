@@ -6,7 +6,7 @@ from uuid import UUID
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, aliased
+from sqlalchemy.orm import noload
 
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
@@ -24,6 +24,7 @@ class NotebookFolderRepository:
         """Get a folder by its ID, with its note count."""
         stmt = (
             select(NotebookFolder, func.count(Note.id).label("note_count"))
+            .options(noload(NotebookFolder.notes))
             .outerjoin(Note, Note.folder_id == NotebookFolder.id)
             .where(NotebookFolder.id == folder_id)
             .group_by(NotebookFolder.id)
@@ -33,7 +34,6 @@ class NotebookFolderRepository:
         if res:
             folder, count = res
             folder.note_count = count
-            folder.notes = []  # Avoid loading all notes
             return folder
         return None
 
@@ -52,6 +52,7 @@ class NotebookFolderRepository:
         """List all folders for a given general account, with note counts."""
         stmt = (
             select(NotebookFolder, func.count(Note.id).label("note_count"))
+            .options(noload(NotebookFolder.notes))
             .outerjoin(Note, Note.folder_id == NotebookFolder.id)
             .where(NotebookFolder.general_account_id == general_account_id)
             .group_by(NotebookFolder.id)
@@ -62,7 +63,6 @@ class NotebookFolderRepository:
         folders_with_counts = []
         for folder, count in res.all():
             folder.note_count = count
-            folder.notes = []  # Don't return full note objects
             folders_with_counts.append(folder)
 
         return folders_with_counts
