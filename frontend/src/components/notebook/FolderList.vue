@@ -1,8 +1,23 @@
 <template>
   <div class="folder-list-container">
     <div class="header">
-      <h2 class="text-lg font-semibold text-white">Folders</h2>
-      <button @click="isCreating = true" class="add-folder-button">+</button>
+      <h2 class="title">Notebook</h2>
+    </div>
+    <div class="search-and-new">
+      <BaseButton
+        :icon="IconPlus"
+        icon-position="left"
+        @click="isCreating = true"
+      >
+        Add folder
+      </BaseButton>
+      <BaseInput
+        v-model="searchTerm"
+        placeholder="Search notes..."
+        :icon="IconSearch"
+        icon-position="left"
+        class="search-input"
+      />
     </div>
 
     <div v-if="isCreating" class="create-folder-form">
@@ -18,33 +33,66 @@
       <button @click="isCreating = false" class="button-cancel">Cancel</button>
     </div>
 
-    <div v-if="store.isLoadingFolders" class="loading-spinner">Loading...</div>
-    <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
+    <div class="folders-section">
+        <div class="section-header">
+            <IconFolder class="icon" />
+            <h3 class="section-title">Folders</h3>
+        </div>
+        <div v-if="store.isLoadingFolders" class="loading-spinner">Loading...</div>
+        <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
+        <ul v-else class="folders">
+        <li
+            v-for="folder in filteredFolders"
+            :key="folder.id"
+            @click="selectFolder(folder.id)"
+            class="folder-item"
+            :class="{ 'is-selected': store.selectedFolderId === folder.id }"
+        >
+            <span>{{ folder.name }}</span>
+            <button @click.stop="handleDeleteFolder(folder.id)" class="delete-button">🗑️</button>
+        </li>
+        </ul>
+    </div>
 
-    <ul v-else class="folders">
-      <li
-        v-for="folder in store.folders"
-        :key="folder.id"
-        @click="selectFolder(folder.id)"
-        class="folder-item"
-        :class="{ 'is-selected': store.selectedFolderId === folder.id }"
-      >
-        <span>{{ folder.name }}</span>
-        <button @click.stop="handleDeleteFolder(folder.id)" class="delete-button">🗑️</button>
-      </li>
-    </ul>
+    <div class="tags-section">
+        <div class="section-header">
+            <IconTag class="icon" />
+            <h3 class="section-title">Tags</h3>
+        </div>
+        <!-- Tags list will be implemented here -->
+        <div class="empty-state">
+            <p>No tags yet.</p>
+        </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
+import BaseButton from '../ui/BaseButton.vue';
+import BaseInput from '../ui/BaseInput.vue';
+import IconPlus from '../icons/IconPlus.vue';
+import IconSearch from '../icons/IconSearch.vue';
+import IconFolder from '../icons/IconFolder.vue';
+import IconTag from '../icons/IconTag.vue';
+
 
 const store = useNotebookStore();
 
+const searchTerm = ref('');
 const isCreating = ref(false);
 const newFolderName = ref('');
 const createInput = ref(null);
+
+const filteredFolders = computed(() => {
+  if (!searchTerm.value) {
+    return store.folders;
+  }
+  return store.folders.filter(folder =>
+    folder.name.toLowerCase().includes(searchTerm.value.toLowerCase())
+  );
+});
 
 watch(isCreating, (val) => {
   if (val) {
@@ -92,21 +140,55 @@ const selectFolder = (folderId) => {
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 1rem;
 }
 
-.add-folder-button {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
-  font-size: 1.5rem;
-  cursor: pointer;
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.search-and-new {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    flex-grow: 1;
+}
+
+.folders-section, .tags-section {
+    margin-top: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--semantic-color-text-primary);
+}
+
+.section-title {
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.section-header .icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--semantic-color-text-secondary);
+    font-size: 0.875rem;
+    padding: 1rem;
 }
 
 .create-folder-form {
