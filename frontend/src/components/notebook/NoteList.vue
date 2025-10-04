@@ -42,11 +42,11 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useNotebookStore } from '../../stores/notebookStore';
-import BaseButton from '../ui/BaseButton.vue';
-import IconCalendar from '../icons/CalendarIcon.vue';
-import IconChevronLeft from '../icons/ArrowLeftIcon.vue';
-import IconJournal from '../icons/IconJournal.vue';
+import { useNotebookStore } from '@/stores/notebookStore';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import IconCalendar from '@/components/icons/CalendarIcon.vue';
+import IconChevronLeft from '@/components/icons/ArrowLeftIcon.vue';
+import IconJournal from '@/components/icons/IconJournal.vue';
 
 const store = useNotebookStore();
 const selectAll = ref(false);

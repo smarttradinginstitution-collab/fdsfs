@@ -27,12 +27,12 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue';
-import { useTradingAccountsStore } from '../../stores/tradingAccountsStore';
-import api from '../../services/api';
-import { formatCurrency, formatPercentage } from '../../services/formatters';
+import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import api from '@/services/api';
+import { formatCurrency, formatPercentage } from '@/services/formatters';
 
-import IconChevronRight from '../icons/ArrowRightIcon.vue';
-import StatItem from './StatItem.vue'; // A new component to be created
+import IconChevronRight from '@/components/icons/ArrowRightIcon.vue';
+import StatItem from '@/components/notebook/StatItem.vue';
 
 const props = defineProps({
   note: {

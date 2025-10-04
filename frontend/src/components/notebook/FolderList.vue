@@ -97,16 +97,16 @@
 
 <script setup>
 import { ref, computed, nextTick, watch, reactive } from 'vue';
-import { useNotebookStore } from '../../stores/notebookStore';
-import { FolderType } from '../../models/enums'; // Assuming enums are now in models
-import BaseButton from '../ui/BaseButton.vue';
-import IconPlus from '../icons/PlusIcon.vue';
-import IconSearch from '../icons/IconSearch.vue';
-import IconBookOpen from '../icons/BookOpenIcon.vue';
-import IconTag from '../icons/IconTag.vue';
-import IconChevronDown from '../icons/ChevronDownIcon.vue';
-import IconJournal from '../icons/IconJournal.vue';
-import IconTrash from '../icons/TrashIcon.vue';
+import { useNotebookStore } from '@/stores/notebookStore';
+import { FolderType } from '@/models/enums';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import IconPlus from '@/components/icons/PlusIcon.vue';
+import IconSearch from '@/components/icons/IconSearch.vue';
+import IconBookOpen from '@/components/icons/BookOpenIcon.vue';
+import IconTag from '@/components/icons/IconTag.vue';
+import IconChevronDown from '@/components/icons/ChevronDownIcon.vue';
+import IconJournal from '@/components/icons/IconJournal.vue';
+import IconTrash from '@/components/icons/TrashIcon.vue';
 
 
 const store = useNotebookStore();
