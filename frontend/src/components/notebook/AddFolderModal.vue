@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :is-open="isOpen" @close="$emit('close')">
+  <BaseModal :show="isOpen" @close="$emit('close')">
     <template #header>
       <h2 class="text-lg font-semibold">Add New Folder</h2>
     </template>
