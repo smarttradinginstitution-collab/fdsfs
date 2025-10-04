@@ -108,6 +108,7 @@ const handleCreateFolder = async () => {
     await store.createFolder({ name: newFolderName.value });
     newFolderName.value = '';
     isCreating.value = false;
+    searchTerm.value = ''; // Clear search term to ensure new folder is visible
   } catch (error) {
     // Error is handled in the store, maybe show a toast here in the future
     console.error("Failed to create folder:", error);
