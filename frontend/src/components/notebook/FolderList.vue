@@ -5,7 +5,7 @@
     </div>
     <div class="search-and-new">
       <BaseButton
-        :icon="IconPlus"
+        :icon="PlusIcon"
         icon-position="left"
         @click="isCreating = true"
       >
@@ -14,7 +14,7 @@
       <BaseInput
         v-model="searchTerm"
         placeholder="Search notes..."
-        :icon="IconSearch"
+        :icon="FilterIcon"
         icon-position="left"
         class="search-input"
       />
@@ -35,7 +35,7 @@
 
     <div class="folders-section">
         <div class="section-header">
-            <IconFolder class="icon" />
+            <BookOpenIcon class="icon" />
             <h3 class="section-title">Folders</h3>
         </div>
         <div v-if="store.isLoadingFolders" class="loading-spinner">Loading...</div>
@@ -56,7 +56,7 @@
 
     <div class="tags-section">
         <div class="section-header">
-            <IconTag class="icon" />
+            <PencilIcon class="icon" />
             <h3 class="section-title">Tags</h3>
         </div>
         <!-- Tags list will be implemented here -->
@@ -72,10 +72,10 @@ import { ref, computed, nextTick, watch } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseButton from '../ui/BaseButton.vue';
 import BaseInput from '../ui/BaseInput.vue';
-import IconPlus from '../icons/IconPlus.vue';
-import IconSearch from '../icons/IconSearch.vue';
-import IconFolder from '../icons/IconFolder.vue';
-import IconTag from '../icons/IconTag.vue';
+import PlusIcon from '../icons/PlusIcon.vue';
+import FilterIcon from '../icons/FilterIcon.vue';
+import BookOpenIcon from '../icons/BookOpenIcon.vue';
+import PencilIcon from '../icons/PencilIcon.vue';
 
 
 const store = useNotebookStore();
