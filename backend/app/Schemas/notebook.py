@@ -59,3 +59,21 @@ class NotebookFolderRead(NotebookFolderBase):
     notes: List[NoteRead] = []
     note_count: int = Field(0, description="The number of notes in the folder")
     template_content: Optional[Dict[str, Any]] = None
+
+class NotebookFolderReadWithCount(NotebookFolderBase):
+    """
+    A read schema for NotebookFolder that includes the note count but not the
+    full list of notes, to prevent lazy-loading issues.
+    """
+    id: UUID
+    general_account_id: UUID
+    folder_type: FolderType
+    created_at: datetime
+    updated_at: datetime
+    name: str
+    color: Optional[str] = None
+    note_count: int = Field(0, description="The number of notes in the folder")
+    template_content: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True

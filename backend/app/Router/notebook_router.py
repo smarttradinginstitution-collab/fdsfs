@@ -13,6 +13,7 @@ from app.Schemas.notebook import (
     NoteRead,
     NoteCreate,
     NoteUpdate,
+    NotebookFolderReadWithCount,
 )
 
 # Instantiate the controller once, as it's stateless
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/api/v1/notebook", tags=["Notebook"])
 
 router.get(
     "/folders",
-    response_model=List[NotebookFolderRead],
+    response_model=List[NotebookFolderReadWithCount],
     summary="List all notebook folders for the current user",
 )(notebook_controller.list_my_folders)
 
