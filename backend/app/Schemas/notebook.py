@@ -29,6 +29,7 @@ class NoteRead(NoteBase):
     trade_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None
     title: str
 
 
@@ -53,6 +54,32 @@ class NotebookFolderRead(NotebookFolderBase):
     folder_type: FolderType
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None
     name: str
     notes: List[NoteRead] = []
     template_content: Optional[Dict[str, Any]] = None
+
+
+# --- Schemas for Deleted Items ---
+
+class DeletedNoteInfo(BaseModel):
+    id: UUID
+    title: str
+    deleted_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+class DeletedFolderInfo(BaseModel):
+    id: UUID
+    name: str
+    deleted_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+class DeletedItemsRead(BaseModel):
+    deleted_folders: List[DeletedFolderInfo]
+    deleted_notes: List[DeletedNoteInfo]

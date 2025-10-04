@@ -1,6 +1,7 @@
 # app/Repositories/notebook_folder_repository.py
 from __future__ import annotations
 
+import datetime
 from typing import Sequence
 from uuid import UUID
 
@@ -19,13 +20,14 @@ class NotebookFolderRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def get_by_id(self, folder_id: UUID) -> NotebookFolder | None:
+    async def get_by_id(
+        self, folder_id: UUID, include_deleted: bool = False
+    ) -> NotebookFolder | None:
         """Get a folder by its ID, with its notes preloaded."""
-        stmt = (
-            select(NotebookFolder)
-            .where(NotebookFolder.id == folder_id)
-            .options(selectinload(NotebookFolder.notes))
-        )
+        stmt = select(NotebookFolder).where(NotebookFolder.id == folder_id)
+        if not include_deleted:
+            stmt = stmt.where(NotebookFolder.deleted_at.is_(None))
+        stmt = stmt.options(selectinload(NotebookFolder.notes))
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
@@ -33,7 +35,8 @@ class NotebookFolderRepository:
         """Find a folder by name for a specific general account."""
         stmt = select(NotebookFolder).where(
             NotebookFolder.name == name,
-            NotebookFolder.general_account_id == general_account_id
+            NotebookFolder.general_account_id == general_account_id,
+            NotebookFolder.deleted_at.is_(None)
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
@@ -44,9 +47,27 @@ class NotebookFolderRepository:
         """List all folders for a given general account, with notes preloaded."""
         stmt = (
             select(NotebookFolder)
-            .where(NotebookFolder.general_account_id == general_account_id)
+            .where(
+                NotebookFolder.general_account_id == general_account_id,
+                NotebookFolder.deleted_at.is_(None),
+            )
             .options(selectinload(NotebookFolder.notes))
             .order_by(NotebookFolder.name.asc())
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+
+    async def list_deleted_by_general_account_id(
+        self, general_account_id: UUID
+    ) -> Sequence[NotebookFolder]:
+        """List all soft-deleted folders for a given general account."""
+        stmt = (
+            select(NotebookFolder)
+            .where(
+                NotebookFolder.general_account_id == general_account_id,
+                NotebookFolder.deleted_at.isnot(None),
+            )
+            .order_by(NotebookFolder.deleted_at.desc())
         )
         res = await self.db.execute(stmt)
         return res.scalars().all()
@@ -76,6 +97,18 @@ class NotebookFolderRepository:
         return await self.get_by_id(db_obj.id)
 
     async def delete(self, db_obj: NotebookFolder) -> None:
-        """Delete a folder."""
+        """
+        Soft delete a folder and all of its associated notes.
+        Assumes that the notes have been eager-loaded.
+        """
+        now = datetime.datetime.now(datetime.timezone.utc)
+        db_obj.deleted_at = now
+        for note in db_obj.notes:
+            note.deleted_at = now
+        self.db.add(db_obj)
+        await self.db.commit()
+
+    async def permanently_delete(self, db_obj: NotebookFolder) -> None:
+        """Permanently delete a folder from the database."""
         await self.db.delete(db_obj)
         await self.db.commit()

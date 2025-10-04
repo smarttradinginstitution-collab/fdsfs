@@ -16,6 +16,7 @@ from app.Schemas.notebook import (
     NotebookFolderUpdate,
     NoteCreate,
     NoteUpdate,
+    DeletedItemsRead,
 )
 
 # Define system folders as a constant
@@ -128,3 +129,67 @@ class NotebookService:
         """Delete a note, ensuring it belongs to the user."""
         note = await self.get_note(note_id, user_id)
         await self.note_repo.delete(note)
+
+    # --- Deleted Items Operations ---
+
+    async def get_all_deleted_items(self, user_id: UUID) -> DeletedItemsRead:
+        """Get all soft-deleted folders and notes for the current user."""
+        general_account_id = await self._get_general_account_id(user_id)
+        deleted_folders = await self.folder_repo.list_deleted_by_general_account_id(
+            general_account_id
+        )
+        deleted_notes = await self.note_repo.list_deleted_by_general_account_id(
+            general_account_id
+        )
+        return DeletedItemsRead(
+            deleted_folders=deleted_folders, deleted_notes=deleted_notes
+        )
+
+    async def restore_note(self, note_id: UUID, user_id: UUID) -> Note:
+        """Restore a soft-deleted note."""
+        note = await self.note_repo.get_by_id(note_id, include_deleted=True)
+        general_account_id = await self._get_general_account_id(user_id)
+        if not note or note.general_account_id != general_account_id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+        if not note.deleted_at:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Note is not deleted")
+
+        note.deleted_at = None
+        await self.db.commit()
+        await self.db.refresh(note)
+        return note
+
+    async def restore_folder(self, folder_id: UUID, user_id: UUID) -> NotebookFolder:
+        """Restore a soft-deleted folder and its notes."""
+        folder = await self.folder_repo.get_by_id(folder_id, include_deleted=True)
+        general_account_id = await self._get_general_account_id(user_id)
+        if not folder or folder.general_account_id != general_account_id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Folder not found")
+        if not folder.deleted_at:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Folder is not deleted")
+
+        folder.deleted_at = None
+        for note in folder.notes:
+            note.deleted_at = None
+
+        await self.db.commit()
+        await self.db.refresh(folder)
+        return folder
+
+    async def permanently_delete_note(self, note_id: UUID, user_id: UUID):
+        """Permanently delete a note."""
+        note = await self.note_repo.get_by_id(note_id, include_deleted=True)
+        general_account_id = await self._get_general_account_id(user_id)
+        if not note or note.general_account_id != general_account_id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+
+        await self.note_repo.permanently_delete(note)
+
+    async def permanently_delete_folder(self, folder_id: UUID, user_id: UUID):
+        """Permanently delete a folder and all its notes."""
+        folder = await self.folder_repo.get_by_id(folder_id, include_deleted=True)
+        general_account_id = await self._get_general_account_id(user_id)
+        if not folder or folder.general_account_id != general_account_id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Folder not found")
+
+        await self.folder_repo.permanently_delete(folder)
