@@ -16,6 +16,13 @@
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
+import Blockquote from '@tiptap/extension-blockquote';
+import CodeBlock from '@tiptap/extension-code-block';
+import HorizontalRule from '@tiptap/extension-horizontal-rule';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Mention from '@tiptap/extension-mention';
+import slashCommandSuggestion from './editor-extensions/slash-command.js';
 import { useNotebookStore } from '../../stores/notebookStore';
 
 const store = useNotebookStore();
@@ -25,7 +32,22 @@ const editableTitle = ref(note.value ? note.value.title : '');
 
 const editor = useEditor({
   content: note.value ? note.value.content : '',
-  extensions: [StarterKit],
+  extensions: [
+    StarterKit,
+    Blockquote,
+    CodeBlock,
+    HorizontalRule,
+    TaskList,
+    TaskItem.configure({
+      nested: true,
+    }),
+    Mention.configure({
+      HTMLAttributes: {
+        class: 'mention',
+      },
+      suggestion: slashCommandSuggestion,
+    }),
+  ],
   editorProps: {
     attributes: {
       class: 'prose prose-invert focus:outline-none',
@@ -149,6 +171,58 @@ onBeforeUnmount(() => {
 
 /* Tiptap default styles override */
 .prose {
-    max-width: none;
+  max-width: none;
+
+  p {
+    margin: 0.5rem 0;
+  }
+
+  blockquote {
+    padding-left: 1rem;
+    border-left: 3px solid var(--semantic-color-border-default);
+    margin-left: 1rem;
+    font-style: italic;
+    color: var(--semantic-color-text-secondary);
+  }
+
+  pre {
+    background: var(--semantic-color-surface-secondary);
+    color: var(--semantic-color-text-primary);
+    font-family: 'JetBrainsMono', monospace;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+
+    code {
+      color: inherit;
+      padding: 0;
+      background: none;
+      font-size: 0.85rem;
+    }
+  }
+
+  hr {
+    border-color: var(--semantic-color-border-default);
+    margin: 1rem 0;
+  }
+
+  ul[data-type='taskList'] {
+    list-style: none;
+    padding: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      > label {
+        margin-right: 0.5rem;
+        cursor: pointer;
+      }
+
+      > div {
+        flex: 1;
+      }
+    }
+  }
 }
 </style>
