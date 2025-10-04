@@ -192,6 +192,8 @@ const showDeleted = () => {
     top: 50%;
     transform: translateY(-50%);
     color: var(--semantic-color-text-secondary);
+    width: 18px;
+    height: 18px;
   }
   .search-input {
     width: 100%;
@@ -235,6 +237,12 @@ const showDeleted = () => {
   &.is-selected {
     background-color: var(--semantic-color-interactive-primary-default);
     color: var(--semantic-color-text-on-primary);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
 }
 

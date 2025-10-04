@@ -98,4 +98,6 @@
   --semantic-color-border-subtle: var(--base-color-gray-800);
   --semantic-color-border-focus: var(--base-color-blue-400);
   --semantic-color-overlay-background: var(--base-color-black-alpha-50);
+  --semantic-color-danger-default: var(--base-color-red-500);
+  --semantic-color-danger-hover: var(--base-color-red-600);
 }
