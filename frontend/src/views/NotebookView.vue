@@ -37,6 +37,9 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/_mixins.scss';
+@import '@/styles/_breakpoints.scss';
+
 .notebook-layout {
   display: grid;
   // A responsive 3-column layout. The first two have a max-width and the last one takes the remaining space.
