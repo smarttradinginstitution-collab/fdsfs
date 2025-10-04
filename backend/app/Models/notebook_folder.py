@@ -28,6 +28,7 @@ class NotebookFolder(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
+    color: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     # Correctly define the column using SQLAlchemy's Enum type
     folder_type: Mapped[FolderType] = mapped_column(
         Enum(FolderType, name="folder_type", create_type=False),

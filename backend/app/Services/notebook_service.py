@@ -103,6 +103,13 @@ class NotebookService:
 
     # --- Note Operations ---
 
+    async def get_notes_for_folder(self, folder_id: UUID, user_id: UUID) -> List[Note]:
+        """Get all notes for a specific folder, ensuring it belongs to the user."""
+        # First, verify the user has access to this folder.
+        await self.get_folder(folder_id, user_id)
+        # Then, fetch the notes.
+        return await self.note_repo.list_by_folder_id(folder_id)
+
     async def get_note(self, note_id: UUID, user_id: UUID) -> Note:
         """Get a specific note, ensuring it belongs to the user."""
         general_account_id = await self._get_general_account_id(user_id)

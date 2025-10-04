@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import apiClient from '@/services/api'; // Import apiClient directly
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
@@ -23,6 +24,10 @@ const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
 const editableContent = ref(null);
+
+// Local state for notes to avoid depending on notebookStore's active notes
+const tradeNotesList = ref([]);
+const dailyJournalNotesList = ref([]);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -55,15 +60,16 @@ const tradeDate = computed(() => {
 const tradeNotesFolder = computed(() => notebookStore.folders.find(f => f.name === 'Trade Notes'));
 const dailyJournalFolder = computed(() => notebookStore.folders.find(f => f.name === 'Daily Journal'));
 
+// --- These computed properties now use the local state, which is safe ---
 const currentTradeNote = computed(() => {
-  if (!trade.value || !tradeNotesFolder.value) return null;
-  return tradeNotesFolder.value.notes.find(n => n.trade_id === trade.value.id);
+  if (!trade.value) return null;
+  return tradeNotesList.value.find(n => n.trade_id === trade.value.id);
 });
 
 const currentDailyJournalNote = computed(() => {
-    if (!trade.value || !dailyJournalFolder.value) return null;
+    if (!trade.value) return null;
     const noteTitle = `Journal - ${tradeDate.value}`;
-    return dailyJournalFolder.value.notes.find(n => n.title === noteTitle);
+    return dailyJournalNotesList.value.find(n => n.title === noteTitle);
 });
 
 // --- METHODS ---
@@ -100,6 +106,8 @@ const handleSaveNotes = async () => {
     } else {
       await notebookStore.createNote(noteData);
     }
+    // Refetch notes for this folder after saving
+    await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
   } else if (rightColumnActiveTab.value === 'daily-journal') {
     const noteData = {
       title: `Journal - ${tradeDate.value}`,
@@ -111,14 +119,38 @@ const handleSaveNotes = async () => {
     } else {
         await notebookStore.createNote(noteData);
     }
+    // Refetch notes for this folder after saving
+    await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
   }
-  // Optionally, add a success toast here
 };
 
-const fetchRequiredData = async (id) => {
+const fetchNotesForFolder = async (folderId, targetRef) => {
+    if (!folderId) {
+        targetRef.value = [];
+        return;
+    }
+    try {
+        const response = await apiClient.get(`/notebook/folders/${folderId}/notes`);
+        targetRef.value = response.data;
+    } catch (e) {
+        console.error(`Failed to fetch notes for folder ${folderId}`, e);
+        targetRef.value = [];
+    }
+};
+
+const fetchRequiredData = async (tradeId) => {
   if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
   if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
-  await tradesStore.fetchTradeById(id);
+
+  // Once folders are loaded, fetch the specific notes needed for this view
+  if (tradeNotesFolder.value) {
+      await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
+  }
+  if (dailyJournalFolder.value) {
+      await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
+  }
+
+  await tradesStore.fetchTradeById(tradeId);
 };
 
 // --- LIFECYCLE & WATCHERS ---
@@ -130,7 +162,7 @@ watch(() => route.params.id, (newId) => {
   if (newId) fetchRequiredData(newId);
 });
 
-watch([rightColumnActiveTab, trade], () => {
+watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
   if (rightColumnActiveTab.value === 'trade-note') {
     editableContent.value = currentTradeNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
   } else if (rightColumnActiveTab.value === 'daily-journal') {

@@ -1,14 +1,22 @@
 <template>
   <div class="notebook-layout">
-    <!-- Left Column: Folder List -->
-    <div class="folder-list-pane">
+    <!-- Column 1: Folder List & Navigation -->
+    <div class="navigation-pane">
       <FolderList />
     </div>
 
-    <!-- Right Column: Note List or Note Editor -->
-    <div class="main-pane">
+    <!-- Column 2: Note List -->
+    <div class="note-list-pane">
+      <NoteList />
+    </div>
+
+    <!-- Column 3: Note Editor -->
+    <div class="editor-pane">
       <NoteEditor v-if="store.selectedNote" />
-      <NoteList v-else />
+      <div v-else class="editor-placeholder">
+        <p>Select a note to view or edit it.</p>
+        <p>Or, select a folder and create a new note.</p>
+      </div>
     </div>
   </div>
 </template>
@@ -28,20 +36,41 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .notebook-layout {
   display: grid;
-  grid-template-columns: 300px 1fr; /* Fixed width for folder list, rest for main content */
-  height: calc(100vh - var(--header-height, 60px)); /* Adjust based on your header's height */
+  // Defines the three-column layout:
+  // 1. Navigation Pane: fixed width
+  // 2. Note List Pane: takes up 40% of the remaining space
+  // 3. Editor Pane: takes up 60% of the remaining space
+  grid-template-columns: 280px 0.6fr 1fr;
+  height: calc(100vh - var(--header-height));
   background-color: var(--semantic-color-surface-primary);
+  border-top: 1px solid var(--semantic-color-border-default);
 }
 
-.folder-list-pane {
+.navigation-pane {
+  border-right: 1px solid var(--semantic-color-border-default);
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.note-list-pane {
   border-right: 1px solid var(--semantic-color-border-default);
   overflow-y: auto;
 }
 
-.main-pane {
+.editor-pane {
   overflow-y: auto;
+}
+
+.editor-placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--semantic-color-text-secondary);
+  text-align: center;
 }
 </style>

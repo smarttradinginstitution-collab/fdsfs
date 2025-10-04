@@ -4,10 +4,11 @@ from __future__ import annotations
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import noload
 
+from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
 from app.Models.enums import FolderType
 from app.Schemas.notebook import NotebookFolderCreate, NotebookFolderUpdate
@@ -20,14 +21,21 @@ class NotebookFolderRepository:
         self.db = db
 
     async def get_by_id(self, folder_id: UUID) -> NotebookFolder | None:
-        """Get a folder by its ID, with its notes preloaded."""
+        """Get a folder by its ID, with its note count."""
         stmt = (
-            select(NotebookFolder)
+            select(NotebookFolder, func.count(Note.id).label("note_count"))
+            .options(noload(NotebookFolder.notes))
+            .outerjoin(Note, Note.folder_id == NotebookFolder.id)
             .where(NotebookFolder.id == folder_id)
-            .options(selectinload(NotebookFolder.notes))
+            .group_by(NotebookFolder.id)
         )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        res = result.first()
+        if res:
+            folder, count = res
+            folder.note_count = count
+            return folder
+        return None
 
     async def find_by_name_and_account(self, name: str, general_account_id: UUID) -> NotebookFolder | None:
         """Find a folder by name for a specific general account."""
@@ -41,15 +49,24 @@ class NotebookFolderRepository:
     async def list_by_general_account_id(
         self, general_account_id: UUID
     ) -> Sequence[NotebookFolder]:
-        """List all folders for a given general account, with notes preloaded."""
+        """List all folders for a given general account, with note counts."""
         stmt = (
-            select(NotebookFolder)
+            select(NotebookFolder, func.count(Note.id).label("note_count"))
+            .options(noload(NotebookFolder.notes))
+            .outerjoin(Note, Note.folder_id == NotebookFolder.id)
             .where(NotebookFolder.general_account_id == general_account_id)
-            .options(selectinload(NotebookFolder.notes))
+            .group_by(NotebookFolder.id)
             .order_by(NotebookFolder.name.asc())
         )
         res = await self.db.execute(stmt)
-        return res.scalars().all()
+
+        folders_with_counts = []
+        for folder, count in res.all():
+            folder.note_count = count
+            folders_with_counts.append(folder)
+
+        return folders_with_counts
+
 
     async def create(
         self, folder_in: NotebookFolderCreate, general_account_id: UUID

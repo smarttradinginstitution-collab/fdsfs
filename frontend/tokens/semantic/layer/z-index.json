@@ -1,0 +1,28 @@
+{
+  "semantic": {
+    "layer": {
+      "z-index": {
+        "overlay": {
+          "$value": 1000,
+          "$type": "number",
+          "$comment": "Z-index for full-screen overlays, like the one behind a modal."
+        },
+        "modal": {
+          "$value": 1001,
+          "$type": "number",
+          "$comment": "Z-index for modal dialogs, to ensure they appear above the overlay."
+        },
+        "dropdown": {
+          "$value": 900,
+          "$type": "number",
+          "$comment": "Z-index for dropdown menus and popovers."
+        },
+        "header": {
+          "$value": 800,
+          "$type": "number",
+          "$comment": "Z-index for the main application header."
+        }
+      }
+    }
+  }
+}
