@@ -131,8 +131,6 @@ const handleLogDay = async (date) => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../assets/css/mixins';
-
 .folder-list-container {
   display: flex;
   flex-direction: column;
