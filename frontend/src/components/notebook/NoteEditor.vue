@@ -1,14 +1,44 @@
 <template>
   <div v-if="note" class="note-editor-container">
-    <div class="editor-header">
-      <input v-model="editableTitle" class="title-input" />
-      <div class="actions">
-        <button @click="saveNote" class="button-save">Save</button>
-        <button @click="saveAsTemplate" class="button-secondary">Save as Template</button>
-        <button @click="cancelEdit" class="button-cancel">Cancel</button>
+    <!-- Editor Header -->
+    <header class="editor-header">
+      <div class="header-main">
+        <h2 class="note-title">{{ note.title }}</h2>
+        <div class="metadata">
+          <span>Created: {{ formatDate(note.created_at) }}</span>
+          <span>Last updated: {{ formatDate(note.updated_at) }}</span>
+        </div>
       </div>
+      <div class="header-actions">
+        <button class="icon-button" @click="saveNote" aria-label="Save changes">
+            <IconSave />
+        </button>
+        <button class="icon-button" aria-label="More options">
+            <IconDotsVertical />
+        </button>
+      </div>
+    </header>
+
+    <!-- Summary Panel -->
+    <SummaryPanel :note="note" />
+
+    <!-- Tags and Templates -->
+    <div class="meta-controls">
+        <div class="tags-section">
+            <span>Add tag</span>
+            <!-- Tag pills will go here -->
+        </div>
+        <div class="templates-section">
+            <span>Recently used templates</span>
+            <BaseButton variant="secondary" size="sm">+ Add Template</BaseButton>
+        </div>
     </div>
-    <editor-content :editor="editor" class="tiptap-editor" />
+
+    <!-- Tiptap Editor -->
+    <div class="editor-wrapper">
+      <TiptapToolbar v-if="editor" :editor="editor" />
+      <editor-content :editor="editor" class="tiptap-editor-content" />
+    </div>
   </div>
 </template>
 
@@ -16,16 +46,28 @@
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
+import Typography from '@tiptap/extension-typography';
 import { useNotebookStore } from '../../stores/notebookStore';
+
+import BaseButton from '../ui/BaseButton.vue';
+import TiptapToolbar from './TiptapToolbar.vue';
+import SummaryPanel from './SummaryPanel.vue';
+import IconSave from '../icons/IconSave.vue';
+import IconDotsVertical from '../icons/IconDotsVertical.vue';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);
 
-const editableTitle = ref(note.value ? note.value.title : '');
-
 const editor = useEditor({
-  content: note.value ? note.value.content : '',
-  extensions: [StarterKit],
+  content: '',
+  extensions: [
+    StarterKit,
+    Typography,
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+    }),
+  ],
   editorProps: {
     attributes: {
       class: 'prose prose-invert focus:outline-none',
@@ -35,44 +77,25 @@ const editor = useEditor({
 
 watch(note, (newNote) => {
   if (newNote && editor.value) {
-    editableTitle.value = newNote.title;
-    if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-        editor.value.commands.setContent(newNote.content, false);
+    const isSameContent = JSON.stringify(newNote.content) === JSON.stringify(editor.value.getJSON());
+    if (!isSameContent) {
+      editor.value.commands.setContent(newNote.content, false);
     }
   }
-}, { deep: true });
-
+}, { immediate: true, deep: true });
 
 const saveNote = async () => {
-    if (!editor.value || !note.value) return;
-    try {
-        await store.updateNote(note.value.id, {
-            title: editableTitle.value,
-            content: editor.value.getJSON(),
-        });
-        store.deselectNote();
-    } catch (error) {
-        console.error("Failed to save note:", error);
-    }
+  if (!editor.value || !note.value) return;
+  await store.updateNote(note.value.id, {
+    title: note.value.title, // Title is not editable in this new UI
+    content: editor.value.getJSON(),
+  });
+  // Maybe show a toast notification on success
 };
 
-const saveAsTemplate = async () => {
-    if (!editor.value || !note.value) return;
-    if (confirm("Save the current content as the template for this folder? This will overwrite any existing template.")) {
-        try {
-            await store.saveFolderTemplate({
-                folderId: note.value.folder_id,
-                templateContent: editor.value.getJSON(),
-            });
-            // Optionally, show a success toast
-        } catch (error) {
-            console.error("Failed to save template:", error);
-        }
-    }
-};
-
-const cancelEdit = () => {
-    store.deselectNote();
+const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
 onBeforeUnmount(() => {
@@ -82,73 +105,88 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .note-editor-container {
-  padding: 1rem;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  gap: var(--fluid-spacing-l);
 }
 
 .editor-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  flex-shrink: 0;
 }
 
-.title-input {
-    font-size: 1.5rem;
-    font-weight: bold;
-    background: transparent;
+.note-title {
+  font-size: var(--fluid-font-size-xxl);
+  font-weight: 700;
+  margin: 0 0 var(--fluid-spacing-xs) 0;
+  color: var(--semantic-color-text-primary);
+}
+
+.metadata {
+  display: flex;
+  gap: var(--fluid-spacing-m);
+  font-size: var(--fluid-font-size-s);
+  color: var(--semantic-color-text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--fluid-spacing-s);
+  .icon-button {
+    background: none;
     border: none;
-    color: var(--semantic-color-text-primary);
-    width: 70%;
-    &:focus {
-        outline: none;
-        border-bottom: 1px solid var(--semantic-color-border-default);
-    }
-}
-
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.button-save, .button-cancel, .button-secondary {
-    padding: 0.5rem 1rem;
-    border-radius: var(--semantic-border-radius-interactive);
+    color: var(--semantic-color-text-secondary);
     cursor: pointer;
-    border: 1px solid transparent;
-    transition: background-color 0.2s;
-}
-
-.button-save {
-    background-color: var(--semantic-color-interactive-primary-default);
-    color: white;
-    border-color: transparent;
-}
-
-.button-cancel, .button-secondary {
-    background-color: var(--semantic-color-surface-secondary);
-    color: var(--semantic-color-text-primary);
-    border-color: var(--semantic-color-border-default);
-}
-
-.button-cancel:hover, .button-secondary:hover {
-    background-color: var(--semantic-color-surface-tertiary);
-}
-
-.tiptap-editor {
-    flex-grow: 1;
-    border: 1px solid var(--semantic-color-border-default);
+    padding: var(--fluid-spacing-xs);
     border-radius: var(--semantic-border-radius-interactive);
-    padding: 1rem;
-    overflow-y: auto;
+    &:hover {
+      background-color: var(--semantic-color-surface-tertiary);
+    }
+  }
 }
 
-/* Tiptap default styles override */
-.prose {
+.meta-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--fluid-spacing-m);
+    flex-wrap: wrap;
+    font-size: var(--fluid-font-size-m);
+    color: var(--semantic-color-text-secondary);
+}
+
+.tags-section, .templates-section {
+    display: flex;
+    align-items: center;
+    gap: var(--fluid-spacing-m);
+}
+
+.editor-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-container);
+  background-color: var(--semantic-color-surface-secondary);
+}
+
+.tiptap-editor-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: var(--fluid-spacing-m);
+  color: var(--semantic-color-text-primary);
+
+  .prose {
     max-width: none;
+  }
+
+  &:focus {
+    outline: none;
+  }
 }
 </style>

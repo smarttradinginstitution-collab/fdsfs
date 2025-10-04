@@ -13,6 +13,7 @@ from app.Schemas.notebook import (
     NoteRead,
     NoteCreate,
     NoteUpdate,
+    DeletedItemsRead,
 )
 
 # Instantiate the controller once, as it's stateless
@@ -73,4 +74,38 @@ router.put(
 router.delete(
     "/notes/{note_id}",
     summary="Delete a note",
+    status_code=status.HTTP_204_NO_CONTENT,
 )(notebook_controller.delete_note)
+
+
+# --- Deleted Items Endpoints ---
+
+router.get(
+    "/deleted",
+    response_model=DeletedItemsRead,
+    summary="List all soft-deleted notes and folders",
+)(notebook_controller.get_all_deleted_items)
+
+router.post(
+    "/notes/{note_id}/restore",
+    response_model=NoteRead,
+    summary="Restore a soft-deleted note",
+)(notebook_controller.restore_note)
+
+router.post(
+    "/folders/{folder_id}/restore",
+    response_model=NotebookFolderRead,
+    summary="Restore a soft-deleted folder",
+)(notebook_controller.restore_folder)
+
+router.delete(
+    "/notes/{note_id}/permanent",
+    summary="Permanently delete a note",
+    status_code=status.HTTP_204_NO_CONTENT,
+)(notebook_controller.permanently_delete_note)
+
+router.delete(
+    "/folders/{folder_id}/permanent",
+    summary="Permanently delete a folder",
+    status_code=status.HTTP_204_NO_CONTENT,
+)(notebook_controller.permanently_delete_folder)

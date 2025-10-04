@@ -44,6 +44,9 @@ class NotebookFolder(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+    deleted_at: Mapped[Optional[Any]] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
 
     # Relationships
     general_account: Mapped["GeneralAccount"] = relationship(

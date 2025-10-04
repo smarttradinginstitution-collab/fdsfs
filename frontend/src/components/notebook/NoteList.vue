@@ -1,160 +1,196 @@
 <template>
   <div class="note-list-container">
-    <div v-if="store.selectedFolder">
-      <div class="header">
-        <h2 class="text-lg font-semibold text-white">{{ store.selectedFolder.name }}</h2>
-        <button @click="handleCreateNote" class="add-note-button">New Note</button>
+    <header class="list-header">
+      <BaseButton variant="secondary" @click="logDay">
+        <IconCalendar />
+        Log day
+      </BaseButton>
+      <div class="header-actions">
+        <label class="select-all-label">
+          <input type="checkbox" v-model="selectAll" />
+          Select All
+        </label>
+        <button class="icon-button" aria-label="Collapse panel">
+          <IconChevronLeft />
+        </button>
       </div>
+    </header>
 
-      <div v-if="store.isLoadingNotes" class="loading-spinner">Loading notes...</div>
-      <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
+    <div v-if="store.isLoadingNotes" class="loading-spinner">Loading notes...</div>
+    <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
 
-      <ul v-else-if="store.notes.length > 0" class="notes">
-        <li
-          v-for="note in store.notes"
-          :key="note.id"
-          @click="selectNote(note.id)"
-          class="note-item"
-        >
-          <h3 class="note-title">{{ note.title }}</h3>
-          <p class="note-preview">{{ generatePreview(note.content) }}</p>
-          <div class="note-footer">
-            <span class="note-date">{{ new Date(note.updated_at).toLocaleDateString() }}</span>
-            <button @click.stop="handleDeleteNote(note.id)" class="delete-button">🗑️</button>
-          </div>
-        </li>
-      </ul>
-      <div v-else class="empty-state">
-        <p>No notes in this folder. Click "New Note" to create one!</p>
-      </div>
-    </div>
-    <div v-else class="empty-state-no-folder">
-      <p>Select a folder to see your notes.</p>
+    <ul v-else-if="store.notes.length > 0" class="notes-list">
+      <li
+        v-for="note in store.notes"
+        :key="note.id"
+        @click="selectNote(note.id)"
+        class="note-card"
+        :class="{ 'is-selected': store.selectedNoteId === note.id }"
+      >
+        <h3 class="note-title">{{ formatDate(note.created_at, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) }}</h3>
+        <p class="note-subtitle">{{ formatDate(note.created_at) }}</p>
+      </li>
+    </ul>
+
+    <div v-else class="empty-state">
+      <IconJournal class="empty-icon" />
+      <h4>No notes yet</h4>
+      <p>Select a folder and click "Log day" to start.</p>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
+import BaseButton from '../ui/BaseButton.vue';
+import IconCalendar from '../icons/CalendarIcon.vue';
+import IconChevronLeft from '../icons/ArrowLeftIcon.vue';
+import IconJournal from '../icons/IconJournal.vue';
 
 const store = useNotebookStore();
+const selectAll = ref(false);
 
 const selectNote = (noteId) => {
   store.selectNote(noteId);
 };
 
-const handleCreateNote = () => {
-    const newNoteTitle = prompt("Enter a title for the new note:");
-    if (newNoteTitle && newNoteTitle.trim()) {
-        // Check if the selected folder has a template
-        const templateContent = store.selectedFolder?.template_content;
-        const noteContent = templateContent || { type: 'doc', content: [{ type: 'paragraph' }] };
+const logDay = () => {
+  if (!store.selectedFolderId) {
+    alert("Please select a folder first.");
+    return;
+  }
 
-        store.createNote({
-            folder_id: store.selectedFolderId,
-            title: newNoteTitle.trim(),
-            content: noteContent
-        });
-    }
+  const today = new Date();
+  const title = `Log - ${today.toLocaleDateString('en-CA')}`; // YYYY-MM-DD
+
+  const templateContent = store.selectedFolder?.template_content;
+  const noteContent = templateContent || { type: 'doc', content: [{ type: 'paragraph' }] };
+
+  store.createNote({
+    folder_id: store.selectedFolderId,
+    title: title,
+    content: noteContent
+  });
 };
 
-const handleDeleteNote = async (noteId) => {
-    if (confirm('Are you sure you want to delete this note?')) {
-        try {
-            await store.deleteNote(noteId);
-        } catch (error) {
-            console.error("Failed to delete note:", error);
-        }
-    }
-};
-
-// A simple function to generate a text preview from Tiptap's JSON content
-const generatePreview = (content) => {
-    if (!content || !content.content) return 'No content';
-    let text = '';
-    content.content.forEach(node => {
-        if (node.type === 'paragraph' && node.content) {
-            node.content.forEach(textNode => {
-                if (textNode.type === 'text') {
-                    text += textNode.text + ' ';
-                }
-            });
-        }
-    });
-    return text.trim().slice(0, 100) + (text.length > 100 ? '...' : '');
+const formatDate = (dateString, options = {}) => {
+  const date = new Date(dateString);
+  const defaultOptions = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  };
+  return date.toLocaleDateString(undefined, { ...defaultOptions, ...options });
 };
 </script>
 
 <style lang="scss" scoped>
 .note-list-container {
-  padding: 1rem;
+  padding: var(--fluid-spacing-m);
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.header {
+.list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--fluid-spacing-m);
+  flex-shrink: 0;
+
+  .base-button {
+    gap: var(--fluid-spacing-xs);
+  }
 }
 
-.add-note-button {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--semantic-border-radius-interactive);
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--fluid-spacing-m);
+}
+
+.select-all-label {
+  display: flex;
+  align-items: center;
+  gap: var(--fluid-spacing-xs);
+  font-size: var(--fluid-font-size-m);
   cursor: pointer;
 }
 
-.notes {
+.icon-button {
+  background: none;
+  border: none;
+  color: var(--semantic-color-text-secondary);
+  cursor: pointer;
+  padding: var(--fluid-spacing-xs);
+  border-radius: var(--semantic-border-radius-interactive);
+  &:hover {
+    background-color: var(--semantic-color-surface-tertiary);
+  }
+}
+
+.notes-list {
   list-style: none;
   padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
-.note-item {
-  padding: 1rem;
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  margin-bottom: 1rem;
+.note-card {
+  padding: var(--fluid-spacing-m);
+  border-radius: var(--semantic-border-radius-container);
+  margin-bottom: var(--fluid-spacing-s);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
+  border: 1px solid transparent;
 
   &:hover {
-    background-color: var(--semantic-color-surface-secondary);
+    background-color: var(--semantic-color-surface-tertiary);
+  }
+
+  &.is-selected {
+    background-color: var(--semantic-color-surface-elevated-primary);
+    border-color: var(--semantic-color-border-focus);
   }
 }
 
 .note-title {
-  font-weight: bold;
+  font-size: var(--fluid-font-size-m);
+  font-weight: 600;
   color: var(--semantic-color-text-primary);
-  margin-bottom: 0.5rem;
+  margin: 0 0 var(--fluid-spacing-xxs) 0;
 }
 
-.note-preview {
+.note-subtitle {
+  font-size: var(--fluid-font-size-s);
   color: var(--semantic-color-text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
+  margin: 0;
 }
 
-.note-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    color: var(--semantic-color-text-secondary);
-}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: var(--semantic-color-text-secondary);
+  height: 100%;
 
-.delete-button {
-    background: none;
-    border: none;
-    color: var(--semantic-color-text-danger);
-    cursor: pointer;
-}
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--fluid-spacing-m);
+    color: var(--semantic-color-text-disabled);
+  }
 
-.empty-state, .empty-state-no-folder {
-    text-align: center;
-    margin-top: 4rem;
-    color: var(--semantic-color-text-secondary);
+  h4 {
+    font-size: var(--fluid-font-size-l);
+    font-weight: 600;
+    color: var(--semantic-color-text-primary);
+    margin: 0 0 var(--fluid-spacing-xs) 0;
+  }
 }
 </style>

@@ -14,6 +14,7 @@ from app.Schemas.notebook import (
     NoteRead,
     NoteCreate,
     NoteUpdate,
+    DeletedItemsRead,
 )
 from app.Router.dependencies import get_current_user, CurrentUser
 
@@ -92,4 +93,47 @@ class NotebookController:
         service: NotebookService = Depends(),
     ) -> Response:
         await service.delete_note(note_id=note_id, user_id=current_user.id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    # --- Deleted Items Endpoints ---
+
+    async def get_all_deleted_items(
+        self,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> DeletedItemsRead:
+        return await service.get_all_deleted_items(user_id=current_user.id)
+
+    async def restore_note(
+        self,
+        note_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> NoteRead:
+        return await service.restore_note(note_id=note_id, user_id=current_user.id)
+
+    async def restore_folder(
+        self,
+        folder_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> NotebookFolderRead:
+        return await service.restore_folder(folder_id=folder_id, user_id=current_user.id)
+
+    async def permanently_delete_note(
+        self,
+        note_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> Response:
+        await service.permanently_delete_note(note_id=note_id, user_id=current_user.id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    async def permanently_delete_folder(
+        self,
+        folder_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> Response:
+        await service.permanently_delete_folder(folder_id=folder_id, user_id=current_user.id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
