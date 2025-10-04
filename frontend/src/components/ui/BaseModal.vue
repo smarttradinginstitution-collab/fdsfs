@@ -122,7 +122,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: var(--semantic-layer-z-index-overlay); /* Si assicura che sia sopra tutto. */
+  z-index: 9998; /* Force a high z-index to ensure visibility */
 }
 
 .modal-card {
@@ -130,7 +130,7 @@ export default {
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-high);
   padding: var(--semantic-size-component-modal-padding);
-  z-index: var(--semantic-layer-z-index-modal);
+  z-index: 9999; /* Higher than the overlay */
   width: 100%;
   max-width: var(--semantic-size-component-modal-max-width);
   display: flex;
