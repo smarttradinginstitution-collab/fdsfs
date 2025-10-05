@@ -21,6 +21,20 @@
           "md": { "$value": "{base.size.spacing.8}", "$type": "dimension" },
           "lg": { "$value": "{base.size.spacing.10}", "$type": "dimension" }
         },
+        "notebook-column": {
+          "width": {
+            "$value": "{base.size.spacing.70}",
+            "$type": "dimension",
+            "$comment": "Larghezza standard per le colonne della vista notebook."
+          }
+        },
+        "notebook-bookmark": {
+          "width": {
+            "$value": "{base.size.spacing.1}",
+            "$type": "dimension",
+            "$comment": "Larghezza della linguetta 'bookmark' nella lista delle cartelle del notebook."
+          }
+        },
         "sidebar": {
           "width": {
             "expanded": { "$value": "{base.size.spacing.64}", "$type": "dimension" },

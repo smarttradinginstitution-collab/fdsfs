@@ -149,10 +149,10 @@ const generatePreview = (content) => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: var(--semantic-size-stack-xxs);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--semantic-size-stack-xs);
 
   &:hover:not(:disabled) {
     text-decoration: underline;
@@ -169,8 +169,8 @@ const generatePreview = (content) => {
 }
 
 .note-list-container {
-  padding: 1rem;
-  height: 100%;
+  padding: var(--semantic-size-inset-md);
+  /* height: 100% is removed to fix flexbox overflow bug */
   overflow-y: auto;
 }
 
@@ -181,7 +181,7 @@ const generatePreview = (content) => {
 }
 
 .note-item {
-  padding: 1rem;
+  padding: var(--semantic-size-inset-md);
   border-bottom: 1px solid var(--semantic-color-border-default);
   cursor: pointer;
   transition: background-color 0.2s;
@@ -202,13 +202,13 @@ const generatePreview = (content) => {
 .note-title {
   font: var(--semantic-font-style-label-lg-bold);
   color: var(--semantic-color-text-primary);
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--semantic-size-stack-xxs);
 }
 
 .note-preview {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--semantic-size-stack-xs);
   // Truncate preview text
   white-space: nowrap;
   overflow: hidden;
@@ -219,7 +219,7 @@ const generatePreview = (content) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  font: var(--semantic-font-style-body-xs);
   color: var(--semantic-color-text-secondary);
 }
 
@@ -228,14 +228,14 @@ const generatePreview = (content) => {
   border: none;
   color: var(--semantic-color-text-danger);
   cursor: pointer;
-  padding: 0.25rem;
+  padding: var(--semantic-size-stack-xxs);
 }
 
 .empty-state,
 .empty-state-no-folder,
 .loading-spinner {
   text-align: center;
-  padding-top: 4rem;
+  padding-top: var(--semantic-size-stack-xl); /* Using a large stack token */
   color: var(--semantic-color-text-secondary);
 }
 

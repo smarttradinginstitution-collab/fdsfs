@@ -64,7 +64,7 @@ onMounted(() => {
 }
 
 .search-bar-container {
-  padding: 1rem 1rem 0 1rem;
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md) 0 var(--semantic-size-inset-md);
   /* Borders removed to let cards define the layout */
 }
 
@@ -99,11 +99,12 @@ onMounted(() => {
 
 .notebook-layout {
   display: grid;
-  grid-template-columns: 280px 280px 1fr; /* Equal width for first two columns */
+  /* Use the new token for column width */
+  grid-template-columns: var(--semantic-size-component-notebook-column-width) var(--semantic-size-component-notebook-column-width) 1fr;
   flex-grow: 1;
   overflow: hidden; // Prevents double scrollbars
-  gap: 1rem; /* Add a gap for visual separation */
-  padding: 1rem;
+  gap: var(--semantic-size-stack-sm); /* Use stack token for gap */
+  padding: var(--semantic-size-inset-md); /* Use inset token for padding */
 }
 
 .navigation-pane,

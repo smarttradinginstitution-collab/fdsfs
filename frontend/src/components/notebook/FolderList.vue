@@ -113,10 +113,10 @@ const handleCreateFolder = async (folderData) => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: var(--semantic-size-stack-xxs);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--semantic-size-stack-xs);
 
   &:hover {
     text-decoration: underline;
@@ -131,9 +131,9 @@ const handleCreateFolder = async (folderData) => {
 .folder-list-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 1rem;
-  gap: 1rem;
+  /* height: 100% is removed to fix flexbox overflow bug */
+  padding: var(--semantic-size-inset-md);
+  gap: var(--semantic-size-stack-sm);
   overflow-y: auto;
 }
 
@@ -141,7 +141,7 @@ const handleCreateFolder = async (folderData) => {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--semantic-size-stack-md);
 }
 
 .nav-section {
@@ -153,13 +153,13 @@ const handleCreateFolder = async (folderData) => {
   font: var(--semantic-font-style-label-sm);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--semantic-size-stack-xs);
   color: var(--semantic-color-text-secondary);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem 0;
-  margin-bottom: 0.5rem;
+  padding: var(--semantic-size-stack-xxs) 0;
+  margin-bottom: var(--semantic-size-stack-xs);
 }
 
 .chevron-icon {
@@ -177,7 +177,7 @@ const handleCreateFolder = async (folderData) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--semantic-size-stack-xs);
 }
 
 .folder-item {
@@ -185,7 +185,7 @@ const handleCreateFolder = async (folderData) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 0.75rem 0.6rem 1.5rem;
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-sm) var(--semantic-size-inset-sm) var(--semantic-size-inset-lg);
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: background-color 0.15s ease-in-out;
@@ -204,7 +204,7 @@ const handleCreateFolder = async (folderData) => {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 4px;
+  width: var(--semantic-size-component-notebook-bookmark-width);
   height: 60%;
   background-color: var(--semantic-color-border-default);
   border-top-right-radius: 2px;
@@ -214,7 +214,7 @@ const handleCreateFolder = async (folderData) => {
 .folder-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--semantic-size-inset-sm);
 }
 
 .folder-name {
@@ -226,7 +226,7 @@ const handleCreateFolder = async (folderData) => {
   font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-secondary);
-  padding: 0.125rem 0.5rem;
+  padding: var(--semantic-size-inset-xxs) var(--semantic-size-inset-xs);
   border-radius: var(--semantic-border-radius-pill);
 }
 
@@ -234,8 +234,8 @@ const handleCreateFolder = async (folderData) => {
   font: var(--semantic-font-style-label-md);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--semantic-size-inset-sm);
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
   color: var(--semantic-color-text-primary);
   text-decoration: none;
   border-radius: var(--semantic-border-radius-interactive);
