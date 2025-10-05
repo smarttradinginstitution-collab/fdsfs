@@ -136,6 +136,7 @@ const generatePreview = (content) => {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    align-items: flex-start; /* FIX: Ensure children start from the left */
   }
 }
 
@@ -173,9 +174,7 @@ const generatePreview = (content) => {
 
 .note-list-container {
   padding: var(--semantic-size-inset-md);
-  text-align: left; /* Ensure text within is left-aligned */
-  width: 100%; /* Ensure container takes full width */
-  align-self: flex-start; /* Align the container itself to the start of the parent flexbox */
+  width: 100%; /* FIX: Ensure container takes full width */
 }
 
 .content-wrapper {
@@ -193,7 +192,7 @@ const generatePreview = (content) => {
   border-bottom: 1px solid var(--semantic-color-border-default);
   cursor: pointer;
   transition: background-color 0.2s;
-  text-align: left; /* Ensure content within the item is left-aligned */
+  text-align: left; /* FIX: Explicitly align text to the left */
 
   &:last-child {
     border-bottom: none;
