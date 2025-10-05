@@ -11,6 +11,7 @@ export const useNotebookStore = defineStore('notebook', {
     isLoadingFolders: false,
     isLoadingNotes: false,
     error: null,
+    searchQuery: '',
   }),
 
   getters: {
@@ -20,9 +21,20 @@ export const useNotebookStore = defineStore('notebook', {
     selectedNote: (state) => {
       return state.notes.find(n => n.id === state.selectedNoteId) || null;
     },
+    filteredNotes: (state) => {
+      if (!state.searchQuery) {
+        return state.notes;
+      }
+      return state.notes.filter(note =>
+        note.title.toLowerCase().includes(state.searchQuery.toLowerCase())
+      );
+    },
   },
 
   actions: {
+    setSearchQuery(query) {
+      this.searchQuery = query;
+    },
     // --- FOLDER ACTIONS ---
 
     async fetchFolders() {
@@ -123,8 +135,8 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingNotes = true;
         try {
             const response = await apiClient.post('/notebook/notes', noteData);
-            // After creating, refetch the notes for the folder to get the updated list
-            await this.fetchNotesForFolder(noteData.folder_id);
+            // After creating, add the new note to the list directly
+            this.notes.unshift(response.data);
             return response.data;
         } catch (err) {
             console.error('Error creating note:', err);
@@ -159,7 +171,7 @@ export const useNotebookStore = defineStore('notebook', {
             await apiClient.delete(`/notebook/notes/${noteId}`);
             // After deleting, refetch notes for the current folder
             if (this.selectedFolderId) {
-              await this.fetchNotesForFolder(this.selectedFolderId);
+              this.notes = this.notes.filter(n => n.id !== noteId);
             }
         } catch (err) {
             console.error('Error deleting note:', err);
@@ -168,34 +180,6 @@ export const useNotebookStore = defineStore('notebook', {
         } finally {
             this.isLoadingNotes = false;
         }
-    },
-
-    async logDay(date) {
-      const journalFolderName = 'Daily Journal';
-      let journalFolder = this.folders.find(f => f.name === journalFolderName);
-
-      if (!journalFolder) {
-        try {
-          journalFolder = await this.createFolder({ name: journalFolderName, color: '#F5A623' });
-        } catch (err) {
-          this.error = 'Could not create the Daily Journal folder.';
-          return;
-        }
-      }
-
-      const formattedDate = date.toLocaleDateString('en-CA');
-      const noteTitle = `Log: ${formattedDate}`;
-
-      try {
-        await this.createNote({
-          folder_id: journalFolder.id,
-          title: noteTitle,
-          content: { type: 'doc', content: [{ type: 'paragraph' }] },
-        });
-        this.selectFolder(journalFolder.id);
-      } catch (err) {
-        this.error = 'Could not create the daily log note.';
-      }
     },
 
     // --- SELECTION ACTIONS ---
