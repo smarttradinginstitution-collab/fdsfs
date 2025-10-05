@@ -16,6 +16,7 @@
       <nav class="navigation">
         <!-- Folders Section -->
         <div class="nav-section">
+          <h3 class="section-header">Folders</h3>
           <ul class="folder-list">
             <li v-if="store.isLoadingFolders">Loading...</li>
             <li
@@ -146,6 +147,14 @@ const handleCreateFolder = async (folderData) => {
 .nav-section {
   display: flex;
   flex-direction: column;
+}
+
+.section-header {
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--semantic-size-inset-sm);
 }
 
 .folder-list {
