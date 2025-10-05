@@ -1,8 +1,10 @@
 <template>
   <BaseWidget class="note-list-widget">
-    <!-- Header: "Log Day" action -->
+    <!-- Header: Title and "Log Day" action -->
     <template #header>
       <div class="header-content">
+        <h2 class="header-title" v-if="store.selectedFolder">{{ store.selectedFolder.name }}</h2>
+        <div class="spacer"></div>
         <VueDatePicker
           v-model="logDayDate"
           @update:model-value="handleLogDay"
@@ -136,9 +138,21 @@ const generatePreview = (content) => {
 
 .header-content {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   width: 100%;
+  gap: var(--semantic-size-stack-sm);
+}
+
+.header-title {
+  font: var(--semantic-font-style-heading-lg);
+  color: var(--semantic-color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spacer {
+  flex-grow: 1;
 }
 
 .log-day-button {
@@ -151,6 +165,7 @@ const generatePreview = (content) => {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-stack-xs);
+  flex-shrink: 0; /* Prevent the button from shrinking */
 
   &:hover:not(:disabled) {
     text-decoration: underline;
