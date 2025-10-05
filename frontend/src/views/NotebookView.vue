@@ -99,7 +99,6 @@ onMounted(() => {
 .notebook-layout {
   display: grid;
   grid-template-columns: 280px 280px 1fr;
-  flex-grow: 1;
   gap: var(--semantic-size-stack-sm);
   padding: var(--semantic-size-inset-md);
   min-height: 0; /* Prevents grid from overflowing its container */

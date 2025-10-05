@@ -173,6 +173,7 @@ const generatePreview = (content) => {
 
 .note-list-container {
   padding: var(--semantic-size-inset-md);
+  text-align: left; /* Override inherited text-alignment */
 }
 
 .content-wrapper {
