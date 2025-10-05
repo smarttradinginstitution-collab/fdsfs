@@ -7,8 +7,7 @@
     <!-- Actions -->
     <div class="actions">
       <BaseButton class="action-button" variant="primary" @click="isAddFolderModalOpen = true">
-        <PlusIcon class="icon" />
-        Add folder
+        <PlusIcon class="icon" /> Add folder
       </BaseButton>
       <VueDatePicker
         v-model="logDayDate"
@@ -22,8 +21,7 @@
       >
         <template #trigger>
           <BaseButton class="action-button" variant="secondary">
-            <CalendarIcon class="icon" />
-            Log day
+            <CalendarIcon class="icon" /> Log day
           </BaseButton>
         </template>
       </VueDatePicker>
@@ -78,7 +76,7 @@
 
     <!-- Add Folder Modal -->
     <AddFolderModal
-      :is-open="isAddFolderModalOpen"
+      :show="isAddFolderModalOpen"
       @close="isAddFolderModalOpen = false"
       @create="handleCreateFolder"
     />
@@ -142,7 +140,8 @@ const handleLogDay = async (date) => {
 }
 
 .actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
 }
 
@@ -233,15 +232,17 @@ const handleLogDay = async (date) => {
   padding: 0.5rem 0.75rem;
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  border-left: 2px solid transparent;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary);
   }
 
   &.is-selected {
-    background-color: var(--semantic-color-surface-selected);
-    color: var(--semantic-color-text-primary);
+    background-color: transparent;
+    border-left: 2px solid var(--semantic-color-interactive-primary-default);
+    padding-left: calc(0.75rem - 2px); /* Compensate for the border */
   }
 }
 
@@ -252,8 +253,8 @@ const handleLogDay = async (date) => {
 }
 
 .folder-color-dot {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.6rem;
+  height: 0.6rem;
   border-radius: 50%;
   border: 1px solid var(--semantic-color-border-default);
 }
@@ -265,7 +266,7 @@ const handleLogDay = async (date) => {
 .note-count-badge {
   font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: #333333;
   padding: 0.125rem 0.5rem;
   border-radius: var(--semantic-border-radius-pill);
 }

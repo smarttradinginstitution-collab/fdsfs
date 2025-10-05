@@ -1,13 +1,13 @@
 <template>
   <div class="note-list-container">
-    <div v-if="store.selectedFolder">
+    <div v-if="store.selectedFolder" class="content-wrapper">
       <div class="header">
         <h2 class="text-lg font-semibold text-white">{{ store.selectedFolder.name }}</h2>
         <button @click="handleCreateNote" class="add-note-button">New Note</button>
       </div>
 
       <div v-if="store.isLoadingNotes" class="loading-spinner">Loading notes...</div>
-      <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
+      <div v-else-if="store.error && !store.isLoadingNotes" class="error-message">{{ store.error }}</div>
 
       <ul v-else-if="store.notes.length > 0" class="notes">
         <li
@@ -46,7 +46,6 @@ const selectNote = (noteId) => {
 const handleCreateNote = () => {
     const newNoteTitle = prompt("Enter a title for the new note:");
     if (newNoteTitle && newNoteTitle.trim()) {
-        // Check if the selected folder has a template
         const templateContent = store.selectedFolder?.template_content;
         const noteContent = templateContent || { type: 'doc', content: [{ type: 'paragraph' }] };
 
@@ -68,7 +67,6 @@ const handleDeleteNote = async (noteId) => {
     }
 };
 
-// A simple function to generate a text preview from Tiptap's JSON content
 const generatePreview = (content) => {
     if (!content || !content.content) return 'No content';
     let text = '';
@@ -91,11 +89,18 @@ const generatePreview = (content) => {
   height: 100%;
 }
 
+.content-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 
 .add-note-button {
@@ -105,23 +110,29 @@ const generatePreview = (content) => {
   padding: 0.5rem 1rem;
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
+  font: var(--semantic-font-style-button-label-medium);
 }
 
 .notes {
   list-style: none;
   padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 .note-item {
   padding: 1rem;
+  background-color: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   margin-bottom: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary);
+    border-color: #555;
   }
 }
 
@@ -152,7 +163,7 @@ const generatePreview = (content) => {
     cursor: pointer;
 }
 
-.empty-state, .empty-state-no-folder {
+.empty-state, .empty-state-no-folder, .loading-spinner, .error-message {
     text-align: center;
     margin-top: 4rem;
     color: var(--semantic-color-text-secondary);
