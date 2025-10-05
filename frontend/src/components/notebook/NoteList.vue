@@ -26,7 +26,7 @@
     <!-- Main Content: Note List -->
     <div class="note-list-container">
       <div v-if="store.selectedFolder" class="content-wrapper">
-        <div v-if="store.isLoadingNotes" class="loading-spinner">Loading notes...</div>
+        <div v-if="store.isLoadingNotes" class="loading-spinner">Loading...</div>
         <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
 
         <ul v-else-if="store.filteredNotes.length > 0" class="notes">
@@ -37,12 +37,13 @@
             class="note-item"
             :class="{ 'is-selected': store.selectedNoteId === note.id }"
           >
-            <h3 class="note-title">{{ note.title }}</h3>
-            <p class="note-preview">{{ generatePreview(note.content) }}</p>
-            <div class="note-footer">
-              <span class="note-date">{{ new Date(note.updated_at).toLocaleDateString() }}</span>
-              <button @click.stop="handleDeleteNote(note.id)" class="delete-button">🗑️</button>
+            <div class="note-text-content">
+              <h3 class="note-title">{{ note.title }}</h3>
+              <p class="note-preview">{{ generatePreview(note.content) }}</p>
             </div>
+            <button @click.stop="handleDeleteNote(note.id)" class="delete-button" aria-label="Delete note">
+              <TrashIcon />
+            </button>
           </li>
         </ul>
         <div v-else class="empty-state">
@@ -63,7 +64,7 @@ import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { CalendarIcon } from '@heroicons/vue/24/outline';
+import { CalendarIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 const store = useNotebookStore();
 const logDayDate = ref(null);
@@ -75,57 +76,51 @@ const selectNote = (noteId) => {
 const handleLogDay = async (date) => {
   if (!date || !store.selectedFolderId) return;
 
-  const defaultTitle = date.toLocaleDateString('en-US', {
+  const noteTitle = date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 
-  const noteTitle = prompt("Enter a title for the new note:", defaultTitle);
-
-  if (noteTitle && noteTitle.trim()) {
-    try {
-      const newNote = await store.createNote({
-        folder_id: store.selectedFolderId,
-        title: noteTitle.trim(),
-        content: { type: 'doc', content: [{ type: 'paragraph' }] },
-      });
-      // Automatically select the new note to open it in the editor
-      if (newNote && newNote.id) {
-        store.selectNote(newNote.id);
-      }
-    } catch (error) {
-      console.error("Error logging day from component:", error);
+  try {
+    const newNote = await store.createNote({
+      folder_id: store.selectedFolderId,
+      title: noteTitle,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+    });
+    if (newNote && newNote.id) {
+      store.selectNote(newNote.id);
     }
+  } catch (error) {
+    console.error("Error logging day from component:", error);
   }
 
-  logDayDate.value = null; // Reset picker
+  logDayDate.value = null;
 };
 
 const handleDeleteNote = async (noteId) => {
-    if (confirm('Are you sure you want to delete this note?')) {
-        try {
-            await store.deleteNote(noteId);
-        } catch (error) {
-            console.error("Failed to delete note:", error);
-        }
+  if (confirm('Are you sure you want to delete this note?')) {
+    try {
+      await store.deleteNote(noteId);
+    } catch (error) {
+      console.error("Failed to delete note:", error);
     }
+  }
 };
 
-// A simple function to generate a text preview from Tiptap's JSON content
 const generatePreview = (content) => {
-    if (!content || !content.content) return 'No content';
-    let text = '';
-    content.content.forEach(node => {
-        if (node.type === 'paragraph' && node.content) {
-            node.content.forEach(textNode => {
-                if (textNode.type === 'text') {
-                    text += textNode.text + ' ';
-                }
-            });
+  if (!content || !content.content) return '';
+  let text = '';
+  content.content.forEach(node => {
+    if (node.type === 'paragraph' && node.content) {
+      node.content.forEach(textNode => {
+        if (textNode.type === 'text') {
+          text += textNode.text + ' ';
         }
-    });
-    return text.trim().slice(0, 100) + (text.length > 100 ? '...' : '');
+      });
+    }
+  });
+  return text.trim().slice(0, 100) + (text.length > 100 ? '...' : '');
 };
 </script>
 
@@ -136,7 +131,6 @@ const generatePreview = (content) => {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    align-items: flex-start; /* FIX: Ensure children start from the left */
   }
 }
 
@@ -173,26 +167,29 @@ const generatePreview = (content) => {
 }
 
 .note-list-container {
-  padding: var(--semantic-size-inset-md);
-  width: 100%; /* FIX: Ensure container takes full width */
-}
-
-.content-wrapper {
-  /* This wrapper can be used if more complex internal layout is needed */
+  padding: var(--semantic-size-inset-sm);
+  width: 100%;
 }
 
 .notes {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-xxs); /* Compact gap */
 }
 
 .note-item {
-  padding: var(--semantic-size-inset-md);
-  border-bottom: 1px solid var(--semantic-color-border-default);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--semantic-size-inset-sm); /* Compact padding */
+  border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
-  transition: background-color 0.2s;
-  text-align: left; /* FIX: Explicitly align text to the left */
+  transition: background-color 0.15s ease-in-out;
+  text-align: left;
+  border-bottom: 1px solid var(--semantic-color-border-default);
 
   &:last-child {
     border-bottom: none;
@@ -207,42 +204,55 @@ const generatePreview = (content) => {
   }
 }
 
-.note-title {
-  font: var(--semantic-font-style-label-lg-bold);
-  color: var(--semantic-color-text-primary);
-  margin-bottom: var(--semantic-size-stack-xxs);
+.note-text-content {
+  flex-grow: 1;
+  min-width: 0;
 }
 
-.note-preview {
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
-  margin-bottom: var(--semantic-size-stack-xs);
+.note-title {
+  font: var(--semantic-font-style-label-sm); /* Compact font */
+  color: var(--semantic-color-text-primary);
+  margin-bottom: var(--semantic-size-stack-xxs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.note-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font: var(--semantic-font-style-body-xs);
+.note-preview {
+  font: var(--semantic-font-style-body-xs); /* Compact font */
   color: var(--semantic-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .delete-button {
   background: none;
   border: none;
-  color: var(--semantic-color-text-danger);
+  color: var(--semantic-color-text-secondary);
   cursor: pointer;
   padding: var(--semantic-size-stack-xxs);
+  flex-shrink: 0;
+  margin-left: var(--semantic-size-stack-xs);
+  opacity: 0.5;
+  transition: opacity 0.15s ease-in-out;
+
+  &:hover {
+    color: var(--semantic-color-text-danger);
+    opacity: 1;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .empty-state,
 .empty-state-no-folder,
 .loading-spinner {
   text-align: center;
-  padding-top: var(--semantic-size-stack-xl);
+  padding: var(--semantic-size-stack-xl) var(--semantic-size-inset-md);
   color: var(--semantic-color-text-secondary);
 }
 
