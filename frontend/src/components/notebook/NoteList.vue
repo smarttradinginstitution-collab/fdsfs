@@ -173,7 +173,9 @@ const generatePreview = (content) => {
 
 .note-list-container {
   padding: var(--semantic-size-inset-md);
-  text-align: left; /* Override inherited text-alignment */
+  text-align: left; /* Ensure text within is left-aligned */
+  width: 100%; /* Ensure container takes full width */
+  align-self: flex-start; /* Align the container itself to the start of the parent flexbox */
 }
 
 .content-wrapper {
@@ -191,6 +193,7 @@ const generatePreview = (content) => {
   border-bottom: 1px solid var(--semantic-color-border-default);
   cursor: pointer;
   transition: background-color 0.2s;
+  text-align: left; /* Ensure content within the item is left-aligned */
 
   &:last-child {
     border-bottom: none;
