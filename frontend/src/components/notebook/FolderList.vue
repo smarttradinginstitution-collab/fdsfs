@@ -1,11 +1,11 @@
 <template>
   <BaseWidget class="folder-list-widget">
-    <!-- Header: Title and "Add Folder" action -->
+    <!-- Header: "Add Folder" action -->
     <template #header>
       <div class="header-content">
-        <h2 class="title">Folders</h2>
         <button @click="isAddFolderModalOpen = true" class="add-folder-button">
-          + Add Folder
+          <FolderIcon class="icon" />
+          <span>Add Folder</span>
         </button>
       </div>
     </template>
@@ -15,7 +15,11 @@
       <nav class="navigation">
         <!-- Folders Section (Collapsible) -->
         <div class="nav-section">
-          <ul class="folder-list">
+          <button @click="toggleFolders" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !foldersOpen }" />
+            <span>Folders</span>
+          </button>
+          <ul v-show="foldersOpen" class="folder-list">
             <li v-if="store.isLoadingFolders">Loading...</li>
             <li
               v-for="folder in store.folders"
@@ -63,10 +67,15 @@ import { ref } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import AddFolderModal from './AddFolderModal.vue';
-import { TrashIcon } from '@heroicons/vue/24/outline';
+import { TrashIcon, FolderIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 
 const store = useNotebookStore();
 const isAddFolderModalOpen = ref(false);
+const foldersOpen = ref(true);
+
+const toggleFolders = () => {
+  foldersOpen.value = !foldersOpen.value;
+};
 
 const selectFolder = (folderId) => {
   store.selectFolder(folderId);
@@ -84,8 +93,6 @@ const handleCreateFolder = async (folderData) => {
 
 <style lang="scss" scoped>
 .folder-list-widget {
-  // The BaseWidget provides the card structure, so we just need to ensure
-  // its content is laid out correctly.
   :deep(.widget-content) {
     padding: 0;
     display: flex;
@@ -95,14 +102,9 @@ const handleCreateFolder = async (folderData) => {
 
 .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   width: 100%;
-}
-
-.title {
-  font: var(--semantic-font-style-heading-lg);
-  color: var(--semantic-color-text-primary);
 }
 
 .add-folder-button {
@@ -112,8 +114,17 @@ const handleCreateFolder = async (folderData) => {
   border: none;
   cursor: pointer;
   padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
   &:hover {
     text-decoration: underline;
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }
 
@@ -138,21 +149,43 @@ const handleCreateFolder = async (folderData) => {
   flex-direction: column;
 }
 
+.section-header {
+  font: var(--semantic-font-style-label-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--semantic-color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.chevron-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease-in-out;
+  &.is-rotated {
+    transform: rotate(-90deg);
+  }
+}
+
 .folder-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* Increased gap for better spacing with bookmarks */
+  gap: 0.5rem;
 }
 
 .folder-item {
-  position: relative; /* For positioning the bookmark */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 0.75rem 0.6rem 1.5rem; /* Add left padding for bookmark */
+  padding: 0.6rem 0.75rem 0.6rem 1.5rem;
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: background-color 0.15s ease-in-out;
@@ -173,7 +206,7 @@ const handleCreateFolder = async (folderData) => {
   transform: translateY(-50%);
   width: 4px;
   height: 60%;
-  background-color: var(--semantic-color-border-default); /* Fallback color */
+  background-color: var(--semantic-color-border-default);
   border-top-right-radius: 2px;
   border-bottom-right-radius: 2px;
 }

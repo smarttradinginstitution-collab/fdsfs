@@ -3,7 +3,6 @@
     <!-- Header: "Log Day" action -->
     <template #header>
       <div class="header-content">
-        <h2 class="title">{{ store.selectedFolder ? store.selectedFolder.name : 'Notes' }}</h2>
         <VueDatePicker
           v-model="logDayDate"
           @update:model-value="handleLogDay"
@@ -16,7 +15,8 @@
         >
           <template #trigger>
             <button class="log-day-button" :disabled="!store.selectedFolderId">
-              + Log Day
+              <CalendarIcon class="icon" />
+              <span>Log Day</span>
             </button>
           </template>
         </VueDatePicker>
@@ -63,6 +63,7 @@ import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import { CalendarIcon } from '@heroicons/vue/24/outline';
 
 const store = useNotebookStore();
 const logDayDate = ref(null);
@@ -137,17 +138,9 @@ const generatePreview = (content) => {
 
 .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end; /* Align button to the right */
   align-items: center;
   width: 100%;
-}
-
-.title {
-  font: var(--semantic-font-style-heading-lg);
-  color: var(--semantic-color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .log-day-button {
@@ -157,12 +150,21 @@ const generatePreview = (content) => {
   border: none;
   cursor: pointer;
   padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
   &:hover:not(:disabled) {
     text-decoration: underline;
   }
   &:disabled {
     color: var(--semantic-color-text-disabled);
     cursor: not-allowed;
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }
 

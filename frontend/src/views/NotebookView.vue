@@ -60,12 +60,12 @@ onMounted(() => {
   flex-direction: column;
   height: calc(100vh - var(--header-height));
   background-color: var(--semantic-color-surface-primary);
+  border-top: 1px solid var(--semantic-color-border-default);
 }
 
 .search-bar-container {
-  padding: 1rem 1rem 0.5rem 1rem;
-  border-top: 1px solid var(--semantic-color-border-default);
-  border-bottom: 1px solid var(--semantic-color-border-default);
+  padding: 1rem 1rem 0 1rem;
+  /* Borders removed to let cards define the layout */
 }
 
 .search-bar {
@@ -99,24 +99,26 @@ onMounted(() => {
 
 .notebook-layout {
   display: grid;
-  grid-template-columns: 280px 0.6fr 1fr;
+  grid-template-columns: 280px 280px 1fr; /* Equal width for first two columns */
   flex-grow: 1;
   overflow: hidden; // Prevents double scrollbars
-}
-
-.navigation-pane {
-  border-right: 1px solid var(--semantic-color-border-default);
-  overflow-y: auto;
+  gap: 1rem; /* Add a gap for visual separation */
   padding: 1rem;
 }
 
-.note-list-pane {
-  border-right: 1px solid var(--semantic-color-border-default);
+.navigation-pane,
+.note-list-pane,
+.editor-pane {
   overflow-y: auto;
 }
 
-.editor-pane {
-  overflow-y: auto;
+/* Panes no longer need individual padding or borders */
+.navigation-pane {
+  padding: 0;
+}
+
+.note-list-pane {
+  padding: 0;
 }
 
 .editor-placeholder {
