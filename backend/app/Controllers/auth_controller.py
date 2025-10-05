@@ -53,17 +53,10 @@ class AuthController:
         try:
             decoded_token = jwt.get_unverified_claims(access_token)
             aal = decoded_token.get("aal")
-        except Exception as e:
-            print(f"DEBUG: Errore durante la decodifica del token: {e}")
+        except Exception:
             pass
 
         factors = user_obj.get("factors")
-
-        print("--- DEBUG LOGIN MFA ---")
-        print(f"AAL Level: {aal}")
-        print(f"User Object: {user_obj}")
-        print(f"Factors: {factors}")
-        print("-----------------------")
 
         if aal == "aal1" and factors and len(factors) > 0:
             totp_factor = next((f for f in factors if f.get("factor_type") == "totp" and f.get("status") == "verified"), None)
@@ -233,12 +226,6 @@ class AuthController:
             app_meta=payload.app_meta,
             phone=payload.phone,
         )
-
-        # ---- DEBUG REGISTRATION ----
-        print("--- DEBUG REGISTER RESPONSE ---")
-        print(f"Response from Supabase: {res}")
-        print("-----------------------------")
-        # --------------------------
 
         if res.get("error"):
             msg = res.get("message") or "Registrazione fallita"
