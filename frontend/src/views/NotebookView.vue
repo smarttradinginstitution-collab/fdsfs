@@ -64,20 +64,20 @@ onMounted(() => {
 }
 
 .search-container {
-  padding: 1rem 1rem 0 1rem;
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md) 0;
   flex-shrink: 0;
 }
 
 .search-bar {
   position: relative;
-  max-width: 400px; // Or any width you prefer
-  margin-bottom: 1rem;
+  max-width: 400px;
+  margin-bottom: var(--semantic-size-inset-md);
 }
 
 .search-input {
   font: var(--semantic-font-style-label-md);
   width: 100%;
-  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md) var(--semantic-size-inset-sm) 38px; // Custom left padding for icon
   background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
@@ -90,22 +90,21 @@ onMounted(() => {
 
 .search-icon {
   position: absolute;
-  left: 0.75rem;
+  left: var(--semantic-size-inset-md);
   top: 50%;
   transform: translateY(-50%);
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.125rem; // 18px
+  height: 1.125rem; // 18px
   color: var(--semantic-color-text-secondary);
 }
 
 .notebook-layout {
   display: grid;
-  // Adjusted column widths: Folder list is wider, note list is narrower.
-  grid-template-columns: 320px 280px 1fr;
+  grid-template-columns: 300px 260px 1fr; // Slightly more compact columns
   flex-grow: 1;
-  gap: 1rem;
-  padding: 0 1rem 1rem 1rem;
-  overflow: hidden; // Prevents double scrollbars
+  gap: var(--semantic-size-inset-md);
+  padding: 0 var(--semantic-size-inset-md) var(--semantic-size-inset-md);
+  overflow: hidden;
 }
 
 .grid-pane {
@@ -125,5 +124,11 @@ onMounted(() => {
   height: 100%;
   color: var(--semantic-color-text-secondary);
   text-align: center;
+  font: var(--semantic-font-style-body-lg);
+
+  p + p {
+    margin-top: var(--semantic-size-inset-xs);
+    font: var(--semantic-font-style-body-md);
+  }
 }
 </style>

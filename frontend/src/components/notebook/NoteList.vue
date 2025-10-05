@@ -140,6 +140,10 @@ const generatePreview = (content) => {
   :deep(.widget-content) {
     padding: 0;
   }
+  :deep(.widget-header) {
+    padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+    min-height: 50px;
+  }
 }
 
 .header-content {
@@ -152,8 +156,8 @@ const generatePreview = (content) => {
 .log-day-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font: var(--semantic-font-style-label-lg);
+  gap: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
   background: none;
   border: none;
@@ -165,13 +169,13 @@ const generatePreview = (content) => {
   }
 
   .icon {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.125rem; // 18px
+    height: 1.125rem;
   }
 }
 
 .note-list-container {
-  padding: 1rem;
+  padding: var(--semantic-size-inset-md);
   height: 100%;
   width: 100%;
 }
@@ -182,11 +186,11 @@ const generatePreview = (content) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--semantic-size-inset-sm);
 }
 
 .note-item {
-  padding: 1rem;
+  padding: var(--semantic-size-inset-md);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
@@ -203,16 +207,16 @@ const generatePreview = (content) => {
 }
 
 .note-title {
-  font: var(--semantic-font-style-heading-xs);
+  font: var(--semantic-font-style-heading-sm);
   color: var(--semantic-color-text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--semantic-size-inset-xs);
 }
 
 .note-preview {
-  font: var(--semantic-font-style-body-md);
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-  margin-bottom: 0.75rem;
-  line-height: 1.5;
+  margin-bottom: var(--semantic-size-inset-sm);
+  line-height: 1.4;
 }
 
 .note-footer {
@@ -228,7 +232,7 @@ const generatePreview = (content) => {
   border: none;
   color: var(--semantic-color-text-secondary);
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 2px;
   border-radius: 50%;
   transition: color 0.2s, background-color 0.2s;
 
@@ -238,8 +242,8 @@ const generatePreview = (content) => {
   }
 
   .icon {
-    width: 1rem;
-    height: 1rem;
+    width: 0.875rem; // 14px
+    height: 0.875rem;
   }
 }
 
@@ -247,11 +251,11 @@ const generatePreview = (content) => {
 .empty-state-no-folder,
 .loading-spinner {
   text-align: center;
-  margin-top: 4rem;
+  margin-top: var(--semantic-size-inset-xl);
   color: var(--semantic-color-text-secondary);
   font: var(--semantic-font-style-body-lg);
   p + p {
-    margin-top: 0.5rem;
+    margin-top: var(--semantic-size-inset-xs);
     font: var(--semantic-font-style-body-md);
   }
 }

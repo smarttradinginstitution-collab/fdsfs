@@ -91,6 +91,10 @@ const handleCreateFolder = async (folderData) => {
     padding: 0;
     display: flex;
   }
+  :deep(.widget-header) {
+    padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+    min-height: 50px;
+  }
 }
 
 .header-content {
@@ -103,8 +107,8 @@ const handleCreateFolder = async (folderData) => {
 .add-folder-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font: var(--semantic-font-style-label-lg);
+  gap: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
   background: none;
   border: none;
@@ -116,8 +120,8 @@ const handleCreateFolder = async (folderData) => {
   }
 
   .icon {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.125rem; // 18px
+    height: 1.125rem;
   }
 }
 
@@ -126,19 +130,16 @@ const handleCreateFolder = async (folderData) => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: 1rem;
-  gap: 1rem;
-}
-
-.actions {
-  display: none; // Hide old actions, log day is moved
+  padding: var(--semantic-size-inset-md);
+  padding-top: var(--semantic-size-inset-sm);
+  gap: var(--semantic-size-inset-md);
 }
 
 .navigation {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--semantic-size-inset-lg);
   overflow-y: auto;
 }
 
@@ -153,7 +154,7 @@ const handleCreateFolder = async (folderData) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; // Space between folder items
+  gap: var(--semantic-size-inset-xs);
 }
 
 .folder-item {
@@ -161,11 +162,12 @@ const handleCreateFolder = async (folderData) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem 0.75rem 2rem; // Increased left padding for bookmark
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+  padding-left: calc(var(--semantic-size-inset-sm) + 6px); // Space for bookmark
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: background-color 0.15s ease-in-out;
-  overflow: hidden; // Ensures bookmark is clipped by border-radius
+  overflow: hidden;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary);
@@ -185,18 +187,18 @@ const handleCreateFolder = async (folderData) => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 8px;
+  width: 4px; // Thinner bookmark
   border-right: 1px solid var(--semantic-color-border-default);
 }
 
 .folder-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--semantic-size-inset-sm);
 }
 
 .folder-name {
-  font: var(--semantic-font-style-label-lg);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
 }
 
@@ -204,7 +206,7 @@ const handleCreateFolder = async (folderData) => {
   font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-tertiary);
-  padding: 0.125rem 0.5rem;
+  padding: 2px var(--semantic-size-inset-xs);
   border-radius: var(--semantic-border-radius-pill);
 }
 
@@ -212,8 +214,8 @@ const handleCreateFolder = async (folderData) => {
   font: var(--semantic-font-style-label-md);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--semantic-size-inset-sm);
+  padding: var(--semantic-size-inset-sm);
   color: var(--semantic-color-text-primary);
   text-decoration: none;
   border-radius: var(--semantic-border-radius-interactive);
@@ -223,19 +225,15 @@ const handleCreateFolder = async (folderData) => {
   }
 
   .icon {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.125rem; // 18px
+    height: 1.125rem;
     color: var(--semantic-color-text-secondary);
   }
 }
 
 .footer {
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: var(--semantic-size-inset-md);
   border-top: 1px solid var(--semantic-color-border-default);
-}
-
-.log-day-picker {
-  display: none; // Hide the date picker, it's moved to NoteList
 }
 </style>
