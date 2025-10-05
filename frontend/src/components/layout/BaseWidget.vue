@@ -39,6 +39,5 @@
   /* The header has padding, so the content doesn't need top padding */
   padding-top: 0;
   min-height: 0; /* Allow content to shrink and scroll if needed */
-  overflow-y: auto; /* Make the widget content area scrollable */
 }
 </style>

@@ -2,11 +2,6 @@
   "semantic": {
     "size": {
       "inset": {
-        "xxs": {
-          "$value": "{base.size.spacing.0.5}",
-          "$type": "spacing",
-          "$comment": "2px. Padding per elementi estremamente piccoli o compatti."
-        },
         "xs": {
           "$value": "{base.size.spacing.2}",
           "$type": "spacing",

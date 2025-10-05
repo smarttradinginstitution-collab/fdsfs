@@ -59,13 +59,12 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--header-height));
-  background-color: var(--semantic-color-surface-primary);
-  border-top: 1px solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-page);
 }
 
 .search-bar-container {
-  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-md) 0 var(--semantic-size-inset-md);
-  /* Borders removed to let cards define the layout */
+  padding: var(--semantic-size-inset-md);
+  padding-bottom: 0;
 }
 
 .search-bar {
@@ -99,28 +98,17 @@ onMounted(() => {
 
 .notebook-layout {
   display: grid;
-  /* Use the new token for column width */
   grid-template-columns: var(--semantic-size-component-notebook-column-width) var(--semantic-size-component-notebook-column-width) 1fr;
   flex-grow: 1;
-  /* overflow: hidden; // This was preventing the grid from expanding correctly */
-  gap: var(--semantic-size-stack-sm); /* Use stack token for gap */
-  padding: var(--semantic-size-inset-md); /* Use inset token for padding */
+  gap: var(--semantic-size-stack-sm);
+  padding: var(--semantic-size-inset-md);
+  min-height: 0; /* Prevents grid from overflowing its container */
 }
 
 .navigation-pane,
 .note-list-pane,
 .editor-pane {
-  /* overflow-y is now handled by the BaseWidget component */
-  min-height: 0; /* Prevent grid items from growing beyond their container */
-}
-
-/* Panes no longer need individual padding or borders */
-.navigation-pane {
-  padding: 0;
-}
-
-.note-list-pane {
-  padding: 0;
+  min-height: 0; /* Important for nested scrolling content */
 }
 
 .editor-placeholder {

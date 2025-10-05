@@ -19,8 +19,7 @@
         "12":   { "$value": "2.1rem", "$type": "spacing", "$comment": "48px. Spazio per sezioni." },
         "16":   { "$value": "2.8rem", "$type": "spacing", "$comment": "64px" },
         "20":   { "$value": "3.5rem", "$type": "spacing", "$comment": "80px" },
-        "64":   { "$value": "11.2rem", "$type": "spacing", "$comment": "256px" },
-        "70":   { "$value": "12.25rem", "$type": "spacing", "$comment": "280px" }
+        "64":   { "$value": "11.2rem", "$type": "spacing", "$comment": "256px" }
       }
     }
   }

@@ -135,8 +135,8 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingNotes = true;
         try {
             const response = await apiClient.post('/notebook/notes', noteData);
-            // After creating, refetch the notes for the folder to get the updated list
-            await this.fetchNotesForFolder(noteData.folder_id);
+            // After creating, add the new note to the list directly
+            this.notes.unshift(response.data);
             return response.data;
         } catch (err) {
             console.error('Error creating note:', err);
@@ -171,7 +171,7 @@ export const useNotebookStore = defineStore('notebook', {
             await apiClient.delete(`/notebook/notes/${noteId}`);
             // After deleting, refetch notes for the current folder
             if (this.selectedFolderId) {
-              await this.fetchNotesForFolder(this.selectedFolderId);
+              this.notes = this.notes.filter(n => n.id !== noteId);
             }
         } catch (err) {
             console.error('Error deleting note:', err);

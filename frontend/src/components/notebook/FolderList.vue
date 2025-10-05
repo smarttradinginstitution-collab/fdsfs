@@ -97,6 +97,7 @@ const handleCreateFolder = async (folderData) => {
     padding: 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
 }
 
@@ -131,10 +132,8 @@ const handleCreateFolder = async (folderData) => {
 .folder-list-container {
   display: flex;
   flex-direction: column;
-  /* height: 100% is removed to fix flexbox overflow bug */
   padding: var(--semantic-size-inset-md);
   gap: var(--semantic-size-stack-sm);
-  /* overflow-y is now handled by the BaseWidget component */
 }
 
 .navigation {

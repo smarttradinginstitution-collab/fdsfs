@@ -25,7 +25,7 @@
 
     <!-- Main Content: Note List -->
     <div class="note-list-container">
-      <div v-if="store.selectedFolder">
+      <div v-if="store.selectedFolder" class="content-wrapper">
         <div v-if="store.isLoadingNotes" class="loading-spinner">Loading notes...</div>
         <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
 
@@ -133,12 +133,15 @@ const generatePreview = (content) => {
 .note-list-widget {
   :deep(.widget-content) {
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
   }
 }
 
 .header-content {
   display: flex;
-  justify-content: flex-end; /* Align button to the right */
+  justify-content: flex-end;
   align-items: center;
   width: 100%;
 }
@@ -170,8 +173,10 @@ const generatePreview = (content) => {
 
 .note-list-container {
   padding: var(--semantic-size-inset-md);
-  /* height: 100% is removed to fix flexbox overflow bug */
-  /* overflow-y is now handled by the BaseWidget component */
+}
+
+.content-wrapper {
+  /* This wrapper can be used if more complex internal layout is needed */
 }
 
 .notes {
@@ -209,7 +214,6 @@ const generatePreview = (content) => {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   margin-bottom: var(--semantic-size-stack-xs);
-  // Truncate preview text
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -235,7 +239,7 @@ const generatePreview = (content) => {
 .empty-state-no-folder,
 .loading-spinner {
   text-align: center;
-  padding-top: var(--semantic-size-stack-xl); /* Using a large stack token */
+  padding-top: var(--semantic-size-stack-xl);
   color: var(--semantic-color-text-secondary);
 }
 
