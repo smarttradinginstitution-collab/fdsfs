@@ -56,8 +56,8 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .notebook-view-container {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr; /* Top row for search, bottom row for content */
   height: calc(100vh - var(--header-height));
   background-color: var(--semantic-color-surface-page);
 }
@@ -98,7 +98,7 @@ onMounted(() => {
 
 .notebook-layout {
   display: grid;
-  grid-template-columns: var(--semantic-size-component-notebook-column-width) var(--semantic-size-component-notebook-column-width) 1fr;
+  grid-template-columns: 280px 280px 1fr;
   flex-grow: 1;
   gap: var(--semantic-size-stack-sm);
   padding: var(--semantic-size-inset-md);

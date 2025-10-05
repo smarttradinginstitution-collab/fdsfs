@@ -29,7 +29,7 @@ class Asset(Base):
     symbol_norm: Mapped[Optional[str]] = mapped_column(
         Text, server_default=FetchedValue(), nullable=True
     )
-    
+    market: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     asset_class_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.asset_classes.id"),
