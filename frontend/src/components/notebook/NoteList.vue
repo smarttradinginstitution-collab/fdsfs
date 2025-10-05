@@ -171,7 +171,7 @@ const generatePreview = (content) => {
 .note-list-container {
   padding: var(--semantic-size-inset-md);
   /* height: 100% is removed to fix flexbox overflow bug */
-  overflow-y: auto;
+  /* overflow-y is now handled by the BaseWidget component */
 }
 
 .notes {

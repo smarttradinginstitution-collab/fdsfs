@@ -102,7 +102,7 @@ onMounted(() => {
   /* Use the new token for column width */
   grid-template-columns: var(--semantic-size-component-notebook-column-width) var(--semantic-size-component-notebook-column-width) 1fr;
   flex-grow: 1;
-  overflow: hidden; // Prevents double scrollbars
+  /* overflow: hidden; // This was preventing the grid from expanding correctly */
   gap: var(--semantic-size-stack-sm); /* Use stack token for gap */
   padding: var(--semantic-size-inset-md); /* Use inset token for padding */
 }
@@ -110,7 +110,8 @@ onMounted(() => {
 .navigation-pane,
 .note-list-pane,
 .editor-pane {
-  overflow-y: auto;
+  /* overflow-y is now handled by the BaseWidget component */
+  min-height: 0; /* Prevent grid items from growing beyond their container */
 }
 
 /* Panes no longer need individual padding or borders */

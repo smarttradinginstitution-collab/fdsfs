@@ -134,7 +134,7 @@ const handleCreateFolder = async (folderData) => {
   /* height: 100% is removed to fix flexbox overflow bug */
   padding: var(--semantic-size-inset-md);
   gap: var(--semantic-size-stack-sm);
-  overflow-y: auto;
+  /* overflow-y is now handled by the BaseWidget component */
 }
 
 .navigation {
