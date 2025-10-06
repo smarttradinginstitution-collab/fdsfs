@@ -72,7 +72,18 @@
             :class="{ 'is-selected': store.selectedNoteId === note.id }"
           >
             <h3 class="note-title">{{ note.title }}</h3>
-            <p class="note-preview">{{ generatePreview(note.content) }}</p>
+
+            <!-- Trade-specific details -->
+            <div v-if="note.trade" class="trade-details">
+              <span class="pnl-label">Net P&L:</span>
+              <span class="pnl-value" :class="getPnlClass(note.trade.p_l)">
+                {{ formatCurrency(note.trade.p_l) }}
+              </span>
+            </div>
+
+            <!-- Standard note preview -->
+            <p v-else class="note-preview">{{ generatePreview(note.content) }}</p>
+
             <div class="note-footer">
               <span class="note-date">{{ new Date(note.updated_at).toLocaleDateString() }}</span>
               <button @click.stop="handleDeleteNote(note.id)" class="delete-button">
@@ -109,6 +120,7 @@ import NewTradeNoteModal from './NewTradeNoteModal.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import '@vuepic/vue-datepicker/dist/main.css';
 import { TrashIcon, CalendarDaysIcon, PlusIcon } from '@heroicons/vue/24/outline';
+import { formatCurrency } from '../../services/formatters';
 
 const props = defineProps({
   searchQuery: {
@@ -200,6 +212,11 @@ const generatePreview = (content) => {
   });
   return text.trim().slice(0, 100) + (text.length > 100 ? '...' : '');
 };
+
+const getPnlClass = (pnl) => {
+  if (!pnl) return '';
+  return pnl > 0 ? 'is-positive' : 'is-negative';
+};
 </script>
 
 <style lang="scss" scoped>
@@ -284,6 +301,26 @@ const generatePreview = (content) => {
   color: var(--semantic-color-text-secondary);
   margin-bottom: var(--semantic-size-inset-sm);
   line-height: 1.4;
+}
+
+.trade-details {
+  font: var(--semantic-font-style-body-sm);
+  margin-bottom: var(--semantic-size-inset-sm);
+}
+
+.pnl-label {
+  color: var(--semantic-color-text-secondary);
+  margin-right: var(--semantic-size-inset-xs);
+}
+
+.pnl-value {
+  font-weight: 600;
+  &.is-positive {
+    color: var(--semantic-color-text-success);
+  }
+  &.is-negative {
+    color: var(--semantic-color-text-danger);
+  }
 }
 
 .note-footer {

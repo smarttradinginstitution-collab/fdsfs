@@ -6,6 +6,7 @@ from typing import Optional, List, Dict, Any
 
 from pydantic import BaseModel, Field
 from app.Models.enums import FolderType, SystemFolderIdentifier
+from .trade import TradeRead
 
 # --- Note Schemas ---
 
@@ -28,6 +29,7 @@ class NoteRead(NoteBase):
     id: UUID
     folder_id: UUID
     trade_id: Optional[UUID] = None
+    trade: Optional[TradeRead] = None # Include full trade details
     created_at: datetime
     updated_at: datetime
     title: str

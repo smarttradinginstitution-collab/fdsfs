@@ -5,12 +5,6 @@
     @close="$emit('close')"
   >
     <div class="modal-content">
-      <BaseInput
-        v-model="noteTitle"
-        label="Note Title"
-        placeholder="Enter a title for your note"
-        class="title-input"
-      />
       <div class="link-trade-section">
         <button class="button-link-trade" @click="toggleTradeLink">
           <LinkIcon class="icon" />
@@ -59,7 +53,7 @@
     </div>
     <template #footer>
       <BaseButton variant="secondary" @click="$emit('close')">Cancel</BaseButton>
-      <BaseButton variant="primary" @click="handleSave" :disabled="!noteTitle">Save</BaseButton>
+      <BaseButton variant="primary" @click="handleSave">Save</BaseButton>
     </template>
   </BaseModal>
 </template>
@@ -69,7 +63,6 @@ import { ref, watch } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseModal from '../ui/BaseModal.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import BaseInput from '../ui/BaseInput.vue';
 import { LinkIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { formatCurrency } from '../../services/formatters';
 
@@ -83,14 +76,12 @@ const props = defineProps({
 const emit = defineEmits(['close', 'create']);
 
 const store = useNotebookStore();
-const noteTitle = ref('');
 const selectedTrade = ref(null);
 const showTrades = ref(false);
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     store.fetchRecentTrades();
-    noteTitle.value = '';
     selectedTrade.value = null;
     showTrades.value = false;
   }
@@ -110,10 +101,26 @@ const clearSelectedTrade = () => {
 };
 
 const handleSave = () => {
-  emit('create', {
-    title: noteTitle.value,
-    tradeId: selectedTrade.value ? selectedTrade.value.id : null,
-  });
+  let title = '';
+  const tradeId = selectedTrade.value ? selectedTrade.value.id : null;
+
+  if (tradeId && selectedTrade.value) {
+    const tradeDate = new Date(selectedTrade.value.entry_timestamp).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const symbol = selectedTrade.value.asset?.symbol ?? 'N/A';
+    title = `${symbol} : ${tradeDate}`;
+  } else {
+    const today = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+    });
+    title = `Trade Notes for ${today}`;
+  }
+
+  emit('create', { title, tradeId });
   emit('close');
 };
 </script>
