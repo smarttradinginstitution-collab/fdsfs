@@ -16,8 +16,11 @@
       <nav class="navigation">
         <!-- Folders Section -->
         <div class="nav-section">
-          <h3 class="section-header">Folders</h3>
-          <ul class="folder-list">
+          <button @click="toggleFolders" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !foldersOpen }" />
+            <span>Folders</span>
+          </button>
+          <ul v-show="foldersOpen" class="folder-list">
             <li v-if="store.isLoadingFolders">Loading...</li>
             <li
               v-for="folder in store.folders"
@@ -66,11 +69,16 @@ import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import AddFolderModal from './AddFolderModal.vue';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { TrashIcon, FolderIcon } from '@heroicons/vue/24/outline';
+import { TrashIcon, FolderIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 
 
 const store = useNotebookStore();
 const isAddFolderModalOpen = ref(false);
+const foldersOpen = ref(true);
+
+const toggleFolders = () => {
+  foldersOpen.value = !foldersOpen.value;
+};
 
 const selectFolder = (folderId) => {
   store.selectFolder(folderId);
@@ -150,11 +158,32 @@ const handleCreateFolder = async (folderData) => {
 }
 
 .section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-inset-xs);
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
   font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: var(--semantic-size-inset-sm);
+
+  &:hover {
+    color: var(--semantic-color-text-secondary);
+  }
+}
+
+.chevron-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease-in-out;
+  &.is-rotated {
+    transform: rotate(-90deg);
+  }
 }
 
 .folder-list {

@@ -120,28 +120,27 @@ export const useNotebookStore = defineStore('notebook', {
     },
 
     async createNote(noteData) {
-      this.isLoadingNotes = true;
-      try {
-        const response = await apiClient.post('/notebook/notes', noteData);
-        const newNote = response.data;
+        this.isLoadingNotes = true;
+        try {
+            const response = await apiClient.post('/notebook/notes', noteData);
 
-        // Optimistically add the new note to the list
-        this.notes.unshift(newNote);
+            // After creating, refetch the notes for the folder to ensure the list is up-to-date.
+            await this.fetchNotesForFolder(noteData.folder_id);
 
-        // Optimistically update the note count for the corresponding folder
-        const folder = this.folders.find(f => f.id === noteData.folder_id);
-        if (folder) {
-          folder.note_count += 1;
+            // Also, optimistically update the note count on the folder for immediate feedback.
+            const folder = this.folders.find(f => f.id === noteData.folder_id);
+            if (folder) {
+              folder.note_count += 1;
+            }
+
+            return response.data; // Return the created note object
+        } catch (err) {
+            console.error('Error creating note:', err);
+            this.error = err.response?.data?.detail || 'Failed to create note.';
+            throw err;
+        } finally {
+            this.isLoadingNotes = false;
         }
-
-        return newNote; // Return the created note object
-      } catch (err) {
-        console.error('Error creating note:', err);
-        this.error = err.response?.data?.detail || 'Failed to create note.';
-        throw err;
-      } finally {
-        this.isLoadingNotes = false;
-      }
     },
 
     async updateNote(noteId, noteData) {
