@@ -66,11 +66,13 @@ class TradeRepository:
         from app.Models.note import Note
         from sqlalchemy import exists
 
+        # Correlated subquery to check if a note exists for the trade.
         has_note_subquery = (
             select(Note.id).where(Note.trade_id == Trade.id).exists()
         ).label("is_linked_to_note")
 
-        # Re-apply the eager loading options from the helper, as we are building a new query.
+        # The main query selects the Trade object and the boolean result of the subquery.
+        # It's crucial to retain the eager loading options for related entities.
         query = (
             select(Trade, has_note_subquery)
             .options(
@@ -87,7 +89,10 @@ class TradeRepository:
             .limit(limit)
         )
         result = await self.db.execute(query)
-        return result.all()
+
+        # .unique() is mandatory here because the eager loads on collections (e.g., tags)
+        # can cause duplicate rows in the result set. This was the cause of the error.
+        return result.unique().all()
 
     async def get_filtered_trades(
         self,
