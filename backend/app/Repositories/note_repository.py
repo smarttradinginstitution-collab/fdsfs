@@ -36,7 +36,7 @@ class NoteRepository:
             .where(Note.id == note_id)
         )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def list_by_folder_id(self, folder_id: UUID) -> Sequence[Note]:
         """List all notes for a given folder, including related trades and all sub-relationships."""
@@ -56,7 +56,7 @@ class NoteRepository:
             .order_by(Note.updated_at.desc())
         )
         res = await self.db.execute(stmt)
-        return res.scalars().all()
+        return res.unique().scalars().all()
 
     async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[Note]:
         """List all notes for a given general account, including related trades and all sub-relationships."""
@@ -76,7 +76,7 @@ class NoteRepository:
             .order_by(Note.updated_at.desc())
         )
         res = await self.db.execute(stmt)
-        return res.scalars().all()
+        return res.unique().scalars().all()
 
     async def create(self, note_in: NoteCreate, general_account_id: UUID) -> Note:
         """Create a new note."""
