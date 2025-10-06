@@ -236,9 +236,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
         </div>
       </main>
     </div>
-    <div v-else class="empty-state">
-      <p>Trade not found.</p>
-    </div>
+
 
     <EditTradeDetailsModal
       v-if="trade"
