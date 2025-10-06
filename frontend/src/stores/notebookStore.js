@@ -123,9 +123,17 @@ export const useNotebookStore = defineStore('notebook', {
         this.isLoadingNotes = true;
         try {
             const response = await apiClient.post('/notebook/notes', noteData);
-            // After creating, refetch the notes for the folder to get the updated list
+
+            // After creating, refetch the notes for the folder to ensure the list is up-to-date.
             await this.fetchNotesForFolder(noteData.folder_id);
-            return response.data;
+
+            // Also, optimistically update the note count on the folder for immediate feedback.
+            const folder = this.folders.find(f => f.id === noteData.folder_id);
+            if (folder) {
+              folder.note_count += 1;
+            }
+
+            return response.data; // Return the created note object
         } catch (err) {
             console.error('Error creating note:', err);
             this.error = err.response?.data?.detail || 'Failed to create note.';
@@ -171,30 +179,36 @@ export const useNotebookStore = defineStore('notebook', {
     },
 
     async logDay(date) {
-      const journalFolderName = 'Daily Journal';
-      let journalFolder = this.folders.find(f => f.name === journalFolderName);
-
-      if (!journalFolder) {
-        try {
-          journalFolder = await this.createFolder({ name: journalFolderName, color: '#F5A623' });
-        } catch (err) {
-          this.error = 'Could not create the Daily Journal folder.';
-          return;
-        }
+      if (!this.selectedFolderId) {
+        const err = 'No folder selected. Please select a folder first.';
+        this.error = err;
+        console.error(err);
+        throw new Error(err);
       }
 
-      const formattedDate = date.toLocaleDateString('en-CA');
-      const noteTitle = `Log: ${formattedDate}`;
+      // Format date to a user-friendly title like "October 5, 2025"
+      const noteTitle = date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
 
       try {
-        await this.createNote({
-          folder_id: journalFolder.id,
+        // Create the note and get the new note object in return
+        const newNote = await this.createNote({
+          folder_id: this.selectedFolderId,
           title: noteTitle,
-          content: { type: 'doc', content: [{ type: 'paragraph' }] },
+          content: { type: 'doc', content: [{ type: 'paragraph' }] }, // Start with an empty paragraph
         });
-        this.selectFolder(journalFolder.id);
+
+        // Automatically select the newly created note so it opens in the editor
+        if (newNote && newNote.id) {
+          this.selectNote(newNote.id);
+        }
       } catch (err) {
         this.error = 'Could not create the daily log note.';
+        // The error is already logged by createNote, so we just update the message
+        throw err;
       }
     },
 

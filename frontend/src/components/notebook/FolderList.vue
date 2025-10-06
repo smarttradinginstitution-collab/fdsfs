@@ -1,79 +1,73 @@
 <template>
-  <div class="folder-list-container">
-    <div class="header">
-      <h1 class="title">Notebook</h1>
-    </div>
-
-    <!-- Actions -->
-    <div class="actions">
-      <BaseButton class="action-button" variant="primary" @click="isAddFolderModalOpen = true">
-        <PlusIcon class="icon" />
-        Add folder
-      </BaseButton>
-      <VueDatePicker
-        v-model="logDayDate"
-        @update:model-value="handleLogDay"
-        :enable-time-picker="false"
-        auto-apply
-        dark
-        :teleport="true"
-        placeholder="Log Day"
-        class="log-day-picker"
-      >
-        <template #trigger>
-          <BaseButton class="action-button" variant="secondary">
-            <CalendarIcon class="icon" />
-            Log day
-          </BaseButton>
-        </template>
-      </VueDatePicker>
-    </div>
-
-    <!-- Search -->
-    <div class="search-bar">
-      <MagnifyingGlassIcon class="search-icon" />
-      <input type="text" placeholder="Search notes..." class="search-input" />
-    </div>
-
-    <!-- Navigation -->
-    <nav class="navigation">
-      <!-- Folders Section (Collapsible) -->
-      <div class="nav-section">
-        <button @click="toggleFolders" class="section-header">
-          <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !foldersOpen }" />
-          <span>Folders</span>
+  <BaseWidget class="folder-list-widget">
+    <!-- Header: Add Folder -->
+    <template #header>
+      <div class="header-content">
+        <button @click="isAddFolderModalOpen = true" class="add-folder-button">
+          <FolderIcon class="icon" />
+          <span>Add Folder</span>
         </button>
-        <ul v-show="foldersOpen" class="folder-list">
-          <li v-if="store.isLoadingFolders">Loading...</li>
-          <li
-            v-for="folder in store.folders"
-            :key="folder.id"
-            @click="selectFolder(folder.id)"
-            class="folder-item"
-            :class="{ 'is-selected': store.selectedFolderId === folder.id }"
-          >
-            <div class="folder-info">
-              <span class="folder-color-dot" :style="{ backgroundColor: folder.color }"></span>
-              <span class="folder-name">{{ folder.name }}</span>
-            </div>
-            <span class="note-count-badge">{{ folder.note_count }}</span>
-          </li>
-        </ul>
       </div>
+    </template>
 
-      <!-- Other Links -->
-      <div class="nav-section">
-        <a href="#" class="nav-item">My notes</a>
-        <a href="#" class="nav-item">Tags</a>
+    <!-- Main Content: Folder List -->
+    <div class="folder-list-container">
+      <!-- Navigation -->
+      <nav class="navigation">
+        <!-- Folders Section -->
+        <div class="nav-section">
+          <button @click="toggleFolders" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !foldersOpen }" />
+            <span>Folders</span>
+          </button>
+          <ul v-show="foldersOpen" class="folder-list">
+            <li v-if="store.isLoadingFolders">Loading...</li>
+            <li
+              v-for="folder in store.folders"
+              :key="folder.id"
+              @click="selectFolder(folder.id)"
+              class="folder-item"
+              :class="{ 'is-selected': store.selectedFolderId === folder.id }"
+            >
+              <div class="bookmark-tab" :style="{ backgroundColor: folder.color }"></div>
+              <div class="folder-info">
+                <span class="folder-name">{{ folder.name }}</span>
+              </div>
+              <span class="note-count-badge">{{ folder.note_count }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- My Notes Section -->
+        <div class="nav-section">
+          <button @click="toggleMyNotes" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !myNotesOpen }" />
+            <span>My notes</span>
+          </button>
+          <div v-if="myNotesOpen" class="placeholder-content">
+            <p>Notes content...</p>
+          </div>
+        </div>
+
+        <!-- Tags Section -->
+        <div class="nav-section">
+          <button @click="toggleTags" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !tagsOpen }" />
+            <span>Tags</span>
+          </button>
+          <div v-if="tagsOpen" class="placeholder-content">
+            <p>Tags content...</p>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Footer -->
+      <div class="footer">
+        <a href="#" class="nav-item">
+          <TrashIcon class="icon" />
+          Recently Deleted
+        </a>
       </div>
-    </nav>
-
-    <!-- Footer -->
-    <div class="footer">
-      <a href="#" class="nav-item">
-        <TrashIcon class="icon" />
-        Recently Deleted
-      </a>
     </div>
 
     <!-- Add Folder Modal -->
@@ -82,25 +76,34 @@
       @close="isAddFolderModalOpen = false"
       @create="handleCreateFolder"
     />
-  </div>
+  </BaseWidget>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
-import BaseButton from '../ui/BaseButton.vue';
+import BaseWidget from '../layout/BaseWidget.vue';
 import AddFolderModal from './AddFolderModal.vue';
-import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { PlusIcon, CalendarIcon, MagnifyingGlassIcon, ChevronDownIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { TrashIcon, FolderIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
+
 
 const store = useNotebookStore();
-const foldersOpen = ref(true);
 const isAddFolderModalOpen = ref(false);
-const logDayDate = ref(null);
+const foldersOpen = ref(true);
+const myNotesOpen = ref(false);
+const tagsOpen = ref(false);
 
 const toggleFolders = () => {
   foldersOpen.value = !foldersOpen.value;
+};
+
+const toggleMyNotes = () => {
+  myNotesOpen.value = !myNotesOpen.value;
+};
+
+const toggleTags = () => {
+  tagsOpen.value = !tagsOpen.value;
 };
 
 const selectFolder = (folderId) => {
@@ -115,78 +118,63 @@ const handleCreateFolder = async (folderData) => {
     console.error('Failed to create folder from component:', error);
   }
 };
-
-const handleLogDay = async (date) => {
-  if (!date) return;
-  try {
-    await store.logDay(date);
-  } catch (error) {
-    console.error("Error logging day from component:", error);
-  } finally {
-    logDayDate.value = null;
-  }
-};
 </script>
 
 <style lang="scss" scoped>
+.folder-list-widget {
+  :deep(.widget-content) {
+    padding: 0;
+    display: flex;
+  }
+  :deep(.widget-header) {
+    padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+    min-height: 50px;
+  }
+}
+
+.header-content {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.add-folder-button {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--semantic-color-text-primary);
+  }
+
+  .icon {
+    width: 1.125rem; // 18px
+    height: 1.125rem;
+  }
+}
+
 .folder-list-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 1rem;
-}
-
-.header .title {
-  font: var(--semantic-font-style-heading-xl);
-  color: var(--semantic-color-text-primary);
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-button {
-  flex-grow: 1;
-  .icon {
-    width: 1rem;
-    height: 1rem;
-  }
-}
-
-.search-bar {
-  position: relative;
-}
-
-.search-input {
-  font: var(--semantic-font-style-label-md);
   width: 100%;
-  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-  background-color: var(--semantic-color-surface-secondary);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  color: var(--semantic-color-text-primary);
-  &:focus {
-    outline: none;
-    border-color: var(--semantic-color-border-focus);
-  }
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--semantic-color-text-secondary);
+  padding: var(--semantic-size-inset-md);
+  padding-top: var(--semantic-size-inset-sm);
+  gap: var(--semantic-size-inset-md);
 }
 
 .navigation {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--semantic-size-inset-lg);
   overflow-y: auto;
 }
 
@@ -196,16 +184,23 @@ const handleLogDay = async (date) => {
 }
 
 .section-header {
-  font: var(--semantic-font-style-label-sm);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--semantic-color-text-secondary);
+  gap: var(--semantic-size-inset-xs);
+  width: 100%;
+  padding: 0;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem 0;
-  margin-bottom: 0.5rem;
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--semantic-size-inset-sm);
+
+  &:hover {
+    color: var(--semantic-color-text-secondary);
+  }
 }
 
 .chevron-icon {
@@ -223,17 +218,27 @@ const handleLogDay = async (date) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--semantic-size-inset-xs);
+}
+
+.placeholder-content {
+  padding: var(--semantic-size-inset-xs) 0;
+  padding-left: calc(1rem + var(--semantic-size-inset-xs)); // Align with folder text
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-disabled);
 }
 
 .folder-item {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+  padding-left: calc(var(--semantic-size-inset-sm) + 6px); // Space for bookmark
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: background-color 0.15s ease-in-out;
+  overflow: hidden;
 
   &:hover {
     background-color: var(--semantic-color-surface-secondary);
@@ -241,32 +246,38 @@ const handleLogDay = async (date) => {
 
   &.is-selected {
     background-color: var(--semantic-color-surface-selected);
-    color: var(--semantic-color-text-primary);
+    .folder-name {
+      color: var(--semantic-color-text-primary);
+      font-weight: 600;
+    }
   }
+}
+
+.bookmark-tab {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px; // Thinner bookmark
+  border-right: 1px solid var(--semantic-color-border-default);
 }
 
 .folder-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.folder-color-dot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-  border: 1px solid var(--semantic-color-border-default);
+  gap: var(--semantic-size-inset-sm);
 }
 
 .folder-name {
   font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-secondary);
 }
 
 .note-count-badge {
   font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
-  background-color: var(--semantic-color-surface-secondary);
-  padding: 0.125rem 0.5rem;
+  background-color: var(--semantic-color-surface-tertiary);
+  padding: 2px var(--semantic-size-inset-xs);
   border-radius: var(--semantic-border-radius-pill);
 }
 
@@ -274,8 +285,8 @@ const handleLogDay = async (date) => {
   font: var(--semantic-font-style-label-md);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--semantic-size-inset-sm);
+  padding: var(--semantic-size-inset-sm);
   color: var(--semantic-color-text-primary);
   text-decoration: none;
   border-radius: var(--semantic-border-radius-interactive);
@@ -285,29 +296,15 @@ const handleLogDay = async (date) => {
   }
 
   .icon {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.125rem; // 18px
+    height: 1.125rem;
     color: var(--semantic-color-text-secondary);
   }
 }
 
 .footer {
   margin-top: auto;
-}
-
-.log-day-picker {
-  flex-grow: 1;
-
-  :global(.dp__theme_dark) {
-    --dp-background-color: var(--semantic-color-surface-secondary);
-    --dp-text-color: var(--semantic-color-text-primary);
-    --dp-hover-color: var(--semantic-color-surface-tertiary);
-    --dp-hover-text-color: var(--semantic-color-text-primary);
-    --dp-primary-color: var(--semantic-color-interactive-primary-default);
-    --dp-primary-text-color: var(--semantic-color-text-on-primary);
-    --dp-border-color: var(--semantic-color-border-default);
-    --dp-border-color-hover: var(--semantic-color-border-focus);
-    --dp-icon-color: var(--semantic-color-text-secondary);
-  }
+  padding-top: var(--semantic-size-inset-md);
+  border-top: 1px solid var(--semantic-color-border-default);
 }
 </style>
