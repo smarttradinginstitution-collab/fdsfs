@@ -24,6 +24,12 @@ const props = defineProps({
 const buttonClass = computed(() => `button button--${props.variant} button--${props.size}`);
 </script>
 
+<script>
+  export default {
+    inheritAttrs: false
+  }
+</script>
+
 <template>
   <button :class="buttonClass" v-bind="$attrs">
     <slot></slot>
