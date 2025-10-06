@@ -37,13 +37,19 @@
               :key="trade.id"
               @click="selectTrade(trade)"
               class="trade-row"
-              :class="{ 'is-selected': selectedTrade && selectedTrade.id === trade.id }"
+              :class="{
+                'is-selected': selectedTrade && selectedTrade.id === trade.id,
+                'is-disabled': trade.is_linked_to_note
+              }"
             >
               <td>{{ trade.asset?.symbol ?? 'N/A' }}</td>
               <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
               <td>{{ formatCurrency(trade.p_l) }}</td>
-              <td>
-                <BaseButton variant="secondary" size="small">Link</BaseButton>
+              <td class="action-cell">
+                <BaseButton v-if="!trade.is_linked_to_note" variant="secondary" size="small">Link</BaseButton>
+                <div v-else class="linked-icon-container" v-tooltip="'This trade is already linked to a note.'">
+                  <LinkIconSolid class="linked-icon" />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -63,6 +69,7 @@ import { ref, watch } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseModal from '../ui/BaseModal.vue';
 import BaseButton from '../ui/BaseButton.vue';
+import { LinkIcon as LinkIconSolid } from '@heroicons/vue/24/solid'; // For the blue icon
 import { LinkIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { formatCurrency } from '../../services/formatters';
 
@@ -92,6 +99,10 @@ const toggleTradeLink = () => {
 };
 
 const selectTrade = (trade) => {
+  // Do not allow selecting a trade that is already linked
+  if (trade.is_linked_to_note) {
+    return;
+  }
   selectedTrade.value = trade;
   showTrades.value = false; // Hide table after selection
 };
@@ -225,6 +236,32 @@ const handleSave = () => {
     &.is-selected {
       background-color: var(--semantic-color-surface-selected);
     }
+
+    &.is-disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
   }
+}
+
+.action-cell {
+  text-align: center;
+}
+
+.linked-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--semantic-size-button-padding-block-small) var(--semantic-size-button-padding-inline-small);
+}
+
+.linked-icon {
+  width: 1.25rem; // 20px
+  height: 1.25rem; // 20px
+  color: var(--semantic-color-interactive-primary-default);
 }
 </style>

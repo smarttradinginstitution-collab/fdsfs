@@ -58,17 +58,36 @@ class TradeRepository:
 
     async def list_recent_by_general_account_id(
         self, general_account_id: UUID, limit: int = 20
-    ) -> List[Trade]:
-        """Lists the most recent trades for a given general account."""
+    ) -> List[tuple[Trade, bool]]:
+        """
+        Lists the most recent trades for a given general account,
+        and includes a boolean indicating if each trade is linked to a note.
+        """
+        from app.Models.note import Note
+        from sqlalchemy import exists
+
+        has_note_subquery = (
+            select(Note.id).where(Note.trade_id == Trade.id).exists()
+        ).label("is_linked_to_note")
+
+        # Re-apply the eager loading options from the helper, as we are building a new query.
         query = (
-            self._get_trade_query()
+            select(Trade, has_note_subquery)
+            .options(
+                joinedload(Trade.tags),
+                joinedload(Trade.mistakes),
+                joinedload(Trade.playbook),
+                joinedload(Trade.news_impacts),
+                joinedload(Trade.psychology_states),
+                joinedload(Trade.asset),
+            )
             .join(Trade.trading_account)
             .where(TradingAccount.general_account_id == general_account_id)
             .order_by(Trade.entry_timestamp.desc())
             .limit(limit)
         )
         result = await self.db.execute(query)
-        return result.unique().scalars().all()
+        return result.all()
 
     async def get_filtered_trades(
         self,

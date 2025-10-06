@@ -186,17 +186,27 @@ class TradeService:
 
     async def get_recent_trades(self, claims: dict) -> List[TradeRead]:
         """
-        Retrieves the 20 most recent trades for the user's general account.
+        Retrieves the 20 most recent trades for the user's general account,
+        indicating whether each trade is linked to a note.
         """
         user_id = UUID(claims["sub"])
         general_account = await self.general_account_repo.get_by_user_id(user_id)
         if not general_account:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account not found.")
 
-        trades = await self.repo.list_recent_by_general_account_id(
+        # The repository now returns a list of (Trade, bool) tuples
+        trade_results = await self.repo.list_recent_by_general_account_id(
             general_account_id=general_account.id, limit=20
         )
-        return [TradeRead.from_orm(trade) for trade in trades]
+
+        # Process the results to populate the Pydantic schema
+        response_trades = []
+        for trade, is_linked in trade_results:
+            trade_read = TradeRead.from_orm(trade)
+            trade_read.is_linked_to_note = is_linked
+            response_trades.append(trade_read)
+
+        return response_trades
 
     async def list_trades_by_trading_account(
         self,
