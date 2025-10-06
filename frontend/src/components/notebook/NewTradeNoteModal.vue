@@ -1,6 +1,6 @@
 <template>
   <BaseModal
-    :is-open="isOpen"
+    :show="isOpen"
     title="Create New Trade Note"
     @close="$emit('close')"
   >
@@ -12,12 +12,12 @@
         class="title-input"
       />
       <div class="link-trade-section">
-        <BaseButton variant="secondary" @click="toggleTradeLink">
+        <button class="button-link-trade" @click="toggleTradeLink">
           <LinkIcon class="icon" />
-          {{ selectedTrade ? 'Change Linked Trade' : 'Link to a Trade' }}
-        </BaseButton>
+          <span>{{ selectedTrade ? 'Change Linked Trade' : 'Link to a Trade' }}</span>
+        </button>
         <div v-if="selectedTrade" class="linked-trade-info">
-          <span>Linked to: {{ selectedTrade.asset.symbol }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
+          <span>Linked to: {{ selectedTrade.asset?.symbol ?? 'N/A' }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
           <button @click="clearSelectedTrade" class="clear-button">
             <XMarkIcon class="icon" />
           </button>
@@ -45,11 +45,11 @@
               class="trade-row"
               :class="{ 'is-selected': selectedTrade && selectedTrade.id === trade.id }"
             >
-              <td>{{ trade.asset.symbol }}</td>
+              <td>{{ trade.asset?.symbol ?? 'N/A' }}</td>
               <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
               <td>{{ formatCurrency(trade.p_l) }}</td>
               <td>
-                <BaseButton variant="secondary" size="sm">Link</BaseButton>
+                <BaseButton variant="secondary" size="small">Link</BaseButton>
               </td>
             </tr>
           </tbody>
@@ -128,6 +128,27 @@ const handleSave = () => {
 
 .title-input {
   margin-bottom: var(--semantic-size-inset-sm);
+}
+
+.button-link-trade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--base-size-spacing-2);
+  font: var(--semantic-font-style-button-label-medium);
+  padding-block: var(--semantic-size-button-padding-block-medium);
+  padding-inline: var(--semantic-size-button-padding-inline-medium);
+  border-radius: var(--semantic-border-radius-interactive);
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  background-color: var(--semantic-color-surface-primary);
+  color: var(--semantic-color-text-interactive);
+  cursor: pointer;
+  transition: all var(--base-animation-duration-fast);
+
+  &:hover {
+    background-color: var(--semantic-color-surface-secondary);
+    border-color: var(--semantic-color-border-subtle);
+  }
 }
 
 .link-trade-section {

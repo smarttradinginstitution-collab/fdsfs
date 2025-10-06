@@ -5,10 +5,10 @@
       <div class="header-content" v-if="store.selectedFolder">
         <!-- Trade Notes: New Note Button -->
         <template v-if="store.selectedFolder.system_folder_identifier === 'TRADE_NOTES'">
-          <BaseButton @click="isNewTradeNoteModalOpen = true">
+          <button @click="isNewTradeNoteModalOpen = true" class="log-day-button">
             <PlusIcon class="icon" />
-            New Note
-          </BaseButton>
+            <span>New Note</span>
+          </button>
         </template>
 
         <!-- Session Recap: Date Range Picker -->
