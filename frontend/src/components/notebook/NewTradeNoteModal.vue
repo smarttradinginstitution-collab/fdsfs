@@ -47,7 +47,7 @@
               <td>{{ formatCurrency(trade.p_l) }}</td>
               <td class="action-cell">
                 <div v-if="trade.note_id" class="linked-icon-container">
-                  <CheckCircleIcon class="linked-icon" />
+                  <SolidLinkIcon class="linked-icon" />
                 </div>
                 <BaseButton v-else variant="secondary" size="small">Link</BaseButton>
               </td>
@@ -69,7 +69,8 @@ import { ref, watch } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseModal from '../ui/BaseModal.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import { LinkIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
+import { LinkIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { LinkIcon as SolidLinkIcon } from '@heroicons/vue/24/solid';
 import { formatCurrency } from '../../services/formatters';
 
 const props = defineProps({
