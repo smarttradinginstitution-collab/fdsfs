@@ -10,7 +10,7 @@ from app.Repositories.note_repository import NoteRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Models.notebook_folder import NotebookFolder
 from app.Models.note import Note
-from app.Models.enums import FolderType
+from app.Models.enums import FolderType, SystemFolderIdentifier
 from app.Schemas.notebook import (
     NotebookFolderCreate,
     NotebookFolderUpdate,
@@ -18,14 +18,13 @@ from app.Schemas.notebook import (
     NoteUpdate,
 )
 
-# Define system folders as a constant
-SYSTEM_FOLDERS = [
-    "Daily Journal",
-    "Weekly Notes",
-    "Trade Notes",
-    "Sessions Recap",
-    "Backtesting Session Note Folder",
-]
+# Define system folders with their specific identifiers
+SYSTEM_FOLDERS = {
+    "Trade Notes": SystemFolderIdentifier.TRADE_NOTES,
+    "Daily Journal": SystemFolderIdentifier.DAILY_JOURNAL,
+    "Session Recap": SystemFolderIdentifier.SESSION_RECAP,
+}
+
 
 class NotebookService:
     """Service layer for notebook operations."""
@@ -48,7 +47,7 @@ class NotebookService:
 
     async def _ensure_system_folders_exist(self, general_account_id: UUID):
         """Checks for and creates missing system folders."""
-        for folder_name in SYSTEM_FOLDERS:
+        for folder_name, identifier in SYSTEM_FOLDERS.items():
             existing_folder = await self.folder_repo.find_by_name_and_account(
                 name=folder_name, general_account_id=general_account_id
             )
@@ -57,6 +56,8 @@ class NotebookService:
                     name=folder_name,
                     general_account_id=general_account_id,
                     folder_type=FolderType.SYSTEM,
+                    is_system_folder=True,
+                    system_folder_identifier=identifier,
                 )
                 self.db.add(new_folder)
         await self.db.commit()
@@ -102,6 +103,11 @@ class NotebookService:
         await self.folder_repo.delete(folder)
 
     # --- Note Operations ---
+
+    async def get_all_notes_for_user(self, user_id: UUID) -> List[Note]:
+        """Get all notes for the current user's general account."""
+        general_account_id = await self._get_general_account_id(user_id)
+        return await self.note_repo.list_by_general_account_id(general_account_id)
 
     async def get_notes_for_folder(self, folder_id: UUID, user_id: UUID) -> List[Note]:
         """Get all notes for a specific folder, ensuring it belongs to the user."""

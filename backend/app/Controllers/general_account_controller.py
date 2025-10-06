@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from fastapi import Depends, HTTPException, status
 
-# Importa il servizio che gestisce la logica di interazione con il database.
+# Importa i servizi necessari.
 from app.Services.general_account_service import GeneralAccountService
+from app.Services.notebook_service import NotebookService
 # Importa la dipendenza per ottenere i dati dell'utente autenticato.
 from app.Router.auth import get_current_claims
 
@@ -13,6 +14,7 @@ from app.Router.auth import get_current_claims
 async def create_general_account(
     claims: dict = Depends(get_current_claims),
     service: GeneralAccountService = Depends(),
+    notebook_service: NotebookService = Depends(),
 ):
     """
     Crea un General Account per l'utente autenticato.
@@ -21,7 +23,9 @@ async def create_general_account(
     uno nuovo, garantendo l'idempotenza della creazione.
     """
     # Delega la creazione (o il recupero) dell'account al servizio.
-    account = await service.create_general_account_for_user(claims)
+    account = await service.create_general_account_for_user(
+        claims=claims, notebook_service=notebook_service
+    )
     return account
 
 

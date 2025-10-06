@@ -9,6 +9,7 @@ from fastapi import Depends
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.general_account import GeneralAccountCreate, GeneralAccountRead
 from app.Infrastructure.db import get_db
+from app.Services.notebook_service import NotebookService
 
 
 class GeneralAccountService:
@@ -17,7 +18,7 @@ class GeneralAccountService:
         self.repo = GeneralAccountRepository(db)
 
     async def create_general_account_for_user(
-        self, claims: dict
+        self, claims: dict, notebook_service: NotebookService
     ) -> GeneralAccountRead:
         """
         Crea un GeneralAccount per l'utente corrente, usando la sua email come label.
@@ -31,6 +32,9 @@ class GeneralAccountService:
             user_id=user_id,
             account_data=account_create_schema
         )
+
+        # Automatically create system folders for the new account
+        await notebook_service._ensure_system_folders_exist(db_account.id)
 
         return GeneralAccountRead.from_orm(db_account)
 

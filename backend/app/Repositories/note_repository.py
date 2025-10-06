@@ -29,6 +29,16 @@ class NoteRepository:
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
+    async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[Note]:
+        """List all notes for a given general account."""
+        stmt = (
+            select(Note)
+            .where(Note.general_account_id == general_account_id)
+            .order_by(Note.updated_at.desc())
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+
     async def create(self, note_in: NoteCreate, general_account_id: UUID) -> Note:
         """Create a new note."""
         db_note = Note(

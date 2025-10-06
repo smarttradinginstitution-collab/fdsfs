@@ -58,6 +58,14 @@ class NotebookController:
         await service.delete_folder(folder_id=folder_id, user_id=current_user.id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+    async def list_all_my_notes(
+        self,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> List[NoteRead]:
+        """Lists all notes for the currently authenticated user."""
+        return await service.get_all_notes_for_user(user_id=current_user.id)
+
     async def list_notes_for_folder(
         self,
         folder_id: UUID,

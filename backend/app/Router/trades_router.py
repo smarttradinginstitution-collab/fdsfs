@@ -120,6 +120,14 @@ async def get_trades_for_trading_account(
     )
 
 
+@router.get("/recent", response_model=List[TradeRead], summary="Get the last 20 trades for the current user")
+async def get_recent_trades(
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.list_recent_trades(claims, service)
+
+
 @router.get("/{trade_id}", response_model=TradeRead)
 async def get_trade(
     trade_id: UUID,

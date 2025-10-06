@@ -107,6 +107,14 @@ class TradesController:
             end_date=end_date,
         )
 
+    async def list_recent_trades(
+        self,
+        claims: dict,
+        service: TradeService,
+    ) -> List[TradeRead]:
+        """Lists the 20 most recent trades for the current user."""
+        return await service.get_recent_trades(claims=claims)
+
     async def get_trade(
         self,
         claims: dict,

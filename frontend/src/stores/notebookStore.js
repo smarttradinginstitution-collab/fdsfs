@@ -6,10 +6,12 @@ export const useNotebookStore = defineStore('notebook', {
   state: () => ({
     folders: [],
     notes: [],
+    recentTrades: [], // To store trades for linking
     selectedFolderId: null,
     selectedNoteId: null,
     isLoadingFolders: false,
     isLoadingNotes: false,
+    isLoadingTrades: false, // For loading recent trades
     error: null,
   }),
 
@@ -20,6 +22,23 @@ export const useNotebookStore = defineStore('notebook', {
     selectedNote: (state) => {
       return state.notes.find(n => n.id === state.selectedNoteId) || null;
     },
+    systemFolders: (state) => {
+      const allNotesFolder = {
+        id: 'ALL_NOTES_VIRTUAL_ID',
+        name: 'All Notes',
+        is_system_folder: true,
+        system_folder_identifier: 'ALL_NOTES', // Special identifier
+        note_count: state.notes.length, // This might not be accurate until all notes are fetched
+      };
+      const dbSystemFolders = state.folders.filter(f => f.is_system_folder).sort((a, b) => a.name.localeCompare(b.name));
+      return [allNotesFolder, ...dbSystemFolders];
+    },
+    userFolders: (state) => {
+      return state.folders.filter(f => !f.is_system_folder).sort((a, b) => a.name.localeCompare(b.name));
+    },
+    isSystemFolderSelected() {
+      return this.selectedFolder ? this.selectedFolder.is_system_folder : false;
+    }
   },
 
   actions: {
@@ -119,6 +138,21 @@ export const useNotebookStore = defineStore('notebook', {
       }
     },
 
+    async fetchAllNotes() {
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get('/notebook/notes/all');
+        this.notes = response.data;
+      } catch (err) {
+        console.error('Error fetching all notes:', err);
+        this.error = err.response?.data?.detail || 'Failed to fetch all notes.';
+        this.notes = [];
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
     async createNote(noteData) {
         this.isLoadingNotes = true;
         try {
@@ -212,13 +246,66 @@ export const useNotebookStore = defineStore('notebook', {
       }
     },
 
+    async createTradeNote({ title, tradeId = null }) {
+      if (!this.selectedFolderId) {
+        throw new Error("Cannot create trade note without a selected folder.");
+      }
+      const newNote = await this.createNote({
+        folder_id: this.selectedFolderId,
+        title,
+        trade_id: tradeId,
+        content: { type: 'doc', content: [{ type: 'paragraph' }] },
+      });
+      if (newNote && newNote.id) {
+        this.selectNote(newNote.id);
+      }
+    },
+
+    async createSessionRecapNote({ startDate, endDate }) {
+       if (!this.selectedFolderId) {
+        throw new Error("Cannot create session recap without a selected folder.");
+      }
+      const title = `Session: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+      const newNote = await this.createNote({
+        folder_id: this.selectedFolderId,
+        title: title,
+        content: { type: 'doc', content: [{ type: 'paragraph' }] },
+      });
+       if (newNote && newNote.id) {
+        this.selectNote(newNote.id);
+      }
+    },
+
+    // --- OTHER ACTIONS ---
+
+    async fetchRecentTrades() {
+      this.isLoadingTrades = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get('/trades/recent');
+        this.recentTrades = response.data;
+      } catch (err) {
+        console.error('Error fetching recent trades:', err);
+        this.error = err.response?.data?.detail || 'Failed to fetch recent trades.';
+        this.recentTrades = [];
+      } finally {
+        this.isLoadingTrades = false;
+      }
+    },
+
     // --- SELECTION ACTIONS ---
 
     selectFolder(folderId) {
       if (this.selectedFolderId !== folderId) {
         this.selectedFolderId = folderId;
         this.selectedNoteId = null;
-        this.fetchNotesForFolder(folderId);
+
+        // Handle the virtual "All Notes" folder
+        if (folderId === 'ALL_NOTES_VIRTUAL_ID') {
+          this.fetchAllNotes();
+        } else {
+          this.fetchNotesForFolder(folderId);
+        }
       }
     },
 

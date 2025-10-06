@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 from pydantic import BaseModel, Field
-from app.Models.enums import FolderType
+from app.Models.enums import FolderType, SystemFolderIdentifier
 
 # --- Note Schemas ---
 
@@ -19,6 +19,7 @@ class NoteBase(BaseModel):
 class NoteCreate(NoteBase):
     folder_id: UUID = Field(..., description="The ID of the folder this note belongs to")
     title: str = Field(..., description="The title of the note is required for creation")
+    trade_id: Optional[UUID] = Field(None, description="The optional ID of the trade this note is linked to")
 
 class NoteUpdate(NoteBase):
     pass
@@ -52,6 +53,8 @@ class NotebookFolderRead(NotebookFolderBase):
     id: UUID
     general_account_id: UUID
     folder_type: FolderType
+    is_system_folder: bool
+    system_folder_identifier: SystemFolderIdentifier
     created_at: datetime
     updated_at: datetime
     name: str
@@ -68,6 +71,8 @@ class NotebookFolderReadWithCount(NotebookFolderBase):
     id: UUID
     general_account_id: UUID
     folder_type: FolderType
+    is_system_folder: bool
+    system_folder_identifier: SystemFolderIdentifier
     created_at: datetime
     updated_at: datetime
     name: str

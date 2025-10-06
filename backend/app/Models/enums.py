@@ -20,3 +20,10 @@ class ImportSourceType(str, enum.Enum):
 class FolderType(str, enum.Enum):
     USER = "USER"
     SYSTEM = "SYSTEM"
+
+class SystemFolderIdentifier(str, enum.Enum):
+    """Specific identifiers for system folders with unique frontend behavior."""
+    NONE = "NONE"
+    TRADE_NOTES = "TRADE_NOTES"
+    DAILY_JOURNAL = "DAILY_JOURNAL"
+    SESSION_RECAP = "SESSION_RECAP"

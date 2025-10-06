@@ -1,0 +1,202 @@
+<template>
+  <BaseModal
+    :is-open="isOpen"
+    title="Create New Trade Note"
+    @close="$emit('close')"
+  >
+    <div class="modal-content">
+      <BaseInput
+        v-model="noteTitle"
+        label="Note Title"
+        placeholder="Enter a title for your note"
+        class="title-input"
+      />
+      <div class="link-trade-section">
+        <BaseButton variant="secondary" @click="toggleTradeLink">
+          <LinkIcon class="icon" />
+          {{ selectedTrade ? 'Change Linked Trade' : 'Link to a Trade' }}
+        </BaseButton>
+        <div v-if="selectedTrade" class="linked-trade-info">
+          <span>Linked to: {{ selectedTrade.asset.symbol }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
+          <button @click="clearSelectedTrade" class="clear-button">
+            <XMarkIcon class="icon" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Trades Table -->
+      <div v-if="showTrades" class="recent-trades-container">
+        <div v-if="store.isLoadingTrades">Loading trades...</div>
+        <div v-else-if="store.error">{{ store.error }}</div>
+        <table v-else-if="store.recentTrades.length > 0" class="trades-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Entry Date</th>
+              <th>Net P&L</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="trade in store.recentTrades"
+              :key="trade.id"
+              @click="selectTrade(trade)"
+              class="trade-row"
+              :class="{ 'is-selected': selectedTrade && selectedTrade.id === trade.id }"
+            >
+              <td>{{ trade.asset.symbol }}</td>
+              <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
+              <td>{{ formatCurrency(trade.p_l) }}</td>
+              <td>
+                <BaseButton variant="secondary" size="sm">Link</BaseButton>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else>No recent trades found.</div>
+      </div>
+    </div>
+    <template #footer>
+      <BaseButton variant="secondary" @click="$emit('close')">Cancel</BaseButton>
+      <BaseButton variant="primary" @click="handleSave" :disabled="!noteTitle">Save</BaseButton>
+    </template>
+  </BaseModal>
+</template>
+
+<script setup>
+import { ref, watch } from 'vue';
+import { useNotebookStore } from '../../stores/notebookStore';
+import BaseModal from '../ui/BaseModal.vue';
+import BaseButton from '../ui/BaseButton.vue';
+import BaseInput from '../ui/BaseInput.vue';
+import { LinkIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { formatCurrency } from '../../services/formatters';
+
+const props = defineProps({
+  isOpen: {
+    type: Boolean,
+    required: true,
+  },
+});
+
+const emit = defineEmits(['close', 'create']);
+
+const store = useNotebookStore();
+const noteTitle = ref('');
+const selectedTrade = ref(null);
+const showTrades = ref(false);
+
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    store.fetchRecentTrades();
+    noteTitle.value = '';
+    selectedTrade.value = null;
+    showTrades.value = false;
+  }
+});
+
+const toggleTradeLink = () => {
+  showTrades.value = !showTrades.value;
+};
+
+const selectTrade = (trade) => {
+  selectedTrade.value = trade;
+  showTrades.value = false; // Hide table after selection
+};
+
+const clearSelectedTrade = () => {
+  selectedTrade.value = null;
+};
+
+const handleSave = () => {
+  emit('create', {
+    title: noteTitle.value,
+    tradeId: selectedTrade.value ? selectedTrade.value.id : null,
+  });
+  emit('close');
+};
+</script>
+
+<style lang="scss" scoped>
+.modal-content {
+  padding: var(--semantic-size-inset-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-inset-lg);
+}
+
+.title-input {
+  margin-bottom: var(--semantic-size-inset-sm);
+}
+
+.link-trade-section {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-inset-md);
+
+  .icon {
+    width: 1rem;
+    height: 1rem;
+    margin-right: var(--semantic-size-inset-xs);
+  }
+}
+
+.linked-trade-info {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-inset-sm);
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  background-color: var(--semantic-color-surface-secondary);
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-pill);
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--semantic-color-text-tertiary);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  &:hover {
+    color: var(--semantic-color-text-danger);
+  }
+}
+
+.recent-trades-container {
+  margin-top: var(--semantic-size-inset-sm);
+  border-top: 1px solid var(--semantic-color-border-default);
+  padding-top: var(--semantic-size-inset-lg);
+}
+
+.trades-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--semantic-font-style-body-sm);
+
+  th, td {
+    padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-xs);
+    text-align: left;
+    border-bottom: 1px solid var(--semantic-color-border-default);
+  }
+
+  th {
+    color: var(--semantic-color-text-secondary);
+    font-weight: 600;
+  }
+
+  .trade-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    &:hover {
+      background-color: var(--semantic-color-surface-secondary);
+    }
+    &.is-selected {
+      background-color: var(--semantic-color-surface-selected);
+    }
+  }
+}
+</style>
