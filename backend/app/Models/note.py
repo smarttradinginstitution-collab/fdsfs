@@ -60,6 +60,4 @@ class Note(Base):
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="notes"
     )
-    trade: Mapped[Optional["Trade"]] = relationship(
-        "Trade", foreign_keys=[trade_id], back_populates="note"
-    )
+    trade: Mapped[Optional["Trade"]] = relationship("Trade", back_populates="note")
