@@ -2,7 +2,7 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.asset import Asset
 from app.Schemas.asset import AssetCreate, AssetUpdate
@@ -12,17 +12,38 @@ class AssetRepository:
         self.db = db
 
     async def get(self, asset_id: uuid.UUID) -> Optional[Asset]:
-        stmt = select(Asset).where(Asset.id == asset_id)
+        stmt = (
+            select(Asset)
+            .where(Asset.id == asset_id)
+            .options(
+                joinedload(Asset.asset_class),
+                joinedload(Asset.asset_market)
+            )
+        )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
     async def get_by_symbol(self, symbol: str) -> Optional[Asset]:
-        stmt = select(Asset).where(Asset.symbol_norm == symbol.upper().strip())
+        stmt = (
+            select(Asset)
+            .where(Asset.symbol_norm == symbol.upper().strip())
+            .options(
+                joinedload(Asset.asset_class),
+                joinedload(Asset.asset_market)
+            )
+        )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
     async def list(self) -> List[Asset]:
-        stmt = select(Asset).order_by(Asset.symbol)
+        stmt = (
+            select(Asset)
+            .order_by(Asset.symbol)
+            .options(
+                joinedload(Asset.asset_class),
+                joinedload(Asset.asset_market)
+            )
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 

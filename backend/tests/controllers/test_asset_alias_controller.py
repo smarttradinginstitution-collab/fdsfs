@@ -56,12 +56,32 @@ def user_client(async_client: AsyncClient, regular_user: AuthUser) -> AsyncClien
     app.dependency_overrides[get_current_claims] = lambda: {"sub": str(regular_user.id)}
     return async_client
 
+from app.Models.asset_market import AssetMarket
+
 @pytest.fixture
-async def test_asset(db_session: AsyncSession) -> Asset:
-    asset_class = AssetClass(name=f"Alias Dep Class {uuid4()}")
+async def test_asset_market(db_session: AsyncSession) -> AssetMarket:
+    """Fixture for a pre-existing asset market."""
+    asset_market = AssetMarket(name=f"Test Market {uuid4()}", code=f"TM{str(uuid4())[:4]}")
+    db_session.add(asset_market)
+    await db_session.commit()
+    return asset_market
+
+@pytest.fixture
+async def test_asset_class(db_session: AsyncSession) -> AssetClass:
+    """Fixture for a pre-existing asset class."""
+    asset_class = AssetClass(name=f"Test Class {uuid4()}")
     db_session.add(asset_class)
-    await db_session.flush()
-    asset = Asset(symbol="ALIAS", name="Alias Asset", asset_class_id=asset_class.id)
+    await db_session.commit()
+    return asset_class
+
+@pytest.fixture
+async def test_asset(db_session: AsyncSession, test_asset_class: AssetClass, test_asset_market: AssetMarket) -> Asset:
+    asset = Asset(
+        symbol="ALIAS",
+        name="Alias Asset",
+        asset_class_id=test_asset_class.id,
+        asset_market_id=test_asset_market.id
+    )
     db_session.add(asset)
     await db_session.commit()
     return asset

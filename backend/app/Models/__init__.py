@@ -26,6 +26,7 @@ from .user_dashboard_layout import UserDashboardLayout
 from .platform import Platform
 from .broker import Broker
 from .trading_account import TradingAccount
+from .asset_market import AssetMarket
 from .asset import Asset
 from .asset_alias import AssetAlias
 from .import_run import ImportRun
@@ -57,6 +58,7 @@ __all__ = [
     "PsychologyState",
     "Tag",
     "UserDashboardLayout",
+    "AssetMarket",
     "BrokerPlatform",
     "TradesMistakes",
     "TradesNewsImpacts",

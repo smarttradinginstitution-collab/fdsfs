@@ -242,6 +242,16 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🏛️ ASSET MARKETS (protetto: user/admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import asset_market_router
+
+router.include_router(
+    asset_market_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📈 ASSETS (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import asset_router
