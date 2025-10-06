@@ -1,25 +1,59 @@
 <template>
   <BaseWidget class="note-list-widget">
-    <!-- Header: Log Day -->
+    <!-- Header: Dynamic Actions -->
     <template #header>
-      <div class="header-content">
-        <VueDatePicker
-          v-model="logDayDate"
-          @update:model-value="handleLogDay"
-          :enable-time-picker="false"
-          auto-apply
-          dark
-          :teleport="true"
-          placeholder="Log Day"
-          class="log-day-picker"
-        >
-          <template #trigger>
-            <button class="log-day-button">
-              <CalendarDaysIcon class="icon" />
-              <span>Log Day</span>
-            </button>
-          </template>
-        </VueDatePicker>
+      <div class="header-content" v-if="store.selectedFolder">
+        <!-- Trade Notes: New Note Button -->
+        <template v-if="store.selectedFolder.system_folder_identifier === 'TRADE_NOTES'">
+          <BaseButton @click="isNewTradeNoteModalOpen = true">
+            <PlusIcon class="icon" />
+            New Note
+          </BaseButton>
+        </template>
+
+        <!-- Session Recap: Date Range Picker -->
+        <template v-else-if="store.selectedFolder.system_folder_identifier === 'SESSION_RECAP'">
+          <VueDatePicker
+            v-model="sessionRecapDate"
+            @update:model-value="handleLogSession"
+            :enable-time-picker="false"
+            auto-apply
+            dark
+            range
+            :teleport="true"
+            placeholder="Log Session"
+            class="log-day-picker"
+          >
+            <template #trigger>
+              <button class="log-day-button">
+                <CalendarDaysIcon class="icon" />
+                <span>Log Session</span>
+              </button>
+            </template>
+          </VueDatePicker>
+        </template>
+
+        <!-- Daily Journal & others: Default Log Day -->
+        <template v-else-if="store.selectedFolder.system_folder_identifier === 'DAILY_JOURNAL' || store.selectedFolder.system_folder_identifier === 'NONE'">
+           <VueDatePicker
+            v-model="logDayDate"
+            @update:model-value="handleLogDay"
+            :enable-time-picker="false"
+            auto-apply
+            dark
+            :teleport="true"
+            placeholder="Log Day"
+            class="log-day-picker"
+          >
+            <template #trigger>
+              <button class="log-day-button">
+                <CalendarDaysIcon class="icon" />
+                <span>Log Day</span>
+              </button>
+            </template>
+          </VueDatePicker>
+        </template>
+        <!-- For "All Notes", nothing is rendered in the header -->
       </div>
     </template>
 
@@ -52,13 +86,17 @@
         </div>
         <div v-else class="empty-state">
           <p>This folder is empty.</p>
-          <p>Click "Log Day" to create a new entry.</p>
         </div>
       </div>
       <div v-else class="empty-state-no-folder">
         <p>Select a folder to see your notes.</p>
       </div>
     </div>
+     <NewTradeNoteModal
+      :is-open="isNewTradeNoteModalOpen"
+      @close="isNewTradeNoteModalOpen = false"
+      @create="handleCreateTradeNote"
+    />
   </BaseWidget>
 </template>
 
@@ -67,8 +105,10 @@ import { ref, computed } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
+import NewTradeNoteModal from './NewTradeNoteModal.vue';
+import BaseButton from '../ui/BaseButton.vue';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { TrashIcon, CalendarDaysIcon } from '@heroicons/vue/24/outline';
+import { TrashIcon, CalendarDaysIcon, PlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   searchQuery: {
@@ -79,6 +119,8 @@ const props = defineProps({
 
 const store = useNotebookStore();
 const logDayDate = ref(null);
+const sessionRecapDate = ref(null);
+const isNewTradeNoteModalOpen = ref(false);
 
 const filteredNotes = computed(() => {
   if (!props.searchQuery) {
@@ -106,6 +148,31 @@ const handleLogDay = async (date) => {
     logDayDate.value = null; // Reset picker
   } catch (error) {
     console.error('Error logging day from component:', error);
+  }
+};
+
+const handleLogSession = async (dateRange) => {
+  if (!dateRange || dateRange.length < 2 || !store.selectedFolderId) {
+    alert('Please select a date range.');
+    return;
+  }
+  try {
+    await store.createSessionRecapNote({
+      startDate: dateRange[0],
+      endDate: dateRange[1],
+    });
+    sessionRecapDate.value = null; // Reset picker
+  } catch (error) {
+    console.error('Error logging session from component:', error);
+  }
+};
+
+const handleCreateTradeNote = async (noteData) => {
+  try {
+    await store.createTradeNote(noteData);
+    isNewTradeNoteModalOpen.value = false;
+  } catch (error) {
+    console.error('Error creating trade note from component:', error);
   }
 };
 

@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.trade import Trade
+from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
 
 
@@ -52,6 +53,20 @@ class TradeRepository:
     async def list_by_playbook_id(self, playbook_id: UUID) -> List[Trade]:
         """Elenca tutti i trade per un dato playbook."""
         query = self._get_trade_query().where(Trade.playbook_id == playbook_id)
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
+    async def list_recent_by_general_account_id(
+        self, general_account_id: UUID, limit: int = 20
+    ) -> List[Trade]:
+        """Lists the most recent trades for a given general account."""
+        query = (
+            self._get_trade_query()
+            .join(Trade.trading_account)
+            .where(TradingAccount.general_account_id == general_account_id)
+            .order_by(Trade.entry_timestamp.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 

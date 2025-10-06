@@ -21,9 +21,28 @@
             <span>Folders</span>
           </button>
           <ul v-show="foldersOpen" class="folder-list">
+            <!-- System Folders -->
             <li v-if="store.isLoadingFolders">Loading...</li>
             <li
-              v-for="folder in store.folders"
+              v-for="folder in store.systemFolders"
+              :key="folder.id"
+              @click="selectFolder(folder.id)"
+              class="folder-item is-system"
+              :class="{ 'is-selected': store.selectedFolderId === folder.id }"
+            >
+              <div class="bookmark-tab" :style="{ backgroundColor: 'var(--semantic-color-text-secondary)' }"></div>
+              <div class="folder-info">
+                <span class="folder-name">{{ folder.name }}</span>
+              </div>
+              <span class="note-count-badge">{{ folder.note_count }}</span>
+            </li>
+
+            <!-- Separator -->
+            <hr v-if="store.systemFolders.length > 0 && store.userFolders.length > 0" class="separator" />
+
+            <!-- User Folders -->
+            <li
+              v-for="folder in store.userFolders"
               :key="folder.id"
               @click="selectFolder(folder.id)"
               class="folder-item"
@@ -219,6 +238,12 @@ const handleCreateFolder = async (folderData) => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-inset-xs);
+}
+
+.separator {
+  border: none;
+  border-top: 1px solid var(--semantic-color-border-default);
+  margin: var(--semantic-size-inset-sm) 0;
 }
 
 .placeholder-content {

@@ -3,12 +3,12 @@ from __future__ import annotations
 import uuid
 from typing import Any, TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, TIMESTAMP, func, ForeignKey, Enum
+from sqlalchemy import String, TIMESTAMP, func, ForeignKey, Enum, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
-from app.Models.enums import FolderType
+from app.Models.enums import FolderType, SystemFolderIdentifier
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
@@ -35,7 +35,16 @@ class NotebookFolder(Base):
         nullable=False,
         default=FolderType.USER,
     )
+    system_folder_identifier: Mapped[SystemFolderIdentifier] = mapped_column(
+        Enum(SystemFolderIdentifier, name="system_folder_identifier", create_type=False),
+        nullable=False,
+        default=SystemFolderIdentifier.NONE,
+        server_default=SystemFolderIdentifier.NONE.value,
+    )
     template_content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    is_system_folder: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
@@ -44,6 +53,9 @@ class NotebookFolder(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+    deleted_at: Mapped[Optional[Any]] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
     )
 
     # Relationships
