@@ -12,6 +12,11 @@ import router from './router';
 import { useAuthStore } from '@/stores/auth'; // (AGGIUNTA) Store di autenticazione per ripristinare il token
 import { setAuthToken } from '@/services/api'; // (AGGIUNTA) helper per impostare header Authorization
 
+// --- IMPORTAZIONI DEI PLUGIN ---
+import FloatingVue from 'floating-vue';
+import 'floating-vue/dist/style.css';
+
+
 // --- IMPORTAZIONI DEGLI STILI GLOBALI ---
 /*
   BEST PRACTICE: Importazione Centralizzata degli Stili
@@ -35,7 +40,10 @@ const pinia = createPinia();
 // 3. Diciamo a Vue di usare Pinia per la gestione dello stato.
 app.use(pinia);
 
-// 4. Diciamo a Vue di usare il nostro router per la navigazione.
+// 4. Registriamo il plugin per i tooltip
+app.use(FloatingVue);
+
+// 5. Diciamo a Vue di usare il nostro router per la navigazione.
 app.use(router);
 
 // --- INIZIALIZZAZIONE AUTENTICAZIONE (AGGIUNTA) ---
