@@ -111,7 +111,7 @@ async def test_create_note_raises_conflict_on_duplicate_trade_id(
     notebook_service.get_folder = AsyncMock()
     # Simulate finding an existing note with the same trade_id
     mock_note_repo.get_by_trade_id.return_value = Note(
-        id=uuid4(), trade_id=trade_id, general_account_id=general_account_id
+            id=uuid4(), trade_id=trade_id, folder_id=note_create_data.folder_id
     )
 
     # Assert that a 409 Conflict is raised
