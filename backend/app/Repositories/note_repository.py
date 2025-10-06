@@ -24,14 +24,12 @@ class NoteRepository:
         stmt = (
             select(Note)
             .options(
-                joinedload(Note.trade).options(
-                    joinedload(Trade.asset),
-                    joinedload(Trade.tags),
-                    joinedload(Trade.mistakes),
-                    joinedload(Trade.playbook),
-                    joinedload(Trade.news_impacts),
-                    joinedload(Trade.psychology_states),
-                )
+                joinedload(Note.trade).joinedload(Trade.asset),
+                joinedload(Note.trade).joinedload(Trade.tags),
+                joinedload(Note.trade).joinedload(Trade.mistakes),
+                joinedload(Note.trade).joinedload(Trade.playbook),
+                joinedload(Note.trade).joinedload(Trade.news_impacts),
+                joinedload(Note.trade).joinedload(Trade.psychology_states),
             )
             .where(Note.id == note_id)
         )
@@ -43,14 +41,12 @@ class NoteRepository:
         stmt = (
             select(Note)
             .options(
-                joinedload(Note.trade).options(
-                    joinedload(Trade.asset),
-                    joinedload(Trade.tags),
-                    joinedload(Trade.mistakes),
-                    joinedload(Trade.playbook),
-                    joinedload(Trade.news_impacts),
-                    joinedload(Trade.psychology_states),
-                )
+                joinedload(Note.trade).joinedload(Trade.asset),
+                joinedload(Note.trade).joinedload(Trade.tags),
+                joinedload(Note.trade).joinedload(Trade.mistakes),
+                joinedload(Note.trade).joinedload(Trade.playbook),
+                joinedload(Note.trade).joinedload(Trade.news_impacts),
+                joinedload(Note.trade).joinedload(Trade.psychology_states),
             )
             .where(Note.folder_id == folder_id)
             .order_by(Note.updated_at.desc())
@@ -63,14 +59,12 @@ class NoteRepository:
         stmt = (
             select(Note)
             .options(
-                joinedload(Note.trade).options(
-                    joinedload(Trade.asset),
-                    joinedload(Trade.tags),
-                    joinedload(Trade.mistakes),
-                    joinedload(Trade.playbook),
-                    joinedload(Trade.news_impacts),
-                    joinedload(Trade.psychology_states),
-                )
+                joinedload(Note.trade).joinedload(Trade.asset),
+                joinedload(Note.trade).joinedload(Trade.tags),
+                joinedload(Note.trade).joinedload(Trade.mistakes),
+                joinedload(Note.trade).joinedload(Trade.playbook),
+                joinedload(Note.trade).joinedload(Trade.news_impacts),
+                joinedload(Note.trade).joinedload(Trade.psychology_states),
             )
             .where(Note.general_account_id == general_account_id)
             .order_by(Note.updated_at.desc())
