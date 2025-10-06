@@ -1,6 +1,6 @@
 from __future__ import annotations
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 class AssetClassBase(BaseModel):
@@ -15,5 +15,4 @@ class AssetClassUpdate(BaseModel):
 class AssetClassRead(AssetClassBase):
     id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

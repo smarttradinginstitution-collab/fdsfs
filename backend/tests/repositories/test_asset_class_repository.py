@@ -8,6 +8,7 @@ from app.Models.general_account import GeneralAccount
 from app.Models.trading_account import TradingAccount
 from app.Models.broker import Broker
 from app.Models.asset_class import AssetClass
+from app.Models.asset_market import AssetMarket
 from app.Models.asset import Asset
 from app.Models.trade import Trade
 from app.Models.broker_asset_class import BrokerAssetClass
@@ -57,8 +58,17 @@ async def test_delete_asset_class_cascades(db_session: AsyncSession):
     db_session.add(broker_asset_class)
     await db_session.flush()
 
+    # AssetMarket
+    asset_market = AssetMarket(name=f"Cascade Test Market {uuid4()}")
+    db_session.add(asset_market)
+    await db_session.flush()
+
     # Asset
-    asset = Asset(name="Test Asset", asset_class_id=asset_class.id)
+    asset = Asset(
+        name="Test Asset",
+        asset_class_id=asset_class.id,
+        asset_market_id=asset_market.id,
+    )
     db_session.add(asset)
     await db_session.flush()
 

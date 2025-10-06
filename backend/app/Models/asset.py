@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from app.Models.asset_class import AssetClass
     from app.Models.trade import Trade
     from app.Models.asset_alias import AssetAlias
-
+    from app.Models.asset_market import AssetMarket
 
 class Asset(Base):
     __tablename__ = "assets"
@@ -35,6 +35,11 @@ class Asset(Base):
         ForeignKey("public.asset_classes.id"),
         nullable=False,
     )
+    asset_market_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.asset_markets.id"),
+        nullable=False,
+    )
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
@@ -42,6 +47,9 @@ class Asset(Base):
     # Relazioni
     asset_class: Mapped["AssetClass"] = relationship(
         "AssetClass", back_populates="assets"
+    )
+    asset_market: Mapped["AssetMarket"] = relationship(
+        "AssetMarket", back_populates="assets"
     )
     trades: Mapped[list["Trade"]] = relationship("Trade", back_populates="asset")
     aliases: Mapped[list["AssetAlias"]] = relationship(

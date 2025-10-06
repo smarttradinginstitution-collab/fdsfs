@@ -8,6 +8,7 @@ from app.main import app
 from sqlalchemy import select
 from app.Models.asset import Asset
 from app.Models.asset_class import AssetClass
+from app.Models.asset_market import AssetMarket
 from app.Models.asset_alias import AssetAlias
 from app.Models.broker import Broker
 from app.Models.platform import Platform
@@ -59,9 +60,16 @@ def user_client(async_client: AsyncClient, regular_user: AuthUser) -> AsyncClien
 @pytest.fixture
 async def test_asset(db_session: AsyncSession) -> Asset:
     asset_class = AssetClass(name=f"Alias Dep Class {uuid4()}")
-    db_session.add(asset_class)
+    asset_market = AssetMarket(name=f"Alias Dep Market {uuid4()}")
+    db_session.add_all([asset_class, asset_market])
     await db_session.flush()
-    asset = Asset(symbol="ALIAS", name="Alias Asset", asset_class_id=asset_class.id)
+
+    asset = Asset(
+        symbol="ALIAS",
+        name="Alias Asset",
+        asset_class_id=asset_class.id,
+        asset_market_id=asset_market.id,
+    )
     db_session.add(asset)
     await db_session.commit()
     return asset

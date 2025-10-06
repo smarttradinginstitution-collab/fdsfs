@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
 from app.Repositories.asset_repository import AssetRepository
 from app.Repositories.asset_class_repository import AssetClassRepository
+from app.Repositories.asset_market_repository import AssetMarketRepository
 from app.Schemas.asset import AssetCreate, AssetRead, AssetUpdate
 
 class AssetController:
@@ -39,6 +40,14 @@ class AssetController:
                 detail=f"AssetClass with id '{asset.asset_class_id}' does not exist.",
             )
 
+        # Verify that asset_market_id exists
+        asset_market_repo = AssetMarketRepository(db)
+        if not await asset_market_repo.get(asset.asset_market_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"AssetMarket with id '{asset.asset_market_id}' does not exist.",
+            )
+
         return await asset_repo.create(asset)
 
     async def update_asset(self, asset_id: uuid.UUID, asset: AssetUpdate, db: AsyncSession = Depends(get_db)):
@@ -65,6 +74,15 @@ class AssetController:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"AssetClass with id '{asset.asset_class_id}' does not exist.",
+                )
+
+        # If asset_market_id is being updated, verify it exists
+        if asset.asset_market_id:
+            asset_market_repo = AssetMarketRepository(db)
+            if not await asset_market_repo.get(asset.asset_market_id):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"AssetMarket with id '{asset.asset_market_id}' does not exist.",
                 )
 
         updated_asset = await asset_repo.update(asset_id, asset)
