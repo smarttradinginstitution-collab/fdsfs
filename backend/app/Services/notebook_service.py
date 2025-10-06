@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from typing import List
 from app.Infrastructure.db import get_db
 from app.Repositories.notebook_folder_repository import NotebookFolderRepository
 from app.Repositories.note_repository import NoteRepository
