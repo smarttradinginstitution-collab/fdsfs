@@ -79,8 +79,14 @@ class NoteRepository:
         )
         self.db.add(db_note)
         await self.db.commit()
-        await self.db.refresh(db_note)
-        return db_note
+        # After committing, the note has an ID. We need to fetch it again
+        # using our eager-loading method to ensure all relationships are loaded
+        # before returning it to the service layer. This prevents lazy-loading errors.
+        newly_created_note = await self.get_by_id(db_note.id)
+        if not newly_created_note:
+             # This should theoretically never happen, but it's a safeguard.
+             raise Exception("Failed to fetch newly created note.")
+        return newly_created_note
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:
         """Update an existing note."""
