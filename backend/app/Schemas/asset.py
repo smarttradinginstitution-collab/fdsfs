@@ -7,7 +7,6 @@ class AssetBase(BaseModel):
     symbol: str = Field(min_length=1, max_length=10)
     name: str = Field(min_length=1, max_length=255)
     asset_class_id: UUID
-    market: Optional[str] = None
 
 class AssetCreate(AssetBase):
     pass
@@ -16,7 +15,6 @@ class AssetUpdate(BaseModel):
     symbol: Optional[str] = Field(default=None, min_length=1, max_length=10)
     name: Optional[str] = Field(default=None, min_length=1, max_length=255)
     asset_class_id: Optional[UUID] = None
-    market: Optional[str] = None
 
 class AssetRead(AssetBase):
     id: UUID
