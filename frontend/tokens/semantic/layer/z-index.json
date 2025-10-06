@@ -3,12 +3,12 @@
     "layer": {
       "z-index": {
         "overlay": {
-          "$value": 1000,
+          "$value": 5000,
           "$type": "number",
           "$comment": "Z-index for full-screen overlays, like the one behind a modal."
         },
         "modal": {
-          "$value": 1001,
+          "$value": 5001,
           "$type": "number",
           "$comment": "Z-index for modal dialogs, to ensure they appear above the overlay."
         },
