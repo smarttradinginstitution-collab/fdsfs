@@ -193,6 +193,15 @@ router_user_roles.delete(
 router.include_router(router_user_roles)
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🔬 REQUEST LOGS (protetto: admin)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import request_log_router
+
+router.include_router(
+    request_log_router.router
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📊 DASHBOARD (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 router_dashboard = APIRouter(

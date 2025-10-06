@@ -22,6 +22,7 @@ import ViewListIcon from '../icons/ViewListIcon.vue';
 import SparkleIcon from '../icons/SparkleIcon.vue';
 import SettingsIcon from '../icons/SettingsIcon.vue';
 import BookOpenIcon from '../icons/BookOpenIcon.vue';
+import ClockIcon from '../icons/ClockIcon.vue'; // <-- Importa la nuova icona
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -30,6 +31,7 @@ const authStore = useAuthStore();
 // --- DATI DEL COMPONENTE ---
 const user = computed(() => authStore.user);
 const isMfaActive = computed(() => authStore.isMfaActive);
+const isAdmin = computed(() => authStore.user?.roleName === 'admin');
 
 // Stato per la modale MFA
 const isMfaModalOpen = ref(false);
@@ -41,15 +43,23 @@ function openMfaModal(mode) {
 }
 
 // Dati per i link di navigazione.
-// Usare un array rende più facile gestire l'aggiunta di icone in futuro.
 const navLinks = [
   { to: '/', text: 'Dashboard', icon: ViewGridIcon },
   { to: '/playbooks', text: 'Playbooks', icon: BuildingLibraryIcon },
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
+  { to: '/admin/request-logs', text: 'Monitoring', icon: ClockIcon, adminOnly: true }, // <-- Nuovo link
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
+
+// Link visibili in base al ruolo dell'utente
+const visibleNavLinks = computed(() => {
+  if (isAdmin.value) {
+    return navLinks; // L'admin vede tutto
+  }
+  return navLinks.filter(link => !link.adminOnly);
+});
 </script>
 
 <template>
@@ -73,7 +83,7 @@ const navLinks = [
       seleziona un link, migliorando l'esperienza utente su mobile.
       -->
       <RouterLink
-        v-for="link in navLinks"
+        v-for="link in visibleNavLinks"
         :key="link.text"
         :to="link.to"
         class="nav-item"

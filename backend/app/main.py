@@ -7,12 +7,17 @@ from slowapi.errors import RateLimitExceeded
 from app.Router.routes import router
 from app.config import settings
 from app.Middleware.security_headers import SecurityHeadersMiddleware
+from app.Middleware.request_logging import RequestLoggingMiddleware
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title=settings.APP_NAME)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+# Middleware per il logging delle richieste. Deve essere tra i primi
+# per catturare l'intero tempo di elaborazione.
+app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(

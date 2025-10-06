@@ -20,7 +20,7 @@ from app.Models import (
     auth_user, role, tag, trade, trades_tags, user_dashboard_layout, user_role,
     general_account, trading_account, broker, asset, asset_class, mistake,
     playbook, news_impact, psychology_state, trades_mistakes,
-    trades_news_impacts, trades_psychology
+    trades_news_impacts, trades_psychology, request_log
 )
 from app.Models.auth_user import AuthUser
 
@@ -69,14 +69,28 @@ async def tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+@pytest.fixture(scope="session")
+def test_session_maker(engine):
+    """Factory for creating test database sessions."""
+    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
 @pytest.fixture
-async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(test_session_maker, tables) -> AsyncGenerator[AsyncSession, None]:
     """Fixture for an async db session."""
-    async_session_factory = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with async_session_factory() as session:
+    async with test_session_maker() as session:
         yield session
+
+
+@pytest.fixture(autouse=True)
+def override_session_local(mocker, test_session_maker):
+    """
+    Patches SessionLocal where it's used by the middleware to ensure it uses
+    the test database. This is crucial because middleware often does not use
+    the standard dependency injection flow for database sessions.
+    """
+    mocker.patch("app.Middleware.request_logging.SessionLocal", new=test_session_maker)
+
 
 # Fixture for a regular authenticated user client
 @pytest.fixture
@@ -99,8 +113,30 @@ async def admin_async_client(authenticated_client_factory):
 
 from contextlib import asynccontextmanager
 
+@pytest.fixture
+async def admin_role(db_session: AsyncSession) -> role.Role:
+    """
+    Ensures the 'admin' role exists and returns it. This fixture is crucial
+    to ensure that the admin role is created and committed before any user
+    that depends on it.
+    """
+    # Use a separate select to check for the role first.
+    stmt = select(role.Role).where(role.Role.name == "admin")
+    result = await db_session.execute(stmt)
+    admin_role_obj = result.scalar_one_or_none()
+
+    if not admin_role_obj:
+        # If the role doesn't exist, create it and commit immediately.
+        admin_role_obj = role.Role(name="admin", description="Administrator")
+        db_session.add(admin_role_obj)
+        await db_session.commit()
+        await db_session.refresh(admin_role_obj)
+
+    return admin_role_obj
+
+
 # Helper to create a user and return their claims
-async def create_test_user(db_session: AsyncSession, is_admin: bool) -> dict:
+async def create_test_user(db_session: AsyncSession, is_admin: bool, admin_role_obj: role.Role) -> dict:
     user_id = uuid.uuid4()
     user_type = 'admin' if is_admin else 'user'
     user_email = f"testuser_{user_type}_{uuid.uuid4()}@example.com"
@@ -109,23 +145,18 @@ async def create_test_user(db_session: AsyncSession, is_admin: bool) -> dict:
     db_session.add(user)
 
     if is_admin:
-        admin_role_result = await db_session.execute(select(role.Role).filter_by(name="admin"))
-        admin_role = admin_role_result.scalar_one_or_none()
-        if not admin_role:
-            admin_role = role.Role(name="admin", description="Administrator")
-            db_session.add(admin_role)
-            await db_session.flush()
-        user_admin_role = user_role.UserRole(user_id=user_id, role_id=admin_role.id)
+        user_admin_role = user_role.UserRole(user_id=user_id, role_id=admin_role_obj.id)
         db_session.add(user_admin_role)
 
     await db_session.commit()
     return {"sub": str(user_id), "email": user_email}
 
+
 @pytest.fixture
-async def authenticated_client_factory(db_session: AsyncSession):
+async def authenticated_client_factory(db_session: AsyncSession, admin_role: role.Role):
     @asynccontextmanager
     async def factory(is_admin: bool = False):
-        claims = await create_test_user(db_session, is_admin)
+        claims = await create_test_user(db_session, is_admin, admin_role)
 
         async def override_get_db():
             yield db_session

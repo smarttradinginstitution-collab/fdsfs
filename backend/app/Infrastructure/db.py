@@ -31,6 +31,7 @@ from app.Models.news_impact import NewsImpact
 from app.Models.playbook import Playbook
 from app.Models.psychology_state import PsychologyState
 from app.Models.role import Role
+from app.Models.request_log import RequestLog
 from app.Models.tag import Tag
 from app.Models.trade import Trade
 from app.Models.trading_account import TradingAccount

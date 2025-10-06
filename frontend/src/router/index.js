@@ -83,6 +83,12 @@ const router = createRouter({
       name: 'component-test',
       component: () => import('../views/ComponentTestView.vue'),
       meta: { title: 'Component Test' },
+    },
+    {
+      path: '/admin/request-logs',
+      name: 'request-logs',
+      component: () => import('../views/RequestLogsView.vue'),
+      meta: { title: 'Monitoraggio Richieste', requiresAdmin: true },
     }
   ],
 });
@@ -112,6 +118,12 @@ router.beforeEach(async (to, from, next) => {
   if (isAuthenticated) {
     // Redirect away from login page if already authenticated
     if (to.name === 'login') {
+      return next({ name: 'dashboard' });
+    }
+
+    // Protezione per le rotte che richiedono privilegi di amministratore
+    if (to.meta.requiresAdmin && authStore.user?.roleName !== 'admin') {
+      console.warn('Accesso negato: questa pagina richiede privilegi di amministratore. Ridirigendo alla dashboard.');
       return next({ name: 'dashboard' });
     }
 
