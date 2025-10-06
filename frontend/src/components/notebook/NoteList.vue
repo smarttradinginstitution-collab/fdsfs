@@ -316,10 +316,10 @@ const getPnlClass = (pnl) => {
 .pnl-value {
   font-weight: 600;
   &.is-positive {
-    color: var(--semantic-color-text-success);
+    color: var(--semantic-color-feedback-positive-text);
   }
   &.is-negative {
-    color: var(--semantic-color-text-danger);
+    color: var(--semantic-color-feedback-negative-text);
   }
 }
 
@@ -334,7 +334,7 @@ const getPnlClass = (pnl) => {
 .delete-button {
   background: none;
   border: none;
-  color: var(--semantic-color-text-secondary);
+  color: var(--semantic-color-feedback-negative-text);
   cursor: pointer;
   padding: 2px;
   border-radius: 50%;
