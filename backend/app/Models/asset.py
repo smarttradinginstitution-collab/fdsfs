@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from app.Models.asset_alias import AssetAlias
     from app.Models.asset_market import AssetMarket
 
-
 class Asset(Base):
     __tablename__ = "assets"
     __table_args__ = {"schema": "public"}

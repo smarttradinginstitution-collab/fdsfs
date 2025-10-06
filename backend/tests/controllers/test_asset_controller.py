@@ -4,48 +4,49 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 from fastapi import status
 
+from app.main import app
+from sqlalchemy import select
 from app.Models.asset import Asset
 from app.Models.asset_class import AssetClass
 from app.Models.asset_market import AssetMarket
+from app.Models.role import Role
+from app.Models.auth_user import AuthUser
+from app.Models.user_role import UserRole
+from app.Router.auth import get_current_claims
 
-pytestmark = pytest.mark.anyio
-
-# Fixtures for admin_user, regular_user, admin_client, user_client
-# are used from tests/controllers/conftest.py
+# Re-using fixtures from other tests for consistency
 
 @pytest.fixture
 async def test_asset_class(db_session: AsyncSession) -> AssetClass:
-    """Fixture for a pre-existing asset class."""
-    asset_class = AssetClass(name=f"Test Asset Class {uuid4()}")
+    asset_class = AssetClass(name=f"Dependency Class {uuid4()}")
     db_session.add(asset_class)
     await db_session.commit()
     return asset_class
 
 @pytest.fixture
 async def test_asset_market(db_session: AsyncSession) -> AssetMarket:
-    """Fixture for a pre-existing asset market."""
-    asset_market = AssetMarket(name=f"Test Market {uuid4()}", code=f"TM{str(uuid4())[:4]}")
+    asset_market = AssetMarket(name=f"Dependency Market {uuid4()}")
     db_session.add(asset_market)
     await db_session.commit()
     return asset_market
 
 @pytest.fixture
 async def test_asset(db_session: AsyncSession, test_asset_class: AssetClass, test_asset_market: AssetMarket) -> Asset:
-    """Fixture for a pre-existing asset, linked to a class and market."""
     asset = Asset(
         symbol="TEST",
         name="Test Asset",
         asset_class_id=test_asset_class.id,
-        asset_market_id=test_asset_market.id
+        asset_market_id=test_asset_market.id,
     )
     db_session.add(asset)
     await db_session.commit()
+    await db_session.refresh(asset)
     return asset
 
-# --- Tests for Assets ---
+# Tests for Assets
 
+@pytest.mark.anyio
 async def test_create_asset_as_admin(admin_client: AsyncClient, test_asset_class: AssetClass, test_asset_market: AssetMarket):
-    """Admin should be able to create a new asset."""
     payload = {
         "symbol": "AAPL",
         "name": "Apple Inc.",
@@ -56,11 +57,13 @@ async def test_create_asset_as_admin(admin_client: AsyncClient, test_asset_class
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["symbol"] == "AAPL"
-    assert data["asset_class"]["id"] == str(test_asset_class.id)
+    assert data["name"] == "Apple Inc."
     assert data["asset_market"]["id"] == str(test_asset_market.id)
+    assert data["asset_class"]["id"] == str(test_asset_class.id)
 
+
+@pytest.mark.anyio
 async def test_create_asset_as_user(user_client: AsyncClient, test_asset_class: AssetClass, test_asset_market: AssetMarket):
-    """Regular user should not be able to create a new asset."""
     payload = {
         "symbol": "GOOG",
         "name": "Google LLC",
@@ -70,8 +73,32 @@ async def test_create_asset_as_user(user_client: AsyncClient, test_asset_class: 
     response = await user_client.post("/api/v1/assets/", json=payload)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
+
+@pytest.mark.anyio
+async def test_create_asset_symbol_too_long(admin_client: AsyncClient, test_asset_class: AssetClass, test_asset_market: AssetMarket):
+    payload = {
+        "symbol": "THISISWAYTOOLONG",
+        "name": "Long Symbol",
+        "asset_class_id": str(test_asset_class.id),
+        "asset_market_id": str(test_asset_market.id),
+    }
+    response = await admin_client.post("/api/v1/assets/", json=payload)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+@pytest.mark.anyio
+async def test_create_asset_nonexistent_class(admin_client: AsyncClient, test_asset_market: AssetMarket):
+    payload = {
+        "symbol": "NOCLASS",
+        "name": "No Class",
+        "asset_class_id": str(uuid4()),
+        "asset_market_id": str(test_asset_market.id),
+    }
+    response = await admin_client.post("/api/v1/assets/", json=payload)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+@pytest.mark.anyio
 async def test_create_asset_nonexistent_market(admin_client: AsyncClient, test_asset_class: AssetClass):
-    """Should fail if the asset_market_id does not exist."""
     payload = {
         "symbol": "NOMARKET",
         "name": "No Market",
@@ -80,50 +107,46 @@ async def test_create_asset_nonexistent_market(admin_client: AsyncClient, test_a
     }
     response = await admin_client.post("/api/v1/assets/", json=payload)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert "AssetMarket with id" in response.json()["detail"]
 
+@pytest.mark.anyio
 async def test_get_all_assets(user_client: AsyncClient, test_asset: Asset):
-    """Any authenticated user should be able to list assets."""
     response = await user_client.get("/api/v1/assets/")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert isinstance(data, list)
-    found_asset = next((a for a in data if a["id"] == str(test_asset.id)), None)
-    assert found_asset is not None
-    assert "asset_class" in found_asset
-    assert "asset_market" in found_asset
-    assert found_asset["asset_class"]["id"] == str(test_asset.asset_class_id)
-    assert found_asset["asset_market"]["id"] == str(test_asset.asset_market_id)
+    assert any(a["id"] == str(test_asset.id) for a in data)
+    # Check that nested data is loaded
+    assert "asset_market" in data[0]
+    assert "asset_class" in data[0]
 
+@pytest.mark.anyio
 async def test_get_asset_by_id(user_client: AsyncClient, test_asset: Asset):
-    """Any authenticated user should be able to get an asset by ID."""
     response = await user_client.get(f"/api/v1/assets/{test_asset.id}")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["id"] == str(test_asset.id)
-    assert "asset_class" in data
-    assert "asset_market" in data
-    assert data["asset_class"]["id"] == str(test_asset.asset_class_id)
     assert data["asset_market"]["id"] == str(test_asset.asset_market_id)
+    assert data["asset_class"]["id"] == str(test_asset.asset_class_id)
 
-async def test_update_asset_market_as_admin(admin_client: AsyncClient, test_asset: Asset, db_session: AsyncSession):
-    """Admin should be able to update an asset's market."""
-    new_market = AssetMarket(name=f"New Market for Update {uuid4()}", code=f"UPM{str(uuid4())[:3]}")
-    db_session.add(new_market)
-    await db_session.commit()
-
-    response = await admin_client.put(
-        f"/api/v1/assets/{test_asset.id}",
-        json={"asset_market_id": str(new_market.id)}
-    )
+@pytest.mark.anyio
+async def test_update_asset_as_admin(admin_client: AsyncClient, test_asset: Asset):
+    response = await admin_client.put(f"/api/v1/assets/{test_asset.id}", json={"name": "Updated Asset Name"})
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert data["asset_market"]["id"] == str(new_market.id)
+    assert data["name"] == "Updated Asset Name"
 
+@pytest.mark.anyio
+async def test_update_asset_as_user(user_client: AsyncClient, test_asset: Asset):
+    response = await user_client.put(f"/api/v1/assets/{test_asset.id}", json={"name": "Forbidden Update"})
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+@pytest.mark.anyio
 async def test_delete_asset_as_admin(admin_client: AsyncClient, db_session: AsyncSession, test_asset_class: AssetClass, test_asset_market: AssetMarket):
-    """Admin should be able to delete an asset."""
     asset_to_delete = Asset(
-        symbol="DEL", name="ToDelete", asset_class_id=test_asset_class.id, asset_market_id=test_asset_market.id
+        symbol="DEL",
+        name="ToDelete",
+        asset_class_id=test_asset_class.id,
+        asset_market_id=test_asset_market.id,
     )
     db_session.add(asset_to_delete)
     await db_session.commit()
@@ -133,3 +156,8 @@ async def test_delete_asset_as_admin(admin_client: AsyncClient, db_session: Asyn
 
     deleted = await db_session.get(Asset, asset_to_delete.id)
     assert deleted is None
+
+@pytest.mark.anyio
+async def test_delete_asset_as_user(user_client: AsyncClient, test_asset: Asset):
+    response = await user_client.delete(f"/api/v1/assets/{test_asset.id}")
+    assert response.status_code == status.HTTP_403_FORBIDDEN

@@ -1,10 +1,9 @@
 from __future__ import annotations
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
-
-from app.Schemas.asset_market import AssetMarketRead
-from app.Schemas.asset_class import AssetClassRead
+from .asset_market import AssetMarketRead
+from .asset_class import AssetClassRead
 
 class AssetBase(BaseModel):
     symbol: str = Field(min_length=1, max_length=10)
@@ -26,5 +25,4 @@ class AssetRead(AssetBase):
     asset_class: AssetClassRead
     asset_market: AssetMarketRead
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

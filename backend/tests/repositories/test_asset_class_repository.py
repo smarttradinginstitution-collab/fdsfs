@@ -53,18 +53,22 @@ async def test_delete_asset_class_cascades(db_session: AsyncSession):
     db_session.add(asset_class)
     await db_session.flush()
 
-    # AssetMarket
-    asset_market = AssetMarket(name=f"Test Market {uuid4()}", code=f"TM{str(uuid4())[:4]}")
-    db_session.add(asset_market)
-    await db_session.flush()
-
     # Link Broker and AssetClass
     broker_asset_class = BrokerAssetClass(broker_id=broker.id, asset_class_id=asset_class.id)
     db_session.add(broker_asset_class)
     await db_session.flush()
 
+    # AssetMarket
+    asset_market = AssetMarket(name=f"Cascade Test Market {uuid4()}")
+    db_session.add(asset_market)
+    await db_session.flush()
+
     # Asset
-    asset = Asset(name="Test Asset", asset_class_id=asset_class.id, asset_market_id=asset_market.id)
+    asset = Asset(
+        name="Test Asset",
+        asset_class_id=asset_class.id,
+        asset_market_id=asset_market.id,
+    )
     db_session.add(asset)
     await db_session.flush()
 

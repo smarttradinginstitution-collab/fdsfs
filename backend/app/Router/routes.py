@@ -248,6 +248,7 @@ from app.Router import asset_market_router
 
 router.include_router(
     asset_market_router.router,
+    prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
 

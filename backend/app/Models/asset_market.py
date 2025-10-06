@@ -1,13 +1,15 @@
-import uuid
-from datetime import datetime
-from typing import List
-
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import Column, String, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy.orm import relationship
 from app.Infrastructure.db import Base
+from typing import TYPE_CHECKING, List
 
+if TYPE_CHECKING:
+    from app.Models.asset import Asset  # noqa: F401
+
+import uuid
+from sqlalchemy import TIMESTAMP
+from sqlalchemy.orm import Mapped, mapped_column
 
 class AssetMarket(Base):
     __tablename__ = "asset_markets"
@@ -16,14 +18,9 @@ class AssetMarket(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    code: Mapped[str] = mapped_column(String, unique=True, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    created_at: Mapped[str] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # Relationships
     assets: Mapped[List["Asset"]] = relationship("Asset", back_populates="asset_market")
-
-    def __repr__(self) -> str:
-        return f"<AssetMarket(id={self.id}, name='{self.name}', code='{self.code}')>"

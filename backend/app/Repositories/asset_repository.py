@@ -51,8 +51,8 @@ class AssetRepository:
         db_asset = Asset(**asset.model_dump())
         self.db.add(db_asset)
         await self.db.commit()
-        await self.db.refresh(db_asset)
-        return db_asset
+        # Re-fetch to load relationships
+        return await self.get(db_asset.id)
 
     async def update(self, asset_id: uuid.UUID, asset_update: AssetUpdate) -> Optional[Asset]:
         db_asset = await self.get(asset_id)
@@ -61,8 +61,9 @@ class AssetRepository:
             for key, value in update_data.items():
                 setattr(db_asset, key, value)
             await self.db.commit()
-            await self.db.refresh(db_asset)
-        return db_asset
+            # Re-fetch to load relationships
+            return await self.get(asset_id)
+        return None
 
     async def delete(self, asset_id: uuid.UUID) -> bool:
         db_asset = await self.get(asset_id)
