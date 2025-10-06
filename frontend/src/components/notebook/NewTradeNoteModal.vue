@@ -1,6 +1,6 @@
 <template>
   <BaseModal
-    :is-open="isOpen"
+    :show="isOpen"
     title="Create New Trade Note"
     @close="$emit('close')"
   >
