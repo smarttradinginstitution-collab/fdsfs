@@ -83,6 +83,15 @@ class NotebookService:
     async def create_folder(self, folder_in: NotebookFolderCreate, user_id: UUID) -> NotebookFolder:
         """Create a new folder for the user."""
         general_account_id = await self._get_general_account_id(user_id)
+        # Check for uniqueness
+        existing_folder = await self.folder_repo.find_by_name_and_account(
+            name=folder_in.name, general_account_id=general_account_id
+        )
+        if existing_folder:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A folder with the name '{folder_in.name}' already exists.",
+            )
         return await self.folder_repo.create(folder_in, general_account_id)
 
     async def update_folder(
@@ -130,6 +139,16 @@ class NotebookService:
         """Create a new note, ensuring the parent folder belongs to the user."""
         general_account_id = await self._get_general_account_id(user_id)
         await self.get_folder(note_in.folder_id, user_id)
+
+        # Check for uniqueness of trade_id
+        if note_in.trade_id:
+            existing_note = await self.note_repo.get_by_trade_id(note_in.trade_id)
+            if existing_note:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"A note for trade '{note_in.trade_id}' already exists.",
+                )
+
         return await self.note_repo.create(note_in, general_account_id)
 
     async def update_note(self, note_id: UUID, note_in: NoteUpdate, user_id: UUID) -> Note:
