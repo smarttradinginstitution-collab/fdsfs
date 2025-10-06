@@ -259,7 +259,7 @@ const getPnlClass = (pnl) => {
 }
 
 .note-list-container {
-  padding: var(--semantic-size-inset-md);
+  padding: var(--semantic-size-inset-sm);
   height: 100%;
   width: 100%;
 }
@@ -270,12 +270,12 @@ const getPnlClass = (pnl) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-inset-sm);
+  gap: var(--semantic-size-inset-xs);
 }
 
 .note-item {
   padding: var(--semantic-size-inset-md);
-  border: 1px solid var(--semantic-color-border-default);
+  border-bottom: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
@@ -293,7 +293,7 @@ const getPnlClass = (pnl) => {
 .note-title {
   font: var(--semantic-font-style-heading-sm);
   color: var(--semantic-color-text-primary);
-  margin-bottom: var(--semantic-size-inset-xs);
+  margin-bottom: var(--semantic-size-inset-xxs);
 }
 
 .note-preview {
