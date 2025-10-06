@@ -7,9 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Infrastructure.db import get_db
 from app.Repositories.notebook_folder_repository import NotebookFolderRepository
 from app.Repositories.note_repository import NoteRepository
+from app.Repositories.trade_repository import TradeRepository
+from app.Repositories.trade_repository import TradeRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Models.notebook_folder import NotebookFolder
 from app.Models.note import Note
+from app.Models.trade import Trade
+from app.Models.trade import Trade
 from app.Models.enums import FolderType, SystemFolderIdentifier
 from app.Schemas.notebook import (
     NotebookFolderCreate,
@@ -34,6 +38,7 @@ class NotebookService:
         self.folder_repo = NotebookFolderRepository(db)
         self.note_repo = NoteRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
+        self.trade_repo = TradeRepository(db)
 
     async def _get_general_account_id(self, user_id: UUID) -> UUID:
         """Helper to get the general_account_id for a user."""
@@ -127,10 +132,37 @@ class NotebookService:
         return note
 
     async def create_note(self, note_in: NoteCreate, user_id: UUID) -> Note:
-        """Create a new note, ensuring the parent folder belongs to the user."""
+        """
+        Create a new note. If a trade_id is provided, it validates the trade
+        and establishes a bidirectional one-to-one relationship.
+        """
         general_account_id = await self._get_general_account_id(user_id)
-        await self.get_folder(note_in.folder_id, user_id)
-        return await self.note_repo.create(note_in, general_account_id)
+        await self.get_folder(note_in.folder_id, user_id)  # Authorization check
+
+        if note_in.trade_id:
+            trade = await self.trade_repo.get_trade_by_id_simple(note_in.trade_id)
+            if not trade or trade.trading_account.general_account_id != general_account_id:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Trade not found or does not belong to the user.",
+                )
+            if trade.note_id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This trade is already linked to another note.",
+                )
+
+        new_note = await self.note_repo.create(note_in, general_account_id)
+
+        if new_note.trade_id:
+            # Fetch the trade again to ensure it's in the current session
+            trade_to_update = await self.trade_repo.get_trade_by_id_simple(new_note.trade_id)
+            if trade_to_update:
+                trade_to_update.note_id = new_note.id
+                self.db.add(trade_to_update)
+                await self.db.commit()
+
+        return new_note
 
     async def update_note(self, note_id: UUID, note_in: NoteUpdate, user_id: UUID) -> Note:
         """Update a note, ensuring it belongs to the user."""

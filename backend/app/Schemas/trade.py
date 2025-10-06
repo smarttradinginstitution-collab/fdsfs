@@ -82,6 +82,7 @@ class TradeRead(TradeBase):
     id: UUID
     created_at: datetime
     trading_account_id: UUID
+    note_id: Optional[UUID] = None # For 1-to-1 relationship check
 
     gross_p_l: Optional[float] = None
     fees: Optional[float] = None

@@ -36,6 +36,7 @@ class Note(Base):
         UUID(as_uuid=True),
         ForeignKey("public.trades.id", ondelete="SET NULL"),
         nullable=True,
+        unique=True,  # Enforce one-to-one relationship
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
     content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
@@ -59,4 +60,4 @@ class Note(Base):
     general_account: Mapped["GeneralAccount"] = relationship(
         "GeneralAccount", back_populates="notes"
     )
-    trade: Mapped[Optional["Trade"]] = relationship("Trade", back_populates="notes")
+    trade: Mapped[Optional["Trade"]] = relationship("Trade", back_populates="note")

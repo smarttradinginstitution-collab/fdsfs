@@ -69,6 +69,11 @@ class Trade(Base):
         ForeignKey("public.playbooks.id"),
         nullable=True
     )
+    note_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.notes.id", ondelete="SET NULL"),
+        nullable=True
+    )
 
 # Core trade data
     gross_p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
@@ -142,7 +147,9 @@ class Trade(Base):
     psychology_states: Mapped[list["PsychologyState"]] = relationship(
         "PsychologyState", secondary="public.trades_psychology", back_populates="trades"
     )
-    notes: Mapped[list["Note"]] = relationship("Note", back_populates="trade")
+    note: Mapped[Optional["Note"]] = relationship(
+        "Note", back_populates="trade", uselist=False
+    )
     rules_followed: Mapped[List["RulePlaybook"]] = relationship(
         "RulePlaybook",
         secondary=trades_rules_association,

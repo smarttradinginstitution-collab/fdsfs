@@ -37,13 +37,19 @@
               :key="trade.id"
               @click="selectTrade(trade)"
               class="trade-row"
-              :class="{ 'is-selected': selectedTrade && selectedTrade.id === trade.id }"
+              :class="{
+                'is-selected': selectedTrade && selectedTrade.id === trade.id,
+                'is-linked': trade.note_id,
+              }"
             >
               <td>{{ trade.asset?.symbol ?? 'N/A' }}</td>
               <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
               <td>{{ formatCurrency(trade.p_l) }}</td>
-              <td>
-                <BaseButton variant="secondary" size="small">Link</BaseButton>
+              <td class="action-cell">
+                <div v-if="trade.note_id" class="linked-icon-container">
+                  <CheckCircleIcon class="linked-icon" />
+                </div>
+                <BaseButton v-else variant="secondary" size="small">Link</BaseButton>
               </td>
             </tr>
           </tbody>
@@ -63,7 +69,7 @@ import { ref, watch } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseModal from '../ui/BaseModal.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import { LinkIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { LinkIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
 import { formatCurrency } from '../../services/formatters';
 
 const props = defineProps({
@@ -92,6 +98,7 @@ const toggleTradeLink = () => {
 };
 
 const selectTrade = (trade) => {
+  if (trade.note_id) return; // Prevent selecting already linked trades
   selectedTrade.value = trade;
   showTrades.value = false; // Hide table after selection
 };
@@ -131,10 +138,6 @@ const handleSave = () => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-inset-lg);
-}
-
-.title-input {
-  margin-bottom: var(--semantic-size-inset-sm);
 }
 
 .button-link-trade {
@@ -205,7 +208,8 @@ const handleSave = () => {
   border-collapse: collapse;
   font: var(--semantic-font-style-body-sm);
 
-  th, td {
+  th,
+  td {
     padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-xs);
     text-align: left;
     border-bottom: 1px solid var(--semantic-color-border-default);
@@ -214,6 +218,10 @@ const handleSave = () => {
   th {
     color: var(--semantic-color-text-secondary);
     font-weight: 600;
+  }
+
+  .action-cell {
+    text-align: center;
   }
 
   .trade-row {
@@ -225,6 +233,19 @@ const handleSave = () => {
     &.is-selected {
       background-color: var(--semantic-color-surface-selected);
     }
+    &.is-linked {
+      cursor: not-allowed;
+      opacity: 0.6;
+      &:hover {
+        background-color: transparent;
+      }
+    }
   }
+}
+
+.linked-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--semantic-color-text-success);
 }
 </style>
