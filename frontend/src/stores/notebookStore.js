@@ -124,7 +124,6 @@ export const useNotebookStore = defineStore('notebook', {
     // --- NOTE ACTIONS ---
 
     async fetchNotesForFolder(folderId) {
-      console.log(`[DEBUG] store: fetchNotesForFolder triggered for folderId: ${folderId}. Setting isLoadingNotes = true.`);
       this.isLoadingNotes = true;
       this.error = null;
       try {
@@ -135,13 +134,11 @@ export const useNotebookStore = defineStore('notebook', {
         this.error = err.response?.data?.detail || 'Failed to fetch notes.';
         this.notes = [];
       } finally {
-        console.log('[DEBUG] store: fetchNotesForFolder finished. Setting isLoadingNotes = false.');
         this.isLoadingNotes = false;
       }
     },
 
     async fetchAllNotes() {
-      console.log('[DEBUG] store: fetchAllNotes triggered. Setting isLoadingNotes = true.');
       this.isLoadingNotes = true;
       this.error = null;
       try {
@@ -152,13 +149,11 @@ export const useNotebookStore = defineStore('notebook', {
         this.error = err.response?.data?.detail || 'Failed to fetch all notes.';
         this.notes = [];
       } finally {
-        console.log('[DEBUG] store: fetchAllNotes finished. Setting isLoadingNotes = false.');
         this.isLoadingNotes = false;
       }
     },
 
     async createNote(noteData) {
-        console.log('[DEBUG] store: createNote triggered. Setting isLoadingNotes = true.');
         this.isLoadingNotes = true;
         try {
             const response = await apiClient.post('/notebook/notes', noteData);
@@ -178,13 +173,11 @@ export const useNotebookStore = defineStore('notebook', {
             this.error = err.response?.data?.detail || 'Failed to create note.';
             throw err;
         } finally {
-            console.log('[DEBUG] store: createNote finished. Setting isLoadingNotes = false.');
             this.isLoadingNotes = false;
         }
     },
 
     async updateNote(noteId, noteData) {
-      console.log(`[DEBUG] store: updateNote triggered for noteId: ${noteId}. This should NOT change isLoadingNotes.`);
       // This action is now "silent" - it doesn't trigger a global loading state.
       // This prevents the entire list from flickering during auto-saves.
       try {
@@ -197,12 +190,9 @@ export const useNotebookStore = defineStore('notebook', {
         // If the note is found in the current list, update it directly.
         // This is the key change to prevent re-fetching the whole list.
         if (index !== -1) {
-          console.log(`[DEBUG] store: updateNote found note at index ${index}. Updating local state.`);
           // To ensure reactivity, we replace the item.
           // We merge to preserve any local-only properties if they existed.
           this.notes[index] = { ...this.notes[index], ...updatedNote };
-        } else {
-          console.log(`[DEBUG] store: updateNote did NOT find note with id ${noteId} in local state.`);
         }
 
         return updatedNote;
@@ -215,7 +205,6 @@ export const useNotebookStore = defineStore('notebook', {
     },
 
     async deleteNote(noteId) {
-        console.log('[DEBUG] store: deleteNote triggered. Setting isLoadingNotes = true.');
         this.isLoadingNotes = true;
         try {
             await apiClient.delete(`/notebook/notes/${noteId}`);
@@ -228,7 +217,6 @@ export const useNotebookStore = defineStore('notebook', {
             this.error = err.response?.data?.detail || 'Failed to delete note.';
             throw err;
         } finally {
-            console.log('[DEBUG] store: deleteNote finished. Setting isLoadingNotes = false.');
             this.isLoadingNotes = false;
         }
     },

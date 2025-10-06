@@ -55,14 +55,12 @@ watch(note, (newNote) => {
 
 const saveNote = async () => {
     if (!editor.value || !note.value) return;
-    console.log(`[DEBUG] NoteEditor: saveNote triggered for noteId: ${note.value.id}. Status: Saving...`);
     saveStatus.value = 'Saving...';
     try {
         await store.updateNote(note.value.id, {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
-        console.log(`[DEBUG] NoteEditor: saveNote successful for noteId: ${note.value.id}. Status: Saved!`);
         saveStatus.value = 'Saved!';
         // Clear the status message after a couple of seconds
         setTimeout(() => {

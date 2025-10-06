@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
@@ -133,10 +133,6 @@ const store = useNotebookStore();
 const logDayDate = ref(null);
 const sessionRecapDate = ref(null);
 const isNewTradeNoteModalOpen = ref(false);
-
-watch(() => store.isLoadingNotes, (newValue, oldValue) => {
-  console.log(`[DEBUG] NoteList: isLoadingNotes changed from ${oldValue} to ${newValue}.`);
-});
 
 const filteredNotes = computed(() => {
   if (!props.searchQuery) {
