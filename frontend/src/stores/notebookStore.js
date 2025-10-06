@@ -104,6 +104,36 @@ export const useNotebookStore = defineStore('notebook', {
 
     // --- NOTE ACTIONS ---
 
+    async fetchAllNotes() {
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get('/notebook/notes/all');
+        this.notes = response.data;
+      } catch (err) {
+        console.error('Error fetching all notes:', err);
+        this.error = err.response?.data?.detail || 'Failed to fetch all notes.';
+        this.notes = [];
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
+    async fetchAllNotes() {
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get('/notebook/notes/all');
+        this.notes = response.data;
+      } catch (err) {
+        console.error('Error fetching all notes:', err);
+        this.error = err.response?.data?.detail || 'Failed to fetch all notes.';
+        this.notes = [];
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
     async fetchNotesForFolder(folderId) {
       this.isLoadingNotes = true;
       this.error = null;
@@ -212,13 +242,100 @@ export const useNotebookStore = defineStore('notebook', {
       }
     },
 
+    async logSession(startDate, endDate) {
+      if (!this.selectedFolderId) {
+        const err = 'No folder selected. Please select a folder first.';
+        this.error = err;
+        console.error(err);
+        throw new Error(err);
+      }
+
+      const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const noteTitle = `Recap: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+      try {
+        const newNote = await this.createNote({
+          folder_id: this.selectedFolderId,
+          title: noteTitle,
+          content: { type: 'doc', content: [{ type: 'paragraph' }] },
+        });
+
+        if (newNote && newNote.id) {
+          this.selectNote(newNote.id);
+        }
+      } catch (err) {
+        this.error = 'Could not create the session recap note.';
+        throw err;
+      }
+    },
+
+    async logSession(startDate, endDate) {
+      if (!this.selectedFolderId) {
+        const err = 'No folder selected. Please select a folder first.';
+        this.error = err;
+        console.error(err);
+        throw new Error(err);
+      }
+
+      const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const noteTitle = `Recap: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+      try {
+        const newNote = await this.createNote({
+          folder_id: this.selectedFolderId,
+          title: noteTitle,
+          content: { type: 'doc', content: [{ type: 'paragraph' }] },
+        });
+
+        if (newNote && newNote.id) {
+          this.selectNote(newNote.id);
+        }
+      } catch (err) {
+        this.error = 'Could not create the session recap note.';
+        throw err;
+      }
+    },
+
+    async logSession(startDate, endDate) {
+      if (!this.selectedFolderId) {
+        const err = 'No folder selected. Please select a folder first.';
+        this.error = err;
+        console.error(err);
+        throw new Error(err);
+      }
+
+      const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const noteTitle = `Recap: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+      try {
+        const newNote = await this.createNote({
+          folder_id: this.selectedFolderId,
+          title: noteTitle,
+          content: { type: 'doc', content: [{ type: 'paragraph' }] },
+        });
+
+        if (newNote && newNote.id) {
+          this.selectNote(newNote.id);
+        }
+      } catch (err) {
+        this.error = 'Could not create the session recap note.';
+        throw err;
+      }
+    },
+
     // --- SELECTION ACTIONS ---
 
     selectFolder(folderId) {
       if (this.selectedFolderId !== folderId) {
         this.selectedFolderId = folderId;
         this.selectedNoteId = null;
-        this.fetchNotesForFolder(folderId);
+
+        const folder = this.folders.find(f => f.id === folderId);
+        if (folder && folder.name === 'All Notes') {
+          this.fetchAllNotes();
+        } else {
+          this.fetchNotesForFolder(folderId);
+        }
       }
     },
 

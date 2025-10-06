@@ -19,6 +19,7 @@ class NoteBase(BaseModel):
 class NoteCreate(NoteBase):
     folder_id: UUID = Field(..., description="The ID of the folder this note belongs to")
     title: str = Field(..., description="The title of the note is required for creation")
+    trade_id: Optional[UUID] = Field(None, description="The optional ID of the trade this note is linked to")
 
 class NoteUpdate(NoteBase):
     pass

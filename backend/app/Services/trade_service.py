@@ -207,6 +207,20 @@ class TradeService:
 
         return [TradeRead.from_orm(trade) for trade in trades]
 
+    async def list_recent_trades_for_account(self, claims: dict, limit: int = 20) -> List[TradeRead]:
+        """
+        Elenca gli ultimi 'limit' trade per l'account generale dell'utente.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
+
+        trades = await self.repo.list_recent_by_general_account_id(
+            general_account_id=general_account.id, limit=limit
+        )
+        return [TradeRead.from_orm(trade) for trade in trades]
+
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
         """Aggiorna un trade esistente e ricalcola le metriche se necessario."""
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)

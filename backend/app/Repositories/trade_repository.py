@@ -55,6 +55,26 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def list_recent_by_general_account_id(
+        self, general_account_id: UUID, limit: int = 20
+    ) -> List[Trade]:
+        """
+        Elenca gli ultimi 'limit' trade per un dato general account,
+        ordinati per data di ingresso.
+        """
+        # This requires a join from Trade -> TradingAccount to filter by general_account_id
+        from app.Models.trading_account import TradingAccount
+
+        query = (
+            self._get_trade_query()
+            .join(TradingAccount, Trade.trading_account_id == TradingAccount.id)
+            .where(TradingAccount.general_account_id == general_account_id)
+            .order_by(Trade.entry_timestamp.desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def get_filtered_trades(
         self,
         trading_account_id: UUID,

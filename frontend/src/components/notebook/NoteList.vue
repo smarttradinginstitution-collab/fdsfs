@@ -1,25 +1,51 @@
 <template>
   <BaseWidget class="note-list-widget">
-    <!-- Header: Log Day -->
+    <!-- Header: Conditional Buttons -->
     <template #header>
       <div class="header-content">
+        <!-- "New Note" for Trade Notes folder -->
+        <button v-if="headerType === 'new_note'" @click="isTradeNoteModalOpen = true" class="action-button">
+          <PencilSquareIcon class="icon" />
+          <span>New Note</span>
+        </button>
+
+        <!-- "Log Day" for Daily Journal and User folders -->
         <VueDatePicker
+          v-if="headerType === 'log_day'"
           v-model="logDayDate"
           @update:model-value="handleLogDay"
           :enable-time-picker="false"
           auto-apply
           dark
           :teleport="true"
-          placeholder="Log Day"
-          class="log-day-picker"
         >
           <template #trigger>
-            <button class="log-day-button">
+            <button class="action-button">
               <CalendarDaysIcon class="icon" />
               <span>Log Day</span>
             </button>
           </template>
         </VueDatePicker>
+
+        <!-- "Log Session" for Session Recap folder -->
+        <VueDatePicker
+          v-if="headerType === 'session_recap'"
+          v-model="sessionDateRange"
+          @update:model-value="handleLogSession"
+          range
+          :enable-time-picker="false"
+          auto-apply
+          dark
+          :teleport="true"
+        >
+          <template #trigger>
+            <button class="action-button">
+              <CalendarDaysIcon class="icon" />
+              <span>Log Session</span>
+            </button>
+          </template>
+        </VueDatePicker>
+        <!-- No header for "All Notes" -->
       </div>
     </template>
 
@@ -28,7 +54,6 @@
       <div v-if="store.selectedFolder">
         <div v-if="store.isLoadingNotes" class="loading-spinner">Loading notes...</div>
         <div v-else-if="store.error" class="error-message">{{ store.error }}</div>
-
         <ul v-else-if="filteredNotes.length > 0" class="notes">
           <li
             v-for="note in filteredNotes"
@@ -52,13 +77,19 @@
         </div>
         <div v-else class="empty-state">
           <p>This folder is empty.</p>
-          <p>Click "Log Day" to create a new entry.</p>
         </div>
       </div>
       <div v-else class="empty-state-no-folder">
         <p>Select a folder to see your notes.</p>
       </div>
     </div>
+
+    <!-- Modals -->
+    <TradeNoteModal
+      :is-open="isTradeNoteModalOpen"
+      @close="isTradeNoteModalOpen = false"
+      @create="handleCreateTradeNote"
+    />
   </BaseWidget>
 </template>
 
@@ -67,8 +98,9 @@ import { ref, computed } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
+import TradeNoteModal from './TradeNoteModal.vue';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { TrashIcon, CalendarDaysIcon } from '@heroicons/vue/24/outline';
+import { TrashIcon, CalendarDaysIcon, PencilSquareIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   searchQuery: {
@@ -79,6 +111,16 @@ const props = defineProps({
 
 const store = useNotebookStore();
 const logDayDate = ref(null);
+const sessionDateRange = ref(null);
+const isTradeNoteModalOpen = ref(false);
+
+const headerType = computed(() => {
+  const folderName = store.selectedFolder?.name;
+  if (!folderName || folderName === 'All Notes') return 'none';
+  if (folderName === 'Trade Notes') return 'new_note';
+  if (folderName === 'Session Recap') return 'session_recap';
+  return 'log_day'; // Default for Daily Journal and user folders
+});
 
 const filteredNotes = computed(() => {
   if (!props.searchQuery) {
@@ -97,15 +139,42 @@ const selectNote = (noteId) => {
 
 const handleLogDay = async (date) => {
   if (!date || !store.selectedFolderId) {
-    // Maybe show a toast notification here to select a folder first
     alert('Please select a folder before logging a day.');
     return;
   }
   try {
     await store.logDay(date);
-    logDayDate.value = null; // Reset picker
+    logDayDate.value = null;
   } catch (error) {
     console.error('Error logging day from component:', error);
+  }
+};
+
+const handleCreateTradeNote = async (noteData) => {
+  if (!store.selectedFolderId) return;
+  try {
+    await store.createNote({
+      ...noteData,
+      folder_id: store.selectedFolderId,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+    });
+    isTradeNoteModalOpen.value = false;
+  } catch (error) {
+    console.error('Failed to create trade note:', error);
+  }
+};
+
+const handleLogSession = async (dateRange) => {
+  if (!dateRange || dateRange.length < 2 || !store.selectedFolderId) {
+    alert('Please select a date range for the session recap.');
+    return;
+  }
+  const [startDate, endDate] = dateRange;
+  try {
+    await store.logSession(startDate, endDate);
+    sessionDateRange.value = null;
+  } catch (error) {
+    console.error('Error logging session from component:', error);
   }
 };
 

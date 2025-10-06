@@ -94,6 +94,14 @@ async def get_trade_summary(
 
 
 # --- CRUD Trades ---
+@router.get("/recent", response_model=List[TradeRead])
+async def list_recent_trades(
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.list_recent_trades(claims, service)
+
+
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)
 async def create_trade(
     trade_data: TradeCreate,

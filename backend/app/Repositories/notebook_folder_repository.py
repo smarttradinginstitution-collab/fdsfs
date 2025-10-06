@@ -69,15 +69,21 @@ class NotebookFolderRepository:
 
 
     async def create(
-        self, folder_in: NotebookFolderCreate, general_account_id: UUID
+        self,
+        folder_in: NotebookFolderCreate,
+        general_account_id: UUID,
+        folder_type: FolderType = FolderType.USER,
     ) -> NotebookFolder:
-        """Create a new folder."""
+        """Create a new folder, allowing to specify the folder type."""
         db_folder = NotebookFolder(
-            **folder_in.model_dump(), general_account_id=general_account_id
+            **folder_in.model_dump(),
+            general_account_id=general_account_id,
+            folder_type=folder_type,
         )
         self.db.add(db_folder)
         await self.db.commit()
         await self.db.refresh(db_folder)
+        # get_by_id also fetches the note_count, which is useful.
         return await self.get_by_id(db_folder.id)
 
     async def update(
