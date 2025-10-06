@@ -38,10 +38,26 @@
           </ul>
         </div>
 
-        <!-- Other Links -->
+        <!-- My Notes Section -->
         <div class="nav-section">
-          <a href="#" class="nav-item">My notes</a>
-          <a href="#" class="nav-item">Tags</a>
+          <button @click="toggleMyNotes" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !myNotesOpen }" />
+            <span>My notes</span>
+          </button>
+          <div v-if="myNotesOpen" class="placeholder-content">
+            <p>Notes content...</p>
+          </div>
+        </div>
+
+        <!-- Tags Section -->
+        <div class="nav-section">
+          <button @click="toggleTags" class="section-header">
+            <ChevronDownIcon class="chevron-icon" :class="{ 'is-rotated': !tagsOpen }" />
+            <span>Tags</span>
+          </button>
+          <div v-if="tagsOpen" class="placeholder-content">
+            <p>Tags content...</p>
+          </div>
         </div>
       </nav>
 
@@ -75,9 +91,19 @@ import { TrashIcon, FolderIcon, ChevronDownIcon } from '@heroicons/vue/24/outlin
 const store = useNotebookStore();
 const isAddFolderModalOpen = ref(false);
 const foldersOpen = ref(true);
+const myNotesOpen = ref(false);
+const tagsOpen = ref(false);
 
 const toggleFolders = () => {
   foldersOpen.value = !foldersOpen.value;
+};
+
+const toggleMyNotes = () => {
+  myNotesOpen.value = !myNotesOpen.value;
+};
+
+const toggleTags = () => {
+  tagsOpen.value = !tagsOpen.value;
 };
 
 const selectFolder = (folderId) => {
@@ -193,6 +219,13 @@ const handleCreateFolder = async (folderData) => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-inset-xs);
+}
+
+.placeholder-content {
+  padding: var(--semantic-size-inset-xs) 0;
+  padding-left: calc(1rem + var(--semantic-size-inset-xs)); // Align with folder text
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-disabled);
 }
 
 .folder-item {
