@@ -17,7 +17,7 @@
           <span>{{ selectedTrade ? 'Change Linked Trade' : 'Link to a Trade' }}</span>
         </button>
         <div v-if="selectedTrade" class="linked-trade-info">
-          <span>Linked to: {{ selectedTrade.asset.symbol }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
+          <span>Linked to: {{ selectedTrade.asset?.symbol ?? 'N/A' }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
           <button @click="clearSelectedTrade" class="clear-button">
             <XMarkIcon class="icon" />
           </button>
