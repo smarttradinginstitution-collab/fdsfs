@@ -1,6 +1,6 @@
 # app/Repositories/request_log_repository.py
 from typing import Sequence, Optional
-from sqlalchemy import select, delete, asc, desc
+from sqlalchemy import select, delete, asc, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.request_log import RequestLog
 
