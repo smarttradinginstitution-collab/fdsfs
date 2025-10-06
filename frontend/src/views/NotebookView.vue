@@ -59,7 +59,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--header-height));
-  background-color: var(--semantic-color-surface-primary);
   border-top: 1px solid var(--semantic-color-border-default);
 }
 
