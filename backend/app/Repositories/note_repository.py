@@ -36,6 +36,12 @@ class NoteRepository:
         result = await self.db.execute(stmt)
         return result.unique().scalars().first()
 
+    async def get_by_trade_id(self, trade_id: UUID) -> Note | None:
+        """Get a note by its trade_id."""
+        stmt = select(Note).where(Note.trade_id == trade_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def list_by_folder_id(self, folder_id: UUID) -> Sequence[Note]:
         """List all notes for a given folder, including related trades and all sub-relationships."""
         stmt = (

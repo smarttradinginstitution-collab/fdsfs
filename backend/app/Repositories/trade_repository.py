@@ -58,17 +58,41 @@ class TradeRepository:
 
     async def list_recent_by_general_account_id(
         self, general_account_id: UUID, limit: int = 20
-    ) -> List[Trade]:
-        """Lists the most recent trades for a given general account."""
+    ) -> List[tuple[Trade, bool]]:
+        """
+        Lists the most recent trades for a given general account,
+        and includes a boolean indicating if each trade is linked to a note.
+        """
+        from app.Models.note import Note
+        from sqlalchemy import exists
+
+        # Correlated subquery to check if a note exists for the trade.
+        has_note_subquery = (
+            select(Note.id).where(Note.trade_id == Trade.id).exists()
+        ).label("is_linked_to_note")
+
+        # The main query selects the Trade object and the boolean result of the subquery.
+        # It's crucial to retain the eager loading options for related entities.
         query = (
-            self._get_trade_query()
+            select(Trade, has_note_subquery)
+            .options(
+                joinedload(Trade.tags),
+                joinedload(Trade.mistakes),
+                joinedload(Trade.playbook),
+                joinedload(Trade.news_impacts),
+                joinedload(Trade.psychology_states),
+                joinedload(Trade.asset),
+            )
             .join(Trade.trading_account)
             .where(TradingAccount.general_account_id == general_account_id)
             .order_by(Trade.entry_timestamp.desc())
             .limit(limit)
         )
         result = await self.db.execute(query)
-        return result.unique().scalars().all()
+
+        # .unique() is mandatory here because the eager loads on collections (e.g., tags)
+        # can cause duplicate rows in the result set. This was the cause of the error.
+        return result.unique().all()
 
     async def get_filtered_trades(
         self,
