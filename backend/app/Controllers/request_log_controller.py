@@ -28,18 +28,15 @@ class RequestLogController:
         if sort_order.lower() not in ["asc", "desc"]:
             raise HTTPException(status_code=400, detail="Parametro 'sort_order' non valido.")
 
-        # Esegui le query per i dati e il conteggio totale in parallelo
-        import asyncio
-        logs_task = repo.list(
+        # Esegui le query in sequenza per evitare conflitti sulla stessa connessione db
+        total_count = await repo.count(status_code_filter=status_code_filter)
+        logs = await repo.list(
             offset=offset,
             limit=limit,
             sort_by=sort_by,
             sort_order=sort_order,
             status_code_filter=status_code_filter,
         )
-        count_task = repo.count(status_code_filter=status_code_filter)
-
-        logs, total_count = await asyncio.gather(logs_task, count_task)
 
         return PaginatedRequestLogResponse(total=total_count, data=logs)
 
