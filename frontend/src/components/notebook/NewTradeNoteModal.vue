@@ -45,7 +45,7 @@
               class="trade-row"
               :class="{ 'is-selected': selectedTrade && selectedTrade.id === trade.id }"
             >
-              <td>{{ trade.asset.symbol }}</td>
+              <td>{{ trade.asset?.symbol ?? 'N/A' }}</td>
               <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
               <td>{{ formatCurrency(trade.p_l) }}</td>
               <td>
