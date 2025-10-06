@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.Models.note import Note
-from app.Models.trade import Trade # Import the Trade model
+from app.Models.notebook_folder import NotebookFolder
+from app.Models.trade import Trade  # Import the Trade model
 from app.Schemas.notebook import NoteCreate, NoteUpdate
 
 
@@ -20,10 +21,11 @@ class NoteRepository:
         self.db = db
 
     async def get_by_id(self, note_id: UUID) -> Note | None:
-        """Get a note by its ID, including its related trade and all sub-relationships."""
+        """Get a note by its ID, including its related folder, trade, and all sub-relationships."""
         stmt = (
             select(Note)
             .options(
+                joinedload(Note.folder),  # Eager load the folder relationship
                 joinedload(Note.trade).joinedload(Trade.asset),
                 joinedload(Note.trade).joinedload(Trade.tags),
                 joinedload(Note.trade).joinedload(Trade.mistakes),
@@ -60,10 +62,16 @@ class NoteRepository:
         res = await self.db.execute(stmt)
         return res.unique().scalars().all()
 
-    async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[Note]:
-        """List all notes for a given general account, including related trades and all sub-relationships."""
+    async def list_by_general_account_id(
+        self, general_account_id: UUID
+    ) -> Sequence[Note]:
+        """
+        List all notes for a given general account by joining through folders,
+        including related trades and all sub-relationships.
+        """
         stmt = (
             select(Note)
+            .join(Note.folder)
             .options(
                 joinedload(Note.trade).joinedload(Trade.asset),
                 joinedload(Note.trade).joinedload(Trade.tags),
@@ -72,17 +80,15 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
             )
-            .where(Note.general_account_id == general_account_id)
+            .where(NotebookFolder.general_account_id == general_account_id)
             .order_by(Note.updated_at.desc())
         )
         res = await self.db.execute(stmt)
         return res.unique().scalars().all()
 
-    async def create(self, note_in: NoteCreate, general_account_id: UUID) -> Note:
+    async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
-        db_note = Note(
-            **note_in.model_dump(), general_account_id=general_account_id
-        )
+        db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
         await self.db.commit()
         # After committing, the note has an ID. We need to fetch it again

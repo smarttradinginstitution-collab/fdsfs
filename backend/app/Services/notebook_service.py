@@ -129,7 +129,8 @@ class NotebookService:
         """Get a specific note, ensuring it belongs to the user."""
         general_account_id = await self._get_general_account_id(user_id)
         note = await self.note_repo.get_by_id(note_id)
-        if not note or note.general_account_id != general_account_id:
+        # The folder is eager-loaded by the repository's get_by_id method
+        if not note or not note.folder or note.folder.general_account_id != general_account_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Note not found"
             )
@@ -137,7 +138,8 @@ class NotebookService:
 
     async def create_note(self, note_in: NoteCreate, user_id: UUID) -> Note:
         """Create a new note, ensuring the parent folder belongs to the user."""
-        general_account_id = await self._get_general_account_id(user_id)
+        # The `get_folder` call ensures that the folder belongs to the user,
+        # which implicitly confirms ownership.
         await self.get_folder(note_in.folder_id, user_id)
 
         # Check for uniqueness of trade_id
@@ -149,7 +151,7 @@ class NotebookService:
                     detail=f"A note for trade '{note_in.trade_id}' already exists.",
                 )
 
-        return await self.note_repo.create(note_in, general_account_id)
+        return await self.note_repo.create(note_in)
 
     async def update_note(self, note_id: UUID, note_in: NoteUpdate, user_id: UUID) -> Note:
         """Update a note, ensuring it belongs to the user."""

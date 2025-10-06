@@ -27,11 +27,6 @@ class Note(Base):
         ForeignKey("public.notebook_folders.id", ondelete="CASCADE"),
         nullable=False,
     )
-    general_account_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
-        nullable=False,
-    )
     trade_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.trades.id", ondelete="SET NULL"),
@@ -55,8 +50,5 @@ class Note(Base):
     # Relationships
     folder: Mapped["NotebookFolder"] = relationship(
         "NotebookFolder", back_populates="notes"
-    )
-    general_account: Mapped["GeneralAccount"] = relationship(
-        "GeneralAccount", back_populates="notes"
     )
     trade: Mapped[Optional["Trade"]] = relationship("Trade", back_populates="notes")
