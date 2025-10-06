@@ -49,7 +49,7 @@
               <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
               <td>{{ formatCurrency(trade.p_l) }}</td>
               <td>
-                <BaseButton variant="secondary" size="sm">Link</BaseButton>
+                <BaseButton variant="secondary" size="small">Link</BaseButton>
               </td>
             </tr>
           </tbody>
