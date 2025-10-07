@@ -390,7 +390,7 @@ onBeforeUnmount(() => {
     transition: background-color 0.2s;
 }
 .button-save {
-    background-color: var(--semantic-color-interactive-primary-.default);
+    background-color: var(--semantic-color-interactive-primary-default);
     color: white;
     border-color: transparent;
 }
