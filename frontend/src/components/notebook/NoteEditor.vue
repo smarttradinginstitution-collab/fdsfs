@@ -6,17 +6,17 @@
     <!-- Metadata Header -->
     <div class="metadata-header">
       <div class="meta-item">
-        <strong>Created:</strong> {{ formatDate(note.created_at) }}
+        Created: {{ formatDate(note.created_at) }}
       </div>
       <div class="meta-item">
-        <strong>Updated:</strong> {{ formatDate(note.updated_at) }}
+        Updated: {{ formatDate(note.updated_at) }}
       </div>
     </div>
 
     <!-- P&L and Actions Display -->
     <div class="pnl-container" v-if="financialData">
       <div class="pnl-display">
-        <strong>Net P&L:</strong>
+        <strong>Net P&L: </strong>
         <span :class="pnlClass(financialData?.net_pnl)">
           {{ formatCurrency(financialData?.net_pnl) }}
         </span>
@@ -226,6 +226,9 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 .note-editor-container {
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-interactive);
+  background: var(--semantic-color-surface-primary);
   padding: 1rem;
   height: 100%;
   display: flex;
@@ -234,7 +237,7 @@ onBeforeUnmount(() => {
 }
 
 .title-input {
-    font-size: 1.8rem; /* Larger title */
+    font: var(--semantic-font-style-heading-xl);
     font-weight: bold;
     background: transparent;
     border: none;
@@ -250,9 +253,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--semantic-color-text-secondary);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .meta-item strong {
