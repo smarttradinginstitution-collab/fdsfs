@@ -138,7 +138,7 @@ const handleImageUpload = async (event) => {
     });
 
     if (response.data.url && editor.value) {
-      editor.value.chain().focus().setImage({ src: response.data.url }).run();
+      editor.value.chain().focus().setResizableImage({ src: response.data.url }).run();
       uiStore.showNotification({ message: 'Image uploaded!', type: 'success', size: 'small' });
     }
   } catch (error) {
