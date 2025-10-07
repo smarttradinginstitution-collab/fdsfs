@@ -1,196 +1,16 @@
-<script setup>
-import { ref, watch, onBeforeUnmount, computed } from 'vue';
-import { useEditor, EditorContent } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import TextAlign from '@tiptap/extension-text-align';
-import FontFamily from '@tiptap/extension-font-family';
-import { TextStyle } from '@tiptap/extension-text-style';
-import { Color } from '@tiptap/extension-color';
-import Highlight from '@tiptap/extension-highlight';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
-import { FontSize } from '@/utils/tiptap/FontSize.js';
-
-// Custom UI Components
-import ToolbarDropdown from '../ui/ToolbarDropdown.vue';
-import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
-
-// Icons
-import {
-  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon
-} from '@heroicons/vue/24/solid';
-
-// Store and other components
-import { useNotebookStore } from '../../stores/notebookStore';
-import DailyPnlChart from '../dashboard/widgets/charts/DailyPnlChart.vue';
-
-const store = useNotebookStore();
-const note = computed(() => store.selectedNote);
-const financialData = computed(() => store.financialData);
-const folder = computed(() => store.selectedNoteFolder);
-
-const isTradeNoteFolder = computed(() => folder.value?.system_folder_identifier === 'TRADE_NOTES');
-const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
-
-const editableTitle = ref(note.value ? note.value.title : '');
-const saveStatus = ref('');
-
-const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
-const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
-
-const editor = useEditor({
-  content: note.value ? note.value.content : '',
-  extensions: [
-    StarterKit.configure({
-      heading: { levels: [1, 2, 3, 4, 5, 6] },
-      link: {
-        openOnClick: false,
-      },
-    }),
-    TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    FontFamily,
-    TextStyle,
-    Color,
-    Highlight.configure({ multicolor: true }),
-    TaskList,
-    TaskItem.configure({ nested: true }),
-    FontSize,
-  ],
-  editorProps: {
-    attributes: { class: 'prose prose-invert focus:outline-none' },
-  },
-});
-
-// --- Toolbar Logic ---
-const headingItems = computed(() => [
-  { label: 'Paragraph', value: 0, isActive: () => editor.value.isActive('paragraph') },
-  ...[1, 2, 3, 4, 5, 6].map(level => ({
-    label: `Heading ${level}`,
-    value: level,
-    isActive: () => editor.value.isActive('heading', { level }),
-  })),
-]);
-
-const fontFamilyItems = computed(() => fontFamilies.map(font => ({
-  label: font.split(',')[0],
-  value: font,
-  isActive: () => editor.value.isActive('textStyle', { fontFamily: font }),
-})));
-
-const fontSizeItems = computed(() => fontSizes.map(size => ({
-  label: `${size.replace('px', '')}px`,
-  value: size,
-  isActive: () => editor.value.isActive('textStyle', { fontSize: size }),
-})));
-
-const activeHeading = computed({
-  get: () => headingItems.value.find(item => item.isActive())?.value ?? 0,
-  set: (value) => {
-    if (value === 0) editor.value.chain().focus().setParagraph().run();
-    else editor.value.chain().focus().toggleHeading({ level: value }).run();
-  },
-});
-
-const activeFontFamily = computed({
-  get: () => fontFamilyItems.value.find(item => item.isActive())?.value ?? fontFamilies[0],
-  set: (value) => editor.value.chain().focus().setFontFamily(value).run(),
-});
-
-const activeFontSize = computed({
-  get: () => fontSizeItems.value.find(item => item.isActive())?.value ?? '16px',
-  set: (value) => editor.value.chain().focus().setFontSize(value).run(),
-});
-
-const textColor = computed({
-    get: () => editor.value?.getAttributes('textStyle').color || '#000000',
-    set: (value) => editor.value.chain().focus().setColor(value).run(),
-});
-
-const highlightColor = computed({
-    get: () => editor.value?.getAttributes('highlight').color || 'transparent',
-    set: (value) => editor.value.chain().focus().toggleHighlight({ color: value }).run(),
-});
-
-const setLink = () => {
-  const url = window.prompt('URL', editor.value.getAttributes('link').href);
-  if (url === null) return;
-  if (url === '') {
-    editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
-  } else {
-    editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }
-};
-
-// --- Core Component Logic ---
-function debounce(fn, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
-
-const formatDate = (dateString) => new Date(dateString).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-const formatCurrency = (value) => typeof value === 'number' ? value.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : 'N/A';
-const formatPercentage = (value) => typeof value === 'number' ? `${(value * 100).toFixed(2)}%` : 'N/A';
-const pnlClass = (pnl) => typeof pnl !== 'number' ? 'pnl-neutral' : (pnl >= 0 ? 'pnl-positive' : 'pnl-negative');
-const formattedPnl = (pnl) => {
-  if (pnl == null) return '$0.00';
-  const sign = pnl >= 0 ? '+' : '-';
-  return `${sign}$${Math.abs(pnl).toFixed(2)}`;
-};
-
-const statsGrid = computed(() => {
-  if (!financialData.value?.stats) return null;
-  const { stats } = financialData.value;
-  return {
-    col1: [{ label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${stats.win_rate.toFixed(1)}%` }],
-    col2: [{ label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }],
-    col3: [{ label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true }, { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true }],
-    col4: [{ label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label }],
-  };
-});
-
-const saveNote = async () => {
-  if (!editor.value || !note.value) return;
-  saveStatus.value = 'Saving...';
-  try {
-    await store.updateNote(note.value.id, { title: editableTitle.value, content: editor.value.getJSON() });
-    saveStatus.value = 'Saved!';
-    setTimeout(() => { saveStatus.value = ''; }, 2000);
-  } catch (error) {
-    console.error("Failed to save note:", error);
-    saveStatus.value = 'Error!';
-  }
-};
-
-const debouncedSave = debounce(saveNote, 1500);
-
-watch(note, (newNote) => {
-  if (newNote && editor.value) {
-    editableTitle.value = newNote.title;
-    if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-      editor.value.commands.setContent(newNote.content, false);
-    }
-  }
-}, { deep: true });
-
-watch([editableTitle, () => editor.value?.getHTML()], () => {
-  debouncedSave();
-}, { deep: true });
-
-onBeforeUnmount(() => {
-  if (editor.value) editor.value.destroy();
-});
-</script>
-
 <template>
-  <div v-if="note && editor" class="note-editor-container">
+  <div v-if="note" class="note-editor-container">
+    <!-- Note Title -->
     <input v-model="editableTitle" class="title-input" />
 
+    <!-- Metadata Header -->
     <div class="metadata-header">
-      <div class="meta-item">Created: {{ formatDate(note.created_at) }}</div>
-      <div class="meta-item">Updated: {{ formatDate(note.updated_at) }}</div>
+      <div class="meta-item">
+        Created: {{ formatDate(note.created_at) }}
+      </div>
+      <div class="meta-item">
+        Updated: {{ formatDate(note.updated_at) }}
+      </div>
     </div>
 
     <!-- P&L and Actions Display -->
@@ -242,8 +62,10 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- Editor Content -->
     <div class="editor-header-actions">
        <span class="save-status">{{ saveStatus }}</span>
+       <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
     </div>
 
     <div class="tiptap-wrapper">
@@ -280,6 +102,245 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
+<script setup>
+import { ref, watch, onBeforeUnmount, computed } from 'vue';
+import { useEditor, EditorContent } from '@tiptap/vue-3';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import FontFamily from '@tiptap/extension-font-family';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import { FontSize } from '@/utils/tiptap/FontSize.js';
+
+// Custom UI Components
+import ToolbarDropdown from '../ui/ToolbarDropdown.vue';
+import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
+
+// Icons
+import {
+  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon
+} from '@heroicons/vue/24/solid';
+
+// Store and other components
+import { useNotebookStore } from '../../stores/notebookStore';
+import DailyPnlChart from '../dashboard/widgets/charts/DailyPnlChart.vue';
+
+const store = useNotebookStore();
+const note = computed(() => store.selectedNote);
+const financialData = computed(() => store.financialData);
+const folder = computed(() => store.selectedNoteFolder);
+
+const isTradeNoteFolder = computed(() => folder.value?.system_folder_identifier === 'TRADE_NOTES');
+const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
+
+const editableTitle = ref(note.value ? note.value.title : '');
+const saveStatus = ref('');
+
+const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
+const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
+
+const editor = useEditor({
+  content: note.value ? note.value.content : '',
+  extensions: [
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3, 4, 5, 6] },
+      link: { openOnClick: false },
+    }),
+    Underline,
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    FontFamily,
+    TextStyle,
+    Color,
+    Highlight.configure({ multicolor: true }),
+    TaskList,
+    TaskItem.configure({ nested: true }),
+    FontSize,
+  ],
+  editorProps: {
+    attributes: { class: 'prose prose-invert focus:outline-none' },
+  },
+});
+
+// --- Toolbar Logic ---
+const headingItems = computed(() => [
+  { label: 'Paragraph', value: 0, isActive: () => editor.value.isActive('paragraph') },
+  ...[1, 2, 3, 4, 5, 6].map(level => ({
+    label: `Heading ${level}`, value: level, isActive: () => editor.value.isActive('heading', { level }),
+  })),
+]);
+
+const fontFamilyItems = computed(() => fontFamilies.map(font => ({
+  label: font.split(',')[0], value: font, isActive: () => editor.value.isActive('textStyle', { fontFamily: font }),
+})));
+
+const fontSizeItems = computed(() => fontSizes.map(size => ({
+  label: `${size.replace('px', '')}px`, value: size, isActive: () => editor.value.isActive('textStyle', { fontSize: size }),
+})));
+
+const activeHeading = computed({
+  get: () => headingItems.value.find(item => item.isActive())?.value ?? 0,
+  set: (value) => {
+    if (value === 0) editor.value.chain().focus().setParagraph().run();
+    else editor.value.chain().focus().toggleHeading({ level: value }).run();
+  },
+});
+
+const activeFontFamily = computed({
+  get: () => fontFamilyItems.value.find(item => item.isActive())?.value ?? fontFamilies[0],
+  set: (value) => editor.value.chain().focus().setFontFamily(value).run(),
+});
+
+const activeFontSize = computed({
+  get: () => fontSizeItems.value.find(item => item.isActive())?.value ?? '16px',
+  set: (value) => editor.value.chain().focus().setFontSize(value).run(),
+});
+
+const textColor = computed({
+  get: () => editor.value?.getAttributes('textStyle').color || '#000000',
+  set: (value) => editor.value.chain().focus().setColor(value).run(),
+});
+
+const highlightColor = computed({
+  get: () => editor.value?.getAttributes('highlight').color || 'transparent',
+  set: (value) => editor.value.chain().focus().toggleHighlight({ color: value }).run(),
+});
+
+const setLink = () => {
+  const url = window.prompt('URL', editor.value.getAttributes('link').href);
+  if (url === null) return;
+  if (url === '') editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
+  else editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+};
+
+// --- Core Component Logic ---
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+// Helper functions for formatting
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatCurrency = (value) => {
+  if (typeof value !== 'number') return 'N/A';
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
+};
+
+const formatPercentage = (value) => {
+    if (typeof value !== 'number') return 'N/A';
+    return `${(value * 100).toFixed(2)}%`;
+};
+
+const pnlClass = (pnl) => {
+  if (typeof pnl !== 'number') return 'pnl-neutral';
+  return pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+};
+
+const formattedPnl = (pnl) => {
+    if (pnl === null || pnl === undefined) return '$0.00';
+    const sign = pnl >= 0 ? '+' : '-';
+    return `${sign}$${Math.abs(pnl).toFixed(2)}`;
+};
+
+const statsGrid = computed(() => {
+    if (!financialData.value || !financialData.value.stats) return null;
+    const stats = financialData.value.stats;
+    return {
+        col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${stats.win_rate.toFixed(1)}%` } ],
+        col2: [ { label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }, ],
+        col3: [
+          { label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
+          { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true },
+        ],
+        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
+    };
+});
+
+watch(note, (newNote) => {
+  if (newNote && editor.value) {
+    editableTitle.value = newNote.title;
+    if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
+        editor.value.commands.setContent(newNote.content, false);
+    }
+  }
+}, { deep: true });
+
+const saveNote = async () => {
+    if (!editor.value || !note.value) return;
+    saveStatus.value = 'Saving...';
+    try {
+        await store.updateNote(note.value.id, {
+            title: editableTitle.value,
+            content: editor.value.getJSON(),
+        });
+        saveStatus.value = 'Saved!';
+        // Clear the status message after a couple of seconds
+        setTimeout(() => {
+            saveStatus.value = '';
+        }, 2000);
+    } catch (error) {
+        console.error("Failed to save note:", error);
+        saveStatus.value = 'Error!';
+    }
+};
+
+const debouncedSave = debounce(saveNote, 1500);
+
+watch(editableTitle, (newTitle) => {
+    if (note.value && newTitle !== note.value.title) {
+        debouncedSave();
+    }
+});
+
+watch(() => editor.value?.getHTML(), (newContent, oldContent) => {
+    // Trigger save only on actual changes
+    if (newContent !== oldContent && note.value) {
+        debouncedSave();
+    }
+}, { deep: true });
+
+
+const saveAsTemplate = async () => {
+    if (!editor.value || !note.value) return;
+    if (confirm("Save the current content as the template for this folder? This will overwrite any existing template.")) {
+        try {
+            await store.saveFolderTemplate({
+                folderId: note.value.folder_id,
+                templateContent: editor.value.getJSON(),
+            });
+            // Optionally, show a success toast
+        } catch (error) {
+            console.error("Failed to save template:", error);
+        }
+    }
+};
+
+onBeforeUnmount(() => {
+  if (editor.value) {
+    editor.value.destroy();
+  }
+});
+</script>
+
 <style lang="scss">
 .note-editor-container {
   border: 1px solid var(--semantic-color-border-default);
@@ -289,20 +350,20 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1rem; /* Add gap between all flex children */
 }
 
 .title-input {
-  font: var(--semantic-font-style-heading-xl);
-  font-weight: bold;
-  background: transparent;
-  border: none;
-  color: var(--semantic-color-text-primary);
-  padding: 0.25rem 0;
-  &:focus {
-    outline: none;
-    box-shadow: 0 1px 0 var(--semantic-color-border-focus);
-  }
+    font: var(--semantic-font-style-heading-xl);
+    font-weight: bold;
+    background: transparent;
+    border: none;
+    color: var(--semantic-color-text-primary);
+    padding: 0.25rem 0;
+    &:focus {
+        outline: none;
+        box-shadow: 0 1px 0 var(--semantic-color-border-focus);
+    }
 }
 
 .metadata-header {
@@ -311,6 +372,11 @@ onBeforeUnmount(() => {
   gap: 1rem;
   font-size: 0.8rem;
   color: var(--semantic-color-text-secondary);
+  flex-wrap: nowrap;
+}
+
+.meta-item strong {
+  color: var(--semantic-color-text-primary);
 }
 
 .pnl-container {
@@ -343,6 +409,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 1rem;
+  padding: 1rem;
 }
 
 .detail-card {
@@ -358,6 +425,44 @@ onBeforeUnmount(() => {
 .detail-card span {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);
+}
+
+.editor-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Align save status to the right */
+    gap: 0.5rem;
+}
+
+.save-status {
+    font-size: 0.875rem;
+    color: var(--semantic-color-text-secondary);
+    min-width: 80px; // Reserve space to prevent layout shift
+    text-align: right;
+}
+
+.button-save, .button-cancel, .button-secondary {
+    padding: 0.5rem 1rem;
+    border-radius: var(--semantic-border-radius-interactive);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
+}
+
+.button-save {
+    background-color: var(--semantic-color-interactive-primary-default);
+    color: white;
+    border-color: transparent;
+}
+
+.button-cancel, .button-secondary {
+    background-color: var(--semantic-color-surface-secondary);
+    color: var(--semantic-color-text-primary);
+    border-color: var(--semantic-color-border-default);
+}
+
+.button-cancel:hover, .button-secondary:hover {
+    background-color: var(--semantic-color-surface-tertiary);
 }
 
 .details-button {
@@ -377,15 +482,22 @@ onBeforeUnmount(() => {
   }
 }
 
-.daily-summary-container {
-  padding: var(--semantic-size-inset-sm);
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-gap-md);
+.tiptap-editor {
+    flex-grow: 1;
+    border: 1px solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-interactive);
+    padding: 1rem;
+    overflow-y: auto;
 }
 
-.chart-section {
-  min-height: 150px;
+/* Tiptap default styles override */
+.prose {
+    max-width: none;
+}
+
+/* Daily Summary Styles */
+.daily-summary-container {
+  padding: var(--semantic-size-inset-sm);
 }
 
 .stats-section {
@@ -463,24 +575,13 @@ onBeforeUnmount(() => {
   }
 }
 
-.editor-header-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.save-status {
-  font-size: 0.875rem;
-  color: var(--semantic-color-text-secondary);
-}
-
 .tiptap-wrapper {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* To apply radius to children */
+  overflow: hidden;
 }
 
 .tiptap-editor {
