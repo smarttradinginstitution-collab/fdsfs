@@ -18,6 +18,7 @@ from app.Schemas.analytics import (
     EquityCurveData,
     TradeSummary,
     TradeFinancialSummary,
+    DailySummary,
 )
 
 
@@ -97,6 +98,18 @@ class TradesController:
         summary = await service.get_financial_summary(claims, trade_id)
         # The service layer handles the 404 for the trade itself.
         return summary
+
+    async def get_daily_summary(
+        self,
+        trading_account_id: UUID,
+        day: date,
+        service: AnalyticsService,
+    ) -> DailySummary:
+        """
+        Handles the request for a full daily summary.
+        Delegates to the analytics service.
+        """
+        return await service.get_daily_summary(trading_account_id, day)
 
     # --- CRUD Trades ---
     async def create_trade(

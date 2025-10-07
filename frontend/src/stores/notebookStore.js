@@ -362,7 +362,7 @@ export const useNotebookStore = defineStore('notebook', {
       else if (folder.system_folder_identifier === 'DAILY_JOURNAL' && this.selectedNote.note_date) {
         const tradingAccountsStore = useTradingAccountsStore();
         const accountId = tradingAccountsStore.selectedTradingAccount?.id;
-        
+
         if (!accountId) {
           this.financialData = { error: 'No trading account selected.' };
           return;
@@ -371,23 +371,19 @@ export const useNotebookStore = defineStore('notebook', {
         const dateStr = this.selectedNote.note_date; // Directly use the reliable date field
 
         try {
-            const response = await apiClient.get(`/trades/calendar/data/${accountId}`, {
-                params: {
-                    start_date: dateStr,
-                    end_date: dateStr,
-                    user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                }
-            });
-            const dayData = response.data[0];
-            if (dayData) {
-                // Standardize the output to match the financial_summary structure
-                this.financialData = { net_pnl: dayData.pnl };
-            } else {
-                this.financialData = { net_pnl: 0 }; // Day with no trades
-            }
+          // Call the new, more detailed daily summary endpoint
+          const response = await apiClient.get(`/trades/daily-summary/${accountId}/${dateStr}`);
+          const summary = response.data;
+
+          // The response.data has the shape { stats, cumulative_pnl_series, trades }
+          // We add net_pnl to the top level for backward compatibility with the pnl-display component
+          this.financialData = {
+            ...summary,
+            net_pnl: summary.stats.net_pnl,
+          };
         } catch (err) {
-            console.error(`Error fetching calendar PNL for date ${dateStr}:`, err);
-            this.financialData = { error: 'Could not load daily PNL.' };
+          console.error(`Error fetching daily summary for date ${dateStr}:`, err);
+          this.financialData = { error: 'Could not load daily summary.' };
         }
       }
     },

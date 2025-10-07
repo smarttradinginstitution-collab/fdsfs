@@ -2,6 +2,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
 from datetime import date
+from .trade import TradeRead # Import for the trades list
 
 # --- Schemi per /performance/metrics ---
 class PerformanceStats(BaseModel):
@@ -88,3 +89,9 @@ class TradeFinancialSummary(BaseModel):
     total_commissions: Optional[float] = None
     net_pnl: Optional[float] = None
     net_roi: Optional[float] = None
+
+# --- Schema for daily summary endpoint ---
+class DailySummary(BaseModel):
+    stats: PerformanceStats
+    cumulative_pnl_series: EquityCurveData
+    trades: List[TradeRead]
