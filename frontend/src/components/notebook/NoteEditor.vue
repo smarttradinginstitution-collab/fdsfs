@@ -23,7 +23,6 @@ import {
 
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
-import DailyPnlChart from '../dashboard/widgets/charts/DailyPnlChart.vue';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);
