@@ -23,10 +23,10 @@ import {
 
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
-import { useUIStore } from '../../stores/uiStore';
+import { useUiStore } from '../../stores/uiStore';
 
 const store = useNotebookStore();
-const uiStore = useUIStore();
+const uiStore = useUiStore();
 const note = computed(() => store.selectedNote);
 const financialData = computed(() => store.financialData);
 const folder = computed(() => store.selectedNoteFolder);
@@ -200,10 +200,10 @@ const saveNote = async () => {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
-        uiStore.showToast({ message: 'Note saved!', type: 'success' });
+        uiStore.showNotification({ message: 'Note saved!', type: 'success' });
     } catch (error) {
         console.error("Failed to save note:", error);
-        uiStore.showToast({ message: 'Error saving note.', type: 'error' });
+        uiStore.showNotification({ message: 'Error saving note.', type: 'error' });
     } finally {
         isSaving.value = false;
     }
