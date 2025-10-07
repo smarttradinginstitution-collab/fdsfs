@@ -1,107 +1,3 @@
-<template>
-  <div v-if="note" class="note-editor-container">
-    <!-- Note Title -->
-    <input v-model="editableTitle" class="title-input" />
-
-    <!-- Metadata Header -->
-    <div class="metadata-header">
-      <div class="meta-item">
-        Created: {{ formatDate(note.created_at) }}
-      </div>
-      <div class="meta-item">
-        Updated: {{ formatDate(note.updated_at) }}
-      </div>
-    </div>
-
-    <!-- P&L and Actions Display -->
-    <div class="pnl-container" v-if="financialData">
-      <div class="pnl-display">
-        <strong>Net P&L: </strong>
-        <span :class="pnlClass(financialData?.net_pnl)">
-          {{ formatCurrency(financialData?.net_pnl) }}
-        </span>
-      </div>
-      <router-link
-        v-if="note && note.trade_id"
-        :to="{ name: 'report-detail', params: { id: note.trade_id } }"
-        class="details-button"
-      >
-        Trade Details
-      </router-link>
-    </div>
-
-    <!-- Financial Details Section (only for Trade Notes) -->
-    <div v-if="isTradeNoteFolder" class="financial-details">
-      <div class="detail-card">
-        <label>Gross P&L</label>
-        <span>{{ formatCurrency(financialData?.gross_pnl) }}</span>
-      </div>
-      <div class="detail-card">
-        <label>Commissions</label>
-        <span>{{ formatCurrency(financialData?.total_commissions) }}</span>
-      </div>
-      <div class="detail-card">
-        <label>Net ROI</label>
-        <span>{{ formatPercentage(financialData?.net_roi) }}</span>
-      </div>
-    </div>
-
-    <!-- Daily Journal Summary Section -->
-    <div v-if="isDailyJournalNote && statsGrid" class="daily-summary-container">
-      <div class="chart-section">
-        <DailyPnlChart :chart-data="financialData.cumulative_pnl_series" />
-      </div>
-      <div class="stats-section">
-        <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
-          <div v-for="stat in col" :key="stat.label" class="stat-cell">
-            <span class="stat-label">{{ stat.label }}</span>
-            <span v-if="stat.isPnl" class="stat-value" :style="pnlClass(stat.rawValue)">{{ stat.value }}</span>
-            <span v-else class="stat-value">{{ stat.value }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Editor Content -->
-    <div class="editor-header-actions">
-       <span class="save-status">{{ saveStatus }}</span>
-       <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
-    </div>
-
-    <div class="tiptap-wrapper">
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="icon-button"><ArrowUturnLeftIcon class="h-5 w-5" /></button>
-        <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="icon-button"><ArrowUturnRightIcon class="h-5 w-5" /></button>
-        <div class="divider"></div>
-        <ToolbarDropdown v-model="activeHeading" :items="headingItems" />
-        <ToolbarDropdown v-model="activeFontFamily" :items="fontFamilyItems" />
-        <ToolbarDropdown v-model="activeFontSize" :items="fontSizeItems" />
-        <div class="divider"></div>
-        <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="icon-button text-button">B</button>
-        <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="icon-button text-button">I</button>
-        <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" class="icon-button text-button">U</button>
-        <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
-        <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
-        <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
-        <div class="divider"></div>
-        <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
-        <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>
-        <button class="icon-button"><PlusIcon class="h-5 w-5" /></button>
-        <div class="divider"></div>
-        <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" class="icon-button"><ListBulletIcon class="h-5 w-5" /></button>
-        <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" class="icon-button"><QueueListIcon class="h-5 w-5" /></button>
-        <button @click="editor.chain().focus().toggleTaskList().run()" :class="{ 'is-active': editor.isActive('taskList') }" class="icon-button"><CheckCircleIcon class="h-5 w-5" /></button>
-        <div class="divider"></div>
-        <button @click="editor.chain().focus().setTextAlign('left').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }" class="icon-button"><Bars3BottomLeftIcon class="h-5 w-5" /></button>
-        <button @click="editor.chain().focus().setTextAlign('center').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }" class="icon-button"><Bars2Icon class="h-5 w-5" /></button>
-        <button @click="editor.chain().focus().setTextAlign('right').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }" class="icon-button"><Bars3BottomRightIcon class="h-5 w-5" /></button>
-      </div>
-      <editor-content :editor="editor" class="tiptap-editor" />
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
@@ -114,6 +10,7 @@ import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { FontSize } from '@/utils/tiptap/FontSize.js';
+import Underline from '@tiptap/extension-underline';
 
 // Custom UI Components
 import ToolbarDropdown from '../ui/ToolbarDropdown.vue';
@@ -149,6 +46,7 @@ const editor = useEditor({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
       link: { openOnClick: false },
     }),
+    Underline,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     FontFamily,
     TextStyle,
@@ -223,7 +121,6 @@ function debounce(fn, delay) {
   };
 }
 
-// Helper functions for formatting
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleString('en-US', {
@@ -291,7 +188,6 @@ const saveNote = async () => {
             content: editor.value.getJSON(),
         });
         saveStatus.value = 'Saved!';
-        // Clear the status message after a couple of seconds
         setTimeout(() => {
             saveStatus.value = '';
         }, 2000);
@@ -310,12 +206,10 @@ watch(editableTitle, (newTitle) => {
 });
 
 watch(() => editor.value?.getHTML(), (newContent, oldContent) => {
-    // Trigger save only on actual changes
     if (newContent !== oldContent && note.value) {
         debouncedSave();
     }
 }, { deep: true });
-
 
 const saveAsTemplate = async () => {
     if (!editor.value || !note.value) return;
@@ -339,6 +233,100 @@ onBeforeUnmount(() => {
 });
 </script>
 
+<template>
+  <div v-if="note && editor" class="note-editor-container">
+    <input v-model="editableTitle" class="title-input" />
+
+    <div class="metadata-header">
+      <div class="meta-item">Created: {{ formatDate(note.created_at) }}</div>
+      <div class="meta-item">Updated: {{ formatDate(note.updated_at) }}</div>
+    </div>
+
+    <!-- P&L and Actions Display -->
+    <div class="pnl-container" v-if="financialData">
+      <div class="pnl-display">
+        <strong>Net P&L: </strong>
+        <span :class="pnlClass(financialData?.net_pnl)">
+          {{ formatCurrency(financialData?.net_pnl) }}
+        </span>
+      </div>
+      <router-link
+        v-if="note && note.trade_id"
+        :to="{ name: 'report-detail', params: { id: note.trade_id } }"
+        class="details-button"
+      >
+        Trade Details
+      </router-link>
+    </div>
+
+    <!-- Financial Details Section (only for Trade Notes) -->
+    <div v-if="isTradeNoteFolder" class="financial-details">
+      <div class="detail-card">
+        <label>Gross P&L</label>
+        <span>{{ formatCurrency(financialData?.gross_pnl) }}</span>
+      </div>
+      <div class="detail-card">
+        <label>Commissions</label>
+        <span>{{ formatCurrency(financialData?.total_commissions) }}</span>
+      </div>
+      <div class="detail-card">
+        <label>Net ROI</label>
+        <span>{{ formatPercentage(financialData?.net_roi) }}</span>
+      </div>
+    </div>
+
+    <!-- Daily Journal Summary Section -->
+    <div v-if="isDailyJournalNote && statsGrid" class="daily-summary-container">
+      <div class="stats-section">
+        <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
+          <div v-for="stat in col" :key="stat.label" class="stat-cell">
+            <span class="stat-label">{{ stat.label }}</span>
+            <span v-if="stat.isPnl" class="stat-value" :style="pnlClass(stat.rawValue)">{{ stat.value }}</span>
+            <span v-else class="stat-value">{{ stat.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-header-actions">
+       <span class="save-status">{{ saveStatus }}</span>
+       <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
+    </div>
+
+    <div class="tiptap-wrapper">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="icon-button"><ArrowUturnLeftIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="icon-button"><ArrowUturnRightIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <ToolbarDropdown v-model="activeHeading" :items="headingItems" />
+        <ToolbarDropdown v-model="activeFontFamily" :items="fontFamilyItems" />
+        <ToolbarDropdown v-model="activeFontSize" :items="fontSizeItems" />
+        <div class="divider"></div>
+        <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="icon-button text-button">B</button>
+        <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="icon-button text-button">I</button>
+        <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" class="icon-button text-button">U</button>
+        <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
+        <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
+        <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>
+        <button class="icon-button"><PlusIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" class="icon-button"><ListBulletIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" class="icon-button"><QueueListIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().toggleTaskList().run()" :class="{ 'is-active': editor.isActive('taskList') }" class="icon-button"><CheckCircleIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <button @click="editor.chain().focus().setTextAlign('left').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }" class="icon-button"><Bars3BottomLeftIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().setTextAlign('center').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }" class="icon-button"><Bars2Icon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().setTextAlign('right').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }" class="icon-button"><Bars3BottomRightIcon class="h-5 w-5" /></button>
+      </div>
+      <editor-content :editor="editor" class="tiptap-editor" />
+    </div>
+  </div>
+</template>
+
 <style lang="scss">
 .note-editor-container {
   border: 1px solid var(--semantic-color-border-default);
@@ -348,20 +336,20 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Add gap between all flex children */
+  gap: 1rem;
 }
 
 .title-input {
-    font: var(--semantic-font-style-heading-xl);
-    font-weight: bold;
-    background: transparent;
-    border: none;
-    color: var(--semantic-color-text-primary);
-    padding: 0.25rem 0;
-    &:focus {
-        outline: none;
-        box-shadow: 0 1px 0 var(--semantic-color-border-focus);
-    }
+  font: var(--semantic-font-style-heading-xl);
+  font-weight: bold;
+  background: transparent;
+  border: none;
+  color: var(--semantic-color-text-primary);
+  padding: 0.25rem 0;
+  &:focus {
+    outline: none;
+    box-shadow: 0 1px 0 var(--semantic-color-border-focus);
+  }
 }
 
 .metadata-header {
@@ -370,11 +358,6 @@ onBeforeUnmount(() => {
   gap: 1rem;
   font-size: 0.8rem;
   color: var(--semantic-color-text-secondary);
-  flex-wrap: nowrap;
-}
-
-.meta-item strong {
-  color: var(--semantic-color-text-primary);
 }
 
 .pnl-container {
@@ -407,7 +390,6 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 1rem;
-  padding: 1rem;
 }
 
 .detail-card {
@@ -423,44 +405,6 @@ onBeforeUnmount(() => {
 .detail-card span {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);
-}
-
-.editor-header-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Align save status to the right */
-    gap: 0.5rem;
-}
-
-.save-status {
-    font-size: 0.875rem;
-    color: var(--semantic-color-text-secondary);
-    min-width: 80px; // Reserve space to prevent layout shift
-    text-align: right;
-}
-
-.button-save, .button-cancel, .button-secondary {
-    padding: 0.5rem 1rem;
-    border-radius: var(--semantic-border-radius-interactive);
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: background-color 0.2s;
-}
-
-.button-save {
-    background-color: var(--semantic-color-interactive-primary-default);
-    color: white;
-    border-color: transparent;
-}
-
-.button-cancel, .button-secondary {
-    background-color: var(--semantic-color-surface-secondary);
-    color: var(--semantic-color-text-primary);
-    border-color: var(--semantic-color-border-default);
-}
-
-.button-cancel:hover, .button-secondary:hover {
-    background-color: var(--semantic-color-surface-tertiary);
 }
 
 .details-button {
@@ -480,27 +424,13 @@ onBeforeUnmount(() => {
   }
 }
 
-.tiptap-editor {
-    flex-grow: 1;
-    border: 1px solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-interactive);
-    padding: 1rem;
-    overflow-y: auto;
-}
-
-/* Tiptap default styles override */
-.prose {
-    max-width: none;
-}
-
-/* Daily Summary Styles */
 .daily-summary-container {
   padding: var(--semantic-size-inset-sm);
 }
 
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 columns for desktop */
+  grid-template-columns: repeat(4, 1fr);
   overflow: hidden;
 }
 .stat-col {
@@ -571,6 +501,35 @@ onBeforeUnmount(() => {
     background-color: var(--semantic-color-border-default);
     margin: 0 0.6rem;
   }
+}
+
+.editor-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align save status to the right */
+  gap: 0.5rem;
+}
+
+.save-status {
+  font-size: 0.875rem;
+  color: var(--semantic-color-text-secondary);
+  min-width: 80px; // Reserve space to prevent layout shift
+  text-align: right;
+}
+
+.button-secondary {
+    padding: 0.5rem 1rem;
+    border-radius: var(--semantic-border-radius-interactive);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
+    background-color: var(--semantic-color-surface-secondary);
+    color: var(--semantic-color-text-primary);
+    border-color: var(--semantic-color-border-default);
+}
+
+.button-secondary:hover {
+    background-color: var(--semantic-color-surface-tertiary);
 }
 
 .tiptap-wrapper {
