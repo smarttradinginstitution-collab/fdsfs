@@ -48,9 +48,6 @@
 
     <!-- Daily Journal Summary Section -->
     <div v-if="isDailyJournalNote && statsGrid" class="daily-summary-container">
-      <div class="chart-section">
-        <DailyPnlChart :chart-data="financialData.cumulative_pnl_series" />
-      </div>
       <div class="stats-section">
         <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
           <div v-for="stat in col" :key="stat.label" class="stat-cell">
@@ -76,7 +73,6 @@ import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import { useNotebookStore } from '../../stores/notebookStore';
-import DailyPnlChart from '../dashboard/widgets/charts/DailyPnlChart.vue';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);
@@ -384,10 +380,6 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-gap-md);
-}
-
-.chart-section {
-  min-height: 150px;
 }
 
 .stats-section {
