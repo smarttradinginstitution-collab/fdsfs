@@ -347,7 +347,8 @@ export const useNotebookStore = defineStore('notebook', {
       if (!folder) return;
 
       // Logic for "Trade Notes"
-      if (folder.name === 'Trade Notes' && this.selectedNote.trade_id) {
+      // Use the robust system_folder_identifier instead of the folder name
+      if (folder.system_folder_identifier === 'TRADE_NOTES' && this.selectedNote.trade_id) {
         try {
           const response = await apiClient.get(`/trades/${this.selectedNote.trade_id}/financial_summary`);
           this.financialData = response.data;
@@ -357,7 +358,8 @@ export const useNotebookStore = defineStore('notebook', {
         }
       }
       // Logic for "Daily Journal"
-      else if (folder.name === 'Daily Journal' && this.selectedNote.note_date) {
+      // Use the robust system_folder_identifier instead of the folder name
+      else if (folder.system_folder_identifier === 'DAILY_JOURNAL' && this.selectedNote.note_date) {
         const tradingAccountsStore = useTradingAccountsStore();
         const accountId = tradingAccountsStore.selectedTradingAccount?.id;
         

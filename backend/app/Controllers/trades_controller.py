@@ -17,6 +17,7 @@ from app.Schemas.analytics import (
     VantageScoreData,
     EquityCurveData,
     TradeSummary,
+    TradeFinancialSummary,
 )
 
 
@@ -82,6 +83,20 @@ class TradesController:
         service: AnalyticsService,
     ) -> TradeSummary:
         return await service.get_trade_summary(trading_account_id, start_date, end_date)
+
+    async def get_financial_summary(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> TradeFinancialSummary:
+        """
+        Handles the request for a trade's financial summary.
+        Delegates to the service and handles exceptions.
+        """
+        summary = await service.get_financial_summary(claims, trade_id)
+        # The service layer handles the 404 for the trade itself.
+        return summary
 
     # --- CRUD Trades ---
     async def create_trade(

@@ -81,3 +81,10 @@ class ProcessedStats(BaseModel):
     win_loss_days: WinLossDays
     monthly_totals: Dict[str, float]
     weekly_totals: Dict[str, Dict[str, Any]]
+
+# --- Schema for /trades/{trade_id}/financial_summary ---
+class TradeFinancialSummary(BaseModel):
+    gross_pnl: Optional[float] = None
+    total_commissions: Optional[float] = None
+    net_pnl: Optional[float] = None
+    net_roi: Optional[float] = None
