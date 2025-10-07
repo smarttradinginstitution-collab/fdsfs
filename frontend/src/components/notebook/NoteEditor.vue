@@ -298,7 +298,6 @@ onBeforeUnmount(() => {
 .detail-card {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 .detail-card label {
