@@ -14,7 +14,7 @@ export const useUiStore = defineStore('ui', () => {
   const isWeeklySummaryVisible = ref(true);
   const isCalendarTradeCountVisible = ref(true);
   const isCalendarWinRateVisible = ref(true);
-  const notification = ref({ show: false, message: '', type: 'success' });
+  const notification = ref({ show: false, message: '', type: 'success', size: 'default' });
   const isDailySummaryModalOpen = ref(false);
   const isWeeklySummaryModalOpen = ref(false);
   const theme = ref('light');
@@ -52,9 +52,9 @@ export const useUiStore = defineStore('ui', () => {
 
   // --- NOTIFICATION ACTIONS ---
   let notificationTimeout = null;
-  function showNotification({ message, type = 'success' }) {
+  function showNotification({ message, type = 'success', size = 'default' }) {
     if (notificationTimeout) clearTimeout(notificationTimeout);
-    notification.value = { show: true, message, type };
+    notification.value = { show: true, message, type, size };
     notificationTimeout = setTimeout(() => hideNotification(), 4000);
   }
   function hideNotification() { notification.value.show = false; }

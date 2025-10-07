@@ -200,7 +200,7 @@ const saveNote = async () => {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
-        uiStore.showNotification({ message: 'Note saved!', type: 'success' });
+        uiStore.showNotification({ message: 'Note saved!', type: 'success', size: 'small' });
     } catch (error) {
         console.error("Failed to save note:", error);
         uiStore.showNotification({ message: 'Error saving note.', type: 'error' });
