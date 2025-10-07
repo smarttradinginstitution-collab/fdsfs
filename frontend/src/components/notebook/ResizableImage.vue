@@ -49,7 +49,14 @@ const onMousedown = (e) => {
 
 <template>
   <node-view-wrapper class="resizable-image-wrapper" :class="{ 'is-selected': selected }">
-    <img :src="node.attrs.src" :style="{ width: node.attrs.width, height: node.attrs.height }" ref="imgRef" />
+    <img
+      :src="node.attrs.src"
+      :style="{
+        width: node.attrs.width ? `${node.attrs.width}px` : null,
+        height: node.attrs.height ? `${node.attrs.height}px` : null,
+      }"
+      ref="imgRef"
+    />
     <div v-if="selected" class="resize-handle" @mousedown="onMousedown"></div>
   </node-view-wrapper>
 </template>
