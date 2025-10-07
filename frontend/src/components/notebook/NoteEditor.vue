@@ -106,7 +106,6 @@
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import FontFamily from '@tiptap/extension-font-family';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -150,7 +149,6 @@ const editor = useEditor({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
       link: { openOnClick: false },
     }),
-    Underline,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     FontFamily,
     TextStyle,
