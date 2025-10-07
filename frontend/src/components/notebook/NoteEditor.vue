@@ -13,12 +13,21 @@
       </div>
     </div>
 
-    <!-- P&L Display -->
-    <div class="pnl-display" v-if="financialData">
-      <strong>Net P&L:</strong>
-      <span :class="pnlClass(financialData?.net_pnl)">
-        {{ formatCurrency(financialData?.net_pnl) }}
-      </span>
+    <!-- P&L and Actions Display -->
+    <div class="pnl-container" v-if="financialData">
+      <div class="pnl-display">
+        <strong>Net P&L:</strong>
+        <span :class="pnlClass(financialData?.net_pnl)">
+          {{ formatCurrency(financialData?.net_pnl) }}
+        </span>
+      </div>
+      <router-link
+        v-if="note && note.trade_id"
+        :to="{ name: 'Report', params: { id: note.trade_id } }"
+        class="details-button"
+      >
+        Trade Details
+      </router-link>
     </div>
 
     <!-- Financial Details Section (only for Trade Notes) -->
@@ -212,6 +221,12 @@ onBeforeUnmount(() => {
   color: var(--semantic-color-text-primary);
 }
 
+.pnl-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .pnl-display {
   font-size: 1.25rem; /* Larger font for P&L */
   font-weight: 500;
@@ -294,6 +309,23 @@ onBeforeUnmount(() => {
 
 .button-cancel:hover, .button-secondary:hover {
     background-color: var(--semantic-color-surface-tertiary);
+}
+
+.details-button {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-secondary);
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-interactive);
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--semantic-color-surface-tertiary);
+    color: var(--semantic-color-text-primary);
+    border-color: var(--semantic-color-border-focus);
+  }
 }
 
 .tiptap-editor {
