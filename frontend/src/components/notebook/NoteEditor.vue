@@ -46,6 +46,22 @@
       </div>
     </div>
 
+    <!-- Daily Journal Summary Section -->
+    <div v-if="isDailyJournalNote && statsGrid" class="daily-summary-container">
+      <div class="chart-section">
+        <DailyPnlChart :chart-data="financialData.cumulative_pnl_series" />
+      </div>
+      <div class="stats-section">
+        <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
+          <div v-for="stat in col" :key="stat.label" class="stat-cell">
+            <span class="stat-label">{{ stat.label }}</span>
+            <span v-if="stat.isPnl" class="stat-value" :style="pnlClass(stat.rawValue)">{{ stat.value }}</span>
+            <span v-else class="stat-value">{{ stat.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Editor Content -->
     <div class="editor-header-actions">
        <span class="save-status">{{ saveStatus }}</span>
@@ -60,13 +76,15 @@ import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import { useNotebookStore } from '../../stores/notebookStore';
+import DailyPnlChart from '../dashboard/widgets/charts/DailyPnlChart.vue';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);
 const financialData = computed(() => store.financialData);
 const folder = computed(() => store.selectedNoteFolder);
 
-const isTradeNoteFolder = computed(() => folder.value?.name === 'Trade Notes');
+const isTradeNoteFolder = computed(() => folder.value?.system_folder_identifier === 'TRADE_NOTES');
+const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
 
 const editableTitle = ref(note.value ? note.value.title : '');
 const saveStatus = ref(''); // To provide visual feedback on save state.
@@ -119,6 +137,26 @@ const pnlClass = (pnl) => {
   if (typeof pnl !== 'number') return 'pnl-neutral';
   return pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
 };
+
+const formattedPnl = (pnl) => {
+    if (pnl === null || pnl === undefined) return '$0.00';
+    const sign = pnl >= 0 ? '+' : '-';
+    return `${sign}$${Math.abs(pnl).toFixed(2)}`;
+};
+
+const statsGrid = computed(() => {
+    if (!financialData.value || !financialData.value.stats) return null;
+    const stats = financialData.value.stats;
+    return {
+        col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${stats.win_rate.toFixed(1)}%` } ],
+        col2: [ { label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }, ],
+        col3: [
+          { label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
+          { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true },
+        ],
+        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
+    };
+});
 
 watch(note, (newNote) => {
   if (newNote && editor.value) {
@@ -339,5 +377,52 @@ onBeforeUnmount(() => {
 /* Tiptap default styles override */
 .prose {
     max-width: none;
+}
+
+/* Daily Summary Styles */
+.daily-summary-container {
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-container);
+  padding: var(--semantic-size-inset-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-gap-md);
+}
+
+.chart-section {
+  min-height: 150px;
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns for desktop */
+  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  overflow: hidden;
+}
+.stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
+  padding: var(--semantic-size-inset-sm);
+  border-right: 1px solid var(--semantic-color-border-default);
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-spacing-0-5);
+}
+.stat-label {
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-secondary);
+}
+.stat-value {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-primary);
+  font-weight: 600;
 }
 </style>

@@ -19,8 +19,10 @@ from app.Schemas.analytics import (
     EquityCurveData,
     StrategyPerformance,
     WinLossDays,
-    TradeSummary
+    TradeSummary,
+    DailySummary
 )
+from app.Schemas.trade import TradeRead
 
 class AnalyticsService:
     """
@@ -186,4 +188,31 @@ class AnalyticsService:
         return TradeSummary(
             stats=performance_metrics.stats,
             cumulative_pnl_series=equity_curve
+        )
+
+    async def get_daily_summary(
+        self, trading_account_id: UUID, day: date
+    ) -> DailySummary:
+        """
+        Returns a complete summary for a single day, including stats,
+        chart data, and the list of trades.
+        """
+        # Re-use the existing helper to get a calculator scoped to the specific day
+        calculator = await self._get_calculator(trading_account_id, day, day)
+
+        # Get all base metrics from the calculator
+        all_metrics = calculator.get_all_metrics()
+        stats = PerformanceStats(**all_metrics)
+
+        # Get the equity curve for the day
+        equity_curve_data = calculator.calculate_equity_curve()
+        equity_curve = EquityCurveData(**equity_curve_data)
+
+        # Get the list of trades for the day
+        trades_for_day = [TradeRead.from_orm(trade) for trade in calculator.trades]
+
+        return DailySummary(
+            stats=stats,
+            cumulative_pnl_series=equity_curve,
+            trades=trades_for_day
         )

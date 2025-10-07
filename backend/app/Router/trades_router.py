@@ -22,6 +22,7 @@ from app.Schemas.analytics import (
     EquityCurveData,
     TradeSummary,
     TradeFinancialSummary,
+    DailySummary,
 )
 
 controller = TradesController()
@@ -92,6 +93,15 @@ async def get_trade_summary(
     service: AnalyticsService = Depends(),
 ):
     return await controller.get_trade_summary(trading_account_id, start_date, end_date, service)
+
+
+@router.get("/daily-summary/{trading_account_id}/{day}", response_model=DailySummary, summary="Get a full summary for a single day")
+async def get_daily_summary(
+    trading_account_id: UUID,
+    day: date,
+    service: AnalyticsService = Depends(),
+):
+    return await controller.get_daily_summary(trading_account_id, day, service)
 
 
 @router.get("/{trade_id}/financial_summary", response_model=TradeFinancialSummary, summary="Get a financial summary for a single trade")
