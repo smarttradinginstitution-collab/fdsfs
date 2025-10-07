@@ -306,7 +306,7 @@ onBeforeUnmount(() => {
 }
 
 .detail-card span {
-  font: var(--semantic-font-style-label-xl);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);
 }
 
