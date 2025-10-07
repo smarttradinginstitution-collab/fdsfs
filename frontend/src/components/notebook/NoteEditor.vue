@@ -11,7 +11,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { FontSize } from '@/utils/tiptap/FontSize.js';
 import Underline from '@tiptap/extension-underline';
-import Image from '@tiptap/extension-image';
+import { ResizableImageExtension } from '@/utils/tiptap/ResizableImageExtension.js';
 
 // Custom UI Components
 import ToolbarDropdown from '../ui/ToolbarDropdown.vue';
@@ -59,7 +59,7 @@ const editor = useEditor({
     TaskList,
     TaskItem.configure({ nested: true }),
     FontSize,
-    Image,
+    ResizableImageExtension,
   ],
   editorProps: {
     attributes: { class: 'prose prose-invert focus:outline-none' },
@@ -603,6 +603,12 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   .prose {
     max-width: none;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--semantic-border-radius-container);
   }
 }
 </style>
