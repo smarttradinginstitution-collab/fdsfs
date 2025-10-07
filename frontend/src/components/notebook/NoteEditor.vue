@@ -1,12 +1,44 @@
 <template>
   <div v-if="note" class="note-editor-container">
-    <div class="editor-header">
-      <input v-model="editableTitle" class="title-input" />
-      <div class="actions">
-        <span class="save-status">{{ saveStatus }}</span>
-        <!-- The "Save as Template" button is hidden but its functionality is preserved -->
-        <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
+    <!-- Note Title -->
+    <input v-model="editableTitle" class="title-input" />
+
+    <!-- Metadata Header -->
+    <div class="metadata-header">
+      <div class="meta-item">
+        <strong>Created:</strong> {{ formatDate(note.created_at) }}
       </div>
+      <div class="meta-item">
+        <strong>Updated:</strong> {{ formatDate(note.updated_at) }}
+      </div>
+      <div class="meta-item pnl-item" v-if="financialData || isTradeNoteFolder">
+        <strong>Net P&L:</strong>
+        <span :class="pnlClass(financialData?.net_pnl)">
+          {{ formatCurrency(financialData?.net_pnl) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Financial Details Section (only for Trade Notes) -->
+    <div v-if="isTradeNoteFolder" class="financial-details">
+      <div class="detail-card">
+        <label>Gross P&L</label>
+        <span>{{ formatCurrency(financialData?.gross_pnl) }}</span>
+      </div>
+      <div class="detail-card">
+        <label>Commissions</label>
+        <span>{{ formatCurrency(financialData?.total_commissions) }}</span>
+      </div>
+      <div class="detail-card">
+        <label>Net ROI</label>
+        <span>{{ formatPercentage(financialData?.net_roi) }}</span>
+      </div>
+    </div>
+
+    <!-- Editor Content -->
+    <div class="editor-header-actions">
+       <span class="save-status">{{ saveStatus }}</span>
+       <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
     </div>
     <editor-content :editor="editor" class="tiptap-editor" />
   </div>
@@ -20,6 +52,10 @@ import { useNotebookStore } from '../../stores/notebookStore';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);
+const financialData = computed(() => store.financialData);
+const folder = computed(() => store.selectedNoteFolder);
+
+const isTradeNoteFolder = computed(() => folder.value?.name === 'Trade Notes');
 
 const editableTitle = ref(note.value ? note.value.title : '');
 const saveStatus = ref(''); // To provide visual feedback on save state.
@@ -43,10 +79,39 @@ function debounce(fn, delay) {
   };
 }
 
+// Helper functions for formatting
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatCurrency = (value) => {
+  if (typeof value !== 'number') return 'N/A';
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
+};
+
+const formatPercentage = (value) => {
+    if (typeof value !== 'number') return 'N/A';
+    return `${(value * 100).toFixed(2)}%`;
+};
+
+const pnlClass = (pnl) => {
+  if (typeof pnl !== 'number') return 'pnl-neutral';
+  return pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+};
+
 watch(note, (newNote) => {
   if (newNote && editor.value) {
     editableTitle.value = newNote.title;
-    // Avoid re-setting content if it's the same, to prevent cursor jumps
     if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
         editor.value.commands.setContent(newNote.content, false);
     }
@@ -116,31 +181,78 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  gap: 1rem; /* Add gap between all flex children */
 }
 
 .title-input {
-    font-size: 1.5rem;
+    font-size: 1.8rem; /* Larger title */
     font-weight: bold;
     background: transparent;
     border: none;
     color: var(--semantic-color-text-primary);
-    width: 70%;
+    padding: 0.25rem 0;
     &:focus {
         outline: none;
-        border-bottom: 1px solid var(--semantic-color-border-default);
+        box-shadow: 0 1px 0 var(--semantic-color-border-focus);
     }
 }
 
-.actions {
+.metadata-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--semantic-color-text-secondary);
+  flex-wrap: wrap;
+}
+
+.meta-item strong {
+  color: var(--semantic-color-text-primary);
+}
+
+.pnl-item {
+  font-weight: bold;
+}
+.pnl-positive {
+  color: var(--semantic-color-text-success);
+}
+.pnl-negative {
+  color: var(--semantic-color-text-danger);
+}
+.pnl-neutral {
+  color: var(--semantic-color-text-secondary);
+}
+
+.financial-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--semantic-color-surface-secondary);
+  border-radius: var(--semantic-border-radius-container);
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-card label {
+  font-size: 0.875rem;
+  color: var(--semantic-color-text-secondary);
+}
+
+.detail-card span {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--semantic-color-text-primary);
+}
+
+.editor-header-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end; /* Align save status to the right */
     gap: 0.5rem;
 }
 
