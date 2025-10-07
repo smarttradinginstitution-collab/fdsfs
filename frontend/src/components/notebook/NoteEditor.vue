@@ -385,17 +385,21 @@ onBeforeUnmount(() => {
   border-radius: var(--semantic-border-radius-container);
   padding: var(--semantic-size-inset-md);
   display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-gap-md);
+  flex-direction: row;
+  gap: var(--semantic-size-gap-lg);
+  align-items: center; /* Vertically align chart and stats */
 }
 
 .chart-section {
+  flex: 1; /* Takes 1 part of the available space */
+  min-width: 250px; /* Prevents the chart from becoming too small */
   min-height: 150px;
 }
 
 .stats-section {
+  flex: 2; /* Takes 2 parts of the available space, making it larger than the chart */
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 columns for desktop */
+  grid-template-columns: repeat(2, 1fr); /* 2 columns for a compact stats view */
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-surface);
   overflow: hidden;
