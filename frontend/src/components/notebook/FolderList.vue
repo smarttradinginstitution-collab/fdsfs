@@ -153,7 +153,6 @@ const handleCreateFolder = async (folderData) => {
 
 .header-content {
   width: 100%;
-  display: flex;
   justify-content: flex-start;
   align-items: center;
 }

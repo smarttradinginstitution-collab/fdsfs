@@ -99,7 +99,7 @@ onMounted(() => {
 
 .notebook-layout {
   display: grid;
-  grid-template-columns: 300px 260px 1fr; // Slightly more compact columns
+  grid-template-columns: 250px 230px 1fr; // Slightly more compact columns
   flex-grow: 1;
   gap: var(--semantic-size-inset-md);
   padding: 0 var(--semantic-size-inset-md) var(--semantic-size-inset-md);
@@ -123,7 +123,7 @@ onMounted(() => {
   height: 100%;
   color: var(--semantic-color-text-secondary);
   text-align: center;
-  font: var(--semantic-font-style-body-lg);
+  font: var(--semantic-font-style-body-md);
 
   p + p {
     margin-top: var(--semantic-size-inset-xs);

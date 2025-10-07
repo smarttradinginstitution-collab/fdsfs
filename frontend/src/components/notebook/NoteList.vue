@@ -71,7 +71,7 @@
             class="note-item"
             :class="{ 'is-selected': store.selectedNoteId === note.id }"
           >
-            <h3 class="note-title">{{ note.title }}</h3>
+             <h3 class="note-title">{{ note.title }}</h3>
 
             <!-- Trade-specific details -->
             <div v-if="note.trade" class="trade-details">
@@ -291,13 +291,13 @@ const getPnlClass = (pnl) => {
 }
 
 .note-title {
-  font: var(--semantic-font-style-heading-sm);
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-primary);
   margin-bottom: var(--semantic-size-inset-xxs);
 }
 
 .note-preview {
-  font: var(--semantic-font-style-body-sm);
+  font: var(--semantic-font-style-label-md );
   color: var(--semantic-color-text-secondary);
   margin-bottom: var(--semantic-size-inset-sm);
   line-height: 1.4;

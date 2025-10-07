@@ -381,9 +381,7 @@ onBeforeUnmount(() => {
 
 /* Daily Summary Styles */
 .daily-summary-container {
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-container);
-  padding: var(--semantic-size-inset-md);
+  padding: var(--semantic-size-inset-sm);
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-gap-md);
@@ -396,8 +394,6 @@ onBeforeUnmount(() => {
 .stats-section {
   display: grid;
   grid-template-columns: repeat(4, 1fr); /* 4 columns for desktop */
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
   overflow: hidden;
 }
 .stat-col {
