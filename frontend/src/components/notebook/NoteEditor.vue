@@ -11,7 +11,7 @@
       <div class="meta-item">
         <strong>Updated:</strong> {{ formatDate(note.updated_at) }}
       </div>
-      <div class="meta-item pnl-item" v-if="financialData || isTradeNoteFolder">
+      <div class="meta-item pnl-item">
         <strong>Net P&L:</strong>
         <span :class="pnlClass(financialData?.net_pnl)">
           {{ formatCurrency(financialData?.net_pnl) }}

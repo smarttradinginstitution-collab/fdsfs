@@ -1,6 +1,7 @@
 // frontend/src/stores/notebookStore.js
 import { defineStore } from 'pinia';
 import apiClient from '../services/api';
+import { useTradingAccountsStore } from './tradingAccounts';
 
 export const useNotebookStore = defineStore('notebook', {
   state: () => ({
@@ -352,7 +353,44 @@ export const useNotebookStore = defineStore('notebook', {
           this.financialData = { error: 'Could not load trade data.' };
         }
       }
-      // Here you could add more else-if blocks for other special folders like "Daily Journal"
+      // Logic for "Daily Journal"
+      else if (folder.name === 'Daily Journal') {
+        const tradingAccountsStore = useTradingAccountsStore();
+        const accountId = tradingAccountsStore.selectedTradingAccount?.id;
+
+        if (!accountId) {
+          this.financialData = { error: 'No trading account selected.' };
+          return;
+        }
+
+        // Attempt to parse the date from the note title
+        const noteDate = new Date(this.selectedNote.title);
+        if (isNaN(noteDate.getTime())) {
+            this.financialData = null; // or some error state
+            return;
+        }
+        const dateStr = noteDate.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+
+        try {
+            const response = await apiClient.get(`/trades/calendar/data/${accountId}`, {
+                params: {
+                    start_date: dateStr,
+                    end_date: dateStr,
+                    user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                }
+            });
+            const dayData = response.data[0];
+            if (dayData) {
+                // Standardize the output to match the financial_summary structure
+                this.financialData = { net_pnl: dayData.pnl };
+            } else {
+                this.financialData = { net_pnl: 0 }; // Day with no trades
+            }
+        } catch (err) {
+            console.error(`Error fetching calendar PNL for date ${dateStr}:`, err);
+            this.financialData = { error: 'Could not load daily PNL.' };
+        }
+      }
     },
   },
 });
