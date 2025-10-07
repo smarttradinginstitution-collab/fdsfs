@@ -17,7 +17,7 @@ import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
 
 // Icons
 import {
-  ArrowUturnLeftIcon, ArrowUturnRightIcon, BoldIcon, ItalicIcon, UnderlineIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon
+  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon
 } from '@heroicons/vue/24/solid';
 
 // Store and other components
@@ -202,9 +202,9 @@ onBeforeUnmount(() => {
       <ToolbarDropdown v-model="activeFontFamily" :items="fontFamilyItems" />
       <ToolbarDropdown v-model="activeFontSize" :items="fontSizeItems" />
       <div class="divider"></div>
-      <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="icon-button"><BoldIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="icon-button"><ItalicIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" class="icon-button"><UnderlineIcon class="h-5 w-5" /></button>
+      <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="icon-button text-button">B</button>
+      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="icon-button text-button">I</button>
+      <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" class="icon-button text-button">U</button>
       <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
       <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
       <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
@@ -282,6 +282,8 @@ onBeforeUnmount(() => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
 
     &:hover {
       background-color: var(--semantic-color-surface-tertiary);
@@ -291,6 +293,10 @@ onBeforeUnmount(() => {
       background-color: var(--semantic-color-surface-tertiary);
       color: var(--semantic-color-text-focus);
     }
+  }
+  .text-button {
+    font-weight: bold;
+    font-size: 0.9rem;
   }
 
   .divider {
