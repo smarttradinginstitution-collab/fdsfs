@@ -316,24 +316,32 @@ class TradeService:
                 detail="Trading account details are missing for financial calculation."
             )
 
-        # Prepara i dati per il calcolo
-        trade_data_dict = {
+        # Prepara i dati per il calcolo del Net ROI e altre metriche avanzate
+        trade_data_for_enrichment = {
             "p_l": trade.p_l,
-            "fees": trade.fees,
-            "commissions": trade.commissions,
-            "gross_p_l": trade.gross_p_l,
+            "entry_price": trade.entry_price,
+            "exit_price": trade.exit_price,
+            "stop_loss_price": trade.stop_loss_price,
+            "take_profit_price": trade.take_profit_price,
+            "lowest_price_during_trade": trade.lowest_price_during_trade,
+            "highest_price_during_trade": trade.highest_price_during_trade,
+            "position_size": trade.position_size,
+            "direction": trade.direction.value if trade.direction else None,
         }
 
-        # Esegui i calcoli
+        # Esegui i calcoli delle metriche avanzate (principalmente per Net ROI)
         all_metrics = enrich_trade_with_all_metrics(
-            trade_data=trade_data_dict,
+            trade_data=trade_data_for_enrichment,
             initial_balance=Decimal(trade.trading_account.initial_balance)
         )
 
-        # Popola lo schema di risposta
+        # Calcola le commissioni totali sommando fees e commissions
+        total_commissions = (trade.fees or Decimal('0')) + (trade.commissions or Decimal('0'))
+
+        # Popola lo schema di risposta usando i dati diretti dal trade e quelli calcolati
         return TradeFinancialSummary(
-            gross_pnl=float(all_metrics.get("gross_pnl", 0.0)),
-            total_commissions=float(all_metrics.get("total_commissions", 0.0)),
-            net_pnl=float(all_metrics.get("net_pnl", 0.0)),
+            gross_pnl=float(trade.gross_p_l) if trade.gross_p_l is not None else None,
+            total_commissions=float(total_commissions),
+            net_pnl=float(trade.p_l) if trade.p_l is not None else None,
             net_roi=float(all_metrics.get("net_roi")) if all_metrics.get("net_roi") is not None else None,
         )
