@@ -5,6 +5,8 @@ import ResizableImage from '@/components/notebook/ResizableImage.vue';
 export const ResizableImageExtension = Image.extend({
   name: 'resizable-image',
 
+  draggable: true,
+
   addAttributes() {
     return {
       ...this.parent?.(),

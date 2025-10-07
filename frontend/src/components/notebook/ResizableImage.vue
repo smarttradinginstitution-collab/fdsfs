@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { NodeViewWrapper } from '@tiptap/vue-3';
+import { ArrowsPointingOutIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
   node: {
@@ -49,6 +50,9 @@ const onMousedown = (e) => {
 
 <template>
   <node-view-wrapper class="resizable-image-wrapper" :class="{ 'is-selected': selected }">
+    <div v-if="selected" class="drag-handle" data-drag-handle>
+      <ArrowsPointingOutIcon class="drag-icon" />
+    </div>
     <img
       :src="node.attrs.src"
       :style="{
@@ -93,5 +97,30 @@ img {
 
 .resizable-image-wrapper.is-selected .resize-handle {
   display: block;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  cursor: grab;
+  padding: 2px;
+  display: none; /* Hidden by default */
+}
+
+.resizable-image-wrapper.is-selected .drag-handle {
+  display: block;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-icon {
+  width: 16px;
+  height: 16px;
+  color: white;
 }
 </style>
