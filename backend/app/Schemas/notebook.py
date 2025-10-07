@@ -1,7 +1,7 @@
 # app/Schemas/notebook.py
 from __future__ import annotations
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 
 from pydantic import BaseModel, Field
@@ -13,6 +13,7 @@ from .trade import TradeRead
 class NoteBase(BaseModel):
     title: Optional[str] = Field(None, description="The title of the note")
     content: Optional[Dict[str, Any]] = Field(None, description="The content of the note in JSON format from Tiptap")
+    note_date: Optional[date] = Field(None, description="The specific date associated with the note, for journal entries")
 
     class Config:
         from_attributes = True

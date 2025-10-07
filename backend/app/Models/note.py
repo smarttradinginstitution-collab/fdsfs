@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import uuid
 from typing import Any, TYPE_CHECKING, Optional
-
-from sqlalchemy import String, TIMESTAMP, func, ForeignKey
+from datetime import date
+from sqlalchemy import String, TIMESTAMP, func, ForeignKey, DATE
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,7 @@ class Note(Base):
         ForeignKey("public.trades.id", ondelete="SET NULL"),
         nullable=True,
     )
+    note_date: Mapped[Optional[date]] = mapped_column(DATE, nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[Any] = mapped_column(

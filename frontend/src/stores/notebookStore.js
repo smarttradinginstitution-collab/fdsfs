@@ -244,11 +244,14 @@ export const useNotebookStore = defineStore('notebook', {
         day: 'numeric',
       });
 
+      const dateStr = date.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+
       try {
         // Create the note and get the new note object in return
         const newNote = await this.createNote({
           folder_id: this.selectedFolderId,
           title: noteTitle,
+          note_date: dateStr,
           content: { type: 'doc', content: [{ type: 'paragraph' }] }, // Start with an empty paragraph
         });
 
@@ -354,7 +357,7 @@ export const useNotebookStore = defineStore('notebook', {
         }
       }
       // Logic for "Daily Journal"
-      else if (folder.name === 'Daily Journal') {
+      else if (folder.name === 'Daily Journal' && this.selectedNote.note_date) {
         const tradingAccountsStore = useTradingAccountsStore();
         const accountId = tradingAccountsStore.selectedTradingAccount?.id;
         
@@ -363,13 +366,7 @@ export const useNotebookStore = defineStore('notebook', {
           return;
         }
 
-        // Attempt to parse the date from the note title
-        const noteDate = new Date(this.selectedNote.title);
-        if (isNaN(noteDate.getTime())) {
-            this.financialData = null; // or some error state
-            return;
-        }
-        const dateStr = noteDate.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+        const dateStr = this.selectedNote.note_date; // Directly use the reliable date field
 
         try {
             const response = await apiClient.get(`/trades/calendar/data/${accountId}`, {
