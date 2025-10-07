@@ -23,8 +23,10 @@ import {
 
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
+import { useUiStore } from '../../stores/uiStore';
 
 const store = useNotebookStore();
+const uiStore = useUiStore();
 const note = computed(() => store.selectedNote);
 const financialData = computed(() => store.financialData);
 const folder = computed(() => store.selectedNoteFolder);
@@ -33,7 +35,7 @@ const isTradeNoteFolder = computed(() => folder.value?.system_folder_identifier 
 const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
 
 const editableTitle = ref(note.value ? note.value.title : '');
-const saveStatus = ref('');
+const isSaving = ref(false); // Flag to prevent concurrent saves
 
 const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
 const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
@@ -169,30 +171,41 @@ const statsGrid = computed(() => {
     };
 });
 
-watch(note, (newNote) => {
+watch(note, (newNote, oldNote) => {
   if (newNote && editor.value) {
-    editableTitle.value = newNote.title;
-    if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-        editor.value.commands.setContent(newNote.content, false);
+    // Only update the editor's content if the note ID has actually changed.
+    // This prevents auto-save updates from overwriting the user's current input.
+    if (!oldNote || newNote.id !== oldNote.id) {
+      editableTitle.value = newNote.title;
+      // Avoid a flicker if the content is already the same.
+      if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
+          editor.value.commands.setContent(newNote.content, false);
+      }
     }
+  } else if (!newNote && editor.value) {
+    // Handle note deselection
+    editableTitle.value = '';
+    editor.value.commands.clearContent();
   }
 }, { deep: true });
 
 const saveNote = async () => {
-    if (!editor.value || !note.value) return;
-    saveStatus.value = 'Saving...';
+    if (!editor.value || !note.value || isSaving.value) return;
+
+    isSaving.value = true;
+    // No "saving..." toast to keep the UI clean. The user knows they're editing.
+
     try {
         await store.updateNote(note.value.id, {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
-        saveStatus.value = 'Saved!';
-        setTimeout(() => {
-            saveStatus.value = '';
-        }, 2000);
+        uiStore.showNotification({ message: 'Note saved!', type: 'success' });
     } catch (error) {
         console.error("Failed to save note:", error);
-        saveStatus.value = 'Error!';
+        uiStore.showNotification({ message: 'Error saving note.', type: 'error' });
+    } finally {
+        isSaving.value = false;
     }
 };
 
@@ -288,7 +301,6 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="editor-header-actions">
-       <span class="save-status">{{ saveStatus }}</span>
        <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
     </div>
 

@@ -198,8 +198,9 @@ export const useNotebookStore = defineStore('notebook', {
         // If the note is found in the current list, update it directly.
         // This is the key change to prevent re-fetching the whole list.
         if (index !== -1) {
-          // To ensure reactivity, we replace the item.
-          // We merge to preserve any local-only properties if they existed.
+          // To ensure reactivity and that the local state reflects the saved state,
+          // we replace the item with the version returned from the server.
+          // The race condition where this overwrites the editor is handled in NoteEditor.vue's watch effect.
           this.notes[index] = { ...this.notes[index], ...updatedNote };
         }
 
