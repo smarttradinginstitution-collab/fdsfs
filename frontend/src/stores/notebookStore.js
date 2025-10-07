@@ -198,13 +198,10 @@ export const useNotebookStore = defineStore('notebook', {
         // If the note is found in the current list, update it directly.
         // This is the key change to prevent re-fetching the whole list.
         if (index !== -1) {
-          // To prevent overwriting the user's latest input (race condition),
-          // we only update the metadata from the server response.
-          // The user's editor is the source of truth for title and content during an editing session.
-          this.notes[index].updated_at = updatedNote.updated_at;
-
-          // Also update the title in the list view, in case it was changed.
-          this.notes[index].title = noteData.title;
+          // To ensure reactivity and that the local state reflects the saved state,
+          // we replace the item with the version returned from the server.
+          // The race condition where this overwrites the editor is handled in NoteEditor.vue's watch effect.
+          this.notes[index] = { ...this.notes[index], ...updatedNote };
         }
 
         return updatedNote;
