@@ -14,6 +14,7 @@ const notificationClass = computed(() => {
     'toast-notification--success': notification.value.type === 'success',
     'toast-notification--error': notification.value.type === 'error',
     'toast-notification--show': notification.value.show,
+    'toast-notification--small': notification.value.size === 'small',
   };
 });
 </script>
@@ -44,7 +45,22 @@ const notificationClass = computed(() => {
   color: white;
   z-index: 1000;
   transform: translateY(200%);
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), padding 0.3s ease, font-size 0.3s ease;
+}
+
+.toast-notification--small {
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.toast-notification--small .toast-notification__message {
+  font-size: 14px;
+}
+
+.toast-notification--small .toast-notification__icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .toast-notification--show {
