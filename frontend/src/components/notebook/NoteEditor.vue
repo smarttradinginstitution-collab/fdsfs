@@ -193,6 +193,55 @@ onBeforeUnmount(() => {
       <div class="meta-item">Updated: {{ formatDate(note.updated_at) }}</div>
     </div>
 
+    <!-- P&L and Actions Display -->
+    <div class="pnl-container" v-if="financialData">
+      <div class="pnl-display">
+        <strong>Net P&L: </strong>
+        <span :class="pnlClass(financialData?.net_pnl)">
+          {{ formatCurrency(financialData?.net_pnl) }}
+        </span>
+      </div>
+      <router-link
+        v-if="note && note.trade_id"
+        :to="{ name: 'report-detail', params: { id: note.trade_id } }"
+        class="details-button"
+      >
+        Trade Details
+      </router-link>
+    </div>
+
+    <!-- Financial Details Section (only for Trade Notes) -->
+    <div v-if="isTradeNoteFolder" class="financial-details">
+      <div class="detail-card">
+        <label>Gross P&L</label>
+        <span>{{ formatCurrency(financialData?.gross_pnl) }}</span>
+      </div>
+      <div class="detail-card">
+        <label>Commissions</label>
+        <span>{{ formatCurrency(financialData?.total_commissions) }}</span>
+      </div>
+      <div class="detail-card">
+        <label>Net ROI</label>
+        <span>{{ formatPercentage(financialData?.net_roi) }}</span>
+      </div>
+    </div>
+
+    <!-- Daily Journal Summary Section -->
+    <div v-if="isDailyJournalNote && statsGrid" class="daily-summary-container">
+      <div class="chart-section">
+        <DailyPnlChart :chart-data="financialData.cumulative_pnl_series" />
+      </div>
+      <div class="stats-section">
+        <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
+          <div v-for="stat in col" :key="stat.label" class="stat-cell">
+            <span class="stat-label">{{ stat.label }}</span>
+            <span v-if="stat.isPnl" class="stat-value" :style="pnlClass(stat.rawValue)">{{ stat.value }}</span>
+            <span v-else class="stat-value">{{ stat.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="editor-header-actions">
        <span class="save-status">{{ saveStatus }}</span>
     </div>
@@ -262,6 +311,112 @@ onBeforeUnmount(() => {
   gap: 1rem;
   font-size: 0.8rem;
   color: var(--semantic-color-text-secondary);
+}
+
+.pnl-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pnl-display {
+  font: var(--semantic-font-style-label-xl);
+  font-weight: 500;
+  color: var(--semantic-color-text-secondary);
+}
+
+.pnl-display strong {
+  color: var(--semantic-color-text-primary);
+}
+
+.pnl-positive {
+  color: var(--semantic-color-feedback-positive-text);
+}
+.pnl-negative {
+  color: var(--semantic-color-feedback-negative-text);
+}
+.pnl-neutral {
+  color: var(--semantic-color-text-secondary);
+}
+
+.financial-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-card label {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-secondary);
+}
+
+.detail-card span {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-primary);
+}
+
+.details-button {
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-text-secondary);
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
+  border-radius: var(--semantic-border-radius-interactive);
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--semantic-color-surface-tertiary);
+    color: var(--semantic-color-text-primary);
+    border-color: var(--semantic-color-border-focus);
+  }
+}
+
+.daily-summary-container {
+  padding: var(--semantic-size-inset-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-gap-md);
+}
+
+.chart-section {
+  min-height: 150px;
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns for desktop */
+  overflow: hidden;
+}
+.stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
+  padding: var(--semantic-size-inset-sm);
+  border-right: 1px solid var(--semantic-color-border-default);
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-spacing-0-5);
+}
+.stat-label {
+  font: var(--semantic-font-style-label-sm);
+  color: var(--semantic-color-text-secondary);
+}
+.stat-value {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-primary);
+  font-weight: 600;
 }
 
 .toolbar {
