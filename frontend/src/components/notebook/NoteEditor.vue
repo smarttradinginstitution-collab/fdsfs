@@ -269,7 +269,7 @@ onBeforeUnmount(() => {
 }
 
 .pnl-display {
-  font-size: 1.25rem; /* Larger font for P&L */
+  font: var(--semantic-font-style-label-xl);
   font-weight: 500;
   color: var(--semantic-color-text-secondary);
 }
@@ -279,10 +279,10 @@ onBeforeUnmount(() => {
 }
 
 .pnl-positive {
-  color: var(--semantic-color-text-success);
+  color: var(--semantic-color-feedback-positive-text);
 }
 .pnl-negative {
-  color: var(--semantic-color-text-danger);
+  color: var(--semantic-color-feedback-negative-text);
 }
 .pnl-neutral {
   color: var(--semantic-color-text-secondary);
@@ -293,8 +293,6 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 1rem;
   padding: 1rem;
-  background-color: var(--semantic-color-surface-secondary);
-  border-radius: var(--semantic-border-radius-container);
 }
 
 .detail-card {
@@ -304,13 +302,12 @@ onBeforeUnmount(() => {
 }
 
 .detail-card label {
-  font-size: 0.875rem;
+  font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
 }
 
 .detail-card span {
-  font-size: 1.125rem;
-  font-weight: 500;
+  font: var(--semantic-font-style-label-xl);
   color: var(--semantic-color-text-primary);
 }
 
@@ -355,7 +352,7 @@ onBeforeUnmount(() => {
 .details-button {
   font: var(--semantic-font-style-label-md);
   color: var(--semantic-color-text-secondary);
-  background-color: var(--semantic-color-surface-secondary);
+  background-color: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
   border-radius: var(--semantic-border-radius-interactive);
