@@ -23,7 +23,7 @@
       </div>
       <router-link
         v-if="note && note.trade_id"
-        :to="{ name: 'Report', params: { id: note.trade_id } }"
+        :to="{ name: 'report-detail', params: { id: note.trade_id } }"
         class="details-button"
       >
         Trade Details
