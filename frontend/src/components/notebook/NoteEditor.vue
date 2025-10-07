@@ -76,7 +76,7 @@ import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import { useNotebookStore } from '../../stores/notebookStore';
-import DailyPnlChart from '../charts/DailyPnlChart.vue';
+import DailyPnlChart from '../dashboard/widgets/charts/DailyPnlChart.vue';
 
 const store = useNotebookStore();
 const note = computed(() => store.selectedNote);
