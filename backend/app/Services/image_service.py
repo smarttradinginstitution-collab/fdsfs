@@ -9,6 +9,7 @@ from app.Repositories.image_repository import ImageRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.image import ImageCreate
 from app.Models.image import Image
+from app.config import settings
 
 UPLOAD_DIRECTORY = "static/uploads/images"
 
@@ -51,15 +52,15 @@ class ImageService:
             )
 
         # 5. Create the public URL for the image
-        # This assumes the 'static' directory is served at the root of the domain.
-        # e.g., http://localhost:8000/uploads/images/your_image.jpg
-        url = f"/uploads/images/{unique_filename}"
+        # The '/static' part is crucial as the directory is mounted there in main.py.
+        relative_url = f"/static/uploads/images/{unique_filename}"
+        absolute_url = f"{settings.SERVER_HOST}{relative_url}"
 
         # 6. Create the Pydantic schema for the new image record
         image_data = ImageCreate(
             filename=file.filename,
             file_path=file_path,
-            url=url
+            url=absolute_url
         )
 
         # 7. Save the image metadata to the database

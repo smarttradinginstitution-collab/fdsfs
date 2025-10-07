@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "My FastAPI App"
     ENV: str = "dev"
+    SERVER_HOST: str = "http://localhost:8000"
 
     # Trattiamo CORS_ORIGINS come stringa "semplice" per evitare json.loads automatico di Pydantic
     # Esempi validi in .env:
