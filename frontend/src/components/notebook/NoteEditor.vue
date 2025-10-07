@@ -193,39 +193,41 @@ onBeforeUnmount(() => {
       <div class="meta-item">Updated: {{ formatDate(note.updated_at) }}</div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="icon-button"><ArrowUturnLeftIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="icon-button"><ArrowUturnRightIcon class="h-5 w-5" /></button>
-      <div class="divider"></div>
-      <ToolbarDropdown v-model="activeHeading" :items="headingItems" />
-      <ToolbarDropdown v-model="activeFontFamily" :items="fontFamilyItems" />
-      <ToolbarDropdown v-model="activeFontSize" :items="fontSizeItems" />
-      <div class="divider"></div>
-      <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="icon-button text-button">B</button>
-      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="icon-button text-button">I</button>
-      <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" class="icon-button text-button">U</button>
-      <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
-      <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
-      <div class="divider"></div>
-      <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
-      <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>
-      <button class="icon-button"><PlusIcon class="h-5 w-5" /></button>
-      <div class="divider"></div>
-      <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" class="icon-button"><ListBulletIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" class="icon-button"><QueueListIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().toggleTaskList().run()" :class="{ 'is-active': editor.isActive('taskList') }" class="icon-button"><CheckCircleIcon class="h-5 w-5" /></button>
-      <div class="divider"></div>
-      <button @click="editor.chain().focus().setTextAlign('left').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }" class="icon-button"><Bars3BottomLeftIcon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().setTextAlign('center').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }" class="icon-button"><Bars2Icon class="h-5 w-5" /></button>
-      <button @click="editor.chain().focus().setTextAlign('right').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }" class="icon-button"><Bars3BottomRightIcon class="h-5 w-5" /></button>
-    </div>
-
     <div class="editor-header-actions">
        <span class="save-status">{{ saveStatus }}</span>
     </div>
-    <editor-content :editor="editor" class="tiptap-editor" />
+
+    <div class="tiptap-wrapper">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="icon-button"><ArrowUturnLeftIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="icon-button"><ArrowUturnRightIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <ToolbarDropdown v-model="activeHeading" :items="headingItems" />
+        <ToolbarDropdown v-model="activeFontFamily" :items="fontFamilyItems" />
+        <ToolbarDropdown v-model="activeFontSize" :items="fontSizeItems" />
+        <div class="divider"></div>
+        <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" class="icon-button text-button">B</button>
+        <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" class="icon-button text-button">I</button>
+        <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" class="icon-button text-button">U</button>
+        <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
+        <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
+        <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>
+        <button class="icon-button"><PlusIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" class="icon-button"><ListBulletIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" class="icon-button"><QueueListIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().toggleTaskList().run()" :class="{ 'is-active': editor.isActive('taskList') }" class="icon-button"><CheckCircleIcon class="h-5 w-5" /></button>
+        <div class="divider"></div>
+        <button @click="editor.chain().focus().setTextAlign('left').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }" class="icon-button"><Bars3BottomLeftIcon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().setTextAlign('center').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }" class="icon-button"><Bars2Icon class="h-5 w-5" /></button>
+        <button @click="editor.chain().focus().setTextAlign('right').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }" class="icon-button"><Bars3BottomRightIcon class="h-5 w-5" /></button>
+      </div>
+      <editor-content :editor="editor" class="tiptap-editor" />
+    </div>
   </div>
 </template>
 
@@ -268,8 +270,7 @@ onBeforeUnmount(() => {
   align-items: center;
   padding: 0.25rem 0.5rem;
   background-color: var(--semantic-color-surface-secondary);
-  border-radius: var(--semantic-border-radius-interactive);
-  border: 1px solid var(--semantic-color-border-default);
+  border-bottom: 1px solid var(--semantic-color-border-default);
 
   .icon-button {
     background: none;
@@ -318,10 +319,17 @@ onBeforeUnmount(() => {
   color: var(--semantic-color-text-secondary);
 }
 
-.tiptap-editor {
-  flex-grow: 1;
+.tiptap-wrapper {
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* To apply radius to children */
+}
+
+.tiptap-editor {
+  flex-grow: 1;
   padding: 1rem;
   overflow-y: auto;
   .prose {
