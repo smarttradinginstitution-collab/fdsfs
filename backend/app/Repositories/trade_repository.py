@@ -128,19 +128,11 @@ class TradeRepository:
         necessari per la vista dettagliata e i calcoli delle metriche.
         Questo previene problemi di lazy-loading con la sessione asincrona.
         """
-        query = (
-            select(Trade)
-            .where(Trade.id == trade_id)
-            .options(
-                # Eager load all relationships needed for the detail view
-                joinedload(Trade.tags),
-                joinedload(Trade.mistakes),
-                joinedload(Trade.playbook),
-                joinedload(Trade.news_impacts),
-                joinedload(Trade.psychology_states),
-                joinedload(Trade.asset),
-            )
-        )
+        """
+        Recupera un trade per ID, caricando esplicitamente tutte le relazioni necessarie
+        per la vista dettagliata e i calcoli, utilizzando la query di base.
+        """
+        query = self._get_trade_query().where(Trade.id == trade_id)
         result = await self.db.execute(query)
         return result.scalars().first()
 
