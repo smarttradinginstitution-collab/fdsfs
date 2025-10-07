@@ -27,6 +27,7 @@ from app.Models.playbook import Playbook
 from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
 from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
+from app.Schemas.analytics import TradeFinancialSummary
 
 
 class TradeService:
@@ -294,3 +295,53 @@ class TradeService:
 
         await self.repo.delete_trade(db_trade)
         return True
+
+    async def get_financial_summary(self, claims: dict, trade_id: UUID) -> TradeFinancialSummary:
+        """
+        Recupera un riepilogo finanziario per un singolo trade,
+        verificando l'appartenenza e arricchendolo con dati calcolati.
+        """
+        # Il metodo del repository ora carica anche il trading_account associato
+        trade = await self.repo.get_trade_for_details_view(trade_id)
+        if not trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        # Valida che l'utente sia il proprietario del trade
+        await self._validate_and_get_trading_account(claims, trade.trading_account_id)
+
+        # Assicurati che il trading_account sia stato caricato correttamente
+        if not trade.trading_account or trade.trading_account.initial_balance is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Trading account details are missing for financial calculation."
+            )
+
+        # Prepara i dati per il calcolo del Net ROI e altre metriche avanzate
+        trade_data_for_enrichment = {
+            "p_l": trade.p_l,
+            "entry_price": trade.entry_price,
+            "exit_price": trade.exit_price,
+            "stop_loss_price": trade.stop_loss_price,
+            "take_profit_price": trade.take_profit_price,
+            "lowest_price_during_trade": trade.lowest_price_during_trade,
+            "highest_price_during_trade": trade.highest_price_during_trade,
+            "position_size": trade.position_size,
+            "direction": trade.direction.value if trade.direction else None,
+        }
+
+        # Esegui i calcoli delle metriche avanzate (principalmente per Net ROI)
+        all_metrics = enrich_trade_with_all_metrics(
+            trade_data=trade_data_for_enrichment,
+            initial_balance=Decimal(trade.trading_account.initial_balance)
+        )
+
+        # Calcola le commissioni totali sommando fees e commissions
+        total_commissions = (trade.fees or Decimal('0')) + (trade.commissions or Decimal('0'))
+
+        # Popola lo schema di risposta usando i dati diretti dal trade e quelli calcolati
+        return TradeFinancialSummary(
+            gross_pnl=float(trade.gross_p_l) if trade.gross_p_l is not None else None,
+            total_commissions=float(total_commissions),
+            net_pnl=float(trade.p_l) if trade.p_l is not None else None,
+            net_roi=float(all_metrics.get("net_roi")) if all_metrics.get("net_roi") is not None else None,
+        )

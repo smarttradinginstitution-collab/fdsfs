@@ -11,12 +11,14 @@
       <div class="meta-item">
         <strong>Updated:</strong> {{ formatDate(note.updated_at) }}
       </div>
-      <div class="meta-item pnl-item">
-        <strong>Net P&L:</strong>
-        <span :class="pnlClass(financialData?.net_pnl)">
-          {{ formatCurrency(financialData?.net_pnl) }}
-        </span>
-      </div>
+    </div>
+
+    <!-- P&L Display -->
+    <div class="pnl-display" v-if="financialData">
+      <strong>Net P&L:</strong>
+      <span :class="pnlClass(financialData?.net_pnl)">
+        {{ formatCurrency(financialData?.net_pnl) }}
+      </span>
     </div>
 
     <!-- Financial Details Section (only for Trade Notes) -->
@@ -210,9 +212,16 @@ onBeforeUnmount(() => {
   color: var(--semantic-color-text-primary);
 }
 
-.pnl-item {
-  font-weight: bold;
+.pnl-display {
+  font-size: 1.25rem; /* Larger font for P&L */
+  font-weight: 500;
+  color: var(--semantic-color-text-secondary);
 }
+
+.pnl-display strong {
+  color: var(--semantic-color-text-primary);
+}
+
 .pnl-positive {
   color: var(--semantic-color-text-success);
 }

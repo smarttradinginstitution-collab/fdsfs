@@ -21,6 +21,7 @@ from app.Schemas.analytics import (
     VantageScoreData,
     EquityCurveData,
     TradeSummary,
+    TradeFinancialSummary,
 )
 
 controller = TradesController()
@@ -91,6 +92,15 @@ async def get_trade_summary(
     service: AnalyticsService = Depends(),
 ):
     return await controller.get_trade_summary(trading_account_id, start_date, end_date, service)
+
+
+@router.get("/{trade_id}/financial_summary", response_model=TradeFinancialSummary, summary="Get a financial summary for a single trade")
+async def get_financial_summary(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_financial_summary(claims, trade_id, service)
 
 
 # --- CRUD Trades ---
