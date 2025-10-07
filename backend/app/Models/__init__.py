@@ -22,6 +22,7 @@ from .playbook import Playbook
 from .psychology_state import PsychologyState
 from .tag import Tag
 from .user_dashboard_layout import UserDashboardLayout
+from .image import Image
 
 # New or modified models with dependencies
 from .platform import Platform
@@ -59,6 +60,7 @@ __all__ = [
     "PsychologyState",
     "Tag",
     "UserDashboardLayout",
+    "Image",
     "BrokerPlatform",
     "TradesMistakes",
     "TradesNewsImpacts",

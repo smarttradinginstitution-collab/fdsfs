@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from app.Models.playbook import Playbook
     from app.Models.notebook_folder import NotebookFolder
     from app.Models.note import Note
+    from app.Models.image import Image
 
 
 class GeneralAccount(Base):
@@ -47,6 +48,9 @@ class GeneralAccount(Base):
     )
     tags_groups: Mapped[list["TagsGroup"]] = relationship(
         "TagsGroup", back_populates="general_account"
+    )
+    images: Mapped[list["Image"]] = relationship(
+        "Image", back_populates="general_account"
     )
     mistakes: Mapped[list["Mistake"]] = relationship(
         "Mistake", back_populates="general_account"
