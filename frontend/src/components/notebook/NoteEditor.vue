@@ -11,6 +11,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { FontSize } from '@/utils/tiptap/FontSize.js';
 import Underline from '@tiptap/extension-underline';
+import Image from '@tiptap/extension-image';
 
 // Custom UI Components
 import ToolbarDropdown from '../ui/ToolbarDropdown.vue';
@@ -18,12 +19,13 @@ import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
 
 // Icons
 import {
-  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon
+  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon, PhotoIcon
 } from '@heroicons/vue/24/solid';
 
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useUiStore } from '../../stores/uiStore';
+import apiClient from '../../services/api';
 
 const store = useNotebookStore();
 const uiStore = useUiStore();
@@ -36,6 +38,7 @@ const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier
 
 const editableTitle = ref(note.value ? note.value.title : '');
 const isSaving = ref(false); // Flag to prevent concurrent saves
+const fileInput = ref(null); // Ref for the hidden file input
 
 const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
 const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
@@ -56,6 +59,7 @@ const editor = useEditor({
     TaskList,
     TaskItem.configure({ nested: true }),
     FontSize,
+    Image,
   ],
   editorProps: {
     attributes: { class: 'prose prose-invert focus:outline-none' },
@@ -111,6 +115,39 @@ const setLink = () => {
   if (url === null) return;
   if (url === '') editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
   else editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+};
+
+const addImage = () => {
+  fileInput.value.click();
+};
+
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  uiStore.showNotification({ message: 'Uploading image...', type: 'success', size: 'small' });
+
+  try {
+    const response = await apiClient.post('/images/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.data.url && editor.value) {
+      editor.value.chain().focus().setImage({ src: response.data.url }).run();
+      uiStore.showNotification({ message: 'Image uploaded!', type: 'success', size: 'small' });
+    }
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    uiStore.showNotification({ message: 'Error uploading image.', type: 'error' });
+  } finally {
+    // Reset file input to allow uploading the same file again
+    event.target.value = '';
+  }
 };
 
 // --- Core Component Logic ---
@@ -247,6 +284,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="note && editor" class="note-editor-container">
+    <input
+      type="file"
+      ref="fileInput"
+      @change="handleImageUpload"
+      style="display: none"
+      accept="image/*"
+    />
     <input v-model="editableTitle" class="title-input" />
 
     <div class="metadata-header">
@@ -320,6 +364,7 @@ onBeforeUnmount(() => {
         <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
         <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
         <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
+        <button @click="addImage" class="icon-button"><PhotoIcon class="h-5 w-5" /></button>
         <div class="divider"></div>
         <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
         <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>

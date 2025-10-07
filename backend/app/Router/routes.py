@@ -232,6 +232,16 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🖼️ IMAGES (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import image_router
+
+router.include_router(
+    image_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 📦 ASSET CLASSES (protetto: user/admin)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import asset_class_router
