@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
+import { NodeViewWrapper } from '@tiptap/vue-3';
 
 const props = defineProps({
   node: {
@@ -47,10 +48,10 @@ const onMousedown = (e) => {
 </script>
 
 <template>
-  <div class="resizable-image-wrapper" :class="{ 'is-selected': selected }">
+  <node-view-wrapper class="resizable-image-wrapper" :class="{ 'is-selected': selected }">
     <img :src="node.attrs.src" :style="{ width: node.attrs.width, height: node.attrs.height }" ref="imgRef" />
     <div v-if="selected" class="resize-handle" @mousedown="onMousedown"></div>
-  </div>
+  </node-view-wrapper>
 </template>
 
 <style scoped>
