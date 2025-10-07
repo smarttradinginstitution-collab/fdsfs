@@ -13,6 +13,7 @@ export const useNotebookStore = defineStore('notebook', {
     isLoadingNotes: false,
     isLoadingTrades: false, // For loading recent trades
     error: null,
+    financialData: null, // To store financial data for the selected note
   }),
 
   getters: {
@@ -21,6 +22,12 @@ export const useNotebookStore = defineStore('notebook', {
     },
     selectedNote: (state) => {
       return state.notes.find(n => n.id === state.selectedNoteId) || null;
+    },
+    selectedNoteFolder: (state) => {
+      if (!state.selectedNote || !state.folders.length) {
+        return null;
+      }
+      return state.folders.find(f => f.id === state.selectedNote.folder_id) || null;
     },
     systemFolders: (state) => {
       const allNotesFolder = {
@@ -320,10 +327,32 @@ export const useNotebookStore = defineStore('notebook', {
 
     selectNote(noteId) {
       this.selectedNoteId = noteId;
+      this.fetchFinancialDataForSelectedNote();
     },
 
     deselectNote() {
         this.selectedNoteId = null;
-    }
+        this.financialData = null; // Clear financial data when no note is selected
+    },
+
+    async fetchFinancialDataForSelectedNote() {
+      this.financialData = null; // Reset on each call
+      if (!this.selectedNote) return;
+
+      const folder = this.selectedNoteFolder;
+      if (!folder) return;
+
+      // Logic for "Trade Notes"
+      if (folder.name === 'Trade Notes' && this.selectedNote.trade_id) {
+        try {
+          const response = await apiClient.get(`/trades/${this.selectedNote.trade_id}/financial_summary`);
+          this.financialData = response.data;
+        } catch (err) {
+          console.error(`Error fetching financial data for trade ${this.selectedNote.trade_id}:`, err);
+          this.financialData = { error: 'Could not load trade data.' };
+        }
+      }
+      // Here you could add more else-if blocks for other special folders like "Daily Journal"
+    },
   },
 });
