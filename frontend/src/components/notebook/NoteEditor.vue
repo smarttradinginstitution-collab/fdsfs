@@ -2,13 +2,11 @@
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import FontFamily from '@tiptap/extension-font-family';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
-import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { FontSize } from '@/utils/tiptap/FontSize.js';
@@ -43,14 +41,17 @@ const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px
 const editor = useEditor({
   content: note.value ? note.value.content : '',
   extensions: [
-    StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
-    Underline,
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3, 4, 5, 6] },
+      link: {
+        openOnClick: false,
+      },
+    }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     FontFamily,
     TextStyle,
     Color,
     Highlight.configure({ multicolor: true }),
-    Link.configure({ openOnClick: false }),
     TaskList,
     TaskItem.configure({ nested: true }),
     FontSize,
@@ -113,8 +114,11 @@ const highlightColor = computed({
 const setLink = () => {
   const url = window.prompt('URL', editor.value.getAttributes('link').href);
   if (url === null) return;
-  if (url === '') editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
-  else editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  if (url === '') {
+    editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
+  } else {
+    editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }
 };
 
 // --- Core Component Logic ---
