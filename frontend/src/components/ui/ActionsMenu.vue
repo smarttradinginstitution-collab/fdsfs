@@ -1,5 +1,5 @@
 <template>
-  <PopoverMenu class="actions-menu" style="position: relative; z-index: 10;">
+  <PopoverMenu class="actions-menu">
     <template #trigger="{ toggle }">
       <button @click.stop="toggle" class="trigger-button">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="icon">
