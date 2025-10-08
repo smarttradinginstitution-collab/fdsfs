@@ -39,7 +39,7 @@ export const useTagsStore = defineStore('tags', () => {
 
   async function updateTagGroup(groupId, groupData) {
     try {
-      const response = await api.put(`/tags-groups/${groupId}`, groupData);
+      const response = await api.put(`/tags-groups/${groupId}/`, groupData);
       const index = tagGroups.value.findIndex(g => g.id === groupId);
       if (index !== -1) {
         tagGroups.value[index] = response.data;
@@ -52,7 +52,7 @@ export const useTagsStore = defineStore('tags', () => {
 
   async function deleteTagGroup(groupId) {
     try {
-      await api.delete(`/tags-groups/${groupId}`);
+      await api.delete(`/tags-groups/${groupId}/`);
       // Remove the group itself
       tagGroups.value = tagGroups.value.filter(g => g.id !== groupId);
       // Also remove the tags that belonged to this group from the local state

@@ -279,10 +279,10 @@ const getTagsForGroup = (groupId) => {
       <template #footer>
         <BaseButton variant="secondary" @click="closeTagFormModal">
           Cancel
-        </BaseButton>
+        </Button>
         <BaseButton @click="handleSaveTag">
           {{ isTagEditMode ? 'Save Changes' : 'Save Tag' }}
-        </BaseButton>
+        </Button>
       </template>
     </BaseModal>
 
