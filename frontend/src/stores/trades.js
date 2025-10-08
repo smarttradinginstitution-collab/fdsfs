@@ -809,5 +809,48 @@ export const useTradesStore = defineStore('trades', {
         this.isTradeLoading = false;
       }
     },
+
+    async fetchTradeTags(tradeId) {
+      this.isTradeLoading = true;
+      try {
+        const response = await apiClient.get(`/trades/${tradeId}/tags`);
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.tags = response.data;
+        }
+      } catch (error) {
+        console.error(`Error fetching tags for trade ${tradeId}:`, error);
+        const uiStore = useUiStore();
+        uiStore.showNotification({ message: 'Failed to load trade tags.', type: 'danger' });
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async updateTradeTags(tradeId, tagIds) {
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.post(`/trades/${tradeId}/tags`, tagIds);
+        const updatedTags = response.data;
+
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.tags = updatedTags;
+        }
+
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index].tags = updatedTags;
+        }
+
+        uiStore.showNotification({ message: 'Tags updated successfully!', type: 'success' });
+        return updatedTags;
+      } catch (error) {
+        console.error('Error updating trade tags:', error);
+        uiStore.showNotification({ message: 'Failed to update tags.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
   },
 });
