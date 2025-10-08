@@ -117,6 +117,7 @@ const navLinks = [
 <style lang="scss" scoped>
 .sidebar {
   position: fixed;
+  z-index: var(--semantic-layer-z-index-content); /* Add z-index to manage stacking context */
   top: 0;
   left: 0;
   width: var(
