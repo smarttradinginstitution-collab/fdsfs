@@ -181,58 +181,54 @@ const handleConfirmDelete = async () => {
 
 // --- Utils ---
 const getTextColor = (bgColor) => {
-  if (!bgColor) return '#ffffff';
+  if (!bgColor) return 'var(--semantic-color-text-on-primary)';
   const color = (bgColor.charAt(0) === '#') ? bgColor.substring(1, 7) : bgColor;
   const r = parseInt(color.substring(0, 2), 16);
   const g = parseInt(color.substring(2, 4), 16);
   const b = parseInt(color.substring(4, 6), 16);
   const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-  return (brightness > 155) ? '#000000' : '#ffffff';
+  return (brightness > 155) ? 'var(--semantic-color-text-primary)' : 'var(--semantic-color-text-on-primary)';
 };
 </script>
 
 <style scoped>
-.page-container { padding: var(--semantic-size-inset-lg); }
+.page-container { padding: var(--semantic-size-inset-fluid-lg); }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--semantic-size-spacing-lg); }
 .page-title { font: var(--semantic-font-style-heading-2); color: var(--semantic-color-text-primary); }
-.page-subtitle { font: var(--semantic-font-style-body-md); color: var(--semantic-color-text-secondary); margin-top: var(--base-size-spacing-1); }
-.loading-state, .error-state { display: flex; justify-content: center; align-items: center; height: 300px; font: var(--semantic-font-style-body-lg); color: var(--semantic-color-text-secondary); }
-.content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: var(--semantic-size-spacing-lg); }
+.page-subtitle { font: var(--semantic-font-style-body-md); color: var(--semantic-color-text-secondary); margin-top: var(--semantic-size-stack-xs); }
+.loading-state, .error-state { display: flex; justify-content: center; align-items: center; padding: var(--semantic-size-spacing-xl) 0; font: var(--semantic-font-style-body-lg); color: var(--semantic-color-text-secondary); }
+.content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--semantic-size-container-lg), 1fr)); gap: var(--semantic-size-spacing-lg); }
 .tag-group-card .group-title { font: var(--semantic-font-style-heading-4); color: var(--semantic-color-text-primary); flex-grow: 1; }
-.tags-container { display: flex; flex-wrap: wrap; align-items: center; gap: var(--base-size-spacing-2); padding-top: var(--semantic-size-inset-lg); }
+.tags-container { display: flex; flex-wrap: wrap; align-items: center; gap: var(--semantic-size-inline-sm); padding-top: var(--semantic-size-inset-lg); }
 
 .tag-wrapper {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: var(--semantic-size-inline-xs);
+  /* This wrapper is for layout only. Styling is on the pill. */
 }
 
 .tag-pill {
-  font-weight: 600;
-  padding-right: 28px; /* Make space for the menu button */
+  font: var(--semantic-font-style-body-md-bold);
+  /* The color is dynamically applied via inline style */
 }
 
 .tag-actions {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  --button-bg-color: rgba(255, 255, 255, 0.2);
-  --button-text-color: white;
+  /* No custom variables needed, inherits from ActionsMenu */
 }
 
 .add-tag-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px dashed var(--semantic-color-border-default);
+  width: var(--semantic-size-interactive-md);
+  height: var(--semantic-size-interactive-md);
+  border-radius: var(--semantic-border-radius-circle);
+  border: var(--semantic-border-width-default) dashed var(--semantic-color-border-default);
   color: var(--semantic-color-text-secondary);
   background-color: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--base-animation-duration-fast) var(--base-animation-easing-out);
 }
 .add-tag-button:hover {
   background-color: var(--semantic-color-surface-secondary);
