@@ -81,7 +81,7 @@ const handleSubmit = () => {
   const payload = {
     name: tagName.value,
     color: tagColor.value,
-    tags_group_id: props.groupId,
+    group_id: props.groupId,
   };
 
   if (isEditing.value) {
