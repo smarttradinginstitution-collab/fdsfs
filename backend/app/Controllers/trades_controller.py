@@ -10,6 +10,7 @@ from fastapi import HTTPException, status
 from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.tag import TagRead
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,

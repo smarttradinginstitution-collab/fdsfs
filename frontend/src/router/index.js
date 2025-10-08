@@ -83,6 +83,12 @@ const router = createRouter({
       name: 'component-test',
       component: () => import('../views/ComponentTestView.vue'),
       meta: { title: 'Component Test' },
+    },
+    {
+      path: '/settings/tags',
+      name: 'tags-settings',
+      component: () => import('../views/TagsSettings.vue'),
+      meta: { title: 'Tags Settings' },
     }
   ],
 });

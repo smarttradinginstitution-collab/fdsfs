@@ -174,3 +174,25 @@ async def delete_trade(
     service: TradeService = Depends(),
 ):
     return await controller.delete_trade(claims, trade_id, service)
+
+
+# --- Trade <> Tag Association ---
+from app.Schemas.tag import TagRead
+
+@router.get("/{trade_id}/tags", response_model=List[TagRead], summary="Get all tags associated with a trade")
+async def get_trade_tags(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_trade_tags(claims, trade_id, service)
+
+
+@router.post("/{trade_id}/tags", response_model=List[TagRead], summary="Update the tags associated with a trade")
+async def update_trade_tags(
+    trade_id: UUID,
+    tag_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_tags(claims, trade_id, tag_ids, service)
