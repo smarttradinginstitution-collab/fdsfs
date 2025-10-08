@@ -1,5 +1,5 @@
 <template>
-  <div class="tag-row">
+  <div class="tag-row" :class="{ 'is-editing': isEditing }">
     <div class="tag-content">
       <!-- Display State -->
       <template v-if="!isEditing">
@@ -109,17 +109,42 @@ const saveEdit = async () => {
 .tag-row:last-child {
   border-bottom: none;
 }
+
+/* Styles for when the component is in editing mode */
+.tag-row.is-editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--semantic-size-stack-md);
+  padding: var(--semantic-size-inset-md);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-interactive);
+  background-color: var(--semantic-color-surface-secondary);
+}
+
 .tag-content {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-stack-sm);
   flex-grow: 1;
 }
+
+/* When editing, the content also stacks vertically */
+.tag-row.is-editing .tag-content {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .tag-actions {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-stack-sm);
 }
+
+/* When editing, align action buttons to the end */
+.tag-row.is-editing .tag-actions {
+  justify-content: flex-end;
+}
+
 .inline-input {
   flex-grow: 1;
 }

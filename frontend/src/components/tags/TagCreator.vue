@@ -63,7 +63,8 @@ onMounted(() => {
 .tag-creator {
   padding: var(--semantic-size-inset-md);
   display: flex;
-  align-items: center;
+  flex-direction: column; /* Stack elements vertically */
+  align-items: stretch; /* Stretch items to fill width */
   gap: var(--semantic-size-stack-md);
   background-color: var(--semantic-color-surface-secondary);
   border-radius: var(--semantic-border-radius-interactive);
@@ -72,7 +73,7 @@ onMounted(() => {
 
 .actions {
   display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
   gap: var(--semantic-size-stack-sm);
-  margin-left: auto; /* Push actions to the right */
 }
 </style>
