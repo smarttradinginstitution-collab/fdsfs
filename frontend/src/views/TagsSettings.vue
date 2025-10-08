@@ -61,7 +61,7 @@ onMounted(() => {
   padding: var(--semantic-size-inset-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-spacing-lg);
+  gap: var(--semantic-size-stack-lg);
 }
 .header {
   display: flex;
@@ -69,13 +69,12 @@ onMounted(() => {
   align-items: center;
 }
 .page-title {
-  font: var(--semantic-font-style-heading-2);
-  color: var(--semantic-color-text-primary);
+  font: var(--semantic-font-style-heading-2xl);
 }
 .page-subtitle {
-  font: var(--semantic-font-style-body-md);
+  font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-secondary);
-  margin-top: var(--base-size-spacing-1);
+  margin-top: var(--semantic-size-stack-xxs);
 }
 .loading-state, .error-state {
   display: flex;
@@ -87,12 +86,12 @@ onMounted(() => {
 }
 .content-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--semantic-size-spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--semantic-size-stack-lg);
 }
 .empty-state {
   text-align: center;
-  padding: 4rem;
+  padding: var(--semantic-size-inset-xl);
   font: var(--semantic-font-style-body-lg);
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-primary);

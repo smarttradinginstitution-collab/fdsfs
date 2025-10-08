@@ -106,14 +106,14 @@ const saveEdit = async () => {
 }
 
 .color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  width: var(--base-size-spacing-3);
+  height: var(--base-size-spacing-3);
+  border-radius: var(--base-border-radius-full);
   flex-shrink: 0;
 }
 
 .tag-name {
-  font: var(--semantic-font-style-body-md);
+  font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-primary);
 }
 

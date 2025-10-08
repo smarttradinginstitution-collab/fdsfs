@@ -136,12 +136,12 @@ const handleConfirmDeleteTag = async () => {
 .group-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--semantic-size-stack-xs);
   margin-bottom: var(--semantic-size-stack-md);
 }
 
 .group-title {
-  font: var(--semantic-font-style-heading-4);
+  font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
   flex-grow: 1;
 }
@@ -149,7 +149,7 @@ const handleConfirmDeleteTag = async () => {
 .edit-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--semantic-size-stack-xs);
   flex-grow: 1;
 }
 
@@ -167,8 +167,8 @@ const handleConfirmDeleteTag = async () => {
   border: none;
   color: var(--semantic-color-text-secondary);
   cursor: pointer;
-  font: var(--semantic-font-style-body-md);
-  padding: 0.25rem;
+  font: var(--semantic-font-style-label-md);
+  padding: var(--semantic-size-stack-xxs);
 }
 
 .create-tag-btn:hover {

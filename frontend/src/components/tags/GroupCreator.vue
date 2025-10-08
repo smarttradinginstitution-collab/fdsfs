@@ -59,7 +59,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
-  margin-bottom: var(--semantic-size-spacing-lg);
+  margin-bottom: var(--semantic-size-stack-lg);
 }
 
 .actions {
