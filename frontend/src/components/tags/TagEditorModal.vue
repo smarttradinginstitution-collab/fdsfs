@@ -45,7 +45,7 @@ const props = defineProps({
   },
   groupId: {
     type: String,
-    required: true,
+    default: null,
   },
   isSaving: {
     type: Boolean,

@@ -1,185 +1,200 @@
+import { ref, computed } from 'pinia';
 import { defineStore } from 'pinia';
 import apiClient from '../services/api';
 import { useAuthStore } from './auth';
 import { useUiStore } from './uiStore';
 
-export const useTagsStore = defineStore('tags', {
-  state: () => ({
-    tags: [],
-    tagGroups: [],
-    isLoading: false,
-    isSaving: false,
-    error: null,
-  }),
+export const useTagsStore = defineStore('tags', () => {
+  // --- STATE ---
+  const tags = ref([]);
+  const tagGroups = ref([]);
+  const isLoading = ref(false);
+  const isSaving = ref(false);
+  const error = ref(null);
 
-  getters: {
-    groupedTags(state) {
-      if (!state.tagGroups.length || !state.tags.length) {
-        return [];
-      }
-      return state.tagGroups.map(group => ({
-        ...group,
-        tags: state.tags.filter(tag => tag.tags_group_id === group.id),
-      }));
-    },
-  },
-
-  actions: {
-    async fetchTags() {
-      const authStore = useAuthStore();
-      if (!authStore.isAuthenticated) {
-        console.log("User not authenticated. Skipping tags fetch.");
-        return;
-      }
-      this.isLoading = true;
-      this.error = null;
-      try {
-        const response = await apiClient.get('/me/tags');
-        this.tags = response.data;
-      } catch (err) {
-        console.error('Error fetching tags:', err);
-        this.error = err.response?.data?.detail || 'An unexpected error occurred.';
-        this.tags = [];
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchTagGroups() {
-      const authStore = useAuthStore();
-      if (!authStore.isAuthenticated) {
-        console.log("User not authenticated. Skipping tag groups fetch.");
-        return;
-      }
-      this.isLoading = true;
-      this.error = null;
-      try {
-        const response = await apiClient.get('/tags-groups');
-        this.tagGroups = response.data;
-      } catch (err) {
-        console.error('Error fetching tag groups:', err);
-        this.error = err.response?.data?.detail || 'An unexpected error occurred.';
-        this.tagGroups = [];
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchAllTagsData() {
-        this.isLoading = true;
-        this.error = null;
-        try {
-            await Promise.all([this.fetchTags(), this.fetchTagGroups()]);
-        } catch (err) {
-            console.error('Error fetching all tags data:', err);
-            this.error = 'An error occurred while fetching tags information.';
-        } finally {
-            this.isLoading = false;
-        }
-    },
-
-    // --- GROUP ACTIONS ---
-    async createTagGroup(groupData) {
-        const uiStore = useUiStore();
-        this.isSaving = true;
-        try {
-            await apiClient.post('/tags-groups', groupData);
-            await this.fetchAllTagsData();
-            uiStore.showToast({ message: 'Group created successfully.', type: 'success' });
-        } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to create group.';
-            this.error = errorMessage;
-            uiStore.showToast({ message: errorMessage, type: 'error' });
-            throw err;
-        } finally {
-            this.isSaving = false;
-        }
-    },
-
-    async updateTagGroup(groupId, groupData) {
-        const uiStore = useUiStore();
-        this.isSaving = true;
-        try {
-            await apiClient.put(`/tags-groups/${groupId}`, groupData);
-            await this.fetchAllTagsData();
-            uiStore.showToast({ message: 'Group updated successfully.', type: 'success' });
-        } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to update group.';
-            this.error = errorMessage;
-            uiStore.showToast({ message: errorMessage, type: 'error' });
-            throw err;
-        } finally {
-            this.isSaving = false;
-        }
-    },
-
-    async deleteTagGroup(groupId) {
-        const uiStore = useUiStore();
-        this.isSaving = true;
-        try {
-            await apiClient.delete(`/tags-groups/${groupId}`);
-            await this.fetchAllTagsData();
-            uiStore.showToast({ message: 'Group deleted successfully.', type: 'success' });
-        } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to delete group.';
-            this.error = errorMessage;
-            uiStore.showToast({ message: errorMessage, type: 'error' });
-            throw err;
-        } finally {
-            this.isSaving = false;
-        }
-    },
-
-    // --- TAG ACTIONS ---
-    async createTag(tagData) {
-        const uiStore = useUiStore();
-        this.isSaving = true;
-        try {
-            await apiClient.post('/me/tags', tagData);
-            await this.fetchAllTagsData();
-            uiStore.showToast({ message: 'Tag created successfully.', type: 'success' });
-        } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to create tag.';
-            this.error = errorMessage;
-            uiStore.showToast({ message: errorMessage, type: 'error' });
-            throw err;
-        } finally {
-            this.isSaving = false;
-        }
-    },
-
-    async updateTag(tagId, tagData) {
-        const uiStore = useUiStore();
-        this.isSaving = true;
-        try {
-            await apiClient.put(`/tags/${tagId}`, tagData);
-            await this.fetchAllTagsData();
-            uiStore.showToast({ message: 'Tag updated successfully.', type: 'success' });
-        } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to update tag.';
-            this.error = errorMessage;
-            uiStore.showToast({ message: errorMessage, type: 'error' });
-            throw err;
-        } finally {
-            this.isSaving = false;
-        }
-    },
-
-    async deleteTag(tagId) {
-        const uiStore = useUiStore();
-        this.isSaving = true;
-        try {
-            await apiClient.delete(`/tags/${tagId}`);
-            await this.fetchAllTagsData();
-            uiStore.showToast({ message: 'Tag deleted successfully.', type: 'success' });
-        } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to delete tag.';
-            this.error = errorMessage;
-            uiStore.showToast({ message: errorMessage, type: 'error' });
-            throw err;
-        } finally {
-            this.isSaving = false;
-        }
+  // --- GETTERS ---
+  const groupedTags = computed(() => {
+    if (!tagGroups.value.length || !tags.value.length) {
+      return [];
     }
-  },
+    return tagGroups.value.map(group => ({
+      ...group,
+      tags: tags.value.filter(tag => tag.tags_group_id === group.id),
+    }));
+  });
+
+  // --- ACTIONS ---
+  async function fetchTags() {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      console.log("User not authenticated. Skipping tags fetch.");
+      return;
+    }
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const response = await apiClient.get('/me/tags');
+      tags.value = response.data;
+    } catch (err) {
+      console.error('Error fetching tags:', err);
+      error.value = err.response?.data?.detail || 'An unexpected error occurred.';
+      tags.value = [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function fetchTagGroups() {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      console.log("User not authenticated. Skipping tag groups fetch.");
+      return;
+    }
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const response = await apiClient.get('/tags-groups');
+      tagGroups.value = response.data;
+    } catch (err) {
+      console.error('Error fetching tag groups:', err);
+      error.value = err.response?.data?.detail || 'An unexpected error occurred.';
+      tagGroups.value = [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function fetchAllTagsData() {
+      isLoading.value = true;
+      error.value = null;
+      try {
+          await Promise.all([fetchTags(), fetchTagGroups()]);
+      } catch (err) {
+          console.error('Error fetching all tags data:', err);
+          error.value = 'An error occurred while fetching tags information.';
+      } finally {
+          isLoading.value = false;
+      }
+  }
+
+  // --- GROUP ACTIONS ---
+  async function createTagGroup(groupData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.post('/tags-groups', groupData);
+          await fetchAllTagsData();
+          uiStore.showToast({ message: 'Group created successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to create group.';
+          error.value = errorMessage;
+          uiStore.showToast({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function updateTagGroup(groupId, groupData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.put(`/tags-groups/${groupId}`, groupData);
+          await fetchAllTagsData();
+          uiStore.showToast({ message: 'Group updated successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to update group.';
+          error.value = errorMessage;
+          uiStore.showToast({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function deleteTagGroup(groupId) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.delete(`/tags-groups/${groupId}`);
+          await fetchAllTagsData();
+          uiStore.showToast({ message: 'Group deleted successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to delete group.';
+          error.value = errorMessage;
+          uiStore.showToast({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  // --- TAG ACTIONS ---
+  async function createTag(tagData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.post('/me/tags', tagData);
+          await fetchAllTagsData();
+          uiStore.showToast({ message: 'Tag created successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to create tag.';
+          error.value = errorMessage;
+          uiStore.showToast({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function updateTag(tagId, tagData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.put(`/tags/${tagId}`, tagData);
+          await fetchAllTagsData();
+          uiStore.showToast({ message: 'Tag updated successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to update tag.';
+          error.value = errorMessage;
+          uiStore.showToast({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function deleteTag(tagId) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.delete(`/tags/${tagId}`);
+          await fetchAllTagsData();
+          uiStore.showToast({ message: 'Tag deleted successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to delete tag.';
+          error.value = errorMessage;
+          uiStore.showToast({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  // --- EXPORT ---
+  return {
+    tags,
+    tagGroups,
+    isLoading,
+    isSaving,
+    error,
+    groupedTags,
+    fetchAllTagsData,
+    createTagGroup,
+    updateTagGroup,
+    deleteTagGroup,
+    createTag,
+    updateTag,
+    deleteTag,
+  };
 });
