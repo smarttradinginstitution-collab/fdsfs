@@ -27,8 +27,8 @@
             <div v-for="group in filteredGroupedTags" :key="group.id" class="tag-group">
               <h4 class="group-name">{{ group.name }}</h4>
               <ul>
-                <li v-for="tag in group.tags" :key="tag.id" class="tag-item" @click="toggleTag(tag.id)">
-                  <BaseCheckbox :model-value="isSelected(tag.id)" :label="tag.name" />
+                <li v-for="tag in group.tags" :key="tag.id" class="tag-item">
+                  <BaseCheckbox :model-value="isSelected(tag.id)" :label="tag.name" @update:modelValue="toggleTag(tag.id)" />
                 </li>
               </ul>
             </div>
