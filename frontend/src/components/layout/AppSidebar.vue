@@ -22,7 +22,6 @@ import ViewListIcon from '../icons/ViewListIcon.vue';
 import SparkleIcon from '../icons/SparkleIcon.vue';
 import SettingsIcon from '../icons/SettingsIcon.vue';
 import BookOpenIcon from '../icons/BookOpenIcon.vue';
-import FilterIcon from '../icons/FilterIcon.vue'; // <-- Usa un'icona esistente
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -49,7 +48,6 @@ const navLinks = [
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
-  { to: '/settings/tags', text: 'Tags', icon: FilterIcon }, // <-- Usa l'icona corretta
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
 </script>
@@ -117,7 +115,6 @@ const navLinks = [
 <style lang="scss" scoped>
 .sidebar {
   position: fixed;
-  z-index: var(--semantic-layer-z-index-content); /* Add z-index to manage stacking context */
   top: 0;
   left: 0;
   width: var(

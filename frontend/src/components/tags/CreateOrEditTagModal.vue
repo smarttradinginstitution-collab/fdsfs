@@ -70,7 +70,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <BaseModal :model-value="modelValue" @update:model-value="closeModal">
+  <BaseModal :show="modelValue" @close="closeModal">
     <template #title>{{ modalTitle }}</template>
     <template #content>
       <form @submit.prevent="handleSubmit" class="tag-form">
