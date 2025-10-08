@@ -21,7 +21,12 @@
       <BaseWidget v-for="group in groupedTags" :key="group.id" class="tag-group-card">
         <template #header>
           <h2 class="group-title">{{ group.name }}</h2>
-          <ActionsMenu :items="getGroupActions(group)" />
+          <ActionsMenu>
+            <template #default="{ closeMenu }">
+              <div class="menu-item" @click="() => { openGroupModal(group); closeMenu(); }">Edit</div>
+              <div class="menu-item menu-item-danger" @click="() => { openConfirmModal(group.id, 'group'); closeMenu(); }">Delete</div>
+            </template>
+          </ActionsMenu>
         </template>
 
         <div class="tags-container">
@@ -29,7 +34,12 @@
             <BasePill :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }" class="tag-pill">
               {{ tag.name }}
             </BasePill>
-            <ActionsMenu :items="getTagActions(tag, group)" class="tag-actions" />
+            <ActionsMenu class="tag-actions">
+              <template #default="{ closeMenu }">
+                <div class="menu-item" @click="() => { openTagModal(group, tag); closeMenu(); }">Edit</div>
+                <div class="menu-item menu-item-danger" @click="() => { openConfirmModal(tag.id, 'tag'); closeMenu(); }">Delete</div>
+              </template>
+            </ActionsMenu>
           </div>
           <button @click="openTagModal(group)" class="add-tag-button">
             <PlusIcon class="w-4 h-4" />
@@ -114,11 +124,6 @@ const closeModal = () => {
 };
 
 // --- Group Actions ---
-const getGroupActions = (group) => [
-  { label: 'Edit', action: () => openGroupModal(group) },
-  { label: 'Delete', action: () => openConfirmModal(group.id, 'group'), danger: true },
-];
-
 const openGroupModal = (group = null) => {
   editingGroup.value = group;
   isGroupModalOpen.value = true;
@@ -138,11 +143,6 @@ const handleSaveGroup = async (groupData) => {
 };
 
 // --- Tag Actions ---
-const getTagActions = (tag, group) => [
-  { label: 'Edit', action: () => openTagModal(group, tag) },
-  { label: 'Delete', action: () => openConfirmModal(tag.id, 'tag'), danger: true },
-];
-
 const openTagModal = (group, tag = null) => {
   editingTag.value = tag;
   currentGroupId.value = group.id;
