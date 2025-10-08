@@ -43,7 +43,7 @@ import PopoverMenu from './PopoverMenu.vue';
   display: flex;
   flex-direction: column;
   padding: var(--base-size-spacing-2) 0;
-  min-width: 160px;
+  min-width: 200px;
 }
 
 .menu-content :deep(.menu-item) {
