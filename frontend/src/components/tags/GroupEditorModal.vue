@@ -56,7 +56,7 @@ const modalTitle = computed(() => isEditing.value ? 'Edit Tag Group' : 'Create N
 watch(() => props.show, (newVal) => {
   if (newVal) {
     // Reset form when modal opens
-    groupName.value = props.group ? props.group.name_group : '';
+    groupName.value = props.group ? props.group.name : '';
     validationError.value = '';
   }
 });

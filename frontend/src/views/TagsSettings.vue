@@ -20,7 +20,7 @@
     <div v-else class="content-grid">
       <BaseWidget v-for="group in groupedTags" :key="group.id" class="tag-group-card">
         <template #header>
-          <h2 class="group-title">{{ group.name_group }}</h2>
+          <h2 class="group-title">{{ group.name }}</h2>
           <ActionsMenu :items="getGroupActions(group)" />
         </template>
 
