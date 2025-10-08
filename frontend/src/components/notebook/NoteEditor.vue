@@ -610,5 +610,37 @@ onBeforeUnmount(() => {
     height: auto;
     border-radius: var(--semantic-border-radius-container);
   }
+
+  // --- Task List (Checklist) Styles ---
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      > label {
+        // This holds the checkbox.
+        // Using `padding-top` to vertically align the checkbox with the first line of text.
+        padding-top: 0.25em;
+      }
+
+      > div {
+        // This holds the text content.
+        // It will grow to fill the remaining space, and text will wrap within it.
+        flex-grow: 1;
+
+        // Remove the default top margin from the first paragraph inside the list item
+        // to ensure proper alignment.
+        p {
+          margin-top: 0;
+        }
+      }
+    }
+  }
 }
 </style>
