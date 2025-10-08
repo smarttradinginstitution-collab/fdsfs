@@ -91,7 +91,22 @@ class TradeFinancialSummary(BaseModel):
     net_roi: Optional[float] = None
 
 # --- Schema for daily summary endpoint ---
+from uuid import UUID
+
 class DailySummary(BaseModel):
     stats: PerformanceStats
     cumulative_pnl_series: EquityCurveData
     trades: List[TradeRead]
+
+# --- Schema for /analytics/tags-performance ---
+class TagPerformanceStat(BaseModel):
+    tag_id: UUID
+    tag_name: str
+    tag_color: Optional[str] = None
+    total_pnl: float = 0.0
+    win_rate: float = 0.0
+    avg_r_multiple: float = 0.0
+    total_trades: int = 0
+
+    class Config:
+        from_attributes = True

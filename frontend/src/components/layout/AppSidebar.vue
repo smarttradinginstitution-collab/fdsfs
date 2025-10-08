@@ -24,6 +24,7 @@ import SparkleIcon from '../icons/SparkleIcon.vue';
 import SettingsIcon from '../icons/SettingsIcon.vue';
 import BookOpenIcon from '../icons/BookOpenIcon.vue';
 import TagIcon from '../icons/TagIcon.vue';
+import ChartBarIcon from '../icons/ChartBarIcon.vue';
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -50,6 +51,7 @@ const navLinks = [
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
+  { to: '/reports/by-tag', text: 'Reports', icon: ChartBarIcon },
   { to: '/settings/tags', text: 'Tags', icon: TagIcon },
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
