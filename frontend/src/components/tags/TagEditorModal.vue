@@ -62,14 +62,16 @@ const validationError = ref('');
 const isEditing = computed(() => !!props.tag);
 const modalTitle = computed(() => isEditing.value ? 'Edit Tag' : 'Create New Tag');
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    // Reset form when modal opens
-    tagName.value = props.tag ? props.tag.name : '';
-    tagColor.value = props.tag ? props.tag.color : '#4A90E2';
-    validationError.value = '';
+watch(() => props.tag, (newTag) => {
+  if (newTag) {
+    tagName.value = newTag.name;
+    tagColor.value = newTag.color;
+  } else {
+    tagName.value = '';
+    tagColor.value = '#4A90E2'; // Reset to default for creation
   }
-});
+  validationError.value = '';
+}, { immediate: true });
 
 const handleSubmit = () => {
   if (!tagName.value.trim()) {

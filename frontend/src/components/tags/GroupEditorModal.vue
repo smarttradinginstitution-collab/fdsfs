@@ -53,13 +53,14 @@ const validationError = ref('');
 const isEditing = computed(() => !!props.group);
 const modalTitle = computed(() => isEditing.value ? 'Edit Tag Group' : 'Create New Tag Group');
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    // Reset form when modal opens
-    groupName.value = props.group ? props.group.name : '';
-    validationError.value = '';
+watch(() => props.group, (newGroup) => {
+  if (newGroup) {
+    groupName.value = newGroup.name;
+  } else {
+    groupName.value = ''; // Reset when no group is being edited (i.e., for creation)
   }
-});
+  validationError.value = '';
+}, { immediate: true });
 
 const handleSubmit = () => {
   if (!groupName.value.trim()) {
