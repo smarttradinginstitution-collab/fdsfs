@@ -18,6 +18,7 @@ from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
 from decimal import Decimal
 from app.Models.trade import Trade
