@@ -22,8 +22,7 @@ class TagUpdate(TagBase):
 
 class TagRead(TagBase):
     id: UUID
-    group_id: UUID = Field(alias="tags_group_id")
+    group_id: UUID
 
     class Config:
         from_attributes = True
-        populate_by_name = True
