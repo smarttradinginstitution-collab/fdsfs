@@ -519,8 +519,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  background-color: var(--semantic-color-surface-secondary);
+  padding: 0.1rem 0.1rem;
   border-bottom: 1px solid var(--semantic-color-border-default);
 
   .icon-button {
@@ -599,7 +598,7 @@ onBeforeUnmount(() => {
 
 .tiptap-editor {
   flex-grow: 1;
-  padding: 1rem;
+  padding: 2rem;
   overflow-y: auto;
   .prose {
     max-width: none;
@@ -609,6 +608,38 @@ onBeforeUnmount(() => {
     max-width: 100%;
     height: auto;
     border-radius: var(--semantic-border-radius-container);
+  }
+
+  // --- Task List (Checklist) Styles ---
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      > label {
+        // This holds the checkbox.
+        // Using `padding-top` to vertically align the checkbox with the first line of text.
+        padding-top: 0.25em;
+      }
+
+      > div {
+        // This holds the text content.
+        // It will grow to fill the remaining space, and text will wrap within it.
+        flex-grow: 1;
+
+        // Remove the default top margin from the first paragraph inside the list item
+        // to ensure proper alignment.
+        p {
+          margin-top: 0;
+        }
+      }
+    }
   }
 }
 </style>
