@@ -429,9 +429,16 @@ router.include_router(
 # 💹 TRADES (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import trades_router
+from app.Router import analytics_router
 
 router.include_router(
     trades_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+router.include_router(
+    analytics_router.router,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )

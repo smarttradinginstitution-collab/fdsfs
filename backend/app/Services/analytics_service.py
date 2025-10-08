@@ -23,6 +23,7 @@ from app.Schemas.analytics import (
     DailySummary
 )
 from app.Schemas.trade import TradeRead
+from app.Schemas.analytics import TagPerformanceStat
 
 class AnalyticsService:
     """
@@ -216,3 +217,16 @@ class AnalyticsService:
             cumulative_pnl_series=equity_curve,
             trades=trades_for_day
         )
+
+    async def get_tag_performance_stats(
+        self, trading_account_id: UUID, start_date: date, end_date: date
+    ) -> List[TagPerformanceStat]:
+        """
+        Calculates and returns performance statistics for each tag.
+        """
+        raw_stats = await self.trade_repo.get_tag_performance_stats(
+            trading_account_id=trading_account_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return [TagPerformanceStat.from_orm(row) for row in raw_stats]

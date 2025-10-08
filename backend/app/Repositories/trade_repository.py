@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 from uuid import UUID
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from sqlalchemy.orm import joinedload
-from sqlalchemy import select
+from sqlalchemy import select, func, case, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.trade import Trade
+from app.Models.tag import Tag
+from app.Models.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
 
@@ -153,3 +155,56 @@ class TradeRepository:
         """Elimina un trade."""
         await self.db.delete(db_trade)
         await self.db.commit()
+
+    async def get_tag_performance_stats(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date,
+    ) -> List[Any]:
+        """
+        Calcola le statistiche di performance per ogni tag in un dato periodo.
+        """
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Define aggregate functions
+        total_pnl = func.sum(Trade.p_l).label("total_pnl")
+        total_trades = func.count(Trade.id).label("total_trades")
+
+        # Calculate win rate safely, avoiding division by zero
+        winning_trades = func.count(case((Trade.p_l > 0, 1)))
+        win_rate = case(
+            (total_trades > 0, (winning_trades.cast(Float) * 100 / total_trades)),
+            else_=0.0
+        ).label("win_rate")
+
+        # Calculate average R-Multiple, handling NULLs
+        avg_r_multiple = func.avg(Trade.r_multiple).label("avg_r_multiple")
+
+        stmt = (
+            select(
+                Tag.id.label("tag_id"),
+                Tag.name.label("tag_name"),
+                Tag.color.label("tag_color"),
+                total_pnl,
+                total_trades,
+                win_rate,
+                avg_r_multiple,
+            )
+            .select_from(Tag)
+            .join(TradesTags.__table__, Tag.id == TradesTags.__table__.c.tag_id)
+            .join(Trade, Trade.id == TradesTags.__table__.c.trade_id)
+            .where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+            )
+            .group_by(Tag.id, Tag.name, Tag.color)
+            .order_by(total_pnl.desc())
+        )
+
+        result = await self.db.execute(stmt)
+        return result.all()
