@@ -1,5 +1,5 @@
 <template>
-  <PopoverMenu class="actions-menu" style="position: relative; z-index: 10;">
+  <PopoverMenu class="actions-menu">
     <template #trigger="{ toggle }">
       <button @click.stop="toggle" class="trigger-button">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="icon">
@@ -43,7 +43,7 @@ import PopoverMenu from './PopoverMenu.vue';
   display: flex;
   flex-direction: column;
   padding: var(--base-size-spacing-2) 0;
-  min-width: 160px;
+  min-width: 200px;
 }
 
 .menu-content :deep(.menu-item) {
