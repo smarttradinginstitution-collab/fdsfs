@@ -6,11 +6,12 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
 from app.Models.trade import Trade  # Import the Trade model
+from app.Models.note_template import NoteTemplate
 from app.Schemas.notebook import NoteCreate, NoteUpdate
 
 
@@ -32,6 +33,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                selectinload(Note.templates),
             )
             .where(Note.id == note_id)
         )
@@ -55,6 +57,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                selectinload(Note.templates),
             )
             .where(Note.folder_id == folder_id)
             .order_by(Note.updated_at.desc())
@@ -79,6 +82,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                selectinload(Note.templates),
             )
             .where(NotebookFolder.general_account_id == general_account_id)
             .order_by(Note.updated_at.desc())
@@ -114,3 +118,21 @@ class NoteRepository:
         """Delete a note."""
         await self.db.delete(db_obj)
         await self.db.commit()
+
+    async def add_template_to_note(self, note: Note, template: NoteTemplate) -> Note:
+        """Associate a note template with a note."""
+        note.templates.append(template)
+        self.db.add(note)
+        await self.db.commit()
+        await self.db.refresh(note)
+        return note
+
+    async def remove_template_from_note(
+        self, note: Note, template: NoteTemplate
+    ) -> Note:
+        """Disassociate a note template from a note."""
+        note.templates.remove(template)
+        self.db.add(note)
+        await self.db.commit()
+        await self.db.refresh(note)
+        return note

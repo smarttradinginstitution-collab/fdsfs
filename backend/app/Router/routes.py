@@ -232,6 +232,22 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 📝 NOTE TEMPLATES (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Controllers import note_template_controller
+
+router.include_router(
+    note_template_controller.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+router.include_router(
+    note_template_controller.note_association_router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 🖼️ IMAGES (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import image_router
