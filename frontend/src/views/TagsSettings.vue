@@ -41,21 +41,24 @@
 
   <!-- MODALS -->
   <GroupEditorModal
+    v-if="isGroupModalOpen"
     :show="isGroupModalOpen"
-    :group="editingItem"
+    :group="editingGroup"
     :is-saving="isSaving"
     @close="closeModal"
     @save="handleSaveGroup"
   />
   <TagEditorModal
+    v-if="isTagModalOpen"
     :show="isTagModalOpen"
-    :tag="editingItem"
+    :tag="editingTag"
     :group-id="currentGroupId"
     :is-saving="isSaving"
     @close="closeModal"
     @save="handleSaveTag"
   />
   <ConfirmationModal
+    v-if="isConfirmOpen"
     :show="isConfirmOpen"
     :title="`Delete ${itemToDelete?.type}`"
     :message="`Are you sure you want to delete this ${itemToDelete?.type}? This action cannot be undone.`"
@@ -65,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTagsStore } from '@/stores/tagsStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
@@ -81,13 +84,19 @@ import { PlusIcon } from '@heroicons/vue/24/solid';
 const tagsStore = useTagsStore();
 const { groupedTags, isLoading, error, isSaving } = storeToRefs(tagsStore);
 
-// Unified Modal State
+// Modal State
 const isGroupModalOpen = ref(false);
 const isTagModalOpen = ref(false);
 const isConfirmOpen = ref(false);
-const editingItem = ref(null);
+
+// State for editing - SEPARATED to prevent conflicts
+const editingGroup = ref(null);
+const editingTag = ref(null);
+const currentGroupId = ref(null); // For creating new tags
+
+// State for deleting
 const itemToDelete = ref(null); // { id, type: 'group' | 'tag' }
-const currentGroupId = ref(null); // To pass to TagEditorModal
+
 
 onMounted(() => {
   tagsStore.fetchAllTagsData();
@@ -98,7 +107,8 @@ const closeModal = () => {
   isGroupModalOpen.value = false;
   isTagModalOpen.value = false;
   isConfirmOpen.value = false;
-  editingItem.value = null;
+  editingGroup.value = null;
+  editingTag.value = null;
   itemToDelete.value = null;
   currentGroupId.value = null;
 };
@@ -110,13 +120,13 @@ const getGroupActions = (group) => [
 ];
 
 const openGroupModal = (group = null) => {
-  editingItem.value = group;
+  editingGroup.value = group;
   isGroupModalOpen.value = true;
 };
 
 const handleSaveGroup = async (groupData) => {
   try {
-    if (editingItem.value) {
+    if (editingGroup.value) {
       await tagsStore.updateTagGroup(groupData.id, groupData);
     } else {
       await tagsStore.createTagGroup(groupData);
@@ -134,14 +144,14 @@ const getTagActions = (tag, group) => [
 ];
 
 const openTagModal = (group, tag = null) => {
-  editingItem.value = tag;
+  editingTag.value = tag;
   currentGroupId.value = group.id;
   isTagModalOpen.value = true;
 };
 
 const handleSaveTag = async (tagData) => {
   try {
-    if (editingItem.value) {
+    if (editingTag.value) {
       await tagsStore.updateTag(tagData.id, tagData);
     } else {
       await tagsStore.createTag(tagData);
