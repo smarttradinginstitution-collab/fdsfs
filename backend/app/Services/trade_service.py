@@ -81,10 +81,15 @@ class TradeService:
         if not entity_ids:
             return []
 
-        stmt = select(model_class).where(
-            model_class.id.in_(entity_ids),
-            model_class.general_account_id == general_account_id
-        )
+        stmt = select(model_class).where(model_class.id.in_(entity_ids))
+
+        # FIX: Special handling for Tag model which links to general_account_id via TagsGroup
+        if model_class == Tag:
+            from app.Models.tags_group import TagsGroup
+            stmt = stmt.join(TagsGroup).where(TagsGroup.general_account_id == general_account_id)
+        else:
+            stmt = stmt.where(model_class.general_account_id == general_account_id)
+
         result = await self.db.execute(stmt)
         entities = result.scalars().all()
 
