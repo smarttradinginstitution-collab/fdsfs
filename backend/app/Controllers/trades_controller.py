@@ -186,3 +186,27 @@ class TradesController:
                 detail="Trade non trovato o non appartenente all'utente.",
             )
         return None
+
+    # --- Trade <> Tag Association ---
+    async def get_trade_tags(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> List[TagRead]:
+        """
+        Handles the request for getting all tags associated with a trade.
+        """
+        return await service.get_trade_tags(claims, trade_id)
+
+    async def update_trade_tags(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        tag_ids: List[UUID],
+        service: TradeService,
+    ) -> List[TagRead]:
+        """
+        Handles the request for updating the tags associated with a trade.
+        """
+        return await service.update_trade_tags(claims, trade_id, tag_ids)
