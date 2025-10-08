@@ -186,29 +186,29 @@ export const useNotebookStore = defineStore('notebook', {
     },
 
     async updateNote(noteId, noteData) {
-      // This action is now "silent" - it doesn't trigger a global loading state.
-      // This prevents the entire list from flickering during auto-saves.
       try {
         const response = await apiClient.put(`/notebook/notes/${noteId}`, noteData);
-        const updatedNote = response.data;
+        const updatedNoteFromServer = response.data;
 
-        // Find the index of the note in our local state.
         const index = this.notes.findIndex(note => note.id === noteId);
-
-        // If the note is found in the current list, update it directly.
-        // This is the key change to prevent re-fetching the whole list.
         if (index !== -1) {
-          // To ensure reactivity, we replace the item.
-          // We merge to preserve any local-only properties if they existed.
-          this.notes[index] = { ...this.notes[index], ...updatedNote };
+          // To prevent race conditions, we update the store with the content
+          // that was just successfully saved (`noteData`) and merge in the new
+          // `updated_at` timestamp from the server. This ensures the store
+          // reflects the last saved state without reverting to an older version
+          // if the user continued typing during the save operation.
+          this.notes[index] = {
+            ...this.notes[index],
+            title: noteData.title,
+            content: noteData.content,
+            updated_at: updatedNoteFromServer.updated_at,
+          };
         }
-
-        return updatedNote;
+        return updatedNoteFromServer;
       } catch (err) {
         console.error('Error updating note:', err);
-        // Optionally set an error state that a component could display
         this.error = err.response?.data?.detail || 'Failed to update note.';
-        throw err; // Re-throw so the component knows the save failed.
+        throw err;
       }
     },
 

@@ -23,8 +23,10 @@ import {
 
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
+import { useUiStore } from '../../stores/uiStore';
 
 const store = useNotebookStore();
+const uiStore = useUiStore();
 const note = computed(() => store.selectedNote);
 const financialData = computed(() => store.financialData);
 const folder = computed(() => store.selectedNoteFolder);
@@ -33,7 +35,7 @@ const isTradeNoteFolder = computed(() => folder.value?.system_folder_identifier 
 const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
 
 const editableTitle = ref(note.value ? note.value.title : '');
-const saveStatus = ref('');
+const isSaving = ref(false);
 
 const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
 const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
@@ -169,30 +171,33 @@ const statsGrid = computed(() => {
     };
 });
 
-watch(note, (newNote) => {
-  if (newNote && editor.value) {
-    editableTitle.value = newNote.title;
-    if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-        editor.value.commands.setContent(newNote.content, false);
+watch(() => note.value?.id, (newId) => {
+  if (newId && note.value && editor.value) {
+    editableTitle.value = note.value.title;
+    // Check if content is actually different before setting it, to avoid unnecessary updates
+    if (JSON.stringify(note.value.content) !== JSON.stringify(editor.value.getJSON())) {
+        editor.value.commands.setContent(note.value.content, false);
     }
   }
-}, { deep: true });
+}, { immediate: true });
 
 const saveNote = async () => {
-    if (!editor.value || !note.value) return;
-    saveStatus.value = 'Saving...';
+    if (!editor.value || !note.value || isSaving.value) return;
+
+    isSaving.value = true;
+    uiStore.showNotification({ message: 'Salvataggio in corso...' });
+
     try {
         await store.updateNote(note.value.id, {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
-        saveStatus.value = 'Saved!';
-        setTimeout(() => {
-            saveStatus.value = '';
-        }, 2000);
+        uiStore.showNotification({ message: 'Salvato!', type: 'success' });
     } catch (error) {
         console.error("Failed to save note:", error);
-        saveStatus.value = 'Error!';
+        uiStore.showNotification({ message: 'Errore durante il salvataggio.', type: 'error' });
+    } finally {
+        isSaving.value = false;
     }
 };
 
@@ -288,7 +293,6 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="editor-header-actions">
-       <span class="save-status">{{ saveStatus }}</span>
        <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>
     </div>
 
@@ -507,13 +511,6 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end; /* Align save status to the right */
   gap: 0.5rem;
-}
-
-.save-status {
-  font-size: 0.875rem;
-  color: var(--semantic-color-text-secondary);
-  min-width: 80px; // Reserve space to prevent layout shift
-  text-align: right;
 }
 
 .button-secondary {
