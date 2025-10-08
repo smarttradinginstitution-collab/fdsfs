@@ -4,20 +4,22 @@
       <h2 class="text-lg font-semibold">{{ modalTitle }}</h2>
     </template>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <BaseInput
-        v-model="tagName"
-        label="Tag Name"
-        placeholder="e.g., Breakout, Reversal"
-        required
-        :error="validationError"
-      />
+    <template #default>
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <BaseInput
+          v-model="tagName"
+          label="Tag Name"
+          placeholder="e.g., Breakout, Reversal"
+          required
+          :error="validationError"
+        />
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tag Color</label>
-        <ColorSelector v-model="tagColor" />
-      </div>
-    </form>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tag Color</label>
+          <ColorSelector v-model="tagColor" />
+        </div>
+      </form>
+    </template>
 
     <template #footer>
       <div class="flex justify-end space-x-2">

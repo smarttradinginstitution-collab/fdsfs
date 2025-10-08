@@ -4,17 +4,19 @@
       <h2 class="text-lg font-semibold">{{ modalTitle }}</h2>
     </template>
 
-    <form @submit.prevent="handleSubmit">
-      <div class="space-y-4">
-        <BaseInput
-          v-model="groupName"
-          label="Group Name"
-          placeholder="e.g., Strategies, Market Conditions"
-          required
-          :error="validationError"
-        />
-      </div>
-    </form>
+    <template #default>
+      <form @submit.prevent="handleSubmit">
+        <div class="space-y-4">
+          <BaseInput
+            v-model="groupName"
+            label="Group Name"
+            placeholder="e.g., Strategies, Market Conditions"
+            required
+            :error="validationError"
+          />
+        </div>
+      </form>
+    </template>
 
     <template #footer>
       <div class="flex justify-end space-x-2">
