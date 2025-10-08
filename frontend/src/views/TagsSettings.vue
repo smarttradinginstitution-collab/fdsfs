@@ -282,7 +282,7 @@ const getTagsForGroup = (groupId) => {
         </Button>
         <BaseButton @click="handleSaveTag">
           {{ isTagEditMode ? 'Save Changes' : 'Save Tag' }}
-        </Button>
+        </BaseButton>
       </template>
     </BaseModal>
 
