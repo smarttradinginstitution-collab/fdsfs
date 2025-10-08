@@ -60,9 +60,9 @@ const navLinks = [
   -->
   <aside class="sidebar" :class="{ 'is-collapsed': uiStore.isSidebarCollapsed, 'is-mobile-open': uiStore.isMobileMenuOpen }">
     <div class="sidebar-header">
-      <div v-if="!uiStore.isSidebarCollapsed" class="logo-container">
-        <img :src="logo" alt="TradeVantage" class="logo" />
-        <span>TRZ</span>
+        <div v-if="!uiStore.isSidebarCollapsed" class="logo-container">
+        <span>Trade</span><img :src="logo" alt="TradeVantage" class="logo" /><span>antage</span>
+
       </div>
       <span v-else>T</span>
       <!-- Questo pulsante ora è nascosto su mobile, dove usiamo l'hamburger. -->
@@ -145,9 +145,9 @@ const navLinks = [
 
 .sidebar-header {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
-  font: var(--semantic-font-style-heading-2xl);
+  font: var(--semantic-font-style-heading-xs);
   font-weight: var(--base-font-weight-extrabold);
   margin-bottom: var(--semantic-size-stack-xl);
 }
@@ -155,11 +155,13 @@ const navLinks = [
 .logo-container {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-sm);
+  gap: var(--semantic-size-stack-xs);
 }
 
 .logo {
-  height: 30px;
+  height: 40px;
+  margin-left: -15px;
+  margin-right: -10px;
   width: auto;
 }
 
