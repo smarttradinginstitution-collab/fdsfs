@@ -89,6 +89,15 @@ export const useUiStore = defineStore('ui', () => {
     lightboxImageUrl.value = null;
   }
 
+  // Watch for changes in the lightbox state to lock/unlock body scroll
+  watch(lightboxImageUrl, (newUrl) => {
+    if (newUrl) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  });
+
   // --- THEME MANAGEMENT ---
   function setTheme(newTheme) {
     theme.value = newTheme;
