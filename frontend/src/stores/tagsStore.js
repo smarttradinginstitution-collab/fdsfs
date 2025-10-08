@@ -84,11 +84,11 @@ export const useTagsStore = defineStore('tags', () => {
       try {
           await apiClient.post('/tags-groups', groupData);
           await fetchAllTagsData();
-          uiStore.showToast({ message: 'Group created successfully.', type: 'success' });
+          uiStore.showNotification({ message: 'Group created successfully.', type: 'success' });
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to create group.';
           error.value = errorMessage;
-          uiStore.showToast({ message: errorMessage, type: 'error' });
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
           throw err;
       } finally {
           isSaving.value = false;
@@ -101,11 +101,11 @@ export const useTagsStore = defineStore('tags', () => {
       try {
           await apiClient.put(`/tags-groups/${groupId}`, groupData);
           await fetchAllTagsData();
-          uiStore.showToast({ message: 'Group updated successfully.', type: 'success' });
+          uiStore.showNotification({ message: 'Group updated successfully.', type: 'success' });
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to update group.';
           error.value = errorMessage;
-          uiStore.showToast({ message: errorMessage, type: 'error' });
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
           throw err;
       } finally {
           isSaving.value = false;
@@ -118,11 +118,11 @@ export const useTagsStore = defineStore('tags', () => {
       try {
           await apiClient.delete(`/tags-groups/${groupId}`);
           await fetchAllTagsData();
-          uiStore.showToast({ message: 'Group deleted successfully.', type: 'success' });
+          uiStore.showNotification({ message: 'Group deleted successfully.', type: 'success' });
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to delete group.';
           error.value = errorMessage;
-          uiStore.showToast({ message: errorMessage, type: 'error' });
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
           throw err;
       } finally {
           isSaving.value = false;
@@ -136,11 +136,11 @@ export const useTagsStore = defineStore('tags', () => {
       try {
           await apiClient.post('/me/tags', tagData);
           await fetchAllTagsData();
-          uiStore.showToast({ message: 'Tag created successfully.', type: 'success' });
+          uiStore.showNotification({ message: 'Tag created successfully.', type: 'success' });
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to create tag.';
           error.value = errorMessage;
-          uiStore.showToast({ message: errorMessage, type: 'error' });
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
           throw err;
       } finally {
           isSaving.value = false;
@@ -153,11 +153,11 @@ export const useTagsStore = defineStore('tags', () => {
       try {
           await apiClient.put(`/tags/${tagId}`, tagData);
           await fetchAllTagsData();
-          uiStore.showToast({ message: 'Tag updated successfully.', type: 'success' });
+          uiStore.showNotification({ message: 'Tag updated successfully.', type: 'success' });
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to update tag.';
           error.value = errorMessage;
-          uiStore.showToast({ message: errorMessage, type: 'error' });
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
           throw err;
       } finally {
           isSaving.value = false;
@@ -170,11 +170,11 @@ export const useTagsStore = defineStore('tags', () => {
       try {
           await apiClient.delete(`/tags/${tagId}`);
           await fetchAllTagsData();
-          uiStore.showToast({ message: 'Tag deleted successfully.', type: 'success' });
+          uiStore.showNotification({ message: 'Tag deleted successfully.', type: 'success' });
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to delete tag.';
           error.value = errorMessage;
-          uiStore.showToast({ message: errorMessage, type: 'error' });
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
           throw err;
       } finally {
           isSaving.value = false;

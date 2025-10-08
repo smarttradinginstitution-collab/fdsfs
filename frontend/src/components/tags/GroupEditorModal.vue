@@ -69,7 +69,7 @@ const handleSubmit = () => {
   validationError.value = '';
 
   const payload = {
-    name_group: groupName.value,
+    name: groupName.value,
   };
 
   // If editing, include the group ID in the payload for the store action
