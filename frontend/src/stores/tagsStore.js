@@ -19,7 +19,7 @@ export const useTagsStore = defineStore('tags', () => {
     }
     return tagGroups.value.map(group => ({
       ...group,
-      tags: tags.value.filter(tag => tag.tags_group_id === group.id),
+      tags: tags.value.filter(tag => tag.group_id === group.id),
     }));
   });
 
