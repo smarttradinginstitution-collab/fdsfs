@@ -7,6 +7,7 @@ import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
 import TagSelector from '@/components/tags/TagSelector.vue';
 import BasePill from '@/components/ui/BasePill.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
 
 const props = defineProps({
   trade: {
