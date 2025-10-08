@@ -31,7 +31,7 @@
 
         <div class="tags-container">
           <div v-for="tag in group.tags" :key="tag.id" class="tag-wrapper">
-            <BasePill :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }">
+            <BasePill :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }" class="tag-pill">
               {{ tag.name }}
             </BasePill>
             <ActionsMenu class="tag-actions">
@@ -205,11 +205,10 @@ const getTextColor = (bgColor) => {
   display: flex;
   align-items: center;
   gap: var(--semantic-size-inline-xs);
-  /* This wrapper is for layout only. Styling is on the pill. */
 }
 
-.tag-actions {
-  /* No custom variables needed, inherits from ActionsMenu */
+.tag-pill {
+  /* Let BasePill handle its own styling */
 }
 
 .add-tag-button {
