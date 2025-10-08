@@ -21,6 +21,7 @@ export const useUiStore = defineStore('ui', () => {
   const isAppLoading = ref(false);
   const loaderMessage = ref('');
   const isInitialLoadPending = ref(false);
+  const lightboxImageUrl = ref(null); // Holds the URL of the image to be shown in the lightbox
 
   // --- RESPONSIVE LOGIC ---
   const isMobile = useMediaQuery(`(max-width: ${breakpointTokens.base.layout.breakpoint.md.$value})`);
@@ -76,6 +77,26 @@ export const useUiStore = defineStore('ui', () => {
   function closeDailySummaryModal() { _closeModal(isDailySummaryModalOpen); }
   function openWeeklySummaryModal() { _openModal(isWeeklySummaryModalOpen); }
   function closeWeeklySummaryModal() { _closeModal(isWeeklySummaryModalOpen); }
+
+  // --- LIGHTBOX ACTIONS ---
+  function openLightbox(url) {
+    if (url) {
+      lightboxImageUrl.value = url;
+    }
+  }
+
+  function closeLightbox() {
+    lightboxImageUrl.value = null;
+  }
+
+  // Watch for changes in the lightbox state to lock/unlock body scroll
+  watch(lightboxImageUrl, (newUrl) => {
+    if (newUrl) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  });
 
   // --- THEME MANAGEMENT ---
   function setTheme(newTheme) {
@@ -150,5 +171,8 @@ export const useUiStore = defineStore('ui', () => {
     closeWeeklySummaryModal,
     notification,
     showNotification,
+    lightboxImageUrl,
+    openLightbox,
+    closeLightbox,
   };
 });

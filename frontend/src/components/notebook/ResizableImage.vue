@@ -1,6 +1,10 @@
 <script setup>
 import { ref } from 'vue';
 import { NodeViewWrapper } from '@tiptap/vue-3';
+import { ArrowsPointingOutIcon } from '@heroicons/vue/24/solid';
+import { useUiStore } from '@/stores/uiStore';
+
+const uiStore = useUiStore();
 
 const props = defineProps({
   node: {
@@ -45,10 +49,19 @@ const onMousedown = (e) => {
   window.addEventListener('mousemove', onMousemove);
   window.addEventListener('mouseup', onMouseup);
 };
+
+const openImageInLightbox = () => {
+  // Don't open lightbox if the user is trying to resize
+  if (imgRef.value.style.cursor === 'nwse-resize') return;
+  uiStore.openLightbox(props.node.attrs.src);
+};
 </script>
 
 <template>
   <node-view-wrapper class="resizable-image-wrapper" :class="{ 'is-selected': selected }">
+    <div v-if="selected" class="drag-handle" data-drag-handle>
+      <ArrowsPointingOutIcon class="drag-icon" />
+    </div>
     <img
       :src="node.attrs.src"
       :style="{
@@ -56,6 +69,7 @@ const onMousedown = (e) => {
         height: node.attrs.height ? `${node.attrs.height}px` : null,
       }"
       ref="imgRef"
+      @click="openImageInLightbox"
     />
     <div v-if="selected" class="resize-handle" @mousedown="onMousedown"></div>
   </node-view-wrapper>
@@ -76,6 +90,7 @@ img {
   display: block;
   max-width: 100%;
   height: auto;
+  cursor: zoom-in;
 }
 
 .resize-handle {
@@ -93,5 +108,30 @@ img {
 
 .resizable-image-wrapper.is-selected .resize-handle {
   display: block;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  cursor: grab;
+  padding: 2px;
+  display: none; /* Hidden by default */
+}
+
+.resizable-image-wrapper.is-selected .drag-handle {
+  display: block;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-icon {
+  width: 16px;
+  height: 16px;
+  color: white;
 }
 </style>
