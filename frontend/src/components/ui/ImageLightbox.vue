@@ -78,6 +78,7 @@ window.addEventListener('keydown', (e) => {
   max-height: 100%;
   width: auto;
   height: auto;
+  object-fit: contain; /* Ensures the image is fully visible within the container */
   border-radius: var(--semantic-border-radius-container);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
