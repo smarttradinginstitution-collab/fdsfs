@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 from uuid import UUID
-from sqlalchemy import select, insert, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload, contains_eager
 
-from app.Models.tag import Tag
-from app.Models.general_account import GeneralAccount
+from fastapi import HTTPException, status
+from sqlalchemy import func, insert, select, update, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
+
 from app.Models.auth_user import AuthUser
+from app.Models.general_account import GeneralAccount
+from app.Models.tag import Tag
 from app.Schemas.tag import TagCreate, TagUpdate
 
 
@@ -18,12 +20,31 @@ class TagRepository:
 
     async def get_tag_by_id(self, tag_id: UUID) -> Optional[Tag]:
         """Recupera un tag specifico per ID."""
-        stmt = select(Tag).where(Tag.id == tag_id).options(joinedload(Tag.group)).limit(1)
+        stmt = (
+            select(Tag)
+            .where(Tag.id == tag_id)
+            .options(joinedload(Tag.group))
+            .limit(1)
+        )
         res = await self.db.execute(stmt)
         return res.scalars().first()
 
     async def create_tag(self, tag_data: TagCreate) -> Tag:
-        """Crea un nuovo tag."""
+        """Crea un nuovo tag, verificando prima i duplicati."""
+        # Manual check for uniqueness to ensure consistent behavior
+        stmt = select(Tag).where(
+            Tag.group_id == tag_data.group_id,
+            func.lower(func.trim(Tag.name)) == func.lower(func.trim(tag_data.name)),
+        )
+        res = await self.db.execute(stmt)
+        existing_tag = res.scalars().first()
+
+        if existing_tag:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Un tag con questo nome esiste già in questo gruppo.",
+            )
+
         db_tag = Tag(**tag_data.model_dump())
         self.db.add(db_tag)
         await self.db.commit()
