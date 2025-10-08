@@ -14,7 +14,7 @@ export const useTagsStore = defineStore('tags', () => {
 
   // --- GETTERS ---
   const groupedTags = computed(() => {
-    if (!tagGroups.value.length || !tags.value.length) {
+    if (!tagGroups.value.length) {
       return [];
     }
     return tagGroups.value.map(group => ({
