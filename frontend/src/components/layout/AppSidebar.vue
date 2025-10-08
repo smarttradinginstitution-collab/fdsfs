@@ -14,6 +14,7 @@ import { useAuthStore } from '../../stores/auth';
 import ThemeToggle from '../ui/ThemeToggle.vue';
 import MfaModal from '../mfa/MfaModal.vue'; // Importa la nuova modale
 import { computed, ref } from 'vue';
+import logo from '../../assets/images/logo.svg';
 
 // Importiamo le icone necessarie
 import ViewGridIcon from '../icons/ViewGridIcon.vue';
@@ -59,7 +60,10 @@ const navLinks = [
   -->
   <aside class="sidebar" :class="{ 'is-collapsed': uiStore.isSidebarCollapsed, 'is-mobile-open': uiStore.isMobileMenuOpen }">
     <div class="sidebar-header">
-      <span v-if="!uiStore.isSidebarCollapsed">TRZ</span>
+        <div v-if="!uiStore.isSidebarCollapsed" class="logo-container">
+        <span>Trade</span><img :src="logo" alt="TradeVantage" class="logo" /><span>antage</span>
+
+      </div>
       <span v-else>T</span>
       <!-- Questo pulsante ora è nascosto su mobile, dove usiamo l'hamburger. -->
       <button @click="uiStore.toggleSidebar" class="toggle-button">
@@ -141,11 +145,24 @@ const navLinks = [
 
 .sidebar-header {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
-  font: var(--semantic-font-style-heading-2xl);
+  font: var(--semantic-font-style-heading-xs);
   font-weight: var(--base-font-weight-extrabold);
   margin-bottom: var(--semantic-size-stack-xl);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-xs);
+}
+
+.logo {
+  height: 40px;
+  margin-left: -15px;
+  margin-right: -10px;
+  width: auto;
 }
 
 .toggle-button {
