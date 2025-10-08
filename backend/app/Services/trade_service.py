@@ -18,6 +18,7 @@ from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
 from decimal import Decimal
 from app.Models.trade import Trade
@@ -81,10 +82,15 @@ class TradeService:
         if not entity_ids:
             return []
 
-        stmt = select(model_class).where(
-            model_class.id.in_(entity_ids),
-            model_class.general_account_id == general_account_id
-        )
+        stmt = select(model_class).where(model_class.id.in_(entity_ids))
+
+        # FIX: Special handling for Tag model which links to general_account_id via TagsGroup
+        if model_class == Tag:
+            from app.Models.tags_group import TagsGroup
+            stmt = stmt.join(TagsGroup).where(TagsGroup.general_account_id == general_account_id)
+        else:
+            stmt = stmt.where(model_class.general_account_id == general_account_id)
+
         result = await self.db.execute(stmt)
         entities = result.scalars().all()
 
@@ -345,3 +351,32 @@ class TradeService:
             net_pnl=float(trade.p_l) if trade.p_l is not None else None,
             net_roi=float(all_metrics.get("net_roi")) if all_metrics.get("net_roi") is not None else None,
         )
+
+    async def get_trade_tags(self, claims: dict, trade_id: UUID) -> List[TagRead]:
+        """Recupera i tag associati a un trade, verificando l'appartenenza."""
+        db_trade = await self.repo.get_trade_for_details_view(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        return [TagRead.from_orm(tag) for tag in db_trade.tags]
+
+    async def update_trade_tags(self, claims: dict, trade_id: UUID, tag_ids: List[UUID]) -> List[TagRead]:
+        """Aggiorna i tag associati a un trade."""
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        # Recupera le istanze dei Tag e verifica che appartengano all'utente
+        tags = await self._get_related_entities(general_account_id, Tag, tag_ids)
+
+        # Aggiorna la relazione
+        db_trade.tags = tags
+
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['tags'])
+
+        return [TagRead.from_orm(tag) for tag in db_trade.tags]
