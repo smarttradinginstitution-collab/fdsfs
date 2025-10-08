@@ -1,4 +1,4 @@
-import { ref, computed } from 'pinia';
+import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import apiClient from '../services/api';
 import { useAuthStore } from './auth';
