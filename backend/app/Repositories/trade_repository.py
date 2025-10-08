@@ -181,8 +181,8 @@ class TradeRepository:
             else_=0.0
         ).label("win_rate")
 
-        # Calculate average R-Multiple, handling NULLs
-        avg_r_multiple = func.avg(Trade.r_multiple).label("avg_r_multiple")
+        # Calculate average R-Multiple, handling NULLs and defaulting to 0
+        avg_r_multiple = func.coalesce(func.avg(Trade.r_multiple), 0.0).label("avg_r_multiple")
 
         stmt = (
             select(
