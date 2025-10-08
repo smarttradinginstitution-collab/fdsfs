@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import { NodeViewWrapper } from '@tiptap/vue-3';
 import { ArrowsPointingOutIcon } from '@heroicons/vue/24/solid';
+import { useUiStore } from '@/stores/uiStore';
+
+const uiStore = useUiStore();
 
 const props = defineProps({
   node: {
@@ -46,6 +49,12 @@ const onMousedown = (e) => {
   window.addEventListener('mousemove', onMousemove);
   window.addEventListener('mouseup', onMouseup);
 };
+
+const openImageInLightbox = () => {
+  // Don't open lightbox if the user is trying to resize
+  if (imgRef.value.style.cursor === 'nwse-resize') return;
+  uiStore.openLightbox(props.node.attrs.src);
+};
 </script>
 
 <template>
@@ -60,6 +69,7 @@ const onMousedown = (e) => {
         height: node.attrs.height ? `${node.attrs.height}px` : null,
       }"
       ref="imgRef"
+      @click="openImageInLightbox"
     />
     <div v-if="selected" class="resize-handle" @mousedown="onMousedown"></div>
   </node-view-wrapper>
@@ -80,6 +90,7 @@ img {
   display: block;
   max-width: 100%;
   height: auto;
+  cursor: zoom-in;
 }
 
 .resize-handle {

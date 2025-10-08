@@ -6,6 +6,7 @@ import DashboardHeader from './components/layout/DashboardHeader.vue';
 import MainLayout from './components/layout/MainLayout.vue';
 import ToastNotification from './components/ui/ToastNotification.vue';
 import FullScreenLoader from './components/ui/FullScreenLoader.vue';
+import ImageLightbox from './components/ui/ImageLightbox.vue';
 import { useUiStore } from './stores/uiStore';
 
 const uiStore = useUiStore();
@@ -60,6 +61,9 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
 
   <!-- Global Full Screen Loader -->
   <FullScreenLoader v-if="uiStore.isAppLoading" :message="uiStore.loaderMessage" />
+
+  <!-- Global Image Lightbox -->
+  <ImageLightbox />
 </template>
 
 <style lang="scss">
