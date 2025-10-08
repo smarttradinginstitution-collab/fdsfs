@@ -4,9 +4,10 @@ from uuid import UUID
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.Models.enums import FolderType, SystemFolderIdentifier
 from .trade import TradeRead
+from .note_template import NoteTemplateRead
 
 # --- Note Schemas ---
 
@@ -15,8 +16,7 @@ class NoteBase(BaseModel):
     content: Optional[Dict[str, Any]] = Field(None, description="The content of the note in JSON format from Tiptap")
     note_date: Optional[date] = Field(None, description="The specific date associated with the note, for journal entries")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class NoteCreate(NoteBase):
     folder_id: UUID = Field(..., description="The ID of the folder this note belongs to")
@@ -31,6 +31,7 @@ class NoteRead(NoteBase):
     folder_id: UUID
     trade_id: Optional[UUID] = None
     trade: Optional[TradeRead] = None # Include full trade details
+    templates: List[NoteTemplateRead] = []
     created_at: datetime
     updated_at: datetime
     title: str
@@ -43,8 +44,7 @@ class NotebookFolderBase(BaseModel):
     color: Optional[str] = Field(None, description="The hex color code for the folder")
     template_content: Optional[Dict[str, Any]] = Field(None, description="The template content for notes in this folder")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class NotebookFolderCreate(NotebookFolderBase):
     name: str = Field(..., description="The name of the folder is required for creation")
@@ -83,5 +83,4 @@ class NotebookFolderReadWithCount(NotebookFolderBase):
     note_count: int = Field(0, description="The number of notes in the folder")
     template_content: Optional[Dict[str, Any]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

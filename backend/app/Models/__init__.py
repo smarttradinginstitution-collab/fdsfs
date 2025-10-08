@@ -32,6 +32,10 @@ from .asset import Asset
 from .asset_alias import AssetAlias
 from .import_run import ImportRun
 from .trade import Trade
+from .notebook_folder import NotebookFolder
+from .note import Note
+from .note_template import NoteTemplate
+
 
 # Association tables
 from .broker_platform import BrokerPlatform
@@ -39,6 +43,8 @@ from .trades_mistakes import TradesMistakes
 from .trades_news_impacts import TradesNewsImpacts
 from .trades_psychology import TradesPsychology
 from .trades_tags import TradesTags
+from .notes_note_templates import notes_note_templates_association
+
 
 __all__ = [
     "AuthUser",
@@ -61,9 +67,13 @@ __all__ = [
     "Tag",
     "UserDashboardLayout",
     "Image",
+    "NotebookFolder",
+    "Note",
+    "NoteTemplate",
     "BrokerPlatform",
     "TradesMistakes",
     "TradesNewsImpacts",
     "TradesPsychology",
     "TradesTags",
+    "notes_note_templates_association",
 ]
