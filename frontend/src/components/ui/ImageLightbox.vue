@@ -68,17 +68,20 @@ window.addEventListener('keydown', (e) => {
 }
 
 .lightbox-content {
-  max-width: 90vw;
-  max-height: 90vh;
+  /* The container is now flexible, and the image itself will be constrained. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lightbox-image {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  /* These are the direct constraints against the viewport */
+  max-width: 90vw;
+  max-height: 90vh;
   width: auto;
   height: auto;
-  object-fit: contain; /* Ensures the image is fully visible within the container */
+  object-fit: contain;
   border-radius: var(--semantic-border-radius-container);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
