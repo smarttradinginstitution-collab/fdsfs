@@ -22,6 +22,7 @@ import ViewListIcon from '../icons/ViewListIcon.vue';
 import SparkleIcon from '../icons/SparkleIcon.vue';
 import SettingsIcon from '../icons/SettingsIcon.vue';
 import BookOpenIcon from '../icons/BookOpenIcon.vue';
+import TagIcon from '../icons/TagIcon.vue'; // <-- Importa la nuova icona
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -48,6 +49,7 @@ const navLinks = [
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
+  { to: '/settings/tags', text: 'Tags', icon: TagIcon }, // <-- Aggiungi il nuovo link
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
 </script>
