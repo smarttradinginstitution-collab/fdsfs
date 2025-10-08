@@ -1,10 +1,10 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import api from "@/services/api";
-import { useGeneralAccountStore } from "@/stores/generalAccountStore";
+import { useAuthStore } from "@/stores/auth";
 
 export const useTagsStore = defineStore("tags", () => {
-  const generalAccountStore = useGeneralAccountStore();
+  const authStore = useAuthStore();
 
   // State
   const tags = ref([]);
@@ -20,7 +20,7 @@ export const useTagsStore = defineStore("tags", () => {
 
   // Actions
   async function fetchTags() {
-    if (!generalAccountStore.generalAccount.id) return;
+    if (!authStore.generalAccount?.id) return;
     isLoading.value = true;
     error.value = null;
     try {
@@ -35,7 +35,7 @@ export const useTagsStore = defineStore("tags", () => {
   }
 
   async function fetchTagsGroups() {
-    if (!generalAccountStore.generalAccount.id) return;
+    if (!authStore.generalAccount?.id) return;
     isLoading.value = true;
     error.value = null;
     try {
