@@ -52,7 +52,7 @@ export const useTagsStore = defineStore('tags', {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await apiClient.get('/me/tags-groups');
+        const response = await apiClient.get('/tags-groups');
         this.tagGroups = response.data;
       } catch (err) {
         console.error('Error fetching tag groups:', err);
