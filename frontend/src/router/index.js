@@ -79,6 +79,12 @@ const router = createRouter({
       meta: { title: 'Notebook' },
     },
     {
+      path: '/settings/tags',
+      name: 'tags-settings',
+      component: () => import('../views/TagsSettingsView.vue'),
+      meta: { title: 'Tags Settings' },
+    },
+    {
       path: '/component-test',
       name: 'component-test',
       component: () => import('../views/ComponentTestView.vue'),
