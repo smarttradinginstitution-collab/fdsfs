@@ -11,6 +11,17 @@ export const useTagsStore = defineStore('tags', () => {
   const isLoading = ref(false);
   const isSaving = ref(false);
   const error = ref(null);
+  const isCreatingGroup = ref(false);
+  const creatingTagInGroupId = ref(null);
+
+  // --- ACTIONS ---
+  function setCreatingGroup(status) {
+    isCreatingGroup.value = status;
+  }
+
+  function setCreatingTagInGroup(groupId) {
+    creatingTagInGroupId.value = groupId;
+  }
 
   // --- GETTERS ---
   const groupedTags = computed(() => {
@@ -188,6 +199,10 @@ export const useTagsStore = defineStore('tags', () => {
     isLoading,
     isSaving,
     error,
+    isCreatingGroup,
+    creatingTagInGroupId,
+    setCreatingGroup,
+    setCreatingTagInGroup,
     groupedTags,
     fetchAllTagsData,
     createTagGroup,
