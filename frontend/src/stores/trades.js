@@ -852,5 +852,86 @@ export const useTradesStore = defineStore('trades', {
         this.isTradeLoading = false;
       }
     },
+
+    async updateTradeMistakes(tradeId, mistakeIds) {
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.post(`/trades/${tradeId}/mistakes`, mistakeIds);
+        const updatedMistakes = response.data;
+
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.mistakes = updatedMistakes;
+        }
+
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index].mistakes = updatedMistakes;
+        }
+
+        uiStore.showNotification({ message: 'Mistakes updated successfully!', type: 'success' });
+        return updatedMistakes;
+      } catch (error) {
+        console.error('Error updating trade mistakes:', error);
+        uiStore.showNotification({ message: 'Failed to update mistakes.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async updateTradePsychologyStates(tradeId, psychologyStateIds) {
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.post(`/trades/${tradeId}/psychology-states`, psychologyStateIds);
+        const updatedPsychologyStates = response.data;
+
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.psychology_states = updatedPsychologyStates;
+        }
+
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index].psychology_states = updatedPsychologyStates;
+        }
+
+        uiStore.showNotification({ message: 'Psychology states updated successfully!', type: 'success' });
+        return updatedPsychologyStates;
+      } catch (error) {
+        console.error('Error updating trade psychology states:', error);
+        uiStore.showNotification({ message: 'Failed to update psychology states.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async updateTradeNewsImpacts(tradeId, newsImpactIds) {
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.post(`/trades/${tradeId}/news-impacts`, newsImpactIds);
+        const updatedNewsImpacts = response.data;
+
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.news_impacts = updatedNewsImpacts;
+        }
+
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index].news_impacts = updatedNewsImpacts;
+        }
+
+        uiStore.showNotification({ message: 'News impacts updated successfully!', type: 'success' });
+        return updatedNewsImpacts;
+      } catch (error) {
+        console.error('Error updating trade news impacts:', error);
+        uiStore.showNotification({ message: 'Failed to update news impacts.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
   },
 });

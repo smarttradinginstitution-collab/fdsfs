@@ -19,6 +19,9 @@ from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.tag import TagRead
+from app.Schemas.mistake import MistakeRead
+from app.Schemas.psychology_state import PsychologyStateRead
+from app.Schemas.news_impact import NewsImpactRead
 from app.Infrastructure.db import get_db
 from decimal import Decimal
 from app.Models.trade import Trade
@@ -133,8 +136,8 @@ class TradeService:
 
         db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
         db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
-        db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
+        db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_name", "name")
+        db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_name", "name")
 
         self.db.add(db_trade)
         await self.db.commit()
@@ -380,3 +383,54 @@ class TradeService:
         await self.db.refresh(db_trade, attribute_names=['tags'])
 
         return [TagRead.from_orm(tag) for tag in db_trade.tags]
+
+    async def get_trade_mistakes(self, claims: dict, trade_id: UUID) -> List[MistakeRead]:
+        db_trade = await self.repo.get_trade_for_details_view(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        return [MistakeRead.from_orm(m) for m in db_trade.mistakes]
+
+    async def update_trade_mistakes(self, claims: dict, trade_id: UUID, mistake_ids: List[UUID]) -> List[MistakeRead]:
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        db_trade.mistakes = await self._get_related_entities(general_account_id, Mistake, mistake_ids)
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['mistakes'])
+        return [MistakeRead.from_orm(m) for m in db_trade.mistakes]
+
+    async def get_trade_psychology_states(self, claims: dict, trade_id: UUID) -> List[PsychologyStateRead]:
+        db_trade = await self.repo.get_trade_for_details_view(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        return [PsychologyStateRead.from_orm(ps) for ps in db_trade.psychology_states]
+
+    async def update_trade_psychology_states(self, claims: dict, trade_id: UUID, psychology_state_ids: List[UUID]) -> List[PsychologyStateRead]:
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, psychology_state_ids)
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['psychology_states'])
+        return [PsychologyStateRead.from_orm(ps) for ps in db_trade.psychology_states]
+
+    async def get_trade_news_impacts(self, claims: dict, trade_id: UUID) -> List[NewsImpactRead]:
+        db_trade = await self.repo.get_trade_for_details_view(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        return [NewsImpactRead.from_orm(ni) for ni in db_trade.news_impacts]
+
+    async def update_trade_news_impacts(self, claims: dict, trade_id: UUID, news_impact_ids: List[UUID]) -> List[NewsImpactRead]:
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        db_trade.news_impacts = await self._get_related_entities(general_account_id, NewsImpact, news_impact_ids)
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['news_impacts'])
+        return [NewsImpactRead.from_orm(ni) for ni in db_trade.news_impacts]

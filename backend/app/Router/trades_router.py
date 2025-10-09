@@ -178,6 +178,9 @@ async def delete_trade(
 
 # --- Trade <> Tag Association ---
 from app.Schemas.tag import TagRead
+from app.Schemas.mistake import MistakeRead
+from app.Schemas.psychology_state import PsychologyStateRead
+from app.Schemas.news_impact import NewsImpactRead
 
 @router.get("/{trade_id}/tags", response_model=List[TagRead], summary="Get all tags associated with a trade")
 async def get_trade_tags(
@@ -196,3 +199,63 @@ async def update_trade_tags(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade_tags(claims, trade_id, tag_ids, service)
+
+
+# --- Trade <> Mistake Association ---
+@router.get("/{trade_id}/mistakes", response_model=List[MistakeRead], summary="Get all mistakes associated with a trade")
+async def get_trade_mistakes(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_trade_mistakes(claims, trade_id, service)
+
+
+@router.post("/{trade_id}/mistakes", response_model=List[MistakeRead], summary="Update the mistakes associated with a trade")
+async def update_trade_mistakes(
+    trade_id: UUID,
+    mistake_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_mistakes(claims, trade_id, mistake_ids, service)
+
+
+# --- Trade <> Psychology State Association ---
+@router.get("/{trade_id}/psychology-states", response_model=List[PsychologyStateRead], summary="Get all psychology states associated with a trade")
+async def get_trade_psychology_states(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_trade_psychology_states(claims, trade_id, service)
+
+
+@router.post("/{trade_id}/psychology-states", response_model=List[PsychologyStateRead], summary="Update the psychology states associated with a trade")
+async def update_trade_psychology_states(
+    trade_id: UUID,
+    psychology_state_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_psychology_states(claims, trade_id, psychology_state_ids, service)
+
+
+# --- Trade <> News Impact Association ---
+@router.get("/{trade_id}/news-impacts", response_model=List[NewsImpactRead], summary="Get all news impacts associated with a trade")
+async def get_trade_news_impacts(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_trade_news_impacts(claims, trade_id, service)
+
+
+@router.post("/{trade_id}/news-impacts", response_model=List[NewsImpactRead], summary="Update the news impacts associated with a trade")
+async def update_trade_news_impacts(
+    trade_id: UUID,
+    news_impact_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_news_impacts(claims, trade_id, news_impact_ids, service)

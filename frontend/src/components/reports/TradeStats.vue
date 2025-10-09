@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
-import TradeTagManager from './TradeTagManager.vue';
+import QualitativeAnalysis from './QualitativeAnalysis.vue';
 
 const props = defineProps({
   trade: {
@@ -61,7 +61,7 @@ const displayStats = computed(() => {
         </span>
       </div>
     </div>
-    <TradeTagManager :trade="trade" />
+    <QualitativeAnalysis :trade="trade" />
   </div>
 </template>
 

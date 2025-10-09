@@ -11,6 +11,9 @@ from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
 from app.Schemas.tag import TagRead
+from app.Schemas.mistake import MistakeRead
+from app.Schemas.psychology_state import PsychologyStateRead
+from app.Schemas.news_impact import NewsImpactRead
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -210,3 +213,57 @@ class TradesController:
         Handles the request for updating the tags associated with a trade.
         """
         return await service.update_trade_tags(claims, trade_id, tag_ids)
+
+    # --- Trade <> Mistake Association ---
+    async def get_trade_mistakes(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> List[MistakeRead]:
+        return await service.get_trade_mistakes(claims, trade_id)
+
+    async def update_trade_mistakes(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        mistake_ids: List[UUID],
+        service: TradeService,
+    ) -> List[MistakeRead]:
+        return await service.update_trade_mistakes(claims, trade_id, mistake_ids)
+
+    # --- Trade <> Psychology State Association ---
+    async def get_trade_psychology_states(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> List[PsychologyStateRead]:
+        return await service.get_trade_psychology_states(claims, trade_id)
+
+    async def update_trade_psychology_states(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        psychology_state_ids: List[UUID],
+        service: TradeService,
+    ) -> List[PsychologyStateRead]:
+        return await service.update_trade_psychology_states(claims, trade_id, psychology_state_ids)
+
+    # --- Trade <> News Impact Association ---
+    async def get_trade_news_impacts(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> List[NewsImpactRead]:
+        return await service.get_trade_news_impacts(claims, trade_id)
+
+    async def update_trade_news_impacts(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        news_impact_ids: List[UUID],
+        service: TradeService,
+    ) -> List[NewsImpactRead]:
+        return await service.update_trade_news_impacts(claims, trade_id, news_impact_ids)
