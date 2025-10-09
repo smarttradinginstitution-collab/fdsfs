@@ -146,6 +146,7 @@ const handleConfirmDeleteTag = async () => {
 
 .drag-handle {
   cursor: grab;
+  height: 0.8rem;
   color: var(--semantic-color-text-placeholder);
 }
 

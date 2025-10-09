@@ -104,7 +104,8 @@ const saveEdit = async () => {
   align-items: center;
   justify-content: space-between;
   padding: var(--semantic-size-inset-sm) 0;
-  border-bottom: 1px solid var(--semantic-color-border-muted);
+  border-bottom: 1px solid var(--semantic-color-surface-secondary);
+  border-radius: var(--semantic-border-radius-surface);
 }
 .tag-row:last-child {
   border-bottom: none;
