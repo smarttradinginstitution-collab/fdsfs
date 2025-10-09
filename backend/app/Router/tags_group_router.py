@@ -41,3 +41,10 @@ router.add_api_route(
     methods=["DELETE"],
     summary="Delete a Tags Group",
 )
+router.add_api_route(
+    "/reorder",
+    tags_group_controller.reorder_tags_groups,
+    methods=["PUT"],
+    summary="Reorder Tags Groups",
+    status_code=status.HTTP_200_OK,
+)

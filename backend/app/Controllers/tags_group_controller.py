@@ -13,6 +13,7 @@ from app.Schemas.tags_group import (
     TagsGroupCreate,
     TagsGroupRead,
     TagsGroupUpdate,
+    TagsGroupReorder,
 )
 from app.Router.dependencies import get_current_general_account_id
 
@@ -110,3 +111,18 @@ async def delete_tags_group(
 
     await repo.delete_tags_group(db_obj=tags_group_to_delete)
     return {"ok": True, "detail": "Tags Group deleted successfully."}
+
+
+async def reorder_tags_groups(
+    reorder_data: TagsGroupReorder,
+    general_account_id: UUID = Depends(get_current_general_account_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Reorders the tags groups for the user.
+    """
+    repo = TagsGroupRepository(db)
+    await repo.reorder_groups(
+        general_account_id=general_account_id, group_ids=reorder_data.group_ids
+    )
+    return {"ok": True, "detail": "Groups reordered successfully."}

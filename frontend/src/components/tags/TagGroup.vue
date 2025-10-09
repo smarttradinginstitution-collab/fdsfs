@@ -2,6 +2,9 @@
   <div class="tag-group-container">
     <!-- Group Header -->
     <div class="group-header">
+      <span class="drag-handle">
+        <DragHandleIcon />
+      </span>
       <template v-if="!isEditingGroup">
         <h3 class="group-title">{{ group.name }}</h3>
         <ActionsMenu class="group-actions">
@@ -68,6 +71,7 @@ import ActionsMenu from '@/components/ui/ActionsMenu.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import TagRow from './TagRow.vue';
 import TagCreator from './TagCreator.vue';
+import DragHandleIcon from '@/components/icons/DragHandleIcon.vue';
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -138,6 +142,11 @@ const handleConfirmDeleteTag = async () => {
   align-items: center;
   gap: var(--semantic-size-stack-xs);
   margin-bottom: var(--semantic-size-stack-md);
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--semantic-color-text-placeholder);
 }
 
 .group-title {

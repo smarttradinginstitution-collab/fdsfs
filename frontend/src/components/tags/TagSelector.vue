@@ -2,7 +2,7 @@
   <div class="tag-selector">
     <PopoverMenu>
       <template #trigger="{ toggle }">
-        <button @click="toggle" class="selector-trigger">
+        <button @click="toggle" class="selector-trigger" type="button">
           <div v-if="selectedTags.length === 0" class="placeholder">Select tags...</div>
           <div v-else class="pills-container">
             <BasePill
@@ -18,11 +18,22 @@
         </button>
       </template>
 
-      <template #content="{ close }">
+      <template #content>
         <div class="popover-content">
           <div class="search-bar">
             <BaseInput v-model="searchTerm" placeholder="Search tags..." class="search-input" />
           </div>
+
+          <!-- Inline Creator -->
+          <div v-if="isCreating" class="inline-creator">
+            <ColorSelector v-model="newTagColor" />
+            <div class="creator-actions">
+              <BaseButton size="small" variant="secondary" @click="cancelCreation">Cancel</BaseButton>
+              <BaseButton size="small" @click="handleCreateTag" :loading="store.isSaving">Create</BaseButton>
+            </div>
+          </div>
+
+          <!-- Tags List -->
           <div class="tags-list">
             <div v-for="group in filteredGroupedTags" :key="group.id" class="tag-group">
               <h4 class="group-name">{{ group.name }}</h4>
@@ -32,8 +43,13 @@
                 </li>
               </ul>
             </div>
-            <div v-if="filteredGroupedTags.length === 0" class="no-results">
-              No tags found.
+
+            <!-- No Results & Create Button -->
+            <div v-if="filteredGroupedTags.length === 0 && !isCreating" class="no-results">
+              <p>No tags found for "{{ searchTerm }}".</p>
+              <button @click="startCreation" class="create-button">
+                <PlusIcon class="w-4 h-4 mr-1" /> Create new tag
+              </button>
             </div>
           </div>
         </div>
@@ -49,31 +65,28 @@ import PopoverMenu from '@/components/ui/PopoverMenu.vue';
 import BasePill from '@/components/ui/BasePill.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
-import { ChevronDownIcon } from '@heroicons/vue/24/solid';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import ColorSelector from '@/components/ui/ColorSelector.vue';
+import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
-  modelValue: {
-    type: Array,
-    default: () => [], // Array of selected tag IDs
-  },
+  modelValue: { type: Array, default: () => [] },
 });
-
 const emit = defineEmits(['update:modelValue']);
 
 const store = useTagsStore();
 const searchTerm = ref('');
+const isCreating = ref(false);
+const newTagColor = ref('#4A90E2');
 
 onMounted(() => {
-  // Fetch tags if not already loaded
   if (store.tags.length === 0 || store.tagGroups.length === 0) {
     store.fetchAllTagsData();
   }
 });
 
 const filteredGroupedTags = computed(() => {
-  if (!searchTerm.value) {
-    return store.groupedTags;
-  }
+  if (!searchTerm.value) return store.groupedTags;
   const lowerCaseSearch = searchTerm.value.toLowerCase();
   return store.groupedTags
     .map(group => ({
@@ -87,9 +100,7 @@ const selectedTags = computed(() => {
   return store.tags.filter(tag => props.modelValue.includes(tag.id));
 });
 
-const isSelected = (tagId) => {
-  return props.modelValue.includes(tagId);
-};
+const isSelected = (tagId) => props.modelValue.includes(tagId);
 
 const toggleTag = (tagId) => {
   const newSelection = [...props.modelValue];
@@ -100,6 +111,43 @@ const toggleTag = (tagId) => {
     newSelection.push(tagId);
   }
   emit('update:modelValue', newSelection);
+};
+
+const startCreation = () => {
+  isCreating.value = true;
+};
+
+const cancelCreation = () => {
+  isCreating.value = false;
+};
+
+const handleCreateTag = async () => {
+  if (!searchTerm.value.trim() || !store.tagGroups.length) return;
+
+  // For simplicity, add the new tag to the first group.
+  // A more advanced implementation could let the user choose.
+  const targetGroupId = store.tagGroups[0].id;
+
+  try {
+    const newTag = await store.createTag({
+      name: searchTerm.value,
+      color: newTagColor.value,
+      group_id: targetGroupId,
+    });
+
+    // Add the new tag to the selection automatically
+    if (newTag && !isSelected(newTag.id)) {
+      toggleTag(newTag.id);
+    }
+
+    // Reset state
+    searchTerm.value = '';
+    isCreating.value = false;
+    newTagColor.value = '#4A90E2';
+
+  } catch (error) {
+    console.error("Failed to create tag from selector:", error);
+  }
 };
 
 const getTextColor = (bgColor) => {
@@ -115,72 +163,40 @@ const getTextColor = (bgColor) => {
 
 <style scoped>
 .selector-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   background-color: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
-  text-align: left;
-  cursor: pointer;
+  text-align: left; cursor: pointer;
 }
-.placeholder {
-  color: var(--semantic-color-text-placeholder);
+.placeholder { color: var(--semantic-color-text-placeholder); }
+.pills-container { display: flex; flex-wrap: wrap; gap: var(--semantic-size-stack-xs); flex-grow: 1; }
+.trigger-pill { font-size: var(--semantic-font-style-body-sm); padding: 2px 8px; }
+.trigger-icon { width: 1.25rem; height: 1.25rem; color: var(--semantic-color-text-secondary); margin-left: var(--semantic-size-stack-sm); }
+.popover-content { display: flex; flex-direction: column; width: 300px; }
+.search-bar { padding: var(--semantic-size-inset-sm); border-bottom: 1px solid var(--semantic-color-border-default); }
+.search-input { width: 100%; }
+.tags-list { max-height: 300px; overflow-y: auto; padding: var(--semantic-size-inset-sm); }
+.tag-group { margin-bottom: var(--semantic-size-stack-sm); }
+.group-name { font: var(--semantic-font-style-label-md); color: var(--semantic-color-text-secondary); padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm); }
+.tag-item { padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm); cursor: pointer; border-radius: var(--semantic-border-radius-interactive); }
+.tag-item:hover { background-color: var(--semantic-color-surface-hover); }
+.no-results { padding: var(--semantic-size-inset-lg); text-align: center; color: var(--semantic-color-text-secondary); }
+.create-button {
+  background: none; border: none; color: var(--semantic-color-text-interactive);
+  cursor: pointer; font: var(--semantic-font-style-label-md);
+  display: inline-flex; align-items: center; padding: var(--semantic-size-stack-xs);
+  margin-top: var(--semantic-size-stack-sm);
 }
-.pills-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--semantic-size-stack-xs);
-  flex-grow: 1;
-}
-.trigger-pill {
-  font-size: var(--semantic-font-style-body-sm);
-  padding: 2px 8px;
-}
-.trigger-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--semantic-color-text-secondary);
-  margin-left: var(--semantic-size-stack-sm);
-}
-.popover-content {
+.create-button:hover { text-decoration: underline; }
+.inline-creator {
+  padding: var(--semantic-size-inset-md);
+  background-color: var(--semantic-color-surface-secondary);
+  border-bottom: 1px solid var(--semantic-color-border-default);
   display: flex;
   flex-direction: column;
-  width: 300px;
+  gap: var(--semantic-size-stack-sm);
 }
-.search-bar {
-  padding: var(--semantic-size-inset-sm);
-  border-bottom: 1px solid var(--semantic-color-border-default);
-}
-.search-input {
-  width: 100%;
-}
-.tags-list {
-  max-height: 300px;
-  overflow-y: auto;
-  padding: var(--semantic-size-inset-sm);
-}
-.tag-group {
-  margin-bottom: var(--semantic-size-stack-sm);
-}
-.group-name {
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-text-secondary);
-  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-}
-.tag-item {
-  padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-  cursor: pointer;
-  border-radius: var(--semantic-border-radius-interactive);
-}
-.tag-item:hover {
-  background-color: var(--semantic-color-surface-hover);
-}
-.no-results {
-  padding: var(--semantic-size-inset-lg);
-  text-align: center;
-  color: var(--semantic-color-text-secondary);
-}
+.creator-actions { display: flex; justify-content: flex-end; gap: var(--semantic-size-stack-sm); }
 </style>
