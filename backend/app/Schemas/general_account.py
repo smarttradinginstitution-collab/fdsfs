@@ -2,8 +2,13 @@
 from __future__ import annotations
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel, EmailStr, ConfigDict
+from typing import Optional, List
+
+from app.Schemas.mistake import MistakeRead
+from app.Schemas.news_impact import NewsImpactRead
+from app.Schemas.psychology_state import PsychologyStateRead
+from app.Schemas.tags_group import TagsGroupRead
 
 
 class GeneralAccountRead(BaseModel):
@@ -12,9 +17,17 @@ class GeneralAccountRead(BaseModel):
     label: Optional[EmailStr] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GeneralAccountCreate(BaseModel):
     label: EmailStr
+
+
+class GeneralAccountWithData(GeneralAccountRead):
+    mistakes: List[MistakeRead] = []
+    news_impacts: List[NewsImpactRead] = []
+    psychology_states: List[PsychologyStateRead] = []
+    tags_groups: List[TagsGroupRead] = []
+
+    model_config = ConfigDict(from_attributes=True)
