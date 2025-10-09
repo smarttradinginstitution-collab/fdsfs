@@ -1,10 +1,5 @@
 <template>
-  <div class="page-container">
-    <div class="header">
-      <h1 class="page-title">Report by Tag</h1>
-      <p class="page-subtitle">Analyze your performance for each of your tags.</p>
-    </div>
-
+  <div class="tag-report-container">
     <div v-if="isLoading" class="loading-state">
       <LoadingSpinner />
     </div>
@@ -49,6 +44,7 @@ import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import BasePill from '@/components/ui/BasePill.vue';
+import BaseWidget from '@/components/layout/BaseWidget.vue';
 import TagPerformanceChart from '@/components/analytics/TagPerformanceChart.vue';
 import { formatCurrency, formatPercentage, formatNumber } from '@/services/formatters';
 
@@ -91,24 +87,9 @@ watch(
   },
   { deep: true }
 );
-
 </script>
 
 <style scoped>
-.page-container {
-  padding: var(--semantic-size-inset-lg);
-}
-.header {
-  margin-bottom: var(--semantic-size-stack-lg);
-}
-.page-title {
-  font: var(--semantic-font-style-heading-2xl);
-}
-.page-subtitle {
-  font: var(--semantic-font-style-body-base);
-  color: var(--semantic-color-text-secondary);
-  margin-top: var(--semantic-size-stack-xxs);
-}
 .content {
   display: flex;
   flex-direction: column;

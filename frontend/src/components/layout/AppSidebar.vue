@@ -51,7 +51,6 @@ const navLinks = [
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
-  { to: '/reports/by-tag', text: 'Reports', icon: ChartBarIcon },
   { to: '/settings/tags', text: 'Tags', icon: TagIcon },
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
