@@ -1,9 +1,9 @@
 # app/Repositories/tags_group_repository.py
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.tags_group import TagsGroup
@@ -72,4 +72,25 @@ class TagsGroupRepository:
     async def delete_tags_group(self, db_obj: TagsGroup) -> None:
         """Deletes a tags group."""
         await self.db.delete(db_obj)
+        await self.db.commit()
+
+    async def reorder_groups(
+        self, general_account_id: UUID, group_ids: List[UUID]
+    ) -> None:
+        """
+        Updates the position of multiple tags groups in a single transaction.
+        """
+        for index, group_id in enumerate(group_ids):
+            stmt = (
+                select(TagsGroup)
+                .where(
+                    TagsGroup.id == group_id,
+                    TagsGroup.general_account_id == general_account_id,
+                )
+            )
+            result = await self.db.execute(stmt)
+            group = result.scalars().first()
+            if group:
+                group.position = index
+
         await self.db.commit()

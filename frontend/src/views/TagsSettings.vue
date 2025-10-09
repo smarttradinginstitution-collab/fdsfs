@@ -20,33 +20,49 @@
     <div v-else-if="error" class="error-state"><p>Error loading tags: {{ error }}</p></div>
 
     <!-- CONTENT -->
-    <div v-else class="content-container">
-      <TagGroup
-        v-for="group in groupedTags"
-        :key="group.id"
-        :group="group"
-      />
-      <div v-if="!groupedTags.length && !store.isCreatingGroup" class="empty-state">
+    <draggable
+      v-else
+      v-model="localGroupedTags"
+      class="content-container"
+      item-key="id"
+      handle=".drag-handle"
+      @end="onGroupDragEnd"
+    >
+      <template #item="{ element: group }">
+        <TagGroup :group="group" />
+      </template>
+    </draggable>
+    <div v-if="!localGroupedTags.length && !store.isCreatingGroup && !isLoading" class="empty-state">
         <p>No tag groups have been created yet.</p>
         <p>Click "+ Add Group" to get started.</p>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { useTagsStore } from '@/stores/tagsStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import GroupCreator from '@/components/tags/GroupCreator.vue';
 import TagGroup from '@/components/tags/TagGroup.vue';
 import { PlusIcon } from '@heroicons/vue/24/solid';
+import draggable from 'vuedraggable';
 
 const store = useTagsStore();
 const isLoading = computed(() => store.isLoading);
 const error = computed(() => store.error);
-const groupedTags = computed(() => store.groupedTags);
+
+// Local state for vuedraggable
+const localGroupedTags = ref([]);
+watch(() => store.groupedTags, (newGroups) => {
+    localGroupedTags.value = [...newGroups];
+}, { immediate: true, deep: true });
+
+const onGroupDragEnd = async () => {
+    const groupIds = localGroupedTags.value.map(group => group.id);
+    await store.reorderTagGroups(groupIds);
+};
 
 onMounted(() => {
   store.fetchAllTagsData();

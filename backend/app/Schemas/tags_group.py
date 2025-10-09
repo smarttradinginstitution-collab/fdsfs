@@ -33,3 +33,7 @@ class TagsGroupInDB(TagsGroupBase):
 
 class TagsGroupRead(TagsGroupInDB):
     pass
+
+
+class TagsGroupReorder(BaseModel):
+    group_ids: List[uuid.UUID]

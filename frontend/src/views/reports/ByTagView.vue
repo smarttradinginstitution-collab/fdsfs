@@ -16,6 +16,9 @@
       <p>Assign some tags to your trades to see performance analytics here.</p>
     </div>
     <div v-else class="content">
+      <BaseWidget class="chart-widget">
+        <TagPerformanceChart :stats="stats" />
+      </BaseWidget>
       <BaseTable :items="stats" :headers="headers">
         <template #tag_name="{ item }">
           <BasePill :style="{ backgroundColor: item.tag_color, color: getTextColor(item.tag_color) }">
@@ -46,6 +49,7 @@ import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import BasePill from '@/components/ui/BasePill.vue';
+import TagPerformanceChart from '@/components/analytics/TagPerformanceChart.vue';
 import { formatCurrency, formatPercentage, formatNumber } from '@/services/formatters';
 
 const analyticsStore = useAnalyticsStore();
@@ -104,6 +108,14 @@ watch(
   font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-secondary);
   margin-top: var(--semantic-size-stack-xxs);
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
+}
+.chart-widget {
+  padding: var(--semantic-size-inset-lg);
 }
 .loading-state, .error-state, .empty-state {
   display: flex;

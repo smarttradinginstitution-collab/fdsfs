@@ -145,9 +145,11 @@ export const useTagsStore = defineStore('tags', () => {
       const uiStore = useUiStore();
       isSaving.value = true;
       try {
-          await apiClient.post('/me/tags', tagData);
-          await fetchAllTagsData();
+          const response = await apiClient.post('/me/tags', tagData);
+          const newTag = response.data;
+          await fetchAllTagsData(); // Refresh the full list
           uiStore.showNotification({ message: 'Tag created successfully.', type: 'success' });
+          return newTag; // Return the new tag object
       } catch (err) {
           const errorMessage = err.response?.data?.detail || 'Failed to create tag.';
           error.value = errorMessage;
@@ -211,5 +213,21 @@ export const useTagsStore = defineStore('tags', () => {
     createTag,
     updateTag,
     deleteTag,
+
+    async reorderTagGroups(groupIds) {
+      const uiStore = useUiStore();
+      try {
+        await apiClient.put('/tags-groups/reorder', { group_ids: groupIds });
+        // No need to refetch, optimistic update is handled by vuedraggable's v-model.
+        // A full refetch could cause a jarring UI update.
+        uiStore.showNotification({ message: 'Group order saved.', type: 'success' });
+      } catch (err) {
+        console.error('Error reordering groups:', err);
+        uiStore.showNotification({ message: 'Failed to save new group order.', type: 'error' });
+        // In case of error, refetch to revert the changes in the UI
+        this.fetchAllTagsData();
+        throw err;
+      }
+    }
   };
 });
