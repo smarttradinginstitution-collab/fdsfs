@@ -50,6 +50,7 @@ export const useTradesStore = defineStore('trades', {
     activeSummary: null,
     selectedTrade: null,
     isTradeLoading: false,
+    tradeError: null, // Aggiunto per gestire errori specifici del singolo trade
   }),
 
   getters: {
@@ -772,13 +773,25 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchTradeById(tradeId) {
       this.isTradeLoading = true;
+      this.selectedTrade = null; // Resetta il trade precedente
+      this.tradeError = null; // Resetta l'errore precedente
       try {
         const response = await apiClient.get(`/trades/${tradeId}`);
-        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+        if (response.data) {
+          this.selectedTrade = mapBackendTradeToFrontend(response.data);
+        } else {
+          // Questo caso potrebbe non verificarsi se il backend restituisce 404
+          throw new Error('Trade data is empty.');
+        }
       } catch (error) {
         console.error(`Errore nel recupero del trade ${tradeId}:`, error);
+        // Controlla se l'errore è un 404 per un messaggio specifico
+        if (error.response && error.response.status === 404) {
+          this.tradeError = 'Trade not found. It might have been deleted or never existed.';
+        } else {
+          this.tradeError = 'An unexpected error occurred while fetching the trade.';
+        }
         this.selectedTrade = null;
-        // Potremmo voler mostrare un errore all'utente qui
       } finally {
         this.isTradeLoading = false;
       }

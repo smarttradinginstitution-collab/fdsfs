@@ -44,7 +44,7 @@ const rightColumnTabs = [
 // --- COMPUTED ---
 const trade = computed(() => tradesStore.selectedTrade);
 const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders);
-const error = ref(null);
+const error = computed(() => tradesStore.tradeError);
 
 const tradeDate = computed(() => {
   if (!trade.value?.entry_timestamp) return '';
@@ -174,12 +174,19 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 
 <template>
   <div class="report-detail-view">
+    <!-- Stato di caricamento -->
     <div v-if="isLoading" class="loading-state">
       <p>Loading trade details...</p>
     </div>
+
+    <!-- Stato di errore -->
     <div v-else-if="error" class="error-state">
+      <h2>Error</h2>
       <p>{{ error }}</p>
+      <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
     </div>
+
+    <!-- Contenuto del trade trovato -->
     <div v-else-if="trade" class="report-container">
       <!-- Secondary Header -->
       <header class="report-header">
@@ -235,15 +242,21 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
         </BaseWidget>
         </div>
       </main>
+
+      <EditTradeDetailsModal
+        v-if="trade"
+        v-model="isEditModalOpen"
+        :trade="trade"
+        @save="handleUpdateTradeDetails"
+      />
     </div>
 
-
-    <EditTradeDetailsModal
-      v-if="trade"
-      v-model="isEditModalOpen"
-      :trade="trade"
-      @save="handleUpdateTradeDetails"
-    />
+    <!-- Stato "Non trovato" -->
+    <div v-else class="not-found-state">
+      <h2>Trade Not Found</h2>
+      <p>The requested trade could not be found.</p>
+      <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
+    </div>
   </div>
 </template>
 
@@ -254,6 +267,28 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   height: 100%;
   padding: var(--semantic-size-inset-lg);
   gap: var(--semantic-size-gap-lg);
+}
+
+.loading-state,
+.error-state,
+.not-found-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  text-align: center;
+  gap: var(--semantic-size-stack-md);
+
+  h2 {
+    font: var(--semantic-font-style-heading-h2);
+    color: var(--semantic-color-text-primary);
+  }
+
+  p {
+    font: var(--semantic-font-style-body-lg);
+    color: var(--semantic-color-text-secondary);
+  }
 }
 
 .report-header {
