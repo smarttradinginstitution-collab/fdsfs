@@ -29,7 +29,7 @@ class PlaybookRead(BaseModel):
 
 class NewsImpactRead(BaseModel):
     id: UUID
-    title: str
+    name: str
 
     model_config = ConfigDict(from_attributes=True)
 
