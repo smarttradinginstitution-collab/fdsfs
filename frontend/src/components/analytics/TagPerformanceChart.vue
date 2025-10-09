@@ -85,7 +85,7 @@ const chartOptions = {
         },
       },
       grid: {
-        color: 'var(--semantic-color-border-muted)',
+        // color: 'var(--semantic-color-border-muted)', // Reverted
       }
     },
   },
