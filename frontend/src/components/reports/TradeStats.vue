@@ -19,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['open-edit-modal']);
 
 const tradesStore = useTradesStore();
+const tagsStore = useTagsStore();
 const isEditingTags = ref(false);
 const selectedTagIds = ref(props.trade.tags?.map(t => t.id) || []);
 
@@ -51,7 +52,6 @@ const displayStats = computed(() => {
 const groupedTradeTags = computed(() => {
     if (!props.trade?.tags?.length) return [];
     const groups = {};
-    const tagsStore = useTagsStore();
     props.trade.tags.forEach(tag => {
         const groupId = tag.group_id;
         if (!groups[groupId]) {
