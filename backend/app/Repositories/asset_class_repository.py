@@ -1,6 +1,7 @@
 from __future__ import annotations
 import uuid
 from typing import List, Optional
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.asset_class import AssetClass
@@ -25,26 +26,49 @@ class AssetClassRepository:
         return result.scalars().all()
 
     async def create(self, asset_class: AssetClassCreate) -> AssetClass:
+        stmt = select(AssetClass).where(AssetClass.name == asset_class.name)
+        existing_asset_class = await self.db.execute(stmt)
+        if existing_asset_class.scalars().first():
+            raise HTTPException(
+                status_code=409,
+                detail="An asset class with this name already exists.",
+            )
+
         db_asset_class = AssetClass(**asset_class.model_dump())
         self.db.add(db_asset_class)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(db_asset_class)
         return db_asset_class
 
     async def update(self, asset_class_id: uuid.UUID, asset_class_update: AssetClassUpdate) -> Optional[AssetClass]:
         db_asset_class = await self.get(asset_class_id)
-        if db_asset_class:
-            update_data = asset_class_update.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(db_asset_class, key, value)
-            await self.db.commit()
-            await self.db.refresh(db_asset_class)
+        if not db_asset_class:
+            return None
+
+        update_data = asset_class_update.model_dump(exclude_unset=True)
+
+        if "name" in update_data and update_data["name"] != db_asset_class.name:
+            stmt = select(AssetClass).where(
+                AssetClass.name == update_data["name"],
+                AssetClass.id != asset_class_id
+            )
+            existing_asset_class = await self.db.execute(stmt)
+            if existing_asset_class.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="An asset class with this name already exists.",
+                )
+
+        for key, value in update_data.items():
+            setattr(db_asset_class, key, value)
+        await self.db.flush()
+        await self.db.refresh(db_asset_class)
         return db_asset_class
 
     async def delete(self, asset_class_id: uuid.UUID) -> bool:
         db_asset_class = await self.get(asset_class_id)
         if db_asset_class:
             await self.db.delete(db_asset_class)
-            await self.db.commit()
+            await self.db.flush()
             return True
         return False

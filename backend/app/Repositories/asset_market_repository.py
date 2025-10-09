@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from uuid import UUID
+from fastapi import HTTPException
 from app.Models.asset_market import AssetMarket
 from app.Schemas.asset_market import AssetMarketCreate, AssetMarketUpdate
 
@@ -9,6 +10,13 @@ class AssetMarketRepository:
         self.db = db_session
 
     async def create(self, market: AssetMarketCreate) -> AssetMarket:
+        stmt = select(AssetMarket).where(AssetMarket.name == market.name)
+        existing_market = await self.db.execute(stmt)
+        if existing_market.scalars().first():
+            raise HTTPException(
+                status_code=409,
+                detail="An asset market with this name already exists.",
+            )
         new_market = AssetMarket(name=market.name)
         self.db.add(new_market)
         await self.db.commit()
@@ -29,12 +37,27 @@ class AssetMarketRepository:
 
     async def update(self, market_id: UUID, market_data: AssetMarketUpdate) -> AssetMarket | None:
         market = await self.get(market_id)
-        if market:
-            update_data = market_data.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(market, key, value)
-            await self.db.commit()
-            await self.db.refresh(market)
+        if not market:
+            return None
+
+        update_data = market_data.model_dump(exclude_unset=True)
+
+        if "name" in update_data and update_data["name"] != market.name:
+            stmt = select(AssetMarket).where(
+                AssetMarket.name == update_data["name"],
+                AssetMarket.id != market_id
+            )
+            existing_market = await self.db.execute(stmt)
+            if existing_market.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="An asset market with this name already exists.",
+                )
+
+        for key, value in update_data.items():
+            setattr(market, key, value)
+        await self.db.commit()
+        await self.db.refresh(market)
         return market
 
     async def delete(self, market_id: UUID) -> bool:

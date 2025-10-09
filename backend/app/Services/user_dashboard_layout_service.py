@@ -8,7 +8,11 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Repositories.user_dashboard_layout_repository import UserDashboardLayoutRepository
-from app.Schemas.user_dashboard_layout import UserDashboardLayoutUpdate, UserDashboardLayoutRead
+from app.Schemas.user_dashboard_layout import (
+    UserDashboardLayoutCreate,
+    UserDashboardLayoutUpdate,
+    UserDashboardLayoutRead,
+)
 
 
 class UserDashboardLayoutService:
@@ -44,5 +48,15 @@ class UserDashboardLayoutService:
         """
         Saves or updates a user's dashboard layout.
         """
-        upserted_layout = await self.repo.upsert(user_id, payload)
-        return UserDashboardLayoutRead.model_validate(upserted_layout)
+        existing_layout = await self.repo.get_by_user_id(user_id)
+        if existing_layout:
+            # Update existing layout
+            updated_layout = await self.repo.update(existing_layout, payload)
+            return UserDashboardLayoutRead.model_validate(updated_layout)
+        else:
+            # Create new layout
+            create_data = UserDashboardLayoutCreate(
+                user_id=user_id, layout=payload.layout
+            )
+            new_layout = await self.repo.create(create_data)
+            return UserDashboardLayoutRead.model_validate(new_layout)

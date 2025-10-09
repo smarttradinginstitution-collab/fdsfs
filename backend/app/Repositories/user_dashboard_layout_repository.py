@@ -1,16 +1,18 @@
 # app/Repositories/user_dashboard_layout_repository.py
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func
-from sqlalchemy.dialects.postgresql import insert
+from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.user_dashboard_layout import UserDashboardLayout
-from app.Schemas.user_dashboard_layout import UserDashboardLayoutUpdate
+from app.Schemas.user_dashboard_layout import (
+    UserDashboardLayoutCreate,
+    UserDashboardLayoutUpdate,
+)
 
 
 class UserDashboardLayoutRepository:
@@ -25,28 +27,30 @@ class UserDashboardLayoutRepository:
         res = await self.db.execute(q)
         return res.scalars().first()
 
-    async def upsert(
-        self, user_id: UUID, payload: UserDashboardLayoutUpdate
-    ) -> UserDashboardLayout:
-        """
-        Crea o aggiorna il layout per un utente.
-        Usa INSERT ... ON CONFLICT per un'operazione atomica.
-        """
-        insert_data = {
-            "user_id": user_id,
-            "layout": payload.layout.model_dump(),
-        }
-        stmt = insert(UserDashboardLayout).values(**insert_data)
+    async def create(self, layout_data: UserDashboardLayoutCreate) -> UserDashboardLayout:
+        """Crea un nuovo layout per un utente, verificando l'unicità."""
+        existing_layout = await self.get_by_user_id(layout_data.user_id)
+        if existing_layout:
+            raise HTTPException(
+                status_code=409,
+                detail="A layout for this user already exists.",
+            )
 
-        # Su conflitto (stesso user_id), aggiorna il campo 'layout' e 'updated_at'
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[UserDashboardLayout.user_id],
-            set_={
-                "layout": stmt.excluded.layout,
-                "updated_at": datetime.now(timezone.utc),
-            },
-        ).returning(UserDashboardLayout)
-
-        result = await self.db.execute(stmt)
+        db_layout = UserDashboardLayout(**layout_data.model_dump())
+        self.db.add(db_layout)
         await self.db.commit()
-        return result.scalar_one()
+        await self.db.refresh(db_layout)
+        return db_layout
+
+    async def update(
+        self, db_obj: UserDashboardLayout, payload: UserDashboardLayoutUpdate
+    ) -> UserDashboardLayout:
+        """Aggiorna un layout esistente."""
+        update_data = payload.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_obj, key, value)
+
+        self.db.add(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+        return db_obj

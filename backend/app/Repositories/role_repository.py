@@ -3,6 +3,7 @@
 from typing import Sequence, Optional
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,9 +43,18 @@ class RoleRepository:
         """
         Crea un nuovo ruolo con i dati forniti e ritorna il record appena creato.
         """
+        if "name" in data:
+            stmt = select(Role).where(Role.name == data["name"])
+            existing_role = await self.db.execute(stmt)
+            if existing_role.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="A role with this name already exists.",
+                )
+
         obj = Role(**data)
         self.db.add(obj)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(obj)
         return obj
 
@@ -56,10 +66,23 @@ class RoleRepository:
         obj = await self.db.get(Role, role_id)
         if not obj:
             return None
+
+        if "name" in data and data["name"] != obj.name:
+            stmt = select(Role).where(
+                Role.name == data["name"],
+                Role.id != role_id,
+            )
+            existing_role = await self.db.execute(stmt)
+            if existing_role.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="A role with this name already exists.",
+                )
+
         if data:
             for k, v in data.items():
                 setattr(obj, k, v)
-            await self.db.commit()
+            await self.db.flush()
             await self.db.refresh(obj)
         return obj
 
@@ -70,5 +93,5 @@ class RoleRepository:
         """
         stmt = delete(Role).where(Role.id == role_id)
         res = await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
         return (res.rowcount or 0) > 0

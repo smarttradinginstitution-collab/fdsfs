@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 from uuid import UUID
-from sqlalchemy import select, insert, update, delete
+
+from fastapi import HTTPException
+from sqlalchemy import select, insert, update, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload, contains_eager
 
@@ -23,10 +25,21 @@ class TagRepository:
         return res.scalars().first()
 
     async def create_tag(self, tag_data: TagCreate) -> Tag:
-        """Crea un nuovo tag."""
+        """Crea un nuovo tag, assicurandosi che il nome sia unico all'interno del gruppo."""
+        stmt = select(Tag).where(
+            Tag.name == tag_data.name,
+            Tag.group_id == tag_data.group_id
+        )
+        existing_tag = await self.db.execute(stmt)
+        if existing_tag.scalars().first():
+            raise HTTPException(
+                status_code=409,
+                detail="A tag with this name already exists in this group.",
+            )
+
         db_tag = Tag(**tag_data.model_dump())
         self.db.add(db_tag)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(db_tag)
         return db_tag
 
@@ -36,18 +49,31 @@ class TagRepository:
         if not update_data:
             return db_obj
 
+        if "name" in update_data and update_data["name"] != db_obj.name:
+            stmt = select(Tag).where(
+                Tag.name == update_data["name"],
+                Tag.group_id == db_obj.group_id,
+                Tag.id != db_obj.id,
+            )
+            existing_tag = await self.db.execute(stmt)
+            if existing_tag.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="A tag with this name already exists in this group.",
+                )
+
         for field, value in update_data.items():
             setattr(db_obj, field, value)
 
         self.db.add(db_obj)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(db_obj)
         return db_obj
 
     async def delete_tag(self, db_obj: Tag) -> None:
         """Elimina un tag."""
         await self.db.delete(db_obj)
-        await self.db.commit()
+        await self.db.flush()
 
     async def list_tags_by_general_account_id(self, general_account_id: UUID) -> Sequence[Tag]:
         """Lists all tags for a given general_account_id by joining through TagsGroup."""
@@ -91,14 +117,14 @@ class TagRepository:
             if color and tag.color != color:
                 tag.color = color
                 self.db.add(tag)
-                await self.db.commit()
+                await self.db.flush()
                 await self.db.refresh(tag)
             return tag
 
         # 3. Create tag if it does not exist
         new_tag = Tag(name=name, color=color, group_id=group.id)
         self.db.add(new_tag)
-        await self.db.commit()
+        await self.db.flush()
 
         # Re-fetch the tag to ensure the group relationship is loaded, preventing lazy-load errors.
         created_tag = await self.get_tag_by_id(new_tag.id)

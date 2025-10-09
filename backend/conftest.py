@@ -9,7 +9,7 @@ import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy import JSON, select
+from sqlalchemy import JSON, select, event
 from sqlalchemy.ext.compiler import compiles
 
 from app.main import app
@@ -69,14 +69,25 @@ async def tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
-    """Fixture for an async db session."""
-    async_session_factory = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with async_session_factory() as session:
+    """
+    Fixture that establishes a transaction, creates a session, and rolls back
+    the transaction after each test.
+    """
+    connection = await engine.connect()
+    trans = await connection.begin()
+
+    try:
+        async_session_factory = sessionmaker(
+            bind=connection, class_=AsyncSession, expire_on_commit=False
+        )
+        session = async_session_factory()
         yield session
+    finally:
+        await trans.rollback()
+        await connection.close()
+
 
 # Fixture for a regular authenticated user client
 @pytest.fixture
