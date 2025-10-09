@@ -44,7 +44,9 @@ class TradeRepository:
             Trade.trading_account_id == trading_account_id
         )
         result = await self.db.execute(query)
-        return result.scalars().first()
+        # .unique() is mandatory here to consolidate rows for the same Trade
+        # when multiple "to-many" relationships (like tags, mistakes) are joined.
+        return result.unique().scalars().first()
 
     async def list_by_trading_account_id(
         self, trading_account_id: UUID
