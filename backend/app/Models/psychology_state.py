@@ -26,7 +26,7 @@ class PsychologyState(Base):
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    state: Mapped[str] = mapped_column(String, nullable=True)
+    name: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
