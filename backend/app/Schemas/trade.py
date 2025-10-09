@@ -11,6 +11,7 @@ class TagRead(BaseModel):
     id: UUID
     name: str
     color: Optional[str]
+    group_id: UUID  # <-- LA CORREZIONE FONDAMENTALE
 
     class Config:
         from_attributes = True
