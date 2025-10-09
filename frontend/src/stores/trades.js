@@ -777,8 +777,10 @@ export const useTradesStore = defineStore('trades', {
         this.selectedTrade = mapBackendTradeToFrontend(response.data);
       } catch (error) {
         console.error(`Errore nel recupero del trade ${tradeId}:`, error);
-        this.selectedTrade = null;
-        // Potremmo voler mostrare un errore all'utente qui
+        // Non impostare selectedTrade a null in caso di errore.
+        // In questo modo, se l'utente sta navigando tra i trade e uno non riesce a caricare,
+        // i dati del trade precedente rimangono visibili invece di mostrare uno stato di "non trovato".
+        // L'indicatore di caricamento (isTradeLoading) è sufficiente per informare l'utente.
       } finally {
         this.isTradeLoading = false;
       }
