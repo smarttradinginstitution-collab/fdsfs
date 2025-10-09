@@ -181,15 +181,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
       <p>{{ error }}</p>
     </div>
     <div v-else-if="trade" class="report-container">
-
-      <!-- ========= START: ENDPOINT DEBUGGING ========= -->
-      <div style="background-color: #1a1a1a; color: #0f0; padding: 1rem; margin-bottom: 1rem; border: 1px solid #0f0; font-family: monospace; white-space: pre-wrap; z-index: 9999; position: relative;">
-        <h3>DEBUG: Raw `trade` object from store</h3>
-        <p>This shows the data received from the backend after page load. Check if the `tags` array is present and populated.</p>
-        <pre>{{ trade }}</pre>
-      </div>
-      <!-- ========= END: ENDPOINT DEBUGGING ========= -->
-
       <!-- Secondary Header -->
       <header class="report-header">
         <div class="navigation-controls">

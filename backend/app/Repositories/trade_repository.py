@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from uuid import UUID
 from typing import List, Optional, Any
+from datetime import date
 
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select, func, case, Float
