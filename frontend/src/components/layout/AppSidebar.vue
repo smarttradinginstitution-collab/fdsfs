@@ -51,7 +51,7 @@ const navLinks = [
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
-  { to: '/settings/tags', text: 'Tags', icon: TagIcon },
+  { to: '/library', text: 'Libreria', icon: TagIcon },
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
 </script>

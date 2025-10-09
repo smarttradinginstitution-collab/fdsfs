@@ -47,7 +47,7 @@ class PsychologyStateController:
         Lista tutti gli stati psicologici dell'utente autenticato.
         """
         repo = PsychologyStateRepository(db)
-        psychology_states = await repo.list_psychology_states_by_general_account_id(general_account_id)
+        psychology_states = await repo.list_by_general_account_id(general_account_id)
         return [PsychologyStateRead.from_orm(ps) for ps in psychology_states]
 
     async def get_psychology_state(
@@ -61,7 +61,7 @@ class PsychologyStateController:
         Recupera un singolo stato psicologico per ID, verificando la proprietà.
         """
         repo = PsychologyStateRepository(db)
-        psychology_state = await repo.get_psychology_state_by_id(psychology_state_id)
+        psychology_state = await repo.get_by_id(psychology_state_id)
 
         if not psychology_state:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stato psicologico non trovato.")
@@ -81,7 +81,7 @@ class PsychologyStateController:
         Crea un nuovo stato psicologico per l'utente autenticato.
         """
         repo = PsychologyStateRepository(db)
-        new_psychology_state = await repo.create_psychology_state(general_account_id, psychology_state_data)
+        new_psychology_state = await repo.create(obj_in=psychology_state_data, general_account_id=general_account_id)
         return PsychologyStateRead.from_orm(new_psychology_state)
 
     async def update_psychology_state(
@@ -96,7 +96,7 @@ class PsychologyStateController:
         Aggiorna uno stato psicologico, verificando la proprietà.
         """
         repo = PsychologyStateRepository(db)
-        psychology_state_to_update = await repo.get_psychology_state_by_id(psychology_state_id)
+        psychology_state_to_update = await repo.get_by_id(psychology_state_id)
 
         if not psychology_state_to_update:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stato psicologico non trovato.")
@@ -104,7 +104,7 @@ class PsychologyStateController:
         if not current_user.is_admin and psychology_state_to_update.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        updated_psychology_state = await repo.update_psychology_state(db_obj=psychology_state_to_update, psychology_state_data=psychology_state_data)
+        updated_psychology_state = await repo.update(db_obj=psychology_state_to_update, obj_in=psychology_state_data)
         if not updated_psychology_state:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento dello stato psicologico.")
 
@@ -121,7 +121,7 @@ class PsychologyStateController:
         Elimina uno stato psicologico, verificando la proprietà.
         """
         repo = PsychologyStateRepository(db)
-        psychology_state_to_delete = await repo.get_psychology_state_by_id(psychology_state_id)
+        psychology_state_to_delete = await repo.get_by_id(psychology_state_id)
 
         if not psychology_state_to_delete:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stato psicologico non trovato.")
@@ -129,6 +129,6 @@ class PsychologyStateController:
         if not current_user.is_admin and psychology_state_to_delete.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        await repo.delete_psychology_state(db_obj=psychology_state_to_delete)
+        await repo.delete(db_obj=psychology_state_to_delete)
 
         return {"ok": True, "detail": "Stato psicologico eliminato con successo."}
