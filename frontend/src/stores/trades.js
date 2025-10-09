@@ -404,7 +404,7 @@ export const useTradesStore = defineStore('trades', {
         console.log("Nessun trading account selezionato. Non carico i trade.");
         this.trades = []; // Pulisci i trade se non c'è un account selezionato
         this.isLoading = false;
-        return Promise.resolve(); // Restituisce una promise risolta per coerenza
+        return;
       }
 
       const filterStore = useFilterStore();
@@ -433,20 +433,15 @@ export const useTradesStore = defineStore('trades', {
         params.setups = [_strategy];
       }
 
-      // Restituisce la promise per consentire al chiamante di attendere il completamento
-      return apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params })
-        .then(response => {
-          this.trades = response.data.map(mapBackendTradeToFrontend);
-        })
-        .catch(error => {
-          console.error('Errore nel recupero dei trade:', error);
-          this.trades = [];
-          // Rilancia l'errore per permettere al chiamante di gestirlo se necessario
-          throw error;
-        })
-        .finally(() => {
-          this.isLoading = false;
-        });
+      try {
+        const response = await apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params });
+        this.trades = response.data.map(mapBackendTradeToFrontend);
+      } catch (error) {
+        console.error('Errore nel recupero dei trade:', error);
+        this.trades = [];
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     async fetchTradeSummary(dateRange) {
@@ -777,28 +772,13 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchTradeById(tradeId) {
       this.isTradeLoading = true;
-      this.selectedTrade = null; // Resetta subito per evitare di mostrare dati vecchi
-
       try {
-        // Se la lista di trade non è ancora stata caricata, attendi che finisca.
-        if (this.trades.length === 0) {
-          await this.fetchTrades();
-        }
-
-        // Cerca il trade nella lista locale dopo essersi assicurati che sia caricata.
-        const trade = this.trades.find(t => t.id === tradeId);
-
-        if (trade) {
-          this.selectedTrade = trade;
-        } else {
-          // Se non è stato trovato (caso anomalo), recuperalo direttamente dal backend.
-          console.warn(`Trade con ID ${tradeId} non trovato nello store, lo recupero dal backend.`);
-          const response = await apiClient.get(`/trades/${tradeId}`);
-          this.selectedTrade = mapBackendTradeToFrontend(response.data);
-        }
+        const response = await apiClient.get(`/trades/${tradeId}`);
+        this.selectedTrade = mapBackendTradeToFrontend(response.data);
       } catch (error) {
         console.error(`Errore nel recupero del trade ${tradeId}:`, error);
         this.selectedTrade = null;
+        // Potremmo voler mostrare un errore all'utente qui
       } finally {
         this.isTradeLoading = false;
       }
