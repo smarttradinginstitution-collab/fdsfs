@@ -6,9 +6,9 @@ import BasePill from '@/components/ui/BasePill.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
-import BaseModal from '@/components/ui/BaseModal.vue';
-import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import CloseIcon from '@/components/icons/CloseIcon.vue';
+import PopoverMenu from '@/components/ui/PopoverMenu.vue';
+import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 
 const props = defineProps({
   trade: {
@@ -20,9 +20,10 @@ const props = defineProps({
 const tagsStore = useTagsStore();
 const tradesStore = useTradesStore();
 
-// State for Add-Tag Popup
-const editingGroupId = ref(null);
-const selectedTagIdsInPopup = ref([]);
+// State for Add-Tag Popover
+const popoverRefs = ref({});
+const openPopoverGroupId = ref(null);
+const selectedTagIdsInPopover = ref([]);
 
 // State for Remove-Tag "Deletion Mode"
 const deletingFromGroupId = ref(null);
@@ -53,30 +54,48 @@ const getTextColor = (bgColor) => {
 };
 
 // --- ADD TAG LOGIC ---
-const openAddPopup = (group) => {
-  deletingFromGroupId.value = null; // Exit delete mode if active
-  editingGroupId.value = group.id;
-  selectedTagIdsInPopup.value = group.tradeTags.map(t => t.id);
+const handlePopoverToggle = (group) => {
+    const groupId = group.id;
+    if (openPopoverGroupId.value && openPopoverGroupId.value !== groupId) {
+        popoverRefs.value[openPopoverGroupId.value]?.toggle();
+    }
+    popoverRefs.value[groupId]?.toggle();
+
+    if (openPopoverGroupId.value === groupId) {
+        openPopoverGroupId.value = null;
+    } else {
+        openPopoverGroupId.value = groupId;
+        selectedTagIdsInPopover.value = group.tradeTags.map(t => t.id);
+    }
 };
 
-const closeAddPopup = () => {
-  editingGroupId.value = null;
-  selectedTagIdsInPopup.value = [];
+const onPopoverClose = (groupId) => {
+    if (openPopoverGroupId.value === groupId) {
+        openPopoverGroupId.value = null;
+    }
 };
 
-const handleSaveChanges = async () => {
-  if (!editingGroupId.value) return;
+const handleSaveChanges = async (closePopover) => {
+  if (!openPopoverGroupId.value) return;
+  const groupId = openPopoverGroupId.value;
+
   const otherGroupTagIds = props.trade.tags
-    .filter(tag => tag.group_id !== editingGroupId.value)
+    .filter(tag => tag.group_id !== groupId)
     .map(tag => tag.id);
-  const finalTagIds = [...otherGroupTagIds, ...selectedTagIdsInPopup.value];
+
+  const finalTagIds = [...otherGroupTagIds, ...selectedTagIdsInPopover.value];
   await tradesStore.updateTradeTags(props.trade.id, finalTagIds);
-  closeAddPopup();
+
+  closePopover();
+};
+
+const handleCancel = (closePopover) => {
+  closePopover();
 };
 
 // --- REMOVE TAG LOGIC ---
 const enterDeleteMode = (groupId) => {
-  if (editingGroupId.value) return; // Don't enter delete mode if popup is open
+  if (openPopoverGroupId.value) return;
   deletingFromGroupId.value = groupId;
 };
 
@@ -89,8 +108,7 @@ const removeTag = async (tagToRemove) => {
   const finalTagIds = currentTagIds.filter(id => id !== tagToRemove.id);
   await tradesStore.updateTradeTags(props.trade.id, finalTagIds);
 
-  // If the last tag of the group was removed, exit delete mode automatically
-  const remainingTags = props.trade.tags.filter(t => t.group_id === tagToRemove.group_id);
+  const remainingTags = props.trade.tags.filter(t => t.group_id === tagToRemove.group_id && t.id !== tagToRemove.id);
   if (remainingTags.length === 0) {
     exitDeleteMode();
   }
@@ -100,65 +118,64 @@ const removeTag = async (tagToRemove) => {
 
 <template>
   <div class="tag-manager-section">
-    <!-- Rows for each tag group -->
     <div v-for="group in allGroupedTags" :key="group.id" class="tag-group-row">
       <span class="group-name">{{ group.name }}</span>
       <div class="tags-container" @click="deletingFromGroupId === group.id && exitDeleteMode()">
         <div class="tag-pills-display">
-          <div
-            v-for="tag in group.tradeTags"
-            :key="tag.id"
-            class="tag-pill-wrapper"
-            @click.stop="enterDeleteMode(group.id)"
-          >
-            <BasePill
-              :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }"
-              class="tag-pill"
+            <div
+                v-for="tag in group.tradeTags"
+                :key="tag.id"
+                class="tag-pill-wrapper"
+                @click.stop="enterDeleteMode(group.id)"
             >
-              {{ tag.name }}
-            </BasePill>
-            <button
-              v-if="deletingFromGroupId === group.id"
-              class="delete-tag-btn"
-              @click.stop="removeTag(tag)"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-          <p v-if="group.tradeTags.length === 0" class="no-tags-message">-</p>
+                <BasePill
+                :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }"
+                class="tag-pill"
+                >
+                {{ tag.name }}
+                </BasePill>
+                <button
+                    v-if="deletingFromGroupId === group.id"
+                    class="delete-tag-btn"
+                    @click.stop="removeTag(tag)"
+                >
+                    <CloseIcon />
+                </button>
+            </div>
+            <p v-if="group.tradeTags.length === 0" class="no-tags-message">-</p>
         </div>
-        <IconButton v-if="deletingFromGroupId !== group.id" @click.stop="openAddPopup(group)">
-          <PlusIcon />
-        </IconButton>
+
+        <div v-if="deletingFromGroupId !== group.id">
+            <PopoverMenu :ref="el => { if (el) popoverRefs[group.id] = el }" @close="onPopoverClose(group.id)">
+                <template #trigger>
+                    <IconButton @click.stop="handlePopoverToggle(group)">
+                        <PlusIcon/>
+                    </IconButton>
+                </template>
+                <template #content="{ close }">
+                    <div class="popover-content">
+                        <div class="tag-selection-list">
+                            <BaseCheckbox
+                                v-for="tag in group.tags"
+                                :key="tag.id"
+                                :id="`tag-popover-${tag.id}`"
+                                :value="tag.id"
+                                v-model="selectedTagIdsInPopover"
+                            >
+                                {{ tag.name }}
+                            </BaseCheckbox>
+                        </div>
+                        <div class="popover-actions">
+                            <BaseButton variant="secondary" size="small" @click="handleCancel(close)">Cancel</BaseButton>
+                            <BaseButton size="small" @click="handleSaveChanges(close)" :loading="tradesStore.isTradeLoading">Save</BaseButton>
+                        </div>
+                    </div>
+                </template>
+            </PopoverMenu>
+        </div>
         <BaseButton v-else variant="secondary" size="small" @click.stop="exitDeleteMode">Done</BaseButton>
       </div>
     </div>
-
-    <!-- Add/Edit Tags Modal -->
-    <BaseModal :show="!!editingGroupId" @close="closeAddPopup">
-      <template #header>
-        <h3>Add Tags to Group</h3>
-      </template>
-      <template #body>
-        <div v-if="editingGroupId" class="tag-selection-list">
-          <BaseCheckbox
-            v-for="tag in allGroupedTags.find(g => g.id === editingGroupId).tags"
-            :key="tag.id"
-            :id="`tag-${tag.id}`"
-            :value="tag.id"
-            v-model="selectedTagIdsInPopup"
-          >
-            {{ tag.name }}
-          </BaseCheckbox>
-        </div>
-      </template>
-      <template #footer>
-        <div class="modal-actions">
-          <BaseButton variant="secondary" @click="closeAddPopup">Cancel</BaseButton>
-          <BaseButton @click="handleSaveChanges" :loading="tradesStore.isTradeLoading">Save Changes</BaseButton>
-        </div>
-      </template>
-    </BaseModal>
   </div>
 </template>
 
@@ -169,7 +186,6 @@ const removeTag = async (tagToRemove) => {
   gap: var(--semantic-size-stack-xs);
   margin-top: var(--semantic-size-stack-lg);
 }
-
 .tag-group-row {
   display: grid;
   grid-template-columns: 40% 1fr;
@@ -178,32 +194,47 @@ const removeTag = async (tagToRemove) => {
   padding: var(--semantic-size-inset-sm) 0;
   border-bottom: 1px solid var(--semantic-color-border-subtle);
 }
-
 .group-name {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   justify-self: start;
 }
-
 .tags-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
 .tag-pills-display {
   display: flex;
   flex-wrap: wrap;
   gap: var(--semantic-size-stack-xs);
   align-items: center;
 }
-
 .no-tags-message {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   margin: 0;
 }
-
+.popover-content {
+    padding: var(--semantic-size-inset-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--semantic-size-stack-md);
+    width: 220px;
+}
+.tag-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
+}
+.popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--semantic-size-stack-sm);
+  border-top: 1px solid var(--semantic-color-border-subtle);
+  padding-top: var(--semantic-size-inset-md);
+  margin-top: var(--semantic-size-inset-sm);
+}
 .tag-pill-wrapper {
   position: relative;
   display: inline-block;
@@ -211,7 +242,6 @@ const removeTag = async (tagToRemove) => {
     cursor: pointer;
   }
 }
-
 .delete-tag-btn {
   position: absolute;
   top: -6px;
@@ -239,17 +269,5 @@ const removeTag = async (tagToRemove) => {
     width: 10px;
     height: 10px;
   }
-}
-
-.tag-selection-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--semantic-size-stack-sm);
 }
 </style>
