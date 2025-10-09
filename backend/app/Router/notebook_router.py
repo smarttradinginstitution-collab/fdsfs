@@ -20,7 +20,7 @@ from app.Schemas.notebook import (
 notebook_controller = NotebookController()
 
 # The main router for all /notebook endpoints
-router = APIRouter(prefix="/api/v1/notebook", tags=["Notebook"])
+router = APIRouter(prefix="/notebook", tags=["Notebook"])
 
 
 # --- Notebook Folders Endpoints ---
