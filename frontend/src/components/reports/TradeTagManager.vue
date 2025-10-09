@@ -27,6 +27,7 @@ const popoverStyle = ref({});
 const activeGroup = ref(null);
 const selectedTagIdsInPopover = ref([]);
 const popoverRef = ref(null);
+const deletingFromGroupId = ref(null);
 
 // --- LIFECYCLE ---
 onMounted(() => {
@@ -64,7 +65,10 @@ const getTextColor = (bgColor) => {
   return (brightness > 155) ? '#000000' : '#ffffff';
 };
 
+// --- ADD TAG LOGIC ---
 const openPopover = async (event, group) => {
+    if (deletingFromGroupId.value) return;
+
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
 
@@ -102,41 +106,71 @@ const handleCancel = () => {
   activeGroup.value = null;
 };
 
+// --- REMOVE TAG LOGIC ---
+const enterDeleteMode = (groupId) => {
+  if (isPopoverOpen.value) return;
+  deletingFromGroupId.value = groupId;
+};
+
+const exitDeleteMode = () => {
+  deletingFromGroupId.value = null;
+};
+
+const removeTag = async (tagToRemove) => {
+  const currentTagIds = props.trade.tags.map(t => t.id);
+  const finalTagIds = currentTagIds.filter(id => id !== tagToRemove.id);
+  await tradesStore.updateTradeTags(props.trade.id, finalTagIds);
+
+  const remainingTags = props.trade.tags.filter(t => t.group_id === tagToRemove.group_id && t.id !== tagToRemove.id);
+  if (remainingTags.length === 0) {
+    exitDeleteMode();
+  }
+};
+
 </script>
 
 <template>
   <div class="tag-manager-section">
-    <!-- Main UI -->
     <div v-for="group in allGroupedTags" :key="group.id" class="tag-group-row">
       <span class="group-name">{{ group.name }}</span>
       <div class="tags-container">
         <div class="tag-pills-display">
-            <BasePill v-for="tag in group.tradeTags" :key="tag.id" :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }">
-              {{ tag.name }}
-            </BasePill>
+            <div
+                v-for="tag in group.tradeTags"
+                :key="tag.id"
+                class="tag-pill-wrapper"
+                @click.stop="enterDeleteMode(group.id)"
+            >
+                <BasePill :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }" class="tag-pill">
+                  {{ tag.name }}
+                </BasePill>
+                <button v-if="deletingFromGroupId === group.id" class="delete-tag-btn" @click.stop="removeTag(tag)">
+                    <CloseIcon />
+                </button>
+            </div>
             <p v-if="group.tradeTags.length === 0" class="no-tags-message">-</p>
         </div>
-        <IconButton @click="openPopover($event, group)">
+
+        <IconButton v-if="deletingFromGroupId !== group.id" @click="openPopover($event, group)">
             <PlusIcon/>
         </IconButton>
+        <BaseButton v-else variant="secondary" size="small" @click.stop="exitDeleteMode">Done</BaseButton>
+
       </div>
     </div>
 
-    <!-- The single, shared popover with internal debug -->
     <div v-if="isPopoverOpen && activeGroup" :style="popoverStyle" class="popover-panel" ref="popoverRef">
         <div class="popover-content">
-            <!-- ========= POPOVER-INTERNAL DEBUGGING ========= -->
-            <div class="debug-section-internal">
-                <h4>Active Group Tags ({{ activeGroup.tags.length }})</h4>
-                <pre>{{ activeGroup.tags }}</pre>
-            </div>
-            <!-- ========= END POPOVER-INTERNAL DEBUGGING ========= -->
-
             <div class="tag-selection-list">
                 <p v-if="activeGroup.tags.length === 0" class="no-tags-message">No tags in this group.</p>
-                <div v-for="tag in activeGroup.tags" :key="tag.id">
-                    Tag: {{ tag.name }} (ID: {{ tag.id }})
-                </div>
+                <BaseCheckbox
+                    v-for="tag in activeGroup.tags"
+                    :key="tag.id"
+                    :value="tag.id"
+                    v-model="selectedTagIdsInPopover"
+                >
+                    {{ tag.name }}
+                </BaseCheckbox>
             </div>
             <div class="popover-actions">
                 <BaseButton variant="secondary" size="small" @click="handleCancel">Cancel</BaseButton>
@@ -144,18 +178,6 @@ const handleCancel = () => {
             </div>
         </div>
     </div>
-
-    <!-- ========= MAIN DEBUGGING OUTPUT ========= -->
-    <div class="debug-section">
-        <hr>
-        <h3>MAIN DEBUGGING SECTION</h3>
-        <h4>Raw Tags from Store ({{ tagsStore.tags.length }})</h4>
-        <pre>{{ tagsStore.tags }}</pre>
-        <h4>Raw Tag Groups from Store ({{ tagsStore.tagGroups.length }})</h4>
-        <pre>{{ tagsStore.tagGroups }}</pre>
-        <hr>
-    </div>
-    <!-- ========= END DEBUGGING ========= -->
   </div>
 </template>
 
@@ -225,20 +247,39 @@ const handleCancel = () => {
   padding-top: var(--semantic-size-inset-md);
   margin-top: var(--semantic-size-inset-sm);
 }
-
-.debug-section, .debug-section-internal {
-    background-color: #1a1a1a;
-    color: #0f0;
-    padding: 1rem;
-    margin-top: 1rem;
-    border: 1px solid #0f0;
-    font-family: monospace;
-    font-size: 12px;
-    white-space: pre-wrap;
+.tag-pill-wrapper {
+  position: relative;
+  display: inline-block;
+  .tag-pill {
+    cursor: pointer;
+  }
 }
-.debug-section-internal {
-    background-color: #1a1a4a;
-    border-color: #0ff;
-    color: #0ff;
+.delete-tag-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: var(--semantic-color-surface-sunken);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: var(--semantic-color-text-secondary);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--semantic-color-background-muted);
+    color: var(--semantic-color-text-primary);
+    transform: scale(1.1);
+  }
+
+  :deep(svg) {
+    width: 10px;
+    height: 10px;
+  }
 }
 </style>
