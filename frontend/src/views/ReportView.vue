@@ -13,6 +13,7 @@ import PencilIcon from '@/components/icons/PencilIcon.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
+import { useTagsStore } from '@/stores/tagsStore';
 
 // --- STATE ---
 const route = useRoute();
@@ -139,8 +140,14 @@ const fetchNotesForFolder = async (folderId, targetRef) => {
 };
 
 const fetchRequiredData = async (tradeId) => {
-  if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
-  if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
+  const tagsStore = useTagsStore();
+  // Ensure all necessary data is loaded in parallel for efficiency
+  await Promise.all([
+    tradesStore.trades.length === 0 ? tradesStore.fetchTrades() : Promise.resolve(),
+    notebookStore.folders.length === 0 ? notebookStore.fetchFolders() : Promise.resolve(),
+    // CRITICAL FIX: Ensure tags and groups are loaded before rendering the report
+    (tagsStore.tags.length === 0 || tagsStore.tagGroups.length === 0) ? tagsStore.fetchAllTagsData() : Promise.resolve()
+  ]);
 
   // Once folders are loaded, fetch the specific notes needed for this view
   if (tradeNotesFolder.value) {
