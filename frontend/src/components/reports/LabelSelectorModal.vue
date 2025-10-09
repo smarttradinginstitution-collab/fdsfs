@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :show="show" @close="handleCancel" :title="`Select ${itemTypeName}s`">
+  <BaseModal :show="show" @close="handleCancel" :title="title">
     <div class="modal-content">
       <div class="search-bar">
         <BaseInput v-model="searchTerm" :placeholder="`Search ${itemTypeName.toLowerCase()}s...`" class="search-input" />

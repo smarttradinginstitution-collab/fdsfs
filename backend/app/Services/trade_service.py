@@ -19,9 +19,6 @@ from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.tag import TagRead
-from app.Schemas.mistake import MistakeRead
-from app.Schemas.psychology_state import PsychologyStateRead
-from app.Schemas.news_impact import NewsImpactRead
 from app.Infrastructure.db import get_db
 from decimal import Decimal
 from app.Models.trade import Trade
@@ -136,8 +133,8 @@ class TradeService:
 
         db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
         db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_name", "name")
-        db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_name", "name")
+        db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
+        db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
 
         self.db.add(db_trade)
         await self.db.commit()

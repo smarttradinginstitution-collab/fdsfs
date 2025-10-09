@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 
 
 class PsychologyStateBase(BaseModel):
-    state: str = Field(...)
+    name: str = Field(..., max_length=100)
+    color: Optional[str] = Field(default="#888888", max_length=7)
 
 
 class PsychologyStateCreate(PsychologyStateBase):
@@ -15,7 +16,8 @@ class PsychologyStateCreate(PsychologyStateBase):
 
 
 class PsychologyStateUpdate(BaseModel):
-    state: Optional[str] = Field(default=None)
+    name: Optional[str] = Field(default=None, max_length=100)
+    color: Optional[str] = Field(default=None, max_length=7)
 
 
 class PsychologyStateRead(PsychologyStateBase):
