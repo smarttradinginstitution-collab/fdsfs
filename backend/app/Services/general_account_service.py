@@ -4,10 +4,14 @@ from __future__ import annotations
 from uuid import UUID
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 
 from app.Repositories.general_account_repository import GeneralAccountRepository
-from app.Schemas.general_account import GeneralAccountCreate, GeneralAccountRead
+from app.Schemas.general_account import (
+    GeneralAccountCreate,
+    GeneralAccountRead,
+    GeneralAccountWithData,
+)
 from app.Infrastructure.db import get_db
 from app.Services.notebook_service import NotebookService
 
@@ -36,7 +40,7 @@ class GeneralAccountService:
         # Automatically create system folders for the new account
         await notebook_service._ensure_system_folders_exist(db_account.id)
 
-        return GeneralAccountRead.from_orm(db_account)
+        return GeneralAccountRead.model_validate(db_account)
 
     async def get_general_account_for_user(
         self, claims: dict
@@ -45,5 +49,29 @@ class GeneralAccountService:
         user_id = UUID(claims["sub"])
         db_account = await self.repo.get_by_user_id(user_id=user_id)
         if db_account:
-            return GeneralAccountRead.from_orm(db_account)
+            return GeneralAccountRead.model_validate(db_account)
         return None
+
+    async def get_general_account_with_all_data(
+        self, account_id: UUID, claims: dict
+    ) -> GeneralAccountWithData:
+        """
+        Recupera un GeneralAccount con tutte le sue relazioni (mistakes, news, ecc.)
+        verificando che l'utente sia il proprietario.
+        """
+        user_id = UUID(claims["sub"])
+        db_account = await self.repo.get_by_id_with_all_data(account_id=account_id)
+
+        if not db_account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="General account not found.",
+            )
+
+        if db_account.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User is not authorized to access this account.",
+            )
+
+        return GeneralAccountWithData.model_validate(db_account)

@@ -1,6 +1,7 @@
 # app/Controllers/general_account_controller.py
 # Questo file contiene la logica di business per la gestione dei General Accounts.
 from __future__ import annotations
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 
@@ -44,4 +45,18 @@ async def get_my_general_account(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="General Account non trovato per questo utente.",
         )
+    return account
+
+
+async def get_general_account_with_all_data(
+    account_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: GeneralAccountService = Depends(),
+):
+    """
+    Recupera un General Account con tutte le sue relazioni (mistakes, news, ecc.).
+    """
+    account = await service.get_general_account_with_all_data(
+        account_id=account_id, claims=claims
+    )
     return account

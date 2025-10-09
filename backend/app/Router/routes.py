@@ -220,6 +220,11 @@ router.include_router(
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
+router.include_router(
+    general_account_router.router_with_data,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 📓 NOTEBOOK (protetto: user)

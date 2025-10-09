@@ -1,8 +1,9 @@
 # app/Schemas/tags_group.py
 from __future__ import annotations
 import uuid
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, constr
+from app.Schemas.tag import TagRead
 
 
 class TagsGroupBase(BaseModel):
@@ -32,7 +33,7 @@ class TagsGroupInDB(TagsGroupBase):
 
 
 class TagsGroupRead(TagsGroupInDB):
-    pass
+    tags: List[TagRead] = []
 
 
 class TagsGroupReorder(BaseModel):

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.general_account import GeneralAccount
+from app.Models.tags_group import TagsGroup
 from app.Schemas.general_account import GeneralAccountCreate
 
 
@@ -58,3 +59,20 @@ class GeneralAccountRepository:
                 raise
 
         return db_account
+
+    async def get_by_id_with_all_data(self, account_id: UUID) -> Optional[GeneralAccount]:
+        """
+        Recupera un GeneralAccount tramite il suo ID con tutte le relazioni caricate (eager loading).
+        """
+        stmt = (
+            select(GeneralAccount)
+            .where(GeneralAccount.id == account_id)
+            .options(
+                selectinload(GeneralAccount.mistakes),
+                selectinload(GeneralAccount.news_impacts),
+                selectinload(GeneralAccount.psychology_states),
+                selectinload(GeneralAccount.tags_groups).selectinload(TagsGroup.tags),
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()

@@ -10,6 +10,12 @@ from app.Models.broker import Broker
 from app.Models.role import Role
 from app.Models.auth_user import AuthUser
 from app.Models.user_role import UserRole
+from app.Models.general_account import GeneralAccount
+from app.Models.mistake import Mistake
+from app.Models.news_impact import NewsImpact
+from app.Models.psychology_state import PsychologyState
+from app.Models.tags_group import TagsGroup
+from app.Models.tag import Tag
 from app.Router.auth import get_current_claims
 
 @pytest.fixture(scope="module")
@@ -73,3 +79,32 @@ async def test_broker(db_session: AsyncSession) -> Broker:
     await db_session.commit()
     await db_session.refresh(broker)
     return broker
+
+@pytest.fixture
+async def general_account_with_data(db_session: AsyncSession, regular_user: AuthUser) -> GeneralAccount:
+    """
+    Crea un GeneralAccount per l'utente e lo popola con dati correlati
+    (mistakes, news, psychology, tags) per testare l'endpoint "with-data".
+    """
+    # Crea il GeneralAccount
+    general_account = GeneralAccount(user_id=regular_user.id, label=regular_user.email)
+    db_session.add(general_account)
+    await db_session.flush()
+
+    # Crea dati correlati e associali
+    mistake = Mistake(name="Test Mistake", general_account_id=general_account.id)
+    news_impact = NewsImpact(title="Test News", general_account_id=general_account.id)
+    psychology_state = PsychologyState(name="Test State", general_account_id=general_account.id)
+    tags_group = TagsGroup(name="Test Group", general_account_id=general_account.id)
+    db_session.add_all([mistake, news_impact, psychology_state, tags_group])
+    await db_session.flush()
+
+    # Crea tag per il gruppo
+    tag1 = Tag(name="Tag 1", group_id=tags_group.id, color="#FF0000")
+    tag2 = Tag(name="Tag 2", group_id=tags_group.id, color="#00FF00")
+    db_session.add_all([tag1, tag2])
+
+    await db_session.commit()
+    await db_session.refresh(general_account)
+
+    return general_account
