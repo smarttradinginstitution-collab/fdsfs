@@ -4,6 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import List
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -44,6 +45,13 @@ class PlatformRepository:
         return result.unique().scalars().all()
 
     async def create(self, platform_in: PlatformCreate) -> Platform:
+        existing = await self.get_by_name(platform_in.name)
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="A platform with this name already exists.",
+            )
+
         brokers = []
         if platform_in.brokers:
             result = await self.db.execute(
@@ -61,6 +69,14 @@ class PlatformRepository:
         self, platform: Platform, platform_in: PlatformUpdate
     ) -> Platform:
         platform_data = platform_in.model_dump(exclude_unset=True)
+
+        if "name" in platform_data and platform_data["name"] != platform.name:
+            existing = await self.get_by_name(platform_data["name"])
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="A platform with this name already exists.",
+                )
 
         for field, value in platform_data.items():
             if field != "brokers":

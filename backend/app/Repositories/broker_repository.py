@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import uuid
 from typing import List
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -16,6 +17,13 @@ class BrokerRepository:
 
     async def create(self, data: dict) -> Broker:
         """Creates a new broker."""
+        if "name" in data:
+            existing = await self.get_by_name(data["name"])
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="A broker with this name already exists.",
+                )
         broker = Broker(**data)
         self.db.add(broker)
         await self.db.commit()
@@ -59,6 +67,13 @@ class BrokerRepository:
 
     async def update(self, broker: Broker, data: dict) -> Broker:
         """Updates a broker."""
+        if "name" in data and data["name"] != broker.name:
+            existing = await self.get_by_name(data["name"])
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="A broker with this name already exists.",
+                )
         for key, value in data.items():
             setattr(broker, key, value)
         await self.db.commit()

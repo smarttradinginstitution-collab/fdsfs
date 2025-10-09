@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Sequence
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -92,6 +93,15 @@ class NoteRepository:
 
     async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
+        # Check for uniqueness of trade_id if it's provided
+        if note_in.trade_id:
+            existing_note = await self.get_by_trade_id(note_in.trade_id)
+            if existing_note:
+                raise HTTPException(
+                    status_code=409,
+                    detail="A note for this trade already exists.",
+                )
+
         db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
         await self.db.commit()

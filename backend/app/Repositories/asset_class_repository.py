@@ -1,6 +1,7 @@
 from __future__ import annotations
 import uuid
 from typing import List, Optional
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.asset_class import AssetClass
@@ -25,6 +26,12 @@ class AssetClassRepository:
         return result.scalars().all()
 
     async def create(self, asset_class: AssetClassCreate) -> AssetClass:
+        existing = await self.get_by_name(asset_class.name)
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="An asset class with this name already exists.",
+            )
         db_asset_class = AssetClass(**asset_class.model_dump())
         self.db.add(db_asset_class)
         await self.db.commit()
@@ -35,6 +42,15 @@ class AssetClassRepository:
         db_asset_class = await self.get(asset_class_id)
         if db_asset_class:
             update_data = asset_class_update.model_dump(exclude_unset=True)
+
+            if "name" in update_data and update_data["name"] != db_asset_class.name:
+                existing = await self.get_by_name(update_data["name"])
+                if existing:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="An asset class with this name already exists.",
+                    )
+
             for key, value in update_data.items():
                 setattr(db_asset_class, key, value)
             await self.db.commit()

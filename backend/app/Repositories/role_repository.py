@@ -3,6 +3,7 @@
 from typing import Sequence, Optional
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +18,14 @@ class RoleRepository:
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
+
+    async def get_by_name(self, name: str) -> Optional[Role]:
+        """
+        Ritorna un ruolo per nome, oppure None se non trovato.
+        """
+        stmt = select(Role).where(Role.name == name)
+        res = await self.db.execute(stmt)
+        return res.scalars().first()
 
     # -------------------------
     # READ
@@ -42,6 +51,13 @@ class RoleRepository:
         """
         Crea un nuovo ruolo con i dati forniti e ritorna il record appena creato.
         """
+        if "name" in data:
+            existing_role = await self.get_by_name(data["name"])
+            if existing_role:
+                raise HTTPException(
+                    status_code=409, detail="A role with this name already exists."
+                )
+
         obj = Role(**data)
         self.db.add(obj)
         await self.db.commit()
@@ -56,6 +72,14 @@ class RoleRepository:
         obj = await self.db.get(Role, role_id)
         if not obj:
             return None
+
+        if "name" in data and data["name"] != obj.name:
+            existing_role = await self.get_by_name(data["name"])
+            if existing_role:
+                raise HTTPException(
+                    status_code=409, detail="A role with this name already exists."
+                )
+
         if data:
             for k, v in data.items():
                 setattr(obj, k, v)

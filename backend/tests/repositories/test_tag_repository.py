@@ -116,3 +116,69 @@ async def test_upsert_by_name_updates_existing_tag(db_session: AsyncSession, set
 
     assert updated_tag.id == tag.id
     assert updated_tag.color == "#FFFFFF"
+
+async def test_create_tag_raises_conflict_for_duplicate_name(db_session: AsyncSession, setup_data):
+    """Test that creating a tag with a duplicate name in the same group raises a 409 conflict."""
+    from fastapi import HTTPException
+    _, tags_group = setup_data
+    repo = TagRepository(db_session)
+
+    # Create the first tag
+    tag_create_schema = TagCreate(name="Duplicate Tag", group_id=tags_group.id)
+    await repo.create_tag(tag_create_schema)
+
+    # Attempt to create another tag with the same name in the same group
+    with pytest.raises(HTTPException) as excinfo:
+        await repo.create_tag(tag_create_schema)
+
+    assert excinfo.value.status_code == 409
+
+async def test_create_tag_succeeds_for_same_name_in_different_group(db_session: AsyncSession, setup_data):
+    """Test that tags with the same name can exist in different groups."""
+    general_account, tags_group1 = setup_data
+    repo = TagRepository(db_session)
+
+    # Create a tag in the first group
+    await repo.create_tag(TagCreate(name="Shared Name", group_id=tags_group1.id))
+
+    # Create a second group
+    tags_group2 = TagsGroup(name="Another Group", general_account_id=general_account.id)
+    db_session.add(tags_group2)
+    await db_session.commit()
+
+    # Create a tag with the same name in the second group
+    tag_create_schema_2 = TagCreate(name="Shared Name", group_id=tags_group2.id)
+    created_tag_2 = await repo.create_tag(tag_create_schema_2)
+
+    assert created_tag_2 is not None
+    assert created_tag_2.name == "Shared Name"
+    assert created_tag_2.group_id == tags_group2.id
+
+async def test_update_tag_raises_conflict_for_duplicate_name(db_session: AsyncSession, setup_data):
+    """Test that updating a tag to a duplicate name in the same group raises a 409 conflict."""
+    from fastapi import HTTPException
+    _, tags_group = setup_data
+    repo = TagRepository(db_session)
+
+    # Create two tags
+    tag1 = await repo.create_tag(TagCreate(name="Tag One", group_id=tags_group.id))
+    tag2 = await repo.create_tag(TagCreate(name="Tag Two", group_id=tags_group.id))
+
+    # Attempt to update the second tag to have the same name as the first
+    with pytest.raises(HTTPException) as excinfo:
+        await repo.update_tag(tag2, TagUpdate(name="Tag One"))
+
+    assert excinfo.value.status_code == 409
+
+async def test_update_tag_succeeds_if_name_is_unchanged(db_session: AsyncSession, setup_data):
+    """Test that updating a tag without changing its name (e.g., changing color) succeeds."""
+    _, tags_group = setup_data
+    repo = TagRepository(db_session)
+
+    tag = await repo.create_tag(TagCreate(name="My Tag", color="#000000", group_id=tags_group.id))
+
+    # Update only the color
+    updated_tag = await repo.update_tag(tag, TagUpdate(name="My Tag", color="#FFFFFF"))
+
+    assert updated_tag.color == "#FFFFFF"
+    assert updated_tag.name == "My Tag"

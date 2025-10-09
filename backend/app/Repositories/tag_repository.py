@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 from uuid import UUID
+from fastapi import HTTPException
 from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload, contains_eager
@@ -23,7 +24,18 @@ class TagRepository:
         return res.scalars().first()
 
     async def create_tag(self, tag_data: TagCreate) -> Tag:
-        """Crea un nuovo tag."""
+        """Crea un nuovo tag, assicurandosi che il nome sia unico all'interno del gruppo."""
+        # Verifica l'esistenza di un tag con lo stesso nome (case-sensitive)
+        stmt = select(Tag).where(
+            Tag.name == tag_data.name, Tag.group_id == tag_data.group_id
+        )
+        existing_tag = await self.db.execute(stmt)
+        if existing_tag.scalars().first():
+            raise HTTPException(
+                status_code=409,
+                detail="A tag with this name already exists in this group.",
+            )
+
         db_tag = Tag(**tag_data.model_dump())
         self.db.add(db_tag)
         await self.db.commit()
@@ -35,6 +47,18 @@ class TagRepository:
         update_data = tag_data.model_dump(exclude_unset=True)
         if not update_data:
             return db_obj
+
+        # Se il nome viene modificato, verifica l'unicità
+        if "name" in update_data and update_data["name"] != db_obj.name:
+            stmt = select(Tag).where(
+                Tag.name == update_data["name"], Tag.group_id == db_obj.group_id
+            )
+            existing_tag = await self.db.execute(stmt)
+            if existing_tag.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="A tag with this name already exists in this group.",
+                )
 
         for field, value in update_data.items():
             setattr(db_obj, field, value)
