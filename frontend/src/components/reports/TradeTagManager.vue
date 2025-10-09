@@ -22,11 +22,11 @@ const tagsStore = useTagsStore();
 const tradesStore = useTradesStore();
 
 // --- STATE ---
+const popoverRef = ref(null);
 const isPopoverOpen = ref(false);
 const popoverStyle = ref({});
 const activeGroup = ref(null);
 const selectedTagIdsInPopover = ref([]);
-const popoverRef = ref(null);
 const deletingFromGroupId = ref(null);
 
 // --- LIFECYCLE ---
@@ -83,13 +83,29 @@ const openPopover = async (event, group) => {
 
     activeGroup.value = group;
     selectedTagIdsInPopover.value = group.tradeTags.map(t => t.id);
+    isPopoverOpen.value = true;
+
+    await nextTick();
+
+    const popoverEl = popoverRef.value;
+    if (!popoverEl) return;
+
+    const popoverRect = popoverEl.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    let top = rect.bottom + 8;
+    let left = rect.left + (rect.width / 2) - (popoverRect.width / 2);
+
+    if (left < 0) left = 8;
+    if (left + popoverRect.width > windowWidth) left = windowWidth - popoverRect.width - 8;
+    if (top + popoverRect.height > windowHeight) top = rect.top - popoverRect.height - 8;
 
     popoverStyle.value = {
         position: 'fixed',
-        top: `${rect.bottom + 8}px`,
-        left: `${rect.right - 110}px`,
+        top: `${top}px`,
+        left: `${left}px`,
     };
-    isPopoverOpen.value = true;
 };
 
 const handleSaveChanges = async () => {
@@ -126,7 +142,6 @@ const removeTag = async (tagToRemove) => {
     exitDeleteMode();
   }
 };
-
 </script>
 
 <template>
