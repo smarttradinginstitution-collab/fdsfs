@@ -62,8 +62,8 @@ const chartOptions = {
           if (label) {
             label += ': ';
           }
-          if (context.parsed.x !== null) {
-            label += formatCurrency(context.parsed.x);
+          if (context.parsed.y !== null) {
+            label += formatCurrency(context.parsed.y);
           }
           return label;
         },
@@ -72,11 +72,25 @@ const chartOptions = {
   },
   scales: {
     x: {
+      // On a vertical chart, the x-axis has the labels (tags)
+      ticks: {
+        color: 'var(--semantic-color-text-secondary)',
+      },
+      grid: {
+        display: false,
+      }
+    },
+    y: {
+      // On a vertical chart, the y-axis has the values (P&L)
       ticks: {
         callback: function (value) {
           return formatCurrency(value);
         },
+        color: 'var(--semantic-color-text-secondary)',
       },
+      grid: {
+        color: 'var(--semantic-color-border-muted)',
+      }
     },
   },
 };
