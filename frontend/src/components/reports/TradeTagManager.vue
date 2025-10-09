@@ -200,8 +200,7 @@ const removeTag = async (tagToRemove) => {
 .tag-manager-section {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
-  margin-top: var(--semantic-size-stack-lg);
+
 }
 .tag-group-row {
   display: grid;
