@@ -8,10 +8,12 @@
 -->
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- REFS ---
 const inputElement = ref(null);
+const inputId = ref('');
 
 // --- PROPS ---
 // Definiamo le "props" che questo componente può accettare dall'esterno.
@@ -60,15 +62,23 @@ defineExpose({
     inputElement.value?.focus();
   },
 });
+
+// --- LIFECYCLE HOOKS ---
+onMounted(() => {
+  // Genera un ID univoco per l'input, essenziale per l'accessibilità
+  // e per collegare correttamente la label all'input.
+  inputId.value = `base-input-${uuidv4()}`;
+});
 </script>
 
 <template>
   <!-- Il template contiene un contenitore, un'etichetta (label) e il campo di input. -->
   <div class="input-wrapper">
     <!-- L'etichetta viene mostrata solo se la prop `label` è stata fornita. -->
-    <label v-if="label" class="input-label">{{ label }}</label>
+    <label v-if="label" :for="inputId" class="input-label">{{ label }}</label>
     <!-- Questo è il campo di input HTML. -->
     <input
+      :id="inputId"
       ref="inputElement"
       :type="type"
       :value="modelValue"
