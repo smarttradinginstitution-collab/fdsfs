@@ -24,6 +24,8 @@ const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
 const editableContent = ref(null);
+const isComponentLoading = ref(true); // Master loading state for the component
+const error = ref(null);
 
 // Local state for notes to avoid depending on notebookStore's active notes
 const tradeNotesList = ref([]);
@@ -43,8 +45,6 @@ const rightColumnTabs = [
 
 // --- COMPUTED ---
 const trade = computed(() => tradesStore.selectedTrade);
-const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders);
-const error = ref(null);
 
 const tradeDate = computed(() => {
   if (!trade.value?.entry_timestamp) return '';
@@ -139,18 +139,40 @@ const fetchNotesForFolder = async (folderId, targetRef) => {
 };
 
 const fetchRequiredData = async (tradeId) => {
-  if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
-  if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
+  isComponentLoading.value = true;
+  error.value = null;
+  tradesStore.selectedTrade = null; // Reset trade on new load
 
-  // Once folders are loaded, fetch the specific notes needed for this view
-  if (tradeNotesFolder.value) {
-      await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
-  }
-  if (dailyJournalFolder.value) {
-      await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
-  }
+  try {
+    // Parallelize fetching to speed up loading
+    const dataPromises = [
+      tradesStore.trades.length === 0 ? tradesStore.fetchTrades() : Promise.resolve(),
+      notebookStore.folders.length === 0 ? notebookStore.fetchFolders() : Promise.resolve(),
+    ];
+    await Promise.all(dataPromises);
 
-  await tradesStore.fetchTradeById(tradeId);
+    // After base data is loaded, fetch specifics
+    const notesPromises = [];
+    if (tradeNotesFolder.value) {
+      notesPromises.push(fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList));
+    }
+    if (dailyJournalFolder.value) {
+      notesPromises.push(fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList));
+    }
+    await Promise.all(notesPromises);
+
+    // Finally, fetch the specific trade
+    await tradesStore.fetchTradeById(tradeId);
+
+    if (!tradesStore.selectedTrade) {
+        throw new Error('Trade not found.');
+    }
+  } catch (e) {
+    console.error("Failed to fetch trade data:", e);
+    error.value = e.message || 'An unexpected error occurred.';
+  } finally {
+    isComponentLoading.value = false;
+  }
 };
 
 // --- LIFECYCLE & WATCHERS ---
@@ -174,7 +196,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 
 <template>
   <div class="report-detail-view">
-    <div v-if="isLoading" class="loading-state">
+    <div v-if="isComponentLoading" class="loading-state">
       <p>Loading trade details...</p>
     </div>
     <div v-else-if="error" class="error-state">
