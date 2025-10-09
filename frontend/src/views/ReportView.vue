@@ -20,6 +20,7 @@ const router = useRouter();
 const tradesStore = useTradesStore();
 const notebookStore = useNotebookStore();
 
+const isPageLoading = ref(true);
 const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
@@ -139,18 +140,27 @@ const fetchNotesForFolder = async (folderId, targetRef) => {
 };
 
 const fetchRequiredData = async (tradeId) => {
-  if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
-  if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
+  isPageLoading.value = true;
+  try {
+    if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
+    if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
 
-  // Once folders are loaded, fetch the specific notes needed for this view
-  if (tradeNotesFolder.value) {
-      await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
-  }
-  if (dailyJournalFolder.value) {
-      await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
-  }
+    // Once folders are loaded, fetch the specific notes needed for this view
+    if (tradeNotesFolder.value) {
+        await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
+    }
+    if (dailyJournalFolder.value) {
+        await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
+    }
 
-  await tradesStore.fetchTradeById(tradeId);
+    await tradesStore.fetchTradeById(tradeId);
+  } catch (error) {
+    console.error("Errore durante il caricamento dei dati del trade:", error);
+    // L'errore specifico verrà gestito dal getter `error` dello store,
+    // ma lo logghiamo qui per il debug.
+  } finally {
+    isPageLoading.value = false;
+  }
 };
 
 // --- LIFECYCLE & WATCHERS ---
@@ -174,69 +184,85 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 
 <template>
   <div class="report-detail-view">
-    <div v-if="isLoading" class="loading-state">
+    <!-- Mostra il caricamento unificato finché la pagina non è pronta -->
+    <div v-if="isPageLoading" class="loading-state">
       <p>Loading trade details...</p>
     </div>
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-    </div>
-    <div v-else-if="trade" class="report-container">
-      <!-- Secondary Header -->
-      <header class="report-header">
-        <div class="navigation-controls">
-          <button @click="handlePrevious" class="nav-button" :disabled="!tradesStore.getPreviousTradeId">&lt;</button>
-          <button @click="handleNext" class="nav-button" :disabled="!tradesStore.getNextTradeId">&gt;</button>
-        </div>
-        <div class="trade-identifier">
-          <h1 class="asset-name">{{ trade.symbol_snapshot }}</h1>
-          <p class="trade-date">{{ tradeDate }}</p>
-        </div>
-        <div class="action-buttons">
-          <button class="action-button">Mark as reviewed</button>
-          <button class="action-button">Replay</button>
-          <button class="action-button">Share</button>
-        </div>
-      </header>
 
-      <!-- Main Content -->
-      <main class="report-content">
-        <!-- Left Column -->
-        <div class="left-column">
-          <BaseWidget class="stats-widget">
-            <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
-              <template #stats>
-              <TradeStats :trade="trade" @open-edit-modal="openEditModal" />
-            </template>
-            <template #playbook>
-              <div>Contenuto Playbook</div>
-            </template>
-            <template #executions>
-              <div>Contenuto Executions</div>
-            </template>
-            <template #attachments>
-              <div>Contenuto Attachments</div>
-            </template>
-          </BaseTabs>
+    <!-- Una volta completato il caricamento, mostra il contenuto effettivo -->
+    <template v-else>
+      <!-- Stato di errore -->
+      <div v-if="error" class="error-state">
+        <h2>Error</h2>
+        <p>{{ error }}</p>
+        <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
+      </div>
+
+      <!-- Contenuto del trade trovato -->
+      <div v-else-if="trade" class="report-container">
+        <!-- Secondary Header -->
+        <header class="report-header">
+          <div class="navigation-controls">
+            <button @click="handlePrevious" class="nav-button" :disabled="!tradesStore.getPreviousTradeId">&lt;</button>
+            <button @click="handleNext" class="nav-button" :disabled="!tradesStore.getNextTradeId">&gt;</button>
+          </div>
+          <div class="trade-identifier">
+            <h1 class="asset-name">{{ trade.symbol_snapshot }}</h1>
+            <p class="trade-date">{{ tradeDate }}</p>
+          </div>
+          <div class="action-buttons">
+            <button class="action-button">Mark as reviewed</button>
+            <button class="action-button">Replay</button>
+            <button class="action-button">Share</button>
+          </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="report-content">
+          <!-- Left Column -->
+          <div class="left-column">
+            <BaseWidget class="stats-widget">
+              <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
+                <template #stats>
+                <TradeStats :trade="trade" @open-edit-modal="openEditModal" />
+              </template>
+              <template #playbook>
+                <div>Contenuto Playbook</div>
+              </template>
+              <template #executions>
+                <div>Contenuto Executions</div>
+              </template>
+              <template #attachments>
+                <div>Contenuto Attachments</div>
+              </template>
+            </BaseTabs>
+            </BaseWidget>
+          </div>
+
+          <!-- Right Column -->
+          <div class="right-column">
+          <BaseWidget class="notes-widget">
+            <div class="right-column-content">
+              <div class="notes-header">
+                <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
+                <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+              </div>
+              <div class="editor-container">
+                <RichTextEditor v-model="editableContent" />
+              </div>
+              </div>
           </BaseWidget>
-        </div>
+          </div>
+        </main>
+      </div>
 
-        <!-- Right Column -->
-        <div class="right-column">
-        <BaseWidget class="notes-widget">
-          <div class="right-column-content">
-            <div class="notes-header">
-              <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-              <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
-            </div>
-            <div class="editor-container">
-              <RichTextEditor v-model="editableContent" />
-            </div>
-            </div>
-        </BaseWidget>
-        </div>
-      </main>
-    </div>
-
+      <!-- Stato "Non trovato" -->
+      <div v-else class="not-found-state">
+        <h2>Trade Not Found</h2>
+        <p>The requested trade could not be found.</p>
+        <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
+      </div>
+    </template>
 
     <EditTradeDetailsModal
       v-if="trade"
