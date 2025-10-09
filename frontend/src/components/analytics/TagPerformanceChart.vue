@@ -73,9 +73,6 @@ const chartOptions = {
   scales: {
     x: {
       // On a vertical chart, the x-axis has the labels (tags)
-      ticks: {
-        color: 'var(--semantic-color-text-secondary)',
-      },
       grid: {
         display: false,
       }
@@ -86,7 +83,6 @@ const chartOptions = {
         callback: function (value) {
           return formatCurrency(value);
         },
-        color: 'var(--semantic-color-text-secondary)',
       },
       grid: {
         color: 'var(--semantic-color-border-muted)',
