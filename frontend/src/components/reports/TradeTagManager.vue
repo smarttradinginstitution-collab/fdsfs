@@ -134,9 +134,9 @@ const handleCancel = () => {
 
             <div class="tag-selection-list">
                 <p v-if="activeGroup.tags.length === 0" class="no-tags-message">No tags in this group.</p>
-                <BaseCheckbox v-for="tag in activeGroup.tags" :key="tag.id" :id="`tag-popover-${tag.id}`" :value="tag.id" v-model="selectedTagIdsInPopover">
-                    {{ tag.name }}
-                </BaseCheckbox>
+                <div v-for="tag in activeGroup.tags" :key="tag.id">
+                    Tag: {{ tag.name }} (ID: {{ tag.id }})
+                </div>
             </div>
             <div class="popover-actions">
                 <BaseButton variant="secondary" size="small" @click="handleCancel">Cancel</BaseButton>
