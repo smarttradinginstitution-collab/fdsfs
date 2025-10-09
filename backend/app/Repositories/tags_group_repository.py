@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Optional, Sequence, List
 from uuid import UUID
+from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +18,23 @@ class TagsGroupRepository:
     async def create_tags_group(
         self, tags_group_data: TagsGroupCreate, general_account_id: UUID
     ) -> TagsGroup:
-        """Creates a new tags group."""
+        """
+        Crea un nuovo gruppo di tag, assicurandosi che il nome sia unico
+        all'interno del general_account.
+        """
+        # Verifica l'esistenza di un gruppo con lo stesso nome (case-insensitive)
+        stmt = select(TagsGroup).where(
+            func.lower(TagsGroup.name) == tags_group_data.name.lower(),
+            TagsGroup.general_account_id == general_account_id,
+        )
+        existing_group = await self.db.execute(stmt)
+        if existing_group.scalars().first():
+            raise HTTPException(
+                status_code=409,
+                detail="A tags group with this name already exists.",
+            )
+
+        # Se non esiste, crea il nuovo gruppo
         db_tags_group = TagsGroup(
             **tags_group_data.model_dump(), general_account_id=general_account_id
         )
