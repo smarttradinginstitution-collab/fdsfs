@@ -3,11 +3,11 @@
 from __future__ import annotations
 from uuid import UUID
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class PsychologyStateBase(BaseModel):
-    state: str = Field(...)
+    name: str = Field(...)
 
 
 class PsychologyStateCreate(PsychologyStateBase):
@@ -15,15 +15,14 @@ class PsychologyStateCreate(PsychologyStateBase):
 
 
 class PsychologyStateUpdate(BaseModel):
-    state: Optional[str] = Field(default=None)
+    name: Optional[str] = Field(default=None)
 
 
 class PsychologyStateRead(PsychologyStateBase):
     id: UUID
     general_account_id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PsychologyStateAdminRead(BaseModel):
@@ -31,5 +30,4 @@ class PsychologyStateAdminRead(BaseModel):
     user_email: str
     psychology_states: List[PsychologyStateRead]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

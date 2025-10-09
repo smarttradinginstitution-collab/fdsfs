@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # Schemi per le entità relazionate, per usarle in TradeRead
 class TagRead(BaseModel):
@@ -13,36 +13,31 @@ class TagRead(BaseModel):
     color: Optional[str]
     group_id: UUID  # <-- LA CORREZIONE FONDAMENTALE
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class MistakeRead(BaseModel):
     id: UUID
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PlaybookRead(BaseModel):
     id: UUID
     title: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class NewsImpactRead(BaseModel):
     id: UUID
     title: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PsychologyStateRead(BaseModel):
     id: UUID
-    state: str
+    name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TradeBase(BaseModel):
@@ -103,8 +98,7 @@ class TradeRead(TradeBase):
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TradeFilters(BaseModel):

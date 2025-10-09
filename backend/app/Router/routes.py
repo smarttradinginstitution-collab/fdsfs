@@ -228,6 +228,7 @@ from app.Router import notebook_router
 
 router.include_router(
     notebook_router.router,
+    prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
 
