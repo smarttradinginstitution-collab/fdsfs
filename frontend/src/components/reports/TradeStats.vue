@@ -1,13 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { useTradesStore } from '@/stores/trades';
-import { useTagsStore } from '@/stores/tagsStore';
+import { computed } from 'vue';
 import { formatCurrency, formatNumber, formatPercentage } from '@/services/formatters.js';
 import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
-import TagSelector from '@/components/tags/TagSelector.vue';
-import BasePill from '@/components/ui/BasePill.vue';
-import BaseButton from '@/components/ui/BaseButton.vue';
+import TradeTagManager from './TradeTagManager.vue';
 
 const props = defineProps({
   trade: {
@@ -16,11 +12,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['open-edit-modal']);
-
-const tradesStore = useTradesStore();
-const isEditingTags = ref(false);
-const selectedTagIds = ref(props.trade.tags?.map(t => t.id) || []);
+defineEmits(['open-edit-modal']);
 
 const displayStats = computed(() => {
     if (!props.trade) return [];
@@ -48,45 +40,6 @@ const displayStats = computed(() => {
     ];
 });
 
-const groupedTradeTags = computed(() => {
-    if (!props.trade?.tags?.length) return [];
-    const groups = {};
-    const tagsStore = useTagsStore();
-    props.trade.tags.forEach(tag => {
-        const groupId = tag.group_id;
-        if (!groups[groupId]) {
-            const groupInfo = tagsStore.tagGroups.find(g => g.id === groupId);
-            groups[groupId] = {
-                id: groupId,
-                name: groupInfo ? groupInfo.name : 'Uncategorized',
-                tags: []
-            };
-        }
-        groups[groupId].tags.push(tag);
-    });
-    return Object.values(groups);
-});
-
-const getTextColor = (bgColor) => {
-  if (!bgColor) return '#ffffff';
-  const color = (bgColor.charAt(0) === '#') ? bgColor.substring(1, 7) : bgColor;
-  const r = parseInt(color.substring(0, 2), 16);
-  const g = parseInt(color.substring(2, 4), 16);
-  const b = parseInt(color.substring(4, 6), 16);
-  const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-  return (brightness > 155) ? '#000000' : '#ffffff';
-};
-
-const handleSaveTags = async () => {
-    await tradesStore.updateTradeTags(props.trade.id, selectedTagIds.value);
-    isEditingTags.value = false;
-};
-
-const handleCancelEditTags = () => {
-    selectedTagIds.value = props.trade.tags?.map(t => t.id) || [];
-    isEditingTags.value = false;
-};
-
 </script>
 
 <template>
@@ -110,36 +63,7 @@ const handleCancelEditTags = () => {
       </div>
     </div>
 
-    <div class="tags-section">
-      <div class="tags-header">
-        <h3 class="section-title">Tags</h3>
-        <IconButton @click="isEditingTags = true" v-if="!isEditingTags">
-          <PencilIcon />
-        </IconButton>
-      </div>
-      <div v-if="!isEditingTags" class="tags-display">
-        <div v-for="group in groupedTradeTags" :key="group.id" class="stat-item">
-          <span class="stat-label">{{ group.name }}</span>
-          <div class="tag-pills-display">
-            <BasePill
-              v-for="tag in group.tags"
-              :key="tag.id"
-              :style="{ backgroundColor: tag.color, color: getTextColor(tag.color) }"
-            >
-              {{ tag.name }}
-            </BasePill>
-          </div>
-        </div>
-        <p v-if="groupedTradeTags.length === 0" class="no-tags-message">No tags assigned.</p>
-      </div>
-      <div v-else class="tag-editor">
-        <TagSelector v-model="selectedTagIds" />
-        <div class="editor-actions">
-          <BaseButton variant="secondary" size="small" @click="handleCancelEditTags">Cancel</BaseButton>
-          <BaseButton size="small" @click="handleSaveTags" :loading="tradesStore.isTradeLoading">Save Tags</BaseButton>
-        </div>
-      </div>
-    </div>
+    <TradeTagManager :trade="trade" />
   </div>
 </template>
 
