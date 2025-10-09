@@ -2,12 +2,12 @@
 from __future__ import annotations
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
 class NewsImpactBase(BaseModel):
-    title: Optional[str] = None
+    name: Optional[str] = None
 
 
 class NewsImpactCreate(NewsImpactBase):
@@ -23,5 +23,4 @@ class NewsImpactRead(NewsImpactBase):
     general_account_id: UUID
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

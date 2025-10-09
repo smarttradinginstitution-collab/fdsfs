@@ -70,7 +70,7 @@ async def test_get_general_account_with_all_data(
     assert data["mistakes"][0]["name"] == "Test Mistake"
 
     assert len(data["news_impacts"]) == 1
-    assert data["news_impacts"][0]["title"] == "Test News"
+    assert data["news_impacts"][0]["name"] == "Test News"
 
     assert len(data["psychology_states"]) == 1
     assert data["psychology_states"][0]["name"] == "Test State"

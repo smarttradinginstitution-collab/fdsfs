@@ -2,7 +2,7 @@
 from __future__ import annotations
 import uuid
 from typing import Optional, List
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field, constr, ConfigDict
 from app.Schemas.tag import TagRead
 
 
@@ -28,8 +28,7 @@ class TagsGroupInDB(TagsGroupBase):
     id: uuid.UUID
     general_account_id: uuid.UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TagsGroupRead(TagsGroupInDB):

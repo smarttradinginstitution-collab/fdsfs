@@ -93,7 +93,7 @@ async def general_account_with_data(db_session: AsyncSession, regular_user: Auth
 
     # Crea dati correlati e associali
     mistake = Mistake(name="Test Mistake", general_account_id=general_account.id)
-    news_impact = NewsImpact(title="Test News", general_account_id=general_account.id)
+    news_impact = NewsImpact(name="Test News", general_account_id=general_account.id)
     psychology_state = PsychologyState(name="Test State", general_account_id=general_account.id)
     tags_group = TagsGroup(name="Test Group", general_account_id=general_account.id)
     db_session.add_all([mistake, news_impact, psychology_state, tags_group])
