@@ -404,17 +404,6 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 📰 NEWS IMPACTS (protetto: user)
-# ──────────────────────────────────────────────────────────────────────────────
-from app.Router import news_impacts_router
-
-router.include_router(
-    news_impacts_router.router,
-    prefix="/api/v1",
-    dependencies=[Depends(get_current_claims)],
-)
-
-# ──────────────────────────────────────────────────────────────────────────────
 # 🏢 BROKERS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import broker_router

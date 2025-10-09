@@ -85,10 +85,10 @@ const router = createRouter({
       meta: { title: 'Component Test' },
     },
     {
-      path: '/library',
-      name: 'library',
-      component: () => import('../views/LibraryView.vue'),
-      meta: { title: 'Libreria' },
+      path: '/settings/tags',
+      name: 'tags-settings',
+      component: () => import('../views/TagsSettings.vue'),
+      meta: { title: 'Tags Settings' },
     },
   ],
 });

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 from uuid import UUID
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
@@ -15,16 +15,16 @@ class PsychologyStateRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def get_by_id(self, psychology_state_id: UUID) -> Optional[PsychologyState]:
+    async def get_psychology_state_by_id(self, psychology_state_id: UUID) -> Optional[PsychologyState]:
         """Recupera uno stato psicologico specifico per ID."""
         stmt = select(PsychologyState).where(PsychologyState.id == psychology_state_id).limit(1)
         res = await self.db.execute(stmt)
         return res.scalars().first()
 
-    async def create(self, obj_in: PsychologyStateCreate, general_account_id: UUID) -> PsychologyState:
+    async def create_psychology_state(self, general_account_id: UUID, psychology_state_data: PsychologyStateCreate) -> PsychologyState:
         """Crea un nuovo stato psicologico."""
         db_psychology_state = PsychologyState(
-            **obj_in.model_dump(),
+            **psychology_state_data.model_dump(),
             general_account_id=general_account_id
         )
         self.db.add(db_psychology_state)
@@ -32,9 +32,9 @@ class PsychologyStateRepository:
         await self.db.refresh(db_psychology_state)
         return db_psychology_state
 
-    async def update(self, db_obj: PsychologyState, obj_in: PsychologyStateUpdate) -> PsychologyState:
+    async def update_psychology_state(self, db_obj: PsychologyState, psychology_state_data: PsychologyStateUpdate) -> PsychologyState:
         """Aggiorna uno stato psicologico esistente."""
-        update_data = obj_in.model_dump(exclude_unset=True)
+        update_data = psychology_state_data.model_dump(exclude_unset=True)
         if not update_data:
             return db_obj
 
@@ -46,14 +46,14 @@ class PsychologyStateRepository:
         await self.db.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db_obj: PsychologyState) -> None:
+    async def delete_psychology_state(self, db_obj: PsychologyState) -> None:
         """Elimina uno stato psicologico."""
         await self.db.delete(db_obj)
         await self.db.commit()
 
-    async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[PsychologyState]:
+    async def list_psychology_states_by_general_account_id(self, general_account_id: UUID) -> Sequence[PsychologyState]:
         """Lista tutti gli stati psicologici per un dato general_account_id."""
-        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id).order_by(PsychologyState.name.asc())
+        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id).order_by(PsychologyState.state.asc())
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
@@ -73,17 +73,18 @@ class PsychologyStateRepository:
         res = await self.db.execute(stmt)
         return res.scalars().unique().all()
 
-    async def upsert_by_name(self, general_account_id: UUID, name: str) -> PsychologyState:
+    async def upsert_by_state(self, general_account_id: UUID, state: str) -> PsychologyState:
         """
         Cerca uno stato psicologico per nome; se non esiste, lo crea.
+        Mantenuto per compatibilità con altre parti del sistema (es. import).
         """
-        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id, PsychologyState.name == name).limit(1)
+        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id, PsychologyState.state == state).limit(1)
         res = await self.db.execute(stmt)
         row = res.scalars().first()
         if row:
             return row
 
-        stmt_ins = insert(PsychologyState).values(general_account_id=general_account_id, name=name).returning(PsychologyState)
+        stmt_ins = insert(PsychologyState).values(general_account_id=general_account_id, state=state).returning(PsychologyState)
         res_ins = await self.db.execute(stmt_ins)
         new_row = res_ins.scalar_one()
         await self.db.flush()

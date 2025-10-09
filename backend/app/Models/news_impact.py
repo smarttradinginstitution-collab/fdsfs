@@ -12,7 +12,7 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
-    from app.Models.trade import Trade
+
 
 class NewsImpact(Base):
     __tablename__ = "news_impacts"
@@ -26,8 +26,7 @@ class NewsImpact(Base):
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    color: Mapped[str] = mapped_column(String(7), nullable=False, server_default="#888888")
+    title: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
