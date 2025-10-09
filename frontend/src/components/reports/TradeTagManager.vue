@@ -1,13 +1,14 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useTagsStore } from '@/stores/tagsStore';
 import { useTradesStore } from '@/stores/trades';
+import { onClickOutside } from '@vueuse/core';
+
 import BasePill from '@/components/ui/BasePill.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import CloseIcon from '@/components/icons/CloseIcon.vue';
-import PopoverMenu from '@/components/ui/PopoverMenu.vue';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 
 const props = defineProps({
@@ -20,20 +21,32 @@ const props = defineProps({
 const tagsStore = useTagsStore();
 const tradesStore = useTradesStore();
 
-// State for Add-Tag Popover
-const popoverRefs = ref({});
-const openPopoverGroupId = ref(null);
+// --- STATE ---
+// For the single, shared popover
+const isPopoverOpen = ref(false);
+const popoverStyle = ref({});
+const activeGroup = ref(null); // The group being edited in the popover
 const selectedTagIdsInPopover = ref([]);
+const popoverRef = ref(null); // Ref for the popover element itself
 
-// State for Remove-Tag "Deletion Mode"
+// For Remove-Tag "Deletion Mode"
 const deletingFromGroupId = ref(null);
 
+// --- LIFECYCLE ---
 onMounted(() => {
   if (tagsStore.tagGroups.length === 0 || tagsStore.tags.length === 0) {
     tagsStore.fetchAllTagsData();
   }
 });
 
+onClickOutside(popoverRef, () => {
+    if (isPopoverOpen.value) {
+        isPopoverOpen.value = false;
+        activeGroup.value = null;
+    }
+});
+
+// --- COMPUTED ---
 const allGroupedTags = computed(() => {
   const sortedGroups = [...tagsStore.tagGroups].sort((a, b) => a.order - b.order);
   return sortedGroups.map(group => ({
@@ -43,6 +56,7 @@ const allGroupedTags = computed(() => {
   }));
 });
 
+// --- METHODS ---
 const getTextColor = (bgColor) => {
   if (!bgColor) return '#ffffff';
   const color = (bgColor.charAt(0) === '#') ? bgColor.substring(1, 7) : bgColor;
@@ -54,48 +68,56 @@ const getTextColor = (bgColor) => {
 };
 
 // --- ADD TAG LOGIC ---
-const handlePopoverToggle = (group) => {
-    const groupId = group.id;
-    if (openPopoverGroupId.value && openPopoverGroupId.value !== groupId) {
-        popoverRefs.value[openPopoverGroupId.value]?.toggle();
-    }
-    popoverRefs.value[groupId]?.toggle();
+const openPopover = async (event, group) => {
+    if (deletingFromGroupId.value) return;
 
-    if (openPopoverGroupId.value === groupId) {
-        openPopoverGroupId.value = null;
-    } else {
-        openPopoverGroupId.value = groupId;
-        selectedTagIdsInPopover.value = group.tradeTags.map(t => t.id);
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+
+    // Close if it's the same button, otherwise open a new one
+    if (activeGroup.value?.id === group.id) {
+        isPopoverOpen.value = false;
+        activeGroup.value = null;
+        return;
     }
+
+    isPopoverOpen.value = false;
+    await nextTick();
+
+    activeGroup.value = group;
+    selectedTagIdsInPopover.value = group.tradeTags.map(t => t.id);
+
+    // Position popover relative to the button
+    popoverStyle.value = {
+        position: 'fixed',
+        top: `${rect.bottom + 8}px`, // Add some space
+        left: `${rect.right - 110}px`, // Align right edge of popover with center of button
+    };
+    isPopoverOpen.value = true;
 };
 
-const onPopoverClose = (groupId) => {
-    if (openPopoverGroupId.value === groupId) {
-        openPopoverGroupId.value = null;
-    }
-};
-
-const handleSaveChanges = async (closePopover) => {
-  if (!openPopoverGroupId.value) return;
-  const groupId = openPopoverGroupId.value;
+const handleSaveChanges = async () => {
+  if (!activeGroup.value) return;
 
   const otherGroupTagIds = props.trade.tags
-    .filter(tag => tag.group_id !== groupId)
+    .filter(tag => tag.group_id !== activeGroup.value.id)
     .map(tag => tag.id);
 
   const finalTagIds = [...otherGroupTagIds, ...selectedTagIdsInPopover.value];
   await tradesStore.updateTradeTags(props.trade.id, finalTagIds);
 
-  closePopover();
+  isPopoverOpen.value = false;
+  activeGroup.value = null;
 };
 
-const handleCancel = (closePopover) => {
-  closePopover();
+const handleCancel = () => {
+  isPopoverOpen.value = false;
+  activeGroup.value = null;
 };
 
 // --- REMOVE TAG LOGIC ---
 const enterDeleteMode = (groupId) => {
-  if (openPopoverGroupId.value) return;
+  if (isPopoverOpen.value) return;
   deletingFromGroupId.value = groupId;
 };
 
@@ -120,7 +142,7 @@ const removeTag = async (tagToRemove) => {
   <div class="tag-manager-section">
     <div v-for="group in allGroupedTags" :key="group.id" class="tag-group-row">
       <span class="group-name">{{ group.name }}</span>
-      <div class="tags-container" @click="deletingFromGroupId === group.id && exitDeleteMode()">
+      <div class="tags-container">
         <div class="tag-pills-display">
             <div
                 v-for="tag in group.tradeTags"
@@ -145,36 +167,34 @@ const removeTag = async (tagToRemove) => {
             <p v-if="group.tradeTags.length === 0" class="no-tags-message">-</p>
         </div>
 
-        <div v-if="deletingFromGroupId !== group.id">
-            <PopoverMenu :ref="el => { if (el) popoverRefs[group.id] = el }" @close="onPopoverClose(group.id)">
-                <template #trigger>
-                    <IconButton @click.stop="handlePopoverToggle(group)">
-                        <PlusIcon/>
-                    </IconButton>
-                </template>
-                <template #content="{ close }">
-                    <div class="popover-content">
-                        <div class="tag-selection-list">
-                            <BaseCheckbox
-                                v-for="tag in group.tags"
-                                :key="tag.id"
-                                :id="`tag-popover-${tag.id}`"
-                                :value="tag.id"
-                                v-model="selectedTagIdsInPopover"
-                            >
-                                {{ tag.name }}
-                            </BaseCheckbox>
-                        </div>
-                        <div class="popover-actions">
-                            <BaseButton variant="secondary" size="small" @click="handleCancel(close)">Cancel</BaseButton>
-                            <BaseButton size="small" @click="handleSaveChanges(close)" :loading="tradesStore.isTradeLoading">Save</BaseButton>
-                        </div>
-                    </div>
-                </template>
-            </PopoverMenu>
-        </div>
+        <IconButton v-if="deletingFromGroupId !== group.id" @click="openPopover($event, group)">
+            <PlusIcon/>
+        </IconButton>
         <BaseButton v-else variant="secondary" size="small" @click.stop="exitDeleteMode">Done</BaseButton>
+
       </div>
+    </div>
+
+    <!-- The single, shared popover -->
+    <div v-if="isPopoverOpen && activeGroup" :style="popoverStyle" class="popover-panel" ref="popoverRef">
+        <div class="popover-content">
+            <div class="tag-selection-list">
+                <p v-if="activeGroup.tags.length === 0" class="no-tags-message">No tags in this group.</p>
+                <BaseCheckbox
+                    v-for="tag in activeGroup.tags"
+                    :key="tag.id"
+                    :id="`tag-popover-${tag.id}`"
+                    :value="tag.id"
+                    v-model="selectedTagIdsInPopover"
+                >
+                    {{ tag.name }}
+                </BaseCheckbox>
+            </div>
+            <div class="popover-actions">
+                <BaseButton variant="secondary" size="small" @click="handleCancel">Cancel</BaseButton>
+                <BaseButton size="small" @click="handleSaveChanges" :loading="tradesStore.isTradeLoading">Save</BaseButton>
+            </div>
+        </div>
     </div>
   </div>
 </template>
@@ -214,7 +234,17 @@ const removeTag = async (tagToRemove) => {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
   margin: 0;
+  padding: 0 var(--semantic-size-inset-sm);
 }
+
+.popover-panel {
+  z-index: 20;
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  box-shadow: var(--semantic-effect-shadow-elevation-high);
+}
+
 .popover-content {
     padding: var(--semantic-size-inset-md);
     display: flex;
