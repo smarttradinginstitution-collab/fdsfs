@@ -48,7 +48,7 @@ const chartData = computed(() => {
 });
 
 const chartOptions = {
-  indexAxis: 'y', // Horizontal bar chart
+  indexAxis: 'x', // Vertical bar chart
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
