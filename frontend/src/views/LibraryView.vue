@@ -90,14 +90,14 @@ const libraryStore = useLibraryStore();
 const tagsStore = useTagsStore();
 const dnaStore = useTradingDnaStore();
 
-const activeTab = ref('dna');
+const activeTab = ref('tags');
 
 const tabs = [
-  { id: 'dna', label: 'Trading DNA' },
   { id: 'tags', label: 'Tags' },
   { id: 'mistakes', label: 'Mistakes' },
   { id: 'psychology', label: 'Psychology' },
   { id: 'news', label: 'News Impacts' },
+  { id: 'dna', label: 'Trading DNA' },
 ];
 
 const isLoading = computed(() => {
