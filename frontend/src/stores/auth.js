@@ -44,7 +44,9 @@ export const useAuthStore = defineStore('auth', () => {
       const tradesStore = useTradesStore();
       playbookStore.fetchPlaybooks();
       notebookStore.fetchFolders();
-      tradesStore.fetchAllDataForDashboard();
+      // NOTA: La chiamata a fetchAllDataForDashboard() è stata rimossa da qui.
+      // Ora è responsabilità esclusiva della DashboardView caricare i propri dati,
+      // prevenendo race condition e chiamate duplicate.
 
       return true;
     } catch (error) {

@@ -64,8 +64,11 @@ watch(
 // Watch for changes in the selected trading account and refetch data
 watch(
   () => tradingAccountsStore.selectedTradingAccount,
-  (newAccount, oldAccount) => {
-    if (newAccount && newAccount.id !== oldAccount?.id) {
+  (newAccount) => {
+    // Se c'è un nuovo account valido, carica sempre i dati della dashboard.
+    // Questo gestisce sia il caricamento iniziale (grazie a `immediate: true`)
+    // sia i cambi di account successivi.
+    if (newAccount) {
       tradesStore.fetchAllDataForDashboard();
     }
   },

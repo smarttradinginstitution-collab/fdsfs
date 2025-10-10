@@ -50,7 +50,6 @@ export const useTradesStore = defineStore('trades', {
     activeSummary: null,
     selectedTrade: null,
     isTradeLoading: false,
-    dataSignature: null, // Aggiunto per tracciare lo stato dei dati caricati
   }),
 
   getters: {
@@ -683,58 +682,13 @@ export const useTradesStore = defineStore('trades', {
 
     /**
      * Azione master per caricare tutti i dati della dashboard in parallelo.
-     * Ora è idempotente: non ricarica i dati se i filtri e l'account non sono cambiati.
      */
     async fetchAllDataForDashboard() {
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      const filterStore = useFilterStore();
       const uiStore = useUiStore();
-
-      // Se non c'è un account selezionato, non fare nulla.
-      if (!selectedAccount) {
-        // Resetta lo stato per evitare di mostrare dati vecchi
-        this.trades = [];
-        this.dashboardStats = null;
-        this.calendarData = [];
-        this.processedStats = null;
-        this.equityCurve = null;
-        this.vantageScore = null;
-        this.dataSignature = null;
-        return;
-      }
-
-      // Crea una firma univoca per la richiesta corrente.
-      const newSignature = JSON.stringify({
-        accountId: selectedAccount.id,
-        startDate: filterStore.startDate?.toISOString(),
-        endDate: filterStore.endDate?.toISOString(),
-        strategy: filterStore.selectedStrategy,
-      });
-
-      // Se la firma è la stessa dei dati già caricati e non siamo già in fase di caricamento,
-      // allora i dati sono già aggiornati.
-      if (this.dataSignature === newSignature && !this.isLoading) {
-        console.log("Dati dashboard già aggiornati. Salto il fetch.");
-        // Assicuriamoci che il loader venga nascosto se era il caricamento iniziale.
-        if (uiStore.isInitialLoadPending) {
-          uiStore.hideLoader();
-          uiStore.setInitialLoadPending(false);
-        }
-        return;
-      }
-
-      // Se stiamo già caricando, non avviare un altro caricamento.
-      if (this.isLoading) {
-        console.log("Caricamento già in corso. Salto il fetch.");
-        return;
-      }
-
       if (uiStore.isInitialLoadPending) {
         uiStore.showLoader('Stiamo calcolando i tuoi dati...');
       }
       this.isLoading = true;
-
       try {
         await Promise.allSettled([
           this.fetchTrades(),
@@ -742,13 +696,9 @@ export const useTradesStore = defineStore('trades', {
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
-          this.fetchPlaybooks(), // I playbook non dipendono dai filtri, ma è ok ricaricarli.
+          this.fetchPlaybooks(),
           this.fetchVantageScore(),
         ]);
-
-        // Se il caricamento ha successo, aggiorna la firma.
-        this.dataSignature = newSignature;
-
       } finally {
         this.isLoading = false;
         if (uiStore.isInitialLoadPending) {
