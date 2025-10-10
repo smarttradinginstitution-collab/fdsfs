@@ -35,22 +35,14 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Azione centralizzata per caricare tutti i dati di sessione necessari
    * dopo che l'autenticazione è stata confermata.
-   * Evita race conditions e chiamate duplicate.
    */
   async function initSessionData() {
     console.log("Inizio caricamento dati di sessione...");
-    const tagsStore = useTagsStore();
-    // Usiamo Promise.allSettled per assicurarci che tutte le chiamate vengano
-    // tentate, anche se una di esse dovesse fallire.
     await Promise.allSettled([
       usePlaybookStore().fetchPlaybooks(),
       useNotebookStore().fetchFolders(),
-      tagsStore.fetchTags(),
-      tagsStore.fetchTagGroups(),
-      tagsStore.fetchPsychologyStates(),
-      tagsStore.fetchMistakes(),
-      tagsStore.fetchNewsImpacts(),
-      useTradingDnaStore().fetchTradingDna(),
+      useTagsStore().fetchAllTagsData(),
+      useTradingDnaStore().fetchTradingDnaReport(),
     ]);
     console.log("Caricamento dati di sessione completato.");
   }
@@ -68,8 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true;
     } catch (error) {
       console.error('Errore nel recupero del General Account:', error);
-      // Se non si riesce a ottenere il GA, l'autenticazione non è completa.
-      await logout(); // Esegui il logout per pulire lo stato.
+      await logout();
       return false;
     }
   }

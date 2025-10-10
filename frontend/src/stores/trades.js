@@ -5,7 +5,6 @@
 
 import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
-import { useAuthStore } from './auth';
 import { useTradingAccountsStore } from './tradingAccounts';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
