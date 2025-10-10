@@ -11,6 +11,7 @@ import router from '@/router';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
+import { useTradesStore } from './trades';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -40,8 +41,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Carica i dati iniziali non appena il general account è disponibile
       const playbookStore = usePlaybookStore();
       const notebookStore = useNotebookStore();
+      const tradesStore = useTradesStore();
       playbookStore.fetchPlaybooks();
       notebookStore.fetchFolders();
+      tradesStore.fetchAllDataForDashboard();
 
       return true;
     } catch (error) {
