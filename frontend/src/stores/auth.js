@@ -9,6 +9,7 @@ import { ref, computed } from 'vue';
 import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
 import { useUiStore } from './uiStore';
+import { usePlaybookStore } from './playbookStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -34,6 +35,11 @@ export const useAuthStore = defineStore('auth', () => {
       const { data } = await apiClient.get('/general-accounts/me');
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
+
+      // Carica i playbook non appena il general account è disponibile
+      const playbookStore = usePlaybookStore();
+      playbookStore.fetchPlaybooks();
+
       return true;
     } catch (error) {
       console.error('Errore nel recupero del General Account:', error);
