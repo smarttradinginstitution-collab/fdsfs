@@ -43,9 +43,12 @@
         v-model="selectedNews"
         :options="newsOptions"
         placeholder="Filter by news impacts..."
-        @update:modelValue="applyFilters"
       />
     </div>
+
+    <BaseButton @click="applyFilters" :loading="tradingDnaStore.isLoading" class="apply-button">
+      Apply Filters
+    </BaseButton>
   </div>
 </template>
 
@@ -55,6 +58,7 @@ import { useTagsStore } from '@/stores/tagsStore';
 import { useLibraryStore } from '@/stores/libraryStore';
 import { useTradingDnaStore } from '@/stores/tradingDnaStore';
 import BaseMultiSelect from '@/components/ui/BaseMultiSelect.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
 
 // --- STORES ---
 const tagsStore = useTagsStore();
@@ -101,6 +105,10 @@ function applyFilters() {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
+}
+
+.apply-button {
+  margin-top: var(--semantic-size-stack-md);
 }
 
 .filters-title {
