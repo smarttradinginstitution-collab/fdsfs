@@ -73,12 +73,6 @@ const router = createRouter({
       meta: { title: 'Analytics' },
     },
     {
-      path: '/trading-dna',
-      name: 'trading-dna',
-      component: () => import('../views/TradingDnaView.vue'),
-      meta: { title: 'Trading DNA' },
-    },
-    {
       path: '/notebook',
       name: 'notebook',
       component: () => import('../views/NotebookView.vue'),

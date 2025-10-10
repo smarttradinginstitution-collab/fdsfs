@@ -51,7 +51,6 @@ const navLinks = [
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
-  { to: '/trading-dna', text: 'Trading DNA', icon: SparkleIcon },
   { to: '/library', text: 'Library', icon: FilterIcon },
   { to: '#', text: 'Settings', icon: SettingsIcon },
 ];
