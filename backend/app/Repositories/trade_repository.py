@@ -5,7 +5,7 @@ from uuid import UUID
 from typing import List, Optional, Any
 from datetime import date
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import select, func, case, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +25,7 @@ class TradeRepository:
         return (
             select(Trade)
             .options(
-                joinedload(Trade.tags),
+                selectinload(Trade.tags).joinedload(Tag.group),
                 joinedload(Trade.mistakes),
                 joinedload(Trade.playbook),
                 joinedload(Trade.news_impacts),
