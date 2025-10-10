@@ -8,7 +8,7 @@
 -->
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useTradesStore } from '@/stores/trades';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import KpiDashboard from '@/components/KpiDashboard.vue';
@@ -20,6 +20,14 @@ const tradesStore = useTradesStore();
 const selectedTrades = ref([]); // Stato per le righe selezionate
 
 // --- LOGICA DEL COMPONENTE ---
+onMounted(() => {
+  // Se l'utente atterra direttamente su questa pagina e i trade non sono stati
+  // ancora caricati (es. tramite il login), li carichiamo ora.
+  if (tradesStore.trades.length === 0) {
+    tradesStore.fetchAllDataForDashboard();
+  }
+});
+
 const handleBulkDelete = () => {
   if (selectedTrades.value.length === 0) {
     alert('Nessun trade selezionato.');
