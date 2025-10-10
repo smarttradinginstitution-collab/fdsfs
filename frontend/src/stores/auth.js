@@ -32,29 +32,32 @@ export const useAuthStore = defineStore('auth', () => {
 
   // --- ACTIONS ---
 
+  // Azione centrale per caricare tutti i dati globali della sessione.
+  async function initSessionData() {
+    // Questa azione viene chiamata una sola volta dopo l'autenticazione.
+    const playbookStore = usePlaybookStore();
+    const notebookStore = useNotebookStore();
+    const tradingAccountsStore = useTradingAccountsStore();
+
+    // Eseguiamo tutte le chiamate in parallelo. Se una fallisce, l'intero blocco
+    // verrà rigettato, e il catch in `initAuth` gestirà il logout.
+    await Promise.all([
+      playbookStore.fetchPlaybooks(),
+      notebookStore.fetchFolders(),
+      tradingAccountsStore.fetchTradingAccounts(),
+    ]);
+  }
+
   // Funzione per recuperare il General Account
   async function fetchGeneralAccount() {
     try {
       const { data } = await apiClient.get('/general-accounts/me');
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
-
-      // Carica tutti i dati globali della sessione in parallelo per massima efficienza.
-      const playbookStore = usePlaybookStore();
-      const notebookStore = useNotebookStore();
-      const tradingAccountsStore = useTradingAccountsStore();
-
-      await Promise.all([
-        playbookStore.fetchPlaybooks(),
-        notebookStore.fetchFolders(),
-        tradingAccountsStore.fetchTradingAccounts(),
-      ]);
-
       return true;
     } catch (error) {
       console.error('Errore nel recupero del General Account:', error);
-      // Se non si riesce a ottenere il GA, l'autenticazione non è completa.
-      await logout(); // Esegui il logout per pulire lo stato.
+      await logout(); // Se non si riesce a ottenere il GA, l'autenticazione non è completa.
       return false;
     }
   }
@@ -196,7 +199,11 @@ export const useAuthStore = defineStore('auth', () => {
         try {
           user.value = JSON.parse(storedUser);
           // Tentativo di recuperare il General Account all'avvio
-          await fetchGeneralAccount();
+          const gaSuccess = await fetchGeneralAccount();
+          if (gaSuccess) {
+            // Se il GA è stato recuperato, carica tutti gli altri dati della sessione.
+            await initSessionData();
+          }
         } catch {
           // Se qualcosa va storto, puliamo tutto
           await logout();
@@ -224,5 +231,6 @@ export const useAuthStore = defineStore('auth', () => {
     verifyAndEnableMfa,
     disableMfa,
     unenrollMfa,
+    initSessionData, // Esponi la nuova azione centrale
   };
 });
