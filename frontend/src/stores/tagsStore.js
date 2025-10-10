@@ -64,7 +64,7 @@ export const useTagsStore = defineStore('tags', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get('/tags-groups');
+      const response = await apiClient.get('/tags-groups/');
       tagGroups.value = response.data;
     } catch (err) {
       console.error('Error fetching tag groups:', err);
