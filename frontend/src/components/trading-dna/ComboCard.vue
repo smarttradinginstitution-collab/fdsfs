@@ -27,7 +27,7 @@
       </div>
       <div class="metric-item">
         <span class="metric-value">
-          <Currency :value="combo.metrics.total_pnl" />
+          {{ formatCurrency(combo.metrics.total_pnl) }}
         </span>
         <span class="metric-label">Total P&L</span>
       </div>
@@ -38,7 +38,7 @@
 <script setup>
 import { computed } from 'vue';
 import BasePill from '@/components/ui/BasePill.vue';
-import Currency from '@/components/ui/formatters/Currency.vue';
+import { formatCurrency } from '@/services/formatters';
 
 const props = defineProps({
   title: {
