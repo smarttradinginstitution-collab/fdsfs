@@ -30,8 +30,7 @@ export const usePlaybookStore = defineStore('playbooks', {
   actions: {
     async fetchPlaybooks() {
       const authStore = useAuthStore();
-      if (!authStore.isAuthenticated) {
-        console.log("User not authenticated. Skipping playbook fetch.");
+      if (!authStore.isAuthenticated || this.playbooks.length > 0) {
         return;
       }
       this.isLoading = true;

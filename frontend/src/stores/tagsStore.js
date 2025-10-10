@@ -76,6 +76,9 @@ export const useTagsStore = defineStore('tags', () => {
   }
 
   async function fetchAllTagsData() {
+      if (tags.value.length > 0 && tagGroups.value.length > 0) {
+        return;
+      }
       isLoading.value = true;
       error.value = null;
       try {

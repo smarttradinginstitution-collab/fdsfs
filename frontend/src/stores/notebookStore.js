@@ -53,6 +53,9 @@ export const useNotebookStore = defineStore('notebook', {
     // --- FOLDER ACTIONS ---
 
     async fetchFolders() {
+      if (this.folders.length > 0) {
+        return;
+      }
       this.isLoadingFolders = true;
       this.error = null;
       try {

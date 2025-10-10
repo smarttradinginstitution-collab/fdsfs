@@ -31,6 +31,9 @@ export const useLibraryStore = defineStore('library', () => {
 
   // --- PUBLIC ACTIONS ---
   async function fetchAllLibraryData() {
+    if (mistakes.value.length > 0 && psychologyStates.value.length > 0 && newsImpacts.value.length > 0) {
+      return;
+    }
     isLoading.value = true;
     error.value = null;
     try {
