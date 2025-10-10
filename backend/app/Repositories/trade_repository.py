@@ -5,7 +5,7 @@ from uuid import UUID
 from typing import List, Optional, Any
 from datetime import date
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import select, func, case, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +25,7 @@ class TradeRepository:
         return (
             select(Trade)
             .options(
-                joinedload(Trade.tags),
+                selectinload(Trade.tags).joinedload(Tag.group),
                 joinedload(Trade.mistakes),
                 joinedload(Trade.playbook),
                 joinedload(Trade.news_impacts),
@@ -54,6 +54,50 @@ class TradeRepository:
     ) -> List[Trade]:
         """Elenca tutti i trade per un dato trading account."""
         query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
+    async def get_trades_for_dna_analysis(
+        self,
+        general_account_id: UUID,
+        tag_ids: Optional[List[UUID]] = None,
+        mistake_ids: Optional[List[UUID]] = None,
+        psychology_state_ids: Optional[List[UUID]] = None,
+        news_impact_ids: Optional[List[UUID]] = None,
+    ) -> List[Trade]:
+        """
+        Fetches trades for a general account, dynamically filtering by any combination
+        of provided label IDs.
+        """
+        from app.Models.trades_tags import TradesTags
+        from app.Models.trades_mistakes import TradesMistakes
+        from app.Models.trades_psychology import TradesPsychology
+        from app.Models.trades_news_impacts import TradesNewsImpacts
+
+        query = self._get_trade_query().join(Trade.trading_account).where(
+            TradingAccount.general_account_id == general_account_id
+        )
+
+        if tag_ids:
+            query = query.join(
+                TradesTags.__table__, Trade.id == TradesTags.__table__.c.trade_id
+            ).where(TradesTags.__table__.c.tag_id.in_(tag_ids))
+
+        if mistake_ids:
+            query = query.join(
+                TradesMistakes.__table__, Trade.id == TradesMistakes.__table__.c.trade_id
+            ).where(TradesMistakes.__table__.c.mistake_id.in_(mistake_ids))
+
+        if psychology_state_ids:
+            query = query.join(
+                TradesPsychology.__table__, Trade.id == TradesPsychology.__table__.c.trade_id
+            ).where(TradesPsychology.__table__.c.psychology_id.in_(psychology_state_ids))
+
+        if news_impact_ids:
+            query = query.join(
+                TradesNewsImpacts.__table__, Trade.id == TradesNewsImpacts.__table__.c.trade_id
+            ).where(TradesNewsImpacts.__table__.c.news_impact_id.in_(news_impact_ids))
+
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
