@@ -5,9 +5,9 @@
 
 import { defineStore } from 'pinia';
 import { useFilterStore } from './filterStore';
-import { useAuthStore } from './auth';
 import { useTradingAccountsStore } from './tradingAccounts';
 import { useUiStore } from './uiStore';
+import { usePlaybookStore } from './playbookStore';
 import apiClient from '../services/api';
 
 /**
@@ -39,7 +39,7 @@ export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
     playbookTrades: [], // Trades specifici per un playbook
-    playbooks: [], // Sostituisce 'setups'
+    // 'playbooks' rimosso, verrà letto da playbookStore
     dashboardStats: null,
     calendarData: [],
     processedStats: null,
@@ -76,9 +76,9 @@ export const useTradesStore = defineStore('trades', {
       return state.trades.reduce((sum, trade) => sum + trade.pnl, 0);
     },
 
-    allPlaybooks(state) {
-      // Ora usa l'elenco dei playbook caricato dal backend.
-      const playbookTitles = state.playbooks.map(p => p.title);
+    allPlaybooks() {
+      const playbookStore = usePlaybookStore();
+      const playbookTitles = playbookStore.playbooks.map(p => p.title);
       return ['All', ...playbookTitles];
     },
 
@@ -376,23 +376,6 @@ export const useTradesStore = defineStore('trades', {
 
   actions: {
     /**
-     * Recupera l'elenco di tutti i playbook per l'utente autenticato.
-     */
-    async fetchPlaybooks() {
-      const authStore = useAuthStore();
-      if (!authStore.isAuthenticated) return;
-
-      try {
-        // CORREZIONE: L'endpoint corretto per i playbook dell'utente è /me/playbooks
-        const response = await apiClient.get(`/me/playbooks`);
-        this.playbooks = response.data;
-      } catch (error) {
-        console.error('Errore nel recupero dei playbook:', error);
-        this.playbooks = []; // Resetta in caso di errore
-      }
-    },
-
-    /**
      * Azione unificata per recuperare i trade dal backend con filtri.
      * Ora dipende dal trading account selezionato.
      */
@@ -686,25 +669,27 @@ export const useTradesStore = defineStore('trades', {
      * Ora è idempotente: non ricarica i dati se i filtri e l'account non sono cambiati.
      */
     async fetchAllDataForDashboard() {
+      // LOCK: Se un caricamento è già in corso, non avviarne un altro.
+      if (this.isLoading) {
+        console.log("Caricamento dashboard già in corso. Salto il fetch duplicato.");
+        return;
+      }
+
       const tradingAccountsStore = useTradingAccountsStore();
       const selectedAccount = tradingAccountsStore.selectedTradingAccount;
       const filterStore = useFilterStore();
       const uiStore = useUiStore();
 
-      // Se non c'è un account selezionato, non fare nulla.
       if (!selectedAccount) {
-        // Resetta lo stato per evitare di mostrare dati vecchi
         this.trades = [];
         this.dashboardStats = null;
         this.calendarData = [];
         this.processedStats = null;
         this.equityCurve = null;
         this.vantageScore = null;
-        this.dataSignature = null;
         return;
       }
 
-      // Crea una firma univoca per la richiesta corrente.
       const newSignature = JSON.stringify({
         accountId: selectedAccount.id,
         startDate: filterStore.startDate?.toISOString(),
@@ -712,11 +697,8 @@ export const useTradesStore = defineStore('trades', {
         strategy: filterStore.selectedStrategy,
       });
 
-      // Se la firma è la stessa dei dati già caricati e non siamo già in fase di caricamento,
-      // allora i dati sono già aggiornati.
-      if (this.dataSignature === newSignature && !this.isLoading) {
-        console.log("Dati dashboard già aggiornati. Salto il fetch.");
-        // Assicuriamoci che il loader venga nascosto se era il caricamento iniziale.
+      if (this.dataSignature === newSignature) {
+        console.log("Dati dashboard già aggiornati (stessa firma). Salto il fetch.");
         if (uiStore.isInitialLoadPending) {
           uiStore.hideLoader();
           uiStore.setInitialLoadPending(false);
@@ -724,16 +706,10 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
-      // Se stiamo già caricando, non avviare un altro caricamento.
-      if (this.isLoading) {
-        console.log("Caricamento già in corso. Salto il fetch.");
-        return;
-      }
-
+      this.isLoading = true; // Attiva il lock
       if (uiStore.isInitialLoadPending) {
         uiStore.showLoader('Stiamo calcolando i tuoi dati...');
       }
-      this.isLoading = true;
 
       try {
         await Promise.allSettled([
@@ -742,15 +718,11 @@ export const useTradesStore = defineStore('trades', {
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
-          this.fetchPlaybooks(), // I playbook non dipendono dai filtri, ma è ok ricaricarli.
           this.fetchVantageScore(),
         ]);
-
-        // Se il caricamento ha successo, aggiorna la firma.
         this.dataSignature = newSignature;
-
       } finally {
-        this.isLoading = false;
+        this.isLoading = false; // Rilascia il lock
         if (uiStore.isInitialLoadPending) {
           uiStore.hideLoader();
           uiStore.setInitialLoadPending(false);

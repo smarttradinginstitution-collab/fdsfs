@@ -11,7 +11,8 @@ import router from '@/router';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
-import { useTradesStore } from './trades';
+import { useTagsStore } from './tagsStore';
+import { useTradingDnaStore } from './tradingDnaStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -31,6 +32,21 @@ export const useAuthStore = defineStore('auth', () => {
 
   // --- ACTIONS ---
 
+  /**
+   * Azione centralizzata per caricare tutti i dati di sessione necessari
+   * dopo che l'autenticazione è stata confermata.
+   */
+  async function initSessionData() {
+    console.log("Inizio caricamento dati di sessione...");
+    await Promise.allSettled([
+      usePlaybookStore().fetchPlaybooks(),
+      useNotebookStore().fetchFolders(),
+      useTagsStore().fetchAllTagsData(),
+      useTradingDnaStore().fetchTradingDnaReport(),
+    ]);
+    console.log("Caricamento dati di sessione completato.");
+  }
+
   // Funzione per recuperare il General Account
   async function fetchGeneralAccount() {
     try {
@@ -38,19 +54,13 @@ export const useAuthStore = defineStore('auth', () => {
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
 
-      // Carica i dati iniziali non appena il general account è disponibile
-      const playbookStore = usePlaybookStore();
-      const notebookStore = useNotebookStore();
-      const tradesStore = useTradesStore();
-      playbookStore.fetchPlaybooks();
-      notebookStore.fetchFolders();
-      tradesStore.fetchAllDataForDashboard();
+      // Una volta ottenuto il GA, avvia il caricamento dei dati di sessione.
+      await initSessionData();
 
       return true;
     } catch (error) {
       console.error('Errore nel recupero del General Account:', error);
-      // Se non si riesce a ottenere il GA, l'autenticazione non è completa.
-      await logout(); // Esegui il logout per pulire lo stato.
+      await logout();
       return false;
     }
   }
@@ -215,6 +225,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     initAuth,
+    initSessionData, // Esponi la nuova azione
     verifyMfaAndLogin,
     enrollMfa,
     verifyAndEnableMfa,
