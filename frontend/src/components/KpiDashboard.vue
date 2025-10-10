@@ -1,48 +1,36 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import apiClient from '@/services/api';
+import { useTradesStore } from '@/stores/trades';
 import KpiCard from '@/components/ui/KpiCard.vue';
-// Chart components will be used in the next step, but I'll import them now.
 import LineChart from '@/components/charts/LineChart.vue';
 import GaugeChart from '@/components/charts/GaugeChart.vue';
-import BarChart from '@/components/charts/BarChart.vue';
 import PopoverMenu from '@/components/ui/PopoverMenu.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import InfoIcon from '@/components/icons/InfoIcon.vue';
 
-// Component State
-const summaryData = ref(null);
-const isLoading = ref(true);
-const error = ref(null);
-const dashboardEl = ref(null);
+// --- STORE ---
+const tradesStore = useTradesStore();
 
-// Reactive refs for resolved CSS color variables, with fallbacks.
+// --- STATE ---
+const dashboardEl = ref(null);
 const positiveColor = ref('rgb(34, 197, 94)');
 const negativeColor = ref('rgb(239, 68, 68)');
-const tertiaryColor = ref('rgb(107, 114, 128)');
-const colorsResolved = ref(false); // Flag to prevent race condition
+const colorsResolved = ref(false);
 
-/**
- * Converts any valid CSS color string (rgb or hex) into its numeric 'r, g, b' components.
- * @param {string} colorString - The color string (e.g., "rgb(34, 197, 94)" or "#22c55e").
- * @returns {string} The numeric part (e.g., "34, 197, 94").
- */
+// --- COMPUTED ---
+const isLoading = computed(() => tradesStore.isLoading);
+const dashboardStats = computed(() => tradesStore.allDashboardStats);
+const equityCurve = computed(() => tradesStore.equityCurveData);
+
+// --- UTILS ---
 const getRgbValues = (colorString) => {
   if (!colorString) return '0, 0, 0';
-
-  // Handle rgb(r, g, b) format
   if (colorString.startsWith('rgb')) {
     return colorString.substring(colorString.indexOf('(') + 1, colorString.lastIndexOf(')'));
   }
-
-  // Handle hex format (#RRGGBB or #RGB)
   if (colorString.startsWith('#')) {
     let hex = colorString.slice(1);
-    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
-    if (hex.length === 3) {
-      hex = hex.split('').map(char => char + char).join('');
-    }
-
+    if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
     if (hex.length === 6) {
       const r = parseInt(hex.substring(0, 2), 16);
       const g = parseInt(hex.substring(2, 4), 16);
@@ -50,83 +38,63 @@ const getRgbValues = (colorString) => {
       return `${r}, ${g}, ${b}`;
     }
   }
-
-  // Fallback for other formats or errors
   console.warn(`Could not parse color: ${colorString}, falling back to black.`);
   return '0, 0, 0';
 };
 
-// Hardcoded values as per requirements
-const tradingAccountId = '323aacbc-b72c-4129-a403-bb45d81e09b1';
-const startDate = '2025-09-01';
-const endDate = '2025-09-30';
-
-// Data Fetching
-const fetchSummaryData = async () => {
-  isLoading.value = true;
-  error.value = null;
-  try {
-    const response = await apiClient.get(`/trades/summary/${tradingAccountId}`, {
-      params: { start_date: startDate, end_date: endDate },
-    });
-    summaryData.value = response.data;
-  } catch (err) {
-    console.error('Error loading summary data:', err);
-    error.value = 'Failed to load summary data.';
-  } finally {
-    isLoading.value = false;
-  }
+const formatCurrency = (value) => {
+    // Gestisce il caso in cui il valore sia una stringa formattata come '$123.45'
+    if (typeof value === 'string') {
+        const num = parseFloat(value.replace(/[^0-9.-]+/g,""));
+        if (!isNaN(num)) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+        }
+    }
+    // Gestisce il caso in cui il valore sia un numero
+    if (typeof value === 'number') {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+    }
+    // Fallback se il valore non è né una stringa formattata né un numero
+    return '$0.00';
 };
 
-// Fetch data when the component is mounted
-onMounted(async () => {
-  await fetchSummaryData();
 
-  // After the component is mounted and data is fetched, resolve the CSS variables
+// --- LIFECYCLE ---
+onMounted(() => {
   if (dashboardEl.value) {
     const styles = getComputedStyle(dashboardEl.value);
     positiveColor.value = styles.getPropertyValue('--semantic-color-feedback-positive-text').trim();
     negativeColor.value = styles.getPropertyValue('--semantic-color-feedback-negative-text').trim();
-    tertiaryColor.value = styles.getPropertyValue('--semantic-color-text-tertiary').trim();
-    colorsResolved.value = true; // Signal that colors are ready
+    colorsResolved.value = true;
   }
 });
 
 // ---- Chart Data & Options ----
 
-// Helper for number formatting
-const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-
 // 1. P&L Line Chart
 const pnlLineChartData = computed(() => {
-  // Guard against running before data and colors are ready, preventing race conditions.
-  if (!summaryData.value || !colorsResolved.value) {
+  if (!equityCurve.value?.data || !colorsResolved.value) {
     return { labels: [], datasets: [] };
   }
 
-  const series = summaryData.value.cumulative_pnl_series;
-  const netPnl = summaryData.value.stats.net_pnl;
-
-  // Conditionally choose the color based on P&L
+  const netPnl = parseFloat(dashboardStats.value.netPnl.value.replace(/[^0-9.-]+/g,""));
   const chartColor = netPnl >= 0 ? positiveColor.value : negativeColor.value;
 
   return {
-    labels: series.labels,
+    labels: equityCurve.value.labels,
     datasets: [{
-      data: series.data,
+      data: equityCurve.value.data,
       borderColor: chartColor,
       tension: 0.4,
       fill: true,
       pointRadius: 0,
       backgroundColor: (context) => {
         const { ctx, chartArea } = context.chart;
-        if (!chartArea) {
-          return 'rgba(0,0,0,0)'; // Fallback
-        }
+        if (!chartArea) return 'rgba(0,0,0,0)';
         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
         const rgb = getRgbValues(chartColor);
-        gradient.addColorStop(0, `rgba(${rgb}, 0.4)`); // Top color
-        gradient.addColorStop(1, `rgba(${rgb}, 0)`);   // Bottom color (fully transparent)
+        gradient.addColorStop(0, `rgba(${rgb}, 0.4)`);
+        gradient.addColorStop(1, `rgba(${rgb}, 0)`);
         return gradient;
       },
     }],
@@ -140,29 +108,28 @@ const pnlLineChartOptions = {
   scales: { x: { display: false }, y: { display: false } },
 };
 
-// 2. Meter Charts (Doughnut/Gauge) - Final Color Logic
+// 2. Meter Charts (Doughnut/Gauge)
 const createMeterData = (value, max) => {
   const normalizedValue = Math.min(Math.max(value, 0), max);
   return {
     datasets: [{
       data: [normalizedValue, max - normalizedValue],
-      backgroundColor: [
-        positiveColor.value, // Value part is always green
-        negativeColor.value, // Empty part is always red
-      ],
+      backgroundColor: [positiveColor.value, 'rgba(0,0,0,0.1)'], // Usa un colore neutro per lo sfondo
       borderWidth: 0,
     }]
   };
 };
 
 const profitFactorChartData = computed(() => {
-  if (!summaryData.value) return { datasets: [] };
-  return createMeterData(summaryData.value.stats.profit_factor || 0, 10);
+    if (!dashboardStats.value.profitFactor.value) return { datasets: [] };
+    const pfValue = parseFloat(dashboardStats.value.profitFactor.value);
+    return createMeterData(isNaN(pfValue) ? 0 : pfValue, 5); // Max a 5 per una migliore visualizzazione
 });
 
 const winPercentageChartData = computed(() => {
-  if (!summaryData.value) return { datasets: [] };
-  return createMeterData(summaryData.value.stats.win_rate || 0, 100);
+    if (!dashboardStats.value.winRate.value) return { datasets: [] };
+    const wrValue = parseFloat(dashboardStats.value.winRate.value);
+    return createMeterData(isNaN(wrValue) ? 0 : wrValue, 100);
 });
 
 const gaugeOptions = {
@@ -188,13 +155,11 @@ const doughnutOptions = {
 </script>
 
 <template>
-  <div v-if="isLoading" class="loading-state">
+  <div v-if="isLoading && !dashboardStats.trades.value" class="loading-state">
     <p>Loading KPI data...</p>
   </div>
-  <div v-else-if="error" class="error-state">
-    <p>{{ error }}</p>
-  </div>
-  <div v-else-if="summaryData" ref="dashboardEl" class="kpi-dashboard">
+  <!-- Aggiunto v-else per non mostrare nulla se non ci sono dati, evitando errori -->
+  <div v-else-if="dashboardStats.trades.value !== '0'" ref="dashboardEl" class="kpi-dashboard">
     <!-- Card 1: Net Cumulative P&L -->
     <KpiCard class="pnl-card-layout">
       <div class="pnl-header">
@@ -213,10 +178,10 @@ const doughnutOptions = {
             </template>
           </PopoverMenu>
         </div>
-        <span class="trade-badge">{{ summaryData.stats.trade_count }} trades</span>
+        <span class="trade-badge">{{ dashboardStats.trades.value }} trades</span>
       </div>
       <div class="pnl-metric">
-        <p class="metric-value">{{ formatCurrency(summaryData.stats.net_pnl) }}</p>
+        <p class="metric-value">{{ dashboardStats.netPnl.value }}</p>
       </div>
       <div class="pnl-chart-area">
         <LineChart :chart-data="pnlLineChartData" :chart-options="pnlLineChartOptions" />
@@ -241,7 +206,7 @@ const doughnutOptions = {
             </template>
           </PopoverMenu>
         </div>
-        <p class="metric-value">{{ summaryData.stats.profit_factor.toFixed(2) }}</p>
+        <p class="metric-value">{{ dashboardStats.profitFactor.value }}</p>
       </div>
       <div class="chart-content gauge-chart-wrapper">
         <GaugeChart :chart-data="profitFactorChartData" :chart-options="doughnutOptions" />
@@ -266,7 +231,7 @@ const doughnutOptions = {
             </template>
           </PopoverMenu>
         </div>
-        <p class="metric-value">{{ summaryData.stats.win_rate.toFixed(2) }}%</p>
+        <p class="metric-value">{{ dashboardStats.winRate.value }}</p>
       </div>
       <div class="chart-content gauge-chart-wrapper">
         <GaugeChart :chart-data="winPercentageChartData" :chart-options="gaugeOptions" />
@@ -291,16 +256,16 @@ const doughnutOptions = {
             </template>
           </PopoverMenu>
         </div>
-        <p class="main-metric-value">{{ (summaryData.stats.avg_win / Math.abs(summaryData.stats.avg_loss)).toFixed(2) }}</p>
+        <p class="main-metric-value">{{ dashboardStats.avgRealizedRr.value }}</p>
       </div>
       <div class="chart-block">
         <div class="segmented-bar">
-          <div class="win-segment" :style="{ flexGrow: summaryData.stats.avg_win }"></div>
-          <div class="loss-segment" :style="{ flexGrow: Math.abs(summaryData.stats.avg_loss) }"></div>
+          <div class="win-segment" :style="{ flexGrow: parseFloat(dashboardStats.avgWin.value.replace('$', '')) || 0 }"></div>
+          <div class="loss-segment" :style="{ flexGrow: Math.abs(parseFloat(dashboardStats.avgLoss.value.replace('$', ''))) || 0 }"></div>
         </div>
         <div class="bar-labels">
-          <span class="avg-win">{{ formatCurrency(summaryData.stats.avg_win) }}</span>
-          <span class="avg-loss">{{ formatCurrency(summaryData.stats.avg_loss) }}</span>
+          <span class="avg-win">{{ dashboardStats.avgWin.value }}</span>
+          <span class="avg-loss">{{ dashboardStats.avgLoss.value }}</span>
         </div>
       </div>
     </KpiCard>
