@@ -140,3 +140,59 @@ async def test_delete_playbook(async_client: AsyncClient):
     # Verify it's gone
     get_response = await async_client.get(f"/api/v1/playbooks/{playbook_id}")
     assert get_response.status_code == 404
+
+
+async def test_create_playbook_with_duplicate_title(async_client: AsyncClient):
+    """
+    Tests that creating a playbook with a duplicate title for the same user fails.
+    """
+    await setup_general_account(async_client)
+    playbook_data = {"title": "Duplicate Title Playbook", "description": "First one."}
+
+    # Create the first playbook
+    response1 = await async_client.post("/api/v1/me/playbooks", json=playbook_data)
+    assert response1.status_code == 201, "First playbook creation failed"
+
+    # Attempt to create a second playbook with the same title
+    response2 = await async_client.post("/api/v1/me/playbooks", json=playbook_data)
+    assert response2.status_code == 409
+    assert "already exists" in response2.json()["detail"]
+
+
+async def test_update_playbook_to_duplicate_title(async_client: AsyncClient):
+    """
+    Tests that updating a playbook to a title that already exists for another playbook fails.
+    """
+    await setup_general_account(async_client)
+
+    # Create two playbooks
+    playbook1_data = {"title": "Playbook A", "description": "I am A."}
+    playbook2_data = {"title": "Playbook B", "description": "I am B."}
+    response1 = await async_client.post("/api/v1/me/playbooks", json=playbook1_data)
+    response2 = await async_client.post("/api/v1/me/playbooks", json=playbook2_data)
+    assert response1.status_code == 201
+    assert response2.status_code == 201
+    playbook2_id = response2.json()["id"]
+
+    # Attempt to update Playbook B to have the same title as Playbook A
+    update_data = {"title": "Playbook A"}
+    update_response = await async_client.put(f"/api/v1/playbooks/{playbook2_id}", json=update_data)
+    assert update_response.status_code == 409
+    assert "already exists" in update_response.json()["detail"]
+
+
+async def test_update_playbook_with_same_title(async_client: AsyncClient):
+    """
+    Tests that updating a playbook's other fields without changing its title succeeds.
+    """
+    await setup_general_account(async_client)
+    playbook_data = {"title": "Consistent Title", "description": "Original Description"}
+    create_response = await async_client.post("/api/v1/me/playbooks", json=playbook_data)
+    assert create_response.status_code == 201
+    playbook_id = create_response.json()["id"]
+
+    # Update description but keep the title the same
+    update_data = {"title": "Consistent Title", "description": "Updated Description"}
+    update_response = await async_client.put(f"/api/v1/playbooks/{playbook_id}", json=update_data)
+    assert update_response.status_code == 200
+    assert update_response.json()["description"] == "Updated Description"
