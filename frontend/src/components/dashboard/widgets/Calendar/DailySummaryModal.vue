@@ -27,9 +27,7 @@ const handleClose = () => {
 const handleAddDailyNote = async () => {
   if (!summaryData.value || !summaryData.value.startDate) return;
 
-  if (notebookStore.folders.length === 0) {
-    await notebookStore.fetchFolders();
-  }
+  if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
 
   const dailyJournalFolder = notebookStore.folders.find(f => f.name === 'Daily Journal');
   if (!dailyJournalFolder) {

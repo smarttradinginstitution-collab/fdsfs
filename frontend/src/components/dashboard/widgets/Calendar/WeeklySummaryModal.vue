@@ -27,9 +27,7 @@ const handleClose = () => {
 const handleAddWeeklyNote = async () => {
   if (!summaryData.value || !summaryData.value.startDate) return;
 
-  if (notebookStore.folders.length === 0) {
-    await notebookStore.fetchFolders();
-  }
+  if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
 
   const weeklyNotesFolder = notebookStore.folders.find(f => f.name === 'Weekly Notes');
   if (!weeklyNotesFolder) {

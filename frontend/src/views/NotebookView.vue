@@ -48,10 +48,6 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 const store = useNotebookStore();
 const searchQuery = ref('');
 
-// Fetch the initial list of folders when the component is mounted
-onMounted(() => {
-  store.fetchFolders();
-});
 </script>
 
 <style lang="scss" scoped>

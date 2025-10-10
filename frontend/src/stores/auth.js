@@ -10,6 +10,7 @@ import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
+import { useNotebookStore } from './notebookStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -36,9 +37,11 @@ export const useAuthStore = defineStore('auth', () => {
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
 
-      // Carica i playbook non appena il general account è disponibile
+      // Carica i dati iniziali non appena il general account è disponibile
       const playbookStore = usePlaybookStore();
+      const notebookStore = useNotebookStore();
       playbookStore.fetchPlaybooks();
+      notebookStore.fetchFolders();
 
       return true;
     } catch (error) {
