@@ -6,6 +6,9 @@ from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
+from .asset import AssetRead
+
+
 # Schemi per le entità relazionate, per usarle in TradeRead
 class TagRead(BaseModel):
     id: UUID
@@ -97,6 +100,7 @@ class TradeRead(TradeBase):
     playbook: Optional[PlaybookRead] = None
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
+    asset: Optional[AssetRead] = None
 
     model_config = ConfigDict(from_attributes=True)
 

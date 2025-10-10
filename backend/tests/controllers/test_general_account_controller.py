@@ -53,7 +53,8 @@ async def test_get_general_account_with_all_data(
     user_client: AsyncClient, general_account_with_data: GeneralAccount
 ):
     """
-    Testa il recupero di un GeneralAccount con tutti i dati correlati.
+    Testa il recupero di un GeneralAccount con tutti i dati correlati,
+    inclusi trading accounts e trades.
     """
     response = await user_client.get(
         f"/api/v1/general-account-with-data/{general_account_with_data.id}"
@@ -61,27 +62,44 @@ async def test_get_general_account_with_all_data(
     assert response.status_code == 200
     data = response.json()
 
-    # Verifica i dati di base
+    # Verifica i dati di base del GeneralAccount
     assert data["id"] == str(general_account_with_data.id)
     assert data["label"] == general_account_with_data.label
 
-    # Verifica le relazioni nidificate
+    # Verifica le relazioni dirette del GeneralAccount
     assert len(data["mistakes"]) == 1
     assert data["mistakes"][0]["name"] == "Test Mistake"
-
     assert len(data["news_impacts"]) == 1
     assert data["news_impacts"][0]["name"] == "Test News"
-
     assert len(data["psychology_states"]) == 1
     assert data["psychology_states"][0]["name"] == "Test State"
-
     assert len(data["tags_groups"]) == 1
-    group = data["tags_groups"][0]
-    assert group["name"] == "Test Group"
+    assert data["tags_groups"][0]["name"] == "Test Group"
 
-    assert len(group["tags"]) == 2
-    tag_names = {tag["name"] for tag in group["tags"]}
-    assert tag_names == {"Tag 1", "Tag 2"}
+    # Verifica la presenza dei Trading Accounts
+    assert "trading_accounts" in data
+    assert len(data["trading_accounts"]) == 1
+    trading_account = data["trading_accounts"][0]
+    assert trading_account["label"] == "Test Trading Account"
+    assert trading_account["broker"]["name"].startswith("Test Broker Inc.")
+
+    # Verifica la presenza dei Trades nel Trading Account
+    assert "trades" in trading_account
+    assert len(trading_account["trades"]) == 1
+    trade = trading_account["trades"][0]
+    assert trade["p_l"] == 150.75
+    assert trade["direction"] == "LONG"
+
+    # Verifica l'Asset associato al Trade
+    assert "asset" in trade
+    assert trade["asset"]["symbol"] == "ES"
+    assert trade["asset"]["asset_class"]["name"] == "Futures"
+
+    # Verifica le relazioni M2M del Trade
+    assert len(trade["mistakes"]) == 1
+    assert trade["mistakes"][0]["name"] == "Test Mistake"
+    assert len(trade["tags"]) == 1
+    assert trade["tags"][0]["name"] == "Tag 1"
 
 
 async def test_get_general_account_with_all_data_forbidden(

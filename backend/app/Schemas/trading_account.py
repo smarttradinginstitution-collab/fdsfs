@@ -1,11 +1,12 @@
 from __future__ import annotations
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, List
+from pydantic import BaseModel, Field, ConfigDict
 from decimal import Decimal
 
 from .broker import BrokerRead
+from .trade import TradeRead
 
 
 class TradingAccountRead(BaseModel):
@@ -18,10 +19,9 @@ class TradingAccountRead(BaseModel):
     currency: Optional[str] = None
     broker_name: Optional[str] = Field(None, alias='broker_name')
     broker: Optional[BrokerRead] = None
+    trades: List[TradeRead] = []
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class TradingAccountCreate(BaseModel):

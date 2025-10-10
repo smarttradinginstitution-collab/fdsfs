@@ -6,6 +6,9 @@ from uuid import uuid4
 from fastapi import status
 
 from app.main import app
+from app.Models.asset import Asset
+from app.Models.asset_class import AssetClass
+from app.Models.asset_market import AssetMarket
 from app.Models.broker import Broker
 from app.Models.role import Role
 from app.Models.auth_user import AuthUser
@@ -16,6 +19,9 @@ from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
 from app.Models.tags_group import TagsGroup
 from app.Models.tag import Tag
+from app.Models.enums import TradeDirection
+from app.Models.trade import Trade
+from app.Models.trading_account import TradingAccount
 from app.Router.auth import get_current_claims
 
 @pytest.fixture(scope="module")
@@ -81,10 +87,12 @@ async def test_broker(db_session: AsyncSession) -> Broker:
     return broker
 
 @pytest.fixture
-async def general_account_with_data(db_session: AsyncSession, regular_user: AuthUser) -> GeneralAccount:
+async def general_account_with_data(
+    db_session: AsyncSession, regular_user: AuthUser, test_broker: Broker
+) -> GeneralAccount:
     """
     Crea un GeneralAccount per l'utente e lo popola con dati correlati
-    (mistakes, news, psychology, tags) per testare l'endpoint "with-data".
+    (mistakes, news, psychology, tags, trading accounts, trades) per testare l'endpoint "with-data".
     """
     # Crea il GeneralAccount
     general_account = GeneralAccount(user_id=regular_user.id, label=regular_user.email)
@@ -94,7 +102,9 @@ async def general_account_with_data(db_session: AsyncSession, regular_user: Auth
     # Crea dati correlati e associali
     mistake = Mistake(name="Test Mistake", general_account_id=general_account.id)
     news_impact = NewsImpact(name="Test News", general_account_id=general_account.id)
-    psychology_state = PsychologyState(name="Test State", general_account_id=general_account.id)
+    psychology_state = PsychologyState(
+        name="Test State", general_account_id=general_account.id
+    )
     tags_group = TagsGroup(name="Test Group", general_account_id=general_account.id)
     db_session.add_all([mistake, news_impact, psychology_state, tags_group])
     await db_session.flush()
@@ -103,6 +113,53 @@ async def general_account_with_data(db_session: AsyncSession, regular_user: Auth
     tag1 = Tag(name="Tag 1", group_id=tags_group.id, color="#FF0000")
     tag2 = Tag(name="Tag 2", group_id=tags_group.id, color="#00FF00")
     db_session.add_all([tag1, tag2])
+    await db_session.flush()
+
+    # Crea asset e i suoi prerequisiti (se non esistono)
+    stmt_ac = select(AssetClass).where(AssetClass.name == "Futures")
+    asset_class = (await db_session.execute(stmt_ac)).scalars().first()
+    if not asset_class:
+        asset_class = AssetClass(name="Futures")
+        db_session.add(asset_class)
+        await db_session.flush()
+
+    stmt_am = select(AssetMarket).where(AssetMarket.name == "CME")
+    asset_market = (await db_session.execute(stmt_am)).scalars().first()
+    if not asset_market:
+        asset_market = AssetMarket(name="CME")
+        db_session.add(asset_market)
+        await db_session.flush()
+
+    asset = Asset(
+        symbol="ES",
+        name="E-mini S&P 500",
+        asset_class_id=asset_class.id,
+        asset_market_id=asset_market.id,
+    )
+    db_session.add(asset)
+    await db_session.flush()
+
+    # Crea TradingAccount
+    trading_account = TradingAccount(
+        general_account_id=general_account.id,
+        broker_id=test_broker.id,
+        label="Test Trading Account",
+        initial_balance=10000,
+        currency="USD",
+    )
+    db_session.add(trading_account)
+    await db_session.flush()
+
+    # Crea Trade e associalo
+    trade = Trade(
+        trading_account_id=trading_account.id,
+        asset_id=asset.id,
+        p_l=150.75,
+        direction=TradeDirection.LONG,
+    )
+    trade.mistakes.append(mistake)
+    trade.tags.append(tag1)
+    db_session.add(trade)
 
     await db_session.commit()
     await db_session.refresh(general_account)

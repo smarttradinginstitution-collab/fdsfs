@@ -9,6 +9,7 @@ from app.Schemas.mistake import MistakeRead
 from app.Schemas.news_impact import NewsImpactRead
 from app.Schemas.psychology_state import PsychologyStateRead
 from app.Schemas.tags_group import TagsGroupRead
+from app.Schemas.trading_account import TradingAccountRead
 
 
 class GeneralAccountRead(BaseModel):
@@ -29,5 +30,6 @@ class GeneralAccountWithData(GeneralAccountRead):
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
     tags_groups: List[TagsGroupRead] = []
+    trading_accounts: List[TradingAccountRead] = []
 
     model_config = ConfigDict(from_attributes=True)

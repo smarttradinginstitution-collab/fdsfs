@@ -9,8 +9,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.Models.asset import Asset
 from app.Models.general_account import GeneralAccount
 from app.Models.tags_group import TagsGroup
+from app.Models.trade import Trade
+from app.Models.trading_account import TradingAccount
 from app.Schemas.general_account import GeneralAccountCreate
 
 
@@ -72,6 +75,19 @@ class GeneralAccountRepository:
                 selectinload(GeneralAccount.news_impacts),
                 selectinload(GeneralAccount.psychology_states),
                 selectinload(GeneralAccount.tags_groups).selectinload(TagsGroup.tags),
+                selectinload(GeneralAccount.trading_accounts).options(
+                    selectinload(TradingAccount.broker),
+                    selectinload(TradingAccount.trades).options(
+                        selectinload(Trade.asset).options(
+                            selectinload(Asset.asset_class),
+                            selectinload(Asset.asset_market),
+                        ),
+                        selectinload(Trade.tags),
+                        selectinload(Trade.mistakes),
+                        selectinload(Trade.news_impacts),
+                        selectinload(Trade.psychology_states),
+                    ),
+                ),
             )
         )
         result = await self.db.execute(stmt)

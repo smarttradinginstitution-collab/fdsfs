@@ -41,12 +41,15 @@ class TradingAccountService:
             account_data=account_data,
         )
 
-        # Dopo la creazione, ricarica l'account con la relazione del broker per
-        # garantire che la risposta API sia completa e non causi errori.
+        # Dopo la creazione, ricarica l'account con le relazioni necessarie
+        # (broker, trades) per garantire che la risposta API sia completa.
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.id == db_account.id)
-            .options(selectinload(TradingAccount.broker))
+            .options(
+                selectinload(TradingAccount.broker),
+                selectinload(TradingAccount.trades),
+            )
         )
         result = await self.db.execute(stmt)
         refreshed_account = result.scalar_one()
