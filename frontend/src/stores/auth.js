@@ -11,7 +11,8 @@ import router from '@/router';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
-import { useTradesStore } from './trades';
+import { useTagsStore } from './tagsStore';
+import { useTradingDnaStore } from './tradingDnaStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -37,14 +38,21 @@ export const useAuthStore = defineStore('auth', () => {
    * Evita race conditions e chiamate duplicate.
    */
   async function initSessionData() {
+    console.log("Inizio caricamento dati di sessione...");
+    const tagsStore = useTagsStore();
     // Usiamo Promise.allSettled per assicurarci che tutte le chiamate vengano
     // tentate, anche se una di esse dovesse fallire.
     await Promise.allSettled([
       usePlaybookStore().fetchPlaybooks(),
       useNotebookStore().fetchFolders(),
-      // Non chiamiamo fetchAllDataForDashboard qui perché dipende dalla selezione
-      // di un trading account, che avviene DOPO questo step.
+      tagsStore.fetchTags(),
+      tagsStore.fetchTagGroups(),
+      tagsStore.fetchPsychologyStates(),
+      tagsStore.fetchMistakes(),
+      tagsStore.fetchNewsImpacts(),
+      useTradingDnaStore().fetchTradingDna(),
     ]);
+    console.log("Caricamento dati di sessione completato.");
   }
 
   // Funzione per recuperare il General Account
