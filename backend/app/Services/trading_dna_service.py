@@ -48,63 +48,13 @@ class TradingDnaService:
         )
 
         golden_combos, toxic_combos = self._discover_and_analyze_combos(filtered_trades)
-        group_performance = await self._analyze_group_performance(filtered_trades)
-
-        # For the comparative equity curve, we need all trades to calculate the baseline.
-        all_trades = await self.trade_repo.get_trades_for_dna_analysis(self.general_account_id)
-        equity_curve = await self._generate_comparative_equity_curve(all_trades, filtered_trades)
 
         report = {
             "golden_combos": golden_combos,
             "toxic_combos": toxic_combos,
-            "group_performance": group_performance,
-            "equity_curve": equity_curve,
         }
 
         return report
-
-    async def _generate_comparative_equity_curve(self, all_trades: List[Trade], filtered_trades: List[Trade]) -> Dict:
-        """Generates two equity curves: one for the filtered set and one for the baseline."""
-        trading_accounts = await self.trading_account_repo.list_by_general_account_id(self.general_account_id)
-        total_initial_balance = sum(acc.initial_balance or 0 for acc in trading_accounts)
-
-        # Calculate equity curve for the filtered trades
-        filtered_calculator = MetricsCalculator(filtered_trades, total_initial_balance)
-        filtered_curve = filtered_calculator.calculate_equity_curve()
-
-        # Calculate equity curve for the baseline (all other trades)
-        filtered_trade_ids = {t.id for t in filtered_trades}
-        baseline_trades = [t for t in all_trades if t.id not in filtered_trade_ids]
-        baseline_calculator = MetricsCalculator(baseline_trades, total_initial_balance)
-        baseline_curve = baseline_calculator.calculate_equity_curve()
-
-        return {
-            "filtered_series": filtered_curve,
-            "baseline_series": baseline_curve
-        }
-
-    async def _analyze_group_performance(self, trades_to_analyze: List[Trade]) -> List[Dict]:
-        tag_groups = await self.tags_group_repo.list_tags_groups_by_general_account_id(self.general_account_id)
-
-        performance_data = []
-        for group in tag_groups:
-            group_tag_ids = {tag.id for tag in group.tags}
-
-            group_trades = [
-                trade for trade in trades_to_analyze
-                if any(tag.id in group_tag_ids for tag in trade.tags)
-            ]
-
-            if not group_trades:
-                continue
-
-            metrics = self._calculate_metrics_for_trades(group_trades)
-            performance_data.append({
-                "group": {"id": str(group.id), "name": group.name},
-                "metrics": metrics
-            })
-
-        return performance_data
 
     def _discover_and_analyze_combos(self, trades: List[Trade]) -> Tuple[List[Dict], List[Dict]]:
         golden_combo_trades = defaultdict(list)

@@ -49,5 +49,3 @@ class ComparativeEquityCurve(BaseModel):
 class TradingDnaReport(BaseModel):
     golden_combos: List[AnalyzedCombo]
     toxic_combos: List[AnalyzedCombo]
-    group_performance: List[GroupPerformance]
-    equity_curve: ComparativeEquityCurve

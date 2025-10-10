@@ -67,13 +67,6 @@
             <ComboCard v-for="(combo, index) in dnaStore.report.toxic_combos" :key="`toxic-${index}`" title="Toxic Combo" :combo="combo" type="toxic" />
           </div>
         </div>
-        <div class="section-container explorer-section">
-          <DnaFilters class="explorer-filters" />
-          <div class="explorer-main">
-            <GroupPerformanceTable :performance-data="dnaStore.report.group_performance" />
-            <ComparativeEquityChart :equity-curve-data="dnaStore.report.equity_curve" />
-          </div>
-        </div>
       </div>
 
     </div>
@@ -91,9 +84,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import LibraryManagementCard from '@/components/library/LibraryManagementCard.vue';
 import TagManagementTab from '@/components/tags/TagManagementTab.vue';
 import ComboCard from '@/components/trading-dna/ComboCard.vue';
-import DnaFilters from '@/components/trading-dna/DnaFilters.vue';
-import GroupPerformanceTable from '@/components/trading-dna/GroupPerformanceTable.vue';
-import ComparativeEquityChart from '@/components/trading-dna/ComparativeEquityChart.vue';
 import { PlusIcon } from '@heroicons/vue/24/solid';
 
 const libraryStore = useLibraryStore();
