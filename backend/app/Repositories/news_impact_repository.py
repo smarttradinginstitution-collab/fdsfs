@@ -1,36 +1,58 @@
-# app/Repositories/news_impact_repository.py
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Optional, Sequence
 from uuid import UUID
-from sqlalchemy import select, insert
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.news_impact import NewsImpact
+from app.Schemas.news_impact import NewsImpactCreate, NewsImpactUpdate
 
 
 class NewsImpactRepository:
-    """CRUD minimale + upsert (general_account_id, title) per NewsImpact."""
+    """Repository for NewsImpact CRUD operations."""
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def upsert_by_name(self, general_account_id: UUID, name: str) -> NewsImpact:
-        # Cerca se l'impatto della notizia esiste già
-        stmt = select(NewsImpact).where(NewsImpact.general_account_id == general_account_id, NewsImpact.name == name).limit(1)
+    async def get_by_id(self, news_impact_id: UUID) -> Optional[NewsImpact]:
+        """Get a specific news impact by ID."""
+        stmt = select(NewsImpact).where(NewsImpact.id == news_impact_id).limit(1)
         res = await self.db.execute(stmt)
-        row = res.scalars().first()
-        if row:
-            return row
+        return res.scalars().first()
 
-        # Se non esiste, lo crea
-        stmt_ins = insert(NewsImpact).values(general_account_id=general_account_id, name=name).returning(NewsImpact)
-        res_ins = await self.db.execute(stmt_ins)
-        new_row = res_ins.scalar_one()
-        await self.db.flush()
-        return new_row
+    async def create(self, obj_in: NewsImpactCreate, general_account_id: UUID) -> NewsImpact:
+        """Create a new news impact."""
+        db_obj = NewsImpact(
+            **obj_in.model_dump(),
+            general_account_id=general_account_id
+        )
+        self.db.add(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+        return db_obj
+
+    async def update(self, db_obj: NewsImpact, obj_in: NewsImpactUpdate) -> NewsImpact:
+        """Update an existing news impact."""
+        update_data = obj_in.model_dump(exclude_unset=True)
+        if not update_data:
+            return db_obj
+
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+
+        self.db.add(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+        return db_obj
+
+    async def delete(self, db_obj: NewsImpact) -> None:
+        """Delete a news impact."""
+        await self.db.delete(db_obj)
+        await self.db.commit()
 
     async def list_news_impacts_by_general_account_id(self, general_account_id: UUID) -> Sequence[NewsImpact]:
+        """List all news impacts for a given general_account_id."""
         stmt = select(NewsImpact).where(NewsImpact.general_account_id == general_account_id).order_by(NewsImpact.name.asc())
         res = await self.db.execute(stmt)
         return res.scalars().all()
