@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -94,18 +95,17 @@ class NoteRepository:
 
     async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
-        if note_in.trade_id:
-            stmt = select(Note).where(Note.trade_id == note_in.trade_id)
-            existing_note = await self.db.execute(stmt)
-            if existing_note.scalars().first():
-                raise HTTPException(
-                    status_code=409,
-                    detail="A note for this trade already exists.",
-                )
-
         db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="A note for this trade already exists.",
+            )
+
         # After committing, the note has an ID. We need to fetch it again
         # using our eager-loading method to ensure all relationships are loaded
         # before returning it to the service layer. This prevents lazy-loading errors.
@@ -119,21 +119,20 @@ class NoteRepository:
         """Update an existing note."""
         update_data = obj_in.model_dump(exclude_unset=True)
 
-        if "trade_id" in update_data and update_data["trade_id"] is not None:
-            stmt = select(Note).where(
-                Note.trade_id == update_data["trade_id"], Note.id != db_obj.id
-            )
-            existing_note = await self.db.execute(stmt)
-            if existing_note.scalars().first():
-                raise HTTPException(
-                    status_code=409,
-                    detail="A note with this trade_id already exists.",
-                )
-
         for field, value in update_data.items():
             setattr(db_obj, field, value)
+
         self.db.add(db_obj)
-        await self.db.commit()
+        try:
+            # Flush the session to send the update to the database and trigger the unique constraint
+            await self.db.flush()
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="A note with this trade_id already exists.",
+            )
 
         # After committing, we need to fetch it again to ensure all relationships are loaded
         # This matches the pattern in the `create` method and avoids lazy-loading issues.
