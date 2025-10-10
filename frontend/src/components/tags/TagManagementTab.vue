@@ -40,18 +40,16 @@ const isLoading = computed(() => store.isLoading);
 const error = computed(() => store.error);
 
 // Local state for vuedraggable
-const localGroupedTags = ref([]);
-watch(() => store.groupedTags, (newGroups) => {
-    localGroupedTags.value = [...newGroups];
-}, { immediate: true, deep: true });
+const localGroupedTags = ref([...store.groupedTags]);
 
 const onGroupDragEnd = async () => {
     const groupIds = localGroupedTags.value.map(group => group.id);
     await store.reorderTagGroups(groupIds);
 };
 
+
 onMounted(() => {
-  store.fetchAllTagsData();
+  // Data is fetched by the parent LibraryView, so no need to fetch here
   // Ensure creator is hidden on mount
   store.setCreatingGroup(false);
   store.setCreatingTagInGroup(null);
