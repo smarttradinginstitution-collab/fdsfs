@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps, defineEmits, computed } from 'vue';
+import { ref, onMounted, defineProps, defineEmits } from 'vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';

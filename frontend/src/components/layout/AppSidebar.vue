@@ -23,9 +23,8 @@ import ViewListIcon from '../icons/ViewListIcon.vue';
 import SparkleIcon from '../icons/SparkleIcon.vue';
 import SettingsIcon from '../icons/SettingsIcon.vue';
 import BookOpenIcon from '../icons/BookOpenIcon.vue';
-import TagIcon from '../icons/TagIcon.vue';
-import ChartBarIcon from '../icons/ChartBarIcon.vue';
 import FilterIcon from '../icons/FilterIcon.vue';
+import ChartBarIcon from '../icons/ChartBarIcon.vue';
 
 // --- STORE ---
 const uiStore = useUiStore();

@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, computed } from 'vue';
+import { ref, defineProps } from 'vue';
 import { useLibraryStore } from '@/stores/libraryStore';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import LibraryItemRow from './LibraryItemRow.vue';
