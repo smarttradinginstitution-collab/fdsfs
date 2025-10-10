@@ -100,6 +100,9 @@ async def test_get_general_account_with_all_data(
     assert trade["mistakes"][0]["name"] == "Test Mistake"
     assert len(trade["tags"]) == 1
     assert trade["tags"][0]["name"] == "Tag 1"
+    assert "playbook" in trade
+    assert trade["playbook"] is not None
+    assert trade["playbook"]["title"] == "Test Playbook"
 
 
 async def test_get_general_account_with_all_data_forbidden(

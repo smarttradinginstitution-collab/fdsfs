@@ -20,6 +20,7 @@ from app.Models.psychology_state import PsychologyState
 from app.Models.tags_group import TagsGroup
 from app.Models.tag import Tag
 from app.Models.enums import TradeDirection
+from app.Models.playbook import Playbook
 from app.Models.trade import Trade
 from app.Models.trading_account import TradingAccount
 from app.Router.auth import get_current_claims
@@ -106,7 +107,12 @@ async def general_account_with_data(
         name="Test State", general_account_id=general_account.id
     )
     tags_group = TagsGroup(name="Test Group", general_account_id=general_account.id)
-    db_session.add_all([mistake, news_impact, psychology_state, tags_group])
+    playbook = Playbook(
+        title="Test Playbook",
+        description="Test playbook description",
+        general_account_id=general_account.id,
+    )
+    db_session.add_all([mistake, news_impact, psychology_state, tags_group, playbook])
     await db_session.flush()
 
     # Crea tag per il gruppo
@@ -156,6 +162,7 @@ async def general_account_with_data(
         asset_id=asset.id,
         p_l=150.75,
         direction=TradeDirection.LONG,
+        playbook_id=playbook.id,
     )
     trade.mistakes.append(mistake)
     trade.tags.append(tag1)

@@ -86,6 +86,7 @@ class GeneralAccountRepository:
                         selectinload(Trade.mistakes),
                         selectinload(Trade.news_impacts),
                         selectinload(Trade.psychology_states),
+                        selectinload(Trade.playbook),
                     ),
                 ),
             )
