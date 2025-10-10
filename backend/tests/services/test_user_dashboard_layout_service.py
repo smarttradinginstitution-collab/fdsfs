@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Services.user_dashboard_layout_service import UserDashboardLayoutService
-from app.Schemas.user_dashboard_layout import UserDashboardLayoutUpdate, ZonedLayout, WidgetItem
+from app.Schemas.user_dashboard_layout import UserDashboardLayoutCreate, UserDashboardLayoutUpdate, ZonedLayout, WidgetItem
 from app.Models.user_dashboard_layout import UserDashboardLayout
 
 
@@ -101,25 +101,75 @@ async def test_get_layout_not_found(layout_service: UserDashboardLayoutService):
 
 
 @pytest.mark.asyncio
-async def test_save_layout(layout_service: UserDashboardLayoutService, zoned_layout, zoned_layout_data):
+async def test_save_layout_creates_new_layout(layout_service: UserDashboardLayoutService, zoned_layout, zoned_layout_data):
     # Arrange
     user_id = uuid4()
     payload = UserDashboardLayoutUpdate(layout=zoned_layout)
 
     layout_service.repo = AsyncMock()
-    upserted_layout = UserDashboardLayout(
+    # Mock the case where no layout exists
+    layout_service.repo.get_by_user_id.return_value = None
+
+    # Mock the created layout that should be returned by repo.create
+    created_layout_model = UserDashboardLayout(
         id=uuid4(),
         user_id=user_id,
         layout=zoned_layout_data,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc)
     )
-    layout_service.repo.upsert.return_value = upserted_layout
+    layout_service.repo.create.return_value = created_layout_model
 
     # Act
     result = await layout_service.save_layout(user_id, payload)
 
     # Assert
+    layout_service.repo.get_by_user_id.assert_called_once_with(user_id)
+    layout_service.repo.create.assert_called_once()
+    create_args, _ = layout_service.repo.create.call_args
+    assert isinstance(create_args[0], UserDashboardLayoutCreate)
+    assert create_args[0].user_id == user_id
+    layout_service.repo.update.assert_not_called()
     assert result is not None
+    assert result.user_id == user_id
     assert result.layout.model_dump() == zoned_layout_data
-    layout_service.repo.upsert.assert_called_once_with(user_id, payload)
+
+
+@pytest.mark.asyncio
+async def test_save_layout_updates_existing_layout(layout_service: UserDashboardLayoutService, zoned_layout, zoned_layout_data):
+    # Arrange
+    user_id = uuid4()
+    payload = UserDashboardLayoutUpdate(layout=zoned_layout)
+
+    layout_service.repo = AsyncMock()
+
+    # Mock the existing layout
+    existing_layout_model = UserDashboardLayout(
+        id=uuid4(),
+        user_id=user_id,
+        layout={"stats": [], "main": [], "charts": []}, # some old data
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
+    layout_service.repo.get_by_user_id.return_value = existing_layout_model
+
+    # Mock the updated layout that should be returned by repo.update
+    updated_layout_model = UserDashboardLayout(
+        id=existing_layout_model.id,
+        user_id=user_id,
+        layout=zoned_layout_data,
+        created_at=existing_layout_model.created_at,
+        updated_at=datetime.now(timezone.utc)
+    )
+    layout_service.repo.update.return_value = updated_layout_model
+
+    # Act
+    result = await layout_service.save_layout(user_id, payload)
+
+    # Assert
+    layout_service.repo.get_by_user_id.assert_called_once_with(user_id)
+    layout_service.repo.update.assert_called_once_with(existing_layout_model, payload)
+    layout_service.repo.create.assert_not_called()
+    assert result is not None
+    assert result.id == existing_layout_model.id
+    assert result.layout.model_dump() == zoned_layout_data

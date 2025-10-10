@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Sequence
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -43,9 +45,18 @@ class NoteTemplateRepository:
         """Create a new note template."""
         db_note_template = NoteTemplate(**note_template_in.model_dump())
         self.db.add(db_note_template)
-        await self.db.commit()
-        await self.db.refresh(db_note_template)
-        return db_note_template
+        try:
+            await self.db.commit()
+            await self.db.refresh(db_note_template)
+            return db_note_template
+        except IntegrityError as e:
+            await self.db.rollback()
+            if "note_templates_unique_title_per_account" in str(e.orig):
+                raise HTTPException(
+                    status_code=409,
+                    detail="A template with this title already exists in this account.",
+                )
+            raise
 
     async def update(
         self, db_obj: NoteTemplate, obj_in: NoteTemplateUpdate
@@ -55,9 +66,18 @@ class NoteTemplateRepository:
         for field, value in update_data.items():
             setattr(db_obj, field, value)
         self.db.add(db_obj)
-        await self.db.commit()
-        await self.db.refresh(db_obj)
-        return db_obj
+        try:
+            await self.db.commit()
+            await self.db.refresh(db_obj)
+            return db_obj
+        except IntegrityError as e:
+            await self.db.rollback()
+            if "note_templates_unique_title_per_account" in str(e.orig):
+                raise HTTPException(
+                    status_code=409,
+                    detail="A template with this title already exists in this account.",
+                )
+            raise
 
     async def delete(self, db_obj: NoteTemplate) -> None:
         """Delete a note template."""

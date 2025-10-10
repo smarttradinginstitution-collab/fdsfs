@@ -1,6 +1,10 @@
 import pytest
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
+
+# Schemas
+from app.Schemas.asset_class import AssetClassCreate, AssetClassUpdate
 
 # Models needed for the test
 from app.Models.auth_user import AuthUser
@@ -15,6 +19,74 @@ from app.Models.broker_asset_class import BrokerAssetClass
 
 # The repository to be tested
 from app.Repositories.asset_class_repository import AssetClassRepository
+
+
+pytestmark = pytest.mark.anyio
+
+
+@pytest.fixture
+def asset_class_repo(db_session: AsyncSession) -> AssetClassRepository:
+    return AssetClassRepository(db_session)
+
+
+async def test_create_asset_class(asset_class_repo: AssetClassRepository):
+    """Test creating a new asset class."""
+    asset_class_create = AssetClassCreate(name="Stocks")
+    created_asset_class = await asset_class_repo.create(asset_class_create)
+    assert created_asset_class is not None
+    assert created_asset_class.name == "Stocks"
+    assert created_asset_class.id is not None
+
+
+async def test_create_asset_class_raises_on_duplicate_name(
+    asset_class_repo: AssetClassRepository,
+):
+    """Test that creating an asset class with a duplicate name raises an exception."""
+    # Create the first asset class
+    asset_class_create = AssetClassCreate(name="Forex")
+    await asset_class_repo.create(asset_class_create)
+
+    # Try to create another with the same name
+    with pytest.raises(HTTPException) as exc_info:
+        await asset_class_repo.create(asset_class_create)
+
+    assert exc_info.value.status_code == 409
+    assert "already exists" in exc_info.value.detail
+
+
+async def test_update_asset_class(
+    asset_class_repo: AssetClassRepository, db_session: AsyncSession
+):
+    """Test updating an asset class's name."""
+    asset_class = AssetClass(name="Bonds")
+    db_session.add(asset_class)
+    await db_session.commit()
+
+    update_schema = AssetClassUpdate(name="Government Bonds")
+    updated_asset_class = await asset_class_repo.update(asset_class.id, update_schema)
+
+    assert updated_asset_class is not None
+    assert updated_asset_class.name == "Government Bonds"
+
+
+async def test_update_asset_class_raises_on_duplicate_name(
+    asset_class_repo: AssetClassRepository, db_session: AsyncSession
+):
+    """Test that updating an asset class to a duplicate name raises an exception."""
+    # Create two asset classes
+    asset_class1 = AssetClass(name="Crypto")
+    asset_class2 = AssetClass(name="NFTs")
+    db_session.add_all([asset_class1, asset_class2])
+    await db_session.commit()
+
+    # Try to update the second to have the same name as the first
+    update_schema = AssetClassUpdate(name="Crypto")
+    with pytest.raises(HTTPException) as exc_info:
+        await asset_class_repo.update(asset_class2.id, update_schema)
+
+    assert exc_info.value.status_code == 409
+    assert "already exists" in exc_info.value.detail
+
 
 @pytest.mark.anyio
 async def test_delete_asset_class_cascades(db_session: AsyncSession):

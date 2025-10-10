@@ -1,6 +1,7 @@
 import pytest
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 
 from app.Repositories.tag_repository import TagRepository
 from app.Models.tag import Tag
@@ -52,6 +53,43 @@ async def test_update_tag(db_session: AsyncSession, setup_data):
     updated_tag = await repo.update_tag(tag, update_schema)
 
     assert updated_tag.name == "Updated Name"
+
+
+async def test_create_tag_raises_on_duplicate_name(db_session: AsyncSession, setup_data):
+    """Test that creating a tag with a duplicate name in the same group raises an exception."""
+    _, tags_group = setup_data
+    repo = TagRepository(db_session)
+
+    # Create the first tag
+    tag_create_schema = TagCreate(name="Duplicate Tag", color="#123456", group_id=tags_group.id)
+    await repo.create_tag(tag_create_schema)
+
+    # Try to create another tag with the same name
+    with pytest.raises(HTTPException) as exc_info:
+        await repo.create_tag(tag_create_schema)
+
+    assert exc_info.value.status_code == 409
+    assert "already exists in this group" in exc_info.value.detail
+
+
+async def test_update_tag_raises_on_duplicate_name(db_session: AsyncSession, setup_data):
+    """Test that updating a tag to a duplicate name in the same group raises an exception."""
+    _, tags_group = setup_data
+    repo = TagRepository(db_session)
+
+    # Create two tags
+    tag1 = Tag(name="First Tag", group_id=tags_group.id)
+    tag2 = Tag(name="Second Tag", group_id=tags_group.id)
+    db_session.add_all([tag1, tag2])
+    await db_session.commit()
+
+    # Try to update the second tag to have the same name as the first
+    update_schema = TagUpdate(name="First Tag")
+    with pytest.raises(HTTPException) as exc_info:
+        await repo.update_tag(tag2, update_schema)
+
+    assert exc_info.value.status_code == 409
+    assert "already exists in this group" in exc_info.value.detail
 
 async def test_list_tags_by_general_account_id(db_session: AsyncSession, setup_data):
     """Test listing all tags belonging to a general account."""

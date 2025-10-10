@@ -30,6 +30,12 @@ class UserDashboardLayoutUpdate(BaseModel):
     layout: ZonedLayout
 
 
+class UserDashboardLayoutCreate(BaseModel):
+    """Schema for creating a user's dashboard layout."""
+    user_id: UUID
+    layout: ZonedLayout
+
+
 class UserDashboardLayoutRead(BaseModel):
     """Schema for reading a user's dashboard layout."""
     id: UUID

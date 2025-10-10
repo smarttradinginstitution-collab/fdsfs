@@ -9,7 +9,7 @@ import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy import JSON, select
+from sqlalchemy import JSON, select, event
 from sqlalchemy.ext.compiler import compiles
 
 from app.main import app
@@ -70,13 +70,43 @@ async def tables(engine):
         await conn.run_sync(Base.metadata.drop_all)
 
 @pytest.fixture
-async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
-    """Fixture for an async db session."""
-    async_session_factory = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with async_session_factory() as session:
-        yield session
+async def connection(engine, tables) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Fixture to create a connection with a transaction that is rolled back after each test.
+    """
+    async with engine.connect() as conn:
+        trans = await conn.begin()
+        yield conn
+        await trans.rollback()
+
+
+@pytest.fixture
+async def db_session(connection) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Fixture that establishes a transaction, creates a savepoint, and rolls back
+    to that savepoint after each test. This allows repositories to use commit()
+    while maintaining test isolation.
+    """
+    # start a SAVEPOINT transaction
+    nested = await connection.begin_nested()
+
+    # if the SAVEPOINT transaction is ended, start a new one
+    @event.listens_for(connection.sync_connection, "commit")
+    def recommit(conn):
+        if conn.get_nested_transaction():
+            return
+
+        if conn.get_transaction():
+            conn.begin_nested()
+
+    # bind an individual session to the connection
+    session = AsyncSession(bind=connection, expire_on_commit=False)
+
+    yield session
+
+    # close the session
+    await session.close()
+
 
 # Fixture for a regular authenticated user client
 @pytest.fixture

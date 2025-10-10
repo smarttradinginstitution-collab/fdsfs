@@ -1,9 +1,11 @@
 # app/Repositories/note_repository.py
+# app/Repositories/note_repository.py
 from __future__ import annotations
 
 from typing import Sequence
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -92,6 +94,15 @@ class NoteRepository:
 
     async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
+        if note_in.trade_id:
+            stmt = select(Note).where(Note.trade_id == note_in.trade_id)
+            existing_note = await self.db.execute(stmt)
+            if existing_note.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="A note for this trade already exists.",
+                )
+
         db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
         await self.db.commit()
@@ -100,19 +111,37 @@ class NoteRepository:
         # before returning it to the service layer. This prevents lazy-loading errors.
         newly_created_note = await self.get_by_id(db_note.id)
         if not newly_created_note:
-             # This should theoretically never happen, but it's a safeguard.
-             raise Exception("Failed to fetch newly created note.")
+            # This should theoretically never happen, but it's a safeguard.
+            raise Exception("Failed to fetch newly created note.")
         return newly_created_note
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:
         """Update an existing note."""
         update_data = obj_in.model_dump(exclude_unset=True)
+
+        if "trade_id" in update_data and update_data["trade_id"] is not None:
+            stmt = select(Note).where(
+                Note.trade_id == update_data["trade_id"], Note.id != db_obj.id
+            )
+            existing_note = await self.db.execute(stmt)
+            if existing_note.scalars().first():
+                raise HTTPException(
+                    status_code=409,
+                    detail="A note with this trade_id already exists.",
+                )
+
         for field, value in update_data.items():
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
-        await self.db.refresh(db_obj)
-        return db_obj
+
+        # After committing, we need to fetch it again to ensure all relationships are loaded
+        # This matches the pattern in the `create` method and avoids lazy-loading issues.
+        updated_note = await self.get_by_id(db_obj.id)
+        if not updated_note:
+            # This should theoretically never happen, but it's a safeguard.
+            raise Exception("Failed to fetch updated note.")
+        return updated_note
 
     async def delete(self, db_obj: Note) -> None:
         """Delete a note."""
