@@ -50,6 +50,8 @@ const editButtonText = computed(() => {
 // --- Data Fetching ---
 onMounted(() => {
   dashboardLayoutStore.fetchLayout();
+  // Chiamata unificata per caricare tutti i dati della dashboard all'avvio.
+  tradesStore.fetchAllDataForDashboard();
 });
 
 // Watch for filter changes and refetch all dashboard data
@@ -65,11 +67,13 @@ watch(
 watch(
   () => tradingAccountsStore.selectedTradingAccount,
   (newAccount, oldAccount) => {
+    // Evita la prima chiamata se l'account non è cambiato o è nullo.
+    // La chiamata iniziale viene già gestita in onMounted.
     if (newAccount && newAccount.id !== oldAccount?.id) {
       tradesStore.fetchAllDataForDashboard();
     }
   },
-  { deep: true, immediate: true }
+  { deep: true } // Rimosso 'immediate: true' per evitare la doppia chiamata al caricamento.
 );
 
 // Watch for the user finishing layout editing
