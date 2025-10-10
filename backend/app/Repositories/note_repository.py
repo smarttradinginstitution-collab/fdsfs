@@ -119,24 +119,29 @@ class NoteRepository:
         """Update an existing note."""
         update_data = obj_in.model_dump(exclude_unset=True)
 
-        if "trade_id" in update_data and update_data["trade_id"] is not None and update_data["trade_id"] != db_obj.trade_id:
+        if "trade_id" in update_data and update_data["trade_id"] is not None:
             stmt = select(Note).where(
-                Note.trade_id == update_data["trade_id"],
-                Note.id != db_obj.id,
+                Note.trade_id == update_data["trade_id"], Note.id != db_obj.id
             )
             existing_note = await self.db.execute(stmt)
             if existing_note.scalars().first():
                 raise HTTPException(
                     status_code=409,
-                    detail="A note for this trade already exists.",
+                    detail="A note with this trade_id already exists.",
                 )
 
         for field, value in update_data.items():
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
-        await self.db.refresh(db_obj)
-        return db_obj
+
+        # After committing, we need to fetch it again to ensure all relationships are loaded
+        # This matches the pattern in the `create` method and avoids lazy-loading issues.
+        updated_note = await self.get_by_id(db_obj.id)
+        if not updated_note:
+            # This should theoretically never happen, but it's a safeguard.
+            raise Exception("Failed to fetch updated note.")
+        return updated_note
 
     async def delete(self, db_obj: Note) -> None:
         """Delete a note."""
