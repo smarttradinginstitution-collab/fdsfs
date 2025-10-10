@@ -155,7 +155,7 @@ class TradingDnaService:
     def _analyze_combos(self, combo_trades: Dict[Tuple, List[Trade]]) -> List[Dict]:
         analyzed_combos = []
         for combo_key, trades in combo_trades.items():
-            if len(trades) < 3: continue # Ignore combos with fewer than 3 trades for statistical significance
+            if len(trades) < 1: continue # Lowered threshold to 1 to show all combos
             metrics = self._calculate_metrics_for_trades(trades)
             combo_elements = [self._format_label_element(label_type, label_object) for label_type, label_object in combo_key]
 
