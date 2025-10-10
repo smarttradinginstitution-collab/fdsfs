@@ -29,12 +29,8 @@ const accountOptions = computed(() =>
 );
 
 // --- Lifecycle Hooks ---
-onMounted(() => {
-  // Ensure trading accounts are loaded when the component is mounted
-  if (!tradingAccountsStore.hasTradingAccounts) {
-    tradingAccountsStore.fetchTradingAccounts();
-  }
-});
+// I conti di trading ora vengono caricati centralmente dallo store di autenticazione.
+// Non è più necessario caricarli qui.
 
 // --- Methods ---
 const handleAccountSelection = (accountId) => {

@@ -121,11 +121,8 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'dashboard' });
     }
 
-    // Fetch trading accounts if they haven't been loaded yet.
-    // This is crucial for users who reload the page on a protected route.
-    if (tradingAccountsStore.tradingAccounts.length === 0) {
-      await tradingAccountsStore.fetchTradingAccounts();
-    }
+    // I dati dei conti di trading ora vengono caricati centralmente da `authStore.initAuth()`.
+    // Questa chiamata non è più necessaria qui.
 
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
     const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;

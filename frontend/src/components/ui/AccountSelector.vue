@@ -41,12 +41,8 @@ onClickOutside(selectorRef, () => {
   isDropdownOpen.value = false;
 });
 
-// Fetch accounts on mount
-onMounted(() => {
-  if (!tradingAccountsStore.hasTradingAccounts) {
-    tradingAccountsStore.fetchTradingAccounts();
-  }
-});
+// I conti di trading ora vengono caricati centralmente dallo store di autenticazione.
+// Non è più necessario caricarli qui.
 </script>
 
 <template>

@@ -690,13 +690,14 @@ export const useTradesStore = defineStore('trades', {
       }
       this.isLoading = true;
       try {
+        // I playbook ora vengono caricati centralmente dallo store di autenticazione.
+        // Rimuoviamo la chiamata da qui per evitare duplicazioni.
         await Promise.allSettled([
           this.fetchTrades(),
           this.fetchDashboardStats(),
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
-          this.fetchPlaybooks(),
           this.fetchVantageScore(),
         ]);
       } finally {
