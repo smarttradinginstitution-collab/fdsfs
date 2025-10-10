@@ -11,10 +11,8 @@ const tradingAccountsStore = useTradingAccountsStore();
 const newAccountName = ref('');
 const errorMessage = ref('');
 
-// Carica i conti di trading quando il componente viene montato
-onMounted(() => {
-  tradingAccountsStore.fetchTradingAccounts();
-});
+// I conti di trading ora vengono caricati centralmente dallo store di autenticazione
+// all'avvio dell'applicazione. Non è più necessario caricarli qui.
 
 // Funzione per selezionare un account esistente
 function handleSelectAccount(account) {

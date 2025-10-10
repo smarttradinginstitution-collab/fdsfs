@@ -12,6 +12,7 @@ import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
 import { useTradesStore } from './trades';
+import { useTradingAccountsStore } from './tradingAccounts';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -38,15 +39,16 @@ export const useAuthStore = defineStore('auth', () => {
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
 
-      // Carica i dati iniziali non appena il general account è disponibile
+      // Carica tutti i dati globali della sessione in parallelo per massima efficienza.
       const playbookStore = usePlaybookStore();
       const notebookStore = useNotebookStore();
-      const tradesStore = useTradesStore();
-      playbookStore.fetchPlaybooks();
-      notebookStore.fetchFolders();
-      // NOTA: La chiamata a fetchAllDataForDashboard() è stata rimossa da qui.
-      // Ora è responsabilità esclusiva della DashboardView caricare i propri dati,
-      // prevenendo race condition e chiamate duplicate.
+      const tradingAccountsStore = useTradingAccountsStore();
+
+      await Promise.all([
+        playbookStore.fetchPlaybooks(),
+        notebookStore.fetchFolders(),
+        tradingAccountsStore.fetchTradingAccounts(),
+      ]);
 
       return true;
     } catch (error) {
