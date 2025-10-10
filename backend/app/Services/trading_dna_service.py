@@ -38,16 +38,20 @@ class TradingDnaService:
         """
         Main method to generate the full Trading DNA report.
         """
-        # Fetch all trades for the user once, as this is the master dataset
-        all_trades = await self.trade_repo.get_trades_for_dna_analysis(self.general_account_id)
-
-        # Determine the filtered trades based on the provided IDs
-        filtered_trades = self._apply_filters_to_trades(
-            all_trades, tag_ids, mistake_ids, psychology_state_ids, news_impact_ids
+        # Fetch trades based on the provided filters. This is the primary dataset for analysis.
+        filtered_trades = await self.trade_repo.get_trades_for_dna_analysis(
+            general_account_id=self.general_account_id,
+            tag_ids=tag_ids,
+            mistake_ids=mistake_ids,
+            psychology_state_ids=psychology_state_ids,
+            news_impact_ids=news_impact_ids,
         )
 
         golden_combos, toxic_combos = self._discover_and_analyze_combos(filtered_trades)
         group_performance = await self._analyze_group_performance(filtered_trades)
+
+        # For the comparative equity curve, we need all trades to calculate the baseline.
+        all_trades = await self.trade_repo.get_trades_for_dna_analysis(self.general_account_id)
         equity_curve = await self._generate_comparative_equity_curve(all_trades, filtered_trades)
 
         report = {
@@ -58,28 +62,6 @@ class TradingDnaService:
         }
 
         return report
-
-    def _apply_filters_to_trades(self, all_trades: List[Trade], tag_ids, mistake_ids, psychology_state_ids, news_impact_ids) -> List[Trade]:
-        """Applies filters to a list of trades if any filter IDs are provided."""
-        if not any([tag_ids, mistake_ids, psychology_state_ids, news_impact_ids]):
-            return all_trades
-
-        filtered_trades = []
-        for trade in all_trades:
-            matches_all_filters = True
-            if tag_ids and not any(tag.id in tag_ids for tag in trade.tags):
-                matches_all_filters = False
-            if mistake_ids and not any(m.id in mistake_ids for m in trade.mistakes):
-                matches_all_filters = False
-            if psychology_state_ids and not any(p.id in psychology_state_ids for p in trade.psychology_states):
-                matches_all_filters = False
-            if news_impact_ids and not any(n.id in news_impact_ids for n in trade.news_impacts):
-                matches_all_filters = False
-
-            if matches_all_filters:
-                filtered_trades.append(trade)
-
-        return filtered_trades
 
     async def _generate_comparative_equity_curve(self, all_trades: List[Trade], filtered_trades: List[Trade]) -> Dict:
         """Generates two equity curves: one for the filtered set and one for the baseline."""
