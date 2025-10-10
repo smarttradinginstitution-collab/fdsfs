@@ -53,7 +53,7 @@ class PsychologyStateRepository:
 
     async def list_psychology_states_by_general_account_id(self, general_account_id: UUID) -> Sequence[PsychologyState]:
         """Lista tutti gli stati psicologici per un dato general_account_id."""
-        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id).order_by(PsychologyState.state.asc())
+        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id).order_by(PsychologyState.name.asc())
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
@@ -78,13 +78,13 @@ class PsychologyStateRepository:
         Cerca uno stato psicologico per nome; se non esiste, lo crea.
         Mantenuto per compatibilità con altre parti del sistema (es. import).
         """
-        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id, PsychologyState.state == state).limit(1)
+        stmt = select(PsychologyState).where(PsychologyState.general_account_id == general_account_id, PsychologyState.name == state).limit(1)
         res = await self.db.execute(stmt)
         row = res.scalars().first()
         if row:
             return row
 
-        stmt_ins = insert(PsychologyState).values(general_account_id=general_account_id, state=state).returning(PsychologyState)
+        stmt_ins = insert(PsychologyState).values(general_account_id=general_account_id, name=state).returning(PsychologyState)
         res_ins = await self.db.execute(stmt_ins)
         new_row = res_ins.scalar_one()
         await self.db.flush()

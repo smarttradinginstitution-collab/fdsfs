@@ -12,6 +12,7 @@ from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
+    from app.Models.trade import Trade
 
 
 class Mistake(Base):
@@ -26,7 +27,8 @@ class Mistake(Base):
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(String, nullable=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    color: Mapped[str] = mapped_column(String(7), nullable=False, default="#888888")
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )

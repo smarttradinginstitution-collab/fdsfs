@@ -27,6 +27,7 @@ class NewsImpact(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=True)
+    color: Mapped[str] = mapped_column(String(7), nullable=False, default="#888888")
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
