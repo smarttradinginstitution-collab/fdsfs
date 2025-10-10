@@ -57,6 +57,50 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def get_trades_for_dna_analysis(
+        self,
+        general_account_id: UUID,
+        tag_ids: Optional[List[UUID]] = None,
+        mistake_ids: Optional[List[UUID]] = None,
+        psychology_state_ids: Optional[List[UUID]] = None,
+        news_impact_ids: Optional[List[UUID]] = None,
+    ) -> List[Trade]:
+        """
+        Fetches trades for a general account, dynamically filtering by any combination
+        of provided label IDs.
+        """
+        from app.Models.trades_tags import trades_tags_table
+        from app.Models.trades_mistakes import trades_mistakes_table
+        from app.Models.trades_psychology import trades_psychology_table
+        from app.Models.trades_news_impacts import trades_news_impacts_table
+
+        query = self._get_trade_query().join(Trade.trading_account).where(
+            TradingAccount.general_account_id == general_account_id
+        )
+
+        if tag_ids:
+            query = query.join(
+                trades_tags_table, Trade.id == trades_tags_table.c.trade_id
+            ).where(trades_tags_table.c.tag_id.in_(tag_ids))
+
+        if mistake_ids:
+            query = query.join(
+                trades_mistakes_table, Trade.id == trades_mistakes_table.c.trade_id
+            ).where(trades_mistakes_table.c.mistake_id.in_(mistake_ids))
+
+        if psychology_state_ids:
+            query = query.join(
+                trades_psychology_table, Trade.id == trades_psychology_table.c.trade_id
+            ).where(trades_psychology_table.c.psychology_id.in_(psychology_state_ids))
+
+        if news_impact_ids:
+            query = query.join(
+                trades_news_impacts_table, Trade.id == trades_news_impacts_table.c.trade_id
+            ).where(trades_news_impacts_table.c.news_impact_id.in_(news_impact_ids))
+
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def list_by_playbook_id(self, playbook_id: UUID) -> List[Trade]:
         """Elenca tutti i trade per un dato playbook."""
         query = self._get_trade_query().where(Trade.playbook_id == playbook_id)
