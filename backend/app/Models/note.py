@@ -33,6 +33,7 @@ class Note(Base):
         UUID(as_uuid=True),
         ForeignKey("public.trades.id", ondelete="SET NULL"),
         nullable=True,
+        unique=True,
     )
     note_date: Mapped[Optional[date]] = mapped_column(DATE, nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)

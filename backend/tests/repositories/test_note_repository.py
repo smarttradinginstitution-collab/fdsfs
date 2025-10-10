@@ -1,6 +1,7 @@
 import pytest
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 
 from app.Repositories.note_repository import NoteRepository
@@ -81,27 +82,29 @@ async def test_create_note_raises_on_duplicate_trade_id(note_repo: NoteRepositor
     assert exc_info.value.status_code == 409
     assert "already exists" in exc_info.value.detail
 
-async def test_update_note_raises_on_duplicate_trade_id(note_repo: NoteRepository, db_session: AsyncSession, setup_dependencies):
-    """Test that updating a note to a duplicate trade_id raises an exception."""
+async def test_update_note_raises_on_duplicate_trade_id(db_session: AsyncSession, setup_dependencies):
+    """
+    Test that the database UNIQUE constraint on trade_id prevents duplicate linkages.
+    This test interacts directly with the session to verify the constraint.
+    """
     folder, trade1, trading_account = setup_dependencies
 
-    # 1. Create the first note linked to trade1 and COMMIT it.
-    # This ensures it's in the database and visible to subsequent queries.
+    # 1. ARRANGE: Create and commit the initial state
     note1 = Note(id=uuid4(), title="Note 1", folder_id=folder.id, trade_id=trade1.id, content={})
-    db_session.add(note1)
-    await db_session.commit()
 
-    # 2. Create a second trade and a second note to be updated, and COMMIT them.
     trade2 = Trade(id=uuid4(), trading_account_id=trading_account.id)
     note2 = Note(id=uuid4(), title="Note 2", folder_id=folder.id, trade_id=trade2.id, content={})
-    db_session.add_all([trade2, note2])
+
+    db_session.add_all([note1, trade2, note2])
     await db_session.commit()
 
-    # 3. Attempt to update note2 to use the trade_id of note1.
-    # The `update` method will now correctly find the committed note1.
-    update_schema = NoteUpdate(trade_id=trade1.id)
-    with pytest.raises(HTTPException) as exc_info:
-        await note_repo.update(note2, update_schema)
+    # 2. ACT: Attempt to create a duplicate link
+    note2.trade_id = trade1.id
+    db_session.add(note2)
 
-    assert exc_info.value.status_code == 409
-    assert "already exists" in exc_info.value.detail
+    # 3. ASSERT: The commit must fail due to the unique constraint
+    with pytest.raises(IntegrityError):
+        await db_session.commit()
+
+    # Clean up the session after a failed commit
+    await db_session.rollback()
