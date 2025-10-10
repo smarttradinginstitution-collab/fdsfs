@@ -39,7 +39,7 @@ class TagRepository:
 
         db_tag = Tag(**tag_data.model_dump())
         self.db.add(db_tag)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(db_tag)
         return db_tag
 
@@ -66,14 +66,14 @@ class TagRepository:
             setattr(db_obj, field, value)
 
         self.db.add(db_obj)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(db_obj)
         return db_obj
 
     async def delete_tag(self, db_obj: Tag) -> None:
         """Elimina un tag."""
         await self.db.delete(db_obj)
-        await self.db.flush()
+        await self.db.commit()
 
     async def list_tags_by_general_account_id(self, general_account_id: UUID) -> Sequence[Tag]:
         """Lists all tags for a given general_account_id by joining through TagsGroup."""
@@ -117,14 +117,14 @@ class TagRepository:
             if color and tag.color != color:
                 tag.color = color
                 self.db.add(tag)
-                await self.db.flush()
+                await self.db.commit()
                 await self.db.refresh(tag)
             return tag
 
         # 3. Create tag if it does not exist
         new_tag = Tag(name=name, color=color, group_id=group.id)
         self.db.add(new_tag)
-        await self.db.flush()
+        await self.db.commit()
 
         # Re-fetch the tag to ensure the group relationship is loaded, preventing lazy-load errors.
         created_tag = await self.get_tag_by_id(new_tag.id)

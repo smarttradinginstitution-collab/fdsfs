@@ -69,24 +69,35 @@ async def tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def db_session(engine, tables) -> AsyncGenerator[AsyncSession, None]:
     """
-    Fixture that establishes a transaction, creates a session, and rolls back
-    the transaction after each test.
+    Fixture that establishes a transaction, creates a savepoint, and rolls back
+    to that savepoint after each test. This allows repositories to use commit()
+    while maintaining test isolation.
     """
     connection = await engine.connect()
     trans = await connection.begin()
 
-    try:
-        async_session_factory = sessionmaker(
-            bind=connection, class_=AsyncSession, expire_on_commit=False
-        )
-        session = async_session_factory()
-        yield session
-    finally:
-        await trans.rollback()
-        await connection.close()
+    # bind an individual session to the connection
+    session = AsyncSession(bind=connection, expire_on_commit=False)
+
+    # start a SAVEPOINT transaction
+    nested = await session.begin_nested()
+
+    @event.listens_for(session.sync_session, "after_transaction_end")
+    def end_savepoint(session, transaction):
+        """
+        if the SAVEPOINT transaction is ended, start a new one
+        """
+        if not session.in_nested_transaction():
+            session.begin_nested()
+
+    yield session
+
+    # rollback the overall transaction, undoing all changes
+    await trans.rollback()
+    await connection.close()
 
 
 # Fixture for a regular authenticated user client

@@ -36,7 +36,7 @@ class AssetClassRepository:
 
         db_asset_class = AssetClass(**asset_class.model_dump())
         self.db.add(db_asset_class)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(db_asset_class)
         return db_asset_class
 
@@ -61,7 +61,7 @@ class AssetClassRepository:
 
         for key, value in update_data.items():
             setattr(db_asset_class, key, value)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(db_asset_class)
         return db_asset_class
 
@@ -69,6 +69,6 @@ class AssetClassRepository:
         db_asset_class = await self.get(asset_class_id)
         if db_asset_class:
             await self.db.delete(db_asset_class)
-            await self.db.flush()
+            await self.db.commit()
             return True
         return False

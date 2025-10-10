@@ -85,22 +85,23 @@ async def test_update_note_raises_on_duplicate_trade_id(note_repo: NoteRepositor
     """Test that updating a note to a duplicate trade_id raises an exception."""
     folder, trade1, trading_account = setup_dependencies
 
-    # 1. Create the first note via the repository, linked to trade1.
-    note1_create_schema = NoteCreate(title="First Note", folder_id=folder.id, trade_id=trade1.id, content={})
-    await note_repo.create(note1_create_schema)
-
-    # 2. Create a second trade and a second note.
-    trade2 = Trade(id=uuid4(), trading_account_id=trading_account.id)
-    db_session.add(trade2)
+    # 1. Create the first note linked to trade1 and COMMIT it.
+    # This ensures it's in the database and visible to subsequent queries.
+    note1 = Note(id=uuid4(), title="Note 1", folder_id=folder.id, trade_id=trade1.id, content={})
+    db_session.add(note1)
     await db_session.commit()
 
-    note2_create_schema = NoteCreate(title="Second Note", folder_id=folder.id, trade_id=trade2.id, content={})
-    note2_to_update = await note_repo.create(note2_create_schema)
+    # 2. Create a second trade and a second note to be updated, and COMMIT them.
+    trade2 = Trade(id=uuid4(), trading_account_id=trading_account.id)
+    note2 = Note(id=uuid4(), title="Note 2", folder_id=folder.id, trade_id=trade2.id, content={})
+    db_session.add_all([trade2, note2])
+    await db_session.commit()
 
-    # 3. Attempt to update the second note to use the first trade's ID. This should fail.
+    # 3. Attempt to update note2 to use the trade_id of note1.
+    # The `update` method will now correctly find the committed note1.
     update_schema = NoteUpdate(trade_id=trade1.id)
     with pytest.raises(HTTPException) as exc_info:
-        await note_repo.update(note2_to_update, update_schema)
+        await note_repo.update(note2, update_schema)
 
     assert exc_info.value.status_code == 409
     assert "already exists" in exc_info.value.detail

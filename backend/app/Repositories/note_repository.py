@@ -105,7 +105,7 @@ class NoteRepository:
 
         db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
-        await self.db.flush()
+        await self.db.commit()
         # After committing, the note has an ID. We need to fetch it again
         # using our eager-loading method to ensure all relationships are loaded
         # before returning it to the service layer. This prevents lazy-loading errors.
@@ -134,20 +134,20 @@ class NoteRepository:
         for field, value in update_data.items():
             setattr(db_obj, field, value)
         self.db.add(db_obj)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(db_obj)
         return db_obj
 
     async def delete(self, db_obj: Note) -> None:
         """Delete a note."""
         await self.db.delete(db_obj)
-        await self.db.flush()
+        await self.db.commit()
 
     async def add_template_to_note(self, note: Note, template: NoteTemplate) -> Note:
         """Associate a note template with a note."""
         note.templates.append(template)
         self.db.add(note)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(note)
         return note
 
@@ -157,6 +157,6 @@ class NoteRepository:
         """Disassociate a note template from a note."""
         note.templates.remove(template)
         self.db.add(note)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(note)
         return note

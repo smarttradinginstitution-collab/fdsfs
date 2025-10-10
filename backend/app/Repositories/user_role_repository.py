@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException
 
 from app.Models.role import Role
 from app.Models.user_role import UserRole
@@ -68,9 +69,20 @@ class UserRoleRepository:
         self.db.add(row)
         try:
             await self.db.commit()
-        except IntegrityError:
+        except IntegrityError as e:
             await self.db.rollback()
-            # vincolo UniqueConstraint violato (già assegnato)
+            error_detail = str(e.orig).lower()
+            if "user_roles_role_id_fkey" in error_detail or "user_roles_user_id_fkey" in error_detail:
+                raise HTTPException(
+                    status_code=404,
+                    detail="User or Role not found.",
+                )
+            if "unique constraint" in error_detail or "duplicate key" in error_detail:
+                 raise HTTPException(
+                    status_code=409,
+                    detail="This role is already assigned to the user.",
+                )
+            # For any other integrity error, re-raise it to return a 500
             raise
         await self.db.refresh(row)
         return row

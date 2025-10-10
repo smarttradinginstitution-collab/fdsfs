@@ -19,7 +19,7 @@ class AssetMarketRepository:
             )
         new_market = AssetMarket(name=market.name)
         self.db.add(new_market)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(new_market)
         return new_market
 
@@ -56,7 +56,7 @@ class AssetMarketRepository:
 
         for key, value in update_data.items():
             setattr(market, key, value)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(market)
         return market
 
@@ -64,6 +64,6 @@ class AssetMarketRepository:
         market = await self.get(market_id)
         if market:
             await self.db.delete(market)
-            await self.db.commit()
+            await self.db.flush()
             return True
         return False

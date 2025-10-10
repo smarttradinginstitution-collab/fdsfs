@@ -54,7 +54,7 @@ class RoleRepository:
 
         obj = Role(**data)
         self.db.add(obj)
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(obj)
         return obj
 
@@ -82,7 +82,7 @@ class RoleRepository:
         if data:
             for k, v in data.items():
                 setattr(obj, k, v)
-            await self.db.flush()
+            await self.db.commit()
             await self.db.refresh(obj)
         return obj
 
@@ -93,5 +93,5 @@ class RoleRepository:
         """
         stmt = delete(Role).where(Role.id == role_id)
         res = await self.db.execute(stmt)
-        await self.db.flush()
+        await self.db.commit()
         return (res.rowcount or 0) > 0
