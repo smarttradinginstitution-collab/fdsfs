@@ -26,7 +26,7 @@ class NewsImpactController:
         Lists all the news impacts of the authenticated user.
         """
         repo = NewsImpactRepository(db)
-        news_impacts = await repo.list_by_general_account_id(general_account_id)
+        news_impacts = await repo.list_news_impacts_by_general_account_id(general_account_id)
         return [NewsImpactRead.from_orm(ni) for ni in news_impacts]
 
     async def get_news_impact(
