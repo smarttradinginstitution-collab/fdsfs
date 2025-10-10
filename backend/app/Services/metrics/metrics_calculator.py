@@ -168,8 +168,10 @@ class MetricsCalculator:
         """
         Calculates the equity curve, starting from the initial balance.
         A data point is generated for each trade to show intra-day progression.
+        It explicitly converts all Decimal types to floats for JSON serialization.
         """
-        equity_data = [self.initial_balance]
+        # Explicitly convert initial_balance to float for the first data point
+        equity_data = [float(self.initial_balance)]
         current_balance = self.initial_balance
 
         # The label for the initial data point is the date of the first trade, or today if no trades.
@@ -179,7 +181,8 @@ class MetricsCalculator:
         for trade in self.trades:
             if trade.p_l is not None:
                 current_balance += trade.p_l
-                equity_data.append(current_balance)
+                # Convert each new data point to float before appending
+                equity_data.append(float(current_balance))
 
                 # Each new data point needs a label
                 trade_date = (trade.exit_timestamp or trade.entry_timestamp).date()
