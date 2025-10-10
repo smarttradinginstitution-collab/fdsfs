@@ -31,6 +31,22 @@ export const useAuthStore = defineStore('auth', () => {
 
   // --- ACTIONS ---
 
+  /**
+   * Azione centralizzata per caricare tutti i dati di sessione necessari
+   * dopo che l'autenticazione è stata confermata.
+   * Evita race conditions e chiamate duplicate.
+   */
+  async function initSessionData() {
+    // Usiamo Promise.allSettled per assicurarci che tutte le chiamate vengano
+    // tentate, anche se una di esse dovesse fallire.
+    await Promise.allSettled([
+      usePlaybookStore().fetchPlaybooks(),
+      useNotebookStore().fetchFolders(),
+      // Non chiamiamo fetchAllDataForDashboard qui perché dipende dalla selezione
+      // di un trading account, che avviene DOPO questo step.
+    ]);
+  }
+
   // Funzione per recuperare il General Account
   async function fetchGeneralAccount() {
     try {
@@ -38,13 +54,8 @@ export const useAuthStore = defineStore('auth', () => {
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
 
-      // Carica i dati iniziali non appena il general account è disponibile
-      const playbookStore = usePlaybookStore();
-      const notebookStore = useNotebookStore();
-      const tradesStore = useTradesStore();
-      playbookStore.fetchPlaybooks();
-      notebookStore.fetchFolders();
-      tradesStore.fetchAllDataForDashboard();
+      // Una volta ottenuto il GA, avvia il caricamento dei dati di sessione.
+      await initSessionData();
 
       return true;
     } catch (error) {
@@ -215,6 +226,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     initAuth,
+    initSessionData, // Esponi la nuova azione
     verifyMfaAndLogin,
     enrollMfa,
     verifyAndEnableMfa,

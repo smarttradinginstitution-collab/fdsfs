@@ -8,6 +8,7 @@ import { useFilterStore } from './filterStore';
 import { useAuthStore } from './auth';
 import { useTradingAccountsStore } from './tradingAccounts';
 import { useUiStore } from './uiStore';
+import { usePlaybookStore } from './playbookStore'; // Importa il playbookStore
 import apiClient from '../services/api';
 
 /**
@@ -39,7 +40,7 @@ export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
     playbookTrades: [], // Trades specifici per un playbook
-    playbooks: [], // Sostituisce 'setups'
+    // 'playbooks' rimosso, verrà letto da playbookStore
     dashboardStats: null,
     calendarData: [],
     processedStats: null,
@@ -76,9 +77,9 @@ export const useTradesStore = defineStore('trades', {
       return state.trades.reduce((sum, trade) => sum + trade.pnl, 0);
     },
 
-    allPlaybooks(state) {
-      // Ora usa l'elenco dei playbook caricato dal backend.
-      const playbookTitles = state.playbooks.map(p => p.title);
+    allPlaybooks() {
+      const playbookStore = usePlaybookStore();
+      const playbookTitles = playbookStore.playbooks.map(p => p.title);
       return ['All', ...playbookTitles];
     },
 
@@ -375,23 +376,6 @@ export const useTradesStore = defineStore('trades', {
   },
 
   actions: {
-    /**
-     * Recupera l'elenco di tutti i playbook per l'utente autenticato.
-     */
-    async fetchPlaybooks() {
-      const authStore = useAuthStore();
-      if (!authStore.isAuthenticated) return;
-
-      try {
-        // CORREZIONE: L'endpoint corretto per i playbook dell'utente è /me/playbooks
-        const response = await apiClient.get(`/me/playbooks`);
-        this.playbooks = response.data;
-      } catch (error) {
-        console.error('Errore nel recupero dei playbook:', error);
-        this.playbooks = []; // Resetta in caso di errore
-      }
-    },
-
     /**
      * Azione unificata per recuperare i trade dal backend con filtri.
      * Ora dipende dal trading account selezionato.
@@ -742,7 +726,6 @@ export const useTradesStore = defineStore('trades', {
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
-          this.fetchPlaybooks(), // I playbook non dipendono dai filtri, ma è ok ricaricarli.
           this.fetchVantageScore(),
         ]);
 

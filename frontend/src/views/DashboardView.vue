@@ -50,8 +50,9 @@ const editButtonText = computed(() => {
 // --- Data Fetching ---
 onMounted(() => {
   dashboardLayoutStore.fetchLayout();
-  // Chiamata unificata per caricare tutti i dati della dashboard all'avvio.
-  tradesStore.fetchAllDataForDashboard();
+  // Rimosso fetchAllDataForDashboard da onMounted.
+  // Il caricamento dei dati è ora guidato dai watcher,
+  // in risposta a cambiamenti di filtri o dell'account selezionato.
 });
 
 // Watch for filter changes and refetch all dashboard data
@@ -63,17 +64,18 @@ watch(
   { deep: true }
 );
 
-// Watch for changes in the selected trading account and refetch data
+// Watch for changes in the selected trading account and refetch data.
+// Questo watcher ora gestisce anche il caricamento iniziale quando l'account
+// viene selezionato per la prima volta.
 watch(
   () => tradingAccountsStore.selectedTradingAccount,
   (newAccount, oldAccount) => {
-    // Evita la prima chiamata se l'account non è cambiato o è nullo.
-    // La chiamata iniziale viene già gestita in onMounted.
+    // Si attiva solo se c'è un nuovo account e l'ID è diverso dal precedente
     if (newAccount && newAccount.id !== oldAccount?.id) {
       tradesStore.fetchAllDataForDashboard();
     }
   },
-  { deep: true } // Rimosso 'immediate: true' per evitare la doppia chiamata al caricamento.
+  { deep: true, immediate: true } // 'immediate' qui è corretto per caricare i dati la prima volta.
 );
 
 // Watch for the user finishing layout editing
