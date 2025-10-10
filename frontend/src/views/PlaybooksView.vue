@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import PlaybookControls from '@/components/Playbooks/PlaybookControls.vue';
 import PlaybookList from '@/components/Playbooks/PlaybookList.vue';
@@ -18,10 +18,6 @@ const layout = ref('grid');
 function updateLayout(newLayout) {
   layout.value = newLayout;
 }
-
-onMounted(() => {
-  playbookStore.fetchPlaybooks();
-});
 </script>
 
 <style scoped>
