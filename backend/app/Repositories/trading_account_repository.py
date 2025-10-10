@@ -8,6 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.Models.asset import Asset
+from app.Models.trade import Trade
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trading_account import TradingAccountCreate
 
@@ -17,28 +19,46 @@ class TradingAccountRepository:
         self.db = db
 
     async def get_by_id(self, account_id: UUID) -> Optional[TradingAccount]:
-        """Recupera un TradingAccount tramite il suo ID, includendo broker e trades."""
+        """Recupera un TradingAccount tramite il suo ID, con tutte le relazioni caricate."""
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.id == account_id)
             .options(
                 selectinload(TradingAccount.broker),
-                selectinload(TradingAccount.trades),
+                selectinload(TradingAccount.trades).options(
+                    selectinload(Trade.asset).options(
+                        selectinload(Asset.asset_class),
+                        selectinload(Asset.asset_market),
+                    ),
+                    selectinload(Trade.tags),
+                    selectinload(Trade.mistakes),
+                    selectinload(Trade.news_impacts),
+                    selectinload(Trade.psychology_states),
+                    selectinload(Trade.playbook),
+                ),
             )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
     async def list_by_general_account_id(self, general_account_id: UUID) -> List[TradingAccount]:
-        """
-        Elenca tutti i TradingAccount per un dato GeneralAccount, includendo broker e trades.
-        """
+        """Elenca tutti i TradingAccount con tutte le relazioni caricate."""
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.general_account_id == general_account_id)
             .options(
                 selectinload(TradingAccount.broker),
-                selectinload(TradingAccount.trades),
+                selectinload(TradingAccount.trades).options(
+                    selectinload(Trade.asset).options(
+                        selectinload(Asset.asset_class),
+                        selectinload(Asset.asset_market),
+                    ),
+                    selectinload(Trade.tags),
+                    selectinload(Trade.mistakes),
+                    selectinload(Trade.news_impacts),
+                    selectinload(Trade.psychology_states),
+                    selectinload(Trade.playbook),
+                ),
             )
         )
         result = await self.db.execute(stmt)
