@@ -56,20 +56,11 @@ onMounted(() => {
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
+    // Quando i filtri cambiano, aggiorniamo solo i dati della dashboard.
+    // L'azione `fetchAllDataForAccount` è già stata chiamata al momento della selezione dell'account.
     tradesStore.fetchAllDataForDashboard();
   },
-  { deep: true }
-);
-
-// Watch for changes in the selected trading account and refetch data
-watch(
-  () => tradingAccountsStore.selectedTradingAccount,
-  (newAccount, oldAccount) => {
-    if (newAccount && newAccount.id !== oldAccount?.id) {
-      tradesStore.fetchAllDataForDashboard();
-    }
-  },
-  { deep: true, immediate: true }
+  { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
 );
 
 // Watch for the user finishing layout editing

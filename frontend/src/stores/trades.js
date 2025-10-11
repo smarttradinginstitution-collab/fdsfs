@@ -429,6 +429,30 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    /**
+     * Azione per aggiornare i dati della dashboard in base ai filtri.
+     * Non ricarica la lista dei trade, ma solo le statistiche aggregate.
+     */
+    async fetchAllDataForDashboard() {
+      // LOCK: Se un caricamento è già in corso, non avviarne un altro.
+      if (this.isLoading) {
+        console.log("Caricamento dashboard già in corso. Salto il fetch duplicato.");
+        return;
+      }
+      this.isLoading = true;
+      try {
+        await Promise.allSettled([
+          this.fetchDashboardStats(),
+          this.fetchCalendarData(),
+          this.fetchProcessedStats(),
+          this.fetchEquityCurve(),
+          this.fetchVantageScore(),
+        ]);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async fetchTradeSummary(dateRange) {
       this.isSummaryLoading = true;
       this.activeSummary = null;
@@ -739,7 +763,7 @@ export const useTradesStore = defineStore('trades', {
         }
 
         // Refresh related data
-        await this.fetchAllDataForAccount();
+        await this.fetchAllDataForDashboard();
 
       } catch (error) {
         console.error('Error deleting trade:', error);
@@ -765,7 +789,7 @@ export const useTradesStore = defineStore('trades', {
         uiStore.showToast({ message: `${tradeIds.length} trades cancellati con successo.`, type: 'success' });
 
         // Aggiorna i dati della dashboard
-        await this.fetchAllDataForAccount();
+        await this.fetchAllDataForDashboard();
 
       } catch (error) {
         console.error('Errore nella cancellazione dei trade selezionati:', error);
