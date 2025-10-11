@@ -10,6 +10,7 @@ async def seed_default_tags_for_account(general_account_id: UUID, db: AsyncSessi
     Seeds the default tag groups and tags for a new general account.
     This function is designed to be idempotent.
     """
+    print(f"--- DEBUG: Starting seed_default_tags_for_account for general_account_id: {general_account_id}")
     # Define the default structure
     default_structure = {
         "Setup": {
@@ -31,29 +32,38 @@ async def seed_default_tags_for_account(general_account_id: UUID, db: AsyncSessi
     }
 
     for group_name, group_data in default_structure.items():
+        print(f"--- DEBUG: Processing group: {group_name}")
         # Check if group already exists
-        existing_group = await db.execute(
+        existing_group_result = await db.execute(
             select(TagsGroup).where(
                 TagsGroup.general_account_id == general_account_id,
                 TagsGroup.name == group_name
             )
         )
-        if existing_group.scalars().first():
+        existing_group = existing_group_result.scalars().first()
+
+        if existing_group:
+            print(f"--- DEBUG: Group '{group_name}' already exists. Skipping.")
             continue
 
         # Create the group
+        print(f"--- DEBUG: Creating group '{group_name}'.")
         new_group = TagsGroup(
             general_account_id=general_account_id,
             name=group_name,
             description=group_data["description"],
         )
         db.add(new_group)
-        await db.flush()  # Flush to get the new_group.id
+        await db.flush()
+        print(f"--- DEBUG: Group '{group_name}' created with id {new_group.id}. Now creating tags.")
 
         # Create the tags for the new group
         for tag_name in group_data["tags"]:
+            print(f"--- DEBUG: Creating tag '{tag_name}' for group '{group_name}'.")
             new_tag = Tag(
                 name=tag_name,
                 group_id=new_group.id
             )
             db.add(new_tag)
+
+    print(f"--- DEBUG: Finished processing all groups for general_account_id: {general_account_id}")
