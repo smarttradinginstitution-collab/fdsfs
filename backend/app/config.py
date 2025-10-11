@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     DB_CHARSET: Optional[str] = "utf8"
 
     SUPABASE_PROJECT_URL: str
-    SUPABASE_KEY: str
+    SUPABASE_KEY: str # Questa è la service_role key
+    SUPABASE_ANON_KEY: str # Questa è la anon key pubblica
     AUTH_AUTO_CONFIRM_DEV: bool = True
 
     def assemble_db_url(self) -> str:

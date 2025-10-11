@@ -17,11 +17,19 @@ Per ottenere l'utente corrente da un access token del client, chiamiamo
 """
 
 def _service_headers() -> dict[str, str]:
-    k = settings.SUPABASE_KEY
+    """Usa la service_role key per operazioni di amministrazione."""
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "apikey": k,  # obbligatorio per Supabase
+        "apikey": settings.SUPABASE_KEY,
+    }
+
+def _anon_headers() -> dict[str, str]:
+    """Usa la anon key pubblica per operazioni client-side (login, signup)."""
+    return {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "apikey": settings.SUPABASE_ANON_KEY,
     }
 
 async def _request(
@@ -29,11 +37,14 @@ async def _request(
     path: str,
     json: Optional[dict] = None,
     extra_headers: Optional[dict[str, str]] = None,
+    use_anon_key: bool = False,
 ) -> Dict[str, Any]:
     base = settings.SUPABASE_PROJECT_URL.rstrip("/")
     url = f"{base}{path}"
     timeout = httpx.Timeout(30.0, connect=8.0)
-    headers = _service_headers()
+
+    headers = _anon_headers() if use_anon_key else _service_headers()
+
     if extra_headers:
         headers.update(extra_headers)
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -67,11 +78,11 @@ async def sign_up(email: str, password: str, user_meta: Optional[dict] = None) -
     payload = {"email": email, "password": password}
     if user_meta:
         payload["data"] = user_meta
-    return await _request("POST", "/auth/v1/signup", payload)
+    return await _request("POST", "/auth/v1/signup", payload, use_anon_key=True)
 
 async def sign_in(email: str, password: str) -> Dict[str, Any]:
     payload = {"email": email, "password": password}
-    return await _request("POST", "/auth/v1/token?grant_type=password", payload)
+    return await _request("POST", "/auth/v1/token?grant_type=password", payload, use_anon_key=True)
 
 
 # ----------------- Flussi "admin" (SERVE Authorization Bearer service_role) -----------------
