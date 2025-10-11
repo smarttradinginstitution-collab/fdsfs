@@ -41,7 +41,13 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       // Se non lo è (o non ce n'era uno), pulisce la selezione senza sceglierne uno nuovo.
       // Questo assicura che l'utente venga indirizzato alla pagina di selezione.
       const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
-      if (!isSelectedAccountValid) {
+      if (isSelectedAccountValid) {
+        // Se l'account memorizzato è valido, carica i suoi trade all'avvio.
+        // Usiamo l'istanza dello store dei trade per chiamare l'azione.
+        const tradesStore = useTradesStore();
+        tradesStore.fetchAllTradesForCurrentAccount();
+      } else {
+        // Se non è valido o non c'è, pulisci la selezione.
         selectTradingAccount(null);
       }
 
