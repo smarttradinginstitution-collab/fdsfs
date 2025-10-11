@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.general_account import GeneralAccount
 from app.Models.tags_group import TagsGroup
 from app.Schemas.general_account import GeneralAccountCreate
+from app.Services.seeding_service import seed_default_tags_for_account
 
 
 class GeneralAccountRepository:
@@ -48,8 +49,13 @@ class GeneralAccountRepository:
         )
         self.db.add(db_account)
         try:
-            await self.db.commit()
+            await self.db.flush()
             await self.db.refresh(db_account)
+
+            # Seed the default tags and groups for the new account
+            await seed_default_tags_for_account(db_account.id, self.db)
+
+            await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
             existing_account = await self.get_by_user_id(user_id)
