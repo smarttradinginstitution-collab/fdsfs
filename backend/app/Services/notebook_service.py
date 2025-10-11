@@ -4,10 +4,13 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from datetime import date
+
 from app.Infrastructure.db import get_db
 from app.Repositories.notebook_folder_repository import NotebookFolderRepository
 from app.Repositories.note_repository import NoteRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
+from app.Repositories.trade_repository import TradeRepository
 from app.Models.notebook_folder import NotebookFolder
 from app.Models.note import Note
 from app.Models.enums import FolderType, SystemFolderIdentifier
@@ -34,6 +37,7 @@ class NotebookService:
         self.folder_repo = NotebookFolderRepository(db)
         self.note_repo = NoteRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
+        self.trade_repo = TradeRepository(db)
 
     async def _get_general_account_id(self, user_id: UUID) -> UUID:
         """Helper to get the general_account_id for a user."""
@@ -162,3 +166,91 @@ class NotebookService:
         """Delete a note, ensuring it belongs to the user."""
         note = await self.get_note(note_id, user_id)
         await self.note_repo.delete(note)
+
+    # --- Get-or-Create Operations ---
+
+    async def get_or_create_trade_note(self, trade_id: UUID, user_id: UUID) -> Note:
+        """
+        Retrieves the note for a specific trade. If it doesn't exist,
+        it creates one in the 'Trade Notes' system folder.
+        """
+        general_account_id = await self._get_general_account_id(user_id)
+
+        # 1. Verify the trade exists and belongs to the user
+        trade = await self.trade_repo.get_by_id(trade_id)
+        if not trade or trade.trading_account.general_account_id != general_account_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
+            )
+
+        # 2. Check if a note for this trade already exists
+        existing_note = await self.note_repo.get_by_trade_id(trade_id)
+        if existing_note:
+            return existing_note
+
+        # 3. Ensure 'Trade Notes' system folder exists and get it
+        await self._ensure_system_folders_exist(general_account_id)
+        trade_notes_folder = await self.folder_repo.find_by_system_identifier(
+            SystemFolderIdentifier.TRADE_NOTES, general_account_id
+        )
+        if not trade_notes_folder:
+            # This should theoretically not happen due to _ensure_system_folders_exist
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Trade Notes system folder not found.",
+            )
+
+        # 4. Create the new note
+        note_title = f"{trade.symbol_snapshot} - {trade.entry_timestamp.strftime('%Y-%m-%d')}"
+        note_in = NoteCreate(
+            title=note_title,
+            content={"type": "doc", "content": [{"type": "paragraph"}]},
+            folder_id=trade_notes_folder.id,
+            trade_id=trade_id,
+        )
+        return await self.note_repo.create(note_in)
+
+
+    async def get_or_create_daily_journal_note(self, journal_date: date, user_id: UUID) -> Note:
+        """
+        Retrieves the journal note for a specific day. If it doesn't exist,
+        it creates one in the 'Daily Journal' system folder.
+        """
+        general_account_id = await self._get_general_account_id(user_id)
+
+        # 1. Format the title consistently
+        note_title = f"Journal - {journal_date.strftime('%Y-%m-%d')}"
+
+        # 2. Check if a note for this day already exists in the correct folder
+        existing_note = await self.note_repo.find_by_title_and_account(
+            note_title, general_account_id
+        )
+        if existing_note and existing_note.folder.system_folder_identifier == SystemFolderIdentifier.DAILY_JOURNAL:
+            return existing_note
+
+        # 3. Ensure 'Daily Journal' system folder exists and get it
+        await self._ensure_system_folders_exist(general_account_id)
+        daily_journal_folder = await self.folder_repo.find_by_system_identifier(
+            SystemFolderIdentifier.DAILY_JOURNAL, general_account_id
+        )
+        if not daily_journal_folder:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Daily Journal system folder not found.",
+            )
+
+        # 4. If a note with that title exists but in a different folder, it's a conflict.
+        # This is a rare edge case, but good to handle.
+        if existing_note:
+             raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A note with the title '{note_title}' already exists but is not in the Daily Journal folder.",
+            )
+
+        # 5. Create the new note
+        note_in = NoteCreate(
+            title=note_title,
+            content={"type": "doc", "content": [{"type": "paragraph"}]},
+            folder_id=daily_journal_folder.id,
+        )
+        return await self.note_repo.create(note_in)

@@ -4,12 +4,12 @@ import { useRoute, useRouter } from 'vue-router';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
-import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
+import NoteEditor from '@/components/notebook/NoteEditor.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
 
@@ -23,11 +23,6 @@ const isPageLoading = ref(true);
 const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
-const editableContent = ref(null);
-
-// Local state for notes to avoid depending on notebookStore's active notes
-const tradeNotesList = ref([]);
-const dailyJournalNotesList = ref([]);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -57,21 +52,6 @@ const tradeDate = computed(() => {
   });
 });
 
-const tradeNotesFolder = computed(() => notebookStore.folders.find(f => f.name === 'Trade Notes'));
-const dailyJournalFolder = computed(() => notebookStore.folders.find(f => f.name === 'Daily Journal'));
-
-// --- These computed properties now use the local state, which is safe ---
-const currentTradeNote = computed(() => {
-  if (!trade.value) return null;
-  return tradeNotesList.value.find(n => n.trade_id === trade.value.id);
-});
-
-const currentDailyJournalNote = computed(() => {
-    if (!trade.value) return null;
-    const noteTitle = `Journal - ${tradeDate.value}`;
-    return dailyJournalNotesList.value.find(n => n.title === noteTitle);
-});
-
 // --- METHODS ---
 const handlePrevious = () => {
   const prevId = tradesStore.getPreviousTradeId;
@@ -91,86 +71,66 @@ const handleUpdateTradeDetails = (payload) => {
   if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
 };
 
-const handleSaveNotes = async () => {
-  if (!trade.value || !editableContent.value) return;
-
-  if (rightColumnActiveTab.value === 'trade-note') {
-    const noteData = {
-      title: `${trade.value.symbol_snapshot} - ${tradeDate.value}`,
-      content: editableContent.value,
-      trade_id: trade.value.id,
-      folder_id: tradeNotesFolder.value.id,
-    };
-    if (currentTradeNote.value) {
-      await notebookStore.updateNote(currentTradeNote.value.id, noteData);
-    } else {
-      await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    const noteData = {
-      title: `Journal - ${tradeDate.value}`,
-      content: editableContent.value,
-      folder_id: dailyJournalFolder.value.id,
-    };
-    if (currentDailyJournalNote.value) {
-        await notebookStore.updateNote(currentDailyJournalNote.value.id, noteData);
-    } else {
-        await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
-  }
-};
-
-
-const selectTradeFromStore = (tradeId) => {
+const selectTradeAndFetchNotes = async (tradeId) => {
   isPageLoading.value = true;
-  const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+  error.value = null;
 
-  if (tradeFromList) {
-    // Se il trade è già nello store, lo selezioniamo direttamente.
-    // Usiamo una copia per evitare modifiche dirette allo stato dello store.
-    tradesStore.selectedTrade = { ...tradeFromList };
+  // Clear previous notes
+  notebookStore.activeTradeNote = null;
+  notebookStore.activeDailyJournalNote = null;
 
-    // Filtriamo le note pertinenti dallo store già popolato
-    if (tradeNotesFolder.value) {
-      tradeNotesList.value = notebookStore.notes.filter(n => n.folder_id === tradeNotesFolder.value.id);
+  try {
+    // 1. Select the trade from the store or fetch it if not present
+    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+    if (tradeFromList) {
+      tradesStore.selectedTrade = { ...tradeFromList };
+    } else {
+      console.warn(`Trade ${tradeId} not found in store, fetching individually.`);
+      await tradesStore.fetchTradeById(tradeId);
     }
-    if (dailyJournalFolder.value) {
-      dailyJournalNotesList.value = notebookStore.notes.filter(n => n.folder_id === dailyJournalFolder.value.id);
+
+    if (!trade.value) {
+      throw new Error("Trade could not be loaded.");
     }
 
-  } else {
-    // Se il trade non è trovato (caso limite, es. link diretto senza pre-caricamento),
-    // lo carichiamo specificamente. Questo mantiene la robustezza.
-    console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-    tradesStore.fetchTradeById(tradeId);
+    // 2. Fetch the notes concurrently using our new actions
+    const tradeExitDate = trade.value.exit_timestamp.split('T')[0]; // Format to YYYY-MM-DD
+    await Promise.all([
+      notebookStore.fetchTradeNote(trade.value.id),
+      notebookStore.fetchDailyJournalNote(tradeExitDate)
+    ]);
+
+  } catch (err) {
+    console.error("Error loading trade or notes:", err);
+    error.value = "Failed to load trade details or associated notes.";
+  } finally {
+    isPageLoading.value = false;
   }
-  isPageLoading.value = false;
 };
 
 
 // --- LIFECYCLE & WATCHERS ---
 onMounted(() => {
-  // I dati sono già stati pre-caricati. Dobbiamo solo selezionare il trade corretto.
-  selectTradeFromStore(route.params.id);
+  selectTradeAndFetchNotes(route.params.id);
 });
 
 watch(() => route.params.id, (newId) => {
   if (newId) {
-    selectTradeFromStore(newId);
+    selectTradeAndFetchNotes(newId);
   }
 });
 
-watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
-  if (rightColumnActiveTab.value === 'trade-note') {
-    editableContent.value = currentTradeNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    editableContent.value = currentDailyJournalNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
+// This watcher is the core of the new logic.
+// It sets the `selectedNote` in the store, which `NoteEditor` reacts to.
+watch(rightColumnActiveTab, (newTab) => {
+  if (newTab === 'trade-note') {
+    notebookStore.selectedNoteId = notebookStore.activeTradeNote?.id || null;
+  } else if (newTab === 'daily-journal') {
+    notebookStore.selectedNoteId = notebookStore.activeDailyJournalNote?.id || null;
+  } else {
+    notebookStore.selectedNoteId = null;
   }
-}, { immediate: true, deep: true });
+}, { immediate: true });
 
 </script>
 
@@ -233,17 +193,17 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 
           <!-- Right Column -->
           <div class="right-column">
-          <BaseWidget class="notes-widget">
-            <div class="right-column-content">
-              <div class="notes-header">
-                <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-                <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+            <BaseWidget class="notes-widget">
+              <div class="right-column-content">
+                <div class="notes-header">
+                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
+                </div>
+                <div class="editor-container">
+                  <!-- NoteEditor doesn't need props, it gets the active note from the store -->
+                  <NoteEditor />
+                </div>
               </div>
-              <div class="editor-container">
-                <RichTextEditor v-model="editableContent" />
-              </div>
-              </div>
-          </BaseWidget>
+            </BaseWidget>
           </div>
         </main>
       </div>

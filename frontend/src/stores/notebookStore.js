@@ -15,6 +15,9 @@ export const useNotebookStore = defineStore('notebook', {
     isLoadingTrades: false, // For loading recent trades
     error: null,
     financialData: null, // To store financial data for the selected note
+    // State for the ReportView rework
+    activeTradeNote: null,
+    activeDailyJournalNote: null,
   }),
 
   getters: {
@@ -311,6 +314,50 @@ export const useNotebookStore = defineStore('notebook', {
         this.recentTrades = [];
       } finally {
         this.isLoadingTrades = false;
+      }
+    },
+
+    // --- NOTE ACTIONS FOR REPORT VIEW ---
+
+    async fetchTradeNote(tradeId) {
+      this.isLoadingNotes = true;
+      try {
+        const response = await apiClient.post('/notebook/notes/get-or-create/trade-note', { trade_id: tradeId });
+        const note = response.data;
+        this.activeTradeNote = note;
+        // Upsert the note into the main notes array
+        const index = this.notes.findIndex(n => n.id === note.id);
+        if (index !== -1) {
+          this.notes[index] = note;
+        } else {
+          this.notes.push(note);
+        }
+      } catch (err) {
+        console.error('Error fetching or creating trade note:', err);
+        this.error = err.response?.data?.detail || 'Failed to get trade note.';
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
+    async fetchDailyJournalNote(date) {
+      this.isLoadingNotes = true;
+      try {
+        const response = await apiClient.post('/notebook/notes/get-or-create/daily-journal', { journal_date: date });
+        const note = response.data;
+        this.activeDailyJournalNote = note;
+        // Upsert the note into the main notes array
+        const index = this.notes.findIndex(n => n.id === note.id);
+        if (index !== -1) {
+          this.notes[index] = note;
+        } else {
+          this.notes.push(note);
+        }
+      } catch (err) {
+        console.error('Error fetching or creating daily journal note:', err);
+        this.error = err.response?.data?.detail || 'Failed to get daily journal note.';
+      } finally {
+        this.isLoadingNotes = false;
       }
     },
 

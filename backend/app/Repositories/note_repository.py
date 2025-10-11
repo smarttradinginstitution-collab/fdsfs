@@ -49,6 +49,25 @@ class NoteRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def find_by_title_and_account(
+        self, title: str, general_account_id: UUID
+    ) -> Note | None:
+        """
+        Finds a note by its exact title for a specific general account,
+        joining through the folder to check ownership.
+        """
+        stmt = (
+            select(Note)
+            .join(Note.folder)
+            .where(
+                Note.title == title,
+                NotebookFolder.general_account_id == general_account_id,
+            )
+            .options(selectinload(Note.folder))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def list_by_folder_id(self, folder_id: UUID) -> Sequence[Note]:
         """List all notes for a given folder, including related trades and all sub-relationships."""
         stmt = (

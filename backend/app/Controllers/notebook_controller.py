@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from typing import List
 from uuid import UUID
+from datetime import date
 
-from fastapi import Depends, Response, status
+from fastapi import Depends, Response, status, Body
 
 from app.Services.notebook_service import NotebookService
 from app.Schemas.notebook import (
@@ -111,3 +112,23 @@ class NotebookController:
     ) -> Response:
         await service.delete_note(note_id=note_id, user_id=current_user.id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    async def get_or_create_trade_note_controller(
+        self,
+        trade_id: UUID = Body(..., embed=True),
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> NoteRead:
+        return await service.get_or_create_trade_note(
+            trade_id=trade_id, user_id=current_user.id
+        )
+
+    async def get_or_create_daily_journal_note_controller(
+        self,
+        journal_date: date = Body(..., embed=True),
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> NoteRead:
+        return await service.get_or_create_daily_journal_note(
+            journal_date=journal_date, user_id=current_user.id
+        )

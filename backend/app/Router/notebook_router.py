@@ -87,3 +87,18 @@ router.delete(
     "/notes/{note_id}",
     summary="Delete a note",
 )(notebook_controller.delete_note)
+
+
+# --- Get-or-Create Endpoints ---
+
+router.post(
+    "/notes/get-or-create/trade-note",
+    response_model=NoteRead,
+    summary="Get or create a note for a specific trade",
+)(notebook_controller.get_or_create_trade_note_controller)
+
+router.post(
+    "/notes/get-or-create/daily-journal",
+    response_model=NoteRead,
+    summary="Get or create a journal note for a specific day",
+)(notebook_controller.get_or_create_daily_journal_note_controller)

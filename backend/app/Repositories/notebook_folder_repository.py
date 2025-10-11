@@ -46,6 +46,17 @@ class NotebookFolderRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def find_by_system_identifier(
+        self, identifier: SystemFolderIdentifier, general_account_id: UUID
+    ) -> NotebookFolder | None:
+        """Finds a system folder by its identifier for a specific general account."""
+        stmt = select(NotebookFolder).where(
+            NotebookFolder.system_folder_identifier == identifier,
+            NotebookFolder.general_account_id == general_account_id,
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def list_by_general_account_id(
         self, general_account_id: UUID
     ) -> Sequence[NotebookFolder]:
