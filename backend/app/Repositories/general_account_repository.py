@@ -48,21 +48,11 @@ class GeneralAccountRepository:
             label=account_data.label
         )
         self.db.add(db_account)
-        try:
-            await self.db.flush()
-            await self.db.refresh(db_account)
+        await self.db.flush()
+        await self.db.refresh(db_account)
 
-            # Seed the default tags and groups for the new account
-            await seed_default_tags_for_account(db_account.id, self.db)
-
-            await self.db.commit()
-        except IntegrityError:
-            await self.db.rollback()
-            existing_account = await self.get_by_user_id(user_id)
-            if existing_account:
-                return existing_account
-            else:
-                raise
+        # Seed the default tags and groups for the new account
+        await seed_default_tags_for_account(db_account.id, self.db)
 
         return db_account
 
