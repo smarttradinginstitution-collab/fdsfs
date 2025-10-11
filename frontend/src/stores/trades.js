@@ -895,5 +895,49 @@ export const useTradesStore = defineStore('trades', {
         this.isTradeLoading = false;
       }
     },
+
+    // Helper generico per aggiornare le etichette (Mistakes, Psychology, etc.)
+    async _updateTradeLabels(tradeId, labelType, labelIds) {
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.post(`/trades/${tradeId}/${labelType}`, labelIds);
+        const updatedLabels = response.data;
+        const stateKey = labelType.replace('-', '_'); // es. 'psychology-states' -> 'psychology_states'
+
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade[stateKey] = updatedLabels;
+        }
+
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index][stateKey] = updatedLabels;
+        }
+
+        const formattedLabel = labelType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        uiStore.showNotification({ message: `${formattedLabel} updated successfully!`, type: 'success' });
+        return updatedLabels;
+
+      } catch (error) {
+        const formattedLabel = labelType.replace('-', ' ');
+        console.error(`Error updating trade ${formattedLabel}:`, error);
+        uiStore.showNotification({ message: `Failed to update ${formattedLabel}.`, type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async updateTradeMistakes(tradeId, mistakeIds) {
+      return this._updateTradeLabels(tradeId, 'mistakes', mistakeIds);
+    },
+
+    async updateTradePsychology(tradeId, psychologyIds) {
+      return this._updateTradeLabels(tradeId, 'psychology-states', psychologyIds);
+    },
+
+    async updateTradeNewsImpacts(tradeId, newsImpactIds) {
+      return this._updateTradeLabels(tradeId, 'news-impacts', newsImpactIds);
+    },
   },
 });

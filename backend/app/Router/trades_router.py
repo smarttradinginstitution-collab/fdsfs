@@ -196,3 +196,36 @@ async def update_trade_tags(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade_tags(claims, trade_id, tag_ids, service)
+
+
+# --- Generic Trade <> Label Association ---
+from app.Schemas.mistake import MistakeRead
+from app.Schemas.psychology_state import PsychologyStateRead
+from app.Schemas.news_impact import NewsImpactRead
+
+@router.post("/{trade_id}/mistakes", response_model=List[MistakeRead], summary="Update the mistakes associated with a trade")
+async def update_trade_mistakes(
+    trade_id: UUID,
+    label_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_labels(claims, trade_id, label_ids, "mistakes", service)
+
+@router.post("/{trade_id}/psychology-states", response_model=List[PsychologyStateRead], summary="Update the psychology states associated with a trade")
+async def update_trade_psychology_states(
+    trade_id: UUID,
+    label_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_labels(claims, trade_id, label_ids, "psychology_states", service)
+
+@router.post("/{trade_id}/news-impacts", response_model=List[NewsImpactRead], summary="Update the news impacts associated with a trade")
+async def update_trade_news_impacts(
+    trade_id: UUID,
+    label_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.update_trade_labels(claims, trade_id, label_ids, "news_impacts", service)
