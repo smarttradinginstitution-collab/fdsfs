@@ -213,6 +213,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function register(email, password) {
+    await apiClient.post('/auth/register', { email, password });
+  }
+
   return {
     user,
     token,
@@ -231,5 +235,6 @@ export const useAuthStore = defineStore('auth', () => {
     verifyAndEnableMfa,
     disableMfa,
     unenrollMfa,
+    register,
   };
 });
