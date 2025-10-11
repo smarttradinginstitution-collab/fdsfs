@@ -56,33 +56,35 @@ async function handleMfaVerification() {
       </div>
 
       <!-- Form di Login Standard -->
-      <form v-if="!isMfaStep" class="login-form" @submit.prevent="handleLogin">
-        <div class="form-fields">
-          <BaseInput
-            v-model="email"
-            label="Email"
-            type="email"
-            placeholder="iltuoindirizzo@email.com"
-            required
-          />
-          <BaseInput
-            v-model="password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-        <BaseButton type="submit" variant="primary" size="medium">
-          Accedi
-        </BaseButton>
-      </form>
-      <p class="register-link">
-        Non hai un account? <router-link :to="{ name: 'register' }">Registrati</router-link>
-      </p>
+      <template v-if="!isMfaStep">
+        <form class="login-form" @submit.prevent="handleLogin">
+          <div class="form-fields">
+            <BaseInput
+              v-model="email"
+              label="Email"
+              type="email"
+              placeholder="iltuoindirizzo@email.com"
+              required
+            />
+            <BaseInput
+              v-model="password"
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
+          <BaseButton type="submit" variant="primary" size="medium">
+            Accedi
+          </BaseButton>
+        </form>
+        <p class="register-link">
+          Non hai un account? <router-link :to="{ name: 'register' }">Registrati</router-link>
+        </p>
+      </template>
 
       <!-- Form per Inserimento Codice MFA/OTP -->
       <form v-else class="login-form" @submit.prevent="handleMfaVerification">
