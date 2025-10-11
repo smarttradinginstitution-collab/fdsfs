@@ -8,6 +8,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/services/api';
 import { useAuthStore } from './auth';
+import { useTradesStore } from './trades';
 
 export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   // --- STATE ---
@@ -36,11 +37,15 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       const { data } = await apiClient.get('/trading-accounts/');
       tradingAccounts.value = data;
 
-      // Verifica se l'account precedentemente selezionato è ancora valido.
-      // Se non lo è (o non ce n'era uno), pulisce la selezione senza sceglierne uno nuovo.
-      // Questo assicura che l'utente venga indirizzato alla pagina di selezione.
       const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
-      if (!isSelectedAccountValid) {
+
+      if (isSelectedAccountValid) {
+        // Se l'account in memoria è valido, attiva il caricamento dei dati per quell'account.
+        // Dobbiamo assicurarci che l'oggetto completo sia selezionato.
+        const fullAccount = data.find(acc => acc.id === selectedTradingAccount.value.id);
+        selectTradingAccount(fullAccount);
+      } else {
+        // Se non c'è un account valido, pulisci la selezione.
         selectTradingAccount(null);
       }
 
@@ -78,15 +83,22 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Imposta il conto di trading attivo.
+   * Imposta il conto di trading attivo e avvia il pre-caricamento dei dati.
    * @param {object | null} account - L'oggetto del conto da selezionare o null.
    */
   function selectTradingAccount(account) {
     selectedTradingAccount.value = account;
+
     if (account) {
       localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
+      // Avvia il caricamento di tutti i dati per l'account selezionato.
+      const tradesStore = useTradesStore();
+      tradesStore.fetchAllDataForAccount();
     } else {
       localStorage.removeItem('selectedTradingAccount');
+      // Qui potremmo voler pulire i dati dei trade, se necessario.
+      const tradesStore = useTradesStore();
+      tradesStore.$reset(); // Resetta lo store dei trade a stato iniziale
     }
   }
 
