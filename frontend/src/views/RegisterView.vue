@@ -1,13 +1,13 @@
 <!--
 // =============================================================================
-// FILE: src/views/LoginView.vue
-// DESCRIZIONE: La pagina di login dell'applicazione.
-// Fornisce un'interfaccia per gli utenti per inserire le loro credenziali
-// e accedere al sistema.
+// FILE: src/views/RegisterView.vue
+// DESCRIZIONE: La pagina di registrazione per i nuovi utenti.
+// Fornisce un'interfaccia per creare un nuovo account.
 // =============================================================================
 -->
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/uiStore';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -15,48 +15,44 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+const router = useRouter();
+
 const email = ref('');
 const password = ref('');
-const otpCode = ref('');
+const confirmPassword = ref('');
 const errorMessage = ref('');
-const isMfaStep = ref(false); // Nuovo stato per gestire il flusso MFA
 
-async function handleLogin() {
+async function handleRegister() {
   errorMessage.value = '';
-  try {
-    const result = await authStore.login(email.value, password.value);
-    if (result.mfaRequired) {
-      isMfaStep.value = true; // Mostra il form per l'OTP
-    }
-    // Se non è richiesta MFA, la redirezione avviene nello store
-  } catch (error) {
-    errorMessage.value = error.response?.data?.detail || 'Credenziali non valide o errore inatteso.';
-    console.error(error);
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = 'Le password non coincidono.';
+    return;
   }
-}
 
-async function handleMfaVerification() {
-  errorMessage.value = '';
   try {
-    await authStore.verifyMfaAndLogin(otpCode.value);
-    // La redirezione avviene nello store dopo la verifica
+    await authStore.register(email.value, password.value);
+    uiStore.showNotification({
+      title: 'Registrazione completata!',
+      message: 'Controlla la tua email per confermare il tuo account.',
+      type: 'success',
+    });
+    router.push({ name: 'login' });
   } catch (error) {
-    errorMessage.value = error.response?.data?.detail || 'Codice OTP non valido o errore inatteso.';
+    errorMessage.value = error.response?.data?.detail || 'Errore durante la registrazione.';
     console.error(error);
   }
 }
 </script>
 
 <template>
-  <div class="login-view">
-    <div class="login-container">
-      <div class="login-header">
-        <h1 class="login-title">Bentornato</h1>
-        <p class="login-subtitle">Accedi al tuo trading journal</p>
+  <div class="register-view">
+    <div class="register-container">
+      <div class="register-header">
+        <h1 class="register-title">Crea il tuo Account</h1>
+        <p class="register-subtitle">Inizia a tracciare i tuoi trade oggi stesso.</p>
       </div>
 
-      <!-- Form di Login Standard -->
-      <form v-if="!isMfaStep" class="login-form" @submit.prevent="handleLogin">
+      <form class="register-form" @submit.prevent="handleRegister">
         <div class="form-fields">
           <BaseInput
             v-model="email"
@@ -72,37 +68,19 @@ async function handleMfaVerification() {
             placeholder="••••••••"
             required
           />
-        </div>
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-        <BaseButton type="submit" variant="primary" size="medium">
-          Accedi
-        </BaseButton>
-      </form>
-      <p class="register-link">
-        Non hai un account? <router-link :to="{ name: 'register' }">Registrati</router-link>
-      </p>
-
-      <!-- Form per Inserimento Codice MFA/OTP -->
-      <form v-else class="login-form" @submit.prevent="handleMfaVerification">
-        <div class="form-fields">
-          <p class="login-subtitle">Controlla la tua app di autenticazione e inserisci il codice.</p>
           <BaseInput
-            v-model="otpCode"
-            label="Codice di Verifica"
-            type="text"
-            placeholder="123456"
+            v-model="confirmPassword"
+            label="Conferma Password"
+            type="password"
+            placeholder="••••••••"
             required
-            inputmode="numeric"
-            pattern="\d{6}"
           />
         </div>
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
         <BaseButton type="submit" variant="primary" size="medium">
-          Verifica Codice
+          Registrati
         </BaseButton>
       </form>
     </div>
@@ -110,7 +88,7 @@ async function handleMfaVerification() {
 </template>
 
 <style scoped>
-.login-view {
+.register-view {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -118,7 +96,7 @@ async function handleMfaVerification() {
   background-color: var(--semantic-color-surface-page);
 }
 
-.login-container {
+.register-container {
   width: 100%;
   max-width: 400px;
   padding: var(--semantic-size-stack-xl);
@@ -129,23 +107,23 @@ async function handleMfaVerification() {
   margin: var(--semantic-size-gutter-screen);
 }
 
-.login-header {
+.register-header {
   text-align: center;
   margin-bottom: var(--semantic-size-stack-lg);
 }
 
-.login-title {
+.register-title {
   font: var(--semantic-font-style-heading-xl);
   color: var(--semantic-color-text-primary);
   margin-bottom: var(--semantic-size-stack-xs);
 }
 
-.login-subtitle {
+.register-subtitle {
   font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-secondary);
 }
 
-.login-form {
+.register-form {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
@@ -165,21 +143,5 @@ async function handleMfaVerification() {
   border-radius: var(--semantic-border-radius-interactive);
   font: var(--semantic-font-style-body-sm);
   text-align: center;
-}
-
-.register-link {
-  text-align: center;
-  margin-top: var(--semantic-size-stack-md);
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
-}
-
-.register-link a {
-  color: var(--semantic-color-text-interactive);
-  text-decoration: none;
-}
-
-.register-link a:hover {
-  text-decoration: underline;
 }
 </style>
