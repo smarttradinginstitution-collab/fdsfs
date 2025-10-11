@@ -29,7 +29,7 @@ async function handleRegister() {
   }
 
   try {
-    await authStore.register(name.value, email.value, password.value);
+    await authStore.register(name.value, email.value, password.value, confirmPassword.value);
     // In caso di successo, il redirect con messaggio verrà gestito nello store
     // o qui, a seconda dell'implementazione finale. Per ora, reindirizziamo.
     router.push({ name: 'login', query: { registered: 'true' } });

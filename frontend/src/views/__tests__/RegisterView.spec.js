@@ -66,7 +66,7 @@ describe('RegisterView.vue', () => {
 
     // Verifica che l'azione register sia stata chiamata
     expect(registerSpy).toHaveBeenCalledTimes(1);
-    expect(registerSpy).toHaveBeenCalledWith('Test User', 'test@example.com', 'password123');
+    expect(registerSpy).toHaveBeenCalledWith('Test User', 'test@example.com', 'password123', 'password123');
 
     // Verifica che il router.push sia stato chiamato per il redirect
     expect(router.push).toHaveBeenCalledTimes(1);
