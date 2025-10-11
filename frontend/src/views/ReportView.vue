@@ -142,23 +142,17 @@ const fetchNotesForFolder = async (folderId, targetRef) => {
 const fetchRequiredData = async (tradeId) => {
   isPageLoading.value = true;
   try {
-    // 1. Cerca il trade nello store locale prima di fare una chiamata API
     const existingTrade = tradesStore.trades.find(t => t.id === tradeId);
 
     if (existingTrade) {
-      tradesStore.selectedTrade = existingTrade; // Imposta il trade trovato
+      tradesStore.selectedTrade = existingTrade;
     } else {
-      // 2. Se non trovato, fai la chiamata API come fallback
       console.warn(`Trade ${tradeId} non trovato nello store, eseguo il fallback API.`);
       await tradesStore.fetchTradeById(tradeId);
     }
 
-    // Carica le note necessarie, questo può essere fatto in parallelo
-    if (notebookStore.folders.length === 0) {
-      await notebookStore.fetchFolders();
-    }
+    if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
 
-    // Once folders are loaded, fetch the specific notes needed for this view
     if (tradeNotesFolder.value) {
         await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
     }

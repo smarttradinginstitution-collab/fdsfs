@@ -375,11 +375,6 @@ export const useTradesStore = defineStore('trades', {
   },
 
   actions: {
-    /**
-     * Recupera TUTTI i trade per il conto di trading attualmente selezionato.
-     * Questa azione è pensata per essere chiamata una sola volta quando si seleziona un account,
-     * per popolare lo store con tutti i dati necessari.
-     */
     async fetchAllTradesForCurrentAccount() {
       this.isLoading = true;
       const tradingAccountsStore = useTradingAccountsStore();
@@ -393,13 +388,12 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        // La chiamata non include parametri di data per ottenere TUTTI i trade
         const response = await apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`);
         this.trades = response.data.map(mapBackendTradeToFrontend);
         console.log(`Caricati ${this.trades.length} trade per l'account ${selectedAccount.id}`);
       } catch (error) {
         console.error(`Errore nel recupero di tutti i trade per l'account ${selectedAccount.id}:`, error);
-        this.trades = []; // Pulisci in caso di errore
+        this.trades = [];
       } finally {
         this.isLoading = false;
       }
@@ -743,7 +737,6 @@ export const useTradesStore = defineStore('trades', {
 
       try {
         await Promise.allSettled([
-          this.fetchTrades(),
           this.fetchDashboardStats(),
           this.fetchCalendarData(),
           this.fetchProcessedStats(),

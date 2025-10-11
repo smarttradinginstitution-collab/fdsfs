@@ -8,7 +8,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/services/api';
 import { useAuthStore } from './auth';
-import { useTradesStore } from './trades'; // Importa il trade store
+import { useTradesStore } from './trades';
 
 export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   // --- STATE ---
@@ -42,12 +42,9 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       // Questo assicura che l'utente venga indirizzato alla pagina di selezione.
       const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
       if (isSelectedAccountValid) {
-        // Se l'account memorizzato è valido, carica i suoi trade all'avvio.
-        // Usiamo l'istanza dello store dei trade per chiamare l'azione.
         const tradesStore = useTradesStore();
-        tradesStore.fetchAllTradesForCurrentAccount();
+        await tradesStore.fetchAllTradesForCurrentAccount();
       } else {
-        // Se non è valido o non c'è, pulisci la selezione.
         selectTradingAccount(null);
       }
 
@@ -73,8 +70,7 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     try {
       const { data } = await apiClient.post('/trading-accounts/', accountData);
       tradingAccounts.value.push(data);
-      // Opzionale: seleziona automaticamente il nuovo account creato
-      selectTradingAccount(data);
+      await selectTradingAccount(data);
       return data;
     } catch (error) {
       console.error("Errore nella creazione del trading account:", error);
@@ -85,21 +81,18 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Imposta il conto di trading attivo e avvia il caricamento dei trade associati.
+   * Imposta il conto di trading attivo.
    * @param {object | null} account - L'oggetto del conto da selezionare o null.
    */
   async function selectTradingAccount(account) {
     selectedTradingAccount.value = account;
     const tradesStore = useTradesStore();
-
     if (account) {
       localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
-      // Dopo aver selezionato l'account, carica tutti i suoi trade
       await tradesStore.fetchAllTradesForCurrentAccount();
     } else {
       localStorage.removeItem('selectedTradingAccount');
-      // Se l'account viene deselezionato, svuota la lista dei trade
-      tradesStore.trades = [];
+      tradesStore.trades = []; // Svuota i trade quando l'account viene deselezionato
     }
   }
 
