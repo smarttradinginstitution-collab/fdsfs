@@ -380,3 +380,37 @@ class TradeService:
         await self.db.refresh(db_trade, attribute_names=['tags'])
 
         return [TagRead.from_orm(tag) for tag in db_trade.tags]
+
+    async def update_trade_labels(self, claims: dict, trade_id: UUID, label_ids: List[UUID], label_type: str) -> list:
+        """
+        Aggiorna le etichette associate a un trade in modo generico (mistakes, psychology, etc.).
+        """
+        LABEL_TYPE_MAP = {
+            "mistakes": {"model": Mistake, "schema": "MistakeRead"},
+            "psychology_states": {"model": PsychologyState, "schema": "PsychologyStateRead"},
+            "news_impacts": {"model": NewsImpact, "schema": "NewsImpactRead"},
+        }
+
+        if label_type not in LABEL_TYPE_MAP:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid label type specified")
+
+        config = LABEL_TYPE_MAP[label_type]
+        model_class = config["model"]
+        # Lo schema non viene usato qui ma potrebbe servire per la validazione del response_model
+
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        labels = await self._get_related_entities(general_account_id, model_class, label_ids)
+
+        # Il nome dell'attributo sul modello Trade è il `label_type` (es. trade.mistakes)
+        setattr(db_trade, label_type, labels)
+
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=[label_type])
+
+        # Restituisce la lista aggiornata di etichette
+        return getattr(db_trade, label_type)

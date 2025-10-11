@@ -210,3 +210,16 @@ class TradesController:
         Handles the request for updating the tags associated with a trade.
         """
         return await service.update_trade_tags(claims, trade_id, tag_ids)
+
+    async def update_trade_labels(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        label_ids: List[UUID],
+        label_type: str,
+        service: TradeService,
+    ) -> List[TagRead]:
+        """
+        Handles the request for updating various labels (mistakes, psychology, etc.) associated with a trade.
+        """
+        return await service.update_trade_labels(claims, trade_id, label_ids, label_type)
