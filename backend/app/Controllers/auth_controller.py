@@ -12,6 +12,7 @@ from app.Infrastructure import supabase_service
 from app.Router.auth import get_current_claims
 from app.Repositories.user_role_repository import UserRoleRepository
 from app.Models.role import Role
+from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.auth_session import (
     LoginInput,
     LoginResponse,
@@ -26,6 +27,7 @@ from app.Schemas.auth_session import (
     ListFactorsResponse,
     MfaDisableInput,
 )
+from app.Schemas.general_account import GeneralAccountCreate
 from app.config import settings
 
 bearer = HTTPBearer(auto_error=True)
@@ -252,15 +254,23 @@ class AuthController:
                 detail="Registrazione completata ma user.id mancante",
             )
 
+        user_uuid = UUID(user_id_str)
+
+        # 1. Assign "user" role
         stmt = select(Role.id).where(Role.name.ilike("user")).limit(1)
         role_id_row = await db.execute(stmt)
         role_id = role_id_row.scalar_one_or_none()
         if role_id:
-            repo = UserRoleRepository(db)
+            user_role_repo = UserRoleRepository(db)
             try:
-                await repo.assign(user_id=UUID(user_id_str), role_id=role_id)
+                await user_role_repo.assign(user_id=user_uuid, role_id=role_id)
             except IntegrityError:
-                pass
+                pass # Role already assigned, ignore
+
+        # 2. Create a General Account for the new user
+        general_account_repo = GeneralAccountRepository(db)
+        account_data = GeneralAccountCreate(label=payload.email)
+        await general_account_repo.create_general_account(user_id=user_uuid, account_data=account_data)
 
         return RegisterResponse(user_id=user_id_str, email=user.get("email"), user=user)
 
