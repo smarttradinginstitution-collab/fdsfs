@@ -4,6 +4,7 @@ import { formatCurrency, formatNumber, formatPercentage } from '@/services/forma
 import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
 import TradeTagManager from './TradeTagManager.vue';
+import TradeLabelManager from './TradeLabelManager.vue';
 
 const props = defineProps({
   trade: {
@@ -62,6 +63,9 @@ const displayStats = computed(() => {
       </div>
     </div>
     <TradeTagManager :trade="trade" />
+    <TradeLabelManager :trade="trade" label-type="mistakes" title="Mistakes" />
+    <TradeLabelManager :trade="trade" label-type="psychology-states" title="Psychology" />
+    <TradeLabelManager :trade="trade" label-type="news-impacts" title="News Impact" />
   </div>
 </template>
 
