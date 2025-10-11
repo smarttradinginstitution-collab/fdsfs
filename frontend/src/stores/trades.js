@@ -8,6 +8,7 @@ import { useFilterStore } from './filterStore';
 import { useTradingAccountsStore } from './tradingAccounts';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
+import { useNotebookStore } from './notebookStore';
 import apiClient from '../services/api';
 
 /**
@@ -376,25 +377,22 @@ export const useTradesStore = defineStore('trades', {
 
   actions: {
     /**
-     * Azione unificata per recuperare i trade dal backend con filtri.
-     * Ora dipende dal trading account selezionato.
+     * Azione unificata per recuperare i trade dal backend.
+     * Può recuperare tutti i trade o applicare i filtri della dashboard.
+     * @param {object} options - Opzioni per il fetch.
+     * @param {boolean} options.ignoreFilters - Se true, carica tutti i trade senza filtri.
      */
-    async fetchTrades() {
+    async fetchTrades(options = { ignoreFilters: false }) {
       this.isLoading = true;
       const tradingAccountsStore = useTradingAccountsStore();
       const selectedAccount = tradingAccountsStore.selectedTradingAccount;
 
       if (!selectedAccount) {
         console.log("Nessun trading account selezionato. Non carico i trade.");
-        this.trades = []; // Pulisci i trade se non c'è un account selezionato
+        this.trades = [];
         this.isLoading = false;
         return;
       }
-
-      const filterStore = useFilterStore();
-      const _startDate = filterStore.startDate;
-      const _endDate = filterStore.endDate;
-      const _strategy = filterStore.selectedStrategy;
 
       const toYYYYMMDD = (date) => {
         if (!date) return null;
@@ -406,15 +404,18 @@ export const useTradesStore = defineStore('trades', {
       };
 
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
       const params = {
-        start_date: toYYYYMMDD(_startDate),
-        end_date: toYYYYMMDD(_endDate),
         user_timezone: userTimezone,
       };
 
-      if (_strategy && _strategy.toLowerCase() !== 'all') {
-        params.setups = [_strategy];
+      if (!options.ignoreFilters) {
+        const filterStore = useFilterStore();
+        params.start_date = toYYYYMMDD(filterStore.startDate);
+        params.end_date = toYYYYMMDD(filterStore.endDate);
+
+        if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
+          params.setups = [filterStore.selectedStrategy];
+        }
       }
 
       try {
@@ -665,40 +666,33 @@ export const useTradesStore = defineStore('trades', {
     },
 
     /**
-     * Azione master per caricare tutti i dati della dashboard in parallelo.
-     * Ora è idempotente: non ricarica i dati se i filtri e l'account non sono cambiati.
+     * Azione master per caricare tutti i dati dell'account in parallelo (trade, note, ecc.).
+     * È idempotente: non ricarica i dati se l'account non è cambiato.
      */
-    async fetchAllDataForDashboard() {
-      // LOCK: Se un caricamento è già in corso, non avviarne un altro.
+    async fetchAllDataForAccount() {
       if (this.isLoading) {
-        console.log("Caricamento dashboard già in corso. Salto il fetch duplicato.");
+        console.log("Caricamento dati account già in corso. Salto il fetch duplicato.");
         return;
       }
 
       const tradingAccountsStore = useTradingAccountsStore();
       const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      const filterStore = useFilterStore();
+      const notebookStore = useNotebookStore();
       const uiStore = useUiStore();
 
       if (!selectedAccount) {
         this.trades = [];
         this.dashboardStats = null;
-        this.calendarData = [];
-        this.processedStats = null;
-        this.equityCurve = null;
-        this.vantageScore = null;
+        // ... reset altri stati ...
         return;
       }
 
-      const newSignature = JSON.stringify({
-        accountId: selectedAccount.id,
-        startDate: filterStore.startDate?.toISOString(),
-        endDate: filterStore.endDate?.toISOString(),
-        strategy: filterStore.selectedStrategy,
-      });
+      // Usa una firma più semplice basata solo sull'ID dell'account
+      // per evitare ricaricamenti non necessari quando cambiano solo i filtri.
+      const newSignature = selectedAccount.id;
 
       if (this.dataSignature === newSignature) {
-        console.log("Dati dashboard già aggiornati (stessa firma). Salto il fetch.");
+        console.log("Dati per questo account già caricati. Salto il fetch.");
         if (uiStore.isInitialLoadPending) {
           uiStore.hideLoader();
           uiStore.setInitialLoadPending(false);
@@ -706,23 +700,26 @@ export const useTradesStore = defineStore('trades', {
         return;
       }
 
-      this.isLoading = true; // Attiva il lock
+      this.isLoading = true;
       if (uiStore.isInitialLoadPending) {
-        uiStore.showLoader('Stiamo calcolando i tuoi dati...');
+        uiStore.showLoader('Caricamento di tutti i dati del tuo account...');
       }
 
       try {
         await Promise.allSettled([
-          this.fetchTrades(),
+          this.fetchTrades({ ignoreFilters: true }), // Carica TUTTI i trade per l'account
           this.fetchDashboardStats(),
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
           this.fetchVantageScore(),
+          notebookStore.fetchFolders(), // Carica le cartelle del notebook
+          notebookStore.fetchAllNotes(), // Carica TUTTE le note
         ]);
+        // La firma ora rappresenta che tutti i dati per questo account sono stati caricati.
         this.dataSignature = newSignature;
       } finally {
-        this.isLoading = false; // Rilascia il lock
+        this.isLoading = false;
         if (uiStore.isInitialLoadPending) {
           uiStore.hideLoader();
           uiStore.setInitialLoadPending(false);
@@ -742,7 +739,7 @@ export const useTradesStore = defineStore('trades', {
         }
 
         // Refresh related data
-        await this.fetchAllDataForDashboard();
+        await this.fetchAllDataForAccount();
 
       } catch (error) {
         console.error('Error deleting trade:', error);
@@ -768,7 +765,7 @@ export const useTradesStore = defineStore('trades', {
         uiStore.showToast({ message: `${tradeIds.length} trades cancellati con successo.`, type: 'success' });
 
         // Aggiorna i dati della dashboard
-        await this.fetchAllDataForDashboard();
+        await this.fetchAllDataForAccount();
 
       } catch (error) {
         console.error('Errore nella cancellazione dei trade selezionati:', error);

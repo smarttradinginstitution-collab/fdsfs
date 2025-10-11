@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import apiClient from '@/services/api'; // Import apiClient directly
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
@@ -125,51 +124,44 @@ const handleSaveNotes = async () => {
   }
 };
 
-const fetchNotesForFolder = async (folderId, targetRef) => {
-    if (!folderId) {
-        targetRef.value = [];
-        return;
-    }
-    try {
-        const response = await apiClient.get(`/notebook/folders/${folderId}/notes`);
-        targetRef.value = response.data;
-    } catch (e) {
-        console.error(`Failed to fetch notes for folder ${folderId}`, e);
-        targetRef.value = [];
-    }
-};
 
-const fetchRequiredData = async (tradeId) => {
+const selectTradeFromStore = (tradeId) => {
   isPageLoading.value = true;
-  try {
-    if (tradesStore.trades.length === 0) await tradesStore.fetchTrades();
-    if (notebookStore.folders.length === 0) await notebookStore.fetchFolders();
+  const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
-    // Once folders are loaded, fetch the specific notes needed for this view
+  if (tradeFromList) {
+    // Se il trade è già nello store, lo selezioniamo direttamente.
+    // Usiamo una copia per evitare modifiche dirette allo stato dello store.
+    tradesStore.selectedTrade = { ...tradeFromList };
+
+    // Filtriamo le note pertinenti dallo store già popolato
     if (tradeNotesFolder.value) {
-        await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
+      tradeNotesList.value = notebookStore.notes.filter(n => n.folder_id === tradeNotesFolder.value.id);
     }
     if (dailyJournalFolder.value) {
-        await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
+      dailyJournalNotesList.value = notebookStore.notes.filter(n => n.folder_id === dailyJournalFolder.value.id);
     }
 
-    await tradesStore.fetchTradeById(tradeId);
-  } catch (error) {
-    console.error("Errore durante il caricamento dei dati del trade:", error);
-    // L'errore specifico verrà gestito dal getter `error` dello store,
-    // ma lo logghiamo qui per il debug.
-  } finally {
-    isPageLoading.value = false;
+  } else {
+    // Se il trade non è trovato (caso limite, es. link diretto senza pre-caricamento),
+    // lo carichiamo specificamente. Questo mantiene la robustezza.
+    console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
+    tradesStore.fetchTradeById(tradeId);
   }
+  isPageLoading.value = false;
 };
+
 
 // --- LIFECYCLE & WATCHERS ---
 onMounted(() => {
-  fetchRequiredData(route.params.id);
+  // I dati sono già stati pre-caricati. Dobbiamo solo selezionare il trade corretto.
+  selectTradeFromStore(route.params.id);
 });
 
 watch(() => route.params.id, (newId) => {
-  if (newId) fetchRequiredData(newId);
+  if (newId) {
+    selectTradeFromStore(newId);
+  }
 });
 
 watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
