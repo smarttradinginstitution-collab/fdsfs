@@ -8,6 +8,7 @@
 -->
 <script setup>
 import { ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/uiStore';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -102,6 +103,11 @@ async function handleMfaVerification() {
           Verifica Codice
         </BaseButton>
       </form>
+
+      <div class="register-link">
+        Non hai un account?
+        <RouterLink to="/register">Registrati</RouterLink>
+      </div>
     </div>
   </div>
 </template>
@@ -162,5 +168,21 @@ async function handleMfaVerification() {
   border-radius: var(--semantic-border-radius-interactive);
   font: var(--semantic-font-style-body-sm);
   text-align: center;
+}
+
+.register-link {
+  margin-top: var(--semantic-size-stack-lg);
+  text-align: center;
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+}
+
+.register-link a {
+  color: var(--semantic-color-text-action-primary-default);
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
 }
 </style>

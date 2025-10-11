@@ -13,6 +13,18 @@ const router = createRouter({
       meta: { title: 'Login', public: true }
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+      meta: { title: 'Registrazione', public: true }
+    },
+    {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('../views/AuthCallback.vue'),
+      meta: { title: 'Verifica', public: true }
+    },
+    {
       path: '/add-account',
       name: 'add-account',
       component: AddAccountView,
