@@ -105,7 +105,12 @@ async def test_register_success(auth_controller: AuthController, mock_db_session
     mock_role_result.scalar_one_or_none.return_value = role_id
     mock_db_session.execute.return_value = mock_role_result
 
-    payload = RegisterInput(email="new_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="New User",
+        email="new_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
     response = await auth_controller.register(payload, mock_db_session)
 
     assert response.status == "registered"
@@ -124,7 +129,12 @@ async def test_register_supabase_error(auth_controller: AuthController, mock_db_
         "message": "User already registered"
     })
 
-    payload = RegisterInput(email="existing_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="Existing User",
+        email="existing_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         await auth_controller.register(payload, mock_db_session)
@@ -141,7 +151,12 @@ async def test_register_supabase_no_userid(auth_controller: AuthController, mock
         "user": {"email": "new_user@example.com"}
     })
 
-    payload = RegisterInput(email="new_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="New User",
+        email="new_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         await auth_controller.register(payload, mock_db_session)
@@ -237,7 +252,12 @@ async def test_register_integrity_error(auth_controller: AuthController, mock_db
     # Simulate an IntegrityError, which happens if the role is already assigned
     mock_user_role_repo.assign = AsyncMock(side_effect=IntegrityError(None, None, None))
 
-    payload = RegisterInput(email="new_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="New User",
+        email="new_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
     response = await auth_controller.register(payload, mock_db_session)
 
     # The registration should still be considered successful

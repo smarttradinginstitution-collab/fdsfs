@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from typing import Any, Dict, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 
 # ───────────── Ingressi ─────────────
 
@@ -11,11 +11,19 @@ class LoginInput(BaseModel):
     password: str = Field(min_length=6)
 
 class RegisterInput(BaseModel):
+    name: str = Field(..., min_length=2)
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=8)
+    confirm_password: str = Field(min_length=8)
     user_meta: Optional[Dict[str, Any]] = None
     app_meta: Optional[Dict[str, Any]] = None
     phone: Optional[str] = None
+
+    @validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'password' in values and v != values['password']:
+            raise ValueError('Le password non corrispondono')
+        return v
 
 # ───────────── Uscite ─────────────
 

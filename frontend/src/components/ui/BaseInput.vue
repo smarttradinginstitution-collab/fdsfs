@@ -8,34 +8,42 @@
 -->
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- REFS ---
 const inputElement = ref(null);
+const uniqueId = ref(`input-${uuidv4()}`);
 
 // --- PROPS ---
-// Definiamo le "props" che questo componente può accettare dall'esterno.
 defineProps({
-  // `modelValue` è il valore del campo di input. Vue usa questo nome
-  // di default per la prop collegata a `v-model`.
   modelValue: {
-    type: [String, Number], // Può essere testo o un numero.
+    type: [String, Number],
     default: '',
   },
-  // `label` è il testo dell'etichetta da mostrare sopra il campo.
   label: {
     type: String,
     default: '',
   },
-  // `type` è il tipo di input HTML (es. 'text', 'password', 'number').
   type: {
     type: String,
     default: 'text',
   },
-  // `placeholder` è il testo segnaposto mostrato quando il campo è vuoto.
   placeholder: {
     type: String,
     default: '',
+  },
+  required: {
+    type: Boolean,
+    default: false,
+  },
+  inputmode: {
+    type: String,
+    default: 'text',
+  },
+   pattern: {
+    type: String,
+    default: null,
   },
 });
 
@@ -63,16 +71,17 @@ defineExpose({
 </script>
 
 <template>
-  <!-- Il template contiene un contenitore, un'etichetta (label) e il campo di input. -->
   <div class="input-wrapper">
-    <!-- L'etichetta viene mostrata solo se la prop `label` è stata fornita. -->
-    <label v-if="label" class="input-label">{{ label }}</label>
-    <!-- Questo è il campo di input HTML. -->
+    <label v-if="label" :for="uniqueId" class="input-label">{{ label }}</label>
     <input
+      :id="uniqueId"
       ref="inputElement"
       :type="type"
       :value="modelValue"
       :placeholder="placeholder"
+      :required="required"
+      :inputmode="inputmode"
+      :pattern="pattern"
       class="input-field"
       @input="onInput"
     />

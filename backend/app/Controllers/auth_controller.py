@@ -226,10 +226,15 @@ class AuthController:
         payload: RegisterInput,
         db: AsyncSession = Depends(get_db),
     ) -> RegisterResponse:
+        # Prepara i metadati utente, includendo il nome.
+        # Se user_meta è già presente, lo aggiorniamo, altrimenti lo creiamo.
+        user_meta = payload.user_meta or {}
+        user_meta['name'] = payload.name
+
         res = await supabase_service.register_user(
             email=payload.email,
             password=payload.password,
-            user_meta=payload.user_meta,
+            user_meta=user_meta,
             app_meta=payload.app_meta,
             phone=payload.phone,
         )
