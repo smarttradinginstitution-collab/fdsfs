@@ -8,6 +8,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/services/api';
 import { useAuthStore } from './auth';
+import { useTradesStore } from './trades'; // Importa il trade store
 
 export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   // --- STATE ---
@@ -78,15 +79,21 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Imposta il conto di trading attivo.
+   * Imposta il conto di trading attivo e avvia il caricamento dei trade associati.
    * @param {object | null} account - L'oggetto del conto da selezionare o null.
    */
-  function selectTradingAccount(account) {
+  async function selectTradingAccount(account) {
     selectedTradingAccount.value = account;
+    const tradesStore = useTradesStore();
+
     if (account) {
       localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
+      // Dopo aver selezionato l'account, carica tutti i suoi trade
+      await tradesStore.fetchAllTradesForCurrentAccount();
     } else {
       localStorage.removeItem('selectedTradingAccount');
+      // Se l'account viene deselezionato, svuota la lista dei trade
+      tradesStore.trades = [];
     }
   }
 
