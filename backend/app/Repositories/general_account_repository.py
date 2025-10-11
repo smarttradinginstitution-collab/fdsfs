@@ -49,11 +49,13 @@ class GeneralAccountRepository:
         )
         self.db.add(db_account)
         try:
-            await self.db.commit()
+            await self.db.flush() # Flush to get the db_account.id without committing
             await self.db.refresh(db_account)
+
             # Seed the default tags and groups for the new account
             await seed_default_tags_for_account(db_account.id, self.db)
-            await self.db.commit()
+
+            await self.db.commit() # Commit both the account and the tags
         except IntegrityError:
             await self.db.rollback()
             existing_account = await self.get_by_user_id(user_id)
