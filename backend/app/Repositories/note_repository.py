@@ -1,5 +1,4 @@
 # app/Repositories/note_repository.py
-# app/Repositories/note_repository.py
 from __future__ import annotations
 
 from typing import Sequence
@@ -13,7 +12,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
-from app.Models.trade import Trade  # Import the Trade model
+from app.Models.trade import Trade
 from app.Models.note_template import NoteTemplate
 from app.Schemas.notebook import NoteCreate, NoteUpdate
 
@@ -24,63 +23,56 @@ class NoteRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def get_by_id(self, note_id: UUID) -> Note | None:
-        """Get a note by its ID, including its related folder, trade, and all sub-relationships."""
-        stmt = (
-            select(Note)
-            .options(
-                joinedload(Note.folder),  # Eager load the folder relationship
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
-            .where(Note.id == note_id)
+    def _get_base_query(self):
+        """
+        Constructs a base query for notes with all necessary relationships
+        eagerly loaded to prevent lazy-loading issues in async contexts.
+        """
+        return select(Note).options(
+            joinedload(Note.folder),
+            joinedload(Note.trade).joinedload(Trade.asset),
+            joinedload(Note.trade).joinedload(Trade.tags),
+            joinedload(Note.trade).joinedload(Trade.mistakes),
+            joinedload(Note.trade).joinedload(Trade.playbook),
+            joinedload(Note.trade).joinedload(Trade.news_impacts),
+            joinedload(Note.trade).joinedload(Trade.psychology_states),
+            selectinload(Note.templates),
         )
+
+    async def get_by_id(self, note_id: UUID) -> Note | None:
+        """Get a note by its ID, including all relationships."""
+        stmt = self._get_base_query().where(Note.id == note_id)
         result = await self.db.execute(stmt)
         return result.unique().scalars().first()
 
     async def get_by_trade_id(self, trade_id: UUID) -> Note | None:
-        """Get a note by its trade_id."""
-        stmt = select(Note).where(Note.trade_id == trade_id)
+        """Get a note by its trade_id, including all relationships."""
+        stmt = self._get_base_query().where(Note.trade_id == trade_id)
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def find_by_title_and_account(
         self, title: str, general_account_id: UUID
     ) -> Note | None:
         """
         Finds a note by its exact title for a specific general account,
-        joining through the folder to check ownership.
+        including all relationships.
         """
         stmt = (
-            select(Note)
+            self._get_base_query()
             .join(Note.folder)
             .where(
                 Note.title == title,
                 NotebookFolder.general_account_id == general_account_id,
             )
-            .options(selectinload(Note.folder))
         )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def list_by_folder_id(self, folder_id: UUID) -> Sequence[Note]:
-        """List all notes for a given folder, including related trades and all sub-relationships."""
+        """List all notes for a given folder, including all relationships."""
         stmt = (
-            select(Note)
-            .options(
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
+            self._get_base_query()
             .where(Note.folder_id == folder_id)
             .order_by(Note.updated_at.desc())
         )
@@ -90,22 +82,10 @@ class NoteRepository:
     async def list_by_general_account_id(
         self, general_account_id: UUID
     ) -> Sequence[Note]:
-        """
-        List all notes for a given general account by joining through folders,
-        including related trades and all sub-relationships.
-        """
+        """List all notes for a general account, including all relationships."""
         stmt = (
-            select(Note)
+            self._get_base_query()
             .join(Note.folder)
-            .options(
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
             .where(NotebookFolder.general_account_id == general_account_id)
             .order_by(Note.updated_at.desc())
         )
@@ -125,12 +105,11 @@ class NoteRepository:
                 detail="A note for this trade already exists.",
             )
 
+        await self.db.refresh(db_note)
         # After committing, the note has an ID. We need to fetch it again
-        # using our eager-loading method to ensure all relationships are loaded
-        # before returning it to the service layer. This prevents lazy-loading errors.
+        # using our eager-loading method to ensure all relationships are loaded.
         newly_created_note = await self.get_by_id(db_note.id)
         if not newly_created_note:
-            # This should theoretically never happen, but it's a safeguard.
             raise Exception("Failed to fetch newly created note.")
         return newly_created_note
 
@@ -143,7 +122,6 @@ class NoteRepository:
 
         self.db.add(db_obj)
         try:
-            # Flush the session to send the update to the database and trigger the unique constraint
             await self.db.flush()
             await self.db.commit()
         except IntegrityError:
@@ -153,11 +131,8 @@ class NoteRepository:
                 detail="A note with this trade_id already exists.",
             )
 
-        # After committing, we need to fetch it again to ensure all relationships are loaded
-        # This matches the pattern in the `create` method and avoids lazy-loading issues.
         updated_note = await self.get_by_id(db_obj.id)
         if not updated_note:
-            # This should theoretically never happen, but it's a safeguard.
             raise Exception("Failed to fetch updated note.")
         return updated_note
 

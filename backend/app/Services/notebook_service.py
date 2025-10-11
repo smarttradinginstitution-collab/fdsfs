@@ -176,31 +176,32 @@ class NotebookService:
         """
         general_account_id = await self._get_general_account_id(user_id)
 
-        # 1. Verify the trade exists and belongs to the user
+        # 1. Fetch the trade without security check first
         trade = await self.trade_repo.get_trade_by_id_simple(trade_id)
+
+        # 2. Now, perform the security check
         if not trade or trade.trading_account.general_account_id != general_account_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
             )
 
-        # 2. Check if a note for this trade already exists
+        # 3. Check if a note for this trade already exists
         existing_note = await self.note_repo.get_by_trade_id(trade_id)
         if existing_note:
             return existing_note
 
-        # 3. Ensure 'Trade Notes' system folder exists and get it
+        # 4. Ensure 'Trade Notes' system folder exists and get it
         await self._ensure_system_folders_exist(general_account_id)
         trade_notes_folder = await self.folder_repo.find_by_system_identifier(
             SystemFolderIdentifier.TRADE_NOTES, general_account_id
         )
         if not trade_notes_folder:
-            # This should theoretically not happen due to _ensure_system_folders_exist
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Trade Notes system folder not found.",
             )
 
-        # 4. Create the new note
+        # 5. Create the new note
         note_title = f"{trade.symbol_snapshot} - {trade.entry_timestamp.strftime('%Y-%m-%d')}"
         note_in = NoteCreate(
             title=note_title,
@@ -239,8 +240,7 @@ class NotebookService:
                 detail="Daily Journal system folder not found.",
             )
 
-        # 4. If a note with that title exists but in a different folder, it's a conflict.
-        # This is a rare edge case, but good to handle.
+        # 4. Handle edge case: note with same title exists in another folder
         if existing_note:
              raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
