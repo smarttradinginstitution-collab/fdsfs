@@ -55,6 +55,16 @@ const allLabels = computed(() => labelsStore.labels[props.labelType] || []);
 const tradeLabels = computed(() => props.trade[tradeLabelsKey.value] || []);
 
 // --- METHODS ---
+const getTextColor = (bgColor) => {
+  if (!bgColor) return '#ffffff';
+  const color = (bgColor.charAt(0) === '#') ? bgColor.substring(1, 7) : bgColor;
+  const r = parseInt(color.substring(0, 2), 16);
+  const g = parseInt(color.substring(2, 4), 16);
+  const b = parseInt(color.substring(4, 6), 16);
+  const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (brightness > 155) ? '#000000' : '#ffffff';
+};
+
 const openPopover = async (event) => {
     if (isDeleting.value) return;
 
@@ -137,7 +147,7 @@ const removeItem = async (itemToRemove) => {
                 class="item-pill-wrapper"
                 @click.stop="enterDeleteMode"
             >
-                <BasePill class="item-pill">
+                <BasePill :style="{ backgroundColor: item.color, color: getTextColor(item.color) }">
                   {{ item.name }}
                 </BasePill>
                 <button v-if="isDeleting" class="delete-item-btn" @click.stop="removeItem(item)">
@@ -245,8 +255,6 @@ const removeItem = async (itemToRemove) => {
   display: inline-block;
   .item-pill {
     cursor: pointer;
-    background-color: var(--semantic-color-surface-sunken);
-    color: var(--semantic-color-text-primary);
   }
 }
 .delete-item-btn {
