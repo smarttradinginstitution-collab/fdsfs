@@ -177,8 +177,10 @@ class NotebookService:
         general_account_id = await self._get_general_account_id(user_id)
 
         # 1. Verify the trade exists and belongs to the user
-        trade = await self.trade_repo.get_trade_for_details_view(trade_id)
-        if not trade or trade.trading_account.general_account_id != general_account_id:
+        trade = await self.trade_repo.get_by_id_and_general_account_id(
+            trade_id, general_account_id
+        )
+        if not trade:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
             )
