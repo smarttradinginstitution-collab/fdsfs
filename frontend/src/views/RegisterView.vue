@@ -21,6 +21,7 @@ const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const errorMessage = ref('');
+const isLoading = ref(false);
 
 async function handleRegister() {
   errorMessage.value = '';
@@ -29,6 +30,7 @@ async function handleRegister() {
     return;
   }
 
+  isLoading.value = true;
   try {
     await authStore.register(email.value, password.value);
     uiStore.showNotification({
@@ -40,6 +42,8 @@ async function handleRegister() {
   } catch (error) {
     errorMessage.value = error.response?.data?.detail || 'Errore durante la registrazione.';
     console.error(error);
+  } finally {
+    isLoading.value = false;
   }
 }
 </script>
@@ -79,8 +83,8 @@ async function handleRegister() {
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        <BaseButton type="submit" variant="primary" size="medium">
-          Registrati
+        <BaseButton type="submit" variant="primary" size="medium" :disabled="isLoading">
+          {{ isLoading ? 'Registrazione...' : 'Registrati' }}
         </BaseButton>
       </form>
     </div>
