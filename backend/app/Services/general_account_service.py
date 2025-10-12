@@ -7,19 +7,97 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 
 from app.Repositories.general_account_repository import GeneralAccountRepository
+import copy
+from app.Repositories.tag_repository import TagRepository
+from app.Repositories.tags_group_repository import TagsGroupRepository
 from app.Schemas.general_account import (
     GeneralAccountCreate,
     GeneralAccountRead,
     GeneralAccountWithData,
 )
+from app.Schemas.tag import TagCreate
+from app.Schemas.tags_group import TagsGroupCreate
 from app.Infrastructure.db import get_db
 from app.Services.notebook_service import NotebookService
+
+DEFAULT_TAGS_STRUCTURE = [
+    {
+        "name": "Setup",
+        "description": "The chart pattern or technical setup that initiated the trade.",
+        "color": "#888888",
+        "position": 1,
+        "tags": [
+            {"name": "Breakout", "color": "#888888"},
+            {"name": "Reversal", "color": "#888888"},
+            {"name": "Continuation", "color": "#888888"},
+            {"name": "Fakeout", "color": "#888888"},
+        ],
+    },
+    {
+        "name": "Market Context",
+        "description": "The overall market conditions at the time of the trade.",
+        "color": "#888888",
+        "position": 2,
+        "tags": [
+            {"name": "Trending Market", "color": "#888888"},
+            {"name": "Ranging Market", "color": "#888888"},
+            {"name": "High Volatility", "color": "#888888"},
+            {"name": "Low Volume", "color": "#888888"},
+        ],
+    },
+    {
+        "name": "Execution",
+        "description": "How you actively managed the entry, position, and exit.",
+        "color": "#888888",
+        "position": 3,
+        "tags": [
+            {"name": "Scaled In", "color": "#888888"},
+            {"name": "Took Partials", "color": "#888888"},
+            {"name": "Moved to Breakeven", "color": "#888888"},
+            {"name": "All In / All Out", "color": "#888888"},
+        ],
+    },
+    {
+        "name": "Timeframe",
+        "description": "The primary timeframe used for the trade analysis.",
+        "color": "#888888",
+        "position": 4,
+        "tags": [
+            {"name": "1m", "color": "#888888"},
+            {"name": "5m", "color": "#888888"},
+            {"name": "15m", "color": "#888888"},
+            {"name": "1h", "color": "#888888"},
+            {"name": "Daily", "color": "#888888"},
+        ],
+    },
+]
 
 
 class GeneralAccountService:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.repo = GeneralAccountRepository(db)
+        self.tags_group_repo = TagsGroupRepository(db)
+        self.tag_repo = TagRepository(db)
+
+    async def _create_default_tags_and_groups(self, general_account_id: UUID):
+        """Creates the default tags and groups for a new general account."""
+        structure_copy = copy.deepcopy(DEFAULT_TAGS_STRUCTURE)
+        for group_data in structure_copy:
+            tags = group_data.pop("tags")
+            group_schema = TagsGroupCreate(**group_data)
+            created_group = await self.tags_group_repo.create_tags_group(
+                tags_group_data=group_schema, general_account_id=general_account_id
+            )
+
+            for tag_data in tags:
+                tag_schema = TagCreate(
+                    name=tag_data["name"],
+                    color=tag_data["color"],
+                    group_id=created_group.id,
+                )
+                await self.tag_repo.create_tag(tag_schema)
+
 
     async def create_general_account_for_user(
         self, claims: dict, notebook_service: NotebookService
@@ -39,6 +117,9 @@ class GeneralAccountService:
 
         # Automatically create system folders for the new account
         await notebook_service._ensure_system_folders_exist(db_account.id)
+
+        # Automatically create default tags and groups
+        await self._create_default_tags_and_groups(db_account.id)
 
         return GeneralAccountRead.model_validate(db_account)
 
