@@ -48,6 +48,7 @@ async def test_create_general_account_and_default_tags(async_client: AsyncClient
     # Verifica la struttura e il colore
     for group in groups:
         assert group["color"] == "#888888"
+        assert group["position"] == 0
         for tag in group["tags"]:
             assert tag["color"] == "#888888"
 

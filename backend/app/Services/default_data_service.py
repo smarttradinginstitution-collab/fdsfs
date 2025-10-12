@@ -58,6 +58,7 @@ class DefaultDataService:
                 name=group_data["group_name"],
                 description=group_data["description"],
                 color="#888888",
+                position=0,
             )
             db_group = await self.tags_group_repo.create_tags_group(
                 tags_group_data=group_schema, general_account_id=general_account_id
