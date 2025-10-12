@@ -49,7 +49,7 @@ class DefaultDataService:
         existing_groups = await self.tags_group_repo.list_tags_groups_by_general_account_id(general_account_id)
         existing_group_names = {group.name for group in existing_groups}
 
-        for group_data in DEFAULT_TAGS_STRUCTURE:
+        for i, group_data in enumerate(DEFAULT_TAGS_STRUCTURE):
             if group_data["group_name"] in existing_group_names:
                 continue  # Skip if group already exists
 
@@ -58,7 +58,7 @@ class DefaultDataService:
                 name=group_data["group_name"],
                 description=group_data["description"],
                 color="#888888",
-                position=0,
+                position=i + 1,
             )
             db_group = await self.tags_group_repo.create_tags_group(
                 tags_group_data=group_schema, general_account_id=general_account_id
