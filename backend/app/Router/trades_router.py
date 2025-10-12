@@ -202,6 +202,12 @@ async def update_trade_tags(
 from app.Schemas.mistake import MistakeRead
 from app.Schemas.psychology_state import PsychologyStateRead
 from app.Schemas.news_impact import NewsImpactRead
+from app.Schemas.image import ImageRead
+from app.Services.image_service import ImageService
+from app.Router.dependencies import get_current_user, CurrentUser
+from fastapi import UploadFile, File, Form, Depends, status
+from typing import List, Optional
+from uuid import UUID
 
 @router.post("/{trade_id}/mistakes", response_model=List[MistakeRead], summary="Update the mistakes associated with a trade")
 async def update_trade_mistakes(
@@ -229,3 +235,41 @@ async def update_trade_news_impacts(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade_labels(claims, trade_id, label_ids, "news_impacts", service)
+
+# --- Trade <> Image Association ---
+@router.post(
+    "/{trade_id}/images",
+    response_model=ImageRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload an image for a specific trade",
+)
+async def upload_trade_image(
+    trade_id: UUID,
+    file: UploadFile = File(...),
+    description: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    phase: Optional[str] = Form(None),
+    current_user: CurrentUser = Depends(get_current_user),
+    image_service: ImageService = Depends(),
+):
+    return await image_service.upload_trade_image(
+        file=file,
+        user_id=current_user.id,
+        trade_id=trade_id,
+        description=description,
+        category=category,
+        phase=phase,
+    )
+
+@router.get(
+    "/{trade_id}/images",
+    response_model=List[ImageRead],
+    summary="Get all images associated with a trade",
+)
+async def get_trade_images(
+    trade_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    image_service: ImageService = Depends(),
+):
+    # Authorization to view images is implicitly handled by checking trade access
+    return await image_service.get_images_for_trade(trade_id, requesting_user_id=current_user.id)
