@@ -8,6 +8,7 @@ from fastapi import Depends, HTTPException, status
 # Importa i servizi necessari.
 from app.Services.general_account_service import GeneralAccountService
 from app.Services.notebook_service import NotebookService
+from app.Services.default_data_service import DefaultDataService
 # Importa la dipendenza per ottenere i dati dell'utente autenticato.
 from app.Router.auth import get_current_claims
 
@@ -16,6 +17,7 @@ async def create_general_account(
     claims: dict = Depends(get_current_claims),
     service: GeneralAccountService = Depends(),
     notebook_service: NotebookService = Depends(),
+    default_data_service: DefaultDataService = Depends(),
 ):
     """
     Crea un General Account per l'utente autenticato.
@@ -25,7 +27,9 @@ async def create_general_account(
     """
     # Delega la creazione (o il recupero) dell'account al servizio.
     account = await service.create_general_account_for_user(
-        claims=claims, notebook_service=notebook_service
+        claims=claims,
+        notebook_service=notebook_service,
+        default_data_service=default_data_service,
     )
     return account
 

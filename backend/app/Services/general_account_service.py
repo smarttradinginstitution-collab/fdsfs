@@ -14,6 +14,7 @@ from app.Schemas.general_account import (
 )
 from app.Infrastructure.db import get_db
 from app.Services.notebook_service import NotebookService
+from app.Services.default_data_service import DefaultDataService
 
 
 class GeneralAccountService:
@@ -22,7 +23,10 @@ class GeneralAccountService:
         self.repo = GeneralAccountRepository(db)
 
     async def create_general_account_for_user(
-        self, claims: dict, notebook_service: NotebookService
+        self,
+        claims: dict,
+        notebook_service: NotebookService,
+        default_data_service: DefaultDataService,
     ) -> GeneralAccountRead:
         """
         Crea un GeneralAccount per l'utente corrente, usando la sua email come label.
@@ -33,12 +37,14 @@ class GeneralAccountService:
         account_create_schema = GeneralAccountCreate(label=user_email)
 
         db_account = await self.repo.create_general_account(
-            user_id=user_id,
-            account_data=account_create_schema
+            user_id=user_id, account_data=account_create_schema
         )
 
         # Automatically create system folders for the new account
         await notebook_service._ensure_system_folders_exist(db_account.id)
+
+        # Automatically create default tags for the new account
+        await default_data_service.create_default_tags_for_account(db_account.id)
 
         return GeneralAccountRead.model_validate(db_account)
 

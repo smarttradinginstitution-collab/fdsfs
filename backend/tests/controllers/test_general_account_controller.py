@@ -8,22 +8,59 @@ from app.Models.general_account import GeneralAccount
 
 pytestmark = pytest.mark.anyio
 
-async def test_create_general_account(async_client: AsyncClient):
+async def test_create_general_account_and_default_tags(async_client: AsyncClient):
     """
-    Testa la creazione di un GeneralAccount per un utente.
+    Testa la creazione di un GeneralAccount per un utente e verifica
+    che i gruppi di tag e i tag di default vengano creati correttamente.
     """
+    # 1. Crea il GeneralAccount
     response = await async_client.post("/api/v1/general-accounts/")
     assert response.status_code == 201
     data = response.json()
     assert "id" in data
-
     general_account_id = data["id"]
 
-    # La seconda chiamata deve restituire lo stesso account
+    # 2. Verifica che chiamate multiple siano idempotenti
     response_repeat = await async_client.post("/api/v1/general-accounts/")
     assert response_repeat.status_code == 201
     data_repeat = response_repeat.json()
     assert data_repeat["id"] == general_account_id
+
+    # 3. Verifica la creazione dei dati di default
+    response_with_data = await async_client.get(
+        f"/api/v1/general-account-with-data/{general_account_id}"
+    )
+    assert response_with_data.status_code == 200
+    account_data = response_with_data.json()
+
+    # Verifica la struttura dei dati di default
+    assert "tags_groups" in account_data
+    groups = account_data["tags_groups"]
+    assert len(groups) == 4
+
+    expected_structure = {
+        "Setup": ["Breakout", "Reversal", "Continuation", "Fakeout"],
+        "Market Context": ["Trending Market", "Ranging Market", "High Volatility", "Low Volume"],
+        "Execution": ["Scaled In", "Took Partials", "Moved to Breakeven", "All In / All Out"],
+        "Timeframe": ["1m", "5m", "15m", "1h", "Daily"],
+    }
+
+    # Verifica la struttura e il colore
+    for group in groups:
+        assert group["color"] == "#888888"
+        for tag in group["tags"]:
+            assert tag["color"] == "#888888"
+
+    actual_structure = {
+        group["name"]: sorted([tag["name"] for tag in group["tags"]])
+        for group in groups
+    }
+
+    # Ordina le chiavi e i valori per un confronto deterministico
+    for group_name in expected_structure:
+        expected_structure[group_name].sort()
+
+    assert actual_structure == expected_structure
 
 async def test_get_my_general_account(async_client: AsyncClient):
     """
