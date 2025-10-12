@@ -58,15 +58,22 @@ class DefaultDataService:
                 name=group_data["group_name"],
                 description=group_data["description"],
                 color="#888888",
-                general_account_id=general_account_id,
             )
             db_group = await self.tags_group_repo.create_tags_group(
                 tags_group_data=group_schema, general_account_id=general_account_id
             )
 
+            # Re-fetch the group to ensure it's session-attached for the loop
+            refreshed_group = await self.tags_group_repo.get_tags_group_by_id(
+                db_group.id, general_account_id
+            )
+            if not refreshed_group:
+                # This should not happen, but as a safeguard
+                continue
+
             # Create the associated tags
             for tag_name in group_data["tags"]:
                 tag_schema = TagCreate(
-                    name=tag_name, group_id=db_group.id, color="#888888"
+                    name=tag_name, group_id=refreshed_group.id, color="#888888"
                 )
                 await self.tag_repo.create_tag(tag_data=tag_schema)
