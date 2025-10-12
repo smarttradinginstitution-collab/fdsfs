@@ -10,6 +10,8 @@ import BaseWidget from '@/components/layout/BaseWidget.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
+import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
+import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
 
@@ -23,6 +25,8 @@ const isPageLoading = ref(true);
 const activeTab = ref('stats');
 const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
+const isMetadataModalOpen = ref(false);
+const selectedImageForEdit = ref(null);
 const editableContent = ref(null);
 
 // Local state for notes to avoid depending on notebookStore's active notes
@@ -85,6 +89,11 @@ const handleNext = () => {
 
 const openEditModal = () => {
   isEditModalOpen.value = true;
+};
+
+const handleEditImage = (image) => {
+  selectedImageForEdit.value = image;
+  isMetadataModalOpen.value = true;
 };
 
 const handleUpdateTradeDetails = (payload) => {
@@ -225,7 +234,10 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                 <div>Contenuto Executions</div>
               </template>
               <template #attachments>
-                <div>Contenuto Attachments</div>
+                <TradeImageGallery
+                  :trade-id="trade.id"
+                  @edit-image="handleEditImage"
+                />
               </template>
             </BaseTabs>
             </BaseWidget>
@@ -261,6 +273,12 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
       v-model="isEditModalOpen"
       :trade="trade"
       @save="handleUpdateTradeDetails"
+    />
+
+    <ImageMetadataModal
+      :show="isMetadataModalOpen"
+      :image="selectedImageForEdit"
+      @close="isMetadataModalOpen = false"
     />
   </div>
 </template>

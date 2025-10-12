@@ -16,6 +16,9 @@ import { ResizableImageExtension } from '@/utils/tiptap/ResizableImageExtension.
 // Custom UI Components
 import ToolbarDropdown from '../ui/ToolbarDropdown.vue';
 import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
+import BaseModal from '../ui/BaseModal.vue';
+import TradeImageGallery from '../images/TradeImageGallery.vue';
+import ImageMetadataModal from '../images/ImageMetadataModal.vue';
 
 // Icons
 import {
@@ -25,7 +28,6 @@ import {
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useUiStore } from '../../stores/uiStore';
-import apiClient from '../../services/api';
 
 const store = useNotebookStore();
 const uiStore = useUiStore();
@@ -33,12 +35,17 @@ const note = computed(() => store.selectedNote);
 const financialData = computed(() => store.financialData);
 const folder = computed(() => store.selectedNoteFolder);
 
-const isTradeNoteFolder = computed(() => folder.value?.system_folder_identifier === 'TRADE_NOTES');
+const isTradeNote = computed(() => !!note.value?.trade_id);
 const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
 
 const editableTitle = ref(note.value ? note.value.title : '');
 const isSaving = ref(false); // Flag to prevent concurrent saves
-const fileInput = ref(null); // Ref for the hidden file input
+
+// State for modals
+const isGalleryModalOpen = ref(false);
+const isMetadataModalOpen = ref(false);
+const selectedImageForEdit = ref(null);
+
 
 const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
 const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
@@ -117,37 +124,22 @@ const setLink = () => {
   else editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
 };
 
-const addImage = () => {
-  fileInput.value.click();
+const openImageGallery = () => {
+  if (isTradeNote.value) {
+    isGalleryModalOpen.value = true;
+  }
 };
 
-const handleImageUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('file', file);
-
-  uiStore.showNotification({ message: 'Uploading image...', type: 'success', size: 'small' });
-
-  try {
-    const response = await apiClient.post('/images/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    if (response.data.url && editor.value) {
-      editor.value.chain().focus().setResizableImage({ src: response.data.url }).run();
-      uiStore.showNotification({ message: 'Image uploaded!', type: 'success', size: 'small' });
-    }
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    uiStore.showNotification({ message: 'Error uploading image.', type: 'error' });
-  } finally {
-    // Reset file input to allow uploading the same file again
-    event.target.value = '';
+const handleInsertImage = (imageUrl) => {
+  if (editor.value) {
+    editor.value.chain().focus().setResizableImage({ src: imageUrl }).run();
+    isGalleryModalOpen.value = false;
   }
+};
+
+const handleEditImage = (image) => {
+  selectedImageForEdit.value = image;
+  isMetadataModalOpen.value = true;
 };
 
 // --- Core Component Logic ---
@@ -210,17 +202,13 @@ const statsGrid = computed(() => {
 
 watch(note, (newNote, oldNote) => {
   if (newNote && editor.value) {
-    // Only update the editor's content if the note ID has actually changed.
-    // This prevents auto-save updates from overwriting the user's current input.
     if (!oldNote || newNote.id !== oldNote.id) {
       editableTitle.value = newNote.title;
-      // Avoid a flicker if the content is already the same.
       if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
           editor.value.commands.setContent(newNote.content, false);
       }
     }
   } else if (!newNote && editor.value) {
-    // Handle note deselection
     editableTitle.value = '';
     editor.value.commands.clearContent();
   }
@@ -230,8 +218,6 @@ const saveNote = async () => {
     if (!editor.value || !note.value || isSaving.value) return;
 
     isSaving.value = true;
-    // No "saving..." toast to keep the UI clean. The user knows they're editing.
-
     try {
         await store.updateNote(note.value.id, {
             title: editableTitle.value,
@@ -268,7 +254,6 @@ const saveAsTemplate = async () => {
                 folderId: note.value.folder_id,
                 templateContent: editor.value.getJSON(),
             });
-            // Optionally, show a success toast
         } catch (error) {
             console.error("Failed to save template:", error);
         }
@@ -284,13 +269,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="note && editor" class="note-editor-container">
-    <input
-      type="file"
-      ref="fileInput"
-      @change="handleImageUpload"
-      style="display: none"
-      accept="image/*"
-    />
     <input v-model="editableTitle" class="title-input" />
 
     <div class="metadata-header">
@@ -298,7 +276,6 @@ onBeforeUnmount(() => {
       <div class="meta-item">Updated: {{ formatDate(note.updated_at) }}</div>
     </div>
 
-    <!-- P&L and Actions Display -->
     <div class="pnl-container" v-if="financialData">
       <div class="pnl-display">
         <strong>Net P&L: </strong>
@@ -315,8 +292,7 @@ onBeforeUnmount(() => {
       </router-link>
     </div>
 
-    <!-- Financial Details Section (only for Trade Notes) -->
-    <div v-if="isTradeNoteFolder" class="financial-details">
+    <div v-if="isTradeNote" class="financial-details">
       <div class="detail-card">
         <label>Gross P&L</label>
         <span>{{ formatCurrency(financialData?.gross_pnl) }}</span>
@@ -331,7 +307,6 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Daily Journal Summary Section -->
     <div v-if="isDailyJournalNote && statsGrid" class="daily-summary-container">
       <div class="stats-section">
         <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
@@ -349,7 +324,6 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="tiptap-wrapper">
-      <!-- Toolbar -->
       <div class="toolbar">
         <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="icon-button"><ArrowUturnLeftIcon class="h-5 w-5" /></button>
         <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="icon-button"><ArrowUturnRightIcon class="h-5 w-5" /></button>
@@ -364,7 +338,9 @@ onBeforeUnmount(() => {
         <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" class="icon-button"><MinusIcon class="h-5 w-5" /></button>
         <button @click="editor.chain().focus().toggleCode().run()" :class="{ 'is-active': editor.isActive('code') }" class="icon-button"><CodeBracketIcon class="h-5 w-5" /></button>
         <button @click="setLink" :class="{ 'is-active': editor.isActive('link') }" class="icon-button"><LinkIcon class="h-5 w-5" /></button>
-        <button @click="addImage" class="icon-button"><PhotoIcon class="h-5 w-5" /></button>
+        <button @click="openImageGallery" :disabled="!isTradeNote" class="icon-button" title="Add image from trade gallery">
+          <PhotoIcon class="h-5 w-5" />
+        </button>
         <div class="divider"></div>
         <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
         <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>
@@ -380,6 +356,21 @@ onBeforeUnmount(() => {
       </div>
       <editor-content :editor="editor" class="tiptap-editor" />
     </div>
+
+    <BaseModal :show="isGalleryModalOpen" @close="isGalleryModalOpen = false" title="Trade Image Gallery">
+      <TradeImageGallery
+        v-if="isGalleryModalOpen && note.trade_id"
+        :trade-id="note.trade_id"
+        @insert-image="handleInsertImage"
+        @edit-image="handleEditImage"
+      />
+    </BaseModal>
+
+    <ImageMetadataModal
+      :show="isMetadataModalOpen"
+      :image="selectedImageForEdit"
+      @close="isMetadataModalOpen = false"
+    />
   </div>
 </template>
 
@@ -544,6 +535,12 @@ onBeforeUnmount(() => {
       background-color: var(--semantic-color-surface-tertiary);
       color: var(--semantic-color-text-focus);
     }
+
+    &:disabled {
+      color: var(--semantic-color-text-disabled);
+      cursor: not-allowed;
+      background-color: transparent;
+    }
   }
   .text-button {
     font-weight: bold;
@@ -610,7 +607,6 @@ onBeforeUnmount(() => {
     border-radius: var(--semantic-border-radius-container);
   }
 
-  // --- Task List (Checklist) Styles ---
   ul[data-type="taskList"] {
     list-style: none;
     padding: 0;
@@ -623,18 +619,12 @@ onBeforeUnmount(() => {
       margin-bottom: 0.5rem;
 
       > label {
-        // This holds the checkbox.
-        // Using `padding-top` to vertically align the checkbox with the first line of text.
         padding-top: 0.25em;
       }
 
       > div {
-        // This holds the text content.
-        // It will grow to fill the remaining space, and text will wrap within it.
         flex-grow: 1;
 
-        // Remove the default top margin from the first paragraph inside the list item
-        // to ensure proper alignment.
         p {
           margin-top: 0;
         }
