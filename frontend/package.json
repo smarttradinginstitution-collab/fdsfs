@@ -31,7 +31,6 @@
     "@vueuse/core": "^13.9.0",
     "axios": "^1.11.0",
     "chart.js": "^4.5.0",
-    "fabric": "^6.7.1",
     "floating-vue": "^5.2.2",
     "pinia": "^3.0.3",
     "uuid": "^9.0.1",
