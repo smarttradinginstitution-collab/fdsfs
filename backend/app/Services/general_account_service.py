@@ -4,6 +4,7 @@ from __future__ import annotations
 from uuid import UUID
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from fastapi import Depends, HTTPException, status
 
 from app.Repositories.general_account_repository import GeneralAccountRepository
@@ -14,6 +15,7 @@ from app.Schemas.general_account import (
 )
 from app.Infrastructure.db import get_db
 from app.Services.notebook_service import NotebookService
+from app.Services.default_data_service import DefaultDataService
 
 
 class GeneralAccountService:
@@ -25,20 +27,51 @@ class GeneralAccountService:
         self, claims: dict, notebook_service: NotebookService
     ) -> GeneralAccountRead:
         """
-        Crea un GeneralAccount per l'utente corrente, usando la sua email come label.
+        Crea un GeneralAccount per l'utente corrente, insieme ai dati predefiniti (cartelle, tag, etc.).
+        L'intera operazione è atomica.
         """
         user_id = UUID(claims["sub"])
         user_email = claims["email"]
 
-        account_create_schema = GeneralAccountCreate(label=user_email)
+        # Controlla se l'account esiste già per garantire l'idempotenza.
+        existing_account = await self.repo.get_by_user_id(user_id)
+        if existing_account:
+            return GeneralAccountRead.model_validate(existing_account)
 
+        account_create_schema = GeneralAccountCreate(label=user_email)
         db_account = await self.repo.create_general_account(
-            user_id=user_id,
-            account_data=account_create_schema
+            user_id=user_id, account_data=account_create_schema
         )
 
-        # Automatically create system folders for the new account
-        await notebook_service._ensure_system_folders_exist(db_account.id)
+        # Inizializza il servizio per i dati di default.
+        default_data_service = DefaultDataService(self.db)
+
+        try:
+            # Aggiunge tutte le operazioni alla sessione prima del commit.
+            await self.db.flush() # Per ottenere l'ID del nuovo account.
+
+            # 1. Crea le cartelle di sistema per il notebook.
+            await notebook_service._ensure_system_folders_exist(db_account.id)
+
+            # 2. Crea i tag e i gruppi di tag predefiniti.
+            await default_data_service.create_default_tags_for_account(db_account.id)
+
+            # Esegue il commit di tutte le operazioni in una singola transazione.
+            await self.db.commit()
+
+            # Aggiorna l'istanza con i dati dal DB.
+            await self.db.refresh(db_account)
+
+        except IntegrityError as e:
+            # In caso di errore, annulla tutte le operazioni.
+            await self.db.rollback()
+            # Log dell'errore e solleva un'eccezione HTTP.
+            # (Potresti voler aggiungere un logging più robusto qui)
+            print(f"Errore di integrità durante la creazione dell'account: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Errore durante la configurazione iniziale dell'account.",
+            )
 
         return GeneralAccountRead.model_validate(db_account)
 

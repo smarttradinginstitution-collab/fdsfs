@@ -47,17 +47,7 @@ class GeneralAccountRepository:
             label=account_data.label
         )
         self.db.add(db_account)
-        try:
-            await self.db.commit()
-            await self.db.refresh(db_account)
-        except IntegrityError:
-            await self.db.rollback()
-            existing_account = await self.get_by_user_id(user_id)
-            if existing_account:
-                return existing_account
-            else:
-                raise
-
+        # The commit will be handled by the service layer to ensure atomicity.
         return db_account
 
     async def get_by_id_with_all_data(self, account_id: UUID) -> Optional[GeneralAccount]:

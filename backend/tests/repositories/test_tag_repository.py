@@ -32,6 +32,10 @@ async def test_create_and_get_tag(db_session: AsyncSession, setup_data):
     tag_create_schema = TagCreate(name="My Tag", color="#123456", group_id=tags_group.id)
     created_tag = await repo.create_tag(tag_create_schema)
 
+    # Commit the transaction to save the tag
+    await db_session.commit()
+    await db_session.refresh(created_tag)
+
     assert created_tag.name == "My Tag"
     assert created_tag.group_id == tags_group.id
 
@@ -52,6 +56,10 @@ async def test_update_tag(db_session: AsyncSession, setup_data):
     update_schema = TagUpdate(name="Updated Name")
     updated_tag = await repo.update_tag(tag, update_schema)
 
+    # Commit the transaction to save the update
+    await db_session.commit()
+    await db_session.refresh(updated_tag)
+
     assert updated_tag.name == "Updated Name"
 
 
@@ -63,6 +71,7 @@ async def test_create_tag_raises_on_duplicate_name(db_session: AsyncSession, set
     # Create the first tag
     tag_create_schema = TagCreate(name="Duplicate Tag", color="#123456", group_id=tags_group.id)
     await repo.create_tag(tag_create_schema)
+    await db_session.commit()
 
     # Try to create another tag with the same name
     with pytest.raises(HTTPException) as exc_info:
@@ -104,6 +113,7 @@ async def test_list_tags_by_general_account_id(db_session: AsyncSession, setup_d
     # Create tags in both groups
     await repo.create_tag(TagCreate(name="Tag 1", group_id=tags_group1.id))
     await repo.create_tag(TagCreate(name="Tag 2", group_id=tags_group2.id))
+    await db_session.commit()
 
     # Create data for another user that should NOT be returned
     other_account = GeneralAccount(id=uuid4(), user_id=uuid4(), label="other_account")
@@ -111,6 +121,7 @@ async def test_list_tags_by_general_account_id(db_session: AsyncSession, setup_d
     db_session.add_all([other_account, other_group])
     await db_session.commit()
     await repo.create_tag(TagCreate(name="Other Tag", group_id=other_group.id))
+    await db_session.commit()
 
     # The original `list_tags_by_general_account_id` was removed as it was based on a removed column.
     # We test the repo's ability to get tags and then filter them.

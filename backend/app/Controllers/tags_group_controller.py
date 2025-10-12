@@ -27,8 +27,15 @@ async def create_tags_group(
     Creates a new tags group for the authenticated user.
     """
     repo = TagsGroupRepository(db)
-    new_tags_group = await repo.create_tags_group(
+    # Create the object in the session
+    db_tags_group = await repo.create_tags_group(
         tags_group_data=tags_group_data, general_account_id=general_account_id
+    )
+    # Commit to get the ID
+    await db.commit()
+    # Re-fetch with relationships loaded
+    new_tags_group = await repo.get_tags_group_by_id(
+        tags_group_id=db_tags_group.id, general_account_id=general_account_id
     )
     return TagsGroupRead.from_orm(new_tags_group)
 
@@ -84,10 +91,17 @@ async def update_tags_group(
             detail="Tags Group not found or access denied.",
         )
 
-    updated_tags_group = await repo.update_tags_group(
+    # Update the object
+    await repo.update_tags_group(
         db_obj=tags_group_to_update, tags_group_data=tags_group_data
     )
-    return TagsGroupRead.from_orm(updated_tags_group)
+    # Commit the changes
+    await db.commit()
+    # Re-fetch the updated object with relationships
+    updated_group = await repo.get_tags_group_by_id(
+        tags_group_id=tags_group_id, general_account_id=general_account_id
+    )
+    return TagsGroupRead.from_orm(updated_group)
 
 
 async def delete_tags_group(
@@ -110,6 +124,7 @@ async def delete_tags_group(
         )
 
     await repo.delete_tags_group(db_obj=tags_group_to_delete)
+    await db.commit()
     return {"ok": True, "detail": "Tags Group deleted successfully."}
 
 

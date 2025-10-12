@@ -18,21 +18,26 @@ class TagsGroupRepository:
     async def create_tags_group(
         self, tags_group_data: TagsGroupCreate, general_account_id: UUID
     ) -> TagsGroup:
-        """Creates a new tags group."""
+        """Creates a new tags group, ensuring the name is unique for the account."""
+        # Check for existing group with the same name for this account
+        stmt = select(TagsGroup).where(
+            TagsGroup.name == tags_group_data.name,
+            TagsGroup.general_account_id == general_account_id,
+        )
+        existing_group = await self.db.execute(stmt)
+        if existing_group.scalars().first():
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=409,
+                detail="A tags group with this name already exists for this account.",
+            )
+
         db_tags_group = TagsGroup(
             **tags_group_data.model_dump(), general_account_id=general_account_id
         )
         self.db.add(db_tags_group)
-        await self.db.flush()
-        group_id = db_tags_group.id
-        await self.db.commit()
-
-        # Re-fetch the object to eagerly load relationships
-        created_group = await self.get_tags_group_by_id(group_id, general_account_id)
-        if not created_group:
-            # This should ideally not happen if the commit was successful
-            raise Exception("Failed to re-fetch created tags group")
-        return created_group
+        # The commit will be handled by the service layer.
+        return db_tags_group
 
     async def get_tags_group_by_id(
         self, tags_group_id: UUID, general_account_id: UUID
@@ -74,20 +79,12 @@ class TagsGroupRepository:
                 setattr(db_obj, field, value)
 
             self.db.add(db_obj)
-            await self.db.commit()
 
-        # Always re-fetch to ensure relationships are loaded for the response
-        updated_group = await self.get_tags_group_by_id(
-            db_obj.id, db_obj.general_account_id
-        )
-        if not updated_group:
-            raise Exception("Failed to re-fetch updated tags group")
-        return updated_group
+        return db_obj
 
     async def delete_tags_group(self, db_obj: TagsGroup) -> None:
         """Deletes a tags group."""
         await self.db.delete(db_obj)
-        await self.db.commit()
 
     async def reorder_groups(
         self, general_account_id: UUID, group_ids: List[UUID]

@@ -39,8 +39,7 @@ class TagRepository:
 
         db_tag = Tag(**tag_data.model_dump())
         self.db.add(db_tag)
-        await self.db.commit()
-        await self.db.refresh(db_tag)
+        # The commit will be handled by the service layer.
         return db_tag
 
     async def update_tag(self, db_obj: Tag, tag_data: TagUpdate) -> Tag:

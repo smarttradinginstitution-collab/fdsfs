@@ -72,7 +72,11 @@ class TagController:
             )
 
         tag_repo = TagRepository(db)
-        new_tag = await tag_repo.create_tag(tag_data)
+        db_tag = await tag_repo.create_tag(tag_data)
+        await db.commit()
+        await db.refresh(db_tag)
+        # Re-fetch with the group relationship loaded to prevent MissingGreenlet error
+        new_tag = await tag_repo.get_tag_by_id(db_tag.id)
         return TagRead.from_orm(new_tag)
 
     async def update_tag(
@@ -97,10 +101,15 @@ class TagController:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         updated_tag = await repo.update_tag(db_obj=tag_to_update, tag_data=tag_data)
-        if not updated_tag:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento del tag.")
+        await db.commit()
+        await db.refresh(updated_tag)
 
-        return TagRead.from_orm(updated_tag)
+        # Re-fetch with the group relationship loaded
+        refreshed_tag = await repo.get_tag_by_id(updated_tag.id)
+        if not refreshed_tag:
+             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento del tag.")
+
+        return TagRead.from_orm(refreshed_tag)
 
     async def delete_tag(
         self,
@@ -123,5 +132,6 @@ class TagController:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         await repo.delete_tag(db_obj=tag_to_delete)
+        await db.commit()
 
         return {"ok": True, "detail": "Tag eliminato con successo."}
