@@ -8,22 +8,34 @@ from app.Models.general_account import GeneralAccount
 
 pytestmark = pytest.mark.anyio
 
-async def test_create_general_account(async_client: AsyncClient):
+async def test_create_general_account_and_idempotency(async_client: AsyncClient):
     """
-    Testa la creazione di un GeneralAccount per un utente.
+    Testa la creazione di un GeneralAccount, la creazione dei dati di default
+    e l'idempotenza della chiamata.
     """
-    response = await async_client.post("/api/v1/general-accounts/")
-    assert response.status_code == 201
-    data = response.json()
-    assert "id" in data
+    # 1. Prima chiamata: Crea il GeneralAccount e i dati di default
+    response1 = await async_client.post("/api/v1/general-accounts/")
+    assert response1.status_code == 201
+    account1_data = response1.json()
+    general_account_id = account1_data["id"]
 
-    general_account_id = data["id"]
+    # Verifica che i dati siano stati creati
+    assert "tags_groups" in account1_data
+    groups = account1_data["tags_groups"]
+    assert len(groups) == 4
+    assert sum(len(g["tags"]) for g in groups) == 18
 
-    # La seconda chiamata deve restituire lo stesso account
-    response_repeat = await async_client.post("/api/v1/general-accounts/")
-    assert response_repeat.status_code == 201
-    data_repeat = response_repeat.json()
-    assert data_repeat["id"] == general_account_id
+    # 2. Seconda chiamata: Dovrebbe restituire l'account esistente con status 200
+    response2 = await async_client.post("/api/v1/general-accounts/")
+    assert response2.status_code == 200
+    account2_data = response2.json()
+    assert account2_data["id"] == general_account_id
+
+    # Verifica che non siano stati creati dati duplicati
+    assert "tags_groups" in account2_data
+    groups2 = account2_data["tags_groups"]
+    assert len(groups2) == 4
+    assert sum(len(g["tags"]) for g in groups2) == 18
 
 async def test_get_my_general_account(async_client: AsyncClient):
     """

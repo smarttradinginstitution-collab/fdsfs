@@ -27,18 +27,16 @@ async def create_general_account(
     Crea un General Account per l'utente autenticato. Se l'account esiste già,
     lo restituisce. Altrimenti, lo crea e popola i dati iniziali (tags, etc.).
     """
-    # Controlla se l'account esiste già
-    existing_account = await service.get_general_account_for_user(claims)
-
-    if existing_account:
-        response.status_code = status.HTTP_200_OK
-        return existing_account
-
-    # Se non esiste, crea l'account
-    account = await service.create_general_account_for_user(
+    account, created = await service.create_general_account_for_user(
         claims=claims, notebook_service=notebook_service
     )
-    response.status_code = status.HTTP_201_CREATED
+
+    if created:
+        response.status_code = status.HTTP_201_CREATED
+    else:
+        response.status_code = status.HTTP_200_OK
+        # Se l'account esisteva già, non è necessario continuare
+        return account
 
     # E popola i dati di default
     default_data = {
@@ -75,7 +73,9 @@ async def create_general_account(
             )
 
     # Ricarica l'account per includere i nuovi dati
-    refreshed_account = await service.get_general_account_for_user(claims)
+    refreshed_account = await service.get_general_account_with_all_data(
+        claims=claims, account_id=account.id
+    )
     return refreshed_account
 
 
