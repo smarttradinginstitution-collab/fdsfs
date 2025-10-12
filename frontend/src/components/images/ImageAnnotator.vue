@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import fabric from 'fabric';
 import { ArrowLongRightIcon, ChatBubbleBottomCenterTextIcon, TrashIcon, HandRaisedIcon, PencilIcon as PencilSolidIcon } from '@heroicons/vue/24/solid';
-import { RectangleStackIcon } from '@heroicons/vue/24/outline'; // Using outline for shapes
+import { RectangleStackIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   imageUrl: {
@@ -15,19 +14,27 @@ const emit = defineEmits(['save', 'cancel']);
 
 const canvasEl = ref(null);
 let canvas = null;
-const activeTool = ref('pan'); // pan, draw, rect, arrow, text
+let fabric = null; // To hold the dynamically imported library
+
+const activeTool = ref('pan');
 const strokeColor = ref('#ff0000');
 
-const initializeCanvas = () => {
+const initializeCanvas = async () => {
   if (canvas) {
     canvas.dispose();
   }
 
-  canvas = new fabric.fabric.Canvas(canvasEl.value, {
+  // Dynamically import fabric
+  if (!fabric) {
+    const fabricModule = await import('fabric');
+    fabric = fabricModule.fabric;
+  }
+
+  canvas = new fabric.Canvas(canvasEl.value, {
     isDrawingMode: false,
   });
 
-  fabric.fabric.Image.fromURL(props.imageUrl, (img) => {
+  fabric.Image.fromURL(props.imageUrl, (img) => {
     const container = canvasEl.value.parentElement;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
@@ -45,6 +52,7 @@ const initializeCanvas = () => {
 };
 
 const setTool = (tool) => {
+  if (!canvas) return;
   activeTool.value = tool;
   canvas.isDrawingMode = tool === 'draw';
   canvas.selection = tool === 'pan';
@@ -54,50 +62,28 @@ const setTool = (tool) => {
 };
 
 const addRect = () => {
-    const rect = new fabric.fabric.Rect({
-        left: 100,
-        top: 100,
-        fill: 'transparent',
-        stroke: strokeColor.value,
-        strokeWidth: 2,
-        width: 200,
-        height: 100,
+    const rect = new fabric.Rect({
+        left: 100, top: 100, fill: 'transparent', stroke: strokeColor.value,
+        strokeWidth: 2, width: 200, height: 100,
     });
     canvas.add(rect);
     setTool('pan');
 };
 
 const addArrow = () => {
-    // Custom arrow logic
-    const line = new fabric.fabric.Line([50, 100, 250, 100], {
-        stroke: strokeColor.value,
-        strokeWidth: 2,
+    const line = new fabric.Line([50, 100, 250, 100], { stroke: strokeColor.value, strokeWidth: 2 });
+    const arrowHead = new fabric.Triangle({
+        left: 250, top: 100, width: 10, height: 10, fill: strokeColor.value,
+        angle: 90, originX: 'center', originY: 'center',
     });
-    const arrowHead = new fabric.fabric.Triangle({
-        left: 250,
-        top: 100,
-        width: 10,
-        height: 10,
-        fill: strokeColor.value,
-        angle: 90,
-        originX: 'center',
-        originY: 'center',
-    });
-    const arrow = new fabric.fabric.Group([line, arrowHead], {
-        left: 50,
-        top: 100,
-    });
+    const arrow = new fabric.Group([line, arrowHead], { left: 50, top: 100 });
     canvas.add(arrow);
     setTool('pan');
 };
 
-
 const addText = () => {
-    const text = new fabric.fabric.IText('Your Text', {
-        left: 100,
-        top: 150,
-        fill: strokeColor.value,
-        fontSize: 20,
+    const text = new fabric.IText('Your Text', {
+        left: 100, top: 150, fill: strokeColor.value, fontSize: 20,
     });
     canvas.add(text);
     text.enterEditing();
@@ -109,7 +95,6 @@ const deleteSelected = () => {
     canvas.remove(...canvas.getActiveObjects());
     canvas.discardActiveObject().renderAll();
 };
-
 
 onMounted(() => {
     nextTick(() => {
@@ -131,7 +116,6 @@ const saveImage = () => {
   const dataUrl = canvas.toDataURL({ format: 'png' });
   emit('save', dataUrl);
 };
-
 </script>
 
 <template>
