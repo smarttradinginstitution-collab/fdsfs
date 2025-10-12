@@ -13,6 +13,12 @@ const router = createRouter({
       meta: { title: 'Login', public: true }
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+      meta: { title: 'Registrati', public: true }
+    },
+    {
       path: '/add-account',
       name: 'add-account',
       component: AddAccountView,
@@ -116,8 +122,8 @@ router.beforeEach(async (to, from, next) => {
 
   // 2. Handle authenticated users
   if (isAuthenticated) {
-    // Redirect away from login page if already authenticated
-    if (to.name === 'login') {
+    // Redirect away from login/register page if already authenticated
+    if (to.name === 'login' || to.name === 'register') {
       return next({ name: 'dashboard' });
     }
 

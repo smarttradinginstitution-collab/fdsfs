@@ -226,10 +226,15 @@ class AuthController:
         payload: RegisterInput,
         db: AsyncSession = Depends(get_db),
     ) -> RegisterResponse:
+        # Prepara i metadati utente, includendo il nome.
+        # Se user_meta è già presente, lo aggiorniamo, altrimenti lo creiamo.
+        user_meta = payload.user_meta or {}
+        user_meta['name'] = payload.name
+
         res = await supabase_service.register_user(
             email=payload.email,
             password=payload.password,
-            user_meta=payload.user_meta,
+            user_meta=user_meta,
             app_meta=payload.app_meta,
             phone=payload.phone,
         )
@@ -252,15 +257,15 @@ class AuthController:
                 detail="Registrazione completata ma user.id mancante",
             )
 
-        stmt = select(Role.id).where(Role.name.ilike("user")).limit(1)
-        role_id_row = await db.execute(stmt)
-        role_id = role_id_row.scalar_one_or_none()
-        if role_id:
-            repo = UserRoleRepository(db)
-            try:
-                await repo.assign(user_id=UUID(user_id_str), role_id=role_id)
-            except IntegrityError:
-                pass
+        # Assegna il ruolo 'user' predefinito al nuovo utente.
+        # L'ID del ruolo 'user' è statico e definito dal sistema.
+        user_role_id = UUID("0cc83a82-88f8-4ed9-9c92-ec9e09b266fd")
+        repo = UserRoleRepository(db)
+        try:
+            await repo.assign(user_id=UUID(user_id_str), role_id=user_role_id)
+        except IntegrityError:
+            # L'utente potrebbe già avere il ruolo, ignoriamo l'errore.
+            pass
 
         return RegisterResponse(user_id=user_id_str, email=user.get("email"), user=user)
 

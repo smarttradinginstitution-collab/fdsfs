@@ -7,7 +7,8 @@
 // =============================================================================
 -->
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/uiStore';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -15,11 +16,20 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+const route = useRoute();
+
 const email = ref('');
 const password = ref('');
 const otpCode = ref('');
 const errorMessage = ref('');
+const successMessage = ref('');
 const isMfaStep = ref(false); // Nuovo stato per gestire il flusso MFA
+
+onMounted(() => {
+  if (route.query.registered === 'true') {
+    successMessage.value = 'Registrazione completata! Controlla la tua email per confermare l\'account e poi accedi.';
+  }
+});
 
 async function handleLogin() {
   errorMessage.value = '';
@@ -73,6 +83,9 @@ async function handleMfaVerification() {
             required
           />
         </div>
+        <div v-if="successMessage" class="success-message">
+          {{ successMessage }}
+        </div>
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
@@ -102,6 +115,11 @@ async function handleMfaVerification() {
           Verifica Codice
         </BaseButton>
       </form>
+
+      <div class="register-link">
+        <span>Non hai un account? </span>
+        <router-link to="/register">Registrati</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -162,5 +180,32 @@ async function handleMfaVerification() {
   border-radius: var(--semantic-border-radius-interactive);
   font: var(--semantic-font-style-body-sm);
   text-align: center;
+}
+
+.success-message {
+  background-color: var(--semantic-color-surface-positive-subtle);
+  color: var(--semantic-color-text-positive);
+  border: 1px solid var(--semantic-color-border-positive);
+  padding: var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-interactive);
+  font: var(--semantic-font-style-body-sm);
+  text-align: center;
+}
+
+.register-link {
+  margin-top: var(--semantic-size-stack-lg);
+  text-align: center;
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+}
+
+.register-link a {
+  color: var(--semantic-color-text-action-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
 }
 </style>

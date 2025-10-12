@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from uuid import uuid4, UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -95,23 +95,24 @@ async def test_register_success(auth_controller: AuthController, mock_db_session
     mock_user_role_repo.assign = AsyncMock()
 
     user_id = uuid4()
-    role_id = uuid4()
+    user_role_id = "0cc83a82-88f8-4ed9-9c92-ec9e09b266fd"
 
     mock_supabase_service.register_user = AsyncMock(return_value={
         "user": {"id": str(user_id), "email": "new_user@example.com"}
     })
 
-    mock_role_result = MagicMock()
-    mock_role_result.scalar_one_or_none.return_value = role_id
-    mock_db_session.execute.return_value = mock_role_result
-
-    payload = RegisterInput(email="new_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="New User",
+        email="new_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
     response = await auth_controller.register(payload, mock_db_session)
 
     assert response.status == "registered"
     assert response.user_id == str(user_id)
     mock_supabase_service.register_user.assert_called_once()
-    mock_user_role_repo.assign.assert_called_once_with(user_id=user_id, role_id=role_id)
+    mock_user_role_repo.assign.assert_called_once_with(user_id=user_id, role_id=UUID(user_role_id))
 
 
 @pytest.mark.anyio
@@ -124,7 +125,12 @@ async def test_register_supabase_error(auth_controller: AuthController, mock_db_
         "message": "User already registered"
     })
 
-    payload = RegisterInput(email="existing_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="Existing User",
+        email="existing_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         await auth_controller.register(payload, mock_db_session)
@@ -141,7 +147,12 @@ async def test_register_supabase_no_userid(auth_controller: AuthController, mock
         "user": {"email": "new_user@example.com"}
     })
 
-    payload = RegisterInput(email="new_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="New User",
+        email="new_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         await auth_controller.register(payload, mock_db_session)
@@ -222,22 +233,23 @@ async def test_register_integrity_error(auth_controller: AuthController, mock_db
     """Test that an IntegrityError during role assignment is handled gracefully."""
     mock_supabase_service = mocker.patch("app.Controllers.auth_controller.supabase_service")
     mock_user_role_repo = mocker.patch("app.Controllers.auth_controller.UserRoleRepository").return_value
+    mock_user_role_repo.assign = AsyncMock(side_effect=IntegrityError(None, None, None))
 
     user_id = uuid4()
-    role_id = uuid4()
+    user_role_id = UUID("0cc83a82-88f8-4ed9-9c92-ec9e09b266fd")
 
     mock_supabase_service.register_user = AsyncMock(return_value={
         "user": {"id": str(user_id), "email": "new_user@example.com"}
     })
 
-    mock_role_result = MagicMock()
-    mock_role_result.scalar_one_or_none.return_value = role_id
-    mock_db_session.execute.return_value = mock_role_result
-
     # Simulate an IntegrityError, which happens if the role is already assigned
-    mock_user_role_repo.assign = AsyncMock(side_effect=IntegrityError(None, None, None))
 
-    payload = RegisterInput(email="new_user@example.com", password="password123")
+    payload = RegisterInput(
+        name="New User",
+        email="new_user@example.com",
+        password="password123",
+        confirm_password="password123"
+    )
     response = await auth_controller.register(payload, mock_db_session)
 
     # The registration should still be considered successful

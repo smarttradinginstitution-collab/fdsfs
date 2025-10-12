@@ -115,6 +115,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function register(name, email, password, confirm_password) {
+    await apiClient.post('/auth/register', {
+      name,
+      email,
+      password,
+      confirm_password,
+    });
+    // Dopo la registrazione, non facciamo il login automatico.
+    // La vista reindirizzerà alla pagina di login con un messaggio.
+  }
+
   async function verifyMfaAndLogin(otpCode) {
     if (!mfaChallenge.value || !mfaAal1Token.value) throw new Error("Dati della challenge MFA non trovati.");
 
@@ -223,6 +234,7 @@ export const useAuthStore = defineStore('auth', () => {
     mfaChallenge,
     mfaAal1Token,
     login,
+    register,
     logout,
     initAuth,
     initSessionData, // Esponi la nuova azione
