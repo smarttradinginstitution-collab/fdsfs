@@ -60,7 +60,7 @@ class NotebookService:
                     system_folder_identifier=identifier,
                 )
                 self.db.add(new_folder)
-        await self.db.commit()
+        # The commit is handled by the calling service to ensure atomicity.
 
     # --- Folder Operations ---
 
