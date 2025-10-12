@@ -99,3 +99,35 @@ class ImageService:
 
         await self.image_repo.delete(image_id)
         return
+
+    async def replace_image(self, image_id: uuid.UUID, file: UploadFile, user_id: uuid.UUID) -> Image:
+        db_image = await self._authorize_user_for_image(user_id, image_id)
+
+        # Remove old file from storage
+        if db_image.storage_path:
+            try:
+                self.supabase.storage.from_(BUCKET_NAME).remove([db_image.storage_path])
+            except Exception as e:
+                print(f"Warning: Failed to remove old image {db_image.storage_path} during replacement: {e}")
+
+        # Upload new file
+        file_extension = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+        storage_path = f"{db_image.general_account_id}/{db_image.trade_id}/{unique_filename}"
+
+        try:
+            file_content = await file.read()
+            self.supabase.storage.from_(BUCKET_NAME).upload(
+                path=storage_path, file=file_content, file_options={"content-type": file.content_type}
+            )
+            public_url = self.supabase.storage.from_(BUCKET_NAME).get_public_url(storage_path)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Storage upload failed during replacement: {e}")
+
+        # Update database record with new path and url
+        update_data = ImageUpdate(storage_path=storage_path, url=public_url, filename=file.filename)
+        updated_image = await self.image_repo.update(image_id, update_data)
+        if not updated_image:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found after update")
+
+        return updated_image
