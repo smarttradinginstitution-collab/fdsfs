@@ -267,6 +267,7 @@ from app.Router import image_router
 
 router.include_router(
     image_router.router,
+    prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
 

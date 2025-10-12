@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from app.Models.import_run import ImportRun
     from app.Models.tag import Tag
     from app.Models.note import Note
+    from app.Models.image import Image
     from app.Models.mistake import Mistake
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
@@ -143,6 +144,7 @@ class Trade(Base):
         "PsychologyState", secondary="public.trades_psychology", back_populates="trades"
     )
     notes: Mapped[list["Note"]] = relationship("Note", back_populates="trade")
+    images: Mapped[list["Image"]] = relationship("Image", foreign_keys="Image.trade_id", back_populates="trade")
     rules_followed: Mapped[List["RulePlaybook"]] = relationship(
         "RulePlaybook",
         secondary=trades_rules_association,

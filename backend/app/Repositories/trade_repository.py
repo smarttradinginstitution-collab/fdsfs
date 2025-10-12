@@ -49,6 +49,21 @@ class TradeRepository:
         # when multiple "to-many" relationships (like tags, mistakes) are joined.
         return result.unique().scalars().first()
 
+    async def get_by_id_and_general_account(
+        self, trade_id: UUID, general_account_id: UUID
+    ) -> Optional[Trade]:
+        """Recupera un trade per ID, assicurandosi che appartenga al general account corretto."""
+        query = (
+            self._get_trade_query()
+            .join(Trade.trading_account)
+            .where(
+                Trade.id == trade_id,
+                TradingAccount.general_account_id == general_account_id,
+            )
+        )
+        result = await self.db.execute(query)
+        return result.unique().scalars().first()
+
     async def list_by_trading_account_id(
         self, trading_account_id: UUID
     ) -> List[Trade]:

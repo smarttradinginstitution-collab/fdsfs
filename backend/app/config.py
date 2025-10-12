@@ -27,8 +27,9 @@ class Settings(BaseSettings):
     DB_PORT: Optional[int] = 5432
     DB_CHARSET: Optional[str] = "utf8"
 
-    SUPABASE_PROJECT_URL: str
-    SUPABASE_KEY: str
+    SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str  # Public key for frontend/client-side
+    SUPABASE_SERVICE_KEY: str # Secret key for backend/admin operations
     AUTH_AUTO_CONFIRM_DEV: bool = True
 
     def assemble_db_url(self) -> str:

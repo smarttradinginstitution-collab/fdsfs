@@ -3,21 +3,27 @@ import os
 import uuid
 from fastapi import Depends, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.Infrastructure.db import get_db
 from app.Repositories.image_repository import ImageRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
-from app.Schemas.image import ImageCreate
+from app.Repositories.trade_repository import TradeRepository
+from app.Schemas.image import ImageCreate, ImageUpdate
 from app.Models.image import Image
-from app.config import settings
+from app.Services.supabase_client import get_supabase_client, SupabaseClient
 
-UPLOAD_DIRECTORY = "static/uploads/images"
+BUCKET_NAME = "trade_images"
 
 class ImageService:
-    def __init__(self, db: AsyncSession = Depends(get_db)):
+    def __init__(
+        self,
+        db: AsyncSession = Depends(get_db),
+        supabase: SupabaseClient = Depends(get_supabase_client),
+    ):
         self.db = db
+        self.supabase = supabase
         self.image_repo = ImageRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
+        self.trade_repo = TradeRepository(db)
 
     async def _get_general_account_id(self, user_id: uuid.UUID) -> uuid.UUID:
         general_account = await self.general_account_repo.get_by_user_id(user_id)
@@ -28,41 +34,100 @@ class ImageService:
             )
         return general_account.id
 
-    async def upload_image(self, file: UploadFile, user_id: uuid.UUID) -> Image:
-        # 1. Ensure the user has a general account
+    async def _authorize_user_for_trade(self, user_id: uuid.UUID, trade_id: uuid.UUID):
         general_account_id = await self._get_general_account_id(user_id)
+        trade = await self.trade_repo.get_by_id_and_general_account(trade_id, general_account_id)
+        if not trade:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User does not have access to this trade.")
+        return trade
 
-        # 2. Create the upload directory if it doesn't exist
-        os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
+    async def _authorize_user_for_image(self, user_id: uuid.UUID, image_id: uuid.UUID) -> Image:
+        image = await self.image_repo.get_by_id(image_id)
+        if not image:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+        if not image.trade_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image is not associated with a trade.")
 
-        # 3. Generate a unique filename to prevent collisions
+        await self._authorize_user_for_trade(user_id, image.trade_id)
+        return image
+
+    async def upload_trade_image(
+        self, *, file: UploadFile, user_id: uuid.UUID, trade_id: uuid.UUID,
+        description: str | None = None, category: str | None = None, phase: str | None = None,
+    ) -> Image:
+        trade = await self._authorize_user_for_trade(user_id, trade_id)
+        general_account_id = trade.trading_account.general_account_id
+
         file_extension = os.path.splitext(file.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIRECTORY, unique_filename)
+        storage_path = f"{general_account_id}/{trade_id}/{unique_filename}"
 
-        # 4. Save the file to the server
         try:
-            with open(file_path, "wb") as buffer:
-                buffer.write(await file.read())
-        except Exception as e:
-            # Handle potential file writing errors
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Could not save file: {e}",
+            file_content = await file.read()
+            self.supabase.storage.from_(BUCKET_NAME).upload(
+                path=storage_path, file=file_content, file_options={"content-type": file.content_type}
             )
+            public_url = self.supabase.storage.from_(BUCKET_NAME).get_public_url(storage_path)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Storage operation failed: {e}")
 
-        # 5. Create the public URL for the image
-        # The '/static' part is crucial as the directory is mounted there in main.py.
-        relative_url = f"/static/uploads/images/{unique_filename}"
-        absolute_url = f"{settings.SERVER_HOST}{relative_url}"
-
-        # 6. Create the Pydantic schema for the new image record
         image_data = ImageCreate(
-            filename=file.filename,
-            file_path=file_path,
-            url=absolute_url
+            general_account_id=general_account_id, trade_id=trade_id, filename=file.filename,
+            storage_path=storage_path, url=public_url, description=description, category=category, phase=phase,
         )
+        return await self.image_repo.create(image_data)
 
-        # 7. Save the image metadata to the database
-        db_image = await self.image_repo.create(image_data, general_account_id)
-        return db_image
+    async def get_images_for_trade(self, trade_id: uuid.UUID, requesting_user_id: uuid.UUID) -> list[Image]:
+        await self._authorize_user_for_trade(requesting_user_id, trade_id)
+        return await self.image_repo.list_by_trade_id(trade_id)
+
+    async def update_image_metadata(self, image_id: uuid.UUID, update_data: ImageUpdate, requesting_user_id: uuid.UUID) -> Image:
+        await self._authorize_user_for_image(requesting_user_id, image_id)
+        updated_image = await self.image_repo.update(image_id, update_data)
+        if not updated_image:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found after update")
+        return updated_image
+
+    async def delete_image(self, image_id: uuid.UUID, requesting_user_id: uuid.UUID) -> None:
+        db_image = await self._authorize_user_for_image(requesting_user_id, image_id)
+
+        if db_image.storage_path:
+            try:
+                self.supabase.storage.from_(BUCKET_NAME).remove([db_image.storage_path])
+            except Exception as e:
+                print(f"Warning: Failed to delete image {db_image.storage_path} from storage: {e}")
+
+        await self.image_repo.delete(image_id)
+        return
+
+    async def replace_image(self, image_id: uuid.UUID, file: UploadFile, user_id: uuid.UUID) -> Image:
+        db_image = await self._authorize_user_for_image(user_id, image_id)
+
+        # Remove old file from storage
+        if db_image.storage_path:
+            try:
+                self.supabase.storage.from_(BUCKET_NAME).remove([db_image.storage_path])
+            except Exception as e:
+                print(f"Warning: Failed to remove old image {db_image.storage_path} during replacement: {e}")
+
+        # Upload new file
+        file_extension = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+        storage_path = f"{db_image.general_account_id}/{db_image.trade_id}/{unique_filename}"
+
+        try:
+            file_content = await file.read()
+            self.supabase.storage.from_(BUCKET_NAME).upload(
+                path=storage_path, file=file_content, file_options={"content-type": file.content_type}
+            )
+            public_url = self.supabase.storage.from_(BUCKET_NAME).get_public_url(storage_path)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Storage upload failed during replacement: {e}")
+
+        # Update database record with new path and url
+        update_data = ImageUpdate(storage_path=storage_path, url=public_url, filename=file.filename)
+        updated_image = await self.image_repo.update(image_id, update_data)
+        if not updated_image:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found after update")
+
+        return updated_image
