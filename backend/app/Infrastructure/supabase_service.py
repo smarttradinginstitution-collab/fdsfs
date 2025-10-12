@@ -17,7 +17,7 @@ Per ottenere l'utente corrente da un access token del client, chiamiamo
 """
 
 def _service_headers() -> dict[str, str]:
-    k = settings.SUPABASE_KEY
+    k = settings.SUPABASE_SERVICE_KEY
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -30,7 +30,7 @@ async def _request(
     json: Optional[dict] = None,
     extra_headers: Optional[dict[str, str]] = None,
 ) -> Dict[str, Any]:
-    base = settings.SUPABASE_PROJECT_URL.rstrip("/")
+    base = settings.SUPABASE_URL.rstrip("/")
     url = f"{base}{path}"
     timeout = httpx.Timeout(30.0, connect=8.0)
     headers = _service_headers()
@@ -77,7 +77,7 @@ async def sign_in(email: str, password: str) -> Dict[str, Any]:
 # ----------------- Flussi "admin" (SERVE Authorization Bearer service_role) -----------------
 
 def _admin_auth_headers() -> dict[str, str]:
-    return {"Authorization": f"Bearer {settings.SUPABASE_KEY}"}
+    return {"Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}"}
 
 async def update_user(user_id: str, patch: dict) -> Dict[str, Any]:
     return await _request(
