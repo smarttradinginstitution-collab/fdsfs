@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
-from app.Infrastructure.supabase_client import get_supabase
+from app.Services.supabase_client import get_supabase_client
 from app.Repositories.user_role_repository import UserRoleRepository
 
 bearer = HTTPBearer(auto_error=True)
@@ -23,7 +23,7 @@ async def get_current_claims(
     Ritorna un dict con almeno: {"sub": <user_id>, "email": <email>} 
     """
     token = creds.credentials
-    sb = get_supabase()
+    sb = get_supabase_client()
 
     try:
         # Nota: supabase-py v2 -> get_user(token) ritorna un oggetto con .user
