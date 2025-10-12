@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import { fabric } from 'fabric';
+import fabric from 'fabric';
 import { ArrowLongRightIcon, ChatBubbleBottomCenterTextIcon, TrashIcon, HandRaisedIcon, PencilIcon as PencilSolidIcon } from '@heroicons/vue/24/solid';
 import { RectangleStackIcon } from '@heroicons/vue/24/outline'; // Using outline for shapes
 
@@ -23,11 +23,11 @@ const initializeCanvas = () => {
     canvas.dispose();
   }
 
-  canvas = new fabric.Canvas(canvasEl.value, {
+  canvas = new fabric.fabric.Canvas(canvasEl.value, {
     isDrawingMode: false,
   });
 
-  fabric.Image.fromURL(props.imageUrl, (img) => {
+  fabric.fabric.Image.fromURL(props.imageUrl, (img) => {
     const container = canvasEl.value.parentElement;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
@@ -54,7 +54,7 @@ const setTool = (tool) => {
 };
 
 const addRect = () => {
-    const rect = new fabric.Rect({
+    const rect = new fabric.fabric.Rect({
         left: 100,
         top: 100,
         fill: 'transparent',
@@ -69,11 +69,11 @@ const addRect = () => {
 
 const addArrow = () => {
     // Custom arrow logic
-    const line = new fabric.Line([50, 100, 250, 100], {
+    const line = new fabric.fabric.Line([50, 100, 250, 100], {
         stroke: strokeColor.value,
         strokeWidth: 2,
     });
-    const arrowHead = new fabric.Triangle({
+    const arrowHead = new fabric.fabric.Triangle({
         left: 250,
         top: 100,
         width: 10,
@@ -83,7 +83,7 @@ const addArrow = () => {
         originX: 'center',
         originY: 'center',
     });
-    const arrow = new fabric.Group([line, arrowHead], {
+    const arrow = new fabric.fabric.Group([line, arrowHead], {
         left: 50,
         top: 100,
     });
@@ -93,7 +93,7 @@ const addArrow = () => {
 
 
 const addText = () => {
-    const text = new fabric.IText('Your Text', {
+    const text = new fabric.fabric.IText('Your Text', {
         left: 100,
         top: 150,
         fill: strokeColor.value,
