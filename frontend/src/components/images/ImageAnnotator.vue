@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { fabric } from 'fabric';
 import { ArrowLongRightIcon, ChatBubbleBottomCenterTextIcon, TrashIcon, HandRaisedIcon, PencilIcon as PencilSolidIcon } from '@heroicons/vue/24/solid';
 import { RectangleStackIcon } from '@heroicons/vue/24/outline';
 
@@ -23,12 +24,8 @@ const initializeCanvas = () => {
     canvas.dispose();
   }
 
-  const fabric = window.fabric; // Use the globally available fabric object
-  if (!fabric) {
-    console.error("Fabric.js not loaded from CDN!");
-    alert("Error: Annotation library could not be loaded. Please check your internet connection and try again.");
-    return;
-  }
+  // Hotfix for a known bug in some fabric.js versions
+  fabric.Text.prototype.textBaseline = 'alphabetic';
 
   canvas = new fabric.Canvas(canvasEl.value, {
     isDrawingMode: false,
@@ -64,7 +61,7 @@ const setTool = (tool) => {
 
 const addRect = () => {
     if (!canvas) return;
-    const rect = new window.fabric.Rect({
+    const rect = new fabric.Rect({
         left: 100, top: 100, fill: 'transparent', stroke: strokeColor.value,
         strokeWidth: 2, width: 200, height: 100,
     });
@@ -74,7 +71,6 @@ const addRect = () => {
 
 const addArrow = () => {
     if (!canvas) return;
-    const fabric = window.fabric;
     const line = new fabric.Line([50, 100, 250, 100], { stroke: strokeColor.value, strokeWidth: 2 });
     const arrowHead = new fabric.Triangle({
         left: 250, top: 100, width: 10, height: 10, fill: strokeColor.value,
@@ -87,7 +83,7 @@ const addArrow = () => {
 
 const addText = () => {
     if (!canvas) return;
-    const text = new window.fabric.IText('Your Text', {
+    const text = new fabric.IText('Your Text', {
         left: 100, top: 150, fill: strokeColor.value, fontSize: 20,
     });
     canvas.add(text);
@@ -104,10 +100,7 @@ const deleteSelected = () => {
 
 onMounted(() => {
     nextTick(() => {
-        // A short delay to ensure the global fabric script has loaded
-        setTimeout(() => {
-            initializeCanvas();
-        }, 100);
+        initializeCanvas();
     });
 });
 
