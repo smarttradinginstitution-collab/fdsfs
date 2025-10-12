@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { fabric } from 'fabric';
 import { ArrowLongRightIcon, ChatBubbleBottomCenterTextIcon, TrashIcon, HandRaisedIcon, PencilIcon as PencilSolidIcon } from '@heroicons/vue/24/solid';
 import { RectangleStackIcon } from '@heroicons/vue/24/outline';
 
@@ -14,20 +15,13 @@ const emit = defineEmits(['save', 'cancel']);
 
 const canvasEl = ref(null);
 let canvas = null;
-let fabric = null; // To hold the dynamically imported library
 
 const activeTool = ref('pan');
 const strokeColor = ref('#ff0000');
 
-const initializeCanvas = async () => {
+const initializeCanvas = () => {
   if (canvas) {
     canvas.dispose();
-  }
-
-  // Dynamically import fabric
-  if (!fabric) {
-    const fabricModule = await import('fabric');
-    fabric = fabricModule.fabric;
   }
 
   canvas = new fabric.Canvas(canvasEl.value, {
@@ -36,6 +30,7 @@ const initializeCanvas = async () => {
 
   fabric.Image.fromURL(props.imageUrl, (img) => {
     const container = canvasEl.value.parentElement;
+    if (!container) return;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
 
@@ -62,6 +57,7 @@ const setTool = (tool) => {
 };
 
 const addRect = () => {
+    if (!canvas) return;
     const rect = new fabric.Rect({
         left: 100, top: 100, fill: 'transparent', stroke: strokeColor.value,
         strokeWidth: 2, width: 200, height: 100,
@@ -71,6 +67,7 @@ const addRect = () => {
 };
 
 const addArrow = () => {
+    if (!canvas) return;
     const line = new fabric.Line([50, 100, 250, 100], { stroke: strokeColor.value, strokeWidth: 2 });
     const arrowHead = new fabric.Triangle({
         left: 250, top: 100, width: 10, height: 10, fill: strokeColor.value,
@@ -82,6 +79,7 @@ const addArrow = () => {
 };
 
 const addText = () => {
+    if (!canvas) return;
     const text = new fabric.IText('Your Text', {
         left: 100, top: 150, fill: strokeColor.value, fontSize: 20,
     });
@@ -92,6 +90,7 @@ const addText = () => {
 };
 
 const deleteSelected = () => {
+    if (!canvas) return;
     canvas.remove(...canvas.getActiveObjects());
     canvas.discardActiveObject().renderAll();
 };
@@ -113,6 +112,7 @@ watch(() => props.imageUrl, () => {
 });
 
 const saveImage = () => {
+  if (!canvas) return;
   const dataUrl = canvas.toDataURL({ format: 'png' });
   emit('save', dataUrl);
 };
