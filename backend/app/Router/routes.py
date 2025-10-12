@@ -265,8 +265,10 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import image_router
 
+# Include the metadata router at the root level
 router.include_router(
-    image_router.router,
+    image_router.image_metadata_router,
+    prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
 
