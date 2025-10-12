@@ -6,10 +6,8 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 
-from app.Repositories.general_account_repository import GeneralAccountRepository
 import copy
-from app.Repositories.tag_repository import TagRepository
-from app.Repositories.tags_group_repository import TagsGroupRepository
+from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.general_account import (
     GeneralAccountCreate,
     GeneralAccountRead,
@@ -19,6 +17,8 @@ from app.Schemas.tag import TagCreate
 from app.Schemas.tags_group import TagsGroupCreate
 from app.Infrastructure.db import get_db
 from app.Services.notebook_service import NotebookService
+from app.Services.tags_group_service import TagsGroupService
+from app.Services.tag_service import TagService
 
 DEFAULT_TAGS_STRUCTURE = [
     {
@@ -74,33 +74,42 @@ DEFAULT_TAGS_STRUCTURE = [
 
 
 class GeneralAccountService:
-    def __init__(self, db: AsyncSession = Depends(get_db)):
+    def __init__(
+        self,
+        db: AsyncSession = Depends(get_db),
+    ):
         self.db = db
         self.repo = GeneralAccountRepository(db)
-        self.tags_group_repo = TagsGroupRepository(db)
-        self.tag_repo = TagRepository(db)
 
-    async def _create_default_tags_and_groups(self, general_account_id: UUID):
+    async def _create_default_tags_and_groups(
+        self,
+        general_account_id: UUID,
+        tags_group_service: TagsGroupService,
+        tag_service: TagService,
+    ):
         """Creates the default tags and groups for a new general account."""
         structure_copy = copy.deepcopy(DEFAULT_TAGS_STRUCTURE)
         for group_data in structure_copy:
-            tags = group_data.pop("tags")
+            tags_to_create = group_data.pop("tags")
             group_schema = TagsGroupCreate(**group_data)
-            created_group = await self.tags_group_repo.create_tags_group(
+            created_group = await tags_group_service.create_tags_group(
                 tags_group_data=group_schema, general_account_id=general_account_id
             )
 
-            for tag_data in tags:
+            for tag_data in tags_to_create:
                 tag_schema = TagCreate(
                     name=tag_data["name"],
                     color=tag_data["color"],
                     group_id=created_group.id,
                 )
-                await self.tag_repo.create_tag(tag_schema)
-
+                await tag_service.create_tag(tag_schema)
 
     async def create_general_account_for_user(
-        self, claims: dict, notebook_service: NotebookService
+        self,
+        claims: dict,
+        notebook_service: NotebookService,
+        tags_group_service: TagsGroupService,
+        tag_service: TagService,
     ) -> GeneralAccountRead:
         """
         Crea un GeneralAccount per l'utente corrente, usando la sua email come label.
@@ -111,15 +120,18 @@ class GeneralAccountService:
         account_create_schema = GeneralAccountCreate(label=user_email)
 
         db_account = await self.repo.create_general_account(
-            user_id=user_id,
-            account_data=account_create_schema
+            user_id=user_id, account_data=account_create_schema
         )
 
         # Automatically create system folders for the new account
         await notebook_service._ensure_system_folders_exist(db_account.id)
 
-        # Automatically create default tags and groups
-        await self._create_default_tags_and_groups(db_account.id)
+        # Create default tags and groups
+        await self._create_default_tags_and_groups(
+            general_account_id=db_account.id,
+            tags_group_service=tags_group_service,
+            tag_service=tag_service,
+        )
 
         return GeneralAccountRead.model_validate(db_account)
 

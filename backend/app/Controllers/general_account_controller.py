@@ -12,10 +12,16 @@ from app.Services.notebook_service import NotebookService
 from app.Router.auth import get_current_claims
 
 
+from app.Services.tag_service import TagService
+from app.Services.tags_group_service import TagsGroupService
+
+
 async def create_general_account(
     claims: dict = Depends(get_current_claims),
     service: GeneralAccountService = Depends(),
     notebook_service: NotebookService = Depends(),
+    tags_group_service: TagsGroupService = Depends(),
+    tag_service: TagService = Depends(),
 ):
     """
     Crea un General Account per l'utente autenticato.
@@ -25,7 +31,10 @@ async def create_general_account(
     """
     # Delega la creazione (o il recupero) dell'account al servizio.
     account = await service.create_general_account_for_user(
-        claims=claims, notebook_service=notebook_service
+        claims=claims,
+        notebook_service=notebook_service,
+        tags_group_service=tags_group_service,
+        tag_service=tag_service,
     )
     return account
 
