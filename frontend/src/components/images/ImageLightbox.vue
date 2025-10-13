@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
@@ -45,12 +45,21 @@ const handleKeydown = (e) => {
   }
 };
 
+watch(() => props.show, (isVisible) => {
+  if (isVisible) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  document.body.style.overflow = ''; // Ensure scroll is restored
 });
 </script>
 
@@ -115,12 +124,13 @@ onUnmounted(() => {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
+  overflow: auto; /* Enable scrolling for the container */
+  border-radius: var(--semantic-border-radius-container); /* Move border-radius here */
 }
 
 .lightbox-image {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: var(--semantic-border-radius-container);
+  display: block; /* Helps with layout */
+  margin: auto; /* Centers the image if smaller than container */
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
