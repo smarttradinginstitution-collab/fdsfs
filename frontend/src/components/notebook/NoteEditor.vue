@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onBeforeUnmount, computed } from 'vue';
+import { ref, watch, onBeforeUnmount, computed, onMounted } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
@@ -29,29 +29,35 @@ import {
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useUiStore } from '../../stores/uiStore';
 
+const props = defineProps({
+  noteId: {
+    type: String,
+    required: true,
+  },
+});
+
 const store = useNotebookStore();
 const uiStore = useUiStore();
-const note = computed(() => store.selectedNote);
+const note = ref(null);
 const financialData = computed(() => store.financialData);
-const folder = computed(() => store.selectedNoteFolder);
+const folder = computed(() => note.value ? store.folders.find(f => f.id === note.value.folder_id) : null);
 
 const isTradeNote = computed(() => !!note.value?.trade_id);
 const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
 
-const editableTitle = ref(note.value ? note.value.title : '');
-const isSaving = ref(false); // Flag to prevent concurrent saves
+const editableTitle = ref('');
+const isSaving = ref(false);
 
 // State for modals
 const isGalleryModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
 
-
 const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
 const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
 
 const editor = useEditor({
-  content: note.value ? note.value.content : '',
+  content: '',
   extensions: [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
@@ -137,6 +143,10 @@ const handleInsertImage = (imageUrl) => {
   }
 };
 
+defineExpose({
+  insertImage: handleInsertImage,
+});
+
 const handleEditImage = (image) => {
   selectedImageForEdit.value = image;
   isMetadataModalOpen.value = true;
@@ -200,29 +210,44 @@ const statsGrid = computed(() => {
     };
 });
 
-watch(note, (newNote, oldNote) => {
-  if (newNote && editor.value) {
-    if (!oldNote || newNote.id !== oldNote.id) {
-      editableTitle.value = newNote.title;
-      if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-          editor.value.commands.setContent(newNote.content, false);
-      }
-    }
-  } else if (!newNote && editor.value) {
+const loadNote = async (id) => {
+  if (!id) {
+    note.value = null;
     editableTitle.value = '';
-    editor.value.commands.clearContent();
+    if (editor.value) editor.value.commands.clearContent();
+    return;
   }
-}, { deep: true });
+
+  // Cerca la nota nello store prima di fare una chiamata API
+  let foundNote = store.notes.find(n => n.id === id);
+  if (!foundNote) {
+    foundNote = await store.fetchNoteById(id);
+  }
+
+  note.value = foundNote;
+
+  if (note.value && editor.value) {
+    editableTitle.value = note.value.title;
+    if (JSON.stringify(note.value.content) !== JSON.stringify(editor.value.getJSON())) {
+        editor.value.commands.setContent(note.value.content, false);
+    }
+  }
+};
+
+watch(() => props.noteId, (newId) => {
+  loadNote(newId);
+}, { immediate: true });
 
 const saveNote = async () => {
     if (!editor.value || !note.value || isSaving.value) return;
 
     isSaving.value = true;
     try {
-        await store.updateNote(note.value.id, {
+        const updatedNote = await store.updateNote(note.value.id, {
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });
+        note.value.updated_at = updatedNote.updated_at; // Aggiorna timestamp
         uiStore.showNotification({ message: 'Note saved!', type: 'success', size: 'small' });
     } catch (error) {
         console.error("Failed to save note:", error);
