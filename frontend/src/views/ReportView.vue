@@ -136,7 +136,7 @@ const setupNoteForTrade = async (currentTrade) => {
       try {
         const newNote = await notebookStore.createNote({
           title: `${currentTrade.symbol_snapshot} - ${tradeDate.value}`,
-          content: '<p></p>',
+          content: { type: 'doc', content: [{ type: 'paragraph' }] },
           trade_id: currentTrade.id,
           folder_id: tradeNotesFolder.id,
         });
