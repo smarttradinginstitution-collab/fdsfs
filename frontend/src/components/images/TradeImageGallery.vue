@@ -1,13 +1,17 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useImageStore } from '../../stores/imageStore';
 import { storeToRefs } from 'pinia';
-import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon } from '@heroicons/vue/24/outline';
+import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon, MagnifyingGlassPlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   tradeId: {
     type: String,
     required: true,
+  },
+  images: {
+    type: Array,
+    default: () => [],
   },
   mode: {
     type: String,
@@ -16,12 +20,14 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['insert-image', 'edit-image']);
+const emit = defineEmits(['insert-image', 'edit-image', 'open-lightbox']);
 
 const imageStore = useImageStore();
-const { imagesForCurrentTrade, isLoading } = storeToRefs(imageStore);
+const { isLoading } = storeToRefs(imageStore);
 
 const isDragging = ref(false);
+
+const imagesForCurrentTrade = computed(() => props.images);
 
 const handleFileDrop = (event) => {
   isDragging.value = false;
@@ -56,13 +62,6 @@ const onDelete = async (imageId) => {
   }
 };
 
-onMounted(() => {
-  imageStore.fetchImagesForTrade(props.tradeId);
-});
-
-watch(() => props.tradeId, (newTradeId) => {
-  imageStore.fetchImagesForTrade(newTradeId);
-});
 </script>
 
 <template>
@@ -91,19 +90,19 @@ watch(() => props.tradeId, (newTradeId) => {
       </div>
 
       <div class="image-grid" v-else>
-        <div v-for="image in imagesForCurrentTrade" :key="image.id" class="image-card">
+        <div v-for="(image, index) in imagesForCurrentTrade" :key="image.id" class="image-card" @click="emit('open-lightbox', index)">
           <img :src="image.url" :alt="image.description || 'Trade image'" class="thumbnail" />
           <div class="image-overlay">
             <div class="image-actions">
-              <button @click="onInsert(image.url)" class="action-btn" title="Insert into Note">
-                <ArrowDownOnSquareIcon />
-              </button>
-              <button @click="onEdit(image)" class="action-btn" title="Edit Details">
+              <button @click.stop="onEdit(image)" class="action-btn" title="Edit Details">
                 <PencilIcon />
               </button>
-              <button @click="onDelete(image.id)" class="action-btn danger" title="Delete Image">
+              <button @click.stop="onDelete(image.id)" class="action-btn danger" title="Delete Image">
                 <TrashIcon />
               </button>
+            </div>
+            <div class="zoom-indicator">
+              <MagnifyingGlassPlusIcon />
             </div>
             <p class="image-description">{{ image.description }}</p>
           </div>
@@ -234,5 +233,22 @@ watch(() => props.tradeId, (newTradeId) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: auto; /* Pushes description to the bottom */
+}
+
+.zoom-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  width: 48px;
+  height: 48px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  .image-card:hover & {
+    opacity: 0.8;
+  }
 }
 </style>

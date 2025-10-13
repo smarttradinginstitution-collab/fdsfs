@@ -12,6 +12,8 @@ import PencilIcon from '@/components/icons/PencilIcon.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
 import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
+import ImageLightbox from '@/components/images/ImageLightbox.vue';
+import VisualAnalysisWidget from '@/components/reports/VisualAnalysisWidget.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
 import { useImageStore } from '@/stores/imageStore';
@@ -31,6 +33,10 @@ const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
 const editableContent = ref(null);
+
+// Lightbox state
+const isLightboxOpen = ref(false);
+const lightboxCurrentIndex = ref(0);
 
 // Local state for notes to avoid depending on notebookStore's active notes
 const tradeNotesList = ref([]);
@@ -53,8 +59,6 @@ const trade = computed(() => tradesStore.selectedTrade);
 const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders || imageStore.isLoading);
 const { imagesForCurrentTrade } = storeToRefs(imageStore);
 
-const primaryBeforeImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_before));
-const primaryAfterImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_after));
 const error = ref(null);
 
 const tradeDate = computed(() => {
@@ -105,6 +109,23 @@ const handleEditImage = (image) => {
 
 const handleUpdateTradeDetails = (payload) => {
   if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
+};
+
+const openLightbox = (index) => {
+  lightboxCurrentIndex.value = index;
+  isLightboxOpen.value = true;
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+};
+
+const nextImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value + 1) % imagesForCurrentTrade.value.length;
+};
+
+const prevImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
 const handleSaveNotes = async () => {
@@ -245,6 +266,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
               <template #attachments>
                 <TradeImageGallery
                   :trade-id="trade.id"
+                  :images="imagesForCurrentTrade"
                   mode="uploader-only"
                   @edit-image="handleEditImage"
                 />
@@ -255,30 +277,12 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 
           <!-- Right Column -->
           <div class="right-column">
-            <!-- Visual Analysis Section -->
-            <BaseWidget v-if="primaryBeforeImage || primaryAfterImage" class="visual-analysis-widget">
-              <h3 class="widget-title">Visual Analysis</h3>
-              <div class="chart-comparison">
-                <div class="chart-container">
-                  <h4>Before</h4>
-                  <img v-if="primaryBeforeImage" :src="primaryBeforeImage.url" alt="Before chart" />
-                  <div v-else class="placeholder">Not set</div>
-                </div>
-                <div class="chart-container">
-                  <h4>After</h4>
-                  <img v-if="primaryAfterImage" :src="primaryAfterImage.url" alt="After chart" />
-                  <div v-else class="placeholder">Not set</div>
-                </div>
-              </div>
-
-              <hr class="section-divider" />
-
-              <TradeImageGallery
-                :trade-id="trade.id"
-                mode="gallery-only"
-                @edit-image="handleEditImage"
-              />
-            </BaseWidget>
+            <VisualAnalysisWidget
+              :trade-id="trade.id"
+              :images="imagesForCurrentTrade"
+              @edit-image="handleEditImage"
+              @open-lightbox="openLightbox"
+            />
 
             <BaseWidget class="notes-widget">
               <div class="right-column-content">
@@ -314,6 +318,16 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
       :show="isMetadataModalOpen"
       :image="selectedImageForEdit"
       @close="isMetadataModalOpen = false"
+    />
+
+    <ImageLightbox
+      v-if="imagesForCurrentTrade.length > 0"
+      :images="imagesForCurrentTrade"
+      :current-index="lightboxCurrentIndex"
+      :show="isLightboxOpen"
+      @close="closeLightbox"
+      @next="nextImage"
+      @prev="prevImage"
     />
   </div>
 </template>
