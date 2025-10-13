@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
-import RichTextEditor from '@/components/ui/RichTextEditor.vue';
+import NoteEditor from '@/components/notebook/NoteEditor.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
@@ -29,8 +29,8 @@ const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
-const editableContent = ref(null);
-const editorRef = ref(null); // Ref for RichTextEditor
+const tradeNoteEditorRef = ref(null);
+const dailyJournalNoteEditorRef = ref(null);
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -112,8 +112,8 @@ const handleUpdateTradeDetails = (payload) => {
 };
 
 const handleInsertImageIntoNote = (imageUrl) => {
-  if (editorRef.value) {
-    editorRef.value.insertImage(imageUrl);
+  if (noteEditorRef.value) {
+    noteEditorRef.value.insertImage(imageUrl);
   }
 };
 
@@ -135,35 +135,22 @@ const prevImage = () => {
 };
 
 const handleSaveNotes = async () => {
-  if (!trade.value || !editableContent.value) return;
-
+  let editorRef;
   if (rightColumnActiveTab.value === 'trade-note') {
-    const noteData = {
-      title: `${trade.value.symbol_snapshot} - ${tradeDate.value}`,
-      content: editableContent.value,
-      trade_id: trade.value.id,
-      folder_id: tradeNotesFolder.value.id,
-    };
-    if (currentTradeNote.value) {
-      await notebookStore.updateNote(currentTradeNote.value.id, noteData);
-    } else {
-      await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
+    editorRef = tradeNoteEditorRef;
   } else if (rightColumnActiveTab.value === 'daily-journal') {
-    const noteData = {
-      title: `Journal - ${tradeDate.value}`,
-      content: editableContent.value,
-      folder_id: dailyJournalFolder.value.id,
-    };
-    if (currentDailyJournalNote.value) {
-        await notebookStore.updateNote(currentDailyJournalNote.value.id, noteData);
-    } else {
-        await notebookStore.createNote(noteData);
+    editorRef = dailyJournalNoteEditorRef;
+  }
+
+  if (editorRef && editorRef.value) {
+    await editorRef.value.saveNote();
+    // After saving, a new note might have been created. Refresh the list.
+    if (tradeNotesFolder.value) {
+      await notebookStore.fetchNotesByFolder(tradeNotesFolder.value.id);
     }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
+    if (dailyJournalFolder.value) {
+        await notebookStore.fetchNotesByFolder(dailyJournalFolder.value.id);
+    }
   }
 };
 
@@ -198,13 +185,14 @@ watch(() => route.params.id, (newId) => {
   }
 });
 
-watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
-  if (rightColumnActiveTab.value === 'trade-note') {
-    editableContent.value = currentTradeNote.value?.content || '<p></p>';
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    editableContent.value = currentDailyJournalNote.value?.content || '<p></p>';
-  }
-}, { immediate: true, deep: true });
+watch(() => notebookStore.notes, (newNotes) => {
+    if (tradeNotesFolder.value) {
+        tradeNotesList.value = newNotes.filter(n => n.folder_id === tradeNotesFolder.value.id);
+    }
+    if (dailyJournalFolder.value) {
+        dailyJournalNotesList.value = newNotes.filter(n => n.folder_id === dailyJournalFolder.value.id);
+    }
+}, { deep: true, immediate: true });
 </script>
 
 <template>
@@ -270,7 +258,20 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                   <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
                 </div>
                 <div class="editor-container">
-                  <RichTextEditor v-model="editableContent" />
+                    <NoteEditor
+                        v-if="rightColumnActiveTab === 'trade-note'"
+                        ref="tradeNoteEditorRef"
+                        :note="currentTradeNote"
+                        :trade="trade"
+                        :enable-auto-save="false"
+                    />
+                    <NoteEditor
+                        v-if="rightColumnActiveTab === 'daily-journal'"
+                        ref="dailyJournalNoteEditorRef"
+                        :note="currentDailyJournalNote"
+                        :trade="trade"
+                        :enable-auto-save="false"
+                    />
                 </div>
               </div>
             </BaseWidget>
