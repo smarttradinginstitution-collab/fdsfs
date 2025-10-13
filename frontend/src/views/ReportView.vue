@@ -263,6 +263,18 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
           </div>
 
           <div class="right-column">
+            <BaseWidget class="notes-widget">
+              <div class="right-column-content">
+                <div class="notes-header">
+                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
+                  <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+                </div>
+                <div class="editor-container">
+                  <RichTextEditor v-model="editableContent" />
+                </div>
+              </div>
+            </BaseWidget>
+
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
@@ -287,18 +299,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                 @open-lightbox="openLightbox"
                 @insert-image="handleInsertImageIntoNote"
               />
-            </BaseWidget>
-
-            <BaseWidget class="notes-widget">
-              <div class="right-column-content">
-                <div class="notes-header">
-                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-                  <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
-                </div>
-                <div class="editor-container">
-                  <RichTextEditor ref="editorRef" v-model="editableContent" />
-                </div>
-              </div>
             </BaseWidget>
           </div>
         </main>
