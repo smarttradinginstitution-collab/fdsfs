@@ -227,23 +227,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
           </div>
         </header>
 
-        <!-- Visual Analysis Section -->
-        <BaseWidget v-if="primaryBeforeImage || primaryAfterImage" class="visual-analysis-widget">
-          <h3 class="widget-title">Visual Analysis</h3>
-          <div class="chart-comparison">
-            <div class="chart-container">
-              <h4>Before</h4>
-              <img v-if="primaryBeforeImage" :src="primaryBeforeImage.url" alt="Before chart" />
-              <div v-else class="placeholder">Not set</div>
-            </div>
-            <div class="chart-container">
-              <h4>After</h4>
-              <img v-if="primaryAfterImage" :src="primaryAfterImage.url" alt="After chart" />
-              <div v-else class="placeholder">Not set</div>
-            </div>
-          </div>
-        </BaseWidget>
-
         <!-- Main Content -->
         <main class="report-content">
           <!-- Left Column -->
@@ -271,17 +254,34 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 
           <!-- Right Column -->
           <div class="right-column">
-          <BaseWidget class="notes-widget">
-            <div class="right-column-content">
-              <div class="notes-header">
-                <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-                <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+            <!-- Visual Analysis Section -->
+            <BaseWidget v-if="primaryBeforeImage || primaryAfterImage" class="visual-analysis-widget">
+              <h3 class="widget-title">Visual Analysis</h3>
+              <div class="chart-comparison">
+                <div class="chart-container">
+                  <h4>Before</h4>
+                  <img v-if="primaryBeforeImage" :src="primaryBeforeImage.url" alt="Before chart" />
+                  <div v-else class="placeholder">Not set</div>
+                </div>
+                <div class="chart-container">
+                  <h4>After</h4>
+                  <img v-if="primaryAfterImage" :src="primaryAfterImage.url" alt="After chart" />
+                  <div v-else class="placeholder">Not set</div>
+                </div>
               </div>
-              <div class="editor-container">
-                <RichTextEditor v-model="editableContent" />
-              </div>
-              </div>
-          </BaseWidget>
+            </BaseWidget>
+
+            <BaseWidget class="notes-widget">
+              <div class="right-column-content">
+                <div class="notes-header">
+                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
+                  <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+                </div>
+                <div class="editor-container">
+                  <RichTextEditor v-model="editableContent" />
+                </div>
+                </div>
+            </BaseWidget>
           </div>
         </main>
       </div>
