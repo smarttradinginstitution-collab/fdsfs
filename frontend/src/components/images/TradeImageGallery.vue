@@ -107,6 +107,9 @@ const onDelete = async (imageId) => {
           <img :src="image.url" :alt="image.description || 'Trade image'" class="thumbnail" />
           <div class="image-overlay">
             <div class="image-actions">
+              <button v-if="mode === 'full'" @click.stop="onInsert(image.url)" class="action-btn" title="Insert into Note">
+                <ArrowDownOnSquareIcon />
+              </button>
               <button @click.stop="onEdit(image)" class="action-btn" title="Edit Details">
                 <PencilIcon />
               </button>
