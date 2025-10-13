@@ -77,32 +77,6 @@ export const useImageStore = defineStore('imageStore', () => {
     }
   }
 
-  async function replaceImage(imageId, file) {
-    if (!imageId || !file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    uiStore.showNotification({ message: 'Saving annotated image...', type: 'loading' });
-    try {
-      // We need a new endpoint for this. Let's assume POST /images/{id}/replace
-      const response = await apiClient.post(`/images/${imageId}/replace`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      // Replace the image in the store with the new version.
-      // The URL might change if Supabase adds a cache-busting query param.
-      const index = imagesForCurrentTrade.value.findIndex(img => img.id === imageId);
-      if (index !== -1) {
-        imagesForCurrentTrade.value[index] = response.data;
-      }
-      uiStore.showNotification({ message: 'Annotation saved!', type: 'success' });
-    } catch (error) {
-      console.error('Error replacing image:', error);
-      uiStore.showNotification({ message: 'Failed to save annotation.', type: 'error' });
-    }
-  }
-
   return {
     imagesForCurrentTrade,
     isLoading,
@@ -110,6 +84,5 @@ export const useImageStore = defineStore('imageStore', () => {
     uploadImage,
     updateImageMetadata,
     deleteImage,
-    replaceImage,
   };
 });

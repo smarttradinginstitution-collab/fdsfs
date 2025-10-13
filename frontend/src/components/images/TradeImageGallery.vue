@@ -2,8 +2,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useImageStore } from '../../stores/imageStore';
 import { storeToRefs } from 'pinia';
-import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon, PencilSquareIcon } from '@heroicons/vue/24/outline';
-import ImageAnnotator from './ImageAnnotator.vue';
+import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   tradeId: {
@@ -18,9 +17,6 @@ const imageStore = useImageStore();
 const { imagesForCurrentTrade, isLoading } = storeToRefs(imageStore);
 
 const isDragging = ref(false);
-const isAnnotatorOpen = ref(false);
-const annotatingImageUrl = ref(null);
-const annotatingImageId = ref(null);
 
 const handleFileDrop = (event) => {
   isDragging.value = false;
@@ -55,27 +51,6 @@ const onDelete = async (imageId) => {
   }
 };
 
-const openAnnotator = (image) => {
-  annotatingImageUrl.value = image.url;
-  annotatingImageId.value = image.id;
-  isAnnotatorOpen.value = true;
-};
-
-const handleSaveAnnotation = async (dataUrl) => {
-  // Convert data URL to blob
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
-  const file = new File([blob], "annotated_image.png", { type: 'image/png' });
-
-  // We need a new action in the store to handle replacement
-  await imageStore.replaceImage(annotatingImageId.value, file);
-
-  isAnnotatorOpen.value = false;
-  annotatingImageUrl.value = null;
-  annotatingImageId.value = null;
-};
-
-
 onMounted(() => {
   imageStore.fetchImagesForTrade(props.tradeId);
 });
@@ -83,7 +58,6 @@ onMounted(() => {
 watch(() => props.tradeId, (newTradeId) => {
   imageStore.fetchImagesForTrade(newTradeId);
 });
-
 </script>
 
 <template>
@@ -115,9 +89,6 @@ watch(() => props.tradeId, (newTradeId) => {
             <button @click="onInsert(image.url)" class="action-btn" title="Insert into Note">
               <ArrowDownOnSquareIcon />
             </button>
-            <button @click="openAnnotator(image)" class="action-btn" title="Annotate Image">
-              <PencilSquareIcon />
-            </button>
             <button @click="onEdit(image)" class="action-btn" title="Edit Details">
               <PencilIcon />
             </button>
@@ -129,13 +100,6 @@ watch(() => props.tradeId, (newTradeId) => {
         </div>
       </div>
     </div>
-
-    <ImageAnnotator
-      v-if="isAnnotatorOpen"
-      :image-url="annotatingImageUrl"
-      @save="handleSaveAnnotation"
-      @cancel="isAnnotatorOpen = false"
-    />
   </div>
 </template>
 

@@ -32,19 +32,3 @@ async def delete_image(
         requesting_user_id=current_user.id
     )
     return None
-
-@router.post("/{image_id}/replace", response_model=ImageRead)
-async def replace_image(
-    image_id: uuid.UUID,
-    file: UploadFile = File(...),
-    current_user: CurrentUser = Depends(get_current_user),
-    image_service: ImageService = Depends(),
-) -> ImageRead:
-    """
-    Replaces an existing image with a new one (e.g., after annotation).
-    """
-    return await image_service.replace_image(
-        image_id=image_id,
-        file=file,
-        user_id=current_user.id
-    )
