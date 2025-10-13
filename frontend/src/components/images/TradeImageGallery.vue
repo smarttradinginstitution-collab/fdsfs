@@ -1,33 +1,47 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useImageStore } from '../../stores/imageStore';
 import { storeToRefs } from 'pinia';
-import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon, MagnifyingGlassPlusIcon } from '@heroicons/vue/24/outline';
+import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   tradeId: {
     type: String,
     required: true,
   },
-  images: {
-    type: Array,
-    default: () => [],
-  },
   mode: {
     type: String,
     default: 'full', // 'full', 'gallery-only', 'uploader-only'
     validator: (value) => ['full', 'gallery-only', 'uploader-only'].includes(value),
+  },
+  images: {
+    type: Array,
+    default: () => [],
   },
 });
 
 const emit = defineEmits(['insert-image', 'edit-image', 'open-lightbox']);
 
 const imageStore = useImageStore();
-const { isLoading } = storeToRefs(imageStore);
+const { imagesForCurrentTrade: imagesFromStore, isLoading } = storeToRefs(imageStore);
 
 const isDragging = ref(false);
 
-const imagesForCurrentTrade = computed(() => props.images);
+const imagesForCurrentTrade = computed(() => {
+  return props.mode === 'full' ? imagesFromStore.value : props.images;
+});
+
+onMounted(() => {
+  if (props.mode === 'full') {
+    imageStore.fetchImagesForTrade(props.tradeId);
+  }
+});
+
+watch(() => props.tradeId, (newTradeId) => {
+  if (props.mode === 'full') {
+    imageStore.fetchImagesForTrade(newTradeId);
+  }
+});
 
 const handleFileDrop = (event) => {
   isDragging.value = false;
@@ -62,6 +76,13 @@ const onDelete = async (imageId) => {
   }
 };
 
+onMounted(() => {
+  imageStore.fetchImagesForTrade(props.tradeId);
+});
+
+watch(() => props.tradeId, (newTradeId) => {
+  imageStore.fetchImagesForTrade(newTradeId);
+});
 </script>
 
 <template>
@@ -94,15 +115,15 @@ const onDelete = async (imageId) => {
           <img :src="image.url" :alt="image.description || 'Trade image'" class="thumbnail" />
           <div class="image-overlay">
             <div class="image-actions">
+              <button @click.stop="onInsert(image.url)" class="action-btn" title="Insert into Note">
+                <ArrowDownOnSquareIcon />
+              </button>
               <button @click.stop="onEdit(image)" class="action-btn" title="Edit Details">
                 <PencilIcon />
               </button>
               <button @click.stop="onDelete(image.id)" class="action-btn danger" title="Delete Image">
                 <TrashIcon />
               </button>
-            </div>
-            <div class="zoom-indicator">
-              <MagnifyingGlassPlusIcon />
             </div>
             <p class="image-description">{{ image.description }}</p>
           </div>
@@ -233,22 +254,5 @@ const onDelete = async (imageId) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: auto; /* Pushes description to the bottom */
-}
-
-.zoom-indicator {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  width: 48px;
-  height: 48px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-
-  .image-card:hover & {
-    opacity: 0.8;
-  }
 }
 </style>

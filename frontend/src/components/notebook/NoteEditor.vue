@@ -361,6 +361,7 @@ onBeforeUnmount(() => {
       <TradeImageGallery
         v-if="isGalleryModalOpen && note.trade_id"
         :trade-id="note.trade_id"
+        mode="full"
         @insert-image="handleInsertImage"
         @edit-image="handleEditImage"
       />
