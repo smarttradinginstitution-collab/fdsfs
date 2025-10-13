@@ -30,6 +30,7 @@ const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
 const editableContent = ref(null);
+const editorRef = ref(null); // Ref for RichTextEditor
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -108,6 +109,12 @@ const handleEditImage = (image) => {
 
 const handleUpdateTradeDetails = (payload) => {
   if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
+};
+
+const handleInsertImageIntoNote = (imageUrl) => {
+  if (editorRef.value) {
+    editorRef.value.insertImage(imageUrl);
+  }
 };
 
 const openLightbox = (index) => {
@@ -193,9 +200,9 @@ watch(() => route.params.id, (newId) => {
 
 watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
   if (rightColumnActiveTab.value === 'trade-note') {
-    editableContent.value = currentTradeNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
+    editableContent.value = currentTradeNote.value?.content || '<p></p>';
   } else if (rightColumnActiveTab.value === 'daily-journal') {
-    editableContent.value = currentDailyJournalNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
+    editableContent.value = currentDailyJournalNote.value?.content || '<p></p>';
   }
 }, { immediate: true, deep: true });
 </script>
@@ -242,7 +249,14 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                   <div>Contenuto Executions</div>
                 </template>
                 <template #attachments>
-                  <TradeImageGallery :trade-id="trade.id" :images="imagesForCurrentTrade" mode="uploader-only" @edit-image="handleEditImage" />
+                  <TradeImageGallery
+                    :trade-id="trade.id"
+                    :images="imagesForCurrentTrade"
+                    mode="uploader-only"
+                    :allow-insertion="true"
+                    @edit-image="handleEditImage"
+                    @insert-image="handleInsertImageIntoNote"
+                  />
                 </template>
               </BaseTabs>
             </BaseWidget>
@@ -264,7 +278,15 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                 </div>
               </div>
               <hr v-if="primaryBeforeImage || primaryAfterImage" class="section-divider" />
-              <TradeImageGallery :trade-id="trade.id" :images="imagesForCurrentTrade" mode="gallery-only" @edit-image="handleEditImage" @open-lightbox="openLightbox" />
+              <TradeImageGallery
+                :trade-id="trade.id"
+                :images="imagesForCurrentTrade"
+                mode="gallery-only"
+                :allow-insertion="true"
+                @edit-image="handleEditImage"
+                @open-lightbox="openLightbox"
+                @insert-image="handleInsertImageIntoNote"
+              />
             </BaseWidget>
 
             <BaseWidget class="notes-widget">
@@ -274,7 +296,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                   <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
                 </div>
                 <div class="editor-container">
-                  <RichTextEditor v-model="editableContent" />
+                  <RichTextEditor ref="editorRef" v-model="editableContent" />
                 </div>
               </div>
             </BaseWidget>
