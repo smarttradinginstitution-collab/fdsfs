@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
 import PillTabs from '@/components/ui/PillTabs.vue';
-import RichTextEditor from '@/components/ui/RichTextEditor.vue';
+import TradeNoteManager from '@/components/notebook/TradeNoteManager.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
@@ -25,11 +25,9 @@ const imageStore = useImageStore();
 
 const isPageLoading = ref(true);
 const activeTab = ref('stats');
-const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
-const editableContent = ref(null);
 const editorRef = ref(null); // Ref for RichTextEditor
 
 // Lightbox state
@@ -45,11 +43,6 @@ const leftColumnTabs = [
   { id: 'playbook', label: 'Playbook' },
   { id: 'executions', label: 'Executions' },
   { id: 'attachments', label: 'Attachments' },
-];
-
-const rightColumnTabs = [
-  { id: 'trade-note', label: 'Trade note' },
-  { id: 'daily-journal', label: 'Daily journal' },
 ];
 
 // --- COMPUTED ---
@@ -72,20 +65,6 @@ const tradeDate = computed(() => {
   });
 });
 
-const tradeNotesFolder = computed(() => notebookStore.folders.find(f => f.name === 'Trade Notes'));
-const dailyJournalFolder = computed(() => notebookStore.folders.find(f => f.name === 'Daily Journal'));
-
-// --- These computed properties now use the local state, which is safe ---
-const currentTradeNote = computed(() => {
-  if (!trade.value) return null;
-  return tradeNotesList.value.find(n => n.trade_id === trade.value.id);
-});
-
-const currentDailyJournalNote = computed(() => {
-    if (!trade.value) return null;
-    const noteTitle = `Journal - ${tradeDate.value}`;
-    return dailyJournalNotesList.value.find(n => n.title === noteTitle);
-});
 
 // --- METHODS ---
 const handlePrevious = () => {
@@ -134,38 +113,6 @@ const prevImage = () => {
   lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
-const handleSaveNotes = async () => {
-  if (!trade.value || !editableContent.value) return;
-
-  if (rightColumnActiveTab.value === 'trade-note') {
-    const noteData = {
-      title: `${trade.value.symbol_snapshot} - ${tradeDate.value}`,
-      content: editableContent.value,
-      trade_id: trade.value.id,
-      folder_id: tradeNotesFolder.value.id,
-    };
-    if (currentTradeNote.value) {
-      await notebookStore.updateNote(currentTradeNote.value.id, noteData);
-    } else {
-      await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    const noteData = {
-      title: `Journal - ${tradeDate.value}`,
-      content: editableContent.value,
-      folder_id: dailyJournalFolder.value.id,
-    };
-    if (currentDailyJournalNote.value) {
-        await notebookStore.updateNote(currentDailyJournalNote.value.id, noteData);
-    } else {
-        await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
-  }
-};
 
 const selectTradeFromStore = (tradeId) => {
   isPageLoading.value = true;
@@ -198,13 +145,6 @@ watch(() => route.params.id, (newId) => {
   }
 });
 
-watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
-  if (rightColumnActiveTab.value === 'trade-note') {
-    editableContent.value = currentTradeNote.value?.content || '<p></p>';
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    editableContent.value = currentDailyJournalNote.value?.content || '<p></p>';
-  }
-}, { immediate: true, deep: true });
 </script>
 
 <template>
@@ -263,17 +203,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
           </div>
 
           <div class="right-column">
-            <BaseWidget class="notes-widget">
-              <div class="right-column-content">
-                <div class="notes-header">
-                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-                  <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
-                </div>
-                <div class="editor-container">
-                  <RichTextEditor v-model="editableContent" />
-                </div>
-              </div>
-            </BaseWidget>
+            <TradeNoteManager v-if="trade" :trade-id="trade.id" />
 
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>

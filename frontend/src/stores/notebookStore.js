@@ -7,6 +7,7 @@ export const useNotebookStore = defineStore('notebook', {
   state: () => ({
     folders: [],
     notes: [],
+    unlinkedNotes: [],
     recentTrades: [], // To store trades for linking
     selectedFolderId: null,
     selectedNoteId: null,
@@ -150,7 +151,7 @@ export const useNotebookStore = defineStore('notebook', {
       this.isLoadingNotes = true;
       this.error = null;
       try {
-        const response = await apiClient.get('/notebook/notes/all');
+        const response = await apiClient.get('/notebook/notes');
         this.notes = response.data;
       } catch (err) {
         console.error('Error fetching all notes:', err);
@@ -159,6 +160,88 @@ export const useNotebookStore = defineStore('notebook', {
       } finally {
         this.isLoadingNotes = false;
       }
+    },
+
+    async fetchUnlinkedNotes() {
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get('/notebook/notes?linked=false');
+        this.unlinkedNotes = response.data;
+      } catch (err) {
+        console.error('Error fetching unlinked notes:', err);
+        this.error = err.response?.data?.detail || 'Failed to fetch unlinked notes.';
+        this.unlinkedNotes = [];
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
+    async linkNoteToTrade(noteId, tradeId) {
+      try {
+        const updatedNote = await this.updateNote(noteId, { trade_id: tradeId });
+        // Optionally, update local state if necessary
+        return updatedNote;
+      } catch (error) {
+        console.error('Error linking note to trade:', error);
+        this.error = error.response?.data?.detail || 'Failed to link note.';
+        throw error;
+      }
+    },
+
+    async unlinkNoteFromTrade(noteId) {
+      try {
+        const updatedNote = await this.updateNote(noteId, { trade_id: null });
+        // Optionally, update local state if necessary
+        return updatedNote;
+      } catch (error) {
+        console.error('Error unlinking note from trade:', error);
+        this.error = error.response?.data?.detail || 'Failed to unlink note.';
+        throw error;
+      }
+    },
+
+    async fetchNoteForTrade(tradeId) {
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get(`/trades/${tradeId}/note`);
+        // This note should be handled by the component that calls this action
+        return response.data;
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          return null; // No note found for this trade, which is a valid case
+        }
+        console.error(`Error fetching note for trade ${tradeId}:`, err);
+        this.error = err.response?.data?.detail || 'Failed to fetch note for trade.';
+        throw err;
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
+    async createNoteForTrade({ title, tradeId }) {
+        if (!this.selectedFolderId) {
+            // Try to find the "Trade Notes" system folder
+            const tradeNotesFolder = this.folders.find(f => f.system_folder_identifier === 'TRADE_NOTES');
+            if (tradeNotesFolder) {
+                this.selectedFolderId = tradeNotesFolder.id;
+            } else {
+                throw new Error("Cannot create trade note without a selected folder, and the 'Trade Notes' system folder was not found.");
+            }
+        }
+
+        const newNote = await this.createNote({
+            folder_id: this.selectedFolderId,
+            title,
+            trade_id: tradeId,
+            content: { type: 'doc', content: [{ type: 'paragraph' }] },
+        });
+
+        if (newNote && newNote.id) {
+            this.selectNote(newNote.id);
+        }
+        return newNote;
     },
 
     async createNote(noteData) {

@@ -24,7 +24,7 @@ class NoteCreate(NoteBase):
     trade_id: Optional[UUID] = Field(None, description="The optional ID of the trade this note is linked to")
 
 class NoteUpdate(NoteBase):
-    pass
+    trade_id: Optional[UUID] = Field(None, description="The optional ID of the trade this note is linked to")
 
 class NoteRead(NoteBase):
     id: UUID

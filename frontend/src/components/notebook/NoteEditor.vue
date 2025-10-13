@@ -19,10 +19,11 @@ import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
 import BaseModal from '../ui/BaseModal.vue';
 import TradeImageGallery from '../images/TradeImageGallery.vue';
 import ImageMetadataModal from '../images/ImageMetadataModal.vue';
+import LinkTradeModal from './LinkTradeModal.vue';
 
 // Icons
 import {
-  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon, PhotoIcon
+  ArrowUturnLeftIcon, ArrowUturnRightIcon, MinusIcon, CodeBracketIcon, LinkIcon, ListBulletIcon, QueueListIcon, CheckCircleIcon, Bars3BottomLeftIcon, Bars2Icon, Bars3BottomRightIcon, PlusIcon, PhotoIcon, ArrowsRightLeftIcon
 } from '@heroicons/vue/24/solid';
 
 // Store and other components
@@ -45,6 +46,7 @@ const isSaving = ref(false); // Flag to prevent concurrent saves
 const isGalleryModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
+const isLinkTradeModalOpen = ref(false);
 
 
 const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'];
@@ -135,6 +137,18 @@ const handleInsertImage = (imageUrl) => {
     editor.value.chain().focus().setResizableImage({ src: imageUrl }).run();
     isGalleryModalOpen.value = false;
   }
+};
+
+const handleLinkToTrade = async (tradeId) => {
+    if (!note.value) return;
+    try {
+        await store.linkNoteToTrade(note.value.id, tradeId);
+        isLinkTradeModalOpen.value = false;
+        uiStore.showNotification({ message: 'Note linked successfully!', type: 'success' });
+    } catch (error) {
+        console.error('Failed to link note to trade:', error);
+        uiStore.showNotification({ message: error.message || 'Failed to link note.', type: 'error' });
+    }
 };
 
 const handleEditImage = (image) => {
@@ -341,6 +355,9 @@ onBeforeUnmount(() => {
         <button @click="openImageGallery" :disabled="!isTradeNote" class="icon-button" title="Add image from trade gallery">
           <PhotoIcon class="h-5 w-5" />
         </button>
+        <button @click="isLinkTradeModalOpen = true" :disabled="isTradeNote" class="icon-button" title="Link to Trade">
+            <ArrowsRightLeftIcon class="h-5 w-5" />
+        </button>
         <div class="divider"></div>
         <ToolbarColorPicker v-model="textColor"><span class="font-bold">A</span></ToolbarColorPicker>
         <ToolbarColorPicker v-model="highlightColor"><span class="font-bold" :style="{ backgroundColor: highlightColor, padding: '2px' }">Aa</span></ToolbarColorPicker>
@@ -372,6 +389,12 @@ onBeforeUnmount(() => {
       :show="isMetadataModalOpen"
       :image="selectedImageForEdit"
       @close="isMetadataModalOpen = false"
+    />
+
+    <LinkTradeModal
+        :is-open="isLinkTradeModalOpen"
+        @close="isLinkTradeModalOpen = false"
+        @link-note="handleLinkToTrade"
     />
   </div>
 </template>

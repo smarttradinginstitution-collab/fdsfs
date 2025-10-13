@@ -55,7 +55,7 @@ class Note(Base):
     folder: Mapped["NotebookFolder"] = relationship(
         "NotebookFolder", back_populates="notes"
     )
-    trade: Mapped[Optional["Trade"]] = relationship("Trade", back_populates="notes")
+    trade: Mapped[Optional["Trade"]] = relationship("Trade", back_populates="note")
     templates: Mapped[List["NoteTemplate"]] = relationship(
         "NoteTemplate",
         secondary=notes_note_templates_association,

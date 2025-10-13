@@ -44,10 +44,23 @@ class NoteRepository:
         return result.unique().scalars().first()
 
     async def get_by_trade_id(self, trade_id: UUID) -> Note | None:
-        """Get a note by its trade_id."""
-        stmt = select(Note).where(Note.trade_id == trade_id)
+        """Get a note by its trade_id, eagerly loading all required relationships."""
+        stmt = (
+            select(Note)
+            .options(
+                joinedload(Note.folder),
+                joinedload(Note.trade).joinedload(Trade.asset),
+                joinedload(Note.trade).joinedload(Trade.tags),
+                joinedload(Note.trade).joinedload(Trade.mistakes),
+                joinedload(Note.trade).joinedload(Trade.playbook),
+                joinedload(Note.trade).joinedload(Trade.news_impacts),
+                joinedload(Note.trade).joinedload(Trade.psychology_states),
+                selectinload(Note.templates),
+            )
+            .where(Note.trade_id == trade_id)
+        )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def list_by_folder_id(self, folder_id: UUID) -> Sequence[Note]:
         """List all notes for a given folder, including related trades and all sub-relationships."""
@@ -65,6 +78,38 @@ class NoteRepository:
             .where(Note.folder_id == folder_id)
             .order_by(Note.updated_at.desc())
         )
+        res = await self.db.execute(stmt)
+        return res.unique().scalars().all()
+
+    async def list(
+        self, general_account_id: UUID, linked: bool | None = None
+    ) -> Sequence[Note]:
+        """
+        List all notes for a given general account, with an optional filter for linked status.
+        Includes related trades and all sub-relationships.
+        """
+        stmt = (
+            select(Note)
+            .join(Note.folder)
+            .options(
+                joinedload(Note.trade).joinedload(Trade.asset),
+                joinedload(Note.trade).joinedload(Trade.tags),
+                joinedload(Note.trade).joinedload(Trade.mistakes),
+                joinedload(Note.trade).joinedload(Trade.playbook),
+                joinedload(Note.trade).joinedload(Trade.news_impacts),
+                joinedload(Note.trade).joinedload(Trade.psychology_states),
+                selectinload(Note.templates),
+            )
+            .where(NotebookFolder.general_account_id == general_account_id)
+        )
+
+        if linked is True:
+            stmt = stmt.where(Note.trade_id.isnot(None))
+        elif linked is False:
+            stmt = stmt.where(Note.trade_id.is_(None))
+
+        stmt = stmt.order_by(Note.updated_at.desc())
+
         res = await self.db.execute(stmt)
         return res.unique().scalars().all()
 

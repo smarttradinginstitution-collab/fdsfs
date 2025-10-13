@@ -143,7 +143,7 @@ class Trade(Base):
     psychology_states: Mapped[list["PsychologyState"]] = relationship(
         "PsychologyState", secondary="public.trades_psychology", back_populates="trades"
     )
-    notes: Mapped[list["Note"]] = relationship("Note", back_populates="trade")
+    note: Mapped[Optional["Note"]] = relationship("Note", back_populates="trade", uselist=False)
     images: Mapped[list["Image"]] = relationship("Image", foreign_keys="Image.trade_id", back_populates="trade")
     rules_followed: Mapped[List["RulePlaybook"]] = relationship(
         "RulePlaybook",

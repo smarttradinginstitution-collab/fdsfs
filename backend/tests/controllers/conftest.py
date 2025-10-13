@@ -72,6 +72,11 @@ def user_client(async_client: AsyncClient, regular_user: AuthUser) -> AsyncClien
     return async_client
 
 @pytest.fixture
+def current_user(regular_user: AuthUser) -> dict:
+    """Provides the claims for the regular user."""
+    return {"sub": str(regular_user.id), "email": regular_user.email}
+
+@pytest.fixture
 async def test_broker(db_session: AsyncSession) -> Broker:
     """Fixture for a pre-existing broker."""
     broker = Broker(name=f"Test Broker Inc. {uuid4()}")

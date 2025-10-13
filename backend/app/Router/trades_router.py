@@ -12,6 +12,7 @@ from app.Controllers.trades_controller import TradesController
 from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Router.auth import get_current_claims
+from app.Router.dependencies import get_current_user, CurrentUser
 
 from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
 from app.Schemas.analytics import (
@@ -113,7 +114,21 @@ async def get_financial_summary(
     return await controller.get_financial_summary(claims, trade_id, service)
 
 
+from app.Schemas.notebook import NoteRead
+from app.Controllers.notebook_controller import NotebookController
+from app.Services.notebook_service import NotebookService
+
+notebook_controller = NotebookController()
+
 # --- CRUD Trades ---
+@router.get("/{trade_id}/note", response_model=NoteRead, summary="Get the note associated with a trade")
+async def get_note_for_trade(
+    trade_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: NotebookService = Depends(),
+):
+    return await notebook_controller.get_note_for_trade(trade_id=trade_id, current_user=current_user, service=service)
+
 @router.post("/", response_model=TradeRead, status_code=status.HTTP_201_CREATED)
 async def create_trade(
     trade_data: TradeCreate,

@@ -113,10 +113,10 @@ class NotebookService:
 
     # --- Note Operations ---
 
-    async def get_all_notes_for_user(self, user_id: UUID) -> List[Note]:
-        """Get all notes for the current user's general account."""
+    async def get_all_notes_for_user(self, user_id: UUID, linked: bool | None = None) -> List[Note]:
+        """Get all notes for the current user's general account, with an optional filter for linked status."""
         general_account_id = await self._get_general_account_id(user_id)
-        return await self.note_repo.list_by_general_account_id(general_account_id)
+        return await self.note_repo.list(general_account_id, linked)
 
     async def get_notes_for_folder(self, folder_id: UUID, user_id: UUID) -> List[Note]:
         """Get all notes for a specific folder, ensuring it belongs to the user."""
@@ -153,9 +153,40 @@ class NotebookService:
 
         return await self.note_repo.create(note_in)
 
+    async def get_note_by_trade_id(self, trade_id: UUID, user_id: UUID) -> Note:
+        """Get the note for a specific trade, ensuring the trade belongs to the user."""
+        general_account_id = await self._get_general_account_id(user_id)
+        # First, find the note by trade_id
+        note = await self.note_repo.get_by_trade_id(trade_id)
+        if not note:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No note found for this trade.",
+            )
+        # Then, verify that the found note belongs to the user's general account
+        # This check is indirect: note -> folder -> general_account
+        if not note.folder or note.folder.general_account_id != general_account_id:
+            # This case should ideally not happen if data integrity is maintained,
+            # but it's a critical security check.
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Note found, but it does not belong to the user.",
+            )
+        return note
+
     async def update_note(self, note_id: UUID, note_in: NoteUpdate, user_id: UUID) -> Note:
-        """Update a note, ensuring it belongs to the user."""
+        """Update a note, ensuring it belongs to the user and the trade_id is not already linked."""
         note = await self.get_note(note_id, user_id)
+
+        # If the trade_id is being updated, we must check for conflicts.
+        if note_in.trade_id and note_in.trade_id != note.trade_id:
+            existing_note = await self.note_repo.get_by_trade_id(note_in.trade_id)
+            if existing_note and existing_note.id != note_id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"A note for trade '{note_in.trade_id}' already exists.",
+                )
+
         return await self.note_repo.update(note, note_in)
 
     async def delete_note(self, note_id: UUID, user_id: UUID) -> None:

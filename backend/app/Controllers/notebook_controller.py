@@ -60,11 +60,15 @@ class NotebookController:
 
     async def list_all_my_notes(
         self,
+        linked: bool | None = None,
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
     ) -> List[NoteRead]:
-        """Lists all notes for the currently authenticated user."""
-        return await service.get_all_notes_for_user(user_id=current_user.id)
+        """
+        Lists all notes for the currently authenticated user, with an optional
+        filter to get only notes that are linked or unlinked to trades.
+        """
+        return await service.get_all_notes_for_user(user_id=current_user.id, linked=linked)
 
     async def list_notes_for_folder(
         self,
@@ -91,6 +95,15 @@ class NotebookController:
         service: NotebookService = Depends(),
     ) -> NoteRead:
         return await service.get_note(note_id=note_id, user_id=current_user.id)
+
+    async def get_note_for_trade(
+        self,
+        trade_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> NoteRead:
+        """Gets the note associated with a specific trade."""
+        return await service.get_note_by_trade_id(trade_id=trade_id, user_id=current_user.id)
 
     async def update_note(
         self,

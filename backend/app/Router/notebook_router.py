@@ -59,9 +59,9 @@ router.get(
 # --- Notes Endpoints ---
 
 router.get(
-    "/notes/all",
+    "/notes",
     response_model=List[NoteRead],
-    summary="List all notes for the current user",
+    summary="List all notes for the current user (with optional filters)",
 )(notebook_controller.list_all_my_notes)
 
 router.post(
