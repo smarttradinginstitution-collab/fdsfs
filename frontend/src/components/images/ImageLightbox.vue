@@ -122,16 +122,19 @@ onUnmounted(() => {
 
 .image-container {
   position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: auto; /* Enable scrolling for the container */
-  border-radius: var(--semantic-border-radius-container); /* Move border-radius here */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lightbox-image {
-  display: block; /* Helps with layout */
-  margin: auto; /* Centers the image if smaller than container */
+  display: block;
+  margin: auto;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  max-width: 100vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--semantic-border-radius-container);
 }
 
 .close-button, .nav-button {
