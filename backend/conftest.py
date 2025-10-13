@@ -1,4 +1,19 @@
 # backend/conftest.py
+from dotenv import load_dotenv
+import os
+
+# Carica le variabili d'ambiente dal file .env del backend
+# Assicurati che il percorso sia corretto rispetto a dove esegui pytest
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path=dotenv_path)
+else:
+    # Se il file .env non esiste, imposta delle variabili d'ambiente fittizie
+    # per permettere l'importazione dell'app senza errori.
+    os.environ.setdefault("SUPABASE_URL", "http://localhost:54321")
+    os.environ.setdefault("SUPABASE_ANON_KEY", "your-anon-key")
+    os.environ.setdefault("SUPABASE_SERVICE_KEY", "your-service-key")
+
 
 import pytest
 import asyncio

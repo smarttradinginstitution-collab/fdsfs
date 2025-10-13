@@ -13,6 +13,7 @@ from app.Models.user_role import UserRole
 from app.Models.general_account import GeneralAccount
 from app.Models.mistake import Mistake
 from app.Models.news_impact import NewsImpact
+from app.Models.news_impacts_group import NewsImpactsGroup
 from app.Models.psychology_state import PsychologyState
 from app.Models.tags_group import TagsGroup
 from app.Models.tag import Tag
@@ -93,7 +94,10 @@ async def general_account_with_data(db_session: AsyncSession, regular_user: Auth
 
     # Crea dati correlati e associali
     mistake = Mistake(name="Test Mistake", general_account_id=general_account.id)
-    news_impact = NewsImpact(name="Test News", general_account_id=general_account.id)
+    news_impacts_group = NewsImpactsGroup(name="Test News Group", general_account_id=general_account.id)
+    db_session.add(news_impacts_group)
+    await db_session.flush()
+    news_impact = NewsImpact(name="Test News", group_id=news_impacts_group.id)
     psychology_state = PsychologyState(name="Test State", general_account_id=general_account.id)
     tags_group = TagsGroup(name="Test Group", general_account_id=general_account.id)
     db_session.add_all([mistake, news_impact, psychology_state, tags_group])

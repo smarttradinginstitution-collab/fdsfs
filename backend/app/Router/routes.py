@@ -421,6 +421,13 @@ router.include_router(
 # 📰 NEWS IMPACTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import news_impact_router
+from app.Router import news_impacts_group_router
+
+router.include_router(
+    news_impacts_group_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
 
 router.include_router(
     news_impact_router.router,

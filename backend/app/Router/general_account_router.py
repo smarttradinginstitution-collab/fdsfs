@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, status
 # Importa le funzioni del controller che gestiscono la logica.
 from app.Controllers import general_account_controller
 # Importa gli schemi Pydantic per la validazione dei dati.
-from app.Schemas.general_account import GeneralAccountRead, GeneralAccountWithData
+from app.Schemas.general_account import GeneralAccountRead, GeneralAccountWithDataRead
 # Importa la dipendenza per ottenere l'utente autenticato.
 from app.Router.auth import get_current_claims
 
@@ -38,7 +38,7 @@ router_with_data = APIRouter(
 
 router_with_data.get(
     "/general-account-with-data/{account_id}",
-    response_model=GeneralAccountWithData,
+    response_model=GeneralAccountWithDataRead,
     summary="Get General Account with All Data",
     description="""Recupera un General Account specifico tramite ID,
     includendo tutte le relazioni come mistakes, news impacts,
