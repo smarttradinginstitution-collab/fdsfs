@@ -111,6 +111,7 @@ const prevImage = () => {
 const isCreatingNote = ref(false);
 
 const loadDataForTrade = async (tradeId) => {
+  if (isPageLoading.value) return;
   isPageLoading.value = true;
   currentNoteId.value = null;
   error.value = null;
@@ -167,15 +168,11 @@ const loadDataForTrade = async (tradeId) => {
 
 
 // --- LIFECYCLE & WATCHERS ---
-onMounted(() => {
-  loadDataForTrade(route.params.id);
-});
-
-watch(() => route.params.id, (newId, oldId) => {
-  if (newId && newId !== oldId) {
+watch(() => route.params.id, (newId) => {
+  if (newId) {
     loadDataForTrade(newId);
   }
-});
+}, { immediate: true });
 </script>
 
 <template>
