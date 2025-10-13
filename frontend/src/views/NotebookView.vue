@@ -27,7 +27,7 @@
 
       <!-- Column 3: Note Editor -->
       <div class="editor-pane">
-        <NoteEditor v-if="store.selectedNote" />
+        <NoteEditor v-if="store.selectedNoteId" :note-id="store.selectedNoteId" :key="store.selectedNoteId" />
         <div v-else class="editor-placeholder">
           <p>Select a note to view or edit it.</p>
           <p>Or, select a folder and create a new note.</p>

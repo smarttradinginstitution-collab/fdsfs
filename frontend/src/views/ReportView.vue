@@ -133,6 +133,11 @@ const loadDataForTrade = async (tradeId) => {
 
     // 3. Check for existing note
     const currentTrade = tradesStore.selectedTrade;
+    if (!currentTrade) {
+      // If trade doesn't exist, show not found and stop loading.
+      isPageLoading.value = false;
+      return;
+    }
     let note = notebookStore.notes.find(n => n.trade_id === currentTrade.id);
 
     if (note) {
