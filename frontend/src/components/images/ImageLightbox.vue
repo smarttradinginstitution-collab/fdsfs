@@ -123,7 +123,7 @@ onUnmounted(() => {
 .image-container {
   position: relative;
   max-width: 90vw;
-  max-height: 90vh;
+  max-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
