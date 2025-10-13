@@ -330,7 +330,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   justify-content: space-between;
   align-items: center;
   padding-bottom: var(--semantic-size-inset-lg);
-  border-bottom: 1px solid var(--semantic-color-border-default);
 }
 
 .navigation-controls,
