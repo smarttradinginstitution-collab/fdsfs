@@ -9,6 +9,11 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  mode: {
+    type: String,
+    default: 'full', // 'full', 'gallery-only', 'uploader-only'
+    validator: (value) => ['full', 'gallery-only', 'uploader-only'].includes(value),
+  },
 });
 
 const emit = defineEmits(['insert-image', 'edit-image']);
@@ -62,7 +67,9 @@ watch(() => props.tradeId, (newTradeId) => {
 
 <template>
   <div class="trade-image-gallery">
+    <!-- Uploader Section -->
     <div
+      v-if="mode === 'full' || mode === 'uploader-only'"
       class="upload-area"
       :class="{ 'is-dragging': isDragging }"
       @dragover.prevent="isDragging = true"
@@ -75,28 +82,31 @@ watch(() => props.tradeId, (newTradeId) => {
       <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*" class="hidden-input" />
     </div>
 
-    <div v-if="isLoading" class="loading-spinner">Loading images...</div>
+    <!-- Gallery Section -->
+    <div v-if="mode === 'full' || mode === 'gallery-only'">
+      <div v-if="isLoading" class="loading-spinner">Loading images...</div>
 
-    <div v-if="!isLoading && imagesForCurrentTrade.length === 0" class="empty-state">
-      <p>No images have been attached to this trade yet.</p>
-    </div>
+      <div v-else-if="imagesForCurrentTrade.length === 0" class="empty-state">
+        <p>No images have been attached to this trade yet.</p>
+      </div>
 
-    <div class="image-grid" v-else>
-      <div v-for="image in imagesForCurrentTrade" :key="image.id" class="image-card">
-        <img :src="image.url" :alt="image.description || 'Trade image'" class="thumbnail" />
-        <div class="image-overlay">
-          <div class="image-actions">
-            <button @click="onInsert(image.url)" class="action-btn" title="Insert into Note">
-              <ArrowDownOnSquareIcon />
-            </button>
-            <button @click="onEdit(image)" class="action-btn" title="Edit Details">
-              <PencilIcon />
-            </button>
-            <button @click="onDelete(image.id)" class="action-btn danger" title="Delete Image">
-              <TrashIcon />
-            </button>
+      <div class="image-grid" v-else>
+        <div v-for="image in imagesForCurrentTrade" :key="image.id" class="image-card">
+          <img :src="image.url" :alt="image.description || 'Trade image'" class="thumbnail" />
+          <div class="image-overlay">
+            <div class="image-actions">
+              <button @click="onInsert(image.url)" class="action-btn" title="Insert into Note">
+                <ArrowDownOnSquareIcon />
+              </button>
+              <button @click="onEdit(image)" class="action-btn" title="Edit Details">
+                <PencilIcon />
+              </button>
+              <button @click="onDelete(image.id)" class="action-btn danger" title="Delete Image">
+                <TrashIcon />
+              </button>
+            </div>
+            <p class="image-description">{{ image.description }}</p>
           </div>
-          <p class="image-description">{{ image.description }}</p>
         </div>
       </div>
     </div>

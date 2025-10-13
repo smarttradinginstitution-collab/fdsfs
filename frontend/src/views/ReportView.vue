@@ -245,6 +245,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
               <template #attachments>
                 <TradeImageGallery
                   :trade-id="trade.id"
+                  mode="uploader-only"
                   @edit-image="handleEditImage"
                 />
               </template>
@@ -269,6 +270,14 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                   <div v-else class="placeholder">Not set</div>
                 </div>
               </div>
+
+              <hr class="section-divider" />
+
+              <TradeImageGallery
+                :trade-id="trade.id"
+                mode="gallery-only"
+                @edit-image="handleEditImage"
+              />
             </BaseWidget>
 
             <BaseWidget class="notes-widget">
@@ -470,5 +479,11 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
     color: var(--semantic-color-text-secondary);
     font-style: italic;
   }
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--semantic-color-border-default);
+  margin: var(--semantic-size-gap-lg) 0;
 }
 </style>
