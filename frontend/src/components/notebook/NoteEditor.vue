@@ -19,7 +19,7 @@ import ToolbarColorPicker from '../ui/ToolbarColorPicker.vue';
 import BaseModal from '../ui/BaseModal.vue';
 import TradeImageGallery from '../images/TradeImageGallery.vue';
 import ImageMetadataModal from '../images/ImageMetadataModal.vue';
-import LinkTradeModal from './LinkTradeModal.vue';
+import LinkNoteModal from './LinkNoteModal.vue';
 
 // Icons
 import {
@@ -391,7 +391,7 @@ onBeforeUnmount(() => {
       @close="isMetadataModalOpen = false"
     />
 
-    <LinkTradeModal
+    <LinkNoteModal
         :is-open="isLinkTradeModalOpen"
         @close="isLinkTradeModalOpen = false"
         @link-note="handleLinkToTrade"
