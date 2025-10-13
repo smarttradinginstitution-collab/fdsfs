@@ -49,13 +49,17 @@ const props = defineProps({
 const notebookStore = useNotebookStore();
 const uiStore = useUiStore();
 
-// Use prop if available, otherwise fall back to store
-const activeNote = computed(() => props.note || notebookStore.selectedNote);
-const financialData = computed(() => notebookStore.financialData); // This might need to be passed as a prop if needed outside of NotebookView
-const folder = computed(() => notebookStore.selectedNoteFolder); // Same as above
+// --- STATE ---
+const notebookStore = useNotebookStore();
+const uiStore = useUiStore();
 
-const isTradeNote = computed(() => !!(activeNote.value?.trade_id || props.trade));
-const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
+// Component now relies entirely on props for its primary data.
+const activeNote = computed(() => props.note);
+const isTradeNote = computed(() => !!(props.note?.trade_id || props.trade));
+
+// The component should not be aware of folder types. This logic belongs in the parent.
+const isDailyJournalNote = computed(() => false);
+const financialData = ref(null); // Financial data should be passed via props if needed.
 
 const editableTitle = ref('');
 const isSaving = ref(false);
@@ -227,18 +231,25 @@ const statsGrid = computed(() => {
     };
 });
 
-watch(activeNote, (newNote) => {
+watch(() => props.note, (newNote) => {
   if (!editor.value) return;
 
-  const isNewNote = !newNote || !editor.value.getText() || (newNote.id !== editor.value.options.editorProps.noteId);
+  const isDifferentNote = newNote?.id !== editor.value?.options.editorProps.noteId;
 
-  if (isNewNote) {
-    editableTitle.value = newNote?.title || '';
+  if (isDifferentNote) {
     const newContent = newNote?.content || '<p></p>';
+    const newTitle = newNote?.title || '';
+
+    editableTitle.value = newTitle;
     editor.value.commands.setContent(newContent, false);
     editor.value.options.editorProps.noteId = newNote?.id;
+  } else if (!newNote) {
+    // Clear editor if note is nullified (e.g. switching to a trade with no note)
+    editableTitle.value = '';
+    editor.value.commands.clearContent(false);
+    editor.value.options.editorProps.noteId = null;
   }
-}, { immediate: true });
+}, { immediate: true, deep: true });
 
 
 async function saveNote() {
@@ -330,16 +341,8 @@ onBeforeUnmount(() => {
       <div class="meta-item">Updated: {{ formatDate(activeNote.updated_at) }}</div>
     </div>
 
-    <!-- Financial data display logic remains, using `activeNote` -->
-    <div class="pnl-container" v-if="financialData && enableAutoSave">
-      <!-- ... existing pnl display ... -->
-    </div>
-    <div v-if="isTradeNote && enableAutoSave" class="financial-details">
-      <!-- ... existing financial details ... -->
-    </div>
-    <div v-if="isDailyJournalNote && statsGrid && enableAutoSave" class="daily-summary-container">
-      <!-- ... existing daily summary ... -->
-    </div>
+    <!-- Financial data display is removed as the component is now generic -->
+    <!-- The parent component will be responsible for displaying this information -->
 
     <div class="editor-header-actions">
        <button @click="saveAsTemplate" class="button-secondary" v-show="false">Save as Template</button>

@@ -106,7 +106,6 @@ class NoteRepository:
                 detail="A note for this trade already exists.",
             )
 
-        await self.db.commit()
         # After committing, the note has an ID. We need to fetch it again
         # using our eager-loading method to ensure all relationships are loaded
         # before returning it to the service layer. This prevents lazy-loading errors.
@@ -124,17 +123,6 @@ class NoteRepository:
             setattr(db_obj, field, value)
 
         self.db.add(db_obj)
-        try:
-            # Flush the session to send the update to the database and trigger the unique constraint
-            await self.db.flush()
-            await self.db.commit()
-        except IntegrityError:
-            await self.db.rollback()
-            raise HTTPException(
-                status_code=409,
-                detail="A note with this trade_id already exists.",
-            )
-
         try:
             # Flush the session to send the update to the database and trigger the unique constraint
             await self.db.flush()

@@ -112,8 +112,15 @@ const handleUpdateTradeDetails = (payload) => {
 };
 
 const handleInsertImageIntoNote = (imageUrl) => {
-  if (noteEditorRef.value) {
-    noteEditorRef.value.insertImage(imageUrl);
+  let editorRef;
+  if (rightColumnActiveTab.value === 'trade-note') {
+    editorRef = tradeNoteEditorRef;
+  } else if (rightColumnActiveTab.value === 'daily-journal') {
+    editorRef = dailyJournalNoteEditorRef;
+  }
+
+  if (editorRef && editorRef.value) {
+    editorRef.value.insertImage(imageUrl);
   }
 };
 
@@ -144,15 +151,19 @@ const handleSaveNotes = async () => {
 
   if (editorRef && editorRef.value) {
     await editorRef.value.saveNote();
-    // After saving, a new note might have been created. Refresh the list.
+  }
+};
+
+const handleNoteSaved = async () => {
+    // After saving, a new note might have been created. Refresh the list for both folders
+    // to ensure the UI is up-to-date.
     if (tradeNotesFolder.value) {
       await notebookStore.fetchNotesByFolder(tradeNotesFolder.value.id);
     }
     if (dailyJournalFolder.value) {
-        await notebookStore.fetchNotesByFolder(dailyJournalFolder.value.id);
+      await notebookStore.fetchNotesByFolder(dailyJournalFolder.value.id);
     }
-  }
-};
+}
 
 const selectTradeFromStore = (tradeId) => {
   isPageLoading.value = true;
@@ -257,13 +268,14 @@ watch(() => notebookStore.notes, (newNotes) => {
                   <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
                   <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
                 </div>
-                <div class="editor-container">
+                <div class="editor-container" :key="rightColumnActiveTab">
                     <NoteEditor
                         v-if="rightColumnActiveTab === 'trade-note'"
                         ref="tradeNoteEditorRef"
                         :note="currentTradeNote"
                         :trade="trade"
                         :enable-auto-save="false"
+                        @note-saved="handleNoteSaved"
                     />
                     <NoteEditor
                         v-if="rightColumnActiveTab === 'daily-journal'"
@@ -271,6 +283,7 @@ watch(() => notebookStore.notes, (newNotes) => {
                         :note="currentDailyJournalNote"
                         :trade="trade"
                         :enable-auto-save="false"
+                        @note-saved="handleNoteSaved"
                     />
                 </div>
               </div>
