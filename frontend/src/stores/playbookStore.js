@@ -34,15 +34,35 @@ export const usePlaybookStore = defineStore('playbooks', {
         console.log("User not authenticated. Skipping playbook fetch.");
         return;
       }
+
       this.isLoading = true;
       this.error = null;
+
+      // First, try to load from localStorage
+      const cachedPlaybooks = localStorage.getItem('playbooks');
+      if (cachedPlaybooks) {
+        try {
+          this.playbooks = JSON.parse(cachedPlaybooks);
+          this.isLoading = false;
+          console.log("Playbooks loaded from cache.");
+          return; // Exit if cache is successfully loaded
+        } catch (e) {
+          console.error("Error parsing cached playbooks:", e);
+          // If parsing fails, proceed to fetch from API
+        }
+      }
+
       try {
+        console.log("Fetching playbooks from API...");
         const response = await apiClient.get('/me/playbooks');
         this.playbooks = response.data;
+        // Save to localStorage on successful fetch
+        localStorage.setItem('playbooks', JSON.stringify(response.data));
       } catch (err) {
         console.error('Error fetching playbooks:', err);
         this.error = err.response?.data?.detail || 'An unexpected error occurred.';
-        this.playbooks = [];
+        this.playbooks = []; // Reset on error
+        localStorage.removeItem('playbooks'); // Clear cache on error
       } finally {
         this.isLoading = false;
       }

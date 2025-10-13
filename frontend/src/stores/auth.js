@@ -195,9 +195,10 @@ export const useAuthStore = defineStore('auth', () => {
     generalAccount.value = null; // Pulisci il General Account
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('generalAccount'); // Rimuovi dal localStorage
+
+    // Clear all localStorage data on logout for security and consistency
+    localStorage.clear();
+
     setAuthToken(null);
     router.push('/login');
   }

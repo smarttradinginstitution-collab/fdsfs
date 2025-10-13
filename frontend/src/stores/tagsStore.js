@@ -76,16 +76,42 @@ export const useTagsStore = defineStore('tags', () => {
   }
 
   async function fetchAllTagsData() {
-      isLoading.value = true;
-      error.value = null;
+    isLoading.value = true;
+    error.value = null;
+
+    const cachedTags = localStorage.getItem('tags');
+    const cachedTagGroups = localStorage.getItem('tagGroups');
+
+    if (cachedTags && cachedTagGroups) {
       try {
-          await Promise.all([fetchTags(), fetchTagGroups()]);
-      } catch (err) {
-          console.error('Error fetching all tags data:', err);
-          error.value = 'An error occurred while fetching tags information.';
-      } finally {
-          isLoading.value = false;
+        tags.value = JSON.parse(cachedTags);
+        tagGroups.value = JSON.parse(cachedTagGroups);
+        isLoading.value = false;
+        console.log("Tags and tag groups loaded from cache.");
+        return;
+      } catch (e) {
+        console.error("Error parsing cached tags data:", e);
       }
+    }
+
+    try {
+      console.log("Fetching all tags data from API...");
+      const [tagsResponse, tagGroupsResponse] = await Promise.all([
+        apiClient.get('/me/tags'),
+        apiClient.get('/tags-groups/'),
+      ]);
+      tags.value = tagsResponse.data;
+      tagGroups.value = tagGroupsResponse.data;
+      localStorage.setItem('tags', JSON.stringify(tagsResponse.data));
+      localStorage.setItem('tagGroups', JSON.stringify(tagGroupsResponse.data));
+    } catch (err) {
+      console.error('Error fetching all tags data:', err);
+      error.value = 'An error occurred while fetching tags information.';
+      localStorage.removeItem('tags');
+      localStorage.removeItem('tagGroups');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // --- GROUP ACTIONS ---

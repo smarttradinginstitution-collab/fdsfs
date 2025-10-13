@@ -22,23 +22,44 @@ export const useTradingDnaStore = defineStore('tradingDna', () => {
     error.value = null;
     const uiStore = useUiStore();
 
-    try {
-      // Convert reactive filter arrays to a query string, filtering out empty ones
-      const params = new URLSearchParams();
-      for (const key in filters) {
-        if (filters[key] && filters[key].length > 0) {
-          filters[key].forEach(id => params.append(key, id));
+    const params = new URLSearchParams();
+    for (const key in filters) {
+      if (filters[key] && filters[key].length > 0) {
+        filters[key].forEach(id => params.append(key, id));
+      }
+    }
+    const hasFilters = params.toString() !== '';
+
+    if (!hasFilters) {
+      const cachedReport = localStorage.getItem('tradingDnaReport');
+      if (cachedReport) {
+        try {
+          report.value = JSON.parse(cachedReport);
+          isLoading.value = false;
+          console.log("Trading DNA report loaded from cache.");
+          return;
+        } catch (e) {
+          console.error("Error parsing cached Trading DNA report:", e);
         }
       }
+    }
 
+    try {
+      console.log("Fetching Trading DNA report from API...");
       const response = await apiClient.get('/reports/trading-dna', { params });
       report.value = response.data;
+      if (!hasFilters) {
+        localStorage.setItem('tradingDnaReport', JSON.stringify(response.data));
+      }
     } catch (err) {
       console.error('Error fetching Trading DNA report:', err);
       const errorMessage = err.response?.data?.detail || 'An unexpected error occurred while fetching the report.';
       error.value = errorMessage;
       uiStore.showNotification({ message: errorMessage, type: 'error' });
-      report.value = null; // Clear old data on error
+      report.value = null;
+      if (!hasFilters) {
+        localStorage.removeItem('tradingDnaReport');
+      }
     } finally {
       isLoading.value = false;
     }

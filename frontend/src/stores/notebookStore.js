@@ -55,24 +55,47 @@ export const useNotebookStore = defineStore('notebook', {
     async fetchFolders() {
       this.isLoadingFolders = true;
       this.error = null;
+
+      const cachedFolders = localStorage.getItem('notebookFolders');
+      if (cachedFolders) {
+        try {
+          this.folders = JSON.parse(cachedFolders);
+          this.isLoadingFolders = false;
+          console.log("Notebook folders loaded from cache.");
+          // Ensure a folder is selected if needed
+          const selectedFolderExists = this.folders.some(f => f.id === this.selectedFolderId);
+          if (!this.selectedFolderId || !selectedFolderExists) {
+            if (this.folders.length > 0) {
+              this.selectFolder(this.folders[0].id);
+            } else {
+              this.notes = [];
+            }
+          }
+          return;
+        } catch (e) {
+          console.error("Error parsing cached notebook folders:", e);
+        }
+      }
+
       try {
+        console.log("Fetching notebook folders from API...");
         const response = await apiClient.get('/notebook/folders');
         this.folders = response.data;
+        localStorage.setItem('notebookFolders', JSON.stringify(response.data));
 
-        // If no folder is selected, or the selected one no longer exists,
-        // select the first folder by default.
         const selectedFolderExists = this.folders.some(f => f.id === this.selectedFolderId);
         if (!this.selectedFolderId || !selectedFolderExists) {
           if (this.folders.length > 0) {
             this.selectFolder(this.folders[0].id);
           } else {
-            this.notes = []; // No folders, so no notes
+            this.notes = [];
           }
         }
       } catch (err) {
         console.error('Error fetching notebook folders:', err);
         this.error = err.response?.data?.detail || 'Failed to fetch folders.';
         this.folders = [];
+        localStorage.removeItem('notebookFolders');
       } finally {
         this.isLoadingFolders = false;
       }
@@ -149,13 +172,29 @@ export const useNotebookStore = defineStore('notebook', {
     async fetchAllNotes() {
       this.isLoadingNotes = true;
       this.error = null;
+
+      const cachedNotes = localStorage.getItem('notebookAllNotes');
+      if (cachedNotes) {
+        try {
+          this.notes = JSON.parse(cachedNotes);
+          this.isLoadingNotes = false;
+          console.log("All notes loaded from cache.");
+          return;
+        } catch (e) {
+          console.error("Error parsing cached notes:", e);
+        }
+      }
+
       try {
+        console.log("Fetching all notes from API...");
         const response = await apiClient.get('/notebook/notes/all');
         this.notes = response.data;
+        localStorage.setItem('notebookAllNotes', JSON.stringify(response.data));
       } catch (err) {
         console.error('Error fetching all notes:', err);
         this.error = err.response?.data?.detail || 'Failed to fetch all notes.';
         this.notes = [];
+        localStorage.removeItem('notebookAllNotes');
       } finally {
         this.isLoadingNotes = false;
       }
