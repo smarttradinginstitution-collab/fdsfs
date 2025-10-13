@@ -185,6 +185,27 @@ export const useNotebookStore = defineStore('notebook', {
         }
     },
 
+    async fetchNoteById(noteId) {
+      this.isLoadingNotes = true;
+      try {
+        const response = await apiClient.get(`/notebook/notes/${noteId}`);
+        const fetchedNote = response.data;
+        const index = this.notes.findIndex(n => n.id === noteId);
+        if (index !== -1) {
+          this.notes[index] = fetchedNote;
+        } else {
+          this.notes.push(fetchedNote);
+        }
+        return fetchedNote;
+      } catch (err) {
+        console.error(`Error fetching note ${noteId}:`, err);
+        this.error = err.response?.data?.detail || 'Failed to fetch note.';
+        throw err;
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
     async updateNote(noteId, noteData) {
       // This action is now "silent" - it doesn't trigger a global loading state.
       // This prevents the entire list from flickering during auto-saves.
