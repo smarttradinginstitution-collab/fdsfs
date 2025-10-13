@@ -7,11 +7,10 @@ import PillTabs from '@/components/ui/PillTabs.vue';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import IconButton from '@/components/ui/IconButton.vue';
-import PencilIcon from '@/components/icons/PencilIcon.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
 import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
+import ImageLightbox from '@/components/images/ImageLightbox.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
 import { useImageStore } from '@/stores/imageStore';
@@ -31,6 +30,10 @@ const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
 const editableContent = ref(null);
+
+// Lightbox state
+const isLightboxOpen = ref(false);
+const lightboxCurrentIndex = ref(0);
 
 // Local state for notes to avoid depending on notebookStore's active notes
 const tradeNotesList = ref([]);
@@ -107,6 +110,23 @@ const handleUpdateTradeDetails = (payload) => {
   if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
 };
 
+const openLightbox = (index) => {
+  lightboxCurrentIndex.value = index;
+  isLightboxOpen.value = true;
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+};
+
+const nextImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value + 1) % imagesForCurrentTrade.value.length;
+};
+
+const prevImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
+};
+
 const handleSaveNotes = async () => {
   if (!trade.value || !editableContent.value) return;
 
@@ -140,39 +160,28 @@ const handleSaveNotes = async () => {
   }
 };
 
-
 const selectTradeFromStore = (tradeId) => {
   isPageLoading.value = true;
   const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
   if (tradeFromList) {
-    // Se il trade è già nello store, lo selezioniamo direttamente.
-    // Usiamo una copia per evitare modifiche dirette allo stato dello store.
     tradesStore.selectedTrade = { ...tradeFromList };
-
-    // Filtriamo le note pertinenti dallo store già popolato
     if (tradeNotesFolder.value) {
       tradeNotesList.value = notebookStore.notes.filter(n => n.folder_id === tradeNotesFolder.value.id);
     }
     if (dailyJournalFolder.value) {
       dailyJournalNotesList.value = notebookStore.notes.filter(n => n.folder_id === dailyJournalFolder.value.id);
     }
-
   } else {
-    // Se il trade non è trovato (caso limite, es. link diretto senza pre-caricamento),
-    // lo carichiamo specificamente. Questo mantiene la robustezza.
     console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
     tradesStore.fetchTradeById(tradeId);
   }
-  // Fetch images for this trade
   imageStore.fetchImagesForTrade(tradeId);
   isPageLoading.value = false;
 };
 
-
 // --- LIFECYCLE & WATCHERS ---
 onMounted(() => {
-  // I dati sono già stati pre-caricati. Dobbiamo solo selezionare il trade corretto.
   selectTradeFromStore(route.params.id);
 });
 
@@ -189,28 +198,20 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
     editableContent.value = currentDailyJournalNote.value?.content || { type: 'doc', content: [{ type: 'paragraph' }] };
   }
 }, { immediate: true, deep: true });
-
 </script>
 
 <template>
   <div class="report-detail-view">
-    <!-- Mostra il caricamento unificato finché la pagina non è pronta -->
     <div v-if="isPageLoading" class="loading-state">
       <p>Loading trade details...</p>
     </div>
-
-    <!-- Una volta completato il caricamento, mostra il contenuto effettivo -->
     <template v-else>
-      <!-- Stato di errore -->
       <div v-if="error" class="error-state">
         <h2>Error</h2>
         <p>{{ error }}</p>
         <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
       </div>
-
-      <!-- Contenuto del trade trovato -->
       <div v-else-if="trade" class="report-container">
-        <!-- Secondary Header -->
         <header class="report-header">
           <div class="navigation-controls">
             <button @click="handlePrevious" class="nav-button" :disabled="!tradesStore.getPreviousTradeId">&lt;</button>
@@ -227,66 +228,59 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
           </div>
         </header>
 
-        <!-- Visual Analysis Section -->
-        <BaseWidget v-if="primaryBeforeImage || primaryAfterImage" class="visual-analysis-widget">
-          <h3 class="widget-title">Visual Analysis</h3>
-          <div class="chart-comparison">
-            <div class="chart-container">
-              <h4>Before</h4>
-              <img v-if="primaryBeforeImage" :src="primaryBeforeImage.url" alt="Before chart" />
-              <div v-else class="placeholder">Not set</div>
-            </div>
-            <div class="chart-container">
-              <h4>After</h4>
-              <img v-if="primaryAfterImage" :src="primaryAfterImage.url" alt="After chart" />
-              <div v-else class="placeholder">Not set</div>
-            </div>
-          </div>
-        </BaseWidget>
-
-        <!-- Main Content -->
         <main class="report-content">
-          <!-- Left Column -->
           <div class="left-column">
             <BaseWidget class="stats-widget">
               <BaseTabs v-model="activeTab" :tabs="leftColumnTabs">
                 <template #stats>
-                <TradeStats :trade="trade" @open-edit-modal="openEditModal" />
-              </template>
-              <template #playbook>
-                <div>Contenuto Playbook</div>
-              </template>
-              <template #executions>
-                <div>Contenuto Executions</div>
-              </template>
-              <template #attachments>
-                <TradeImageGallery
-                  :trade-id="trade.id"
-                  @edit-image="handleEditImage"
-                />
-              </template>
-            </BaseTabs>
+                  <TradeStats :trade="trade" @open-edit-modal="openEditModal" />
+                </template>
+                <template #playbook>
+                  <div>Contenuto Playbook</div>
+                </template>
+                <template #executions>
+                  <div>Contenuto Executions</div>
+                </template>
+                <template #attachments>
+                  <TradeImageGallery :trade-id="trade.id" :images="imagesForCurrentTrade" mode="uploader-only" @edit-image="handleEditImage" />
+                </template>
+              </BaseTabs>
             </BaseWidget>
           </div>
 
-          <!-- Right Column -->
           <div class="right-column">
-          <BaseWidget class="notes-widget">
-            <div class="right-column-content">
-              <div class="notes-header">
-                <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-                <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+            <BaseWidget class="visual-analysis-widget">
+              <h3 class="widget-title">Visual Analysis</h3>
+              <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
+                <div class="chart-container">
+                  <h4>Before</h4>
+                  <img v-if="primaryBeforeImage" :src="primaryBeforeImage.url" alt="Before chart" />
+                  <div v-else class="placeholder">Not set</div>
+                </div>
+                <div class="chart-container">
+                  <h4>After</h4>
+                  <img v-if="primaryAfterImage" :src="primaryAfterImage.url" alt="After chart" />
+                  <div v-else class="placeholder">Not set</div>
+                </div>
               </div>
-              <div class="editor-container">
-                <RichTextEditor v-model="editableContent" />
+              <hr v-if="primaryBeforeImage || primaryAfterImage" class="section-divider" />
+              <TradeImageGallery :trade-id="trade.id" :images="imagesForCurrentTrade" mode="gallery-only" @edit-image="handleEditImage" @open-lightbox="openLightbox" />
+            </BaseWidget>
+
+            <BaseWidget class="notes-widget">
+              <div class="right-column-content">
+                <div class="notes-header">
+                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
+                  <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
+                </div>
+                <div class="editor-container">
+                  <RichTextEditor v-model="editableContent" />
+                </div>
               </div>
-              </div>
-          </BaseWidget>
+            </BaseWidget>
           </div>
         </main>
       </div>
-
-      <!-- Stato "Non trovato" -->
       <div v-else class="not-found-state">
         <h2>Trade Not Found</h2>
         <p>The requested trade could not be found.</p>
@@ -294,18 +288,9 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
       </div>
     </template>
 
-    <EditTradeDetailsModal
-      v-if="trade"
-      v-model="isEditModalOpen"
-      :trade="trade"
-      @save="handleUpdateTradeDetails"
-    />
-
-    <ImageMetadataModal
-      :show="isMetadataModalOpen"
-      :image="selectedImageForEdit"
-      @close="isMetadataModalOpen = false"
-    />
+    <EditTradeDetailsModal v-if="trade" v-model="isEditModalOpen" :trade="trade" @save="handleUpdateTradeDetails" />
+    <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit" @close="isMetadataModalOpen = false" />
+    <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage" @prev="prevImage" />
   </div>
 </template>
 
@@ -344,7 +329,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   }
 }
 
-// Stili per i pulsanti di azione, in attesa di un eventuale componente base
 .nav-button, .action-button {
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-interactive);
@@ -369,7 +353,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   display: flex;
   flex-grow: 1;
   gap: var(--semantic-size-stack-lg);
-  min-height: 0; // Fix per flexbox in contenitori scrollabili
+  min-height: 0;
 }
 
 .left-column,
@@ -377,6 +361,7 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: var(--semantic-size-stack-lg);
 }
 
 .left-column {
@@ -388,25 +373,16 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 }
 
 .stats-widget,
-.notes-widget {
+.notes-widget,
+.visual-analysis-widget {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  // Override BaseWidget's default padding if it has any
-  // This lets our internal layout control the spacing.
   padding: var(--semantic-size-inset-lg);
 }
 
-.stats-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--semantic-size-stack-sm);
-
-  h3 {
-    font: var(--semantic-font-style-heading-md);
-    color: var(--semantic-color-text-primary);
-  }
+.notes-widget {
+  flex-grow: 2; /* Make notes widget larger */
 }
 
 .right-column-content {
@@ -429,7 +405,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 }
 
 .visual-analysis-widget {
-  padding: var(--semantic-size-inset-lg);
   .widget-title {
     font: var(--semantic-font-style-heading-md);
     margin-bottom: var(--semantic-size-stack-md);
@@ -470,5 +445,11 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
     color: var(--semantic-color-text-secondary);
     font-style: italic;
   }
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--semantic-color-border-default);
+  margin: var(--semantic-size-gap-lg) 0;
 }
 </style>
