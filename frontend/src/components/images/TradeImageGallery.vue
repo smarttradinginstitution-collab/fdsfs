@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useImageStore } from '../../stores/imageStore';
 import { storeToRefs } from 'pinia';
-import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon } from '@heroicons/vue/24/outline';
+import { DocumentArrowUpIcon, PencilIcon, TrashIcon, ArrowDownOnSquareIcon, MagnifyingGlassPlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   tradeId: {
@@ -75,14 +75,6 @@ const onDelete = async (imageId) => {
     await imageStore.deleteImage(imageId);
   }
 };
-
-onMounted(() => {
-  imageStore.fetchImagesForTrade(props.tradeId);
-});
-
-watch(() => props.tradeId, (newTradeId) => {
-  imageStore.fetchImagesForTrade(newTradeId);
-});
 </script>
 
 <template>
@@ -115,15 +107,15 @@ watch(() => props.tradeId, (newTradeId) => {
           <img :src="image.url" :alt="image.description || 'Trade image'" class="thumbnail" />
           <div class="image-overlay">
             <div class="image-actions">
-              <button @click.stop="onInsert(image.url)" class="action-btn" title="Insert into Note">
-                <ArrowDownOnSquareIcon />
-              </button>
               <button @click.stop="onEdit(image)" class="action-btn" title="Edit Details">
                 <PencilIcon />
               </button>
               <button @click.stop="onDelete(image.id)" class="action-btn danger" title="Delete Image">
                 <TrashIcon />
               </button>
+            </div>
+            <div class="zoom-indicator">
+              <MagnifyingGlassPlusIcon />
             </div>
             <p class="image-description">{{ image.description }}</p>
           </div>
@@ -186,6 +178,7 @@ watch(() => props.tradeId, (newTradeId) => {
   overflow: hidden;
   border-radius: var(--semantic-border-radius-interactive);
   aspect-ratio: 1 / 1;
+  cursor: pointer;
 
   .thumbnail {
     width: 100%;
@@ -202,7 +195,7 @@ watch(() => props.tradeId, (newTradeId) => {
     transition: opacity 0.3s ease;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 0.75rem;
     color: white;
   }
@@ -218,34 +211,33 @@ watch(() => props.tradeId, (newTradeId) => {
 .image-actions {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+}
 
-  .action-btn {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+.action-btn {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 
-    svg {
-      width: 16px;
-      height: 16px;
-    }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.4);
-    }
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
 
-    &.danger:hover {
-      background-color: var(--semantic-color-feedback-negative-bg-default);
-      color: var(--semantic-color-feedback-negative-text);
-    }
+  &.danger:hover {
+    background-color: var(--semantic-color-feedback-negative-bg-default);
+    color: var(--semantic-color-feedback-negative-text);
   }
 }
 
@@ -254,5 +246,22 @@ watch(() => props.tradeId, (newTradeId) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: auto;
+}
+
+.zoom-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  width: 48px;
+  height: 48px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  .image-card:hover & {
+    opacity: 0.8;
+  }
 }
 </style>
