@@ -108,56 +108,71 @@ const prevImage = () => {
   lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
+const isCreatingNote = ref(false);
+
 const loadDataForTrade = async (tradeId) => {
   isPageLoading.value = true;
-  currentNoteId.value = null; // Resetta la nota mentre si carica
+  currentNoteId.value = null;
+  error.value = null;
 
-  await tradesStore.fetchTradeById(tradeId);
-  await imageStore.fetchImagesForTrade(tradeId);
-  await setupNoteForTrade(tradesStore.selectedTrade);
+  try {
+    // 1. Fetch trade and images concurrently
+    await Promise.all([
+      tradesStore.fetchTradeById(tradeId),
+      imageStore.fetchImagesForTrade(tradeId)
+    ]);
 
-  isPageLoading.value = false;
-};
-
-const setupNoteForTrade = async (currentTrade) => {
-  if (!currentTrade) return;
-
-  if (notebookStore.notes.length === 0) {
-    await notebookStore.fetchAllNotes();
-  }
-
-  let note = notebookStore.notes.find(n => n.trade_id === currentTrade.id);
-
-  if (note) {
-    currentNoteId.value = note.id;
-  } else {
-    const tradeNotesFolder = notebookStore.folders.find(f => f.name === 'Trade Notes');
-    if (tradeNotesFolder) {
-      try {
-        const newNote = await notebookStore.createNote({
-          title: `${currentTrade.symbol_snapshot} - ${tradeDate.value}`,
-          content: { type: 'doc', content: [{ type: 'paragraph' }] },
-          trade_id: currentTrade.id,
-          folder_id: tradeNotesFolder.id,
-        });
-        currentNoteId.value = newNote.id;
-      } catch (e) {
-        console.error("Failed to create a new note:", e);
-        error.value = "Could not create a note for this trade.";
-      }
-    } else {
-        error.value = "Trade Notes system folder not found.";
+    // 2. Ensure notes and folders are loaded
+    if (notebookStore.notes.length === 0) {
+      await notebookStore.fetchAllNotes();
     }
+     if (notebookStore.folders.length === 0) {
+      await notebookStore.fetchFolders();
+    }
+
+    // 3. Check for existing note
+    const currentTrade = tradesStore.selectedTrade;
+    let note = notebookStore.notes.find(n => n.trade_id === currentTrade.id);
+
+    if (note) {
+      currentNoteId.value = note.id;
+    } else {
+      // 4. Create note only if it doesn't exist, using a lock
+      if (!isCreatingNote.value) {
+        isCreatingNote.value = true;
+        const tradeNotesFolder = notebookStore.folders.find(f => f.name === 'Trade Notes');
+
+        if (tradeNotesFolder) {
+          const newNote = await notebookStore.createNote({
+            title: `${currentTrade.symbol_snapshot} - ${tradeDate.value}`,
+            content: { type: 'doc', content: [{ type: 'paragraph' }] },
+            trade_id: currentTrade.id,
+            folder_id: tradeNotesFolder.id,
+          });
+          currentNoteId.value = newNote.id;
+        } else {
+          error.value = "Trade Notes system folder not found.";
+        }
+        isCreatingNote.value = false;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load trade data or setup note:", e);
+    error.value = e.message || "An unexpected error occurred.";
+  } finally {
+    isPageLoading.value = false;
+    isCreatingNote.value = false; // Ensure lock is always released
   }
 };
+
 
 // --- LIFECYCLE & WATCHERS ---
 onMounted(() => {
   loadDataForTrade(route.params.id);
 });
 
-watch(() => route.params.id, (newId) => {
-  if (newId) {
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
     loadDataForTrade(newId);
   }
 });
