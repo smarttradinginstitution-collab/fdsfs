@@ -14,12 +14,15 @@ import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
+import { useImageStore } from '@/stores/imageStore';
+import { storeToRefs } from 'pinia';
 
 // --- STATE ---
 const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const notebookStore = useNotebookStore();
+const imageStore = useImageStore();
 
 const isPageLoading = ref(true);
 const activeTab = ref('stats');
@@ -47,7 +50,11 @@ const rightColumnTabs = [
 
 // --- COMPUTED ---
 const trade = computed(() => tradesStore.selectedTrade);
-const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders);
+const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders || imageStore.isLoading);
+const { imagesForCurrentTrade } = storeToRefs(imageStore);
+
+const primaryBeforeImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_before));
+const primaryAfterImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_after));
 const error = ref(null);
 
 const tradeDate = computed(() => {
@@ -157,6 +164,8 @@ const selectTradeFromStore = (tradeId) => {
     console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
     tradesStore.fetchTradeById(tradeId);
   }
+  // Fetch images for this trade
+  imageStore.fetchImagesForTrade(tradeId);
   isPageLoading.value = false;
 };
 
@@ -217,6 +226,23 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
             <button class="action-button">Share</button>
           </div>
         </header>
+
+        <!-- Visual Analysis Section -->
+        <BaseWidget v-if="primaryBeforeImage || primaryAfterImage" class="visual-analysis-widget">
+          <h3 class="widget-title">Visual Analysis</h3>
+          <div class="chart-comparison">
+            <div class="chart-container">
+              <h4>Before</h4>
+              <img v-if="primaryBeforeImage" :src="primaryBeforeImage.url" alt="Before chart" />
+              <div v-else class="placeholder">Not set</div>
+            </div>
+            <div class="chart-container">
+              <h4>After</h4>
+              <img v-if="primaryAfterImage" :src="primaryAfterImage.url" alt="After chart" />
+              <div v-else class="placeholder">Not set</div>
+            </div>
+          </div>
+        </BaseWidget>
 
         <!-- Main Content -->
         <main class="report-content">
@@ -400,5 +426,49 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+}
+
+.visual-analysis-widget {
+  padding: var(--semantic-size-inset-lg);
+  .widget-title {
+    font: var(--semantic-font-style-heading-md);
+    margin-bottom: var(--semantic-size-stack-md);
+  }
+}
+
+.chart-comparison {
+  display: flex;
+  gap: var(--semantic-size-gap-lg);
+}
+
+.chart-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
+
+  h4 {
+    font: var(--semantic-font-style-label-lg);
+    color: var(--semantic-color-text-secondary);
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--semantic-border-radius-container);
+    border: 1px solid var(--semantic-color-border-default);
+  }
+
+  .placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--semantic-border-radius-container);
+    background-color: var(--semantic-color-surface-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--semantic-color-text-secondary);
+    font-style: italic;
+  }
 }
 </style>
