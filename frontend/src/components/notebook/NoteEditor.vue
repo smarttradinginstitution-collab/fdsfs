@@ -49,10 +49,6 @@ const props = defineProps({
 const notebookStore = useNotebookStore();
 const uiStore = useUiStore();
 
-// --- STATE ---
-const notebookStore = useNotebookStore();
-const uiStore = useUiStore();
-
 // Component now relies entirely on props for its primary data.
 const activeNote = computed(() => props.note);
 const isTradeNote = computed(() => !!(props.note?.trade_id || props.trade));
