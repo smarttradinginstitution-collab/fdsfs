@@ -362,6 +362,7 @@ onBeforeUnmount(() => {
         v-if="isGalleryModalOpen && note.trade_id"
         :trade-id="note.trade_id"
         mode="full"
+        :allow-insertion="true"
         @insert-image="handleInsertImage"
         @edit-image="handleEditImage"
       />

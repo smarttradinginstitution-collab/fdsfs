@@ -1,7 +1,8 @@
 <script setup>
-import { defineProps, defineEmits, watch } from 'vue';
+import { defineProps, defineEmits, watch, defineExpose } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
 
 const props = defineProps({
   modelValue: {
@@ -14,7 +15,10 @@ const emit = defineEmits(['update:modelValue']);
 
 const editor = useEditor({
   content: props.modelValue,
-  extensions: [StarterKit],
+  extensions: [
+    StarterKit,
+    Image,
+  ],
   onUpdate: () => {
     emit('update:modelValue', editor.value.getHTML());
   },
@@ -31,6 +35,16 @@ watch(() => props.modelValue, (value) => {
     return;
   }
   editor.value.commands.setContent(value, false);
+});
+
+const insertImage = (url) => {
+  if (editor.value) {
+    editor.value.chain().focus().setImage({ src: url }).run();
+  }
+};
+
+defineExpose({
+  insertImage,
 });
 
 const toggleBold = () => editor.value.chain().focus().toggleBold().run();
