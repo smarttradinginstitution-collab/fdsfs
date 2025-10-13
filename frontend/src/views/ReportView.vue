@@ -34,9 +34,6 @@ const editorRef = ref(null); // Ref for RichTextEditor
 const isLightboxOpen = ref(false);
 const lightboxCurrentIndex = ref(0);
 
-// Local state for notes to avoid depending on notebookStore's active notes
-const tradeNotesList = ref([]);
-const dailyJournalNotesList = ref([]);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -120,12 +117,6 @@ const selectTradeFromStore = (tradeId) => {
 
   if (tradeFromList) {
     tradesStore.selectedTrade = { ...tradeFromList };
-    if (tradeNotesFolder.value) {
-      tradeNotesList.value = notebookStore.notes.filter(n => n.folder_id === tradeNotesFolder.value.id);
-    }
-    if (dailyJournalFolder.value) {
-      dailyJournalNotesList.value = notebookStore.notes.filter(n => n.folder_id === dailyJournalFolder.value.id);
-    }
   } else {
     console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
     tradesStore.fetchTradeById(tradeId);
