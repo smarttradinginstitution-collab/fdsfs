@@ -122,8 +122,6 @@ onUnmounted(() => {
 
 .image-container {
   position: relative;
-  max-width: 90vw;
-  max-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,8 +131,8 @@ onUnmounted(() => {
   display: block;
   margin: auto;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 100vw;
+  max-height: 90vh;
   object-fit: contain;
   border-radius: var(--semantic-border-radius-container);
 }
