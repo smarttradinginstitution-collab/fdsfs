@@ -90,7 +90,7 @@ const statsGrid = computed(() => {
 const tradeTableHeaders = computed(() => [
     { key: 'entry_timestamp', text: 'Open Time' },
     { key: 'duration_minutes', text: 'Duration' },
-    { key: 'symbol', text: 'Ticker' },
+    { key: 'symbol_snapshot', text: 'Symbol' },
     { key: 'direction', text: 'Side' },
     { key: 'setup', text: 'Playbook' },
     { key: 'p_l', text: 'Net P&L' },
