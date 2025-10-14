@@ -56,7 +56,7 @@ async def test_list_my_news_impacts(authenticated_client_factory):
         await client.post("/api/v1/me/news-impacts", json={"name": "Impact A", "group_id": group_id})
         await client.post("/api/v1/me/news-impacts", json={"name": "Impact B", "group_id": group_id})
 
-        list_response = await client.get("/api/v1/me/news-impacts")
+        list_response = await client.get("/api/v1/me/news-impacts/")
         assert list_response.status_code == 200
         impacts = list_response.json()
         assert len(impacts) >= 2

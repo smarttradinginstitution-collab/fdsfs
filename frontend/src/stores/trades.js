@@ -937,7 +937,30 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async updateTradeNewsImpacts(tradeId, newsImpactIds) {
-      return this._updateTradeLabels(tradeId, 'news-impacts', newsImpactIds);
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.post(`/trades/${tradeId}/news-impacts`, newsImpactIds);
+        const updatedImpacts = response.data;
+
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.news_impacts = updatedImpacts;
+        }
+
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index].news_impacts = updatedImpacts;
+        }
+
+        uiStore.showNotification({ message: 'News Impacts updated successfully!', type: 'success' });
+        return updatedImpacts;
+      } catch (error) {
+        console.error('Error updating trade news impacts:', error);
+        uiStore.showNotification({ message: 'Failed to update news impacts.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
     },
   },
 });

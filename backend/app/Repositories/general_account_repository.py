@@ -75,6 +75,7 @@ class GeneralAccountRepository:
                 ),
                 selectinload(GeneralAccount.psychology_states),
                 selectinload(GeneralAccount.tags_groups).selectinload(TagsGroup.tags),
+                selectinload(GeneralAccount.playbooks),
             )
         )
         result = await self.db.execute(stmt)

@@ -5,6 +5,7 @@ import IconButton from '@/components/ui/IconButton.vue';
 import PencilIcon from '@/components/icons/PencilIcon.vue';
 import TradeTagManager from './TradeTagManager.vue';
 import TradeLabelManager from './TradeLabelManager.vue';
+import TradeNewsImpactManager from './TradeNewsImpactManager.vue';
 
 const props = defineProps({
   trade: {
@@ -65,7 +66,7 @@ const displayStats = computed(() => {
     <TradeTagManager :trade="trade" />
     <TradeLabelManager :trade="trade" label-type="mistakes" title="Mistakes" />
     <TradeLabelManager :trade="trade" label-type="psychology-states" title="Psychology" />
-    <TradeLabelManager :trade="trade" label-type="news-impacts" title="News Impact" />
+    <TradeNewsImpactManager :trade="trade" />
   </div>
 </template>
 
