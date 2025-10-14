@@ -84,10 +84,13 @@ class TradeService:
 
         stmt = select(model_class).where(model_class.id.in_(entity_ids))
 
-        # FIX: Special handling for Tag model which links to general_account_id via TagsGroup
+        # FIX: Special handling for models linking to general_account_id via a group
         if model_class == Tag:
             from app.Models.tags_group import TagsGroup
             stmt = stmt.join(TagsGroup).where(TagsGroup.general_account_id == general_account_id)
+        elif model_class == NewsImpact:
+            from app.Models.news_impacts_group import NewsImpactsGroup
+            stmt = stmt.join(NewsImpactsGroup).where(NewsImpactsGroup.general_account_id == general_account_id)
         else:
             stmt = stmt.where(model_class.general_account_id == general_account_id)
 
