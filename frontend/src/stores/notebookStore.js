@@ -166,14 +166,10 @@ export const useNotebookStore = defineStore('notebook', {
       this.error = null;
       try {
         const response = await apiClient.get(`/notebook/notes/by_trade/${tradeId}`);
-        // We don't want to add this to the main `notes` list,
-        // as it might not belong to the currently selected folder.
-        // The component calling this should handle the returned note.
         return response.data;
       } catch (err) {
         console.error(`Error fetching note for trade ${tradeId}:`, err);
         this.error = err.response?.data?.detail || 'Failed to fetch note.';
-        // Re-throw the error so the component can handle 404s etc.
         throw err;
       } finally {
         this.isLoadingNotes = false;

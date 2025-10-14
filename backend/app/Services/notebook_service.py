@@ -158,7 +158,6 @@ class NotebookService:
 
         # Check for uniqueness of trade_id
         if note_in.trade_id:
-            # We need the general_account_id to check for existing notes
             general_account_id = await self._get_general_account_id(user_id)
             existing_note = await self.note_repo.get_by_trade_id(
                 trade_id=note_in.trade_id, general_account_id=general_account_id

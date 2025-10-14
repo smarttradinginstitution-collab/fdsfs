@@ -42,7 +42,6 @@ const props = defineProps({
 });
 
 const store = useNotebookStore();
-const note = ref(null);
 const isLoading = ref(true);
 const isCreating = ref(false);
 
@@ -54,7 +53,6 @@ const fetchNote = async () => {
     if (fetchedNote) {
       store.selectNote(fetchedNote.id);
     } else {
-      // If no note is found, ensure nothing is selected for this context
       if (store.selectedNote?.trade_id === props.tradeId) {
         store.deselectNote();
       }
@@ -75,6 +73,7 @@ const fetchNote = async () => {
 const createNoteForTrade = async () => {
   isCreating.value = true;
   try {
+    // **CORRECTED TITLE LOGIC**
     const tradeDate = new Date(props.tradeDetails.entry_timestamp).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -92,9 +91,8 @@ const createNoteForTrade = async () => {
       }
     }
 
-    // This will create the note and automatically select it via store logic
     await store.createTradeNote({
-      folderId: tradeNotesFolder.id, // Pass folder_id explicitly
+      folderId: tradeNotesFolder.id,
       title,
       tradeId: props.tradeId,
     });
@@ -110,7 +108,6 @@ onMounted(() => {
   fetchNote();
 });
 
-// Watch for tradeId changes, e.g., if the user navigates between reports
 watch(() => props.tradeId, () => {
   fetchNote();
 });
