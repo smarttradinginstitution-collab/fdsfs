@@ -117,10 +117,8 @@ const saveEdit = async () => {
 
 .drag-handle {
   cursor: grab;
+  height: 1rem;
   color: var(--semantic-color-text-placeholder);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .drag-handle :deep(svg) {

@@ -176,13 +176,10 @@ const onRuleModalClosed = async () => {
 
 .drag-handle {
   cursor: grab;
+  height: 0.9rem;
   color: var(--semantic-color-text-placeholder);
-  padding: 0 0.5rem;
 }
 
-.drag-handle :deep(svg) {
-  display: block; /* The definitive fix for vertical alignment */
-}
 
 .group-title {
   font: var(--semantic-font-style-heading-h5);
