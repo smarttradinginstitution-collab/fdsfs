@@ -92,6 +92,16 @@ class NotebookController:
     ) -> NoteRead:
         return await service.get_note(note_id=note_id, user_id=current_user.id)
 
+    async def get_note_by_trade_id(
+        self,
+        trade_id: UUID,
+        current_user: CurrentUser = Depends(get_current_user),
+        service: NotebookService = Depends(),
+    ) -> NoteRead:
+        return await service.get_note_by_trade_id(
+            trade_id=trade_id, user_id=current_user.id
+        )
+
     async def update_note(
         self,
         note_id: UUID,

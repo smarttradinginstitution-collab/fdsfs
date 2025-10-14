@@ -77,6 +77,12 @@ router.get(
     summary="Get a specific note by ID",
 )(notebook_controller.get_note)
 
+router.get(
+    "/notes/by_trade/{trade_id}",
+    response_model=NoteRead,
+    summary="Get a note by its linked trade ID",
+)(notebook_controller.get_note_by_trade_id)
+
 router.put(
     "/notes/{note_id}",
     response_model=NoteRead,

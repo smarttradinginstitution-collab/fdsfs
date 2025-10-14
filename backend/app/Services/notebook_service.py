@@ -136,6 +136,20 @@ class NotebookService:
             )
         return note
 
+    async def get_note_by_trade_id(self, trade_id: UUID, user_id: UUID) -> Note:
+        """Get a note by its linked trade_id, ensuring it belongs to the user."""
+        general_account_id = await self._get_general_account_id(user_id)
+        note = await self.note_repo.get_by_trade_id(
+            trade_id=trade_id, general_account_id=general_account_id
+        )
+
+        if not note:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Note for the specified trade not found.",
+            )
+        return note
+
     async def create_note(self, note_in: NoteCreate, user_id: UUID) -> Note:
         """Create a new note, ensuring the parent folder belongs to the user."""
         # The `get_folder` call ensures that the folder belongs to the user,
@@ -144,7 +158,11 @@ class NotebookService:
 
         # Check for uniqueness of trade_id
         if note_in.trade_id:
-            existing_note = await self.note_repo.get_by_trade_id(note_in.trade_id)
+            # We need the general_account_id to check for existing notes
+            general_account_id = await self._get_general_account_id(user_id)
+            existing_note = await self.note_repo.get_by_trade_id(
+                trade_id=note_in.trade_id, general_account_id=general_account_id
+            )
             if existing_note:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,

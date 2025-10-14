@@ -131,7 +131,11 @@ const handleSave = () => {
     title = `Trade Notes for ${today}`;
   }
 
-  emit('create', { title, tradeId });
+  emit('create', {
+    folderId: store.selectedFolderId,
+    title,
+    tradeId
+  });
   emit('close');
 };
 </script>

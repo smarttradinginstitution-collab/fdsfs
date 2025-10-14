@@ -31,6 +31,14 @@ import { useUiStore } from '../../stores/uiStore';
 
 const store = useNotebookStore();
 const uiStore = useUiStore();
+
+const props = defineProps({
+  showFinancialData: {
+    type: Boolean,
+    default: true,
+  },
+});
+
 const note = computed(() => store.selectedNote);
 const financialData = computed(() => store.financialData);
 const folder = computed(() => store.selectedNoteFolder);
@@ -292,7 +300,7 @@ onBeforeUnmount(() => {
       </router-link>
     </div>
 
-    <div v-if="isTradeNote" class="financial-details">
+    <div v-if="isTradeNote && props.showFinancialData" class="financial-details">
       <div class="detail-card">
         <label>Gross P&L</label>
         <span>{{ formatCurrency(financialData?.gross_pnl) }}</span>

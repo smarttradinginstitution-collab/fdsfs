@@ -43,11 +43,29 @@ class NoteRepository:
         result = await self.db.execute(stmt)
         return result.unique().scalars().first()
 
-    async def get_by_trade_id(self, trade_id: UUID) -> Note | None:
-        """Get a note by its trade_id."""
-        stmt = select(Note).where(Note.trade_id == trade_id)
+    async def get_by_trade_id(self, trade_id: UUID, general_account_id: UUID) -> Note | None:
+        """
+        Get a note by its trade_id and verify ownership via general_account_id.
+        Includes eager loading for related entities.
+        """
+        stmt = (
+            select(Note)
+            .join(Note.folder)
+            .options(
+                joinedload(Note.folder),
+                joinedload(Note.trade).joinedload(Trade.asset),
+                joinedload(Note.trade).joinedload(Trade.tags),
+                joinedload(Note.trade).joinedload(Trade.mistakes),
+                joinedload(Note.trade).joinedload(Trade.playbook),
+                joinedload(Note.trade).joinedload(Trade.news_impacts),
+                joinedload(Note.trade).joinedload(Trade.psychology_states),
+                selectinload(Note.templates),
+            )
+            .where(Note.trade_id == trade_id)
+            .where(NotebookFolder.general_account_id == general_account_id)
+        )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def list_by_folder_id(self, folder_id: UUID) -> Sequence[Note]:
         """List all notes for a given folder, including related trades and all sub-relationships."""

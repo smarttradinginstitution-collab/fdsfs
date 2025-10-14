@@ -9,6 +9,7 @@ import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vu
 import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import ImageLightbox from '@/components/images/ImageLightbox.vue';
+import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
 import { storeToRefs } from 'pinia';
@@ -178,6 +179,7 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
+            <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">

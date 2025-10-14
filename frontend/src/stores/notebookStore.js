@@ -161,6 +161,25 @@ export const useNotebookStore = defineStore('notebook', {
       }
     },
 
+    async fetchNoteByTradeId(tradeId) {
+      this.isLoadingNotes = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get(`/notebook/notes/by_trade/${tradeId}`);
+        // We don't want to add this to the main `notes` list,
+        // as it might not belong to the currently selected folder.
+        // The component calling this should handle the returned note.
+        return response.data;
+      } catch (err) {
+        console.error(`Error fetching note for trade ${tradeId}:`, err);
+        this.error = err.response?.data?.detail || 'Failed to fetch note.';
+        // Re-throw the error so the component can handle 404s etc.
+        throw err;
+      } finally {
+        this.isLoadingNotes = false;
+      }
+    },
+
     async createNote(noteData) {
         this.isLoadingNotes = true;
         try {
@@ -267,12 +286,12 @@ export const useNotebookStore = defineStore('notebook', {
       }
     },
 
-    async createTradeNote({ title, tradeId = null }) {
-      if (!this.selectedFolderId) {
-        throw new Error("Cannot create trade note without a selected folder.");
+    async createTradeNote({ folderId, title, tradeId = null }) {
+      if (!folderId) {
+        throw new Error("Cannot create trade note without a folderId.");
       }
       const newNote = await this.createNote({
-        folder_id: this.selectedFolderId,
+        folder_id: folderId,
         title,
         trade_id: tradeId,
         content: { type: 'doc', content: [{ type: 'paragraph' }] },
