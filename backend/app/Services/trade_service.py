@@ -276,9 +276,9 @@ class TradeService:
             if update_data.playbook_id is None:
                 db_trade.playbook_id = None
             else:
-                playbook = await self.playbook_repo.get_by_id(update_data.playbook_id, general_account_id)
-                if not playbook:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found")
+                playbook = await self.playbook_repo.get_by_id(update_data.playbook_id)
+                if not playbook or playbook.general_account_id != general_account_id:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found or does not belong to the user.")
                 db_trade.playbook_id = playbook.id
 
         if update_data.tag_ids is not None:
