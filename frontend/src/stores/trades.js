@@ -19,7 +19,6 @@ import apiClient from '../services/api';
  */
 const mapBackendTradeToFrontend = (trade) => ({
   id: trade.id,
-  ticker: trade.symbol,
   type: trade.direction,
   pnl: trade.p_l,
   date: trade.entry_timestamp,
@@ -344,7 +343,7 @@ export const useTradesStore = defineStore('trades', {
     tradeHeaders: () => [
       { key: 'checkbox', text: '' }, // Per la checkbox
       { key: 'entry_timestamp', text: 'Open Date' },
-      { key: 'symbol', text: 'Symbol' },
+      { key: 'symbol_snapshot', text: 'Symbol' },
       { key: 'status', text: 'Status' },
       { key: 'exit_timestamp', text: 'Close Date' },
       { key: 'entry_price', text: 'Entry Price', align: 'right' },
@@ -596,7 +595,7 @@ export const useTradesStore = defineStore('trades', {
         // Mappa i dati dal form al payload atteso dal backend
         const payload = {
           trading_account_id: selectedAccount.id, // Aggiungi l'ID del conto di trading
-          symbol: tradeData.ticker,
+          symbol_snapshot: tradeData.symbol_snapshot,
           p_l: tradeData.pnl,
           playbook: tradeData.playbook,
           direction: tradeData.direction,

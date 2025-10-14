@@ -14,7 +14,7 @@ import { useTradesStore } from '../../../../stores/trades';
 const tradesStore = useTradesStore();
 
 const headers = [
-  { key: 'ticker', text: 'Ticker' },
+  { key: 'symbol_snapshot', text: 'Symbol' },
   { key: 'type', text: 'Side' },
   { key: 'pnl', text: 'Net P&L' },
   { key: 'date', text: 'Date' },

@@ -11,7 +11,7 @@
           <span>{{ selectedTrade ? 'Change Linked Trade' : 'Link to a Trade' }}</span>
         </button>
         <div v-if="selectedTrade" class="linked-trade-info">
-          <span>Linked to: {{ selectedTrade.asset?.symbol ?? 'N/A' }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
+          <span>Linked to: {{ selectedTrade.symbol_snapshot ?? 'N/A' }} on {{ new Date(selectedTrade.entry_timestamp).toLocaleDateString() }}</span>
           <button @click="clearSelectedTrade" class="clear-button">
             <XMarkIcon class="icon" />
           </button>
@@ -42,7 +42,7 @@
                 'is-disabled': trade.is_linked_to_note
               }"
             >
-              <td>{{ trade.asset?.symbol ?? 'N/A' }}</td>
+              <td>{{ trade.symbol_snapshot ?? 'N/A' }}</td>
               <td>{{ new Date(trade.entry_timestamp).toLocaleDateString() }}</td>
               <td>{{ formatCurrency(trade.p_l) }}</td>
               <td class="action-cell">
@@ -121,7 +121,7 @@ const handleSave = () => {
       month: 'long',
       day: 'numeric',
     });
-    const symbol = selectedTrade.value.asset?.symbol ?? 'N/A';
+    const symbol = selectedTrade.value.symbol_snapshot ?? 'N/A';
     title = `${symbol} : ${tradeDate}`;
   } else {
     const today = new Date().toLocaleDateString('en-US', {

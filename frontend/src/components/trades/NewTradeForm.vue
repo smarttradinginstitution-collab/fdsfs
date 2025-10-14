@@ -19,7 +19,7 @@ const tradesStore = useTradesStore();
 const emit = defineEmits(['submit']);
 
 const getInitialFormState = () => ({
-  ticker: '',
+  symbol_snapshot: '',
   pnl: 0,
   setup: '',
   direction: null,
@@ -87,7 +87,7 @@ const handleSubmit = () => {
     <fieldset class="form-section">
       <legend>Core Information</legend>
       <div class="grid-group grid-group-4-col">
-        <BaseInput v-model="form.ticker" label="Ticker" placeholder="e.g., AAPL" />
+        <BaseInput v-model="form.symbol_snapshot" label="Symbol" placeholder="e.g., AAPL" />
         <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
         <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
         <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />

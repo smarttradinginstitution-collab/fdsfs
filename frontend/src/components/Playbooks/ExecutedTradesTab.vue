@@ -26,7 +26,7 @@
         <tbody>
           <tr v-for="trade in paginatedTrades" :key="trade.id">
             <td>{{ formatDate(trade.entry_timestamp) }}</td>
-            <td>{{ trade.symbol }}</td>
+            <td>{{ trade.symbol_snapshot }}</td>
             <td>
               <span :class="getStatusClass(trade.p_l)">
                 {{ trade.p_l >= 0 ? 'WIN' : 'LOSS' }}
@@ -61,7 +61,7 @@
     <ConfirmationModal
       :show="isDeleteModalVisible"
       title="Delete Trade"
-      :message="`Are you sure you want to delete this trade for ${tradeToDelete?.symbol}? This action cannot be undone.`"
+      :message="`Are you sure you want to delete this trade for ${tradeToDelete?.symbol_snapshot}? This action cannot be undone.`"
       @close="isDeleteModalVisible = false"
       @confirm="handleConfirmDelete"
     />
