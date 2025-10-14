@@ -25,7 +25,8 @@ class GeneralAccountUpdate(GeneralAccountBase):
 class GeneralAccountRead(GeneralAccountBase):
     id: uuid.UUID
     user_id: uuid.UUID
-
+    # QUI la fix: label può essere None quando arriva dal DB/ORM
+    label: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
