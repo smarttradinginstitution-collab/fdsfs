@@ -147,6 +147,28 @@ class NoteRepository:
         await self.db.delete(db_obj)
         await self.db.commit()
 
+    async def create_for_trade(
+        self, folder_id: UUID, trade_id: UUID, title: str, content: dict
+    ) -> Note:
+        """Create a new note specifically for a trade."""
+        db_note = Note(
+            folder_id=folder_id,
+            trade_id=trade_id,
+            title=title,
+            content=content,
+        )
+        self.db.add(db_note)
+        try:
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="A note for this trade already exists.",
+            )
+        await self.db.refresh(db_note, attribute_names=['folder', 'trade'])
+        return db_note
+
     async def add_template_to_note(self, note: Note, template: NoteTemplate) -> Note:
         """Associate a note template with a note."""
         note.templates.append(template)

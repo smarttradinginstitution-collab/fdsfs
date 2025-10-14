@@ -29,16 +29,31 @@ import {
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useUiStore } from '../../stores/uiStore';
 
+const props = defineProps({
+  note: {
+    type: Object,
+    default: null,
+  },
+});
+
+const emit = defineEmits(['update']);
+
 const store = useNotebookStore();
 const uiStore = useUiStore();
-const note = computed(() => store.selectedNote);
-const financialData = computed(() => store.financialData);
-const folder = computed(() => store.selectedNoteFolder);
 
-const isTradeNote = computed(() => !!note.value?.trade_id);
+// --- Local State Management ---
+// Use the prop as the source of truth if provided, otherwise fall back to the store.
+// This makes the component reusable.
+const isPropMode = computed(() => !!props.note);
+const localNote = computed(() => isPropMode.value ? props.note : store.selectedNote);
+
+const financialData = computed(() => store.financialData); // Still sourced from store for now
+const folder = computed(() => store.selectedNoteFolder); // Still sourced from store for now
+
+const isTradeNote = computed(() => !!localNote.value?.trade_id);
 const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier === 'DAILY_JOURNAL');
 
-const editableTitle = ref(note.value ? note.value.title : '');
+const editableTitle = ref(localNote.value ? localNote.value.title : '');
 const isSaving = ref(false); // Flag to prevent concurrent saves
 
 // State for modals
@@ -51,7 +66,7 @@ const fontFamilies = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verda
 const fontSizes = ['12px', '14px', '15px', '16px', '18px', '24px', '30px', '36px'];
 
 const editor = useEditor({
-  content: note.value ? note.value.content : '',
+  content: localNote.value ? localNote.value.content : '',
   extensions: [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
@@ -200,7 +215,7 @@ const statsGrid = computed(() => {
     };
 });
 
-watch(note, (newNote, oldNote) => {
+watch(localNote, (newNote, oldNote) => {
   if (newNote && editor.value) {
     if (!oldNote || newNote.id !== oldNote.id) {
       editableTitle.value = newNote.title;
@@ -215,14 +230,22 @@ watch(note, (newNote, oldNote) => {
 }, { deep: true });
 
 const saveNote = async () => {
-    if (!editor.value || !note.value || isSaving.value) return;
+    if (!editor.value || !localNote.value || isSaving.value) return;
 
     isSaving.value = true;
+    const payload = {
+        title: editableTitle.value,
+        content: editor.value.getJSON(),
+    };
+
     try {
-        await store.updateNote(note.value.id, {
-            title: editableTitle.value,
-            content: editor.value.getJSON(),
-        });
+        if (isPropMode.value) {
+            // In prop mode, we emit an event for the parent to handle.
+            emit('update', payload);
+        } else {
+            // In store mode, we call the store action directly.
+            await store.updateNote(localNote.value.id, payload);
+        }
         uiStore.showNotification({ message: 'Note saved!', type: 'success', size: 'small' });
     } catch (error) {
         console.error("Failed to save note:", error);
@@ -235,23 +258,23 @@ const saveNote = async () => {
 const debouncedSave = debounce(saveNote, 1500);
 
 watch(editableTitle, (newTitle) => {
-    if (note.value && newTitle !== note.value.title) {
+    if (localNote.value && newTitle !== localNote.value.title) {
         debouncedSave();
     }
 });
 
 watch(() => editor.value?.getHTML(), (newContent, oldContent) => {
-    if (newContent !== oldContent && note.value) {
+    if (newContent !== oldContent && localNote.value) {
         debouncedSave();
     }
 }, { deep: true });
 
 const saveAsTemplate = async () => {
-    if (!editor.value || !note.value) return;
+    if (!editor.value || !localNote.value) return;
     if (confirm("Save the current content as the template for this folder? This will overwrite any existing template.")) {
         try {
             await store.saveFolderTemplate({
-                folderId: note.value.folder_id,
+                folderId: localNote.value.folder_id,
                 templateContent: editor.value.getJSON(),
             });
         } catch (error) {
@@ -268,12 +291,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="note && editor" class="note-editor-container">
+  <div v-if="localNote && editor" class="note-editor-container">
     <input v-model="editableTitle" class="title-input" />
 
     <div class="metadata-header">
-      <div class="meta-item">Created: {{ formatDate(note.created_at) }}</div>
-      <div class="meta-item">Updated: {{ formatDate(note.updated_at) }}</div>
+      <div class="meta-item">Created: {{ formatDate(localNote.created_at) }}</div>
+      <div class="meta-item">Updated: {{ formatDate(localNote.updated_at) }}</div>
     </div>
 
     <div class="pnl-container" v-if="financialData">
@@ -284,8 +307,8 @@ onBeforeUnmount(() => {
         </span>
       </div>
       <router-link
-        v-if="note && note.trade_id"
-        :to="{ name: 'report-detail', params: { id: note.trade_id } }"
+        v-if="localNote && localNote.trade_id"
+        :to="{ name: 'report-detail', params: { id: localNote.trade_id } }"
         class="details-button"
       >
         Trade Details
@@ -359,8 +382,8 @@ onBeforeUnmount(() => {
 
     <BaseModal :show="isGalleryModalOpen" @close="isGalleryModalOpen = false" title="Trade Image Gallery">
       <TradeImageGallery
-        v-if="isGalleryModalOpen && note.trade_id"
-        :trade-id="note.trade_id"
+        v-if="isGalleryModalOpen && localNote.trade_id"
+        :trade-id="localNote.trade_id"
         mode="full"
         :allow-insertion="true"
         @insert-image="handleInsertImage"

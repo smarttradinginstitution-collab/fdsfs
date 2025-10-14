@@ -17,8 +17,11 @@ from app.Repositories.mistake_repository import MistakeRepository
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
+from app.Repositories.notebook_folder_repository import NotebookFolderRepository
+from app.Repositories.note_repository import NoteRepository
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.tag import TagRead
+from app.Schemas.notebook import NoteRead, NoteCreate
 from app.Infrastructure.db import get_db
 from decimal import Decimal
 from app.Models.trade import Trade
@@ -46,6 +49,8 @@ class TradeService:
         self.playbook_repo = PlaybookRepository(db)
         self.news_impact_repo = NewsImpactRepository(db)
         self.psychology_state_repo = PsychologyStateRepository(db)
+        self.note_repo = NoteRepository(db)
+        self.folder_repo = NotebookFolderRepository(db)
 
     async def _validate_and_get_trading_account(self, claims: dict, trading_account_id: UUID) -> tuple[UUID, UUID]:
         """Verifica che il trading account esista e appartenga all'utente."""
@@ -414,3 +419,50 @@ class TradeService:
 
         # Restituisce la lista aggiornata di etichette
         return getattr(db_trade, label_type)
+
+    async def get_note_by_trade_id(self, claims: dict, trade_id: UUID) -> Optional[NoteRead]:
+        """
+        Recupera la nota associata a un trade, verificando l'appartenenza.
+        """
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        note = await self.note_repo.get_by_trade_id(trade_id)
+        if not note:
+            return None
+
+        return NoteRead.from_orm(note)
+
+    async def create_note_for_trade(self, claims: dict, trade_id: UUID, note_data: NoteCreate) -> NoteRead:
+        """
+        Crea una nota per un trade, assicurandosi che sia nella cartella corretta.
+        """
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        # Check if a note already exists for this trade
+        existing_note = await self.note_repo.get_by_trade_id(trade_id)
+        if existing_note:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A note for this trade already exists.")
+
+        # Get the "Trade Notes" system folder
+        trade_notes_folder = await self.folder_repo.get_system_folder_by_identifier(general_account_id, "TRADE_NOTES")
+        if not trade_notes_folder:
+            # This case should be rare, as system folders are created on first access
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Trade Notes system folder not found.")
+
+        # Create the note
+        new_note = await self.note_repo.create_for_trade(
+            folder_id=trade_notes_folder.id,
+            trade_id=trade_id,
+            title=note_data.title,
+            content=note_data.content,
+        )
+
+        return NoteRead.from_orm(new_note)

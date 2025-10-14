@@ -21,6 +21,7 @@ from app.Schemas.analytics import (
     TradeFinancialSummary,
     DailySummary,
 )
+from app.Schemas.notebook import NoteRead, NoteCreate
 
 
 class TradesController:
@@ -223,3 +224,33 @@ class TradesController:
         Handles the request for updating various labels (mistakes, psychology, etc.) associated with a trade.
         """
         return await service.update_trade_labels(claims, trade_id, label_ids, label_type)
+
+    # --- Trade <> Note Association ---
+    async def get_note_for_trade(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> NoteRead:
+        """
+        Handles the request for getting the note associated with a trade.
+        """
+        note = await service.get_note_by_trade_id(claims, trade_id)
+        if not note:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Note not found for this trade.",
+            )
+        return note
+
+    async def create_note_for_trade(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        note_data: NoteCreate,
+        service: TradeService,
+    ) -> NoteRead:
+        """
+        Handles the request for creating a note for a trade.
+        """
+        return await service.create_note_for_trade(claims, trade_id, note_data)

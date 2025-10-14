@@ -203,6 +203,7 @@ from app.Schemas.mistake import MistakeRead
 from app.Schemas.psychology_state import PsychologyStateRead
 from app.Schemas.news_impact import NewsImpactRead
 from app.Schemas.image import ImageRead
+from app.Schemas.notebook import NoteRead, NoteCreate
 from app.Services.image_service import ImageService
 from app.Router.dependencies import get_current_user, CurrentUser
 from fastapi import UploadFile, File, Form
@@ -272,3 +273,24 @@ async def update_trade_news_impacts(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade_labels(claims, trade_id, label_ids, "news_impacts", service)
+
+
+# --- Trade <> Note Association ---
+
+@router.get("/{trade_id}/note", response_model=NoteRead, summary="Get the note associated with a trade")
+async def get_trade_note(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_note_for_trade(claims, trade_id, service)
+
+
+@router.post("/{trade_id}/note", response_model=NoteRead, status_code=status.HTTP_201_CREATED, summary="Create a note for a trade")
+async def create_trade_note(
+    trade_id: UUID,
+    note_data: NoteCreate,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.create_note_for_trade(claims, trade_id, note_data, service)

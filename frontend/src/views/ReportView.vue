@@ -10,15 +10,20 @@ import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import ImageLightbox from '@/components/images/ImageLightbox.vue';
 import { useTradesStore } from '@/stores/trades';
+import { useNotebookStore } from '@/stores/notebookStore';
 import { useImageStore } from '@/stores/imageStore';
 import { storeToRefs } from 'pinia';
+import NoteEditor from '@/components/notebook/NoteEditor.vue';
+import apiClient from '@/services/api';
 
 // --- STATE ---
 const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
+const notebookStore = useNotebookStore();
 
+const tradeNote = ref(null);
 const isPageLoading = ref(true);
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
@@ -97,6 +102,46 @@ const prevImage = () => {
   lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
+const fetchTradeNote = async (tradeId) => {
+  try {
+    const response = await apiClient.get(`/trades/${tradeId}/note`);
+    tradeNote.value = response.data;
+  } catch (err) {
+    if (err.response && err.response.status === 404) {
+      tradeNote.value = null; // Explicitly set to null if not found
+    } else {
+      console.error('Error fetching trade note:', err);
+      error.value = 'Failed to load the trade note.';
+    }
+  }
+};
+
+const createNoteForTrade = async () => {
+  if (!trade.value) return;
+  try {
+    const response = await apiClient.post(`/trades/${trade.value.id}/note`, {
+      title: `Note for ${trade.value.symbol_snapshot}`,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] }
+    });
+    tradeNote.value = response.data;
+  } catch (err) {
+    console.error('Error creating trade note:', err);
+    error.value = 'Failed to create the trade note.';
+  }
+};
+
+const handleNoteUpdate = async (updatedContent) => {
+    if (!tradeNote.value) return;
+    try {
+        const updated = await notebookStore.updateNote(tradeNote.value.id, updatedContent);
+        // Optimistically update the local state with the returned data
+        tradeNote.value = { ...tradeNote.value, ...updated };
+    } catch (err) {
+        console.error('Failed to update note from ReportView:', err);
+        // The store should handle showing an error notification
+    }
+};
+
 const selectTradeFromStore = (tradeId) => {
   isPageLoading.value = true;
   const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
@@ -108,6 +153,7 @@ const selectTradeFromStore = (tradeId) => {
     tradesStore.fetchTradeById(tradeId);
   }
   imageStore.fetchImagesForTrade(tradeId);
+  fetchTradeNote(tradeId);
   isPageLoading.value = false;
 };
 
@@ -201,6 +247,21 @@ onMounted(() => {
                 @edit-image="handleEditImage"
                 @open-lightbox="openLightbox"
               />
+            </BaseWidget>
+
+            <BaseWidget class="notes-widget">
+              <h3 class="widget-title">Trade Note</h3>
+              <NoteEditor
+                v-if="tradeNote"
+                :note="tradeNote"
+                @update="handleNoteUpdate"
+              />
+              <div v-else class="note-placeholder">
+                <p>No note attached to this trade.</p>
+                <BaseButton @click="createNoteForTrade" class="mt-4">
+                  Create Note
+                </BaseButton>
+              </div>
             </BaseWidget>
           </div>
         </main>
@@ -353,5 +414,26 @@ onMounted(() => {
   border: none;
   border-top: 1px solid var(--semantic-color-border-default);
   margin: var(--semantic-size-gap-lg) 0;
+}
+
+.notes-widget {
+  flex-grow: 2; /* Make notes widget larger */
+  display: flex;
+  flex-direction: column;
+  padding: var(--semantic-size-inset-lg);
+  .widget-title {
+    font: var(--semantic-font-style-heading-md);
+    margin-bottom: var(--semantic-size-stack-md);
+  }
+}
+
+.note-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--semantic-color-text-secondary);
+  font: var(--semantic-font-style-body-lg);
 }
 </style>
