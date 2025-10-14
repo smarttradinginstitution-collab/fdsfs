@@ -11,8 +11,8 @@ import { computed } from 'vue';
 const props = defineProps({
   variant: {
     type: String,
-    default: 'primary', // 'primary', 'secondary', or 'danger'
-    validator: (value) => ['primary', 'secondary', 'danger'].includes(value),
+    default: 'primary', // 'primary', 'secondary', 'danger', or 'ghost'
+    validator: (value) => ['primary', 'secondary', 'danger', 'ghost'].includes(value),
   },
   size: {
     type: String,
@@ -47,6 +47,7 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
   border: var(--base-border-width-1) solid transparent; /* Bordo trasparente per mantenere le dimensioni */
   cursor: pointer;
   transition: all var(--base-animation-duration-fast);
+  white-space: nowrap;
 }
 
 /* Stili per dimensione Medium (default) */
@@ -95,5 +96,16 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 }
 .button--danger:hover {
   background-color: var(--semantic-color-danger-hover);
+}
+
+/* Variante Ghost */
+.button--ghost {
+  background-color: transparent;
+  color: var(--semantic-color-text-interactive);
+  border-color: var(--semantic-color-border-subtle);
+}
+.button--ghost:hover {
+  background-color: var(--semantic-color-interactive-primary-hover-subtle);
+  border-color: var(--semantic-color-interactive-primary-hover);
 }
 </style>
