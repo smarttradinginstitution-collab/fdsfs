@@ -6,17 +6,22 @@
         <h1 class="page-title">Library & DNA</h1>
         <p class="page-subtitle">Manage your labels and discover the hidden patterns in your trading.</p>
       </div>
-       <BaseButton
-        v-if="(activeTab === 'tags' && !tagsStore.isCreatingGroup) || (activeTab === 'news' && !newsImpactsStore.isCreatingGroup)"
-        @click="activeTab === 'tags' ? tagsStore.setCreatingGroup(true) : newsImpactsStore.setCreatingGroup(true)"
-      >
-        <PlusIcon class="w-4 h-4 mr-2" />
-        Add Group
-      </BaseButton>
     </div>
 
     <!-- TABS -->
     <BaseTabs v-model="activeTab" :tabs="tabs" />
+
+    <!-- ADD GROUP BUTTON CONTAINER -->
+    <div class="actions-container">
+        <BaseButton
+            v-if="(activeTab === 'tags' && !tagsStore.isCreatingGroup) || (activeTab === 'news' && !newsImpactsStore.isCreatingGroup)"
+            @click="activeTab === 'tags' ? tagsStore.setCreatingGroup(true) : newsImpactsStore.setCreatingGroup(true)"
+            size="small"
+        >
+            <PlusIcon class="w-4 h-4 mr-2" />
+            Add Group
+        </BaseButton>
+    </div>
 
     <!-- TAB CONTENT -->
     <div class="tab-content">
@@ -145,6 +150,11 @@ onMounted(() => {
   font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-secondary);
   margin-top: var(--semantic-size-stack-xxs);
+}
+.actions-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--semantic-size-stack-lg);
 }
 .tab-content {
   margin-top: var(--semantic-size-stack-lg);
