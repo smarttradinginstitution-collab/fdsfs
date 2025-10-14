@@ -40,6 +40,13 @@ class PsychologyStateRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RulePlaybookRead(BaseModel):
+    id: UUID
+    rule: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TradeBase(BaseModel):
     symbol_snapshot: Optional[str] = None
     p_l: Optional[float] = None
@@ -97,6 +104,7 @@ class TradeRead(TradeBase):
     playbook: Optional[PlaybookRead] = None
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
+    rules_followed: List[RulePlaybookRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 
