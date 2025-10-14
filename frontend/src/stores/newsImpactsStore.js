@@ -38,6 +38,111 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     }
   }
 
+  // --- GROUP ACTIONS ---
+  async function createNewsImpactGroup(groupData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.post('/me/news-impacts-groups', groupData);
+          await fetchAllNewsImpactsData();
+          uiStore.showNotification({ message: 'Group created successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to create group.';
+          error.value = errorMessage;
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function updateNewsImpactGroup(groupId, groupData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.put(`/me/news-impacts-groups/${groupId}`, groupData);
+          await fetchAllNewsImpactsData();
+          uiStore.showNotification({ message: 'Group updated successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to update group.';
+          error.value = errorMessage;
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function deleteNewsImpactGroup(groupId) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.delete(`/me/news-impacts-groups/${groupId}`);
+          await fetchAllNewsImpactsData();
+          uiStore.showNotification({ message: 'Group deleted successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to delete group.';
+          error.value = errorMessage;
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  // --- IMPACT ACTIONS ---
+  async function createNewsImpact(impactData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          const response = await apiClient.post('/me/news-impacts', impactData);
+          await fetchAllNewsImpactsData(); // Refresh the full list
+          uiStore.showNotification({ message: 'News impact created successfully.', type: 'success' });
+          return response.data;
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to create news impact.';
+          error.value = errorMessage;
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function updateNewsImpact(impactId, impactData) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.put(`/me/news-impacts/${impactId}`, impactData);
+          await fetchAllNewsImpactsData();
+          uiStore.showNotification({ message: 'News impact updated successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to update news impact.';
+          error.value = errorMessage;
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
+  async function deleteNewsImpact(impactId) {
+      const uiStore = useUiStore();
+      isSaving.value = true;
+      try {
+          await apiClient.delete(`/me/news-impacts/${impactId}`);
+          await fetchAllNewsImpactsData();
+          uiStore.showNotification({ message: 'News impact deleted successfully.', type: 'success' });
+      } catch (err) {
+          const errorMessage = err.response?.data?.detail || 'Failed to delete news impact.';
+          error.value = errorMessage;
+          uiStore.showNotification({ message: errorMessage, type: 'error' });
+          throw err;
+      } finally {
+          isSaving.value = false;
+      }
+  }
+
   return {
     newsImpacts,
     newsImpactsGroups,
@@ -46,5 +151,11 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     error,
     groupedNewsImpacts,
     fetchAllNewsImpactsData,
+    createNewsImpactGroup,
+    updateNewsImpactGroup,
+    deleteNewsImpactGroup,
+    createNewsImpact,
+    updateNewsImpact,
+    deleteNewsImpact,
   };
 });
