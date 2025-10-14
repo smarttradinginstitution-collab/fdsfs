@@ -26,7 +26,6 @@
   display: flex;
   align-items: center;
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-lg);
-  border-bottom: 1px solid var(--semantic-color-border-default);
   min-height: 60px;
   flex-shrink: 0; /* Prevent header from shrinking */
 }
