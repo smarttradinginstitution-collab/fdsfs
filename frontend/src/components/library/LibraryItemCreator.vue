@@ -7,6 +7,13 @@
       @keyup.enter="onSave"
       @keyup.esc="onCancel"
     />
+    <BaseSelect
+      v-if="isGrouped"
+      v-model="selectedGroupId"
+      :options="groups"
+      placeholder="Select a group"
+      label="Group"
+    />
     <ColorSelector v-model="itemColor" />
     <div class="actions">
       <BaseButton @click="onSave" :disabled="!itemName.trim()" :loading="isSaving">Save</BaseButton>
@@ -20,6 +27,7 @@ import { ref, onMounted, defineProps, defineEmits } from 'vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
+import BaseSelect from '@/components/ui/BaseSelect.vue';
 
 const props = defineProps({
   isSaving: {
@@ -34,17 +42,35 @@ const props = defineProps({
     type: String,
     default: '#4A90E2',
   },
+  isGrouped: {
+    type: Boolean,
+    default: false,
+  },
+  groups: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['save', 'cancel']);
 
 const itemName = ref('');
 const itemColor = ref('#4A90E2');
+const selectedGroupId = ref(null);
 const inputRef = ref(null);
 
 const onSave = () => {
   if (!itemName.value.trim()) return;
-  emit('save', { name: itemName.value, color: itemColor.value });
+  const data = { name: itemName.value, color: itemColor.value };
+  if (props.isGrouped) {
+    if (!selectedGroupId.value) {
+      // TODO: Add user feedback about needing to select a group
+      console.error("Please select a group for the new impact.");
+      return;
+    }
+    data.group_id = selectedGroupId.value;
+  }
+  emit('save', data);
 };
 
 const onCancel = () => {

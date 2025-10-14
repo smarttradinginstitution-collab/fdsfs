@@ -50,9 +50,7 @@
             v-if="activeTab === 'news'"
             title="News Impacts"
             :items="libraryStore.newsImpacts"
-            :create-action="libraryStore.createNewsImpact"
-            :update-action="libraryStore.updateNewsImpact"
-            :delete-action="libraryStore.deleteNewsImpact"
+            :is-grouped="true"
           />
         </div>
         <TagManagementTab v-if="activeTab === 'tags'" />
