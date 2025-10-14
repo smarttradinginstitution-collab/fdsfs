@@ -14,6 +14,7 @@ from app.Models.tag import Tag
 from app.Models.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
+from app.Models.rule_playbook import RulePlaybook
 
 
 class TradeRepository:
