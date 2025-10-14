@@ -3,8 +3,6 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import TradeStats from '@/components/reports/TradeStats.vue';
-import PillTabs from '@/components/ui/PillTabs.vue';
-import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
@@ -12,7 +10,6 @@ import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import ImageLightbox from '@/components/images/ImageLightbox.vue';
 import { useTradesStore } from '@/stores/trades';
-import { useNotebookStore } from '@/stores/notebookStore';
 import { useImageStore } from '@/stores/imageStore';
 import { storeToRefs } from 'pinia';
 
@@ -20,25 +17,17 @@ import { storeToRefs } from 'pinia';
 const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
-const notebookStore = useNotebookStore();
 const imageStore = useImageStore();
 
 const isPageLoading = ref(true);
 const activeTab = ref('stats');
-const rightColumnActiveTab = ref('trade-note');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
-const editableContent = ref(null);
-const editorRef = ref(null); // Ref for RichTextEditor
 
 // Lightbox state
 const isLightboxOpen = ref(false);
 const lightboxCurrentIndex = ref(0);
-
-// Local state for notes to avoid depending on notebookStore's active notes
-const tradeNotesList = ref([]);
-const dailyJournalNotesList = ref([]);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -47,14 +36,9 @@ const leftColumnTabs = [
   { id: 'attachments', label: 'Attachments' },
 ];
 
-const rightColumnTabs = [
-  { id: 'trade-note', label: 'Trade note' },
-  { id: 'daily-journal', label: 'Daily journal' },
-];
-
 // --- COMPUTED ---
 const trade = computed(() => tradesStore.selectedTrade);
-const isLoading = computed(() => tradesStore.isTradeLoading || notebookStore.isLoadingFolders || imageStore.isLoading);
+const isLoading = computed(() => tradesStore.isTradeLoading || imageStore.isLoading);
 const { imagesForCurrentTrade } = storeToRefs(imageStore);
 
 const primaryBeforeImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_before));
@@ -70,21 +54,6 @@ const tradeDate = computed(() => {
     day: 'numeric',
     year: 'numeric',
   });
-});
-
-const tradeNotesFolder = computed(() => notebookStore.folders.find(f => f.name === 'Trade Notes'));
-const dailyJournalFolder = computed(() => notebookStore.folders.find(f => f.name === 'Daily Journal'));
-
-// --- These computed properties now use the local state, which is safe ---
-const currentTradeNote = computed(() => {
-  if (!trade.value) return null;
-  return tradeNotesList.value.find(n => n.trade_id === trade.value.id);
-});
-
-const currentDailyJournalNote = computed(() => {
-    if (!trade.value) return null;
-    const noteTitle = `Journal - ${tradeDate.value}`;
-    return dailyJournalNotesList.value.find(n => n.title === noteTitle);
 });
 
 // --- METHODS ---
@@ -111,12 +80,6 @@ const handleUpdateTradeDetails = (payload) => {
   if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
 };
 
-const handleInsertImageIntoNote = (imageUrl) => {
-  if (editorRef.value) {
-    editorRef.value.insertImage(imageUrl);
-  }
-};
-
 const openLightbox = (index) => {
   lightboxCurrentIndex.value = index;
   isLightboxOpen.value = true;
@@ -134,51 +97,12 @@ const prevImage = () => {
   lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
-const handleSaveNotes = async () => {
-  if (!trade.value || !editableContent.value) return;
-
-  if (rightColumnActiveTab.value === 'trade-note') {
-    const noteData = {
-      title: `${trade.value.symbol_snapshot} - ${tradeDate.value}`,
-      content: editableContent.value,
-      trade_id: trade.value.id,
-      folder_id: tradeNotesFolder.value.id,
-    };
-    if (currentTradeNote.value) {
-      await notebookStore.updateNote(currentTradeNote.value.id, noteData);
-    } else {
-      await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(tradeNotesFolder.value.id, tradeNotesList);
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    const noteData = {
-      title: `Journal - ${tradeDate.value}`,
-      content: editableContent.value,
-      folder_id: dailyJournalFolder.value.id,
-    };
-    if (currentDailyJournalNote.value) {
-        await notebookStore.updateNote(currentDailyJournalNote.value.id, noteData);
-    } else {
-        await notebookStore.createNote(noteData);
-    }
-    // Refetch notes for this folder after saving
-    await fetchNotesForFolder(dailyJournalFolder.value.id, dailyJournalNotesList);
-  }
-};
-
 const selectTradeFromStore = (tradeId) => {
   isPageLoading.value = true;
   const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
   if (tradeFromList) {
     tradesStore.selectedTrade = { ...tradeFromList };
-    if (tradeNotesFolder.value) {
-      tradeNotesList.value = notebookStore.notes.filter(n => n.folder_id === tradeNotesFolder.value.id);
-    }
-    if (dailyJournalFolder.value) {
-      dailyJournalNotesList.value = notebookStore.notes.filter(n => n.folder_id === dailyJournalFolder.value.id);
-    }
   } else {
     console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
     tradesStore.fetchTradeById(tradeId);
@@ -188,23 +112,15 @@ const selectTradeFromStore = (tradeId) => {
 };
 
 // --- LIFECYCLE & WATCHERS ---
-onMounted(() => {
-  selectTradeFromStore(route.params.id);
-});
-
 watch(() => route.params.id, (newId) => {
   if (newId) {
     selectTradeFromStore(newId);
   }
 });
 
-watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () => {
-  if (rightColumnActiveTab.value === 'trade-note') {
-    editableContent.value = currentTradeNote.value?.content || '<p></p>';
-  } else if (rightColumnActiveTab.value === 'daily-journal') {
-    editableContent.value = currentDailyJournalNote.value?.content || '<p></p>';
-  }
-}, { immediate: true, deep: true });
+onMounted(() => {
+  selectTradeFromStore(route.params.id);
+});
 </script>
 
 <template>
@@ -253,9 +169,8 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                     :trade-id="trade.id"
                     :images="imagesForCurrentTrade"
                     mode="uploader-only"
-                    :allow-insertion="true"
+                    :allow-insertion="false"
                     @edit-image="handleEditImage"
-                    @insert-image="handleInsertImageIntoNote"
                   />
                 </template>
               </BaseTabs>
@@ -263,18 +178,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
           </div>
 
           <div class="right-column">
-            <BaseWidget class="notes-widget">
-              <div class="right-column-content">
-                <div class="notes-header">
-                  <PillTabs v-model="rightColumnActiveTab" :tabs="rightColumnTabs" />
-                  <BaseButton @click="handleSaveNotes" size="small" variant="primary">Save Notes</BaseButton>
-                </div>
-                <div class="editor-container">
-                  <RichTextEditor v-model="editableContent" />
-                </div>
-              </div>
-            </BaseWidget>
-
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
@@ -294,10 +197,9 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
                 :trade-id="trade.id"
                 :images="imagesForCurrentTrade"
                 mode="gallery-only"
-                :allow-insertion="true"
+                :allow-insertion="false"
                 @edit-image="handleEditImage"
                 @open-lightbox="openLightbox"
-                @insert-image="handleInsertImageIntoNote"
               />
             </BaseWidget>
           </div>
@@ -309,7 +211,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
         <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
       </div>
     </template>
-
     <EditTradeDetailsModal v-if="trade" v-model="isEditModalOpen" :trade="trade" @save="handleUpdateTradeDetails" />
     <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit" @close="isMetadataModalOpen = false" />
     <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage" @prev="prevImage" />
@@ -394,7 +295,6 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
 }
 
 .stats-widget,
-.notes-widget,
 .visual-analysis-widget {
   flex-grow: 1;
   display: flex;
@@ -402,27 +302,8 @@ watch([rightColumnActiveTab, trade, tradeNotesList, dailyJournalNotesList], () =
   padding: var(--semantic-size-inset-lg);
 }
 
-.notes-widget {
+.visual-analysis-widget {
   flex-grow: 2; /* Make notes widget larger */
-}
-
-.right-column-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-gap-lg);
-  flex-grow: 1;
-}
-
-.notes-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.editor-container {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
 }
 
 .visual-analysis-widget {
