@@ -272,3 +272,17 @@ async def update_trade_news_impacts(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade_labels(claims, trade_id, label_ids, "news_impacts", service)
+
+
+@router.put("/{trade_id}/rules", response_model=List[UUID], summary="Update the 'followed' rules for a trade")
+async def update_trade_rules(
+    trade_id: UUID,
+    rule_ids: List[UUID],
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    """
+    Updates the list of followed rules for a specific trade.
+    This replaces the existing list of followed rules with the one provided.
+    """
+    return await controller.update_trade_rules(claims, trade_id, rule_ids, service)

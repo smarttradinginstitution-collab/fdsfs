@@ -218,6 +218,26 @@ class TradeRepository:
         await self.db.delete(db_trade)
         await self.db.commit()
 
+    async def update_trade_rules(self, trade: Trade, rule_ids: list[UUID]):
+        """
+        Aggiorna le regole 'seguite' per un trade specifico.
+        Sostituisce completamente le regole esistenti con la nuova lista.
+        """
+        # Carica le istanze complete delle regole per assicurarsi che esistano
+        rules_result = await self.db.execute(
+            select(RulePlaybook).where(RulePlaybook.id.in_(rule_ids))
+        )
+        rules = rules_result.scalars().all()
+
+        # Verifica che tutti gli ID richiesti corrispondano a regole esistenti
+        if len(rules) != len(rule_ids):
+            raise ValueError("Una o più Rule ID non sono valide.")
+
+        # Sostituisci la lista delle regole associate al trade
+        trade.rules_followed = rules
+
+        # Il commit verrà gestito dal service layer
+
     async def get_tag_performance_stats(
         self,
         trading_account_id: UUID,
