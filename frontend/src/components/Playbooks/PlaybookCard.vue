@@ -99,7 +99,7 @@ const statsGridClass = computed(() => {
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-secondary);
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-pill);
+  border-radius: var(--semantic-border-radius-interactive);
   white-space: nowrap; /* Prevent badge from wrapping */
 }
 
