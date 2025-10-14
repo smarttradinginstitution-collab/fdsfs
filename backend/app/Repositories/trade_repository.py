@@ -32,6 +32,7 @@ class TradeRepository:
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
                 joinedload(Trade.asset),
+                selectinload(Trade.rules_followed),
                 # Eager load the trading account to access initial_balance for ROI calculation
                 joinedload(Trade.trading_account),
             )
