@@ -142,7 +142,7 @@ class TradeService:
 
         self.db.add(db_trade)
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
         return TradeRead.from_orm(db_trade)
 
@@ -291,7 +291,7 @@ class TradeService:
             db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
         return TradeRead.from_orm(db_trade)
 
