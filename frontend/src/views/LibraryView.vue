@@ -49,14 +49,6 @@
             :update-action="libraryStore.updatePsychologyState"
             :delete-action="libraryStore.deletePsychologyState"
           />
-          <LibraryManagementCard
-            v-if="activeTab === 'psychology'"
-            title="Psychology States"
-            :items="libraryStore.psychologyStates"
-            :create-action="libraryStore.createPsychologyState"
-            :update-action="libraryStore.updatePsychologyState"
-            :delete-action="libraryStore.deletePsychologyState"
-          />
         </div>
         <TagManagementTab v-if="activeTab === 'tags'" />
         <NewsImpactManagementTab v-if="activeTab === 'news'" />
