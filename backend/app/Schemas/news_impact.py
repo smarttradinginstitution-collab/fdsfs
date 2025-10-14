@@ -12,7 +12,7 @@ class NewsImpactBase(BaseModel):
 
 
 class NewsImpactCreate(NewsImpactBase):
-    pass
+    group_id: UUID
 
 
 class NewsImpactUpdate(BaseModel):
@@ -22,7 +22,7 @@ class NewsImpactUpdate(BaseModel):
 
 class NewsImpactRead(NewsImpactBase):
     id: UUID
-    general_account_id: UUID
+    group_id: UUID
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

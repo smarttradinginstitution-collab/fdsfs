@@ -10,7 +10,7 @@ from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Schemas.general_account import (
     GeneralAccountCreate,
     GeneralAccountRead,
-    GeneralAccountWithData,
+    GeneralAccountWithDataRead,
 )
 from app.Infrastructure.db import get_db
 from app.Services.notebook_service import NotebookService
@@ -54,7 +54,7 @@ class GeneralAccountService:
 
     async def get_general_account_with_all_data(
         self, account_id: UUID, claims: dict
-    ) -> GeneralAccountWithData:
+    ) -> GeneralAccountWithDataRead:
         """
         Recupera un GeneralAccount con tutte le sue relazioni (mistakes, news, ecc.)
         verificando che l'utente sia il proprietario.
@@ -74,4 +74,4 @@ class GeneralAccountService:
                 detail="User is not authorized to access this account.",
             )
 
-        return GeneralAccountWithData.model_validate(db_account)
+        return GeneralAccountWithDataRead.model_validate(db_account)

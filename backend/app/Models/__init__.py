@@ -20,6 +20,8 @@ from .mistake import Mistake
 from .news_impact import NewsImpact
 from .playbook import Playbook
 from .psychology_state import PsychologyState
+from .tags_group import TagsGroup
+from .news_impacts_group import NewsImpactsGroup
 from .tag import Tag
 from .user_dashboard_layout import UserDashboardLayout
 from .image import Image
@@ -64,6 +66,8 @@ __all__ = [
     "NewsImpact",
     "Playbook",
     "PsychologyState",
+    "TagsGroup",
+    "NewsImpactsGroup",
     "Tag",
     "UserDashboardLayout",
     "Image",

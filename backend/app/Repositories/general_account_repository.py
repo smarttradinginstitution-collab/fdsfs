@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.general_account import GeneralAccount
+from app.Models.news_impacts_group import NewsImpactsGroup
 from app.Models.tags_group import TagsGroup
 from app.Schemas.general_account import GeneralAccountCreate
 
@@ -69,7 +70,9 @@ class GeneralAccountRepository:
             .where(GeneralAccount.id == account_id)
             .options(
                 selectinload(GeneralAccount.mistakes),
-                selectinload(GeneralAccount.news_impacts),
+                selectinload(GeneralAccount.news_impacts_groups).selectinload(
+                    NewsImpactsGroup.news_impacts
+                ),
                 selectinload(GeneralAccount.psychology_states),
                 selectinload(GeneralAccount.tags_groups).selectinload(TagsGroup.tags),
             )

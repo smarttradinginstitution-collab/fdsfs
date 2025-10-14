@@ -11,7 +11,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
-    from app.Models.general_account import GeneralAccount
+    from app.Models.news_impacts_group import NewsImpactsGroup
+    from app.Models.trade import Trade
 
 
 class NewsImpact(Base):
@@ -21,9 +22,9 @@ class NewsImpact(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    general_account_id: Mapped[uuid.UUID] = mapped_column(
+    group_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
+        ForeignKey("public.news_impacts_groups.id", ondelete="RESTRICT"),
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=True)
@@ -33,8 +34,8 @@ class NewsImpact(Base):
     )
 
     # Relazioni
-    general_account: Mapped["GeneralAccount"] = relationship(
-        "GeneralAccount", back_populates="news_impacts"
+    group: Mapped["NewsImpactsGroup"] = relationship(
+        "NewsImpactsGroup", back_populates="news_impacts"
     )
     trades: Mapped[list["Trade"]] = relationship(
         "Trade", secondary="public.trades_news_impacts", back_populates="news_impacts"

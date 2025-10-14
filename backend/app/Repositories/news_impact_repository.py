@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.news_impact import NewsImpact
+from app.Models.news_impacts_group import NewsImpactsGroup
 from app.Schemas.news_impact import NewsImpactCreate, NewsImpactUpdate
 
 
@@ -21,11 +22,13 @@ class NewsImpactRepository:
         res = await self.db.execute(stmt)
         return res.scalars().first()
 
-    async def create(self, obj_in: NewsImpactCreate, general_account_id: UUID) -> NewsImpact:
+    async def create(self, obj_in: NewsImpactCreate, group_id: UUID) -> NewsImpact:
         """Create a new news impact."""
+        data = obj_in.model_dump()
+        data.pop("group_id", None)
         db_obj = NewsImpact(
-            **obj_in.model_dump(),
-            general_account_id=general_account_id
+            **data,
+            group_id=group_id
         )
         self.db.add(db_obj)
         await self.db.commit()
@@ -51,8 +54,15 @@ class NewsImpactRepository:
         await self.db.delete(db_obj)
         await self.db.commit()
 
-    async def list_news_impacts_by_general_account_id(self, general_account_id: UUID) -> Sequence[NewsImpact]:
+    async def list_news_impacts_by_general_account_id(
+        self, general_account_id: UUID
+    ) -> Sequence[NewsImpact]:
         """List all news impacts for a given general_account_id."""
-        stmt = select(NewsImpact).where(NewsImpact.general_account_id == general_account_id).order_by(NewsImpact.name.asc())
+        stmt = (
+            select(NewsImpact)
+            .join(NewsImpact.group)
+            .where(NewsImpactsGroup.general_account_id == general_account_id)
+            .order_by(NewsImpact.name.asc())
+        )
         res = await self.db.execute(stmt)
         return res.scalars().all()
