@@ -11,6 +11,7 @@
         <NoteEditor
           :key="store.selectedNote.id"
           :show-financial-data="false"
+          :show-trade-details-link="false"
         />
       </div>
       <div v-else class="empty-state">
@@ -73,7 +74,6 @@ const fetchNote = async () => {
 const createNoteForTrade = async () => {
   isCreating.value = true;
   try {
-    // **CORRECTED TITLE LOGIC**
     const tradeDate = new Date(props.tradeDetails.entry_timestamp).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',

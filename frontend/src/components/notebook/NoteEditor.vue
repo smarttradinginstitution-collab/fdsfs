@@ -37,6 +37,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  showTradeDetailsLink: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const note = computed(() => store.selectedNote);
@@ -292,7 +296,7 @@ onBeforeUnmount(() => {
         </span>
       </div>
       <router-link
-        v-if="note && note.trade_id"
+        v-if="note && note.trade_id && props.showTradeDetailsLink"
         :to="{ name: 'report-detail', params: { id: note.trade_id } }"
         class="details-button"
       >
