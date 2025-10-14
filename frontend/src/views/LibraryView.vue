@@ -29,7 +29,7 @@
 
       <!-- Library Management Content -->
       <div v-else-if="['tags', 'mistakes', 'psychology', 'news'].includes(activeTab)">
-        <div v-if="activeTab !== 'tags'" class="content-grid">
+        <div v-if="activeTab === 'mistakes' || activeTab === 'psychology'" class="content-grid">
           <LibraryManagementCard
             v-if="activeTab === 'mistakes'"
             title="Mistakes"
@@ -47,13 +47,16 @@
             :delete-action="libraryStore.deletePsychologyState"
           />
           <LibraryManagementCard
-            v-if="activeTab === 'news'"
-            title="News Impacts"
-            :items="libraryStore.newsImpacts"
-            :is-grouped="true"
+            v-if="activeTab === 'psychology'"
+            title="Psychology States"
+            :items="libraryStore.psychologyStates"
+            :create-action="libraryStore.createPsychologyState"
+            :update-action="libraryStore.updatePsychologyState"
+            :delete-action="libraryStore.deletePsychologyState"
           />
         </div>
         <TagManagementTab v-if="activeTab === 'tags'" />
+        <NewsImpactManagementTab v-if="activeTab === 'news'" />
       </div>
 
       <!-- Trading DNA Content -->
@@ -81,6 +84,7 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import LibraryManagementCard from '@/components/library/LibraryManagementCard.vue';
 import TagManagementTab from '@/components/tags/TagManagementTab.vue';
+import NewsImpactManagementTab from '@/components/news-impacts/NewsImpactManagementTab.vue';
 import ComboCard from '@/components/trading-dna/ComboCard.vue';
 import { PlusIcon } from '@heroicons/vue/24/solid';
 

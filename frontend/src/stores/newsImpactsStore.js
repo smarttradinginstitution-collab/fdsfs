@@ -11,6 +11,17 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
   const isLoading = ref(false);
   const isSaving = ref(false);
   const error = ref(null);
+  const isCreatingGroup = ref(false);
+  const creatingTagInGroupId = ref(null);
+
+  // --- ACTIONS ---
+  function setCreatingGroup(status) {
+    isCreatingGroup.value = status;
+  }
+
+  function setCreatingTagInGroup(groupId) {
+    creatingTagInGroupId.value = groupId;
+  }
 
   // --- GETTERS ---
   const groupedNewsImpacts = computed(() => {
@@ -151,6 +162,10 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     error,
     groupedNewsImpacts,
     fetchAllNewsImpactsData,
+    isCreatingGroup,
+    creatingTagInGroupId,
+    setCreatingGroup,
+    setCreatingTagInGroup,
     createNewsImpactGroup,
     updateNewsImpactGroup,
     deleteNewsImpactGroup,
