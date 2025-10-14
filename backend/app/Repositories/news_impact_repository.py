@@ -4,6 +4,7 @@ from typing import Optional, Sequence
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.Models.news_impact import NewsImpact
 from app.Models.news_impacts_group import NewsImpactsGroup
@@ -18,7 +19,7 @@ class NewsImpactRepository:
 
     async def get_by_id(self, news_impact_id: UUID) -> Optional[NewsImpact]:
         """Get a specific news impact by ID."""
-        stmt = select(NewsImpact).where(NewsImpact.id == news_impact_id).limit(1)
+        stmt = select(NewsImpact).where(NewsImpact.id == news_impact_id).options(selectinload(NewsImpact.group)).limit(1)
         res = await self.db.execute(stmt)
         return res.scalars().first()
 

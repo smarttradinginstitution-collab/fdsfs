@@ -6,7 +6,10 @@
         <h1 class="page-title">Library & DNA</h1>
         <p class="page-subtitle">Manage your labels and discover the hidden patterns in your trading.</p>
       </div>
-       <BaseButton v-if="activeTab === 'tags' && !tagsStore.isCreatingGroup" @click="tagsStore.setCreatingGroup(true)">
+       <BaseButton
+        v-if="(activeTab === 'tags' && !tagsStore.isCreatingGroup) || (activeTab === 'news' && !newsImpactsStore.isCreatingGroup)"
+        @click="activeTab === 'tags' ? tagsStore.setCreatingGroup(true) : newsImpactsStore.setCreatingGroup(true)"
+      >
         <PlusIcon class="w-4 h-4 mr-2" />
         Add Group
       </BaseButton>
@@ -29,7 +32,7 @@
 
       <!-- Library Management Content -->
       <div v-else-if="['tags', 'mistakes', 'psychology', 'news'].includes(activeTab)">
-        <div v-if="activeTab !== 'tags'" class="content-grid">
+        <div v-if="activeTab === 'mistakes' || activeTab === 'psychology'" class="content-grid">
           <LibraryManagementCard
             v-if="activeTab === 'mistakes'"
             title="Mistakes"
@@ -47,15 +50,16 @@
             :delete-action="libraryStore.deletePsychologyState"
           />
           <LibraryManagementCard
-            v-if="activeTab === 'news'"
-            title="News Impacts"
-            :items="libraryStore.newsImpacts"
-            :create-action="libraryStore.createNewsImpact"
-            :update-action="libraryStore.updateNewsImpact"
-            :delete-action="libraryStore.deleteNewsImpact"
+            v-if="activeTab === 'psychology'"
+            title="Psychology States"
+            :items="libraryStore.psychologyStates"
+            :create-action="libraryStore.createPsychologyState"
+            :update-action="libraryStore.updatePsychologyState"
+            :delete-action="libraryStore.deletePsychologyState"
           />
         </div>
         <TagManagementTab v-if="activeTab === 'tags'" />
+        <NewsImpactManagementTab v-if="activeTab === 'news'" />
       </div>
 
       <!-- Trading DNA Content -->
@@ -77,17 +81,20 @@
 import { ref, onMounted, computed } from 'vue';
 import { useLibraryStore } from '@/stores/libraryStore';
 import { useTagsStore } from '@/stores/tagsStore';
+import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import { useTradingDnaStore } from '@/stores/tradingDnaStore';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import LibraryManagementCard from '@/components/library/LibraryManagementCard.vue';
 import TagManagementTab from '@/components/tags/TagManagementTab.vue';
+import NewsImpactManagementTab from '@/components/news-impacts/NewsImpactManagementTab.vue';
 import ComboCard from '@/components/trading-dna/ComboCard.vue';
 import { PlusIcon } from '@heroicons/vue/24/solid';
 
 const libraryStore = useLibraryStore();
 const tagsStore = useTagsStore();
+const newsImpactsStore = useNewsImpactsStore();
 const dnaStore = useTradingDnaStore();
 
 const activeTab = ref('tags');

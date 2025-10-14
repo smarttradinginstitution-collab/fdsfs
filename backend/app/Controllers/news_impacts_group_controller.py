@@ -8,7 +8,10 @@ from fastapi import Depends, HTTPException, status, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
-from app.Repositories.news_impacts_group_repository import NewsImpactsGroupRepository
+from app.Repositories.news_impacts_group_repository import (
+    NewsImpactsGroupRepository,
+    DuplicateNewsImpactsGroupError,
+)
 from app.Schemas.news_impacts_group import (
     NewsImpactsGroupCreate,
     NewsImpactsGroupRead,
@@ -35,10 +38,17 @@ async def create_news_impacts_group(
     db: AsyncSession = Depends(get_db),
 ) -> NewsImpactsGroupRead:
     repo = NewsImpactsGroupRepository(db)
-    new_group = await repo.create_news_impacts_group(
-        news_impacts_group_data=news_impacts_group_data, general_account_id=general_account_id
-    )
-    return new_group
+    try:
+        new_group = await repo.create_news_impacts_group(
+            news_impacts_group_data=news_impacts_group_data,
+            general_account_id=general_account_id,
+        )
+        return new_group
+    except DuplicateNewsImpactsGroupError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
 
 
 @router.get(

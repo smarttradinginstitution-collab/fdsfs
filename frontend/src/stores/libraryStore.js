@@ -1,17 +1,21 @@
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import apiClient from '../services/api';
 import { useUiStore } from './uiStore';
+import { useNewsImpactsStore } from './newsImpactsStore';
 
 export const useLibraryStore = defineStore('library', () => {
   // --- STATE ---
   const mistakes = ref([]);
   const psychologyStates = ref([]);
-  const newsImpacts = ref([]);
+  const newsImpactsStore = useNewsImpactsStore();
 
   const isLoading = ref(false);
   const isSaving = ref(false);
   const error = ref(null);
+
+  // --- COMPUTED ---
+  const newsImpacts = computed(() => newsImpactsStore.groupedNewsImpacts);
 
   // --- PRIVATE FETCH ACTIONS ---
   async function fetchMistakes() {
@@ -24,11 +28,6 @@ export const useLibraryStore = defineStore('library', () => {
     psychologyStates.value = response.data;
   }
 
-  async function fetchNewsImpacts() {
-    const response = await apiClient.get('/me/news-impacts');
-    newsImpacts.value = response.data;
-  }
-
   // --- PUBLIC ACTIONS ---
   async function fetchAllLibraryData() {
     isLoading.value = true;
@@ -37,7 +36,7 @@ export const useLibraryStore = defineStore('library', () => {
       await Promise.all([
         fetchMistakes(),
         fetchPsychologyStates(),
-        fetchNewsImpacts(),
+        newsImpactsStore.fetchAllNewsImpactsData(),
       ]);
     } catch (err) {
       console.error('Error fetching library data:', err);
@@ -58,7 +57,6 @@ export const useLibraryStore = defineStore('library', () => {
     const endpointMap = {
       mistake: 'mistakes',
       psychologyState: 'psychology-states',
-      newsImpact: 'news-impacts',
     };
     const entityUrlName = endpointMap[entityName];
 
@@ -114,9 +112,5 @@ export const useLibraryStore = defineStore('library', () => {
     updatePsychologyState: (id, data) => performCrudOperation('update', 'psychologyState', id, data),
     deletePsychologyState: (id) => performCrudOperation('delete', 'psychologyState', id),
 
-    // News Impacts
-    createNewsImpact: (data) => performCrudOperation('create', 'newsImpact', null, data),
-    updateNewsImpact: (id, data) => performCrudOperation('update', 'newsImpact', id, data),
-    deleteNewsImpact: (id) => performCrudOperation('delete', 'newsImpact', id),
   };
 });

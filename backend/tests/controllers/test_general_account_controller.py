@@ -60,7 +60,6 @@ async def test_get_general_account_with_all_data(
     )
     assert response.status_code == 200
     data = response.json()
-
     # Verifica i dati di base
     assert data["id"] == str(general_account_with_data.id)
     assert data["label"] == general_account_with_data.label
@@ -69,8 +68,8 @@ async def test_get_general_account_with_all_data(
     assert len(data["mistakes"]) == 1
     assert data["mistakes"][0]["name"] == "Test Mistake"
 
-    assert len(data["news_impacts"]) == 1
-    assert data["news_impacts"][0]["name"] == "Test News"
+    assert len(data["news_impacts_groups"]) == 1
+    assert data["news_impacts_groups"][0]["name"] == "Test News Group"
 
     assert len(data["psychology_states"]) == 1
     assert data["psychology_states"][0]["name"] == "Test State"

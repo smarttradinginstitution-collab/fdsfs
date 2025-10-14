@@ -17,17 +17,34 @@
 
     <!-- Items List -->
     <div class="items-list">
-      <LibraryItemRow
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
-        :is-saving="store.isSaving"
-        @update="handleUpdate"
-        @delete="promptDelete"
-      />
+      <template v-if="!isGrouped">
+        <LibraryItemRow
+          v-for="item in items"
+          :key="item.id"
+          :item="item"
+          :is-saving="store.isSaving"
+          @update="handleUpdate"
+          @delete="promptDelete"
+        />
+      </template>
+      <template v-else>
+        <div v-for="group in items" :key="group.id" class="group-container">
+          <h4 class="group-title">{{ group.name }}</h4>
+          <LibraryItemRow
+            v-for="item in group.news_impacts"
+            :key="item.id"
+            :item="item"
+            :is-saving="store.isSaving"
+            @update="handleUpdate"
+            @delete="promptDelete"
+          />
+        </div>
+      </template>
       <LibraryItemCreator
         v-if="isCreating"
         :is-saving="store.isSaving"
+        :is-grouped="isGrouped"
+        :groups="groups"
         @save="handleCreate"
         @cancel="isCreating = false"
       />
@@ -41,8 +58,9 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue';
+import { ref, defineProps, computed } from 'vue';
 import { useLibraryStore } from '@/stores/libraryStore';
+import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import LibraryItemRow from './LibraryItemRow.vue';
 import LibraryItemCreator from './LibraryItemCreator.vue';
@@ -50,12 +68,14 @@ import LibraryItemCreator from './LibraryItemCreator.vue';
 const props = defineProps({
   title: { type: String, required: true },
   items: { type: Array, required: true },
-  createAction: { type: Function, required: true },
-  updateAction: { type: Function, required: true },
-  deleteAction: { type: Function, required: true },
+  createAction: { type: Function, required: false },
+  updateAction: { type: Function, required: false },
+  deleteAction: { type: Function, required: false },
+  isGrouped: { type: Boolean, default: false },
 });
 
 const store = useLibraryStore();
+const newsImpactsStore = useNewsImpactsStore();
 const isCreating = ref(false);
 
 // --- Deletion Logic ---
@@ -69,20 +89,39 @@ const promptDelete = (item) => {
 
 const handleConfirmDelete = async () => {
   if (!itemToDelete.value) return;
-  await props.deleteAction(itemToDelete.value.id);
+  if (props.isGrouped) {
+    await newsImpactsStore.deleteNewsImpact(itemToDelete.value.id);
+  } else {
+    await props.deleteAction(itemToDelete.value.id);
+  }
   isDeleteModalVisible.value = false;
   itemToDelete.value = null;
 };
 
 // --- Create/Update Logic ---
 const handleCreate = async (itemData) => {
-  await props.createAction(itemData);
+  if (props.isGrouped) {
+    await newsImpactsStore.createNewsImpact(itemData);
+  } else {
+    await props.createAction(itemData);
+  }
   isCreating.value = false;
 };
 
 const handleUpdate = async ({ id, data }) => {
-  await props.updateAction(id, data);
+  if (props.isGrouped) {
+    await newsImpactsStore.updateNewsImpact(id, data);
+  } else {
+    await props.updateAction(id, data);
+  }
 };
+
+const groups = computed(() => {
+  if (props.isGrouped) {
+    return props.items.map(group => ({ id: group.id, name: group.name }));
+  }
+  return [];
+});
 </script>
 
 <style scoped>

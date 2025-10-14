@@ -111,3 +111,19 @@ async def test_user_cannot_access_other_users_group(authenticated_client_factory
 
         delete_response = await client2.delete(f"/api/v1/me/news-impacts-groups/{group_id}")
         assert delete_response.status_code == 404
+
+
+async def test_create_duplicate_group_name_fails(authenticated_client_factory):
+    """Tests that creating a group with a duplicate name for the same user fails."""
+    async with authenticated_client_factory() as client:
+        await get_general_account_id(client)
+        group_data = {"name": "Duplicate Test Group"}
+
+        # Create the group for the first time
+        response1 = await client.post("/api/v1/me/news-impacts-groups", json=group_data)
+        assert response1.status_code == 201
+
+        # Attempt to create it again
+        response2 = await client.post("/api/v1/me/news-impacts-groups", json=group_data)
+        assert response2.status_code == 409
+        assert "A group with this name already exists" in response2.json()["detail"]

@@ -4,11 +4,16 @@ from __future__ import annotations
 from typing import Optional, Sequence, List
 from uuid import UUID
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.Models.news_impacts_group import NewsImpactsGroup
 from app.Schemas.news_impacts_group import NewsImpactsGroupCreate, NewsImpactsGroupUpdate
+
+
+class DuplicateNewsImpactsGroupError(Exception):
+    pass
 
 
 class NewsImpactsGroupRepository:
@@ -19,16 +24,28 @@ class NewsImpactsGroupRepository:
         self, news_impacts_group_data: NewsImpactsGroupCreate, general_account_id: UUID
     ) -> NewsImpactsGroup:
         """Creates a new news impacts group."""
+        # Check for existing group with the same name
+        stmt = select(NewsImpactsGroup).where(
+            NewsImpactsGroup.general_account_id == general_account_id,
+            NewsImpactsGroup.name == news_impacts_group_data.name,
+        )
+        result = await self.db.execute(stmt)
+        if result.scalars().first():
+            raise DuplicateNewsImpactsGroupError("A group with this name already exists.")
+
         db_news_impacts_group = NewsImpactsGroup(
             **news_impacts_group_data.model_dump(), general_account_id=general_account_id
         )
         self.db.add(db_news_impacts_group)
-        await self.db.flush()
-        group_id = db_news_impacts_group.id
         await self.db.commit()
+        await self.db.refresh(db_news_impacts_group)
 
-        created_group = await self.get_news_impacts_group_by_id(group_id, general_account_id)
+        # Re-fetch the group to ensure relationships are loaded
+        created_group = await self.get_news_impacts_group_by_id(
+            db_news_impacts_group.id, general_account_id
+        )
         if not created_group:
+            # This should not happen, but as a safeguard
             raise Exception("Failed to re-fetch created news impacts group")
         return created_group
 
