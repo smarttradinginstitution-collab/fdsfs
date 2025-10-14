@@ -17,8 +17,9 @@
             v-if="(activeTab === 'tags' && !tagsStore.isCreatingGroup) || (activeTab === 'news' && !newsImpactsStore.isCreatingGroup)"
             @click="activeTab === 'tags' ? tagsStore.setCreatingGroup(true) : newsImpactsStore.setCreatingGroup(true)"
             size="small"
+            variant="ghost"
         >
-            <PlusIcon class="w-4 h-4 mr-2" />
+            <PlusIcon class="w-3 h-3 mr-2" />
             Add Group
         </BaseButton>
     </div>
