@@ -239,7 +239,7 @@ onMounted(() => {
 .rule-groups-container {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-gap-lg);
+  gap: var(--semantic-size-inset-md);
   margin-top: 1rem;
 }
 .rule-group-card {
