@@ -15,6 +15,7 @@ from app.Models.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
 from app.Models.rule_playbook import RulePlaybook
+from app.Models.news_impact import NewsImpact
 
 
 class TradeRepository:
@@ -27,10 +28,10 @@ class TradeRepository:
             select(Trade)
             .options(
                 selectinload(Trade.tags).joinedload(Tag.group),
-                joinedload(Trade.mistakes),
+                selectinload(Trade.mistakes),
                 joinedload(Trade.playbook),
-                joinedload(Trade.news_impacts),
-                joinedload(Trade.psychology_states),
+                selectinload(Trade.news_impacts).joinedload(NewsImpact.group),
+                selectinload(Trade.psychology_states),
                 joinedload(Trade.asset),
                 selectinload(Trade.rules_followed),
                 # Eager load the trading account to access initial_balance for ROI calculation
