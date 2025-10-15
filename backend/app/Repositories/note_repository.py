@@ -36,6 +36,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                joinedload(Note.trade).selectinload(Trade.rules_followed),
                 selectinload(Note.templates),
             )
             .where(Note.id == note_id)
@@ -59,6 +60,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                joinedload(Note.trade).selectinload(Trade.rules_followed),
                 selectinload(Note.templates),
             )
             .where(Note.trade_id == trade_id)
@@ -78,6 +80,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                joinedload(Note.trade).selectinload(Trade.rules_followed),
                 selectinload(Note.templates),
             )
             .where(Note.folder_id == folder_id)
@@ -103,6 +106,7 @@ class NoteRepository:
                 joinedload(Note.trade).joinedload(Trade.playbook),
                 joinedload(Note.trade).joinedload(Trade.news_impacts),
                 joinedload(Note.trade).joinedload(Trade.psychology_states),
+                joinedload(Note.trade).selectinload(Trade.rules_followed),
                 selectinload(Note.templates),
             )
             .where(NotebookFolder.general_account_id == general_account_id)
