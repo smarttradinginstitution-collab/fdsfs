@@ -132,12 +132,20 @@ onMounted(() => {
           <ul class="rules-list">
             <li v-for="rule in group.rules" :key="rule.id" :class="{ 'rule-checked': localCheckedRules.includes(rule.id) }">
               <label class="rule-label">
+        <div v-for="group in ruleGroups" :key="group.id" class="rule-group-card">
+          <h4 class="rule-group-title">{{ group.name_group }}</h4>
+          <ul class="rules-list">
+            <li v-for="rule in group.rules" :key="rule.id" :class="{ 'rule-checked': localCheckedRules.includes(rule.id) }">
+              <label class="rule-label">
                 <input
                   type="checkbox"
+                  class="custom-checkbox-input"
                   class="custom-checkbox-input"
                   :value="rule.id"
                   v-model="localCheckedRules"
                 />
+                <span class="custom-checkbox-visual"></span>
+                <span class="rule-text">{{ rule.rule }}</span>
                 <span class="custom-checkbox-visual"></span>
                 <span class="rule-text">{{ rule.rule }}</span>
               </label>
@@ -229,7 +237,10 @@ onMounted(() => {
 .progress-bar {
   height: 7px;
   background-color: var(--semantic-color-interactive-primary-default);
+  height: 7px;
+  background-color: var(--semantic-color-interactive-primary-default);
   border-radius: 4px;
+  transition: width 0.3s ease-in-out;
   transition: width 0.3s ease-in-out;
 }
 .rules-followed-text {
@@ -237,6 +248,9 @@ onMounted(() => {
   margin-bottom: 1.5rem;
 }
 .rule-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-gap-lg);
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-gap-lg);
@@ -251,7 +265,12 @@ onMounted(() => {
   font: var(--semantic-font-style-heading-sm);
   color: var(--semantic-color-text-primary);
   margin-bottom: var(--semantic-size-stack-md);
+.rule-group-title {
+  font: var(--semantic-font-style-heading-sm);
+  color: var(--semantic-color-text-primary);
+  margin-bottom: var(--semantic-size-stack-md);
 }
+.rules-list {
 .rules-list {
   list-style-type: none;
   padding-left: 0;
@@ -259,6 +278,7 @@ onMounted(() => {
   flex-direction: column;
   gap: var(--semantic-size-gap-md);
 }
+.rule-label {
 .rule-label {
   display: flex;
   align-items: center;
