@@ -11,7 +11,7 @@ from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.playbook import (
-    PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
+    PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics, RuleMetrics
 )
 from app.Schemas.trade import TradeRead
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
@@ -58,15 +58,22 @@ class PlaybookController:
 
         response_playbooks = []
         for playbook in playbooks:
-            # Calcola le statistiche per ogni playbook
-            # L'initial_balance non è rilevante per le metriche del playbook, quindi passiamo 0.0
+            total_playbook_trades = len(playbook.trades)
             calculator = MetricsCalculator(trades=playbook.trades, initial_balance=0.0)
             stats_data = calculator.get_playbook_summary_metrics()
 
-            # Crea lo schema di risposta e popola le statistiche
-            stats = PlaybookStats(**stats_data)
             playbook_read = PlaybookRead.from_orm(playbook)
-            playbook_read.stats = stats
+            playbook_read.stats = PlaybookStats(**stats_data)
+
+            # Calcola le metriche per ogni regola
+            for group in playbook_read.rules_groups:
+                for rule in group.rules:
+                    # Cerca la regola corrispondente nel modello ORM per accedere ai trade associati
+                    orm_rule = next((r for g in playbook.rules_groups for r in g.rules if r.id == rule.id), None)
+                    if orm_rule:
+                        rule_metrics_data = MetricsCalculator.calculate_for_rule(orm_rule, total_playbook_trades)
+                        rule.metrics = RuleMetrics(**rule_metrics_data)
+
             response_playbooks.append(playbook_read)
 
         return response_playbooks
