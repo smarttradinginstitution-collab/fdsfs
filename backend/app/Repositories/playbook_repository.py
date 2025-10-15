@@ -10,6 +10,8 @@ from sqlalchemy.orm import selectinload, joinedload
 
 from app.Models.playbook import Playbook
 from app.Models.general_account import GeneralAccount
+from app.Models.rules_group_playbook import RulesGroupPlaybook
+from app.Models.rule_playbook import RulePlaybook
 from app.Schemas.playbook import PlaybookCreate, PlaybookUpdate
 
 
@@ -71,13 +73,13 @@ class PlaybookRepository:
             select(Playbook)
             .where(Playbook.general_account_id == general_account_id)
             .options(
-                selectinload(Playbook.rules_groups),
+                selectinload(Playbook.rules_groups).selectinload(RulesGroupPlaybook.rules).selectinload(RulePlaybook.trades),
                 selectinload(Playbook.trades)  # Eager load trades
             )
             .order_by(Playbook.title.asc())
         )
         res = await self.db.execute(stmt)
-        return res.scalars().all()
+        return res.unique().scalars().all()
 
     async def create(self, playbook_in: PlaybookCreate, general_account_id: UUID) -> Playbook:
         await self._check_duplicate_title(general_account_id, playbook_in.title)
