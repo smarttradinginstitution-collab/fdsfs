@@ -76,7 +76,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-gap-md, 1rem);
-  max-height: 300px;
+  max-height: 600px;
   overflow-y: auto;
 }
 
