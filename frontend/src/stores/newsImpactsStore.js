@@ -45,6 +45,7 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     error.value = null;
     try {
       const response = await apiClient.get('/me/news-impacts');
+      console.log('[DEBUG] Raw News Impacts from API:', response.data);
       newsImpacts.value = response.data;
     } catch (err) {
       console.error('Error fetching news impacts:', err);
@@ -65,6 +66,7 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     error.value = null;
     try {
       const response = await apiClient.get('/me/news-impacts-groups');
+      console.log('[DEBUG] Raw News Impact Groups from API:', response.data);
       newsImpactsGroups.value = response.data;
     } catch (err) {
       console.error('Error fetching news impact groups:', err);
