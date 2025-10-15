@@ -45,13 +45,26 @@ onClickOutside(popoverRef, () => {
 
 // --- COMPUTED ---
 const allGroupedNewsImpacts = computed(() => {
-  if (!newsImpactsStore.groupedNewsImpacts) return [];
-  const sortedGroups = [...newsImpactsStore.groupedNewsImpacts].sort((a, b) => a.position - b.position);
-  return sortedGroups.map(group => ({
-    ...group,
-    impacts: group.news_impacts,
-    tradeImpacts: props.trade.news_impacts.filter(tradeImpact => tradeImpact.group_id === group.id),
-  }));
+  if (!newsImpactsStore.newsImpactsGroups.length || !newsImpactsStore.newsImpacts.length) return [];
+
+  // Create a Set of the trade's news impact IDs for efficient lookup
+  const tradeImpactIds = new Set(props.trade.news_impacts.map(impact => impact.id));
+
+  const sortedGroups = [...newsImpactsStore.newsImpactsGroups].sort((a, b) => a.position - b.position);
+
+  return sortedGroups.map(group => {
+    // All impacts belonging to this group
+    const impactsInGroup = newsImpactsStore.newsImpacts.filter(impact => impact.group_id === group.id);
+
+    // The impacts that are BOTH in this group AND associated with the trade
+    const tradeImpactsInGroup = impactsInGroup.filter(impact => tradeImpactIds.has(impact.id));
+
+    return {
+      ...group,
+      impacts: impactsInGroup, // for the popover
+      tradeImpacts: tradeImpactsInGroup, // for display
+    };
+  });
 });
 
 // --- METHODS ---
@@ -110,7 +123,14 @@ const openPopover = async (event, group) => {
 
 const handleSaveChanges = async () => {
   if (!activeGroup.value) return;
-  const otherGroupImpactIds = props.trade.news_impacts.filter(impact => impact.group_id !== activeGroup.value.id).map(impact => impact.id);
+
+  // Get IDs of impacts from other groups that are already saved on the trade
+  const tradeImpactIds = new Set(props.trade.news_impacts.map(i => i.id));
+  const impactsFromOtherGroups = newsImpactsStore.newsImpacts.filter(
+    impact => impact.group_id !== activeGroup.value.id && tradeImpactIds.has(impact.id)
+  );
+  const otherGroupImpactIds = impactsFromOtherGroups.map(impact => impact.id);
+
   const finalImpactIds = [...otherGroupImpactIds, ...selectedImpactIdsInPopover.value];
   await tradesStore.updateTradeNewsImpacts(props.trade.id, finalImpactIds);
   isPopoverOpen.value = false;
@@ -137,8 +157,12 @@ const removeImpact = async (impactToRemove) => {
   const finalImpactIds = currentImpactIds.filter(id => id !== impactToRemove.id);
   await tradesStore.updateTradeNewsImpacts(props.trade.id, finalImpactIds);
 
-  const remainingImpacts = props.trade.news_impacts.filter(t => t.group_id === impactToRemove.group_id && t.id !== impactToRemove.id);
-  if (remainingImpacts.length === 0) {
+  const remainingImpacts = props.trade.news_impacts.filter(t => t.id !== impactToRemove.id);
+  const remainingImpactsInGroup = allGroupedNewsImpacts.value
+    .find(g => g.id === impactToRemove.group_id)
+    ?.tradeImpacts.filter(i => remainingImpacts.some(rem => rem.id === i.id));
+
+  if (remainingImpactsInGroup && remainingImpactsInGroup.length === 0) {
     exitDeleteMode();
   }
 };

@@ -25,18 +25,32 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
 
   // --- GETTERS ---
   const groupedNewsImpacts = computed(() => {
-    return newsImpactsGroups.value;
+    if (!newsImpactsGroups.value.length) {
+      return [];
+    }
+    return newsImpactsGroups.value.map(group => ({
+      ...group,
+      news_impacts: newsImpacts.value.filter(impact => impact.group_id === group.id),
+    }));
   });
 
   // --- ACTIONS ---
-  async function fetchAllNewsImpactsData() {
+  async function fetchNewsImpacts() {
     const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
-      console.log("User not authenticated. Skipping news impact groups fetch.");
-      return;
+    if (!authStore.isAuthenticated) return;
+    try {
+      const response = await apiClient.get('/me/news-impacts');
+      newsImpacts.value = response.data;
+    } catch (err) {
+      console.error('Error fetching news impacts:', err);
+      error.value = err.response?.data?.detail || 'An unexpected error occurred.';
+      newsImpacts.value = [];
     }
-    isLoading.value = true;
-    error.value = null;
+  }
+
+  async function fetchNewsImpactsGroups() {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
     try {
       const response = await apiClient.get('/me/news-impacts-groups');
       newsImpactsGroups.value = response.data;
@@ -44,6 +58,22 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
       console.error('Error fetching news impact groups:', err);
       error.value = err.response?.data?.detail || 'An unexpected error occurred.';
       newsImpactsGroups.value = [];
+    }
+  }
+
+  async function fetchAllNewsImpactsData() {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      console.log("User not authenticated. Skipping all news impacts data fetch.");
+      return;
+    }
+    isLoading.value = true;
+    error.value = null;
+    try {
+      await Promise.all([fetchNewsImpacts(), fetchNewsImpactsGroups()]);
+    } catch (err) {
+      console.error('Error fetching all news impacts data:', err);
+      error.value = 'An error occurred while fetching news impacts information.';
     } finally {
       isLoading.value = false;
     }
