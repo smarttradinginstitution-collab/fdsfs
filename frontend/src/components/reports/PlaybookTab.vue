@@ -127,17 +127,17 @@ onMounted(() => {
       </div>
       <div v-if="isLoading" class="loading">Loading rules...</div>
       <div v-else class="rule-groups-container">
-        <div v-for="group in ruleGroups" :key="group.id" class="rule-group">
-          <h4>{{ group.name_group }}</h4>
-          <ul>
-            <li v-for="rule in group.rules" :key="rule.id">
-              <label>
+        <div v-for="group in ruleGroups" :key="group.id" class="rule-group-card">
+          <h4 class="rule-group-title">{{ group.name_group }}</h4>
+          <ul class="rules-list">
+            <li v-for="rule in group.rules" :key="rule.id" :class="{ 'rule-checked': localCheckedRules.includes(rule.id) }">
+              <label class="rule-label">
                 <input
                   type="checkbox"
                   :value="rule.id"
                   v-model="localCheckedRules"
                 />
-                {{ rule.rule }}
+                <span class="rule-text">{{ rule.rule }}</span>
               </label>
             </li>
           </ul>
@@ -226,35 +226,57 @@ onMounted(() => {
 }
 .progress-bar {
   height: 10px;
-  background-color: #4caf50;
+  background-color: var(--semantic-color-interactive-primary-default);
   border-radius: 4px;
+  transition: width 0.3s ease-in-out;
 }
 .rules-followed-text {
   font-size: 0.9rem;
   margin-bottom: 1.5rem;
 }
 .rule-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-gap-lg);
   margin-top: 1rem;
 }
-.rule-group {
-  margin-bottom: 1.5rem;
+.rule-group-card {
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-container);
+  padding: var(--semantic-size-inset-lg);
 }
-.rule-group h4 {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.rule-group-title {
+  font: var(--semantic-font-style-heading-sm);
+  color: var(--semantic-color-text-primary);
+  margin-bottom: var(--semantic-size-stack-md);
 }
-ul {
+.rules-list {
   list-style-type: none;
   padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-gap-md);
 }
-li {
-  margin-bottom: 0.5rem;
-}
-label {
+.rule-label {
   display: flex;
   align-items: center;
+  gap: var(--semantic-size-gap-md);
+  font: var(--semantic-font-style-body-base);
+  color: var(--semantic-color-text-primary);
 }
 input[type="checkbox"] {
-  margin-right: 0.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--semantic-color-interactive-primary-default);
+}
+
+.rule-checked .rule-text {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.rule-label {
+  transition: opacity 0.3s ease;
 }
 </style>
