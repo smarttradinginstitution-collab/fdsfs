@@ -103,11 +103,12 @@ onMounted(() => {
   .playbook-title {
     font-weight: bold;
     color: var(--semantic-color-text-primary, #000);
+    font-size: 0.9rem;
   }
 
   .playbook-description {
     grid-column: 2;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--semantic-color-text-secondary, #666);
   }
 }
