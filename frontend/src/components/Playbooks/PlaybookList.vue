@@ -6,7 +6,7 @@
     <p>No playbooks found. Start by creating one!</p>
   </div>
   <div v-else :class="['playbook-list', layoutClass]">
-    <PlaybookListItem
+    <PlaybookCard
       v-for="playbook in playbooks"
       :key="playbook.id"
       :playbook="playbook"
@@ -17,7 +17,7 @@
 
 <script setup>
 import { computed, defineProps } from 'vue';
-import PlaybookListItem from './PlaybookListItem.vue';
+import PlaybookCard from './PlaybookCard.vue';
 
 const props = defineProps({
   playbooks: {
