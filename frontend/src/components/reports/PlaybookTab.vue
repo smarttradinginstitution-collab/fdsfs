@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import SelectPlaybookModal from './SelectPlaybookModal.vue';
+import InlinePlaybookSelector from './InlinePlaybookSelector.vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
@@ -18,7 +18,7 @@ const router = useRouter();
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
 
-const isModalOpen = ref(false);
+const isSelectorVisible = ref(false);
 const isDropdownOpen = ref(false);
 const localCheckedRules = ref([]);
 
@@ -45,12 +45,14 @@ const initializeCheckedRules = () => {
 };
 
 const handleAddPlaybook = () => {
-  isModalOpen.value = true;
+  isSelectorVisible.value = true;
 };
 
 const handleSelectPlaybook = async (playbookId) => {
   await tradesStore.updateTrade(props.trade.id, { playbook_id: playbookId });
-  isModalOpen.value = false;
+  // Manually update the trade prop to trigger the watcher
+  props.trade.playbook = tradesStore.selectedTrade.playbook;
+  isSelectorVisible.value = false;
 };
 
 const handleSaveChanges = async () => {
@@ -92,11 +94,18 @@ onMounted(() => {
 
 <template>
   <div class="playbook-tab">
-    <div v-if="!playbook" class="no-playbook">
+    <div v-if="!playbook && !isSelectorVisible" class="no-playbook">
       <p>No playbook assigned to this trade.</p>
       <BaseButton @click="handleAddPlaybook">Add Playbook</BaseButton>
     </div>
-    <div v-else class="playbook-details">
+
+    <InlinePlaybookSelector
+      v-if="isSelectorVisible"
+      @select="handleSelectPlaybook"
+      @cancel="isSelectorVisible = false"
+    />
+
+    <div v-if="playbook && !isSelectorVisible" class="playbook-details">
       <div class="playbook-header">
         <h3>{{ playbook.title }}</h3>
         <div class="actions">
@@ -137,32 +146,27 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <SelectPlaybookModal
-      :show="isModalOpen"
-      @close="isModalOpen = false"
-      @select="handleSelectPlaybook"
-    />
   </div>
 </template>
 
 <style scoped>
 .playbook-tab {
-  padding: 1rem;
+  padding: var(--semantic-size-inset-md, 1rem);
 }
 .no-playbook {
   text-align: center;
-  padding: 2rem;
+  padding: var(--semantic-size-inset-lg, 2rem);
 }
 .playbook-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--semantic-size-gap-md, 1rem);
 }
 .actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--semantic-size-gap-sm, 0.5rem);
 }
 .dropdown-container {
   position: relative;
@@ -171,69 +175,72 @@ onMounted(() => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: var(--semantic-size-inset-xs, 0.25rem);
 }
 .icon {
   width: 1.5rem;
   height: 1.5rem;
-  color: #6b7280;
+  color: var(--semantic-color-text-secondary, #6b7280);
 }
 .dropdown-menu {
   position: absolute;
   right: 0;
   top: 100%;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  background-color: var(--semantic-color-surface-primary, white);
+  border: 1px solid var(--semantic-color-border-default, #e5e7eb);
+  border-radius: var(--semantic-border-radius-container, 0.375rem);
+  box-shadow: var(--semantic-effect-shadow-dropdown, 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1));
   z-index: 10;
   width: 120px;
 }
 .dropdown-item {
   display: block;
-  padding: 0.5rem 1rem;
+  padding: var(--semantic-size-inset-sm, 0.5rem) var(--semantic-size-inset-md, 1rem);
   cursor: pointer;
+  font: var(--semantic-font-style-body-md, 1rem);
+  color: var(--semantic-color-text-primary, #1f2937);
 }
 .dropdown-item:hover {
-  background-color: #f3f4f6;
+  background-color: var(--semantic-color-surface-hover, #f3f4f6);
 }
 .progress-bar-container {
   width: 100%;
-  background-color: #e0e0e0;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
+  background-color: var(--semantic-color-surface-secondary, #e0e0e0);
+  border-radius: var(--semantic-border-radius-interactive, 4px);
+  margin-bottom: var(--semantic-size-gap-sm, 0.5rem);
 }
 .progress-bar {
   height: 10px;
-  background-color: #4caf50;
-  border-radius: 4px;
+  background-color: var(--semantic-color-interactive-primary-default, #4caf50);
+  border-radius: var(--semantic-border-radius-interactive, 4px);
 }
 .rules-followed-text {
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  font: var(--semantic-font-style-body-sm, 0.9rem);
+  margin-bottom: var(--semantic-size-gap-lg, 1.5rem);
 }
 .rule-groups-container {
-  margin-top: 1rem;
+  margin-top: var(--semantic-size-gap-md, 1rem);
 }
 .rule-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--semantic-size-gap-lg, 1.5rem);
 }
 .rule-group h4 {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font: var(--semantic-font-style-heading-sm);
+  margin-bottom: var(--semantic-size-gap-sm, 0.5rem);
 }
 ul {
   list-style-type: none;
   padding-left: 0;
 }
 li {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--semantic-size-gap-sm, 0.5rem);
 }
 label {
   display: flex;
   align-items: center;
+  font: var(--semantic-font-style-body-md);
 }
 input[type="checkbox"] {
-  margin-right: 0.5rem;
+  margin-right: var(--semantic-size-gap-sm, 0.5rem);
 }
 </style>
