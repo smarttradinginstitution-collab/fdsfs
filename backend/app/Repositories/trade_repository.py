@@ -200,7 +200,11 @@ class TradeRepository:
         """
         query = self._get_trade_query().where(Trade.id == trade_id)
         result = await self.db.execute(query)
-        return result.scalars().first()
+        # .unique() è fondamentale qui per consolidare le righe quando ci sono
+        # più relazioni "to-many" (es. tags, mistakes, news_impacts) caricate
+        # con selectinload, che altrimenti creerebbero righe duplicate per lo
+        # stesso trade.
+        return result.unique().scalars().first()
 
     async def add_and_commit(self, db_trade: Trade) -> Trade:
         """Aggiunge, committa e refresha un'istanza di trade."""
