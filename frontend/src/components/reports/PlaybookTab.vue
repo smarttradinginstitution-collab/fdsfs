@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import SelectPlaybookModal from './SelectPlaybookModal.vue';
+import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
   trade: {
@@ -12,10 +14,12 @@ const props = defineProps({
   },
 });
 
+const router = useRouter();
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
 
 const isModalOpen = ref(false);
+const isDropdownOpen = ref(false);
 const localCheckedRules = ref([]);
 
 const playbook = computed(() => props.trade.playbook);
@@ -57,6 +61,17 @@ const handleSaveChanges = async () => {
     }
 };
 
+const handleEdit = () => {
+  if (playbook.value) {
+    router.push({ name: 'playbook-detail', params: { id: playbook.value.id } });
+  }
+};
+
+const handleRemove = async () => {
+  await tradesStore.updateTrade(props.trade.id, { playbook_id: null });
+  isDropdownOpen.value = false;
+};
+
 watch(() => props.trade.playbook, (newPlaybook) => {
   if (newPlaybook) {
     playbookStore.fetchRuleGroups(newPlaybook.id);
@@ -84,7 +99,18 @@ onMounted(() => {
     <div v-else class="playbook-details">
       <div class="playbook-header">
         <h3>{{ playbook.title }}</h3>
-        <BaseButton @click="handleSaveChanges">Save Changes</BaseButton>
+        <div class="actions">
+          <BaseButton @click="handleSaveChanges">Save Changes</BaseButton>
+          <div class="dropdown-container">
+            <button @click="isDropdownOpen = !isDropdownOpen" class="icon-button">
+              <EllipsisVerticalIcon class="icon" />
+            </button>
+            <div v-if="isDropdownOpen" class="dropdown-menu">
+              <a @click="handleEdit" class="dropdown-item">Edit</a>
+              <a @click="handleRemove" class="dropdown-item">Remove</a>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar" :style="{ width: progress + '%' }"></div>
@@ -132,6 +158,44 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dropdown-container {
+  position: relative;
+}
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #6b7280;
+}
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  z-index: 10;
+  width: 120px;
+}
+.dropdown-item {
+  display: block;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.dropdown-item:hover {
+  background-color: #f3f4f6;
 }
 .progress-bar-container {
   width: 100%;

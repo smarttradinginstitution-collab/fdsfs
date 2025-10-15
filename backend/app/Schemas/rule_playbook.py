@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
-# DEFINED FIRST to avoid NameError
 class RuleMetrics(BaseModel):
     follow_rate: float
     net_pnl: float
