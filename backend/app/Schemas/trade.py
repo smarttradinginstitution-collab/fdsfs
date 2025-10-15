@@ -21,15 +21,11 @@ class MistakeRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+from app.Schemas.news_impact import NewsImpactRead
+
 class PlaybookRead(BaseModel):
     id: UUID
     title: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-class NewsImpactRead(BaseModel):
-    id: UUID
-    name: str
 
     model_config = ConfigDict(from_attributes=True)
 

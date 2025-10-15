@@ -1,4 +1,5 @@
 # app/Schemas/analytics.py
+from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
 from datetime import date

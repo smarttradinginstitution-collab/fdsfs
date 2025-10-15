@@ -400,18 +400,30 @@ class TradeService:
 
         config = LABEL_TYPE_MAP[label_type]
         model_class = config["model"]
-        # Lo schema non viene usato qui ma potrebbe servire per la validazione del response_model
-
-        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        # Per gestire l'aggiunta e il controllo dei duplicati, carichiamo il trade con le relazioni esistenti.
+        db_trade = await self.repo.get_trade_for_details_view(trade_id)
         if not db_trade:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
 
         _, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        labels = await self._get_related_entities(general_account_id, model_class, label_ids)
+        # Ottieni la lista delle etichette correnti
+        current_labels = getattr(db_trade, label_type)
+        current_label_ids = {label.id for label in current_labels}
 
-        # Il nome dell'attributo sul modello Trade è il `label_type` (es. trade.mistakes)
-        setattr(db_trade, label_type, labels)
+        # Controlla se una delle etichette fornite è già associata al trade
+        incoming_label_ids = set(label_ids)
+        if not incoming_label_ids.isdisjoint(current_label_ids):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"One or more {label_type} are already associated with this trade."
+            )
+
+        # Se non ci sono duplicati, recupera le nuove etichette da aggiungere
+        new_labels = await self._get_related_entities(general_account_id, model_class, label_ids)
+
+        # Aggiungi le nuove etichette a quelle esistenti
+        current_labels.extend(new_labels)
 
         await self.db.commit()
         await self.db.refresh(db_trade, attribute_names=[label_type])

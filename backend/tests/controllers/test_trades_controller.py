@@ -216,3 +216,60 @@ async def test_get_trade_with_correctly_calculated_metrics(async_client: AsyncCl
     assert trade_risk_float == pytest.approx(810.0)
     assert net_roi_float == pytest.approx(1.575)
     assert r_multiple_float == pytest.approx(1.9444, abs=1e-4)
+
+
+async def test_add_duplicate_news_impact_to_trade_fails(async_client: AsyncClient, db_session: AsyncSession):
+    """
+    Testa che l'aggiunta di un news impact duplicato a un trade restituisca un errore 409
+    e che l'operazione venga annullata.
+    """
+    # 1. Setup: Crea un trade e un paio di news impacts
+    trading_account_id = await setup_trading_account(async_client, db_session)
+    trade_payload = {"trading_account_id": trading_account_id, "symbol_snapshot": "TESTUSD", "status": "open", "direction": "LONG"}
+    create_trade_response = await async_client.post("/api/v1/trades/", json=trade_payload)
+    assert create_trade_response.status_code == 201
+    trade_id = create_trade_response.json()["id"]
+
+    # Per creare news_impacts, dobbiamo prima creare un gruppo
+    group_res = await async_client.post("/api/v1/me/news-impacts-groups", json={"name": "Test Group", "color": "#888888"})
+    assert group_res.status_code == 201
+    group_id = group_res.json()["id"]
+
+    # Crea due news impacts per il test
+    news_impact_1_payload = {"name": "Existing Impact", "group_id": group_id}
+    news_impact_2_payload = {"name": "New Impact", "group_id": group_id}
+
+    create_impact_1_res = await async_client.post("/api/v1/me/news-impacts", json=news_impact_1_payload)
+    assert create_impact_1_res.status_code == 201
+    impact_1_id = create_impact_1_res.json()["id"]
+
+    create_impact_2_res = await async_client.post("/api/v1/me/news-impacts", json=news_impact_2_payload)
+    assert create_impact_2_res.status_code == 201
+    impact_2_id = create_impact_2_res.json()["id"]
+
+    # 2. Azione Iniziale: Associa il primo news impact al trade
+    initial_add_response = await async_client.post(
+        f"/api/v1/trades/{trade_id}/news-impacts",
+        json=[impact_1_id]
+    )
+    assert initial_add_response.status_code == 200
+    assert len(initial_add_response.json()) == 1
+
+    # 3. Azione di Test: Prova ad aggiungere di nuovo il primo e anche il secondo
+    duplicate_add_response = await async_client.post(
+        f"/api/v1/trades/{trade_id}/news-impacts",
+        json=[impact_1_id, impact_2_id]
+    )
+
+    # 4. Verifica: L'API dovrebbe restituire 409 Conflict
+    assert duplicate_add_response.status_code == 409
+
+    # 5. Verifica Finale: Controlla che il secondo news impact non sia stato aggiunto
+    get_trade_response = await async_client.get(f"/api/v1/trades/{trade_id}")
+    assert get_trade_response.status_code == 200
+    trade_details = get_trade_response.json()
+
+    # Il trade dovrebbe avere solo il primo impact, perché la seconda transazione è fallita
+    assert len(trade_details["news_impacts"]) == 1
+    assert trade_details["news_impacts"][0]["id"] == impact_1_id
+    assert trade_details["news_impacts"][0]["name"] == "Existing Impact"
