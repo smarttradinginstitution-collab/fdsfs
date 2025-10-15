@@ -201,10 +201,9 @@ onMounted(() => {
   position: absolute;
   right: 0;
   top: 100%;
-  background-color: var(--semantic-color-surface-primary);
+  background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-container);
-  box-shadow: var(--semantic-effect-shadow-sm);
+  border-radius: var(--semantic-border-radius-interactive);
   z-index: 10;
   width: 120px;
   padding: var(--semantic-size-inset-sm);
