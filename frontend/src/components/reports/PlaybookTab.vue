@@ -289,7 +289,7 @@ onMounted(() => {
   position: absolute;
   left: 3px;
   width: 4px;
-  height: 9px;
+  height: 8px;
   border: solid var(--semantic-color-text-on-brand);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
