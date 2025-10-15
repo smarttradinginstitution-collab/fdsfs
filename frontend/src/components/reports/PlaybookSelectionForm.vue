@@ -43,8 +43,8 @@ onMounted(() => {
       </label>
     </div>
     <div class="form-actions">
-      <BaseButton @click="handleCancel" variant="secondary">Cancel</BaseButton>
-      <BaseButton @click="handleAssign" :disabled="!selectedPlaybookId">Assign</BaseButton>
+      <BaseButton @click="handleCancel" variant="secondary" size="small">Cancel</BaseButton>
+      <BaseButton @click="handleAssign" :disabled="!selectedPlaybookId" size="small" class="assign-button">Assign</BaseButton>
     </div>
   </div>
 </template>
@@ -118,5 +118,20 @@ onMounted(() => {
   justify-content: flex-end;
   gap: var(--semantic-size-gap-md, 1rem);
   margin-top: var(--semantic-size-gap-md, 1rem);
+}
+
+.assign-button {
+  background-color: rgba(76, 175, 80, 0.6);
+  color: white;
+  border-color: transparent;
+}
+
+.assign-button:hover:not(:disabled) {
+  background-color: rgba(76, 175, 80, 0.8);
+}
+
+.assign-button:disabled {
+  background-color: rgba(76, 175, 80, 0.3);
+  cursor: not-allowed;
 }
 </style>
