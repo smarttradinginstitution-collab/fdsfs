@@ -25,38 +25,11 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
 
   // --- GETTERS ---
   const groupedNewsImpacts = computed(() => {
-    if (!newsImpactsGroups.value.length) {
-      return [];
-    }
-    return newsImpactsGroups.value.map(group => ({
-      ...group,
-      news_impacts: newsImpacts.value.filter(impact => impact.group_id === group.id),
-    }));
+    return newsImpactsGroups.value;
   });
 
   // --- ACTIONS ---
-  async function fetchNewsImpacts() {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
-      console.log("User not authenticated. Skipping news impacts fetch.");
-      return;
-    }
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const response = await apiClient.get('/me/news-impacts');
-      console.log('[DEBUG] Raw News Impacts from API:', response.data);
-      newsImpacts.value = response.data;
-    } catch (err) {
-      console.error('Error fetching news impacts:', err);
-      error.value = err.response?.data?.detail || 'An unexpected error occurred.';
-      newsImpacts.value = [];
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function fetchNewsImpactsGroups() {
+  async function fetchAllNewsImpactsData() {
     const authStore = useAuthStore();
     if (!authStore.isAuthenticated) {
       console.log("User not authenticated. Skipping news impact groups fetch.");
@@ -66,7 +39,6 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     error.value = null;
     try {
       const response = await apiClient.get('/me/news-impacts-groups');
-      console.log('[DEBUG] Raw News Impact Groups from API:', response.data);
       newsImpactsGroups.value = response.data;
     } catch (err) {
       console.error('Error fetching news impact groups:', err);
@@ -75,19 +47,6 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  async function fetchAllNewsImpactsData() {
-      isLoading.value = true;
-      error.value = null;
-      try {
-          await Promise.all([fetchNewsImpacts(), fetchNewsImpactsGroups()]);
-      } catch (err) {
-          console.error('Error fetching all news impacts data:', err);
-          error.value = 'An error occurred while fetching news impacts information.';
-      } finally {
-          isLoading.value = false;
-      }
   }
 
   // --- GROUP ACTIONS ---
