@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import SelectPlaybookModal from './SelectPlaybookModal.vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid';
+import PlaybookSelectionForm from './PlaybookSelectionForm.vue';
 
 const props = defineProps({
   trade: {
@@ -18,7 +18,7 @@ const router = useRouter();
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
 
-const isModalOpen = ref(false);
+const isAddingPlaybook = ref(false);
 const isDropdownOpen = ref(false);
 const localCheckedRules = ref([]);
 
@@ -45,12 +45,16 @@ const initializeCheckedRules = () => {
 };
 
 const handleAddPlaybook = () => {
-  isModalOpen.value = true;
+  isAddingPlaybook.value = true;
 };
 
-const handleSelectPlaybook = async (playbookId) => {
+const handleAssignPlaybook = async (playbookId) => {
   await tradesStore.updateTrade(props.trade.id, { playbook_id: playbookId });
-  isModalOpen.value = false;
+  isAddingPlaybook.value = false;
+};
+
+const handleCancelAdd = () => {
+  isAddingPlaybook.value = false;
 };
 
 const handleSaveChanges = async () => {
@@ -92,7 +96,10 @@ onMounted(() => {
 
 <template>
   <div class="playbook-tab">
-    <div v-if="!playbook" class="no-playbook">
+    <div v-if="isAddingPlaybook">
+      <PlaybookSelectionForm @assign="handleAssignPlaybook" @cancel="handleCancelAdd" />
+    </div>
+    <div v-else-if="!playbook" class="no-playbook">
       <p>No playbook assigned to this trade.</p>
       <BaseButton @click="handleAddPlaybook">Add Playbook</BaseButton>
     </div>
@@ -137,11 +144,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <SelectPlaybookModal
-      :show="isModalOpen"
-      @close="isModalOpen = false"
-      @select="handleSelectPlaybook"
-    />
   </div>
 </template>
 
