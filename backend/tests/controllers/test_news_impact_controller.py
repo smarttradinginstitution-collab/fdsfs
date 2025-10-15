@@ -113,3 +113,21 @@ async def test_user_cannot_create_impact_in_other_users_group(authenticated_clie
         impact_data = {"name": "Malicious Impact", "group_id": group_id_user1}
         create_response = await client2.post("/api/v1/me/news-impacts", json=impact_data)
         assert create_response.status_code == 404
+
+
+async def test_list_my_news_impacts_handles_trailing_slash(authenticated_client_factory):
+    """Tests that listing news impacts works with and without a trailing slash."""
+    async with authenticated_client_factory() as client:
+        await get_general_account_id(client)
+        group_id = await create_news_impact_group(client, "Slash Test Group")
+        await client.post("/api/v1/me/news-impacts", json={"name": "Slash Impact", "group_id": group_id})
+
+        # Test with trailing slash
+        response_with_slash = await client.get("/api/v1/me/news-impacts/")
+        assert response_with_slash.status_code == 200
+        assert len(response_with_slash.json()) >= 1
+
+        # Test without trailing slash
+        response_without_slash = await client.get("/api/v1/me/news-impacts")
+        assert response_without_slash.status_code == 200
+        assert len(response_without_slash.json()) >= 1
