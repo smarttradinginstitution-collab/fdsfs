@@ -45,28 +45,13 @@ onClickOutside(popoverRef, () => {
 
 // --- COMPUTED ---
 const allGroupedNewsImpacts = computed(() => {
-  if (!newsImpactsStore.newsImpactsGroups.length || !newsImpactsStore.newsImpacts.length) {
-    return [];
-  }
-
-  // Create a Set of news impact IDs that are associated with the current trade for efficient lookup.
-  const tradeImpactIds = new Set(props.trade.news_impacts.map(impact => impact.id));
-
-  const sortedGroups = [...newsImpactsStore.newsImpactsGroups].sort((a, b) => a.order - b.order);
-
-  return sortedGroups.map(group => {
-    // All possible impacts within this group.
-    const impactsInGroup = newsImpactsStore.newsImpacts.filter(impact => impact.group_id === group.id);
-
-    // Filter the impacts in this group to only include those associated with the trade.
-    const tradeImpactsInGroup = impactsInGroup.filter(impact => tradeImpactIds.has(impact.id));
-
-    return {
-      ...group,
-      impacts: impactsInGroup, // For the popover to select from.
-      tradeImpacts: tradeImpactsInGroup, // For display.
-    };
-  });
+  if (!newsImpactsStore.groupedNewsImpacts) return [];
+  const sortedGroups = [...newsImpactsStore.groupedNewsImpacts].sort((a, b) => a.position - b.position);
+  return sortedGroups.map(group => ({
+    ...group,
+    impacts: group.news_impacts,
+    tradeImpacts: props.trade.news_impacts.filter(tradeImpact => tradeImpact.group_id === group.id),
+  }));
 });
 
 // --- METHODS ---

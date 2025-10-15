@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[NewsImpactRead])
+@router.get("/", response_model=List[NewsImpactRead])
 async def list_my_news_impacts(
     general_account_id: UUID = Depends(get_current_general_account_id),
     db: AsyncSession = Depends(get_db),

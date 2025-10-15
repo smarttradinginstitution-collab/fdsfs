@@ -56,23 +56,13 @@ async def test_list_my_news_impacts(authenticated_client_factory):
         await client.post("/api/v1/me/news-impacts", json={"name": "Impact A", "group_id": group_id})
         await client.post("/api/v1/me/news-impacts", json={"name": "Impact B", "group_id": group_id})
 
-        # Test with trailing slash
-        list_response_slash = await client.get("/api/v1/me/news-impacts/")
-        assert list_response_slash.status_code == 200
-        impacts_slash = list_response_slash.json()
-        assert len(impacts_slash) >= 2
-        impact_names_slash = {i["name"] for i in impacts_slash}
-        assert "Impact A" in impact_names_slash
-        assert "Impact B" in impact_names_slash
-
-        # Test without trailing slash
-        list_response_no_slash = await client.get("/api/v1/me/news-impacts")
-        assert list_response_no_slash.status_code == 200
-        impacts_no_slash = list_response_no_slash.json()
-        assert len(impacts_no_slash) >= 2
-        impact_names_no_slash = {i["name"] for i in impacts_no_slash}
-        assert "Impact A" in impact_names_no_slash
-        assert "Impact B" in impact_names_no_slash
+        list_response = await client.get("/api/v1/me/news-impacts/")
+        assert list_response.status_code == 200
+        impacts = list_response.json()
+        assert len(impacts) >= 2
+        impact_names = {i["name"] for i in impacts}
+        assert "Impact A" in impact_names
+        assert "Impact B" in impact_names
 
 
 async def test_update_news_impact(authenticated_client_factory):
