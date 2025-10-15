@@ -30,8 +30,10 @@ class PlaybookRead(BaseModel):
 class NewsImpactRead(BaseModel):
     id: UUID
     name: str
+    group_id: UUID = Field(..., alias='group.id')
+    color: Optional[str] = Field(None, alias='group.color')
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class PsychologyStateRead(BaseModel):
     id: UUID
