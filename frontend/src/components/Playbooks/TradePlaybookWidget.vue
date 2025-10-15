@@ -5,7 +5,7 @@ import { useTradesStore } from '@/stores/trades';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid';
-import PlaybookSelectionForm from './PlaybookSelectionForm.vue';
+import PlaybookSelectionForm from '@/components/reports/PlaybookSelectionForm.vue';
 
 const props = defineProps({
   trade: {
