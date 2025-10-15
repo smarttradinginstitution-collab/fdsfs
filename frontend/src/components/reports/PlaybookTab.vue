@@ -274,7 +274,6 @@ onMounted(() => {
   width: 1rem;
   height: 1rem;
   border: 2px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-container);
   position: relative;
   transition: background-color 0.2s, border-color 0.2s;
 }
