@@ -134,9 +134,11 @@ onMounted(() => {
               <label class="rule-label">
                 <input
                   type="checkbox"
+                  class="custom-checkbox-input"
                   :value="rule.id"
                   v-model="localCheckedRules"
                 />
+                <span class="custom-checkbox-visual"></span>
                 <span class="rule-text">{{ rule.rule }}</span>
               </label>
             </li>
@@ -241,9 +243,8 @@ onMounted(() => {
   margin-top: 1rem;
 }
 .rule-group-card {
-  background-color: var(--semantic-color-surface-secondary);
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-container);
+  border-radius: var(--semantic-border-radius-card);
   padding: var(--semantic-size-inset-lg);
 }
 .rule-group-title {
@@ -265,10 +266,35 @@ onMounted(() => {
   font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-primary);
 }
-input[type="checkbox"] {
-  width: 1.25rem;
-  height: 1.25rem;
-  accent-color: var(--semantic-color-interactive-primary-default);
+.custom-checkbox-input {
+  display: none; /* Nascondi la checkbox di default */
+}
+
+.custom-checkbox-visual {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-interactive);
+  position: relative;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-visual {
+  background-color: var(--semantic-color-interactive-primary-default);
+  border-color: var(--semantic-color-interactive-primary-default);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-visual::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--semantic-color-text-on-brand);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .rule-checked .rule-text {
