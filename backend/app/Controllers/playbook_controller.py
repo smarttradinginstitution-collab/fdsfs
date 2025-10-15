@@ -64,9 +64,9 @@ class PlaybookController:
             stats_data = calculator.get_playbook_summary_metrics()
 
             # Crea lo schema di risposta e popola le statistiche
+            stats = PlaybookStats(**stats_data)
             playbook_read = PlaybookRead.from_orm(playbook)
-            playbook_read.stats = PlaybookStats(**stats_data)
-
+            playbook_read.stats = stats
             response_playbooks.append(playbook_read)
 
         return response_playbooks
