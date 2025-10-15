@@ -58,4 +58,6 @@ export const useTradingDnaStore = defineStore('tradingDna', () => {
     fetchTradingDnaReport,
     updateFilters,
   };
+}, {
+  persist: true,
 });

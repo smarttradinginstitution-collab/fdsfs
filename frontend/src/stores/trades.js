@@ -962,4 +962,5 @@ export const useTradesStore = defineStore('trades', {
       }
     },
   },
+  persist: true,
 });

@@ -16,14 +16,14 @@ import { useTradingDnaStore } from './tradingDnaStore';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
-  const user = ref(JSON.parse(localStorage.getItem('user')) || null);
-  const token = ref(localStorage.getItem('token') || null);
-  const generalAccount = ref(JSON.parse(localStorage.getItem('generalAccount')) || null); // Nuovo state per il General Account
+  const user = ref(null);
+  const token = ref(null);
+  const generalAccount = ref(null);
   const mfaChallenge = ref(null);
-  const mfaAal1Token = ref(null); // Token temporaneo AAL1 per la verifica
+  const mfaAal1Token = ref(null);
 
   // --- GETTERS ---
-  const isAuthenticated = computed(() => !!token.value && !!generalAccount.value); // L'utente è autenticato solo se ha anche un General Account
+  const isAuthenticated = computed(() => !!token.value && !!generalAccount.value);
   const isMfaActive = computed(() => user.value?.factors?.some(f => f.factor_type === 'totp' && f.status === 'verified'));
   const getMfaFactor = computed(() => {
     if (!isMfaActive.value) return null;
@@ -33,18 +33,52 @@ export const useAuthStore = defineStore('auth', () => {
   // --- ACTIONS ---
 
   /**
-   * Azione centralizzata per caricare tutti i dati di sessione necessari
-   * dopo che l'autenticazione è stata confermata.
+   * Azione centralizzata per caricare i dati di sessione.
+   * Controlla la cache prima di eseguire le chiamate API per evitare
+   * caricamenti superflui.
    */
   async function initSessionData() {
-    console.log("Inizio caricamento dati di sessione...");
-    await Promise.allSettled([
-      usePlaybookStore().fetchPlaybooks(),
-      useNotebookStore().fetchFolders(),
-      useTagsStore().fetchAllTagsData(),
-      useTradingDnaStore().fetchTradingDnaReport(),
-    ]);
-    console.log("Caricamento dati di sessione completato.");
+    console.log("Inizio caricamento dati di sessione, verificando la cache...");
+    const fetchPromises = [];
+
+    const playbookStore = usePlaybookStore();
+    if (playbookStore.playbooks.length === 0) {
+      console.log("Cache dei playbook vuota, eseguo il fetch...");
+      fetchPromises.push(playbookStore.fetchPlaybooks());
+    } else {
+      console.log("Cache dei playbook piena, dati caricati localmente.");
+    }
+
+    const notebookStore = useNotebookStore();
+    if (notebookStore.folders.length === 0) {
+      console.log("Cache delle cartelle del notebook vuota, eseguo il fetch...");
+      fetchPromises.push(notebookStore.fetchFolders());
+    } else {
+      console.log("Cache delle cartelle del notebook piena, dati caricati localmente.");
+    }
+
+    const tagsStore = useTagsStore();
+    if (tagsStore.tags.length === 0 || tagsStore.tagGroups.length === 0) {
+      console.log("Cache dei tag vuota, eseguo il fetch...");
+      fetchPromises.push(tagsStore.fetchAllTagsData());
+    } else {
+      console.log("Cache dei tag piena, dati caricati localmente.");
+    }
+
+    const tradingDnaStore = useTradingDnaStore();
+    if (!tradingDnaStore.report) {
+      console.log("Cache del report Trading DNA vuota, eseguo il fetch...");
+      fetchPromises.push(tradingDnaStore.fetchTradingDnaReport());
+    } else {
+      console.log("Cache del report Trading DNA piena, dati caricati localmente.");
+    }
+
+    if (fetchPromises.length > 0) {
+      await Promise.allSettled(fetchPromises);
+      console.log("Caricamento dati di sessione dal backend completato.");
+    } else {
+      console.log("Tutti i dati di sessione sono stati caricati dalla cache.");
+    }
   }
 
   // Funzione per recuperare il General Account
@@ -52,11 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data } = await apiClient.get('/general-accounts/me');
       generalAccount.value = data;
-      localStorage.setItem('generalAccount', JSON.stringify(data));
-
-      // Una volta ottenuto il GA, avvia il caricamento dei dati di sessione.
       await initSessionData();
-
       return true;
     } catch (error) {
       console.error('Errore nel recupero del General Account:', error);
@@ -70,16 +100,10 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = userData;
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
-
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('user', JSON.stringify(userData));
     setAuthToken(accessToken);
-
-    // Dopo aver impostato il token, recupera il General Account
     return await fetchGeneralAccount();
   }
 
-  // Carica il nome del ruolo dell'utente. Funzione di supporto.
   async function loadCurrentRoleName() {
     try {
       const userId = user.value?.id;
@@ -89,7 +113,6 @@ export const useAuthStore = defineStore('auth', () => {
       const name = roleObj?.name ?? null;
       if (name) {
         user.value = { ...user.value, roleName: name };
-        localStorage.setItem('user', JSON.stringify(user.value));
       }
     } catch (err) {
       console.error('Errore caricamento ruolo:', err);
@@ -98,9 +121,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     const response = await apiClient.post('/auth/login', { email, password });
-
     if (response.data.status === 'mfa_required') {
-      mfaChallenge.value = response.data; // Salva tutta la challenge
+      mfaChallenge.value = response.data;
       mfaAal1Token.value = response.data.access_token;
       return { mfaRequired: true };
     } else {
@@ -116,26 +138,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(name, email, password, confirm_password) {
-    await apiClient.post('/auth/register', {
-      name,
-      email,
-      password,
-      confirm_password,
-    });
-    // Dopo la registrazione, non facciamo il login automatico.
-    // La vista reindirizzerà alla pagina di login con un messaggio.
+    await apiClient.post('/auth/register', { name, email, password, confirm_password });
   }
 
   async function verifyMfaAndLogin(otpCode) {
     if (!mfaChallenge.value || !mfaAal1Token.value) throw new Error("Dati della challenge MFA non trovati.");
-
     const response = await apiClient.post('/auth/mfa/verify', {
       access_token: mfaAal1Token.value,
       factor_id: mfaChallenge.value.factor_id,
       challenge_id: mfaChallenge.value.challenge_id,
       code: otpCode,
     });
-
     const authSuccessful = await _setAuthentication(response.data.access_token, response.data.user);
     if (authSuccessful) {
       const uiStore = useUiStore();
@@ -157,7 +170,6 @@ export const useAuthStore = defineStore('auth', () => {
       challenge_id: challengeId,
       code: otpCode,
     });
-    // Qui non facciamo il redirect, ma aggiorniamo lo stato
     const authSuccessful = await _setAuthentication(data.access_token, data.user);
     if (authSuccessful) {
       await loadCurrentRoleName();
@@ -165,8 +177,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function unenrollMfa(factorId) {
-    // Non fa nulla allo stato locale, serve solo per pulizia.
-    // L'utente non è autenticato con questo fattore, quindi non c'è bisogno di aggiornare lo stato.
     try {
       await apiClient.delete(`/auth/mfa/factors/${factorId}`);
     } catch (error) {
@@ -186,40 +196,23 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await apiClient.post('/auth/logout');
     } catch { /* noop */ }
-
-    const uiStore = useUiStore();
-    uiStore.setInitialLoadPending(false);
-
+    localStorage.clear();
     user.value = null;
     token.value = null;
-    generalAccount.value = null; // Pulisci il General Account
+    generalAccount.value = null;
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('generalAccount'); // Rimuovi dal localStorage
     setAuthToken(null);
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   async function initAuth() {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      token.value = storedToken;
-      setAuthToken(storedToken);
-      // Se c'è un token, proviamo a recuperare i dati dell'utente e del GA
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          user.value = JSON.parse(storedUser);
-          // Tentativo di recuperare il General Account all'avvio
-          await fetchGeneralAccount();
-        } catch {
-          // Se qualcosa va storto, puliamo tutto
-          await logout();
-        }
+    if (token.value) {
+      setAuthToken(token.value);
+      if (generalAccount.value) {
+        await initSessionData();
       } else {
-        await logout(); // Se non ci sono dati utente, il token è invalido
+        await fetchGeneralAccount();
       }
     }
   }
@@ -227,7 +220,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     token,
-    generalAccount, // Esponi il nuovo state
+    generalAccount,
     isAuthenticated,
     isMfaActive,
     getMfaFactor,
@@ -237,11 +230,13 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     initAuth,
-    initSessionData, // Esponi la nuova azione
+    initSessionData,
     verifyMfaAndLogin,
     enrollMfa,
     verifyAndEnableMfa,
     disableMfa,
     unenrollMfa,
   };
+}, {
+  persist: true,
 });

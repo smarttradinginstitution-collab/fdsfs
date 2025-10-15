@@ -111,4 +111,6 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     createTradingAccount,
     selectTradingAccount,
   };
+}, {
+  persist: true,
 });

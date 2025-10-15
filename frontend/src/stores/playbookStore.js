@@ -243,4 +243,5 @@ export const usePlaybookStore = defineStore('playbooks', {
       }
     },
   },
+  persist: true,
 });
