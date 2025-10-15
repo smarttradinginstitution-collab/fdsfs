@@ -227,7 +227,7 @@ onMounted(() => {
   margin-bottom: 0.5rem;
 }
 .progress-bar {
-  height: 10px;
+  height: 7px;
   background-color: var(--semantic-color-interactive-primary-default);
   border-radius: 4px;
   transition: width 0.3s ease-in-out;
@@ -244,8 +244,8 @@ onMounted(() => {
 }
 .rule-group-card {
   border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-card);
-  padding: var(--semantic-size-inset-lg);
+  border-radius: var(--semantic-border-radius-interactive);
+  padding: var(--semantic-size-inset-md);
 }
 .rule-group-title {
   font: var(--semantic-font-style-heading-sm);
@@ -257,12 +257,12 @@ onMounted(() => {
   padding-left: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-gap-md);
+  gap: var(--semantic-size-stack-xs);
 }
 .rule-label {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-gap-md);
+  gap: var(--semantic-size-stack-sm);
   font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-primary);
 }
