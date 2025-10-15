@@ -107,7 +107,7 @@ onMounted(() => {
       <div class="playbook-header">
         <h3>{{ playbook.title }}</h3>
         <div class="actions">
-          <BaseButton @click="handleSaveChanges">Save Changes</BaseButton>
+          <BaseButton @click="handleSaveChanges" size="small" class="save-button">Save Changes</BaseButton>
           <div class="dropdown-container">
             <button @click="isDropdownOpen = !isDropdownOpen" class="icon-button">
               <EllipsisVerticalIcon class="icon" />
@@ -148,6 +148,21 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.save-button {
+  background-color: rgba(76, 175, 80, 0.6);
+  color: white;
+  border-color: transparent;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: rgba(76, 175, 80, 0.8);
+}
+
+.save-button:disabled {
+  background-color: rgba(76, 175, 80, 0.3);
+  cursor: not-allowed;
+}
+
 .playbook-tab {
   padding: 1rem;
 }
@@ -178,26 +193,30 @@ onMounted(() => {
 .icon {
   width: 1.5rem;
   height: 1.5rem;
-  color: #6b7280;
+  color: var(--semantic-color-text-secondary);
 }
 .dropdown-menu {
   position: absolute;
   right: 0;
   top: 100%;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  background-color: var(--semantic-color-surface-primary);
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-container);
+  box-shadow: var(--semantic-effect-shadow-sm);
   z-index: 10;
   width: 120px;
+  padding: var(--semantic-size-inset-sm);
 }
 .dropdown-item {
   display: block;
-  padding: 0.5rem 1rem;
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   cursor: pointer;
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-primary);
+  border-radius: var(--semantic-border-radius-interactive);
 }
 .dropdown-item:hover {
-  background-color: #f3f4f6;
+  background-color: var(--semantic-color-surface-secondary);
 }
 .progress-bar-container {
   width: 100%;
