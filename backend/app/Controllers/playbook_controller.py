@@ -11,8 +11,9 @@ from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.playbook import (
-    PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics, RuleMetrics
+    PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
 )
+from app.Schemas.rule_playbook import RuleMetrics
 from app.Schemas.trade import TradeRead
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 from app.Services.metrics.metrics_calculator import MetricsCalculator
