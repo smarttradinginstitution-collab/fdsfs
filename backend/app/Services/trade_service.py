@@ -27,6 +27,7 @@ from app.Models.mistake import Mistake
 from app.Models.playbook import Playbook
 from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
+from app.Models.rule_playbook import RulePlaybook
 from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 from app.Schemas.analytics import TradeFinancialSummary
 
@@ -141,7 +142,7 @@ class TradeService:
 
         self.db.add(db_trade)
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
         return TradeRead.from_orm(db_trade)
 
@@ -275,9 +276,9 @@ class TradeService:
             if update_data.playbook_id is None:
                 db_trade.playbook_id = None
             else:
-                playbook = await self.playbook_repo.get_by_id(update_data.playbook_id, general_account_id)
-                if not playbook:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found")
+                playbook = await self.playbook_repo.get_by_id(update_data.playbook_id)
+                if not playbook or playbook.general_account_id != general_account_id:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found or does not belong to the user.")
                 db_trade.playbook_id = playbook.id
 
         if update_data.tag_ids is not None:
@@ -290,7 +291,7 @@ class TradeService:
             db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
         return TradeRead.from_orm(db_trade)
 
@@ -417,3 +418,27 @@ class TradeService:
 
         # Restituisce la lista aggiornata di etichette
         return getattr(db_trade, label_type)
+
+    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> List[UUID]:
+        """
+        Aggiorna le regole 'seguite' per un trade, verificando l'appartenenza e la validità delle regole.
+        """
+        # 1. Recupera il trade e verifica che l'utente sia il proprietario
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        # 2. Chiama il metodo del repository per aggiornare le regole
+        try:
+            await self.repo.update_trade_rules(db_trade, rule_ids)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+        # 3. Commit e refresh
+        await self.db.commit()
+        await self.db.refresh(db_trade, attribute_names=['rules_followed'])
+
+        # 4. Restituisce gli ID delle regole aggiornate
+        return [rule.id for rule in db_trade.rules_followed]

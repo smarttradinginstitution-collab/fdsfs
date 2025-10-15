@@ -1,5 +1,4 @@
 # app/Repositories/note_repository.py
-# app/Repositories/note_repository.py
 from __future__ import annotations
 
 from typing import Sequence
@@ -13,7 +12,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
-from app.Models.trade import Trade  # Import the Trade model
+from app.Models.trade import Trade
 from app.Models.note_template import NoteTemplate
 from app.Schemas.notebook import NoteCreate, NoteUpdate
 
@@ -24,20 +23,27 @@ class NoteRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
+    def _get_note_load_options(self):
+        """Centralized method to define eager loading options for notes."""
+        return [
+            joinedload(Note.folder),
+            joinedload(Note.trade).options(
+                joinedload(Trade.asset),
+                selectinload(Trade.tags),
+                selectinload(Trade.mistakes),
+                joinedload(Trade.playbook),
+                selectinload(Trade.news_impacts),
+                selectinload(Trade.psychology_states),
+                selectinload(Trade.rules_followed),
+            ),
+            selectinload(Note.templates),
+        ]
+
     async def get_by_id(self, note_id: UUID) -> Note | None:
         """Get a note by its ID, including its related folder, trade, and all sub-relationships."""
         stmt = (
             select(Note)
-            .options(
-                joinedload(Note.folder),  # Eager load the folder relationship
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
+            .options(*self._get_note_load_options())
             .where(Note.id == note_id)
         )
         result = await self.db.execute(stmt)
@@ -51,16 +57,7 @@ class NoteRepository:
         stmt = (
             select(Note)
             .join(Note.folder)
-            .options(
-                joinedload(Note.folder),
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
+            .options(*self._get_note_load_options())
             .where(Note.trade_id == trade_id)
             .where(NotebookFolder.general_account_id == general_account_id)
         )
@@ -71,15 +68,7 @@ class NoteRepository:
         """List all notes for a given folder, including related trades and all sub-relationships."""
         stmt = (
             select(Note)
-            .options(
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
+            .options(*self._get_note_load_options())
             .where(Note.folder_id == folder_id)
             .order_by(Note.updated_at.desc())
         )
@@ -96,15 +85,7 @@ class NoteRepository:
         stmt = (
             select(Note)
             .join(Note.folder)
-            .options(
-                joinedload(Note.trade).joinedload(Trade.asset),
-                joinedload(Note.trade).joinedload(Trade.tags),
-                joinedload(Note.trade).joinedload(Trade.mistakes),
-                joinedload(Note.trade).joinedload(Trade.playbook),
-                joinedload(Note.trade).joinedload(Trade.news_impacts),
-                joinedload(Note.trade).joinedload(Trade.psychology_states),
-                selectinload(Note.templates),
-            )
+            .options(*self._get_note_load_options())
             .where(NotebookFolder.general_account_id == general_account_id)
             .order_by(Note.updated_at.desc())
         )
@@ -124,12 +105,8 @@ class NoteRepository:
                 detail="A note for this trade already exists.",
             )
 
-        # After committing, the note has an ID. We need to fetch it again
-        # using our eager-loading method to ensure all relationships are loaded
-        # before returning it to the service layer. This prevents lazy-loading errors.
         newly_created_note = await self.get_by_id(db_note.id)
         if not newly_created_note:
-            # This should theoretically never happen, but it's a safeguard.
             raise Exception("Failed to fetch newly created note.")
         return newly_created_note
 
@@ -142,7 +119,6 @@ class NoteRepository:
 
         self.db.add(db_obj)
         try:
-            # Flush the session to send the update to the database and trigger the unique constraint
             await self.db.flush()
             await self.db.commit()
         except IntegrityError:
@@ -152,11 +128,8 @@ class NoteRepository:
                 detail="A note with this trade_id already exists.",
             )
 
-        # After committing, we need to fetch it again to ensure all relationships are loaded
-        # This matches the pattern in the `create` method and avoids lazy-loading issues.
         updated_note = await self.get_by_id(db_obj.id)
         if not updated_note:
-            # This should theoretically never happen, but it's a safeguard.
             raise Exception("Failed to fetch updated note.")
         return updated_note
 

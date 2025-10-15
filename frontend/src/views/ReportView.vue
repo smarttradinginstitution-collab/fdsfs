@@ -10,6 +10,7 @@ import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import ImageLightbox from '@/components/images/ImageLightbox.vue';
 import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
+import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
 import { storeToRefs } from 'pinia';
@@ -160,7 +161,7 @@ onMounted(() => {
                   <TradeStats :trade="trade" @open-edit-modal="openEditModal" />
                 </template>
                 <template #playbook>
-                  <div>Contenuto Playbook</div>
+                  <PlaybookTab :trade="trade" />
                 </template>
                 <template #executions>
                   <div>Contenuto Executions</div>

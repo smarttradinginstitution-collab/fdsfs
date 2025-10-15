@@ -961,6 +961,27 @@ export const useTradesStore = defineStore('trades', {
         this.isTradeLoading = false;
       }
     },
+
+    async updateTradeRules(tradeId, ruleIds) {
+      this.isTradeLoading = true;
+      const uiStore = useUiStore();
+      try {
+        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
+        const updatedRuleIds = response.data;
+
+        // Fetch the full trade again to get all updated relations
+        await this.fetchTradeById(tradeId);
+
+        uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
+        return updatedRuleIds;
+      } catch (error) {
+        console.error('Error updating trade rules:', error);
+        uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
+        throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
   },
   persist: true,
 });
