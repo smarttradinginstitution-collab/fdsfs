@@ -45,11 +45,11 @@ onClickOutside(popoverRef, () => {
 
 // --- COMPUTED ---
 const allGroupedNewsImpacts = computed(() => {
-  if (!newsImpactsStore.groupedNewsImpacts) return [];
-  const sortedGroups = [...newsImpactsStore.groupedNewsImpacts].sort((a, b) => a.position - b.position);
+  if (!newsImpactsStore.newsImpactsGroups || !newsImpactsStore.newsImpacts) return [];
+  const sortedGroups = [...newsImpactsStore.newsImpactsGroups].sort((a, b) => a.order - b.order);
   return sortedGroups.map(group => ({
     ...group,
-    impacts: group.news_impacts,
+    impacts: newsImpactsStore.newsImpacts.filter(impact => impact.group_id === group.id),
     tradeImpacts: props.trade.news_impacts.filter(tradeImpact => tradeImpact.group_id === group.id),
   }));
 });
