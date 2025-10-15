@@ -107,7 +107,7 @@ onMounted(() => {
       <div class="playbook-header">
         <h3>{{ playbook.title }}</h3>
         <div class="actions">
-          <BaseButton @click="handleSaveChanges">Save Changes</BaseButton>
+          <BaseButton @click="handleSaveChanges" size="small" class="save-button">Save Changes</BaseButton>
           <div class="dropdown-container">
             <button @click="isDropdownOpen = !isDropdownOpen" class="icon-button">
               <EllipsisVerticalIcon class="icon" />
@@ -148,6 +148,21 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.save-button {
+  background-color: rgba(76, 175, 80, 0.6);
+  color: white;
+  border-color: transparent;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: rgba(76, 175, 80, 0.8);
+}
+
+.save-button:disabled {
+  background-color: rgba(76, 175, 80, 0.3);
+  cursor: not-allowed;
+}
+
 .playbook-tab {
   padding: 1rem;
 }
