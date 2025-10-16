@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import AppSidebar from './components/layout/AppSidebar.vue';
 import DashboardHeader from './components/layout/DashboardHeader.vue';
@@ -8,9 +8,31 @@ import ToastNotification from './components/ui/ToastNotification.vue';
 import FullScreenLoader from './components/ui/FullScreenLoader.vue';
 import ImageLightbox from './components/ui/ImageLightbox.vue';
 import { useUiStore } from './stores/uiStore';
+import { useAuthStore } from './stores/auth';
+import { useInactivityTimer } from './composables/useInactivityTimer';
 
 const uiStore = useUiStore();
 const route = useRoute();
+const authStore = useAuthStore();
+
+// --- Inactivity Timer ---
+const { start: startInactivityTimer, stop: stopInactivityTimer } = useInactivityTimer(
+  authStore.logout,
+  30 // 30 secondi di inattività
+);
+
+watch(
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      startInactivityTimer();
+    } else {
+      stopInactivityTimer();
+    }
+  },
+  { immediate: true }
+);
+// ---
 
 // Initialize the theme as soon as the app mounts
 onMounted(() => {
