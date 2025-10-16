@@ -216,3 +216,35 @@ async def test_get_trade_with_correctly_calculated_metrics(async_client: AsyncCl
     assert trade_risk_float == pytest.approx(810.0)
     assert net_roi_float == pytest.approx(1.575)
     assert r_multiple_float == pytest.approx(1.9444, abs=1e-4)
+
+
+async def test_get_recent_trades_succeeds(async_client: AsyncClient, db_session: AsyncSession):
+    """
+    Testa che l'endpoint per ottenere gli ultimi trade recenti funzioni correttamente
+    senza sollevare errori di validazione Pydantic, specialmente dopo la rimozione
+    di campi obsoleti come `rules_followed`.
+    """
+    # Setup: Crea un account e alcuni trade
+    trading_account_id = await setup_trading_account(async_client, db_session)
+    for i in range(5):
+        await async_client.post(
+            "/api/v1/trades/",
+            json={
+                "trading_account_id": trading_account_id,
+                "symbol_snapshot": f"TRADE_{i}",
+                "p_l": 100 + i,
+                "status": "closed",
+                "direction": "LONG"
+            }
+        )
+
+    # Azione: Chiama l'endpoint dei trade recenti
+    response = await async_client.get("/api/v1/trades/recent")
+
+    # Verifica
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) > 0
+    assert "symbol_snapshot" in data[0]
+    # Verifica implicitamente che non ci sia stato un ValidationError
