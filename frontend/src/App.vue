@@ -18,7 +18,7 @@ const authStore = useAuthStore();
 // --- Inactivity Timer ---
 const { start: startInactivityTimer, stop: stopInactivityTimer } = useInactivityTimer(
   authStore.logout,
-  30 // 30 secondi di inattività
+  60 // 60 secondi di inattività
 );
 
 watch(
@@ -71,11 +71,7 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
       </MainLayout>
     </div>
 
-    <div
-      v-if="uiStore.isMobileMenuOpen"
-      class="mobile-menu-overlay"
-      @click="uiStore.closeMobileMenu"
-    ></div>
+    <div v-if="uiStore.isMobileMenuOpen" class="mobile-menu-overlay" @click="uiStore.closeMobileMenu"></div>
 
     <!-- Toast Notification -->
     <ToastNotification />
@@ -103,7 +99,8 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
 
 .content-wrapper {
   flex-grow: 1;
-  min-width: 0; /* Prevents the container from overflowing when its content is too wide */
+  min-width: 0;
+  /* Prevents the container from overflowing when its content is too wide */
   /*
     BEST PRACTICE: Layout con Sidebar Fissa
     La sidebar ha `position: fixed`, quindi è rimossa dal flusso del layout.
@@ -133,6 +130,7 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
 }
 
 @include media-down('md') {
+
   /* Aumentata la specificità per sovrascrivere lo stato collassato su mobile */
   .content-wrapper.sidebar-is-collapsed,
   .content-wrapper {
