@@ -10,6 +10,7 @@ from fastapi import Depends, HTTPException, status
 
 from app.Repositories.trading_account_repository import TradingAccountRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
+from app.Repositories.trade_repository import TradeRepository  # Import TradeRepository
 from app.Schemas.trading_account import TradingAccountCreate, TradingAccountRead
 from app.Models.trading_account import TradingAccount
 from app.Infrastructure.db import get_db
@@ -20,6 +21,7 @@ class TradingAccountService:
         self.db = db
         self.repo = TradingAccountRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
+        self.trade_repo = TradeRepository(db)  # Instantiate TradeRepository
 
     async def create_trading_account_for_user(
         self, claims: dict, account_data: TradingAccountCreate
@@ -100,3 +102,42 @@ class TradingAccountService:
             return TradingAccountRead.from_orm(db_account)
 
         return None
+
+    async def recalculate_account_metrics(self, account_id: UUID) -> None:
+        """
+        Recalculates all performance metrics for a given trading account and
+        updates the trading_account table with the new values.
+        """
+        from app.Services.analytics_service import AnalyticsService
+
+        # We need to get the full date range of trades for the account
+        # to ensure all metrics are calculated correctly.
+        # This is a simplified approach; a more optimized version might
+        # store start/end dates or use a different method to get the range.
+        all_trades = await self.trade_repo.list_by_trading_account_id(account_id)
+        if not all_trades:
+            # Handle case with no trades
+            return
+
+        entry_dates = [t.entry_timestamp.date() for t in all_trades if t.entry_timestamp]
+        exit_dates = [t.exit_timestamp.date() for t in all_trades if t.exit_timestamp]
+
+        if not entry_dates or not exit_dates:
+            # Handle case where there are no trades with timestamps
+            return
+
+        start_date = min(entry_dates)
+        end_date = max(exit_dates)
+
+        analytics_service = AnalyticsService(self.db)
+        metrics = await analytics_service.get_performance_metrics(
+            trading_account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        account = await self.repo.get_by_id(account_id)
+        if account:
+            account.total_pnl = metrics.stats.net_pnl
+            # Add other metrics to be updated here
+            await self.db.commit()
