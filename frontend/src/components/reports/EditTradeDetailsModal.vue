@@ -22,6 +22,7 @@ watch(() => props.trade, (newTrade) => {
       stop_loss_price: newTrade.stop_loss_price ?? '',
       highest_price_during_trade: newTrade.highest_price_during_trade ?? '',
       lowest_price_during_trade: newTrade.lowest_price_during_trade ?? '',
+      commissions: newTrade.commissions ?? '',
     };
   }
 }, { immediate: true });
@@ -93,6 +94,13 @@ const closeModal = () => {
             <InfoIcon class="info-icon" />
           </div>
         </div>
+        <BaseInput
+          v-model="form.commissions"
+          label="Commissions"
+          type="number"
+          step="any"
+          placeholder="Enter commissions"
+        />
       </div>
       <div class="form-actions">
         <BaseButton @click="closeModal" type="button" variant="secondary">Cancel</BaseButton>

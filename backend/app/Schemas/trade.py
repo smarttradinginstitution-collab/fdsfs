@@ -74,6 +74,7 @@ class TradeCreate(TradeBase):
 
 
 class TradeUpdate(TradeBase):
+    commissions: Optional[float] = None
     tag_ids: Optional[List[UUID]] = None  # Se presente, sostituisce le associazioni
     mistake_ids: Optional[List[UUID]] = None
     playbook_id: Optional[UUID] = None
