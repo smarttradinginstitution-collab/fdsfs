@@ -254,8 +254,17 @@ class TradeService:
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
-        recalculation_fields = ['p_l', 'entry_price', 'stop_loss_price', 'exit_price']
-        if any(field in update_dict for field in recalculation_fields):
+        # Recalculate Net P/L if gross_p_l, fees, or commissions change
+        pl_recalculation_needed = any(field in update_dict for field in ['gross_p_l', 'fees', 'commissions'])
+        if pl_recalculation_needed:
+            gross_pnl = Decimal(str(db_trade.gross_p_l)) if db_trade.gross_p_l is not None else Decimal('0.0')
+            fees = Decimal(str(db_trade.fees)) if db_trade.fees is not None else Decimal('0.0')
+            commissions = Decimal(str(db_trade.commissions)) if db_trade.commissions is not None else Decimal('0.0')
+            db_trade.p_l = gross_pnl - fees - commissions
+
+        # Recalculate R-Multiple if P/L was recalculated or if other relevant fields changed
+        r_multiple_recalc_fields = ['p_l', 'entry_price', 'stop_loss_price', 'exit_price']
+        if pl_recalculation_needed or any(field in update_dict for field in r_multiple_recalc_fields):
             trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
             if not trading_account:
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Dettagli del conto di trading non trovati per ricalcolo.")
