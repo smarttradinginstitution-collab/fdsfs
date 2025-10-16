@@ -78,8 +78,12 @@ const handleEditImage = (image) => {
   isMetadataModalOpen.value = true;
 };
 
-const handleUpdateTradeDetails = (payload) => {
-  if (trade.value) tradesStore.updateTrade(trade.value.id, payload);
+const handleUpdateTradeDetails = async (payload) => {
+  if (trade.value) {
+    await tradesStore.updateTrade(trade.value.id, payload);
+    // After a successful update, force a refresh of all dashboard data
+    await tradesStore.fetchAllDataForDashboard();
+  }
 };
 
 const openLightbox = (index) => {
