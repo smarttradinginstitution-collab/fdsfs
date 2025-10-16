@@ -146,7 +146,6 @@ class TradeService:
         await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
         # Recalculate account metrics
-        # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
         await trading_account_service.recalculate_account_metrics(trading_account_id)
 
@@ -309,7 +308,6 @@ class TradeService:
         await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
         # Recalculate account metrics
-        # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
         await trading_account_service.recalculate_account_metrics(trading_account_id)
 
@@ -321,12 +319,11 @@ class TradeService:
         if not db_trade:
             return False
 
-        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
-
         trading_account_id = db_trade.trading_account_id
+        await self._validate_and_get_trading_account(claims, trading_account_id)
+
         await self.repo.delete_trade(db_trade)
 
-        # Recalculate account metrics
         # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
         await trading_account_service.recalculate_account_metrics(trading_account_id)

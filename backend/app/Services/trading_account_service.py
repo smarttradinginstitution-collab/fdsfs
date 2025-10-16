@@ -115,15 +115,27 @@ class TradingAccountService:
         # This is a simplified approach; a more optimized version might
         # store start/end dates or use a different method to get the range.
         all_trades = await self.trade_repo.list_by_trading_account_id(account_id)
+
+        account = await self.repo.get_by_id(account_id)
+        if not account:
+            # Should not happen if called from a valid context
+            return
+
         if not all_trades:
-            # Handle case with no trades
+            # Handle case with no trades by resetting PnL
+            account.total_pnl = 0
+            await self.db.commit()
             return
 
         entry_dates = [t.entry_timestamp.date() for t in all_trades if t.entry_timestamp]
         exit_dates = [t.exit_timestamp.date() for t in all_trades if t.exit_timestamp]
 
         if not entry_dates or not exit_dates:
-            # Handle case where there are no trades with timestamps
+            # If trades exist but have no timestamps, we can't calculate metrics
+            # but we should ensure PnL is summed up.
+            total_pnl = sum(trade.p_l for trade in all_trades if trade.p_l is not None)
+            account.total_pnl = total_pnl
+            await self.db.commit()
             return
 
         start_date = min(entry_dates)
@@ -136,8 +148,6 @@ class TradingAccountService:
             end_date=end_date,
         )
 
-        account = await self.repo.get_by_id(account_id)
-        if account:
-            account.total_pnl = metrics.stats.net_pnl
-            # Add other metrics to be updated here
-            await self.db.commit()
+        account.total_pnl = metrics.stats.net_pnl
+        # Add other metrics to be updated here
+        await self.db.commit()

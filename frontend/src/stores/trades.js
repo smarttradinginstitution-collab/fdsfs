@@ -688,30 +688,6 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
-    /**
-     * Azione master per caricare tutti i dati dell'account in parallelo (trade, note, ecc.).
-     * È idempotente: non ricarica i dati se l'account non è cambiato.
-     */
-    async fetchAllDataForDashboard() {
-      // LOCK: Se un caricamento è già in corso, non avviarne un altro.
-      if (this.isLoading) {
-        console.log("Caricamento dashboard già in corso. Salto il fetch duplicato.");
-        return;
-      }
-      this.isLoading = true;
-      try {
-        await Promise.allSettled([
-          this.fetchDashboardStats(),
-          this.fetchCalendarData(),
-          this.fetchProcessedStats(),
-          this.fetchEquityCurve(),
-          this.fetchVantageScore(),
-        ]);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
     async fetchAllDataForAccount() {
       if (this.isLoading) {
         console.log("Caricamento dati account già in corso. Salto il fetch duplicato.");
@@ -863,6 +839,9 @@ export const useTradesStore = defineStore('trades', {
         }
 
         uiStore.showNotification({ message: 'Trade updated successfully!', type: 'success' });
+
+        // Refresh dashboard stats to reflect changes
+        await this.fetchAllDataForDashboard();
 
       } catch (error) {
         console.error('Error updating trade:', error);
