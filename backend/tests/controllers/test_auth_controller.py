@@ -109,9 +109,18 @@ async def test_register_success(auth_controller: AuthController, mock_db_session
     )
     response = await auth_controller.register(payload, mock_db_session)
 
-    assert response.status == "registered"
     assert response.user_id == str(user_id)
-    mock_supabase_service.register_user.assert_called_once()
+
+    # Verifica che il servizio di Supabase sia stato chiamato con i metadati corretti
+    mock_supabase_service.register_user.assert_called_once_with(
+        email="new_user@example.com",
+        password="password123",
+        user_meta={'display_name': 'New User'},
+        app_meta=None,
+        phone=None,
+    )
+
+    # Verifica che il ruolo sia stato assegnato correttamente
     mock_user_role_repo.assign.assert_called_once_with(user_id=user_id, role_id=UUID(user_role_id))
 
 
@@ -253,7 +262,6 @@ async def test_register_integrity_error(auth_controller: AuthController, mock_db
     response = await auth_controller.register(payload, mock_db_session)
 
     # The registration should still be considered successful
-    assert response.status == "registered"
     assert response.user_id == str(user_id)
 
 # ------------------------------

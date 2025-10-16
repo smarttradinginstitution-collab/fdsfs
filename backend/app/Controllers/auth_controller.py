@@ -229,7 +229,7 @@ class AuthController:
         # Prepara i metadati utente, includendo il nome.
         # Se user_meta è già presente, lo aggiorniamo, altrimenti lo creiamo.
         user_meta = payload.user_meta or {}
-        user_meta['name'] = payload.name
+        user_meta['display_name'] = payload.name
 
         res = await supabase_service.register_user(
             email=payload.email,
