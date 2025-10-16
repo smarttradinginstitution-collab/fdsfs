@@ -51,7 +51,7 @@ class MetricsCalculator:
         self.breakeven_trades_count = len(self.trades) - total_classified
 
         self.gross_profit = sum(t.p_l for t in self.winning_trades_list)
-        self.gross_loss = abs(sum(t.p_l for t in self.losing_trades_list))
+        self.gross_loss = sum(t.p_l for t in self.losing_trades_list)
 
     def get_all_metrics(self) -> Dict[str, Any]:
         """
@@ -65,9 +65,9 @@ class MetricsCalculator:
         equity_curve_data = self.calculate_equity_curve()
         max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(equity_curve_data['data'])
         avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else Decimal('0')
-        avg_loss = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else Decimal('0')
+        avg_loss = abs(self.gross_loss) / self.losing_trades_count if self.losing_trades_count > 0 else Decimal('0')
         win_rate = (self.winning_trades_count / self.trade_count) * 100 if self.trade_count > 0 else 0
-        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
+        profit_factor = self.gross_profit / abs(self.gross_loss) if self.gross_loss != 0 else None
 
         # Processed Stats
         processed_stats = self.calculate_processed_stats()
