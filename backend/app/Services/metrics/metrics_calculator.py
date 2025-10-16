@@ -21,7 +21,7 @@ class MetricsCalculator:
             key=lambda t: t.exit_timestamp or t.entry_timestamp or datetime.min
         )
         self.initial_balance = Decimal(initial_balance) if initial_balance is not None else Decimal('0.0')
-        self.pnl_series = [t.p_l for t in self.trades if t.p_l is not None]
+        self.pnl_series = [Decimal(str(t.p_l)) for t in self.trades if t.p_l is not None]
         self.trade_count = len(self.pnl_series)
 
         # Pre-calculate basic stats to avoid redundant calculations

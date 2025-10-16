@@ -17,6 +17,7 @@ from app.Repositories.mistake_repository import MistakeRepository
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
+from app.Services.trading_account_service import TradingAccountService
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
@@ -143,6 +144,10 @@ class TradeService:
         self.db.add(db_trade)
         await self.db.commit()
         await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
+
+        # Recalculate account metrics
+        trading_account_service = TradingAccountService(self.db)
+        await trading_account_service.recalculate_account_metrics(trading_account_id)
 
         return TradeRead.from_orm(db_trade)
 
@@ -302,6 +307,10 @@ class TradeService:
         await self.db.commit()
         await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
+        # Recalculate account metrics
+        trading_account_service = TradingAccountService(self.db)
+        await trading_account_service.recalculate_account_metrics(trading_account_id)
+
         return TradeRead.from_orm(db_trade)
 
     async def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
@@ -310,9 +319,15 @@ class TradeService:
         if not db_trade:
             return False
 
-        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+        trading_account_id = db_trade.trading_account_id
+        await self._validate_and_get_trading_account(claims, trading_account_id)
 
         await self.repo.delete_trade(db_trade)
+
+        # Recalculate account metrics
+        trading_account_service = TradingAccountService(self.db)
+        await trading_account_service.recalculate_account_metrics(trading_account_id)
+
         return True
 
     async def get_financial_summary(self, claims: dict, trade_id: UUID) -> TradeFinancialSummary:

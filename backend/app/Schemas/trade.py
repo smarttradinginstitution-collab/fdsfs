@@ -74,8 +74,6 @@ class TradeCreate(TradeBase):
 
 
 class TradeUpdate(TradeBase):
-    gross_p_l: Optional[float] = None
-    fees: Optional[float] = None
     commissions: Optional[float] = None
     tag_ids: Optional[List[UUID]] = None  # Se presente, sostituisce le associazioni
     mistake_ids: Optional[List[UUID]] = None
