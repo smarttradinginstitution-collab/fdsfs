@@ -67,7 +67,7 @@ class MetricsCalculator:
         avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else Decimal('0')
         avg_loss = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else Decimal('0')
         win_rate = (self.winning_trades_count / self.trade_count) * 100 if self.trade_count > 0 else 0
-        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
+        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else self.gross_profit
 
         # Processed Stats
         processed_stats = self.calculate_processed_stats()
