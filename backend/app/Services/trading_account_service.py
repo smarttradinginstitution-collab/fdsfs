@@ -1,6 +1,6 @@
 # app/Services/trading_account_service.py
 from __future__ import annotations
-
+from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import select
@@ -133,7 +133,7 @@ class TradingAccountService:
         if not entry_dates or not exit_dates:
             # If trades exist but have no timestamps, we can't calculate metrics
             # but we should ensure PnL is summed up.
-            total_pnl = sum(trade.p_l for trade in all_trades if trade.p_l is not None)
+            total_pnl = sum((Decimal(str(trade.p_l)) for trade in all_trades if trade.p_l is not None), Decimal('0.0'))
             account.total_pnl = total_pnl
             await self.db.commit()
             return
