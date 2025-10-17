@@ -39,6 +39,7 @@ class NoteRepository:
                 selectinload(Trade.rules_followed),
             ),
             selectinload(Note.templates),
+            selectinload(Note.daily_rule_instances),
         ]
 
     async def get_by_id(self, note_id: UUID) -> Note | None:
