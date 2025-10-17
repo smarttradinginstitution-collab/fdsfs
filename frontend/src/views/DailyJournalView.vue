@@ -6,7 +6,11 @@
     </div>
     <div v-else class="main-content">
       <div class="left-column">
-        <NoteEditor :note="journalStore.journalDay.note" />
+        <NoteEditor
+          :note="journalStore.journalDay.note"
+          :financialData="journalStore.journalDay"
+          @update="updateNote"
+        />
       </div>
       <div class="right-column">
         <Checklist :rules="journalStore.journalDay.rules" />
@@ -24,6 +28,13 @@ import Checklist from '../components/journal/Checklist.vue';
 
 const route = useRoute();
 const journalStore = useJournalStore();
+
+const updateNote = (noteData) => {
+  journalStore.updateNote(noteData.id, {
+    title: noteData.title,
+    content: noteData.content,
+  });
+};
 
 onMounted(() => {
   const date = route.params.date;

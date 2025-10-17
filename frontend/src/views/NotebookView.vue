@@ -27,7 +27,12 @@
 
       <!-- Column 3: Note Editor -->
       <div class="editor-pane">
-        <NoteEditor v-if="store.selectedNote" />
+        <NoteEditor
+          v-if="store.selectedNote"
+          :note="store.selectedNote"
+          :financial-data="store.financialData"
+          @update="updateNote"
+        />
         <div v-else class="editor-placeholder">
           <p>Select a note to view or edit it.</p>
           <p>Or, select a folder and create a new note.</p>
@@ -48,6 +53,12 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 const store = useNotebookStore();
 const searchQuery = ref('');
 
+const updateNote = (noteData) => {
+  store.updateNote(noteData.id, {
+    title: noteData.title,
+    content: noteData.content,
+  });
+};
 </script>
 
 <style lang="scss" scoped>

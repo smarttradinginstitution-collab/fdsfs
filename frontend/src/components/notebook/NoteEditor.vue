@@ -33,6 +33,14 @@ const store = useNotebookStore();
 const uiStore = useUiStore();
 
 const props = defineProps({
+  note: {
+    type: Object,
+    required: true,
+  },
+  financialData: {
+    type: Object,
+    default: null,
+  },
   showFinancialData: {
     type: Boolean,
     default: true,
@@ -43,8 +51,8 @@ const props = defineProps({
   },
 });
 
-const note = computed(() => store.selectedNote);
-const financialData = computed(() => store.financialData);
+const note = computed(() => props.note);
+const financialData = computed(() => props.financialData);
 const folder = computed(() => store.selectedNoteFolder);
 
 const isTradeNote = computed(() => !!note.value?.trade_id);
@@ -226,12 +234,15 @@ watch(note, (newNote, oldNote) => {
   }
 }, { deep: true });
 
+const emit = defineEmits(['update']);
+
 const saveNote = async () => {
     if (!editor.value || !note.value || isSaving.value) return;
 
     isSaving.value = true;
     try {
-        await store.updateNote(note.value.id, {
+        emit('update', {
+            id: note.value.id,
             title: editableTitle.value,
             content: editor.value.getJSON(),
         });

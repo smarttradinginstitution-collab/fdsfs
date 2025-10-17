@@ -22,6 +22,21 @@ export const useJournalStore = defineStore('journal', {
       }
     },
 
+    async updateNote(noteId, noteData) {
+      this.isLoading = true;
+      try {
+        const response = await apiClient.put(`/notebook/notes/${noteId}`, noteData);
+        if (this.journalDay && this.journalDay.note.id === noteId) {
+          this.journalDay.note = response.data;
+        }
+      } catch (error) {
+        console.error('Error updating note:', error);
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async getDay(day) {
       this.isLoading = true;
       try {
