@@ -60,6 +60,7 @@ const isDailyJournalNote = computed(() => folder.value?.system_folder_identifier
 
 const editableTitle = ref(note.value ? note.value.title : '');
 const isSaving = ref(false); // Flag to prevent concurrent saves
+const isReady = ref(false); // Flag to prevent initial save
 
 // State for modals
 const isGalleryModalOpen = ref(false);
@@ -221,6 +222,7 @@ const statsGrid = computed(() => {
 });
 
 watch(note, (newNote, oldNote) => {
+  isReady.value = false;
   if (newNote && editor.value) {
     if (!oldNote || newNote.id !== oldNote.id) {
       editableTitle.value = newNote.title;
@@ -232,7 +234,10 @@ watch(note, (newNote, oldNote) => {
     editableTitle.value = '';
     editor.value.commands.clearContent();
   }
-}, { deep: true });
+  setTimeout(() => {
+    isReady.value = true;
+  }, 200);
+}, { deep: true, immediate: true });
 
 const emit = defineEmits(['update']);
 
@@ -258,13 +263,13 @@ const saveNote = async () => {
 const debouncedSave = debounce(saveNote, 1500);
 
 watch(editableTitle, (newTitle) => {
-    if (note.value && newTitle !== note.value.title) {
+    if (isReady.value && note.value && newTitle !== note.value.title) {
         debouncedSave();
     }
 });
 
 watch(() => editor.value?.getHTML(), (newContent, oldContent) => {
-    if (newContent !== oldContent && note.value) {
+    if (isReady.value && newContent !== oldContent && note.value) {
         debouncedSave();
     }
 }, { deep: true });
