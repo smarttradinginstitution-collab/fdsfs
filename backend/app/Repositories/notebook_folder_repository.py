@@ -10,7 +10,7 @@ from sqlalchemy.orm import noload
 
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
-from app.Models.enums import FolderType
+from app.Models.enums import FolderType, SystemFolderIdentifier
 from app.Schemas.notebook import NotebookFolderCreate, NotebookFolderUpdate
 
 
@@ -45,6 +45,22 @@ class NotebookFolderRepository:
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
+
+    async def create_system_folder(
+        self, general_account_id: UUID, name: str, identifier: SystemFolderIdentifier
+    ) -> NotebookFolder:
+        """Create a new system folder."""
+        db_folder = NotebookFolder(
+            name=name,
+            general_account_id=general_account_id,
+            folder_type=FolderType.SYSTEM,
+            system_folder_identifier=identifier,
+            is_system_folder=True,
+        )
+        self.db.add(db_folder)
+        await self.db.commit()
+        await self.db.refresh(db_folder)
+        return await self.get_by_id(db_folder.id)
 
     async def list_by_general_account_id(
         self, general_account_id: UUID
@@ -96,3 +112,14 @@ class NotebookFolderRepository:
         """Delete a folder."""
         await self.db.delete(db_obj)
         await self.db.commit()
+
+    async def get_by_system_identifier(
+        self, general_account_id: UUID, identifier: SystemFolderIdentifier
+    ) -> NotebookFolder | None:
+        """Get a system folder by its unique identifier."""
+        stmt = select(NotebookFolder).where(
+            NotebookFolder.general_account_id == general_account_id,
+            NotebookFolder.system_folder_identifier == identifier,
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
