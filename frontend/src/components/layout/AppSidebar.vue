@@ -25,6 +25,7 @@ import SettingsIcon from '../icons/SettingsIcon.vue';
 import BookOpenIcon from '../icons/BookOpenIcon.vue';
 import FilterIcon from '../icons/FilterIcon.vue';
 import ChartBarIcon from '../icons/ChartBarIcon.vue';
+import DocumentCheckIcon from '../icons/DocumentCheckIcon.vue';
 
 // --- STORE ---
 const uiStore = useUiStore();
@@ -50,6 +51,7 @@ const navLinks = [
   { to: '/playbooks', text: 'Playbooks', icon: BuildingLibraryIcon },
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
+  { to: '/progress-tracker', text: 'Progress Tracker', icon: DocumentCheckIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
   { to: '/library', text: 'Library', icon: FilterIcon },
   { to: '#', text: 'Settings', icon: SettingsIcon },

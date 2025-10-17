@@ -72,10 +72,15 @@ class JournalService:
         )
         new_note = await self.note_repo.create(note_create)
 
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+
         # 4. Get active rules for the day of the week
         weekday = day.weekday()  # Monday is 0 and Sunday is 6
         all_rules = await self.rule_repo.list_by_general_account_id(general_account_id)
         active_rules = [rule for rule in all_rules if weekday in rule.active_days]
+        logger.info(f"Found {len(active_rules)} active rules for today.")
 
         # 5. Create daily rule instances
         instances_to_create = []
