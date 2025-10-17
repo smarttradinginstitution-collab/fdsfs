@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.Models.note import Note
     from app.Models.image import Image
     from app.Models.news_impacts_group import NewsImpactsGroup
+    from app.Models.discipline_rule import DisciplineRule
 
 
 class GeneralAccount(Base):
@@ -67,4 +68,7 @@ class GeneralAccount(Base):
     )
     news_impacts_groups: Mapped[list["NewsImpactsGroup"]] = relationship(
         "NewsImpactsGroup", back_populates="general_account"
+    )
+    discipline_rules: Mapped[list["DisciplineRule"]] = relationship(
+        "DisciplineRule", back_populates="general_account"
     )

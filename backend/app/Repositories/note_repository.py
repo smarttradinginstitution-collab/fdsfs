@@ -11,10 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.Models.note import Note
-from app.Models.notebook_folder import NotebookFolder
+from app.Models.notebook_folder import NotebookFolder, SystemFolderIdentifier
 from app.Models.trade import Trade
 from app.Models.note_template import NoteTemplate
+from app.Models.daily_rule_instance import DailyRuleInstance
 from app.Schemas.notebook import NoteCreate, NoteUpdate
+from datetime import date
 
 
 class NoteRepository:
@@ -145,6 +147,27 @@ class NoteRepository:
         await self.db.commit()
         await self.db.refresh(note)
         return note
+
+    async def get_daily_journal_by_date(
+        self, general_account_id: UUID, note_date: date
+    ) -> Note | None:
+        """
+        Get a daily journal note for a specific date, eagerly loading its rule instances.
+        """
+        stmt = (
+            select(Note)
+            .join(Note.folder)
+            .options(
+                selectinload(Note.daily_rule_instances)
+            )
+            .where(
+                NotebookFolder.general_account_id == general_account_id,
+                NotebookFolder.system_folder_identifier == SystemFolderIdentifier.DAILY_JOURNAL,
+                Note.note_date == note_date,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.unique().scalars().first()
 
     async def remove_template_from_note(
         self, note: Note, template: NoteTemplate

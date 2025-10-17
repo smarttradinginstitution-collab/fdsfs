@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
     from app.Models.trade import Trade
     from app.Models.note_template import NoteTemplate
+    from app.Models.daily_rule_instance import DailyRuleInstance
 
 
 class Note(Base):
@@ -60,4 +61,9 @@ class Note(Base):
         "NoteTemplate",
         secondary=notes_note_templates_association,
         back_populates="notes",
+    )
+    daily_rule_instances: Mapped[List["DailyRuleInstance"]] = relationship(
+        "DailyRuleInstance",
+        back_populates="daily_journal",
+        cascade="all, delete-orphan",
     )

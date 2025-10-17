@@ -462,9 +462,23 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import trades_router
 from app.Router import analytics_router
+from app.Router import discipline_router
+from app.Router import journal_router
 
 router.include_router(
     trades_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+router.include_router(
+    discipline_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
+router.include_router(
+    journal_router.router,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
