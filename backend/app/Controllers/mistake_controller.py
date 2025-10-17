@@ -34,7 +34,7 @@ class MistakeController:
                     MistakeAdminRead(
                         general_account_id=acc.id,
                         user_email=acc.user.email,
-                        mistakes=[MistakeRead.from_orm(m) for m in acc.mistakes],
+                        mistakes=[MistakeRead.model_validate(m) for m in acc.mistakes],
                     )
                 )
         return response_data
@@ -49,7 +49,7 @@ class MistakeController:
         """
         repo = MistakeRepository(db)
         mistakes = await repo.list_by_general_account_id(general_account_id)
-        return [MistakeRead.from_orm(m) for m in mistakes]
+        return [MistakeRead.model_validate(m) for m in mistakes]
 
     async def get_mistake(
         self,
@@ -70,7 +70,7 @@ class MistakeController:
         if not current_user.is_admin and mistake.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        return MistakeRead.from_orm(mistake)
+        return MistakeRead.model_validate(mistake)
 
     async def create_mistake(
         self,
@@ -83,7 +83,7 @@ class MistakeController:
         """
         repo = MistakeRepository(db)
         new_mistake = await repo.create(mistake_in=mistake_data, general_account_id=general_account_id)
-        return MistakeRead.from_orm(new_mistake)
+        return MistakeRead.model_validate(new_mistake)
 
     async def update_mistake(
         self,
@@ -111,7 +111,7 @@ class MistakeController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento del mistake."
             )
 
-        return MistakeRead.from_orm(updated_mistake)
+        return MistakeRead.model_validate(updated_mistake)
 
     async def delete_mistake(
         self,

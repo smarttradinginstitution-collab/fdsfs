@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from typing import Any, Dict, Optional
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 # ───────────── Ingressi ─────────────
 
@@ -19,9 +19,9 @@ class RegisterInput(BaseModel):
     app_meta: Optional[Dict[str, Any]] = None
     phone: Optional[str] = None
 
-    @validator('confirm_password')
-    def passwords_match(cls, v, values):
-        if 'password' in values and v != values['password']:
+    @field_validator('confirm_password')
+    def passwords_match(cls, v: str, values: Dict[str, Any]) -> str:
+        if 'password' in values.data and v != values.data['password']:
             raise ValueError('Le password non corrispondono')
         return v
 

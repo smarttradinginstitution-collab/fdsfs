@@ -22,6 +22,4 @@ class RoleRead(BaseModel):
     name: str                        # nome del ruolo
     description: str | None = None   # descrizione del ruolo, se esiste
 
-    class Config:
-        # Permette a Pydantic di costruire il modello direttamente da un oggetto ORM (es. SQLAlchemy).
-        from_attributes = True
+    model_config = {"from_attributes": True}

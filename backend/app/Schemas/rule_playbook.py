@@ -13,8 +13,7 @@ class RuleMetrics(BaseModel):
 
 class RuleBase(BaseModel):
     rule: Optional[str] = Field(None, description="The content of the rule")
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class RuleCreate(RuleBase):
     rule: str = Field(..., description="The content of the rule is required")

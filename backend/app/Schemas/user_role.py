@@ -16,5 +16,4 @@ class UserRoleRead(BaseModel):
     user_id: UUID   # ID utente
     role_id: UUID   # ID ruolo
 
-    class Config:
-        from_attributes = True  # consente di creare l’oggetto da un modello SQLAlchemy
+    model_config = {"from_attributes": True}

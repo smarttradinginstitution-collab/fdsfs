@@ -19,5 +19,4 @@ class BrokerUpdate(BrokerBase):
 class BrokerRead(BrokerBase):
     id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

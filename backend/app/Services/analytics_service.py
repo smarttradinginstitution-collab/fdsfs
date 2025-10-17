@@ -210,7 +210,7 @@ class AnalyticsService:
         equity_curve = EquityCurveData(**equity_curve_data)
 
         # Get the list of trades for the day
-        trades_for_day = [TradeRead.from_orm(trade) for trade in calculator.trades]
+        trades_for_day = [TradeRead.model_validate(trade) for trade in calculator.trades]
 
         return DailySummary(
             stats=stats,
@@ -229,4 +229,4 @@ class AnalyticsService:
             start_date=start_date,
             end_date=end_date,
         )
-        return [TagPerformanceStat.from_orm(row) for row in raw_stats]
+        return [TagPerformanceStat.model_validate(row) for row in raw_stats]

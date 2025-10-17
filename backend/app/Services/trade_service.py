@@ -19,6 +19,7 @@ from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Services.trading_account_service import TradingAccountService
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Models.enums import TradeDirection
 from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
 from decimal import Decimal
@@ -149,7 +150,7 @@ class TradeService:
         trading_account_service = TradingAccountService(self.db)
         await trading_account_service.recalculate_account_metrics(trading_account_id)
 
-        return TradeRead.from_orm(db_trade)
+        return TradeRead.model_validate(db_trade)
 
     async def get_trade(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
         """Recupera un singolo trade, verificando l'appartenenza e arricchendolo con dati calcolati."""
@@ -170,7 +171,7 @@ class TradeService:
             "stop_loss_price": trade.stop_loss_price,
             "take_profit_price": trade.take_profit_price,
             "p_l": trade.p_l,
-            "direction": trade.direction.value if trade.direction else None,
+            "direction": trade.direction.value if isinstance(trade.direction, TradeDirection) else trade.direction,
             "lowest_price_during_trade": trade.lowest_price_during_trade,
             "highest_price_during_trade": trade.highest_price_during_trade,
             "position_size": trade.position_size,
@@ -181,7 +182,7 @@ class TradeService:
             initial_balance=Decimal(trading_account.initial_balance or '0.0')
         )
 
-        trade_read = TradeRead.from_orm(trade)
+        trade_read = TradeRead.model_validate(trade)
 
         # Populate all calculated fields, converting Decimal to float for serialization
         # and mapping dictionary keys to the correct Pydantic model fields.
@@ -218,7 +219,7 @@ class TradeService:
         # Process the results to populate the Pydantic schema
         response_trades = []
         for trade, is_linked in trade_results:
-            trade_read = TradeRead.from_orm(trade)
+            trade_read = TradeRead.model_validate(trade)
             trade_read.is_linked_to_note = is_linked
             response_trades.append(trade_read)
 
@@ -245,7 +246,7 @@ class TradeService:
         else:
             trades = await self.repo.list_by_trading_account_id(trading_account_id)
 
-        return [TradeRead.from_orm(trade) for trade in trades]
+        return [TradeRead.model_validate(trade) for trade in trades]
 
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
         """Aggiorna un trade esistente e ricalcola le metriche se necessario."""
@@ -277,7 +278,7 @@ class TradeService:
             trade_data_for_calc = {
                 "entry_price": db_trade.entry_price, "exit_price": db_trade.exit_price,
                 "stop_loss_price": db_trade.stop_loss_price, "p_l": db_trade.p_l,
-                "direction": db_trade.direction.value if db_trade.direction else None
+                "direction": db_trade.direction.value if isinstance(db_trade.direction, TradeDirection) else db_trade.direction
             }
             all_metrics = enrich_trade_with_all_metrics(
                 trade_data=trade_data_for_calc,
@@ -311,7 +312,7 @@ class TradeService:
         trading_account_service = TradingAccountService(self.db)
         await trading_account_service.recalculate_account_metrics(trading_account_id)
 
-        return TradeRead.from_orm(db_trade)
+        return TradeRead.model_validate(db_trade)
 
     async def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
         """Elimina un trade, verificando l'appartenenza."""
@@ -360,7 +361,7 @@ class TradeService:
             "lowest_price_during_trade": trade.lowest_price_during_trade,
             "highest_price_during_trade": trade.highest_price_during_trade,
             "position_size": trade.position_size,
-            "direction": trade.direction.value if trade.direction else None,
+            "direction": trade.direction.value if isinstance(trade.direction, TradeDirection) else trade.direction,
         }
 
         # Esegui i calcoli delle metriche avanzate (principalmente per Net ROI)
@@ -388,7 +389,7 @@ class TradeService:
 
         await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        return [TagRead.from_orm(tag) for tag in db_trade.tags]
+        return [TagRead.model_validate(tag) for tag in db_trade.tags]
 
     async def update_trade_tags(self, claims: dict, trade_id: UUID, tag_ids: List[UUID]) -> List[TagRead]:
         """Aggiorna i tag associati a un trade."""
@@ -407,7 +408,7 @@ class TradeService:
         await self.db.commit()
         await self.db.refresh(db_trade, attribute_names=['tags'])
 
-        return [TagRead.from_orm(tag) for tag in db_trade.tags]
+        return [TagRead.model_validate(tag) for tag in db_trade.tags]
 
     async def update_trade_labels(self, claims: dict, trade_id: UUID, label_ids: List[UUID], label_type: str) -> list:
         """
