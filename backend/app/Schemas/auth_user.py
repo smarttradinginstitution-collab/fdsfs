@@ -34,7 +34,4 @@ class AuthUserRead(BaseModel):
     raw_app_meta_data: Optional[dict] = None# metadati applicativi (dati dal DB)
     raw_user_meta_data: Optional[dict] = None# metadati utente (dati dal DB)
 
-    class Config:
-        # Configurazione per permettere a Pydantic di leggere i dati
-        # direttamente dagli oggetti ORM (SQLAlchemy) oltre che da dict.
-        from_attributes = True
+    model_config = {"from_attributes": True}

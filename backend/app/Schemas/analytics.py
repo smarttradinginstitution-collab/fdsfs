@@ -108,5 +108,4 @@ class TagPerformanceStat(BaseModel):
     avg_r_multiple: float = 0.0
     total_trades: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

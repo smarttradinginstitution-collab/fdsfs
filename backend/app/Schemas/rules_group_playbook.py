@@ -12,8 +12,7 @@ from app.Schemas.rule_playbook import RuleRead
 class RulesGroupBase(BaseModel):
     name_group: Optional[str] = Field(None, description="The name of the rule group")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # Schema per la creazione di un gruppo (usato nel body delle richieste POST)
 class RulesGroupCreate(RulesGroupBase):

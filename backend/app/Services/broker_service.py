@@ -33,7 +33,7 @@ class BrokerService:
                 detail="A broker with this name already exists.",
             )
 
-        return await self.repo.create(data.dict())
+        return await self.repo.create(data.model_dump())
 
     async def get_all_brokers(self) -> List[Broker]:
         """Returns a list of all brokers."""
@@ -64,7 +64,7 @@ class BrokerService:
                     detail="A broker with this name already exists.",
                 )
 
-        return await self.repo.update(broker, data.dict(exclude_unset=True))
+        return await self.repo.update(broker, data.model_dump(exclude_unset=True))
 
     async def delete_broker(self, broker_id: uuid.UUID) -> None:
         """Deletes a broker."""

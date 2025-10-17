@@ -41,7 +41,7 @@ class PlaybookController:
                     PlaybookAdminRead(
                         general_account_id=acc.id,
                         user_email=acc.user.email,
-                        playbooks=[PlaybookRead.from_orm(p) for p in acc.playbooks],
+                        playbooks=[PlaybookRead.model_validate(p) for p in acc.playbooks],
                     )
                 )
         return response_data
@@ -63,7 +63,7 @@ class PlaybookController:
             calculator = MetricsCalculator(trades=playbook.trades, initial_balance=0.0)
             stats_data = calculator.get_playbook_summary_metrics()
 
-            playbook_read = PlaybookRead.from_orm(playbook)
+            playbook_read = PlaybookRead.model_validate(playbook)
             playbook_read.stats = PlaybookStats(**stats_data)
 
             # Calcola le metriche per ogni regola
@@ -98,7 +98,7 @@ class PlaybookController:
         if not current_user.is_admin and playbook.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        return PlaybookRead.from_orm(playbook)
+        return PlaybookRead.model_validate(playbook)
 
     async def create_playbook(
         self,
@@ -111,7 +111,7 @@ class PlaybookController:
         """
         repo = PlaybookRepository(db)
         new_playbook = await repo.create(playbook_in=playbook_data, general_account_id=general_account_id)
-        return PlaybookRead.from_orm(new_playbook)
+        return PlaybookRead.model_validate(new_playbook)
 
     async def update_playbook(
         self,
@@ -139,7 +139,7 @@ class PlaybookController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento del playbook."
             )
 
-        return PlaybookRead.from_orm(updated_playbook)
+        return PlaybookRead.model_validate(updated_playbook)
 
     async def delete_playbook(
         self,
@@ -209,4 +209,4 @@ class PlaybookController:
 
         trade_repo = TradeRepository(db)
         trades = await trade_repo.list_by_playbook_id(playbook_id)
-        return [TradeRead.from_orm(trade) for trade in trades]
+        return [TradeRead.model_validate(trade) for trade in trades]

@@ -18,8 +18,7 @@ class PlaybookBase(BaseModel):
     color: Optional[str] = Field(None, description="The color associated with the playbook")
     icon_name: Optional[str] = Field(None, description="The name of the icon associated with the playbook")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # Schema per la creazione di un playbook (usato nel body delle richieste POST)
 class PlaybookCreate(PlaybookBase):
@@ -58,8 +57,7 @@ class PlaybookAdminRead(BaseModel):
     user_email: str
     playbooks: List[PlaybookRead]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # Alla fine, quando tutti i modelli sono definiti, si può fare:
@@ -91,5 +89,4 @@ class PlaybookAnalytics(BaseModel):
     metrics: PlaybookAnalyticsMetrics
     equity_curve: EquityCurveData
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

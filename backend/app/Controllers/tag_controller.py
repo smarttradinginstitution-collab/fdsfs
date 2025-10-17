@@ -27,7 +27,7 @@ class TagController:
         """
         repo = TagRepository(db)
         tags = await repo.list_tags_by_general_account_id(general_account_id)
-        return [TagRead.from_orm(t) for t in tags]
+        return [TagRead.model_validate(t) for t in tags]
 
     async def get_tag(
         self,
@@ -49,7 +49,7 @@ class TagController:
         if not tag.group or (not current_user.is_admin and tag.group.general_account_id != general_account_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        return TagRead.from_orm(tag)
+        return TagRead.model_validate(tag)
 
     async def create_tag(
         self,
@@ -73,7 +73,7 @@ class TagController:
 
         tag_repo = TagRepository(db)
         new_tag = await tag_repo.create_tag(tag_data)
-        return TagRead.from_orm(new_tag)
+        return TagRead.model_validate(new_tag)
 
     async def update_tag(
         self,
@@ -100,7 +100,7 @@ class TagController:
         if not updated_tag:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento del tag.")
 
-        return TagRead.from_orm(updated_tag)
+        return TagRead.model_validate(updated_tag)
 
     async def delete_tag(
         self,

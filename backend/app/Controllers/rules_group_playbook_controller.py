@@ -63,7 +63,7 @@ class RulesGroupPlaybookController:
         # Build the response with calculated metrics
         response_groups = []
         for group in groups:
-            group_read = RulesGroupRead.from_orm(group)
+            group_read = RulesGroupRead.model_validate(group)
 
             # Sort rules within the group based on the 'order' attribute
             sorted_rules = sorted(group.rules, key=lambda r: (r.order is None, r.order, r.created_at))
@@ -73,7 +73,7 @@ class RulesGroupPlaybookController:
                 metrics = MetricsCalculator.calculate_for_rule(rule, total_playbook_trades)
 
                 # Create a RuleRead schema object and attach the metrics
-                rule_read = RuleReadSchema.from_orm(rule)
+                rule_read = RuleReadSchema.model_validate(rule)
                 rule_read.metrics = metrics
                 enriched_rules.append(rule_read)
 
@@ -100,7 +100,7 @@ class RulesGroupPlaybookController:
 
         repo = RulesGroupPlaybookRepository(db)
         new_group = await repo.create(group_in=group_data)
-        return RulesGroupRead.from_orm(new_group)
+        return RulesGroupRead.model_validate(new_group)
 
     async def update_group(
         self,
@@ -122,7 +122,7 @@ class RulesGroupPlaybookController:
         await self._get_playbook_and_verify_ownership(group_to_update.playbook_id, current_user, general_account_id, db)
 
         updated_group = await repo.update(db_obj=group_to_update, obj_in=group_data)
-        return RulesGroupRead.from_orm(updated_group)
+        return RulesGroupRead.model_validate(updated_group)
 
     async def delete_group(
         self,

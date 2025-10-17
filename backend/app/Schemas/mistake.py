@@ -24,8 +24,7 @@ class MistakeRead(MistakeBase):
     id: UUID
     general_account_id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MistakeAdminRead(BaseModel):
@@ -33,5 +32,4 @@ class MistakeAdminRead(BaseModel):
     user_email: str
     mistakes: List[MistakeRead]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

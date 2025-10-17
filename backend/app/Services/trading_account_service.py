@@ -54,7 +54,7 @@ class TradingAccountService:
         refreshed_account = result.scalar_one()
 
         # Costruisce la risposta arricchita, come nella funzione di elenco
-        account_read = TradingAccountRead.from_orm(refreshed_account)
+        account_read = TradingAccountRead.model_validate(refreshed_account)
         if refreshed_account.broker:
             account_read.broker = refreshed_account.broker
             account_read.broker_name = refreshed_account.broker.name
@@ -77,7 +77,7 @@ class TradingAccountService:
         # Arricchisce i dati con il nome del broker
         accounts_with_broker_info = []
         for acc in db_accounts:
-            account_read = TradingAccountRead.from_orm(acc)
+            account_read = TradingAccountRead.model_validate(acc)
             if acc.broker:
                 # Popola sia l'oggetto broker che il campo broker_name per flessibilità nel frontend
                 account_read.broker = acc.broker
@@ -99,7 +99,7 @@ class TradingAccountService:
 
         db_account = await self.repo.get_by_id(account_id)
         if db_account and db_account.general_account_id == general_account.id:
-            return TradingAccountRead.from_orm(db_account)
+            return TradingAccountRead.model_validate(db_account)
 
         return None
 

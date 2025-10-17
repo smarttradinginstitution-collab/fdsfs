@@ -15,5 +15,4 @@ class BrokerAssetClassRead(BaseModel):
     broker_id: uuid.UUID
     asset_class_id: uuid.UUID
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

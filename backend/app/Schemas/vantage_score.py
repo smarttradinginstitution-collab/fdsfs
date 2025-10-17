@@ -10,5 +10,4 @@ class VantageScoreData(BaseModel):
     consistency_score: float
     recovery_factor_score: float
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

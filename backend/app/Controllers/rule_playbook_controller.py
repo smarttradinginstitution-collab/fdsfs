@@ -51,7 +51,7 @@ class RulePlaybookController:
 
         repo = RulePlaybookRepository(db)
         rules = await repo.list_by_group_id(group_id)
-        return [RuleRead.from_orm(r) for r in rules]
+        return [RuleRead.model_validate(r) for r in rules]
 
     async def create_rule_for_group(
         self,
@@ -71,7 +71,7 @@ class RulePlaybookController:
 
         repo = RulePlaybookRepository(db)
         new_rule = await repo.create(rule_in=rule_data)
-        return RuleRead.from_orm(new_rule)
+        return RuleRead.model_validate(new_rule)
 
     async def update_rule(
         self,
@@ -93,7 +93,7 @@ class RulePlaybookController:
         await self._get_group_and_verify_ownership(rule_to_update.rules_groups_playbook_id, current_user, general_account_id, db)
 
         updated_rule = await repo.update(db_obj=rule_to_update, obj_in=rule_data)
-        return RuleRead.from_orm(updated_rule)
+        return RuleRead.model_validate(updated_rule)
 
     async def delete_rule(
         self,

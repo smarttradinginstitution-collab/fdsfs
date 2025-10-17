@@ -19,6 +19,7 @@ from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Services.trading_account_service import TradingAccountService
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Models.enums import TradeDirection
 from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
 from decimal import Decimal
@@ -170,7 +171,7 @@ class TradeService:
             "stop_loss_price": trade.stop_loss_price,
             "take_profit_price": trade.take_profit_price,
             "p_l": trade.p_l,
-            "direction": trade.direction.value if trade.direction else None,
+            "direction": trade.direction.value if isinstance(trade.direction, TradeDirection) else trade.direction,
             "lowest_price_during_trade": trade.lowest_price_during_trade,
             "highest_price_during_trade": trade.highest_price_during_trade,
             "position_size": trade.position_size,
@@ -277,7 +278,7 @@ class TradeService:
             trade_data_for_calc = {
                 "entry_price": db_trade.entry_price, "exit_price": db_trade.exit_price,
                 "stop_loss_price": db_trade.stop_loss_price, "p_l": db_trade.p_l,
-                "direction": db_trade.direction.value if db_trade.direction else None
+                "direction": db_trade.direction.value if isinstance(db_trade.direction, TradeDirection) else db_trade.direction
             }
             all_metrics = enrich_trade_with_all_metrics(
                 trade_data=trade_data_for_calc,
@@ -360,7 +361,7 @@ class TradeService:
             "lowest_price_during_trade": trade.lowest_price_during_trade,
             "highest_price_during_trade": trade.highest_price_during_trade,
             "position_size": trade.position_size,
-            "direction": trade.direction.value if trade.direction else None,
+            "direction": trade.direction.value if isinstance(trade.direction, TradeDirection) else trade.direction,
         }
 
         # Esegui i calcoli delle metriche avanzate (principalmente per Net ROI)

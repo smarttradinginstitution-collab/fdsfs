@@ -31,8 +31,7 @@ class PlatformInDBBase(PlatformBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # Properties to return to client

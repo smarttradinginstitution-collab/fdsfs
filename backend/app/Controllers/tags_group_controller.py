@@ -30,7 +30,7 @@ async def create_tags_group(
     new_tags_group = await repo.create_tags_group(
         tags_group_data=tags_group_data, general_account_id=general_account_id
     )
-    return TagsGroupRead.from_orm(new_tags_group)
+    return TagsGroupRead.model_validate(new_tags_group)
 
 
 async def list_tags_groups(
@@ -42,7 +42,7 @@ async def list_tags_groups(
     """
     repo = TagsGroupRepository(db)
     tags_groups = await repo.list_tags_groups_by_general_account_id(general_account_id)
-    return [TagsGroupRead.from_orm(tg) for tg in tags_groups]
+    return [TagsGroupRead.model_validate(tg) for tg in tags_groups]
 
 
 async def get_tags_group(
@@ -61,7 +61,7 @@ async def get_tags_group(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tags Group not found or access denied.",
         )
-    return TagsGroupRead.from_orm(tags_group)
+    return TagsGroupRead.model_validate(tags_group)
 
 
 async def update_tags_group(
@@ -87,7 +87,7 @@ async def update_tags_group(
     updated_tags_group = await repo.update_tags_group(
         db_obj=tags_group_to_update, tags_group_data=tags_group_data
     )
-    return TagsGroupRead.from_orm(updated_tags_group)
+    return TagsGroupRead.model_validate(updated_tags_group)
 
 
 async def delete_tags_group(
