@@ -32,7 +32,7 @@ class JournalController:
         self,
         claims: dict,
         instance_id: UUID,
-        status: str = Body(..., embed=True),
         service: JournalService,
+        status: str = Body(..., embed=True),
     ) -> DailyRuleInstanceRead:
         return await service.update_manual_rule_status(claims, instance_id, status)

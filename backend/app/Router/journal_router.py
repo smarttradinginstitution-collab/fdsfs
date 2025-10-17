@@ -41,8 +41,8 @@ async def get_day(
 @router.put("/rules/{instance_id}", response_model=DailyRuleInstanceRead)
 async def update_manual_rule(
     instance_id: UUID,
-    status: str = Body(..., embed=True),
     claims: dict = Depends(get_current_claims),
     service: JournalService = Depends(),
+    status: str = Body(..., embed=True),
 ):
-    return await journal_controller.update_manual_rule(claims, instance_id, status, service)
+    return await journal_controller.update_manual_rule(claims, instance_id, service, status)
