@@ -115,7 +115,12 @@ class NoteRepository:
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:
         """Update an existing note."""
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+
         update_data = obj_in.model_dump(exclude_unset=True)
+        logger.info(f"Updating note {db_obj.id} with data: {update_data}")
 
         for field, value in update_data.items():
             setattr(db_obj, field, value)
