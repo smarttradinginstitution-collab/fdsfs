@@ -86,14 +86,6 @@ watch(
       <span class="account-name">{{ mainText }}</span>
       <span class="broker-name">{{ subText }}</span>
     </div>
-    <div v-else-if="isDisabled" class="text-container">
-      <span class="account-name">Nessun account</span>
-      <span class="broker-name">Aggiungine uno</span>
-    </div>
-    <div v-else class="text-container">
-      <span class="account-name">Seleziona</span>
-      <span class="broker-name">un account</span>
-    </div>
     <ChevronDownIcon v-if="!isDisabled" class="icon chevron-icon" />
 
     <transition name="fade">
