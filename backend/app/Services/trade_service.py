@@ -132,15 +132,22 @@ class TradeService:
         r_multiple = all_metrics.get("realized_r_multiple")
         trade_dict['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
-        db_trade = Trade(**trade_dict)
+        # Gestione delle entità correlate
+        tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
+        mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
+        news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
+        psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
+        playbook = await self.playbook_repo.upsert_by_title(general_account_id, title=playbook_name) if playbook_name else None
 
-        if playbook_name:
-            db_trade.playbook = await self.playbook_repo.upsert_by_title(general_account_id, title=playbook_name)
-
-        db_trade.tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
-        db_trade.mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        db_trade.news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
-        db_trade.psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
+        # Crea l'istanza del trade includendo le relazioni
+        db_trade = Trade(
+            **trade_dict,
+            tags=tags,
+            mistakes=mistakes,
+            playbook=playbook,
+            news_impacts=news_impacts,
+            psychology_states=psychology_states
+        )
 
         self.db.add(db_trade)
         await self.db.commit()
