@@ -67,22 +67,27 @@ async def setup_test_data(db_session: AsyncSession):
 
     await db_session.commit()
 
-    # Return the ID of the trading account for querying
-    return trading_account.id
+    # Mark the account as selected for the tests
+    trading_account.is_selected = True
+    await db_session.commit()
+
+    # Return the user_id and the trading_account_id for querying
+    return {"user_id": general_account.user_id, "trading_account_id": trading_account.id}
 
 
-async def test_get_performance_metrics_integration(db_session: AsyncSession, setup_test_data: uuid4):
+async def test_get_performance_metrics_integration(db_session: AsyncSession, setup_test_data: dict):
     """
     Testa che le metriche di performance avanzate siano calcolate correttamente
     in un ambiente di integrazione con database.
     """
     # Arrange
-    trading_account_id = setup_test_data
+    user_id = setup_test_data["user_id"]
+    claims = {"sub": str(user_id)}
     service = AnalyticsService(db=db_session)
 
     # Act
     result = await service.get_performance_metrics(
-        trading_account_id=trading_account_id,
+        claims=claims,
         start_date=date(2023, 1, 1),
         end_date=date(2023, 12, 31)
     )
@@ -107,18 +112,19 @@ async def test_get_performance_metrics_integration(db_session: AsyncSession, set
     avg_pnl = sum(pnl_list) / len(pnl_list)
     assert stats.sharpe_ratio == pytest.approx(avg_pnl / pnl_std)
 
-async def test_get_processed_stats_integration(db_session: AsyncSession, setup_test_data: uuid4):
+async def test_get_processed_stats_integration(db_session: AsyncSession, setup_test_data: dict):
     """
     Testa che le statistiche aggregate (per strategia, giorno, etc.) siano corrette
     in un ambiente di integrazione con database.
     """
     # Arrange
-    trading_account_id = setup_test_data
+    user_id = setup_test_data["user_id"]
+    claims = {"sub": str(user_id)}
     service = AnalyticsService(db=db_session)
 
     # Act
     result = await service.get_processed_stats(
-        trading_account_id=trading_account_id,
+        claims=claims,
         start_date=date(2023, 1, 1),
         end_date=date(2023, 12, 31)
     )
@@ -150,17 +156,18 @@ async def test_get_processed_stats_integration(db_session: AsyncSession, setup_t
     assert monthly["2023-10"] == pytest.approx(250.0)
     assert monthly["2023-11"] == pytest.approx(300.0)
 
-async def test_get_vantage_score_integration(db_session: AsyncSession, setup_test_data: uuid4):
+async def test_get_vantage_score_integration(db_session: AsyncSession, setup_test_data: dict):
     """
     Test that the Vantage Score is calculated correctly in an integration environment.
     """
     # Arrange
-    trading_account_id = setup_test_data
+    user_id = setup_test_data["user_id"]
+    claims = {"sub": str(user_id)}
     service = AnalyticsService(db=db_session)
 
     # Act
     result = await service.get_vantage_score(
-        trading_account_id=trading_account_id,
+        claims=claims,
         start_date=date(2023, 1, 1),
         end_date=date(2023, 12, 31)
     )

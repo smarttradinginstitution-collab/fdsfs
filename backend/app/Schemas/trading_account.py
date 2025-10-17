@@ -16,6 +16,7 @@ class TradingAccountRead(BaseModel):
     created_at: datetime
     initial_balance: Optional[Decimal] = Field(None, max_digits=10, decimal_places=2)
     currency: Optional[str] = None
+    is_selected: bool = False
     broker_name: Optional[str] = Field(None, alias='broker_name')
     broker: Optional[BrokerRead] = None
 
@@ -29,3 +30,7 @@ class TradingAccountCreate(BaseModel):
     broker_id: UUID
     initial_balance: Decimal = Field(..., max_digits=10, decimal_places=2)
     currency: str
+
+
+class TradingAccountSelectionUpdate(BaseModel):
+    trading_account_ids: list[UUID]

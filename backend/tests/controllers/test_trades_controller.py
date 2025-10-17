@@ -31,7 +31,16 @@ async def setup_trading_account(client: AsyncClient, db_session: AsyncSession) -
         }
     )
     assert response.status_code == 201, response.text
-    return response.json()["id"]
+    account_id = response.json()["id"]
+
+    # Seleziona l'account appena creato
+    selection_response = await client.put(
+        "/api/v1/me/trading-accounts/selection",
+        json={"trading_account_ids": [account_id]}
+    )
+    assert selection_response.status_code == 200
+
+    return account_id
 
 async def test_create_trade_fails_without_trading_account(async_client: AsyncClient):
     """Testa che la creazione di un trade fallisca se il trading account non esiste."""
@@ -67,7 +76,7 @@ async def test_create_and_get_trade(async_client: AsyncClient, db_session: Async
     get_data = get_response.json()
     assert get_data["id"] == trade_id
 
-    list_response = await async_client.get(f"/api/v1/trades/by-trading-account/{trading_account_id}")
+    list_response = await async_client.get("/api/v1/trades/")
     assert list_response.status_code == 200
     list_data = list_response.json()
     assert len(list_data) == 1
@@ -148,7 +157,7 @@ async def test_list_trades_with_date_filter(async_client: AsyncClient, db_sessio
 
     # 1. Testa con il filtro per data (solo oggi)
     response_filtered = await async_client.get(
-        f"/api/v1/trades/by-trading-account/{trading_account_id}",
+        "/api/v1/trades/",
         params={"start_date": today.isoformat(), "end_date": today.isoformat()}
     )
     assert response_filtered.status_code == 200
@@ -157,7 +166,7 @@ async def test_list_trades_with_date_filter(async_client: AsyncClient, db_sessio
     assert filtered_data[0]["symbol_snapshot"] == "TODAY_TRADE"
 
     # 2. Testa senza filtro per data (tutti i trade)
-    response_unfiltered = await async_client.get(f"/api/v1/trades/by-trading-account/{trading_account_id}")
+    response_unfiltered = await async_client.get("/api/v1/trades/")
     assert response_unfiltered.status_code == 200
     unfiltered_data = response_unfiltered.json()
     assert len(unfiltered_data) == 3

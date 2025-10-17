@@ -34,74 +34,74 @@ router = APIRouter(
 )
 
 # --- Endpoint di Analisi ---
-@router.get("/performance/metrics/{trading_account_id}", response_model=PerformanceMetrics)
+@router.get("/performance/metrics", response_model=PerformanceMetrics)
 async def get_performance_metrics(
-    trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_performance_metrics(trading_account_id, start_date, end_date, service)
+    return await controller.get_performance_metrics(claims, start_date, end_date, service)
 
 
-@router.get("/calendar/data/{trading_account_id}", response_model=List[CalendarDayData])
+@router.get("/calendar/data", response_model=List[CalendarDayData])
 async def get_calendar_data(
-    trading_account_id: UUID,
     start_date: date,
     end_date: date,
     user_timezone: str,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_calendar_data(trading_account_id, start_date, end_date, user_timezone, service)
+    return await controller.get_calendar_data(claims, start_date, end_date, user_timezone, service)
 
 
-@router.get("/processed-stats/{trading_account_id}", response_model=ProcessedStats)
+@router.get("/processed-stats", response_model=ProcessedStats)
 async def get_processed_stats(
-    trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_processed_stats(trading_account_id, start_date, end_date, service)
+    return await controller.get_processed_stats(claims, start_date, end_date, service)
 
 
-@router.get("/vantage-score/{trading_account_id}", response_model=VantageScoreData)
+@router.get("/vantage-score", response_model=VantageScoreData)
 async def get_vantage_score(
-    trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_vantage_score(trading_account_id, start_date, end_date, service)
+    return await controller.get_vantage_score(claims, start_date, end_date, service)
 
 
-@router.get("/equity-curve/{trading_account_id}", response_model=EquityCurveData)
+@router.get("/equity-curve", response_model=EquityCurveData)
 async def get_equity_curve(
-    trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_equity_curve(trading_account_id, start_date, end_date, service)
+    return await controller.get_equity_curve(claims, start_date, end_date, service)
 
 
-@router.get("/summary/{trading_account_id}", response_model=TradeSummary)
+@router.get("/summary", response_model=TradeSummary)
 async def get_trade_summary(
-    trading_account_id: UUID,
     start_date: date,
     end_date: date,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_trade_summary(trading_account_id, start_date, end_date, service)
+    return await controller.get_trade_summary(claims, start_date, end_date, service)
 
 
-@router.get("/daily-summary/{trading_account_id}/{day}", response_model=DailySummary, summary="Get a full summary for a single day")
+@router.get("/daily-summary/{day}", response_model=DailySummary, summary="Get a full summary for a single day")
 async def get_daily_summary(
-    trading_account_id: UUID,
     day: date,
+    claims: dict = Depends(get_current_claims),
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_daily_summary(trading_account_id, day, service)
+    return await controller.get_daily_summary(claims, day, service)
 
 
 @router.get("/{trade_id}/financial_summary", response_model=TradeFinancialSummary, summary="Get a financial summary for a single trade")
@@ -123,17 +123,15 @@ async def create_trade(
     return await controller.create_trade(claims, trade_data, service)
 
 
-@router.get("/by-trading-account/{trading_account_id}", response_model=List[TradeRead])
-async def get_trades_for_trading_account(
-    trading_account_id: UUID,
+@router.get("/", response_model=List[TradeRead])
+async def get_trades_for_selected_accounts(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
 ):
-    return await controller.list_trades_for_trading_account(
+    return await controller.list_trades_for_selected_accounts(
         claims=claims,
-        trading_account_id=trading_account_id,
         start_date=start_date,
         end_date=end_date,
         service=service,

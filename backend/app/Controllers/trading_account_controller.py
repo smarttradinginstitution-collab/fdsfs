@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 # Importa il servizio che gestisce la logica di interazione con il database.
 from app.Services.trading_account_service import TradingAccountService
 # Importa gli schemi Pydantic per la validazione dei dati.
-from app.Schemas.trading_account import TradingAccountCreate
+from app.Schemas.trading_account import TradingAccountCreate, TradingAccountSelectionUpdate
 # Importa la dipendenza per ottenere i dati dell'utente autenticato.
 from app.Router.auth import get_current_claims
 
@@ -56,3 +56,15 @@ async def get_trading_account(
             detail="Trading Account non trovato o non appartenente all'utente.",
         )
     return account
+
+
+async def update_my_trading_accounts_selection(
+    selection_data: TradingAccountSelectionUpdate,
+    claims: dict = Depends(get_current_claims),
+    service: TradingAccountService = Depends(),
+):
+    """
+    Aggiorna la selezione dei Trading Accounts per l'utente autenticato.
+    """
+    await service.update_trading_accounts_selection(claims, selection_data.trading_account_ids)
+    return {"message": "Selezione aggiornata con successo."}

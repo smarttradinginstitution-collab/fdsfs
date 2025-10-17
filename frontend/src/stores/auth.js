@@ -13,6 +13,7 @@ import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
 import { useTagsStore } from './tagsStore';
 import { useTradingDnaStore } from './tradingDnaStore';
+import { useTradingAccountsStore } from './tradingAccounts';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -81,6 +82,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Gestisce il reindirizzamento post-login.
+   * Controlla se ci sono account preselezionati e reindirizza
+   * alla dashboard o alla pagina di selezione.
+   */
+  async function handleLoginRedirect() {
+    const tradingAccountsStore = useTradingAccountsStore();
+    await tradingAccountsStore.fetchTradingAccounts();
+
+    if (tradingAccountsStore.selectedTradingAccountIds.length > 0) {
+      router.push('/'); // Reindirizza alla dashboard
+    } else {
+      router.push('/select-account'); // Reindirizza alla selezione account
+    }
+  }
+
   // Funzione per recuperare il General Account
   async function fetchGeneralAccount() {
     try {
@@ -131,7 +148,7 @@ export const useAuthStore = defineStore('auth', () => {
         const uiStore = useUiStore();
         uiStore.setInitialLoadPending(true);
         await loadCurrentRoleName();
-        router.push('/select-account');
+        await handleLoginRedirect();
       }
       return { mfaRequired: false };
     }
@@ -154,7 +171,7 @@ export const useAuthStore = defineStore('auth', () => {
       const uiStore = useUiStore();
       uiStore.setInitialLoadPending(true);
       await loadCurrentRoleName();
-      router.push('/select-account');
+      await handleLoginRedirect();
     }
   }
 

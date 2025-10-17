@@ -456,6 +456,11 @@ router.include_router(
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
+router.include_router(
+    trading_account_router.router_me,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 💹 TRADES (protetto: user)

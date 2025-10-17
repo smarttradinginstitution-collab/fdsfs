@@ -33,58 +33,58 @@ class TradesController:
     # --- Endpoints di Analisi ---
     async def get_performance_metrics(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         start_date: date,
         end_date: date,
         service: AnalyticsService,
     ) -> PerformanceMetrics:
-        return await service.get_performance_metrics(trading_account_id, start_date, end_date)
+        return await service.get_performance_metrics(claims, start_date, end_date)
 
     async def get_calendar_data(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         start_date: date,
         end_date: date,
         user_timezone: str,
         service: AnalyticsService,
     ) -> List[CalendarDayData]:
-        return await service.get_calendar_data(trading_account_id, start_date, end_date, user_timezone)
+        return await service.get_calendar_data(claims, start_date, end_date, user_timezone)
 
     async def get_processed_stats(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         start_date: date,
         end_date: date,
         service: AnalyticsService,
     ) -> ProcessedStats:
-        return await service.get_processed_stats(trading_account_id, start_date, end_date)
+        return await service.get_processed_stats(claims, start_date, end_date)
 
     async def get_vantage_score(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         start_date: date,
         end_date: date,
         service: AnalyticsService,
     ) -> VantageScoreData:
-        return await service.get_vantage_score(trading_account_id, start_date, end_date)
+        return await service.get_vantage_score(claims, start_date, end_date)
 
     async def get_equity_curve(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         start_date: date,
         end_date: date,
         service: AnalyticsService,
     ) -> EquityCurveData:
-        return await service.get_equity_curve(trading_account_id, start_date, end_date)
+        return await service.get_equity_curve(claims, start_date, end_date)
 
     async def get_trade_summary(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         start_date: date,
         end_date: date,
         service: AnalyticsService,
     ) -> TradeSummary:
-        return await service.get_trade_summary(trading_account_id, start_date, end_date)
+        return await service.get_trade_summary(claims, start_date, end_date)
 
     async def get_financial_summary(
         self,
@@ -102,7 +102,7 @@ class TradesController:
 
     async def get_daily_summary(
         self,
-        trading_account_id: UUID,
+        claims: dict,
         day: date,
         service: AnalyticsService,
     ) -> DailySummary:
@@ -110,7 +110,7 @@ class TradesController:
         Handles the request for a full daily summary.
         Delegates to the analytics service.
         """
-        return await service.get_daily_summary(trading_account_id, day)
+        return await service.get_daily_summary(claims, day)
 
     # --- CRUD Trades ---
     async def create_trade(
@@ -121,17 +121,15 @@ class TradesController:
     ) -> TradeRead:
         return await service.create_trade(claims, trade_data)
 
-    async def list_trades_for_trading_account(
+    async def list_trades_for_selected_accounts(
         self,
         claims: dict,
-        trading_account_id: UUID,
         start_date: Optional[date],
         end_date: Optional[date],
         service: TradeService,
     ) -> list[TradeRead]:
-        return await service.list_trades_by_trading_account(
+        return await service.list_trades_for_selected_accounts(
             claims=claims,
-            trading_account_id=trading_account_id,
             start_date=start_date,
             end_date=end_date,
         )

@@ -40,3 +40,21 @@ router.get("/", response_model=List[TradingAccountRead])(
 router.get("/{account_id}", response_model=TradingAccountRead)(
     trading_account_controller.get_trading_account
 )
+
+# ==============================================================================
+# ROUTER PER OPERAZIONI CONTESTUALI DELL'UTENTE ("ME")
+# ==============================================================================
+
+# Definisce un router separato per le operazioni che agiscono sul contesto
+# dell'utente loggato, per avere URL più puliti come /me/trading-accounts.
+router_me = APIRouter(
+    prefix="/me/trading-accounts",
+    tags=["Trading Accounts"],
+    dependencies=[Depends(get_current_claims)],
+    responses={404: {"description": "Not found"}},
+)
+
+# Rotta per aggiornare la selezione dei Trading Accounts.
+router_me.put("/selection", status_code=status.HTTP_200_OK)(
+    trading_account_controller.update_my_trading_accounts_selection
+)

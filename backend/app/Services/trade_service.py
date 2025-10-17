@@ -62,6 +62,24 @@ class TradeService:
 
         return trading_account.id, general_account.id
 
+    async def _get_selected_trading_account_ids(self, claims: dict) -> list[UUID]:
+        """
+        Recupera gli ID di tutti i trading account selezionati per l'utente corrente.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
+
+        selected_accounts = await self.trading_account_repo.list_selected_by_general_account_id(general_account.id)
+        if not selected_accounts:
+            # Se nessun account è selezionato, potremmo voler restituire una lista vuota
+            # o sollevare un'eccezione a seconda della logica di business desiderata.
+            # Per ora, restituiamo una lista vuota e lasciamo che il chiamante gestisca il caso.
+            return []
+
+        return [acc.id for acc in selected_accounts]
+
     async def _get_or_create_related_entities(self, general_account_id: UUID, values: List[str], repo, upsert_method_name: str, value_field_name: str) -> list:
         """
         Funzione helper generica per recuperare o creare entità M2M tramite 'upsert'.
@@ -147,7 +165,7 @@ class TradeService:
 
         # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
-        await trading_account_service.recalculate_account_metrics(trading_account_id)
+        await trading_account_service.recalculate_account_metrics(claims, trading_account_id)
 
         return TradeRead.from_orm(db_trade)
 
@@ -224,26 +242,24 @@ class TradeService:
 
         return response_trades
 
-    async def list_trades_by_trading_account(
+    async def list_trades_for_selected_accounts(
         self,
         claims: dict,
-        trading_account_id: UUID,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None
     ) -> List[TradeRead]:
         """
-        Elenca i trade per un trading account, con filtro opzionale per data.
+        Elenca i trade per tutti i trading account selezionati, con filtro opzionale per data.
         """
-        await self._validate_and_get_trading_account(claims, trading_account_id)
+        selected_account_ids = await self._get_selected_trading_account_ids(claims)
+        if not selected_account_ids:
+            return []
 
-        if start_date and end_date:
-            trades = await self.repo.get_filtered_trades(
-                trading_account_id=trading_account_id,
-                start_date=start_date,
-                end_date=end_date
-            )
-        else:
-            trades = await self.repo.list_by_trading_account_id(trading_account_id)
+        trades = await self.repo.get_filtered_trades_by_account_ids(
+            trading_account_ids=selected_account_ids,
+            start_date=start_date,
+            end_date=end_date
+        )
 
         return [TradeRead.from_orm(trade) for trade in trades]
 
@@ -309,7 +325,7 @@ class TradeService:
 
         # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
-        await trading_account_service.recalculate_account_metrics(trading_account_id)
+        await trading_account_service.recalculate_account_metrics(claims, trading_account_id)
 
         return TradeRead.from_orm(db_trade)
 
@@ -326,7 +342,7 @@ class TradeService:
 
         # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
-        await trading_account_service.recalculate_account_metrics(trading_account_id)
+        await trading_account_service.recalculate_account_metrics(claims, trading_account_id)
 
         return True
 

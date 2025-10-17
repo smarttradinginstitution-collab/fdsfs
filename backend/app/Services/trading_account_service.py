@@ -103,7 +103,26 @@ class TradingAccountService:
 
         return None
 
-    async def recalculate_account_metrics(self, account_id: UUID) -> None:
+    async def update_trading_accounts_selection(
+        self, claims: dict, trading_account_ids: List[UUID]
+    ) -> None:
+        """
+        Aggiorna il flag `is_selected` per i trading account di un utente.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="L'utente non ha un General Account.",
+            )
+
+        await self.repo.update_selection_for_user(
+            general_account.id, trading_account_ids
+        )
+        await self.db.commit()
+
+    async def recalculate_account_metrics(self, claims: dict, account_id: UUID) -> None:
         """
         Recalculates all performance metrics for a given trading account and
         updates the trading_account table with the new values.
@@ -133,7 +152,7 @@ class TradingAccountService:
         if not entry_dates or not exit_dates:
             # If trades exist but have no timestamps, we can't calculate metrics
             # but we should ensure PnL is summed up.
-            total_pnl = sum(trade.p_l for trade in all_trades if trade.p_l is not None)
+            total_pnl = sum(float(trade.p_l) for trade in all_trades if trade.p_l is not None)
             account.total_pnl = total_pnl
             await self.db.commit()
             return
@@ -141,9 +160,12 @@ class TradingAccountService:
         start_date = min(entry_dates)
         end_date = max(exit_dates)
 
+        # Temporarily set the account to be the only selected one for analytics calculation
+        await self.repo.update_selection_for_user(account.general_account_id, [account_id])
+
         analytics_service = AnalyticsService(self.db)
         metrics = await analytics_service.get_performance_metrics(
-            trading_account_id=account_id,
+            claims=claims,
             start_date=start_date,
             end_date=end_date,
         )

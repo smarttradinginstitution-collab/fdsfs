@@ -1,24 +1,30 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 
 const router = useRouter();
 const tradingAccountsStore = useTradingAccountsStore();
 
 const newAccountName = ref('');
 const errorMessage = ref('');
+const localSelectionIds = ref([]);
 
-// Carica i conti di trading quando il componente viene montato
+// All'avvio, popola la selezione locale con quella dello store
 onMounted(() => {
-  tradingAccountsStore.fetchTradingAccounts();
+  tradingAccountsStore.fetchTradingAccounts().then(() => {
+    localSelectionIds.value = [...tradingAccountsStore.selectedTradingAccountIds];
+  });
 });
 
-// Funzione per selezionare un account esistente
-function handleSelectAccount(account) {
-  tradingAccountsStore.selectTradingAccount(account);
+const isConfirmDisabled = computed(() => localSelectionIds.value.length === 0);
+
+// Funzione per confermare la selezione multipla
+async function handleConfirmSelection() {
+  await tradingAccountsStore.updateAccountSelection(localSelectionIds.value);
   router.push('/');
 }
 
@@ -31,12 +37,15 @@ async function handleCreateAccount() {
   errorMessage.value = '';
 
   try {
-    // Il broker_id è opzionale e non viene inviato, sarà null di default
+    // TODO: Sostituire i valori hardcoded con un form di creazione completo
     const newAccount = await tradingAccountsStore.createTradingAccount({
       label: newAccountName.value,
+      initial_balance: 0,
+      currency: 'USD',
+      broker_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' // ID Broker di default
     });
-    // Lo store seleziona già il nuovo account, quindi reindirizziamo
     if (newAccount) {
+      // La logica di selezione è già nello store, quindi basta reindirizzare
       router.push('/');
     }
   } catch (error) {
@@ -50,8 +59,8 @@ async function handleCreateAccount() {
   <div class="select-account-view">
     <div class="container">
       <div class="header">
-        <h1>Seleziona un Account di Trading</h1>
-        <p v-if="tradingAccountsStore.hasTradingAccounts">Scegli con quale account operare.</p>
+        <h1>Seleziona Account di Trading</h1>
+        <p v-if="tradingAccountsStore.hasTradingAccounts">Scegli con quali account operare. Puoi selezionarne più di uno.</p>
         <p v-else>Non hai ancora un account di trading. Creane uno per iniziare.</p>
       </div>
 
@@ -60,17 +69,31 @@ async function handleCreateAccount() {
         <p>Caricamento...</p>
       </div>
 
-      <!-- Elenco degli account esistenti -->
+      <!-- Elenco degli account esistenti con checkbox -->
       <div v-else-if="tradingAccountsStore.hasTradingAccounts" class="accounts-list">
         <div
           v-for="account in tradingAccountsStore.tradingAccounts"
           :key="account.id"
           class="account-item"
-          @click="handleSelectAccount(account)"
         >
-          <span class="account-label">{{ account.label || 'Senza nome' }}</span>
-          <span class="account-broker">{{ account.broker_id || 'Nessun broker' }}</span>
+          <BaseCheckbox
+            :id="`account-${account.id}`"
+            :value="account.id"
+            v-model="localSelectionIds"
+          >
+            <span class="account-label">{{ account.label || 'Senza nome' }}</span>
+          </BaseCheckbox>
+          <span class="account-broker">{{ account.broker?.name || 'Nessun broker' }}</span>
         </div>
+        <BaseButton
+          @click="handleConfirmSelection"
+          :disabled="isConfirmDisabled"
+          variant="primary"
+          size="medium"
+          class="confirm-button"
+        >
+          Conferma e Continua
+        </BaseButton>
       </div>
 
       <!-- Form di creazione nuovo account -->
@@ -153,13 +176,13 @@ async function handleCreateAccount() {
   background-color: var(--semantic-color-surface-subtle);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
 }
 
+/* Rimuoviamo l'hover effect che suggerisce un click sull'intera riga */
 .account-item:hover {
-  background-color: var(--semantic-color-surface-hover);
-  border-color: var(--semantic-color-border-hover);
+  background-color: var(--semantic-color-surface-subtle);
+  border-color: var(--semantic-color-border-default);
 }
 
 .account-label {
@@ -197,5 +220,10 @@ async function handleCreateAccount() {
   border-radius: var(--semantic-border-radius-interactive);
   font: var(--semantic-font-style-body-sm);
   text-align: center;
+}
+
+.confirm-button {
+  margin-top: var(--semantic-size-stack-lg);
+  width: 100%;
 }
 </style>

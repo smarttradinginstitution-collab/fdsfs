@@ -40,6 +40,7 @@ class TradingAccount(Base):
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
+    is_selected: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     # Relazioni
     general_account: Mapped["GeneralAccount"] = relationship(

@@ -1,10 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { onClickOutside } from '@vueuse/core';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import BuildingLibraryIcon from '../icons/BuildingLibraryIcon.vue';
 import ChevronDownIcon from '../icons/ChevronDownIcon.vue';
+import BaseCheckbox from './BaseCheckbox.vue';
+import BaseButton from './BaseButton.vue';
 
 // Stores and Router
 const tradingAccountsStore = useTradingAccountsStore();
@@ -13,40 +15,63 @@ const router = useRouter();
 // Component State
 const isDropdownOpen = ref(false);
 const selectorRef = ref(null);
+const localSelectionIds = ref([]);
 
 // Computed Properties
-const selectedAccount = computed(() => tradingAccountsStore.selectedTradingAccount);
+const selectedAccounts = computed(() => tradingAccountsStore.selectedTradingAccounts);
 const accounts = computed(() => tradingAccountsStore.tradingAccounts);
-const isDisabled = computed(() => accounts.value.length <= 1);
-const hasNoAccounts = computed(() => accounts.value.length === 0);
+const isDisabled = computed(() => accounts.value.length === 0);
+
+// Display text for the selector
+const mainText = computed(() => {
+  if (selectedAccounts.value.length === 0) return 'Nessun account';
+  if (selectedAccounts.value.length === 1) return selectedAccounts.value[0].label;
+  return `${selectedAccounts.value.length} account selezionati`;
+});
+
+const subText = computed(() => {
+  if (selectedAccounts.value.length === 0) return 'Selezionane uno';
+  if (selectedAccounts.value.length === 1) return selectedAccounts.value[0].broker?.name || 'N/D';
+  return 'Visualizzazione aggregata';
+});
 
 // Methods
 function toggleDropdown() {
-  if (isDisabled.value) {
-    if (hasNoAccounts.value) {
-      router.push({ path: '/add-account' });
-    }
-    return;
-  }
+  if (isDisabled.value) return;
   isDropdownOpen.value = !isDropdownOpen.value;
+  // Quando apriamo il dropdown, sincronizziamo la selezione locale con lo store
+  if (isDropdownOpen.value) {
+    localSelectionIds.value = [...tradingAccountsStore.selectedTradingAccountIds];
+  }
 }
 
-function selectAccount(account) {
-  tradingAccountsStore.selectTradingAccount(account);
+async function applySelection() {
+  await tradingAccountsStore.updateAccountSelection(localSelectionIds.value);
   isDropdownOpen.value = false;
 }
 
-// Close dropdown when clicking outside
+// Close dropdown when clicking outside and apply changes
 onClickOutside(selectorRef, () => {
-  isDropdownOpen.value = false;
+  if (isDropdownOpen.value) {
+    applySelection();
+  }
 });
 
 // Fetch accounts on mount
 onMounted(() => {
-  if (!tradingAccountsStore.hasTradingAccounts) {
+  if (tradingAccountsStore.tradingAccounts.length === 0) {
     tradingAccountsStore.fetchTradingAccounts();
   }
 });
+
+// Watch for changes in the store's selection to update the local state
+watch(
+  () => tradingAccountsStore.selectedTradingAccountIds,
+  (newIds) => {
+    localSelectionIds.value = [...newIds];
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -57,11 +82,11 @@ onMounted(() => {
     @click="toggleDropdown"
   >
     <BuildingLibraryIcon class="icon bank-icon" />
-    <div v-if="selectedAccount" class="text-container">
-      <span class="account-name">{{ selectedAccount.label }}</span>
-      <span class="broker-name">{{ selectedAccount.broker_name }}</span>
+    <div class="text-container">
+      <span class="account-name">{{ mainText }}</span>
+      <span class="broker-name">{{ subText }}</span>
     </div>
-    <div v-else-if="hasNoAccounts" class="text-container">
+    <div v-else-if="isDisabled" class="text-container">
       <span class="account-name">Nessun account</span>
       <span class="broker-name">Aggiungine uno</span>
     </div>
@@ -73,19 +98,27 @@ onMounted(() => {
 
     <transition name="fade">
       <div v-if="isDropdownOpen && !isDisabled" class="dropdown-menu">
-        <ul>
-          <li
+        <div class="dropdown-content">
+          <label
             v-for="account in accounts"
             :key="account.id"
-            @click.stop="selectAccount(account)"
             class="dropdown-item"
+            :for="`dd-account-${account.id}`"
           >
-            <div class="text-container">
-              <span class="account-name">{{ account.label }}</span>
-              <span class="broker-name">{{ account.broker_name }}</span>
-            </div>
-          </li>
-        </ul>
+            <BaseCheckbox
+              :id="`dd-account-${account.id}`"
+              :value="account.id"
+              v-model="localSelectionIds"
+            >
+              <span class="account-name-dd">{{ account.label }}</span>
+            </BaseCheckbox>
+          </label>
+        </div>
+        <div class="dropdown-footer">
+          <BaseButton @click.stop="applySelection" size="small" variant="primary" class="apply-button">
+            Applica
+          </BaseButton>
+        </div>
       </div>
     </transition>
   </div>
@@ -176,7 +209,14 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.dropdown-content {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
 .dropdown-item {
+  display: block;
   padding: 8px 12px;
   cursor: pointer;
   list-style: none;
@@ -186,6 +226,21 @@ onMounted(() => {
   &:hover {
     background-color: var(--semantic-color-bg-subtle);
   }
+}
+
+.account-name-dd {
+  font-size: 14px;
+  color: var(--semantic-color-text-primary);
+}
+
+.dropdown-footer {
+  padding: 8px;
+  border-top: 1px solid var(--semantic-color-border-muted);
+  background-color: var(--semantic-color-surface-primary);
+}
+
+.apply-button {
+  width: 100%;
 }
 
 /* Fade Transition */

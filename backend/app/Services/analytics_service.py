@@ -3,12 +3,13 @@ from __future__ import annotations
 from uuid import UUID
 from datetime import date
 from typing import List, Dict, Any
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
 from app.Repositories.trading_account_repository import TradingAccountRepository
+from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 from app.Schemas.analytics import (
     PerformanceMetrics,
@@ -34,23 +35,43 @@ class AnalyticsService:
         self.db = db
         self.trade_repo = TradeRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
+        self.general_account_repo = GeneralAccountRepository(db)
 
-    async def _get_calculator(self, trading_account_id: UUID, start_date: date, end_date: date) -> MetricsCalculator:
-        """Helper method to get trades and instantiate the calculator."""
-        trades = await self.trade_repo.get_filtered_trades(trading_account_id, start_date, end_date)
-        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+    async def _get_selected_trading_accounts(self, claims: dict) -> list[Any]:
+        """
+        Recupera gli oggetti TradingAccount completi per tutti gli account selezionati dall'utente.
+        Solleva un'eccezione se nessun account è selezionato.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
 
-        initial_balance = trading_account.initial_balance if trading_account else 0.0
+        selected_accounts = await self.trading_account_repo.list_selected_by_general_account_id(general_account.id)
+        if not selected_accounts:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Nessun trading account selezionato.")
+
+        return selected_accounts
+
+    async def _get_calculator(self, claims: dict, start_date: date, end_date: date) -> MetricsCalculator:
+        """Helper method to get trades and instantiate the calculator for all selected accounts."""
+        selected_accounts = await self._get_selected_trading_accounts(claims)
+        account_ids = [acc.id for acc in selected_accounts]
+
+        trades = await self.trade_repo.get_filtered_trades_by_account_ids(account_ids, start_date, end_date)
+
+        # Somma i bilanci iniziali di tutti gli account selezionati.
+        initial_balance = sum(acc.initial_balance for acc in selected_accounts if acc.initial_balance)
 
         return MetricsCalculator(trades, initial_balance)
 
     async def get_performance_metrics(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, claims: dict, start_date: date, end_date: date
     ) -> PerformanceMetrics:
         """
-        Calculates and returns main performance metrics.
+        Calculates and returns main performance metrics for selected accounts.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(claims, start_date, end_date)
         all_metrics = calculator.get_all_metrics()
 
         # Map calculator results to the PerformanceStats Pydantic schema
@@ -83,23 +104,23 @@ class AnalyticsService:
         return PerformanceMetrics(stats=stats)
 
     async def get_calendar_data(
-        self, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str
+        self, claims: dict, start_date: date, end_date: date, user_timezone: str
     ) -> List[CalendarDayData]:
         """
-        Returns data aggregated by day for the calendar view.
+        Returns data aggregated by day for the calendar view for selected accounts.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(claims, start_date, end_date)
         calendar_data = calculator.calculate_calendar_data()
 
         return [CalendarDayData(**item) for item in calendar_data]
 
     async def get_processed_stats(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, claims: dict, start_date: date, end_date: date
     ) -> ProcessedStats:
         """
-        Returns aggregated stats like 'by_strategy', 'by_day_of_week', etc.
+        Returns aggregated stats like 'by_strategy', 'by_day_of_week', etc. for selected accounts.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(claims, start_date, end_date)
         processed_data = calculator.calculate_processed_stats()
 
         # Map the nested dictionary to the required Pydantic models
@@ -116,13 +137,13 @@ class AnalyticsService:
         )
 
     async def get_vantage_score(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, claims: dict, start_date: date, end_date: date
     ) -> VantageScoreData:
         """
-        Calculates and returns the Vantage Score and its components.
+        Calculates and returns the Vantage Score and its components for selected accounts.
         This logic remains here as it's a specific interpretation of the base metrics.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(claims, start_date, end_date)
         metrics = calculator.get_all_metrics()
 
         if metrics["trade_count"] < 5:
@@ -167,24 +188,24 @@ class AnalyticsService:
         )
 
     async def get_equity_curve(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, claims: dict, start_date: date, end_date: date
     ) -> EquityCurveData:
         """
-        Returns data for the equity curve chart.
+        Returns data for the equity curve chart for selected accounts.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_calculator(claims, start_date, end_date)
         equity_curve_data = calculator.calculate_equity_curve()
         return EquityCurveData(**equity_curve_data)
 
     async def get_trade_summary(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, claims: dict, start_date: date, end_date: date
     ) -> TradeSummary:
         """
-        Returns a complete summary of trades for a given period.
+        Returns a complete summary of trades for a given period for selected accounts.
         """
         # We can call the other methods in this service to build the summary
-        performance_metrics = await self.get_performance_metrics(trading_account_id, start_date, end_date)
-        equity_curve = await self.get_equity_curve(trading_account_id, start_date, end_date)
+        performance_metrics = await self.get_performance_metrics(claims, start_date, end_date)
+        equity_curve = await self.get_equity_curve(claims, start_date, end_date)
 
         return TradeSummary(
             stats=performance_metrics.stats,
@@ -192,14 +213,14 @@ class AnalyticsService:
         )
 
     async def get_daily_summary(
-        self, trading_account_id: UUID, day: date
+        self, claims: dict, day: date
     ) -> DailySummary:
         """
-        Returns a complete summary for a single day, including stats,
-        chart data, and the list of trades.
+        Returns a complete summary for a single day for selected accounts,
+        including stats, chart data, and the list of trades.
         """
         # Re-use the existing helper to get a calculator scoped to the specific day
-        calculator = await self._get_calculator(trading_account_id, day, day)
+        calculator = await self._get_calculator(claims, day, day)
 
         # Get all base metrics from the calculator
         all_metrics = calculator.get_all_metrics()
@@ -219,13 +240,15 @@ class AnalyticsService:
         )
 
     async def get_tag_performance_stats(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, claims: dict, start_date: date, end_date: date
     ) -> List[TagPerformanceStat]:
         """
-        Calculates and returns performance statistics for each tag.
+        Calculates and returns performance statistics for each tag for selected accounts.
         """
+        selected_accounts = await self._get_selected_trading_accounts(claims)
+        account_ids = [acc.id for acc in selected_accounts]
         raw_stats = await self.trade_repo.get_tag_performance_stats(
-            trading_account_id=trading_account_id,
+            trading_account_ids=account_ids,
             start_date=start_date,
             end_date=end_date,
         )

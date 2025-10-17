@@ -74,6 +74,32 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def get_filtered_trades_by_account_ids(
+        self,
+        trading_account_ids: List[UUID],
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None
+    ) -> List[Trade]:
+        """
+        Recupera i trade per una lista di account, con filtro opzionale per data.
+        """
+        from datetime import datetime, time
+
+        query = self._get_trade_query().where(
+            Trade.trading_account_id.in_(trading_account_ids)
+        )
+
+        if start_date and end_date:
+            start_datetime = datetime.combine(start_date, time.min)
+            end_datetime = datetime.combine(end_date, time.max)
+            query = query.where(
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+            )
+
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def get_trades_for_dna_analysis(
         self,
         general_account_id: UUID,
@@ -242,7 +268,7 @@ class TradeRepository:
 
     async def get_tag_performance_stats(
         self,
-        trading_account_id: UUID,
+        trading_account_ids: List[UUID],
         start_date: date,
         end_date: date,
     ) -> List[Any]:
@@ -282,7 +308,7 @@ class TradeRepository:
             .join(TradesTags.__table__, Tag.id == TradesTags.__table__.c.tag_id)
             .join(Trade, Trade.id == TradesTags.__table__.c.trade_id)
             .where(
-                Trade.trading_account_id == trading_account_id,
+                Trade.trading_account_id.in_(trading_account_ids),
                 Trade.entry_timestamp >= start_datetime,
                 Trade.entry_timestamp <= end_datetime,
             )
