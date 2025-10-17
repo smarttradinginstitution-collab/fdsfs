@@ -254,8 +254,8 @@ class TradeRepository:
             .join(Trade.trading_account)
             .where(
                 TradingAccount.general_account_id == general_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
+                Trade.exit_timestamp >= start_datetime,
+                Trade.exit_timestamp <= end_datetime,
             )
         )
         result = await self.db.execute(query)
