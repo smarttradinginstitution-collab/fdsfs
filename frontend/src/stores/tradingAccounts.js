@@ -13,11 +13,12 @@ import { useTradesStore } from './trades';
 export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   // --- STATE ---
   const tradingAccounts = ref([]);
-  const selectedTradingAccount = ref(JSON.parse(localStorage.getItem('selectedTradingAccount')) || null);
   const isLoading = ref(false);
 
   // --- GETTERS ---
   const hasTradingAccounts = computed(() => tradingAccounts.value.length > 0);
+  const selectedAccounts = computed(() => tradingAccounts.value.filter(acc => acc.is_selected));
+  const hasSelectedAccounts = computed(() => selectedAccounts.value.length > 0);
 
   // --- ACTIONS ---
 
@@ -37,16 +38,11 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       const { data } = await apiClient.get('/trading-accounts/');
       tradingAccounts.value = data;
 
-      const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
-
-      if (isSelectedAccountValid) {
-        // Se l'account in memoria è valido, attiva il caricamento dei dati per quell'account.
-        // Dobbiamo assicurarci che l'oggetto completo sia selezionato.
-        const fullAccount = data.find(acc => acc.id === selectedTradingAccount.value.id);
-        selectTradingAccount(fullAccount);
-      } else {
-        // Se non c'è un account valido, pulisci la selezione.
-        selectTradingAccount(null);
+      // Dopo aver caricato i conti, se ce ne sono di selezionati,
+      // avvia il caricamento dei dati associati (es. trades).
+      if (hasSelectedAccounts.value) {
+        const tradesStore = useTradesStore();
+        tradesStore.fetchAllDataForAccount();
       }
 
     } catch (error) {
@@ -70,9 +66,9 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     isLoading.value = true;
     try {
       const { data } = await apiClient.post('/trading-accounts/', accountData);
-      tradingAccounts.value.push(data);
-      // Opzionale: seleziona automaticamente il nuovo account creato
-      selectTradingAccount(data);
+      // Aggiungi il nuovo account e ricarica la lista per avere lo stato aggiornato
+      // dal backend (es. `is_selected` potrebbe essere true di default).
+      await fetchTradingAccounts();
       return data;
     } catch (error) {
       console.error("Errore nella creazione del trading account:", error);
@@ -82,34 +78,14 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     }
   }
 
-  /**
-   * Imposta il conto di trading attivo e avvia il pre-caricamento dei dati.
-   * @param {object | null} account - L'oggetto del conto da selezionare o null.
-   */
-  function selectTradingAccount(account) {
-    selectedTradingAccount.value = account;
-
-    if (account) {
-      localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
-      // Avvia il caricamento di tutti i dati per l'account selezionato.
-      const tradesStore = useTradesStore();
-      tradesStore.fetchAllDataForAccount();
-    } else {
-      localStorage.removeItem('selectedTradingAccount');
-      // Qui potremmo voler pulire i dati dei trade, se necessario.
-      const tradesStore = useTradesStore();
-      tradesStore.$reset(); // Resetta lo store dei trade a stato iniziale
-    }
-  }
-
   return {
     tradingAccounts,
-    selectedTradingAccount,
     isLoading,
     hasTradingAccounts,
+    selectedAccounts,
+    hasSelectedAccounts,
     fetchTradingAccounts,
     createTradingAccount,
-    selectTradingAccount,
   };
 }, {
   persist: true,

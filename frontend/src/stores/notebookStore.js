@@ -377,9 +377,7 @@ export const useNotebookStore = defineStore('notebook', {
       // Use the robust system_folder_identifier instead of the folder name
       else if (folder.system_folder_identifier === 'DAILY_JOURNAL' && this.selectedNote.note_date) {
         const tradingAccountsStore = useTradingAccountsStore();
-        const accountId = tradingAccountsStore.selectedTradingAccount?.id;
-
-        if (!accountId) {
+        if (!tradingAccountsStore.hasSelectedAccounts) {
           this.financialData = { error: 'No trading account selected.' };
           return;
         }
@@ -387,8 +385,9 @@ export const useNotebookStore = defineStore('notebook', {
         const dateStr = this.selectedNote.note_date; // Directly use the reliable date field
 
         try {
-          // Call the new, more detailed daily summary endpoint
-          const response = await apiClient.get(`/trades/daily-summary/${accountId}/${dateStr}`);
+          // Call the new, more detailed daily summary endpoint.
+          // The backend will handle aggregation across selected accounts.
+          const response = await apiClient.get(`/me/trades/daily-summary/${dateStr}`);
           const summary = response.data;
 
           // The response.data has the shape { stats, cumulative_pnl_series, trades }

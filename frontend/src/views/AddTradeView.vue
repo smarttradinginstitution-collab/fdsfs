@@ -18,33 +18,53 @@ const tradingAccountsStore = useTradingAccountsStore();
 
 const choice = ref(null); // 'manual' or 'import'
 
+// --- State ---
+const selectedAccountIdForNewTrade = ref(null);
+
 // --- Computed Properties ---
-const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
+const selectedAccounts = computed(() => tradingAccountsStore.selectedAccounts);
 
 const accountOptions = computed(() =>
-  tradingAccountsStore.tradingAccounts.map(acc => ({
+  selectedAccounts.value.map(acc => ({
     value: acc.id,
     text: acc.label,
   }))
 );
 
 // --- Lifecycle Hooks ---
-onMounted(() => {
-  // Ensure trading accounts are loaded when the component is mounted
-  if (!tradingAccountsStore.hasTradingAccounts) {
-    tradingAccountsStore.fetchTradingAccounts();
+onMounted(async () => {
+  // Ensure trading accounts are loaded
+  if (tradingAccountsStore.tradingAccounts.length === 0) {
+    await tradingAccountsStore.fetchTradingAccounts();
+  }
+
+  // If there's only one selected account, pre-select it for the user.
+  if (selectedAccounts.value.length === 1) {
+    selectedAccountIdForNewTrade.value = selectedAccounts.value[0].id;
   }
 });
 
 // --- Methods ---
 const handleAccountSelection = (accountId) => {
-  const selectedAccount = tradingAccountsStore.tradingAccounts.find(
-    (acc) => acc.id === accountId
-  );
-  tradingAccountsStore.selectTradingAccount(selectedAccount);
+  selectedAccountIdForNewTrade.value = accountId;
 };
 
-const handleNewTrade = async (tradeData) => {
+const handleNewTrade = async (formData) => {
+  // If there are multiple selected accounts, user must choose one.
+  if (selectedAccounts.value.length > 1 && !selectedAccountIdForNewTrade.value) {
+    uiStore.showNotification({
+      message: 'Please select a trading account first.',
+      type: 'warning',
+    });
+    return;
+  }
+
+  // Assign the chosen account ID to the trade data.
+  const tradeData = {
+    ...formData,
+    trading_account_id: selectedAccountIdForNewTrade.value,
+  };
+
   try {
     const newTrade = await tradesStore.addTrade(tradeData);
     if (newTrade) {
@@ -124,17 +144,18 @@ const handleNewTrade = async (tradeData) => {
         <p class="step-description">Choose the account you want to import trades into.</p>
         <BaseSelect
           label="Trading Account"
-          :model-value="selectedAccountId"
+          :model-value="selectedAccountIdForNewTrade"
           :options="accountOptions"
           @update:modelValue="handleAccountSelection"
+          placeholder="Select an account"
         />
       </div>
 
       <!-- Step 2: Upload File (shown only after account selection) -->
-      <div v-if="selectedAccountId" class="import-step">
+      <div v-if="selectedAccountIdForNewTrade" class="import-step">
         <h2 class="step-title">Step 2: Upload Your File</h2>
         <p class="step-description">Select the 'Performance' CSV file exported from your broker.</p>
-        <TradeImporter />
+        <TradeImporter :trading-account-id="selectedAccountIdForNewTrade" />
       </div>
     </div>
   </div>

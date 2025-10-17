@@ -84,7 +84,7 @@ export const useTradesStore = defineStore('trades', {
 
     allDashboardStats() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const hasSelectedAccounts = tradingAccountsStore.hasSelectedAccounts;
 
       // Restituisce un set completo di statistiche vuote per evitare errori di rendering
       // se i dati non sono ancora stati caricati o se non c'è un account selezionato.
@@ -112,7 +112,7 @@ export const useTradesStore = defineStore('trades', {
           peakBalance: emptyStat('peakBalance', 'Peak Balance', 'Core', '$0.00'),
       };
 
-      if (!this.dashboardStats || !selectedAccount) {
+      if (!this.dashboardStats || !hasSelectedAccounts) {
         return emptyStats;
       }
 
@@ -139,7 +139,8 @@ export const useTradesStore = defineStore('trades', {
       const averageHoldTime = parseFloat(stats.average_hold_time);
 
       // Calcoli per le metriche mancanti
-      const initialBalance = parseFloat(selectedAccount.initial_balance ?? 0);
+      // Aggrega i saldi iniziali di tutti gli account selezionati
+      const initialBalance = tradingAccountsStore.selectedAccounts.reduce((sum, acc) => sum + parseFloat(acc.initial_balance ?? 0), 0);
       const currentBalance = initialBalance + totalPnl;
       const peakBalance = this.equityCurve?.data?.length > 0 ? Math.max(...this.equityCurve.data) : initialBalance;
 
@@ -384,9 +385,9 @@ export const useTradesStore = defineStore('trades', {
     async fetchTrades(options = { ignoreFilters: false }) {
       this.isLoading = true;
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const hasSelectedAccounts = tradingAccountsStore.hasSelectedAccounts;
 
-      if (!selectedAccount) {
+      if (!hasSelectedAccounts) {
         console.log("Nessun trading account selezionato. Non carico i trade.");
         this.trades = [];
         this.isLoading = false;
@@ -418,7 +419,8 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params });
+        // L'endpoint ora non richiede l'ID del conto, il backend gestisce i conti selezionati.
+        const response = await apiClient.get(`/me/trades`, { params });
         this.trades = response.data.map(mapBackendTradeToFrontend);
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
@@ -457,8 +459,7 @@ export const useTradesStore = defineStore('trades', {
       this.activeSummary = null;
 
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      if (!selectedAccount) {
+      if (!tradingAccountsStore.hasSelectedAccounts) {
         console.error("Nessun trading account selezionato per il riepilogo.");
         this.isSummaryLoading = false;
         return;
@@ -485,8 +486,8 @@ export const useTradesStore = defineStore('trades', {
       try {
         // Eseguiamo le due chiamate in parallelo per efficienza
         const [summaryResponse, tradesResponse] = await Promise.all([
-          apiClient.get(`/trades/summary/${selectedAccount.id}`, { params }),
-          apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params })
+          apiClient.get(`/me/trades/summary`, { params }),
+          apiClient.get(`/me/trades`, { params })
         ]);
 
         const fetchedTrades = tradesResponse.data.map(mapBackendTradeToFrontend);
@@ -509,12 +510,10 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchDashboardStats() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      if (!selectedAccount) return;
+      if (!tradingAccountsStore.hasSelectedAccounts) return;
 
       const filterStore = useFilterStore();
       const params = {
-        // Rimuoviamo trading_account_id dai parametri, verrà inserito nell'URL
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -524,8 +523,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        // L'ID del conto è ora parte dell'URL, come per le altre chiamate
-        const response = await apiClient.get(`/trades/performance/metrics/${selectedAccount.id}`, { params });
+        const response = await apiClient.get(`/me/trades/performance/metrics`, { params });
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -534,8 +532,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchCalendarData() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      if (!selectedAccount) return;
+      if (!tradingAccountsStore.hasSelectedAccounts) return;
 
       const filterStore = useFilterStore();
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -551,7 +548,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/trades/calendar/data/${selectedAccount.id}`, { params });
+        const response = await apiClient.get(`/me/trades/calendar/data`, { params });
         this.calendarData = response.data;
       } catch (error) {
         console.error('Error fetching calendar data:', error);
@@ -560,8 +557,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchVantageScore() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      if (!selectedAccount) return;
+      if (!tradingAccountsStore.hasSelectedAccounts) return;
 
       const filterStore = useFilterStore();
       const params = {
@@ -573,7 +569,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/trades/vantage-score/${selectedAccount.id}`, { params });
+        const response = await apiClient.get(`/me/trades/vantage-score`, { params });
         this.vantageScore = response.data;
       } catch (error) {
         console.error('Error fetching vantage score:', error);
@@ -584,38 +580,16 @@ export const useTradesStore = defineStore('trades', {
     async addTrade(tradeData) {
       this.isLoading = true;
       try {
+        // L'ID del conto di trading è ora gestito dal backend.
+        // La UI dovrebbe garantire che l'utente possa selezionare un conto
+        // se ne ha più di uno, prima di aggiungere un trade.
+        // Questa logica va gestita nel componente (es. AddTradeView).
         const tradingAccountsStore = useTradingAccountsStore();
-        const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-
-        if (!selectedAccount) {
-          console.error('Nessun trading account selezionato, impossibile aggiungere il trade.');
-          throw new Error('Nessun trading account selezionato');
+        if (!tradeData.trading_account_id && tradingAccountsStore.selectedAccounts.length > 1) {
+            throw new Error('Please select a specific trading account to add the trade to.');
         }
 
-        // Mappa i dati dal form al payload atteso dal backend
-        const payload = {
-          trading_account_id: selectedAccount.id, // Aggiungi l'ID del conto di trading
-          symbol_snapshot: tradeData.symbol_snapshot,
-          p_l: tradeData.pnl,
-          playbook: tradeData.playbook,
-          direction: tradeData.direction,
-          entry_price: tradeData.entry_price,
-          exit_price: tradeData.exit_price,
-          stop_loss_price: tradeData.stop_loss_price,
-          take_profit_price: tradeData.take_profit_price,
-          position_size: tradeData.position_size,
-          lowest_price_during_trade: tradeData.lowest_price_during_trade,
-          highest_price_during_trade: tradeData.highest_price_during_trade,
-          entry_timestamp: tradeData.entry_timestamp,
-          exit_timestamp: tradeData.exit_timestamp,
-          notes: tradeData.notes,
-          notes_pre_trade: tradeData.notes_pre_trade,
-          notes_post_trade: tradeData.notes_post_trade,
-          emotional_state: tradeData.emotional_state,
-          // I campi many-to-many ora si aspettano array di ID
-          tag_ids: tradeData.tags || [], // Assumendo che 'tags' sia un array di ID
-          mistake_ids: tradeData.mistakes || [], // Assumendo che 'mistakes' sia un array di ID
-        };
+        const payload = { ...tradeData };
 
         // Rimuovi le chiavi con valori null o undefined per non inviarle al backend
         Object.keys(payload).forEach(key => {
@@ -644,8 +618,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchProcessedStats() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      if (!selectedAccount) return;
+      if (!tradingAccountsStore.hasSelectedAccounts) return;
 
       const filterStore = useFilterStore();
       const params = {
@@ -657,7 +630,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/trades/processed-stats/${selectedAccount.id}`, { params });
+        const response = await apiClient.get(`/me/trades/processed-stats`, { params });
         this.processedStats = response.data;
       } catch (error) {
         console.error('Error fetching processed stats:', error);
@@ -667,8 +640,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchEquityCurve() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      if (!selectedAccount) return;
+      if (!tradingAccountsStore.hasSelectedAccounts) return;
 
       const filterStore = useFilterStore();
       const params = {
@@ -680,7 +652,7 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/trades/equity-curve/${selectedAccount.id}`, { params });
+        const response = await apiClient.get(`/me/trades/equity-curve`, { params });
         this.equityCurve = response.data;
       } catch (error) {
         console.error('Error fetching equity curve:', error);
@@ -695,23 +667,21 @@ export const useTradesStore = defineStore('trades', {
       }
 
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
       const notebookStore = useNotebookStore();
       const uiStore = useUiStore();
 
-      if (!selectedAccount) {
+      if (!tradingAccountsStore.hasSelectedAccounts) {
         this.trades = [];
         this.dashboardStats = null;
         // ... reset altri stati ...
         return;
       }
 
-      // Usa una firma più semplice basata solo sull'ID dell'account
-      // per evitare ricaricamenti non necessari quando cambiano solo i filtri.
-      const newSignature = selectedAccount.id;
+      // La firma ora si basa sugli ID combinati dei conti selezionati.
+      const newSignature = tradingAccountsStore.selectedAccounts.map(a => a.id).sort().join(',');
 
       if (this.dataSignature === newSignature) {
-        console.log("Dati per questo account già caricati. Salto il fetch.");
+        console.log("Dati per questa selezione di account già caricati. Salto il fetch.");
         if (uiStore.isInitialLoadPending) {
           uiStore.hideLoader();
           uiStore.setInitialLoadPending(false);

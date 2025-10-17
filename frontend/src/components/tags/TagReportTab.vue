@@ -81,7 +81,7 @@ onMounted(() => {
 
 // Watch for changes in global filters and refetch data
 watch(
-  [() => filterStore.startDate, () => filterStore.endDate, () => tradingAccountsStore.selectedTradingAccount],
+  [() => filterStore.startDate, () => filterStore.endDate, () => tradingAccountsStore.selectedAccounts],
   () => {
     analyticsStore.fetchTagPerformanceStats();
   },

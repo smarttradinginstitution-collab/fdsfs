@@ -12,10 +12,12 @@ const uploadProgress = ref(0);
 const isUploading = ref(false);
 const importResult = ref(null);
 
-// This should be passed as a prop or fetched from a store
-const tradingAccountsStore = useTradingAccountsStore();
-const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
-
+const props = defineProps({
+  tradingAccountId: {
+    type: String,
+    required: true,
+  },
+});
 
 const onFileChange = (event) => {
   files.value = [...event.target.files];
@@ -24,11 +26,11 @@ const onFileChange = (event) => {
 const handleUpload = async () => {
   console.log('Attempting to upload...', {
     fileCount: files.value.length,
-    accountId: selectedAccountId.value,
+    accountId: props.tradingAccountId,
   });
 
-  if (!files.value.length || !selectedAccountId.value) {
-    uiStore.showNotification({ message: 'Please select a file and a trading account.', type: 'error' });
+  if (!files.value.length || !props.tradingAccountId) {
+    uiStore.showNotification({ message: 'Please select a file and ensure a trading account is selected.', type: 'error' });
     return;
   }
 
@@ -46,12 +48,12 @@ const handleUpload = async () => {
        uiStore.showNotification({ message: 'For MT5 import, only the first selected HTML file will be processed.', type: 'warning' });
     }
     formData.append('file', firstFile); // MT5 endpoint expects a single 'file'
-    endpoint = `/import/mt5/${selectedAccountId.value}`;
+    endpoint = `/import/mt5/${props.tradingAccountId}`;
   } else {
     files.value.forEach(file => {
       formData.append('files', file); // Tradovate endpoint expects 'files'
     });
-    endpoint = `/import/tradovate/${selectedAccountId.value}`;
+    endpoint = `/import/tradovate/${props.tradingAccountId}`;
   }
 
   try {

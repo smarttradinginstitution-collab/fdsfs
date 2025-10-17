@@ -13,8 +13,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
   // --- ACTIONS ---
   async function fetchTagPerformanceStats() {
     const tradingAccountsStore = useTradingAccountsStore();
-    const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-    if (!selectedAccount) {
+    if (!tradingAccountsStore.hasSelectedAccounts) {
       tagPerformanceStats.value = [];
       return;
     }
@@ -28,7 +27,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get(`/analytics/tags-performance/${selectedAccount.id}`, { params });
+      const response = await apiClient.get(`/me/analytics/tags-performance`, { params });
       tagPerformanceStats.value = response.data;
     } catch (err) {
       console.error('Error fetching tag performance stats:', err);

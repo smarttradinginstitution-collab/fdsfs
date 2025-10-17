@@ -11,9 +11,9 @@ import HamburgerButton from '../ui/HamburgerButton.vue';
 import DropdownButton from '../ui/DropdownButton.vue';
 import StrategyFilter from '../dashboard/filters/StrategyFilter.vue';
 import DateRangeFilter from '../dashboard/filters/DateRangeFilter.vue';
-import AccountSelector from '../ui/AccountSelector.vue';
 import { useUiStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/auth';
+import { useTradingAccountsStore } from '../../stores/tradingAccounts';
 import BaseButton from '../ui/BaseButton.vue';
 import apiClient from '@/services/api'; // 👈 client axios configurato
 
@@ -56,8 +56,24 @@ onMounted(() => {
   fetchUsers();
 });
 
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
 // Logica responsive con VueUse
 const isDesktop = useMediaQuery('(min-width: 769px)');
+const tradingAccountsStore = useTradingAccountsStore();
+const router = useRouter();
+
+const selectedAccountsSummary = computed(() => {
+  const count = tradingAccountsStore.selectedAccounts.length;
+  if (count === 0) return 'Nessun account selezionato';
+  if (count === 1) return '1 Account Selezionato';
+  return `${count} Account Selezionati`;
+});
+
+const navigateToAccountSelection = () => {
+  router.push('/select-account');
+};
 </script>
 
 <template>
@@ -106,12 +122,29 @@ const isDesktop = useMediaQuery('(min-width: 769px)');
         </DropdownButton>
       </div>
 
-      <AccountSelector />
+      <div class="accounts-summary" @click="navigateToAccountSelection">
+        {{ selectedAccountsSummary }}
+      </div>
     </div>
   </header>
 </template>
 
 <style lang="scss" scoped>
+.accounts-summary {
+  cursor: pointer;
+  font: var(--semantic-font-style-label-md);
+  padding: 8px 12px;
+  border-radius: var(--semantic-border-radius-interactive);
+  background-color: var(--semantic-color-surface-secondary);
+  border: 1px solid var(--semantic-color-border-default);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--semantic-color-border-accent);
+    background-color: var(--semantic-color-surface-tertiary);
+  }
+}
+
 .header {
   display: flex;
   justify-content: space-between;

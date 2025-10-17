@@ -128,27 +128,41 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // Fetch trading accounts if they haven't been loaded yet.
-    // This is crucial for users who reload the page on a protected route.
+    // This is crucial for users who reload the page or login.
     if (tradingAccountsStore.tradingAccounts.length === 0) {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+    const hasSelectedAccounts = tradingAccountsStore.hasSelectedAccounts;
 
-    // Handle routing based on account status
-    if (to.name === 'add-account') {
-      // If user has accounts, they shouldn't be on the 'add-account' page
-      if (hasAccounts) return next({ name: 'dashboard' });
-    } else if (to.name === 'select-account') {
-      // If user has NO accounts, they must go to the 'add-account' page first
+    // Handle routing based on account status for authenticated users.
+    // This logic defines the setup flow for new users or users without selections.
+    if (authRequired) {
+      // If the user is trying to access any protected page...
+      if (!hasAccounts) {
+        // ...but has no accounts, force them to the account creation page.
+        // Allow navigation only if the target is 'add-account'.
+        if (to.name !== 'add-account') return next({ name: 'add-account' });
+      } else if (!hasSelectedAccounts) {
+        // ...or has accounts but none are selected, force them to the selection page.
+        // Allow navigation only if the target is 'select-account'.
+        if (to.name !== 'select-account') return next({ name: 'select-account' });
+      }
+    }
+
+    // Additional guardrails for specific pages
+    if (to.name === 'select-account') {
+      // If the user has no accounts, they must create one first.
       if (!hasAccounts) return next({ name: 'add-account' });
-      // If user has already selected an account, send them to the dashboard
-      if (hasSelectedAccount) return next({ name: 'dashboard' });
-    } else if (authRequired) {
-      // For any other protected page, enforce the setup flow
-      if (!hasAccounts) return next({ name: 'add-account' });
-      if (!hasSelectedAccount) return next({ name: 'select-account' });
+      // If they already have a selection, they should be on the dashboard.
+      if (hasSelectedAccounts) return next({ name: 'dashboard' });
+    } else if (to.name === 'add-account') {
+      // If user already has accounts, they shouldn't be on the 'add-account' page.
+      // Redirect them to select one or to the dashboard.
+      if (hasAccounts) {
+        return next({ name: hasSelectedAccounts ? 'dashboard' : 'select-account' });
+      }
     }
   }
 
