@@ -12,6 +12,7 @@ from app.Schemas.discipline_rule import (
     DisciplineRuleCreate,
     DisciplineRuleUpdate,
 )
+from app.Schemas.journal import ProgressTrackerSummary
 from app.Router.auth import get_current_claims
 
 router = APIRouter(
@@ -58,3 +59,11 @@ async def delete_rule(
 ):
     await discipline_controller.delete_rule(claims, rule_id, service)
     return None
+
+
+@router.get("/progress-tracker-summary", response_model=ProgressTrackerSummary)
+async def get_progress_tracker_summary(
+    claims: dict = Depends(get_current_claims),
+    service: DisciplineService = Depends(),
+):
+    return await discipline_controller.get_progress_tracker_summary(claims, service)

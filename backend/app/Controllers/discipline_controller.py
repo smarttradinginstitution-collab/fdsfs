@@ -10,6 +10,7 @@ from app.Schemas.discipline_rule import (
     DisciplineRuleCreate,
     DisciplineRuleUpdate,
 )
+from app.Schemas.journal import ProgressTrackerSummary
 
 
 class DisciplineController:
@@ -45,3 +46,10 @@ class DisciplineController:
     ) -> None:
         await service.delete_rule(claims, rule_id)
         return None
+
+    async def get_progress_tracker_summary(
+        self,
+        claims: dict,
+        service: DisciplineService,
+    ) -> ProgressTrackerSummary:
+        return await service.get_progress_tracker_summary(claims)

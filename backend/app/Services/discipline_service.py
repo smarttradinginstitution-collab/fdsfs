@@ -15,6 +15,8 @@ from app.Schemas.discipline_rule import (
 )
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Models.discipline_rule import DisciplineRule
+from app.Schemas.journal import ProgressTrackerSummary
+from datetime import date, timedelta
 
 
 class DisciplineService:
@@ -68,3 +70,25 @@ class DisciplineService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found"
             )
         await self.repo.delete(db_rule)
+
+    async def get_progress_tracker_summary(
+        self, claims: dict
+    ) -> ProgressTrackerSummary:
+        user_id = UUID(claims["sub"])
+        general_account_id = await self._get_general_account_id(user_id)
+
+        # This is a simplified implementation. A real implementation would involve
+        # more complex queries and logic to calculate the streak and score history.
+        rule_stats = await self.repo.get_rule_statistics(general_account_id)
+        follow_rate = {
+            stat.name: (stat.completed_instances / stat.total_instances) * 100
+            if stat.total_instances > 0
+            else 0
+            for stat in rule_stats
+        }
+
+        return ProgressTrackerSummary(
+            score_history={},
+            streak=0,
+            follow_rate=follow_rate,
+        )

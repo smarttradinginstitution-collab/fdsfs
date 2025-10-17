@@ -96,6 +96,18 @@ const router = createRouter({
       component: () => import('../views/LibraryView.vue'),
       meta: { title: 'Library' },
     },
+    {
+      path: '/progress-tracker',
+      name: 'ProgressTrackerView',
+      component: () => import('../views/ProgressTrackerView.vue'),
+      meta: { title: 'Progress Tracker' },
+    },
+    {
+      path: '/journal/:date',
+      name: 'DailyJournalView',
+      component: () => import('../views/DailyJournalView.vue'),
+      meta: { title: 'Daily Journal' },
+    },
   ],
 });
 

@@ -9,9 +9,12 @@ from app.Infrastructure.db import get_db
 from app.Repositories.note_repository import NoteRepository
 from app.Repositories.notebook_folder_repository import NotebookFolderRepository
 from app.Repositories.discipline_rule_repository import DisciplineRuleRepository
+from sqlalchemy import func
 from app.Repositories.daily_rule_instance_repository import DailyRuleInstanceRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
+from app.Repositories.trade_repository import TradeRepository
 from app.Models.notebook_folder import SystemFolderIdentifier
+from app.Models.trade import Trade
 from app.Schemas.journal import JournalDay
 from app.Schemas.notebook import NoteCreate
 from app.Schemas.daily_rule_instance import DailyRuleInstanceRead
@@ -25,6 +28,7 @@ class JournalService:
         self.rule_repo = DisciplineRuleRepository(db)
         self.instance_repo = DailyRuleInstanceRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
+        self.trade_repo = TradeRepository(db)
 
     async def _get_general_account_id(self, user_id: UUID) -> UUID:
         general_account = await self.general_account_repo.get_by_user_id(user_id)
@@ -100,12 +104,24 @@ class JournalService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Journal for this day not found. Use 'start-day' first."
             )
 
-        # Here you would add the logic to evaluate automated rules in real-time
-        # For now, we just return the stored status
+        # Evaluate automated rules
+        trades_today = await self.trade_repo.get_trades_by_day(general_account_id, day)
+        for instance in note.daily_rule_instances:
+            if instance.rule_type == "AUTOMATED":
+                rule = await self.rule_repo.get_by_id(instance.rule_template_id, general_account_id)
+                if rule:
+                    # This is a simplified example. A real implementation would have a
+                    # factory or strategy pattern to handle different rule conditions.
+                    if rule.condition_type == "MAX_LOSS_PER_DAY":
+                        total_loss = sum(t.p_l for t in trades_today if t.p_l < 0)
+                        if abs(total_loss) > rule.condition_value["amount"]:
+                            instance.status = "failed"
+                        else:
+                            instance.status = "completed"
+                        instance.actual_value = f"${abs(total_loss)} / ${rule.condition_value['amount']}"
 
-        # Here you would calculate the P/L for the day
-        # For now, we just return 0.0
-        pnl = 0.0
+        # Calculate P/L for the day
+        pnl = sum(t.p_l for t in trades_today)
 
         return JournalDay(
             note=note,

@@ -240,6 +240,27 @@ class TradeRepository:
 
         # Il commit verrà gestito dal service layer
 
+    async def get_trades_by_day(
+        self, general_account_id: UUID, day: date
+    ) -> List[Trade]:
+        """Recupera tutti i trade per un dato general account in un giorno specifico."""
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(day, time.min)
+        end_datetime = datetime.combine(day, time.max)
+
+        query = (
+            self._get_trade_query()
+            .join(Trade.trading_account)
+            .where(
+                TradingAccount.general_account_id == general_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+            )
+        )
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def get_tag_performance_stats(
         self,
         trading_account_id: UUID,

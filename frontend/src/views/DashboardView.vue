@@ -18,12 +18,14 @@ import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
+import StartDayCalendar from '../components/dashboard/StartDayCalendar.vue';
 
 const tradesStore = useTradesStore();
 const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
+const startDayCalendar = ref(null);
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -46,6 +48,12 @@ const onLayoutDragEnd = ({ zone, event }) => {
 const editButtonText = computed(() => {
   return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
 });
+
+const openStartDayCalendar = () => {
+  if (startDayCalendar.value) {
+    startDayCalendar.value.openCalendar();
+  }
+};
 
 // --- Data Fetching ---
 onMounted(() => {
@@ -92,6 +100,10 @@ watch(
           <span class="button-text">Nuovo Trade</span>
         </BaseButton>
       </router-link>
+
+      <BaseButton variant="primary" @click="openStartDayCalendar">
+        <span class="button-text">Start my day</span>
+      </BaseButton>
     </div>
 
     <!-- Stats Grid -->
@@ -134,6 +146,7 @@ watch(
       @click="uiStore.closeStatSelector"
     ></div>
     <StatSelectorPanel :is-open="uiStore.isStatSelectorVisible" />
+    <StartDayCalendar ref="startDayCalendar" />
   </div>
 </template>
 
