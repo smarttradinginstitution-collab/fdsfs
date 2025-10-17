@@ -18,7 +18,7 @@ else:
 import pytest
 import asyncio
 from typing import AsyncGenerator
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 import uuid
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -61,14 +61,6 @@ def compile_citext_sqlite(element, compiler, **kw):
 
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an instance of the default event loop for each test session."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
 
 @pytest.fixture(scope="session")
 async def engine():
@@ -183,7 +175,7 @@ async def authenticated_client_factory(db_session: AsyncSession):
         app.dependency_overrides[get_current_claims] = override_get_current_claims
 
         try:
-            async with AsyncClient(app=app, base_url="http://test", follow_redirects=True) as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True) as client:
                 yield client
         finally:
             app.dependency_overrides = original_overrides

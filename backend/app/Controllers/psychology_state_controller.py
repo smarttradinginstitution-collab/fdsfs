@@ -33,7 +33,7 @@ class PsychologyStateController:
                     PsychologyStateAdminRead(
                         general_account_id=acc.id,
                         user_email=acc.user.email,
-                        psychology_states=[PsychologyStateRead.from_orm(ps) for ps in acc.psychology_states]
+                        psychology_states=[PsychologyStateRead.model_validate(ps) for ps in acc.psychology_states]
                     )
                 )
         return response_data
@@ -48,7 +48,7 @@ class PsychologyStateController:
         """
         repo = PsychologyStateRepository(db)
         psychology_states = await repo.list_psychology_states_by_general_account_id(general_account_id)
-        return [PsychologyStateRead.from_orm(ps) for ps in psychology_states]
+        return [PsychologyStateRead.model_validate(ps) for ps in psychology_states]
 
     async def get_psychology_state(
         self,
@@ -69,7 +69,7 @@ class PsychologyStateController:
         if not current_user.is_admin and psychology_state.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        return PsychologyStateRead.from_orm(psychology_state)
+        return PsychologyStateRead.model_validate(psychology_state)
 
     async def create_psychology_state(
         self,
@@ -82,7 +82,7 @@ class PsychologyStateController:
         """
         repo = PsychologyStateRepository(db)
         new_psychology_state = await repo.create_psychology_state(general_account_id, psychology_state_data)
-        return PsychologyStateRead.from_orm(new_psychology_state)
+        return PsychologyStateRead.model_validate(new_psychology_state)
 
     async def update_psychology_state(
         self,
@@ -108,7 +108,7 @@ class PsychologyStateController:
         if not updated_psychology_state:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Errore durante l'aggiornamento dello stato psicologico.")
 
-        return PsychologyStateRead.from_orm(updated_psychology_state)
+        return PsychologyStateRead.model_validate(updated_psychology_state)
 
     async def delete_psychology_state(
         self,

@@ -3,7 +3,7 @@
 import pytest
 from httpx import AsyncClient
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock
 
@@ -47,8 +47,8 @@ async def test_get_layout_success(async_client: AsyncClient, authenticated_user,
         id=uuid4(),
         user_id=FAKE_USER_ID,
         layout=FAKE_LAYOUT_DATA,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     mock_service = mocker.patch(
         "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"
@@ -98,8 +98,8 @@ async def test_save_layout_success(async_client: AsyncClient, authenticated_user
         id=uuid4(),
         user_id=FAKE_USER_ID,
         layout=FAKE_LAYOUT_DATA,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     mock_service = mocker.patch(
         "app.Controllers.user_dashboard_layout_controller.UserDashboardLayoutService"

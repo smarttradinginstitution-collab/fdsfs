@@ -224,7 +224,6 @@ async def test_update_trade_succeeds(trade_service: TradeService, mock_claims, m
     trade_service.trading_account_repo.get_by_id.return_value = trading_account
     trade_service.db.commit = AsyncMock()
     trade_service.db.refresh = AsyncMock()
-    mocker.patch('app.Schemas.trade.TradeRead.from_orm', return_value=MagicMock())
 
     result = await trade_service.update_trade(mock_claims, trade_id, trade_update)
 
