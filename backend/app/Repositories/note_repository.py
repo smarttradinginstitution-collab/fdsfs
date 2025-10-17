@@ -159,7 +159,8 @@ class NoteRepository:
             select(Note)
             .join(Note.folder)
             .options(
-                selectinload(Note.daily_rule_instances)
+                selectinload(Note.daily_rule_instances),
+                selectinload(Note.templates),
             )
             .where(
                 NotebookFolder.general_account_id == general_account_id,
