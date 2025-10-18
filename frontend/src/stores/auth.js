@@ -9,11 +9,6 @@ import { ref, computed } from 'vue';
 import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
 import { useUiStore } from './uiStore';
-import { usePlaybookStore } from './playbookStore';
-import { useNotebookStore } from './notebookStore';
-import { useTagsStore } from './tagsStore';
-import { useTradingDnaStore } from './tradingDnaStore';
-import { useTradesStore } from './trades';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -38,18 +33,9 @@ export const useAuthStore = defineStore('auth', () => {
    * dopo che l'autenticazione è stata confermata.
    */
   async function initSessionData() {
-    const notebookStore = useNotebookStore();
-    const tradesStore = useTradesStore();
-
-    // Carica tutti i dati di sessione globali in parallelo
-    await Promise.allSettled([
-      usePlaybookStore().fetchPlaybooks(),
-      useTagsStore().fetchAllTagsData(),
-      useTradingDnaStore().fetchTradingDnaReport(),
-      notebookStore.fetchFolders(),
-      notebookStore.fetchAllNotes(),
-      tradesStore.fetchTrades({ ignoreFilters: true }), // Carica tutti i trade per l'account
-    ]);
+    // Questa funzione è ora vuota. Il caricamento dei dati è gestito
+    // dall'orchestratore nella vista appropriata (es. DashboardView).
+    return Promise.resolve();
   }
 
   // Funzione per recuperare il General Account
