@@ -1,10 +1,10 @@
 <template>
   <div class="daily-checklist">
-    <h2>Daily Checklist, {{ formattedDate }}</h2>
+    <h2 class="view-title">Daily Checklist, {{ formattedDate }}</h2>
 
     <div v-if="manualRules.length > 0" class="rules-section">
       <h3 class="section-title">MANUAL RULES ({{ manualRules.length }})</h3>
-      <ul>
+      <ul class="rules-list">
         <li v-for="rule in manualRules" :key="rule.id" class="rule-item">
           <input
             type="checkbox"
@@ -13,17 +13,17 @@
             @change="toggleStatus(rule)"
             class="custom-checkbox"
           />
-          <label :for="`rule-${rule.id}`">{{ rule.name }}</label>
+          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.name }}</label>
         </li>
       </ul>
     </div>
 
     <div v-if="automatedRules.length > 0" class="rules-section">
       <h3 class="section-title">AUTOMATED RULES ({{ automatedRules.length }})</h3>
-      <ul>
+      <ul class="rules-list">
         <li v-for="rule in automatedRules" :key="rule.id" class="rule-item">
           <span class="status-icon" :class="`status-${rule.status}`"></span>
-          <span>{{ rule.name }}</span>
+          <span class="rule-label">{{ rule.name }}</span>
           <span class="actual-value">{{ rule.actual_value || '' }}</span>
         </li>
       </ul>
@@ -65,49 +65,57 @@ function toggleStatus(rule) {
 <style scoped>
 .daily-checklist {
   flex-grow: 1;
-  padding: 0 2rem;
+  padding: 0 var(--semantic-size-inset-lg);
 }
 
-h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
+.view-title {
+  font: var(--semantic-font-style-heading-xl);
+  margin-bottom: var(--semantic-size-stack-xl);
 }
 
 .rules-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--semantic-size-stack-lg);
 }
 
 .section-title {
-  font-size: 0.9rem;
-  font-weight: 700;
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
-  margin-bottom: 1rem;
+  text-transform: uppercase;
+  margin-bottom: var(--semantic-size-stack-md);
 }
 
-ul {
+.rules-list {
   list-style-type: none;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-sm);
 }
 
 .rule-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 0;
-  font-size: 1rem;
+  gap: var(--semantic-size-stack-md);
+  padding: var(--semantic-size-inset-sm) 0;
+}
+
+.rule-label {
+    font: var(--semantic-font-style-body-base);
+    color: var(--semantic-color-text-primary);
 }
 
 .custom-checkbox {
   width: 20px;
   height: 20px;
   cursor: pointer;
+  accent-color: var(--semantic-color-interactive-primary-default);
 }
 
 .status-icon {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .status-pending {
@@ -116,16 +124,18 @@ ul {
 }
 
 .status-completed {
-  background-color: var(--semantic-color-interactive-success-default);
+  background-color: var(--semantic-color-feedback-positive-surface);
+  border: 1px solid var(--semantic-color-feedback-positive-text);
 }
 
 .status-failed {
-  background-color: var(--semantic-color-interactive-danger-default);
+  background-color: var(--semantic-color-feedback-negative-surface);
+  border: 1px solid var(--semantic-color-feedback-negative-text);
 }
 
 .actual-value {
   margin-left: auto;
-  font-size: 0.9rem;
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 </style>

@@ -1,32 +1,41 @@
 <template>
   <div class="rules-table-container">
     <div class="table-header">
-      <h3>Current Rules</h3>
-      <button @click="$emit('edit-rules')" class="edit-rules-btn">Edit Rules</button>
+      <h3 class="table-title">Current Rules</h3>
+      <BaseButton @click="$emit('edit-rules')" variant="primary" size="medium">
+        Edit Rules
+      </BaseButton>
     </div>
-    <table class="rules-table">
-      <thead>
-        <tr>
-          <th>RULE & CONDITION</th>
-          <th>FOLLOW RATE</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="rule in rules" :key="rule.id">
-          <td>
-            <div class="rule-name">{{ rule.name }}</div>
-            <div class="rule-condition">{{ formatCondition(rule) }}</div>
-          </td>
-          <td>
-            <span class="follow-rate">100%</span> <!-- Placeholder -->
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="rules-table">
+        <thead>
+          <tr>
+            <th>RULE & CONDITION</th>
+            <th>FOLLOW RATE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="rules.length === 0">
+            <td colspan="2" class="empty-state">No rules defined yet.</td>
+          </tr>
+          <tr v-for="rule in rules" :key="rule.id">
+            <td>
+              <div class="rule-name">{{ rule.name }}</div>
+              <div class="rule-condition">{{ formatCondition(rule) }}</div>
+            </td>
+            <td>
+              <span class="follow-rate">100%</span> <!-- Placeholder -->
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
 <script setup>
+import BaseButton from '@/components/ui/BaseButton.vue';
+
 defineProps({
   rules: {
     type: Array,
@@ -55,61 +64,64 @@ function formatCondition(rule) {
 <style scoped>
 .rules-table-container {
   background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-container);
-  padding: 1.5rem;
-  margin-top: 2rem;
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-lg);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--semantic-size-stack-md);
 }
 
-h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
+.table-title {
+  font: var(--semantic-font-style-heading-lg);
 }
 
-.edit-rules-btn {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: var(--semantic-color-text-on-brand);
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
-  font-weight: 600;
+.table-wrapper {
+  overflow-x: auto;
 }
 
 .rules-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 th, td {
-  padding: 1rem;
+  padding: var(--semantic-size-inset-md) var(--semantic-size-inset-sm);
   text-align: left;
-  border-bottom: 1px solid var(--semantic-color-border-default);
+  border-bottom: 1px solid var(--semantic-color-border-subtle);
 }
 
 th {
-  font-size: 0.9rem;
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
-  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .rule-name {
-  font-weight: 600;
+  font: var(--semantic-font-style-body-base);
+  font-weight: var(--base-font-weight-medium);
+  color: var(--semantic-color-text-primary);
 }
 
 .rule-condition {
-  font-size: 0.9rem;
+  font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
 }
 
 .follow-rate {
-  font-weight: 600;
-  color: var(--semantic-color-text-success);
+  font: var(--semantic-font-style-label-md);
+  color: var(--semantic-color-feedback-positive-text);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--semantic-size-inset-xl);
+  color: var(--semantic-color-text-secondary);
+  font: var(--semantic-font-style-body-base);
 }
 </style>

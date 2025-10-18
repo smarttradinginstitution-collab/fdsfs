@@ -2,7 +2,7 @@
   <div v-if="isOpen" class="modal-overlay" @click.self="close">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Edit Rules</h3>
+        <h3 class="modal-title">Edit Rules</h3>
         <button @click="close" class="close-btn">&times;</button>
       </div>
       <div class="modal-body">
@@ -10,14 +10,16 @@
         <!-- Rule list and form will be implemented here -->
       </div>
       <div class="modal-footer">
-        <button @click="close" class="btn-secondary">Cancel</button>
-        <button @click="save" class="btn-primary">Save Changes</button>
+        <BaseButton @click="close" variant="secondary" size="medium">Cancel</BaseButton>
+        <BaseButton @click="save" variant="primary" size="medium">Save Changes</BaseButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import BaseButton from '@/components/ui/BaseButton.vue';
+
 defineProps({
   isOpen: {
     type: Boolean,
@@ -45,30 +47,30 @@ function save() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: var(--semantic-color-overlay-background);
   display: grid;
   place-items: center;
-  z-index: 1000;
+  z-index: var(--semantic-layer-z-index-modal);
 }
 
 .modal-content {
   background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-container);
-  padding: 2rem;
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-component-modal-padding-desktop);
   width: 90%;
-  max-width: 600px;
+  max-width: var(--semantic-size-component-modal-max-width-desktop);
+  box-shadow: var(--semantic-effect-shadow-elevation-high);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--semantic-size-component-modal-gap-desktop);
 }
 
-h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
+.modal-title {
+  font: var(--semantic-font-style-heading-lg);
 }
 
 .close-btn {
@@ -79,30 +81,14 @@ h3 {
   color: var(--semantic-color-text-secondary);
 }
 
+.modal-body {
+    min-height: 200px; /* Placeholder height */
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.btn-primary {
-  background-color: var(--semantic-color-interactive-primary-default);
-  color: var(--semantic-color-text-on-brand);
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-secondary {
-  background-color: var(--semantic-color-surface-secondary);
-  color: var(--semantic-color-text-primary);
-  border: 1px solid var(--semantic-color-border-default);
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
-  font-weight: 600;
+  gap: var(--semantic-size-stack-sm);
+  margin-top: var(--semantic-size-component-modal-gap-desktop);
 }
 </style>

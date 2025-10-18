@@ -1,17 +1,17 @@
 <template>
   <div class="summary-sidebar">
     <div class="summary-card">
-      <h3>Current Streak</h3>
+      <h3 class="card-title">Current Streak</h3>
       <p class="streak-value">1 day <span class="emoji">😊</span></p>
     </div>
     <div class="summary-card">
-      <h3>Current Period Score</h3>
-      <div class="score-gauge">
+      <h3 class="card-title">Current Period Score</h3>
+      <div class="score-gauge" :style="{'--score-percent': `${score}%`}">
         <p class="score-percentage">{{ score }}%</p>
       </div>
     </div>
     <div class="summary-card">
-      <h3>Today's progress</h3>
+      <h3 class="card-title">Today's progress</h3>
       <div class="progress-bar-container">
         <div class="progress-bar" :style="{ width: progressWidth }"></div>
       </div>
@@ -51,32 +51,31 @@ const progressWidth = computed(() => {
 .summary-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  width: 250px;
+  gap: var(--semantic-size-stack-md);
+  width: 250px; /* This could be a token if a standard sidebar width exists */
   flex-shrink: 0;
 }
 
 .summary-card {
   background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-container);
-  padding: 1.5rem;
-  box-shadow: var(--semantic-shadow-sm);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-lg);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
 }
 
-h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
+.card-title {
+  font: var(--semantic-font-style-heading-sm);
+  color: var(--semantic-color-text-secondary);
+  margin-bottom: var(--semantic-size-stack-sm);
 }
 
 .streak-value {
-  font-size: 2rem;
-  font-weight: 700;
+  font: var(--semantic-font-style-heading-2xl);
   color: var(--semantic-color-text-primary);
 }
 
 .emoji {
-  font-size: 1.5rem;
+  font-size: var(--base-font-size-xl);
 }
 
 .score-gauge {
@@ -93,8 +92,7 @@ h3 {
 }
 
 .score-percentage {
-  font-size: 2rem;
-  font-weight: 700;
+  font: var(--semantic-font-style-heading-2xl);
   color: var(--semantic-color-text-primary);
 }
 
@@ -102,21 +100,21 @@ h3 {
   width: 100%;
   height: 10px;
   background-color: var(--semantic-color-surface-secondary);
-  border-radius: 5px;
+  border-radius: var(--base-border-radius-full);
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--semantic-size-stack-xs);
 }
 
 .progress-bar {
   height: 100%;
   background-color: var(--semantic-color-interactive-primary-default);
-  border-radius: 5px;
+  border-radius: var(--base-border-radius-full);
   transition: width 0.3s ease;
 }
 
 .progress-text {
   text-align: right;
-  font-size: 0.9rem;
+  font: var(--semantic-font-style-label-sm);
   color: var(--semantic-color-text-secondary);
 }
 </style>
