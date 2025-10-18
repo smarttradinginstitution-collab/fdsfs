@@ -40,12 +40,9 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
 
       if (isSelectedAccountValid) {
-        // Se l'account in memoria è valido, attiva il caricamento dei dati per quell'account.
-        // Dobbiamo assicurarci che l'oggetto completo sia selezionato.
         const fullAccount = data.find(acc => acc.id === selectedTradingAccount.value.id);
         selectTradingAccount(fullAccount);
       } else {
-        // Se non c'è un account valido, pulisci la selezione.
         selectTradingAccount(null);
       }
 
@@ -71,7 +68,6 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     try {
       const { data } = await apiClient.post('/trading-accounts/', accountData);
       tradingAccounts.value.push(data);
-      // Opzionale: seleziona automaticamente il nuovo account creato
       selectTradingAccount(data);
       return data;
     } catch (error) {
@@ -83,7 +79,7 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Imposta il conto di trading attivo e avvia il pre-caricamento dei dati.
+   * Imposta il conto di trading attivo.
    * @param {object | null} account - L'oggetto del conto da selezionare o null.
    */
   function selectTradingAccount(account) {
@@ -91,14 +87,12 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
     if (account) {
       localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
-      // Avvia il caricamento di tutti i dati per l'account selezionato.
-      const tradesStore = useTradesStore();
-      tradesStore.fetchAllDataForAccount();
+      // Il caricamento dei dati è ora gestito dal watcher in DashboardView.
     } else {
       localStorage.removeItem('selectedTradingAccount');
-      // Qui potremmo voler pulire i dati dei trade, se necessario.
       const tradesStore = useTradesStore();
-      tradesStore.$reset(); // Resetta lo store dei trade a stato iniziale
+      // Resetta lo store dei trade se nessun account è selezionato.
+      tradesStore.$reset();
     }
   }
 

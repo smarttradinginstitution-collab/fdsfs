@@ -59,29 +59,36 @@ async function orchestrateDashboardLoad() {
     dashboardLayoutStore.fetchLayout(),
     tradesStore.fetchAllDataForDashboard(),
     notebookStore.fetchFolders(),
-    notebookStore.fetchAllNotes(), // Ripristina il caricamento di tutte le note
+    notebookStore.fetchAllNotes(),
     tradesStore.fetchTrades({ ignoreFilters: true }),
   ];
   await Promise.allSettled(group2Promises);
 
   // --- GRUPPO 3: Dati di sessione (lanciato dopo il Gruppo 2) ---
-  // La chiamata viene fatta senza 'await' per non bloccare il rendering,
-  // ma solo dopo che il gruppo 2 è terminato.
   authStore.initSessionData();
 }
 
-// Esegui l'orchestrazione completa solo la prima volta che il componente viene montato.
-onMounted(() => {
-  orchestrateDashboardLoad();
-});
+// Esegui l'orchestrazione completa quando il componente viene montato
+// e ogni volta che il conto di trading selezionato cambia.
+watch(
+  () => tradingAccountsStore.selectedTradingAccount,
+  (newAccount) => {
+    if (newAccount) {
+      orchestrateDashboardLoad();
+    }
+  },
+  { immediate: true } // Esegui subito al primo caricamento
+);
 
 // Watch per i cambi di filtri: ricarica solo i dati della dashboard (Gruppo 2), non i dati di sessione.
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
-  () => {
-    tradesStore.fetchAllDataForDashboard();
+  (newValue, oldValue) => {
+    if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
+      tradesStore.fetchAllDataForDashboard();
+    }
   },
-  { deep: true } // Non più 'immediate', gestito da onMounted
+  { deep: true }
 );
 
 // Watch for the user finishing layout editing
