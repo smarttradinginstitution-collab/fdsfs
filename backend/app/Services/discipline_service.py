@@ -61,8 +61,11 @@ class DisciplineService:
             )
             daily_note = await self.note_repo.create(note_schema)
 
-            # 4. Get all rule templates and create instances for the new note
+            # 4. Create default rules if they don't exist, then get all rules
+            await self._create_default_automated_rules_if_not_exist(general_account_id)
             rules = await self.rule_repo.list_by_general_account(general_account_id)
+
+            # 5. Create instances for the new note
             instances_to_create = []
             for rule in rules:
                 # Check if the rule is active for the current day of the week
@@ -78,11 +81,27 @@ class DisciplineService:
             if instances_to_create:
                 await self.instance_repo.create_many(instances_to_create)
 
-        # 5. Evaluate automated rules for the day
+        # 6. Evaluate automated rules for the day
         await self.evaluate_automated_rules(daily_note.id, trading_account_id, today)
 
-        # 6. Return all instances for the daily note
+        # 7. Return all instances for the daily note
         return await self.instance_repo.find_by_journal_and_date(daily_note.id)
+
+    async def _create_default_automated_rules_if_not_exist(self, general_account_id: UUID):
+        existing_rules = await self.rule_repo.list_by_general_account(general_account_id)
+        automated_rules_exist = any(r.rule_type == 'AUTOMATED' for r in existing_rules)
+
+        if not automated_rules_exist:
+            default_rules = [
+                {"name": "Start my day by 12:00", "rule_type": "AUTOMATED", "condition_type": "TIME", "condition_value": {"time": "12:00"}, "active_days": [0,1,2,3,4]},
+                {"name": "Link trades to playbook", "rule_type": "AUTOMATED", "condition_type": "PERCENTAGE", "condition_value": {"percentage": 100}, "active_days": [0,1,2,3,4]},
+                {"name": "Trade has stop loss", "rule_type": "AUTOMATED", "condition_type": "PERCENTAGE", "condition_value": {"percentage": 100}, "active_days": [0,1,2,3,4]},
+                {"name": "Max loss per trade", "rule_type": "AUTOMATED", "condition_type": "PERCENTAGE_OR_FIXED", "condition_value": {"amount": 500, "type": "FIXED_AMOUNT"}, "active_days": [0,1,2,3,4]},
+                {"name": "Max loss per day", "rule_type": "AUTOMATED", "condition_type": "FIXED_AMOUNT", "condition_value": {"amount": 4000}, "active_days": [0,1,2,3,4]},
+            ]
+            for rule_data in default_rules:
+                rule_data["general_account_id"] = general_account_id
+                await self.rule_repo.create(rule_data)
 
     async def evaluate_automated_rules(self, daily_journal_id: UUID, trading_account_id: UUID, date: datetime.date):
         daily_note = await self.note_repo.get_by_id(daily_journal_id)

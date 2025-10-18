@@ -11,27 +11,69 @@
             Changes you make will only update your scoring for today and for future days.
           </p>
 
-          <!-- Automated Rules -->
+          <!-- Global Settings for Automated Rules -->
           <div class="form-section">
-            <h4 class="section-title">Automated Rules</h4>
-            <div class="rule-item" v-for="rule in automatedRules" :key="rule.id">
-              <label :for="`rule-${rule.id}`">{{ rule.name }}</label>
-              <!-- Different input types based on rule condition -->
+             <h4 class="section-title">Global Settings</h4>
+             <div class="rule-item">
+                <label for="trading-days">Trading days</label>
+                <BaseMultiSelect
+                    :options="dayOptions"
+                    v-model="globalTradingDays"
+                    placeholder="Select days"
+                    class="day-selector"
+                />
+             </div>
+          </div>
+
+          <!-- Automated Rules Parameters -->
+          <div class="form-section">
+            <h4 class="section-title">Parameters</h4>
+
+            <!-- Start my day by -->
+            <div class="rule-item" v-if="startMyDayRule.condition_value">
+              <label for="start-day">Start my day by</label>
+              <input id="start-day" type="time" v-model="startMyDayRule.condition_value.time" class="form-input">
+            </div>
+
+            <!-- Link trades to playbook -->
+            <div class="rule-item" v-if="linkTradesRule.condition_value">
+              <label for="link-trades">Link trades to playbook</label>
               <div class="input-group">
-                <input v-if="rule.condition_type === 'TIME'" type="time" v-model="rule.condition_value.time" class="form-input">
-
-                <template v-if="rule.condition_type === 'PERCENTAGE_OR_FIXED'">
-                  <input type="number" v-model="rule.condition_value.amount" class="form-input">
-                  <select v-model="rule.condition_value.type" class="form-select">
-                    <option value="FIXED_AMOUNT">$</option>
-                    <option value="PERCENTAGE">%</option>
-                  </select>
-                </template>
-
-                <input v-if="rule.condition_type === 'FIXED_AMOUNT'" type="number" v-model="rule.condition_value.amount" class="form-input">
-                <input v-if="rule.condition_type === 'PERCENTAGE'" type="number" v-model="rule.condition_value.percentage" class="form-input">
+                <input id="link-trades" type="number" v-model="linkTradesRule.condition_value.percentage" class="form-input short-input">
+                <span class="input-adornment">%</span>
               </div>
             </div>
+
+            <!-- Trade has stop loss -->
+            <div class="rule-item" v-if="stopLossRule.condition_value">
+              <label for="stop-loss">Trade has stop loss</label>
+              <div class="input-group">
+                <input id="stop-loss" type="number" v-model="stopLossRule.condition_value.percentage" class="form-input short-input">
+                <span class="input-adornment">%</span>
+              </div>
+            </div>
+
+            <!-- Max loss per trade -->
+            <div class="rule-item" v-if="maxLossPerTradeRule.condition_value">
+              <label for="max-loss-trade">Max loss per trade</label>
+              <div class="input-group">
+                <input id="max-loss-trade" type="number" v-model="maxLossPerTradeRule.condition_value.amount" class="form-input">
+                <select v-model="maxLossPerTradeRule.condition_type" class="form-select">
+                  <option value="FIXED_AMOUNT">$</option>
+                  <option value="PERCENTAGE">%</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Max loss per day -->
+            <div class="rule-item" v-if="maxLossPerDayRule.condition_value">
+              <label for="max-loss-day">Max loss per day</label>
+              <div class="input-group">
+                <span class="input-adornment">$</span>
+                <input id="max-loss-day" type="number" v-model="maxLossPerDayRule.condition_value.amount" class="form-input">
+              </div>
+            </div>
+
           </div>
 
           <!-- Manual Rules -->
@@ -39,6 +81,9 @@
             <div class="section-header">
               <h4 class="section-title">Manual Rules</h4>
               <BaseButton @click="addManualRule" variant="tertiary" size="small">+ Add manual rule</BaseButton>
+            </div>
+            <div v-if="manualRules.length === 0" class="empty-state">
+                No manual rules defined. Add one to get started.
             </div>
             <div class="rule-item manual-rule" v-for="rule in manualRules" :key="rule.id">
               <input type="text" v-model="rule.name" placeholder="Rule name" class="form-input flex-grow">
@@ -51,6 +96,7 @@
               <button @click="removeManualRule(rule.id)" class="delete-btn">&times;</button>
             </div>
           </div>
+
         </div>
       </div>
       <div class="modal-footer">
@@ -81,8 +127,31 @@ const disciplineStore = useDisciplineStore();
 // Local state for editing
 const localRules = ref([]);
 
-const automatedRules = computed(() => localRules.value.filter(r => r.rule_type === 'AUTOMATED'));
 const manualRules = computed(() => localRules.value.filter(r => r.rule_type === 'MANUAL'));
+
+// Specific computed properties for each automated rule
+const findRule = (name) => computed(() => localRules.value.find(r => r.name === name) || {});
+const startMyDayRule = findRule("Start my day by 12:00");
+const linkTradesRule = findRule("Link trades to playbook");
+const stopLossRule = findRule("Trade has stop loss");
+const maxLossPerTradeRule = findRule("Max loss per trade");
+const maxLossPerDayRule = findRule("Max loss per day");
+
+const globalTradingDays = computed({
+  get() {
+    // Return the active_days from the first automated rule as a representative
+    const firstAutoRule = localRules.value.find(r => r.rule_type === 'AUTOMATED');
+    return firstAutoRule ? firstAutoRule.active_days : [];
+  },
+  set(newDays) {
+    // Update active_days for all automated rules
+    localRules.value.forEach(rule => {
+      if (rule.rule_type === 'AUTOMATED') {
+        rule.active_days = newDays;
+      }
+    });
+  }
+});
 
 // Watch for the modal opening to clone the rules from the store
 watch(() => props.isOpen, (newVal) => {
@@ -192,7 +261,7 @@ const dayOptions = [
 .rules-form {
     display: flex;
     flex-direction: column;
-    gap: var(--semantic-size-stack-lg);
+    gap: var(--semantic-size-stack-xl);
 }
 
 .form-description {
@@ -201,61 +270,90 @@ const dayOptions = [
     background-color: var(--semantic-color-surface-secondary);
     padding: var(--semantic-size-inset-md);
     border-radius: var(--semantic-border-radius-actions);
+    border: 1px solid var(--semantic-color-border-subtle);
 }
 
 .form-section {
     display: flex;
     flex-direction: column;
-    gap: var(--semantic-size-stack-md);
+    gap: var(--semantic-size-stack-lg);
 }
 
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid var(--semantic-color-border-subtle);
+    padding-bottom: var(--semantic-size-stack-sm);
 }
 
 .section-title {
-    font: var(--semantic-font-style-heading-sm);
+    font: var(--semantic-font-style-heading-md);
     color: var(--semantic-color-text-primary);
 }
 
 .rule-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 250px 1fr;
     align-items: center;
-    gap: var(--semantic-size-stack-md);
+    gap: var(--semantic-size-stack-lg);
 }
 
 .rule-item label {
-    flex-basis: 200px;
     font: var(--semantic-font-style-body-base);
+    color: var(--semantic-color-text-secondary);
+    text-align: right;
 }
 
 .input-group {
     display: flex;
     align-items: center;
     gap: var(--semantic-size-stack-xs);
+    width: fit-content;
 }
 
 .form-input {
-    /* Assuming a base style for inputs exists or define here */
     padding: var(--semantic-size-inset-sm);
     border: 1px solid var(--semantic-color-border-default);
     border-radius: var(--semantic-border-radius-actions);
     background-color: var(--semantic-color-surface-primary);
     color: var(--semantic-color-text-primary);
-    width: 150px;
+    width: 200px;
+}
+
+.form-input.short-input {
+    width: 100px;
 }
 
 .form-select {
     padding: var(--semantic-size-inset-sm);
+    height: 100%;
     border: 1px solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-actions);
-    background-color: var(--semantic-color-surface-primary);
+    border-left: none;
+    border-radius: 0 var(--semantic-border-radius-actions) var(--semantic-border-radius-actions) 0;
+    background-color: var(--semantic-color-surface-secondary);
     color: var(--semantic-color-text-primary);
+}
+.input-group .form-input {
+    border-right: none;
+    border-radius: var(--semantic-border-radius-actions) 0 0 var(--semantic-border-radius-actions);
+}
+
+
+.input-adornment {
+    padding: var(--semantic-size-inset-sm);
+    background-color: var(--semantic-color-surface-secondary);
+    border: 1px solid var(--semantic-color-border-default);
+    border-left: none;
+    color: var(--semantic-color-text-secondary);
+    border-radius: 0 var(--semantic-border-radius-actions) var(--semantic-border-radius-actions) 0;
+}
+.input-group .form-input.short-input {
+     border-radius: var(--semantic-border-radius-actions) 0 0 var(--semantic-border-radius-actions);
 }
 
 .manual-rule {
+    display: flex;
     gap: var(--semantic-size-stack-sm);
 }
 
@@ -264,27 +362,30 @@ const dayOptions = [
 }
 
 .day-selector {
-    width: 250px;
+    width: 300px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--semantic-size-inset-xl);
+    color: var(--semantic-color-text-secondary);
+    font: var(--semantic-font-style-body-base);
+    background-color: var(--semantic-color-surface-secondary);
+    border-radius: var(--semantic-border-radius-surface);
 }
 
 .delete-btn {
     background: none;
-    border: 1px solid var(--semantic-color-border-subtle);
+    border: none;
     color: var(--semantic-color-text-secondary);
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
     cursor: pointer;
-    display: grid;
-    place-items: center;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    padding: 0 var(--semantic-size-inset-sm);
 }
 
 .delete-btn:hover {
-    background-color: var(--semantic-color-surface-hover);
     color: var(--semantic-color-feedback-negative-text);
 }
-
 
 .modal-footer {
   display: flex;
