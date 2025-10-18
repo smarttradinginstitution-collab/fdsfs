@@ -39,7 +39,6 @@ export const useAuthStore = defineStore('auth', () => {
   async function initSessionData() {
     console.log("Inizio caricamento dati di sessione...");
     await Promise.allSettled([
-      usePlaybookStore().fetchPlaybooks(),
     ]);
     console.log("Caricamento dati di sessione completato.");
   }

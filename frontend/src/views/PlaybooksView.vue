@@ -6,12 +6,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import PlaybookControls from '@/components/Playbooks/PlaybookControls.vue';
 import PlaybookList from '@/components/Playbooks/PlaybookList.vue';
 
 const playbookStore = usePlaybookStore();
+
+onMounted(() => {
+  if (playbookStore.playbooks.length === 0) {
+    playbookStore.fetchPlaybooks();
+  }
+});
 
 const layout = ref('grid');
 

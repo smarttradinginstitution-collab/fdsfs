@@ -137,6 +137,10 @@ const selectTab = (tabName) => {
 };
 
 onMounted(() => {
+  // Ensure the full list of playbooks is available for navigation etc.
+  if (store.playbooks.length === 0) {
+    store.fetchPlaybooks();
+  }
   if (playbookId.value) {
     // Fetch analytics for the overview tab regardless
     store.fetchPlaybookAnalytics(playbookId.value);
