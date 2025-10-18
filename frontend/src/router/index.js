@@ -96,6 +96,12 @@ const router = createRouter({
       component: () => import('../views/LibraryView.vue'),
       meta: { title: 'Library' },
     },
+    {
+      path: '/progress-tracker',
+      name: 'progress-tracker',
+      component: () => import('../views/ProgressTrackerView.vue'),
+      meta: { title: 'Progress Tracker' },
+    },
   ],
 });
 

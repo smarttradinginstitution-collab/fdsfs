@@ -222,6 +222,16 @@ router.include_router(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 🛡️ DISCIPLINE (protetto: user)
+# ──────────────────────────────────────────────────────────────────────────────
+from app.Router import discipline_router
+
+router.include_router(
+    discipline_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 🧬 TRADING DNA (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import trading_dna_router
