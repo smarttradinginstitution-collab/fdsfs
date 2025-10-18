@@ -90,13 +90,17 @@
         <div class="manual-rules-section">
           <div class="manual-rules-header">
             <h4>MANUAL RULES</h4>
-            <BaseButton variant="tertiary" size="small" @click="addManualRule">+ Add manual rule</BaseButton>
+            <BaseButton variant="secondary" size="small" @click="addManualRule">+ Add manual rule</BaseButton>
           </div>
           <p class="subtitle">The rule will be added as a daily check list</p>
 
           <div v-for="(rule, index) in localManualRules" :key="index" class="manual-rule-row">
             <BaseInput type="text" v-model="rule.name" placeholder="Rule name" />
-            <BaseSelect v-model="rule.frequency" :options="frequencyOptions" />
+            <BaseSelect
+              :model-value="JSON.stringify(rule.frequency)"
+              @update:model-value="rule.frequency = JSON.parse($event)"
+              :options="frequencyOptions"
+            />
             <button @click="removeManualRule(index)" class="delete-rule-btn">
               <i class="fas fa-trash"></i>
             </button>
@@ -136,9 +140,9 @@ const localManualRules = ref([]);
 
 const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const frequencyOptions = [
-  { value: [1, 2, 3, 4, 5], label: 'Mon-Fri' },
-  { value: [6, 7], label: 'Sat-Sun' },
-  { value: [1, 2, 3, 4, 5, 6, 7], label: 'Daily' },
+  { value: JSON.stringify([1, 2, 3, 4, 5]), text: 'Mon-Fri' },
+  { value: JSON.stringify([6, 7]), text: 'Sat-Sun' },
+  { value: JSON.stringify([1, 2, 3, 4, 5, 6, 7]), text: 'Daily' },
 ];
 
 watch(() => props.isOpen, (newVal) => {
