@@ -10,21 +10,20 @@
       <table class="rules-table">
         <thead>
           <tr>
-            <th>RULE & CONDITION</th>
-            <th>FOLLOW RATE</th>
+            <th>MANUAL RULE</th>
+            <th>FREQUENCY</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="rules.length === 0">
-            <td colspan="2" class="empty-state">No rules defined yet.</td>
+            <td colspan="2" class="empty-state">No manual rules defined yet.</td>
           </tr>
           <tr v-for="rule in rules" :key="rule.id">
             <td>
               <div class="rule-name">{{ rule.name }}</div>
-              <div class="rule-condition">{{ formatCondition(rule) }}</div>
             </td>
             <td>
-              <span class="follow-rate">100%</span> <!-- Placeholder -->
+              <span class="frequency">{{ formatFrequency(rule.frequency) }}</span>
             </td>
           </tr>
         </tbody>
@@ -46,18 +45,15 @@ defineProps({
 
 defineEmits(['edit-rules']);
 
-function formatCondition(rule) {
-  if (!rule.condition_type) return '-';
-  switch (rule.condition_type) {
-    case 'TIME':
-      return rule.condition_value.time;
-    case 'PERCENTAGE':
-      return `${rule.condition_value.percentage}%`;
-    case 'FIXED_AMOUNT':
-      return `$${rule.condition_value.amount / 1000}k`; // Assuming amount is in dollars
-    default:
-      return '-';
-  }
+const frequencyMap = {
+  '[1,2,3,4,5]': 'Mon-Fri',
+  '[6,7]': 'Sat-Sun',
+  '[1,2,3,4,5,6,7]': 'Daily'
+};
+
+function formatFrequency(frequency) {
+  const key = JSON.stringify(frequency.sort());
+  return frequencyMap[key] || 'Custom';
 }
 </script>
 

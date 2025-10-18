@@ -2,19 +2,27 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/services/api';
 import { useAuthStore } from './auth';
+import { useTradingAccountsStore } from './tradingAccounts';
 
 export const useDisciplineStore = defineStore('discipline', () => {
   // --- STATE ---
   const settings = ref(null);
   const manualRules = ref([]);
-  const dailyChecklist = ref([]); // For manual rule instances
+  const dailyChecklist = ref({ manual_rules: [], automated_rules: [] });
   const heatmapData = ref([]);
   const isLoading = ref(false);
   const error = ref(null);
 
   // --- GETTERS ---
-  const completedRulesCount = computed(() => dailyChecklist.value.filter(item => item.status === 'completed').length);
-  const totalRulesCount = computed(() => dailyChecklist.value.length); // This will need adjustment based on automated rules logic
+  const completedRulesCount = computed(() => {
+    const manualCompleted = dailyChecklist.value.manual_rules.filter(item => item.status === 'completed').length;
+    const automatedCompleted = dailyChecklist.value.automated_rules.filter(item => item.status === 'completed').length;
+    return manualCompleted + automatedCompleted;
+  });
+
+  const totalRulesCount = computed(() => {
+    return (dailyChecklist.value.manual_rules?.length || 0) + (dailyChecklist.value.automated_rules?.length || 0);
+  });
 
   const dailyScore = computed(() => {
     if (totalRulesCount.value === 0) return 0;
@@ -127,9 +135,26 @@ export const useDisciplineStore = defineStore('discipline', () => {
   }
 
 
-  // This needs to be re-evaluated based on the new logic
   async function fetchDailyChecklist() {
-    // ...
+    const authStore = useAuthStore();
+    const tradingAccountsStore = useTradingAccountsStore();
+    if (!authStore.isAuthenticated || !tradingAccountsStore.selectedTradingAccount) {
+      dailyChecklist.value = { manual_rules: [], automated_rules: [] };
+      return;
+    }
+
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const tradingAccountId = tradingAccountsStore.selectedTradingAccount.id;
+      const { data } = await apiClient.get(`/daily-checklist?trading_account_id=${tradingAccountId}`);
+      dailyChecklist.value = data;
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to fetch daily checklist.';
+      console.error(error.value);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   async function updateManualRuleStatus(instanceId, newStatus) {

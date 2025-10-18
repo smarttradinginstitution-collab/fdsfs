@@ -90,13 +90,17 @@
         <div class="manual-rules-section">
           <div class="manual-rules-header">
             <h4>MANUAL RULES</h4>
-            <BaseButton variant="tertiary" size="small" @click="addManualRule">+ Add manual rule</BaseButton>
+            <BaseButton variant="secondary" size="small" @click="addManualRule">+ Add manual rule</BaseButton>
           </div>
           <p class="subtitle">The rule will be added as a daily check list</p>
 
           <div v-for="(rule, index) in localManualRules" :key="index" class="manual-rule-row">
             <BaseInput type="text" v-model="rule.name" placeholder="Rule name" />
-            <BaseSelect v-model="rule.frequency" :options="frequencyOptions" />
+            <BaseSelect
+              :model-value="JSON.stringify(rule.frequency)"
+              @update:model-value="rule.frequency = JSON.parse($event)"
+              :options="frequencyOptions"
+            />
             <button @click="removeManualRule(index)" class="delete-rule-btn">
               <i class="fas fa-trash"></i>
             </button>
@@ -113,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useDisciplineStore } from '@/stores/disciplineStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -136,13 +140,14 @@ const localManualRules = ref([]);
 
 const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const frequencyOptions = [
-  { value: [1, 2, 3, 4, 5], label: 'Mon-Fri' },
-  { value: [6, 7], label: 'Sat-Sun' },
-  { value: [1, 2, 3, 4, 5, 6, 7], label: 'Daily' },
+  { value: JSON.stringify([1, 2, 3, 4, 5]), text: 'Mon-Fri' },
+  { value: JSON.stringify([6, 7]), text: 'Sat-Sun' },
+  { value: JSON.stringify([1, 2, 3, 4, 5, 6, 7]), text: 'Daily' },
 ];
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
+    document.body.classList.add('modal-open');
     // Deep clone the store state to local state for editing
     localSettings.value = cloneDeep(disciplineStore.settings || {
         trading_days: [1, 2, 3, 4, 5],
@@ -154,7 +159,14 @@ watch(() => props.isOpen, (newVal) => {
         max_loss_per_day: 2000,
     });
     localManualRules.value = cloneDeep(disciplineStore.manualRules);
+  } else {
+    document.body.classList.remove('modal-open');
   }
+});
+
+// Ensure the class is removed if the component is unmounted while open
+onUnmounted(() => {
+    document.body.classList.remove('modal-open');
 });
 
 function toggleDay(day) {
@@ -237,9 +249,9 @@ onMounted(() => {
 .modal-content {
   background-color: #2a2a3e;
   border-radius: 8px;
-  padding: 24px;
+  padding: 20px; /* Reduced padding */
   width: 90%;
-  max-width: 600px;
+  max-width: 700px; /* Increased width */
   box-shadow: 0 4px_6px rgba(0, 0, 0, 0.1);
   color: #fff;
 }
@@ -267,23 +279,23 @@ onMounted(() => {
 .modal-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px; /* Reduced gap */
 }
 
 .info-note {
   background-color: #31314a;
-  padding: 12px;
+  padding: 10px; /* Reduced padding */
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px; /* Slightly smaller font */
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* Reduced margin */
 }
 
 .rule-row, .rule-control-group {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: 16px; /* Reduced gap */
 }
 
 .rule-label {
@@ -318,7 +330,8 @@ onMounted(() => {
   border: 1px solid #4a4a6a;
   color: #fff;
   border-radius: 4px;
-  padding: 8px 12px;
+  padding: 6px 10px; /* Reduced padding */
+  font-size: 12px; /* Smaller font */
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -337,7 +350,8 @@ onMounted(() => {
     background-color: #31314a;
     border: none;
     color: #fff;
-    padding: 8px 12px;
+    padding: 6px 10px; /* Reduced padding */
+    font-size: 12px; /* Smaller font */
     cursor: pointer;
 }
 .tabs button.active {

@@ -38,6 +38,7 @@ CREATE TABLE "public"."daily_rule_instances" (
     "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
     "manual_rule_id" uuid NOT NULL,
     "trading_account_id" uuid NOT NULL,
+    "daily_journal_id" uuid NOT NULL,
     "date" date NOT NULL,
     "status" text NOT NULL DEFAULT 'pending', -- e.g., 'pending', 'completed', 'missed'
     "created_at" timestamptz NOT NULL DEFAULT now(),
