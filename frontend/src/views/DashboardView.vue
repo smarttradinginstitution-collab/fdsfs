@@ -57,7 +57,6 @@ watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
     // Quando i filtri cambiano, aggiorniamo solo i dati della dashboard.
-    // L'azione `fetchAllDataForAccount` è già stata chiamata al momento della selezione dell'account.
     tradesStore.fetchAllDataForDashboard();
   },
   { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render

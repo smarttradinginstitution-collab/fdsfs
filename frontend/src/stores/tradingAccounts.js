@@ -93,7 +93,7 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
       localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
       // Avvia il caricamento di tutti i dati per l'account selezionato.
       const tradesStore = useTradesStore();
-      tradesStore.fetchAllDataForAccount();
+      tradesStore.fetchAllDataForDashboard();
     } else {
       localStorage.removeItem('selectedTradingAccount');
       // Qui potremmo voler pulire i dati dei trade, se necessario.

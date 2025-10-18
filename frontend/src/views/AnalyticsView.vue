@@ -8,10 +8,18 @@
 -->
 
 <script setup>
-// --- IMPORTAZIONI ---
+import { onMounted } from 'vue';
+import { useTradesStore } from '@/stores/trades';
 import StrategyPerformance from '../components/analytics/StrategyPerformance.vue';
 import WinLossDays from '../components/analytics/WinLossDays.vue';
-// In futuro, potremmo importare qui altri widget, come DayOfWeekPerformance.vue
+
+const tradesStore = useTradesStore();
+
+onMounted(() => {
+  if (!tradesStore.processedStats) {
+    tradesStore.fetchProcessedStats();
+  }
+});
 </script>
 
 <template>

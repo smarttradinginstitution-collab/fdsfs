@@ -48,6 +48,14 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 const store = useNotebookStore();
 const searchQuery = ref('');
 
+onMounted(() => {
+  if (store.folders.length === 0) {
+    store.fetchFolders();
+  }
+  if (store.notes.length === 0) {
+    store.fetchAllNotes();
+  }
+});
 </script>
 
 <style lang="scss" scoped>
