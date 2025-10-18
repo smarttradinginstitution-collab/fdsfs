@@ -49,15 +49,6 @@ class NoteRepository:
         result = await self.db.execute(stmt)
         return result.unique().scalars().first()
 
-    async def find_by_date_and_folder(self, note_date: date, folder_id: UUID) -> Note | None:
-        """Find a note by date within a specific folder."""
-        stmt = select(Note).where(
-            Note.note_date == note_date,
-            Note.folder_id == folder_id
-        )
-        result = await self.db.execute(stmt)
-        return result.scalars().first()
-
     async def get_by_trade_id(self, trade_id: UUID, general_account_id: UUID) -> Note | None:
         """
         Get a note by its trade_id and verify ownership via general_account_id.
@@ -103,36 +94,20 @@ class NoteRepository:
 
     async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
-        # First, fetch the parent folder to get the general_account_id
-        folder = await self.db.get(NotebookFolder, note_in.folder_id)
-        if not folder:
-            raise HTTPException(status_code=404, detail="Parent folder not found.")
-
-        note_data = note_in.model_dump()
-        note_data["general_account_id"] = folder.general_account_id
-
-        db_note = Note(**note_data)
+        db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
         try:
             await self.db.commit()
-        except IntegrityError as e:
+        except IntegrityError:
             await self.db.rollback()
-            # A more specific error message could be useful here
-            # Check for unique constraint violation message, which can differ between DBs
-            if 'UNIQUE constraint failed' in str(e) or 'notes_trade_id_key' in str(e):
-                 raise HTTPException(
-                    status_code=409,
-                    detail="A note for this trade already exists.",
-                )
-            # Re-raise for other integrity errors, providing more context
             raise HTTPException(
-                status_code=500,
-                detail=f"An integrity error occurred: {e.orig}",
+                status_code=409,
+                detail="A note for this trade already exists.",
             )
 
         newly_created_note = await self.get_by_id(db_note.id)
         if not newly_created_note:
-            raise Exception("Failed to fetch newly created note after creation.") # Changed error message for clarity
+            raise Exception("Failed to fetch newly created note.")
         return newly_created_note
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:

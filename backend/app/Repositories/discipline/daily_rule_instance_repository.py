@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.daily_rule_instance import DailyRuleInstance
 from app.Models.note import Note
+from app.Models.notebook_folder import NotebookFolder
 
 class DailyRuleInstanceRepository:
     """
@@ -46,8 +47,9 @@ class DailyRuleInstanceRepository:
         stmt = (
             select(DailyRuleInstance, Note.note_date)
             .join(Note, DailyRuleInstance.daily_journal_id == Note.id)
+            .join(NotebookFolder, Note.folder_id == NotebookFolder.id)
             .where(
-                Note.general_account_id == general_account_id,
+                NotebookFolder.general_account_id == general_account_id,
                 Note.note_date >= start_date,
                 Note.note_date <= end_date
             )

@@ -65,9 +65,6 @@ class GeneralAccount(Base):
     notebook_folders: Mapped[list["NotebookFolder"]] = relationship(
         "NotebookFolder", back_populates="general_account"
     )
-    notes: Mapped[list["Note"]] = relationship(
-        "Note", back_populates="general_account"
-    )
     news_impacts_groups: Mapped[list["NewsImpactsGroup"]] = relationship(
         "NewsImpactsGroup", back_populates="general_account"
     )
