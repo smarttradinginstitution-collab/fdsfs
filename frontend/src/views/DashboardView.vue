@@ -10,11 +10,14 @@ import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
-import { useTradesStore } from '../stores/trades';
-import { useUiStore } from '../stores/uiStore';
-import { useFilterStore } from '../stores/filterStore';
-import { useDashboardLayoutStore } from '../stores/dashboardLayout';
+import { useTradesStore } from '@/stores/trades';
+import { useUiStore } from '@/stores/uiStore';
+import { useFilterStore } from '@/stores/filterStore';
+import { useDashboardLayoutStore } from '@/stores/dashboardLayout';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import { useAuthStore } from '@/stores/auth';
+import { usePlaybookStore } from '@/stores/playbook';
+import { useNotebookStore } from '@/stores/notebook';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
@@ -24,6 +27,11 @@ const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
+const authStore = useAuthStore();
+const playbookStore = usePlaybookStore();
+const notebookStore = useNotebookStore();
+
+const isLoading = ref(true);
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -48,19 +56,70 @@ const editButtonText = computed(() => {
 });
 
 // --- Data Fetching ---
+const orchestrateInitialDataLoad = async () => {
+  console.log("Inizio caricamento sessione...");
+  isLoading.value = true;
+  uiStore.showLoader('Caricamento dei dati essenziali...');
+
+  try {
+    // --- GRUPPO 1: Dati Essenziali ---
+    console.log("GRUPPO 1: Caricamento dati essenziali...");
+    await Promise.allSettled([
+      authStore.fetchGeneralAccount(),
+      authStore.loadCurrentRoleName(),
+      tradingAccountsStore.fetchTradingAccounts(),
+    ]);
+    console.log("GRUPPO 1: Dati essenziali caricati.");
+    uiStore.showLoader('Caricamento dei dati della dashboard...');
+
+    // --- GRUPPO 2: Dati Dashboard ---
+    console.log("GRUPPO 2: Caricamento dati dashboard...");
+    if (tradingAccountsStore.hasSelectedAccounts) {
+      await Promise.allSettled([
+        dashboardLayoutStore.fetchLayout(),
+        tradesStore.fetchTrades({ ignoreFilters: true }),
+        tradesStore.fetchAllDataForDashboard(),
+        notebookStore.fetchFolders(),
+        notebookStore.fetchAllNotes(),
+      ]);
+      console.log("GRUPPO 2: Dati dashboard caricati.");
+    } else {
+      console.log("Nessun account di trading selezionato, salto il caricamento dei dati della dashboard.");
+    }
+
+    isLoading.value = false;
+    uiStore.hideLoader();
+
+    // --- GRUPPO 3: Dati Secondari (in background) ---
+    console.log("GRUPPO 3: Avvio caricamento dati secondari in background...");
+    authStore.initSessionData().then(() => {
+      console.log("GRUPPO 3: Dati secondari caricati.");
+    });
+
+  } catch (error) {
+    console.error("Errore catastrofico durante il caricamento della sessione:", error);
+    isLoading.value = false;
+    uiStore.hideLoader();
+    uiStore.showToast({
+      message: 'Errore critico nel caricamento dei dati. Prova a ricaricare la pagina.',
+      type: 'danger',
+    });
+  }
+};
+
 onMounted(() => {
-  dashboardLayoutStore.fetchLayout();
+  orchestrateInitialDataLoad();
 });
 
-// Watch for filter changes and refetch all dashboard data
+// Watch for filter changes and refetch only dashboard data (without immediate)
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
-    // Quando i filtri cambiano, aggiorniamo solo i dati della dashboard.
-    // L'azione `fetchAllDataForAccount` è già stata chiamata al momento della selezione dell'account.
-    tradesStore.fetchAllDataForDashboard();
+    if (!isLoading.value) { // Non rieseguire se il caricamento iniziale è in corso
+      tradesStore.fetchAllDataForDashboard();
+    }
   },
-  { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
+  { deep: true }
 );
 
 // Watch for the user finishing layout editing

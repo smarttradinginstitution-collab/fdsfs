@@ -31,31 +31,6 @@ defineProps({
   },
 });
 
-// Stato per gli utenti
-const users = ref([]);
-const loadingUsers = ref(false);
-const errorUsers = ref(null);
-
-async function fetchUsers() {
-  if (!authStore.isAuthenticated) return;
-  loadingUsers.value = true;
-  errorUsers.value = null;
-  try {
-    const res = await apiClient.get('/users/');
-    users.value = res.data;
-  } catch (err) {
-    console.error('Errore caricamento utenti:', err);
-    errorUsers.value = 'Impossibile caricare gli utenti';
-  } finally {
-    loadingUsers.value = false;
-  }
-}
-
-// carica utenti al mount (solo se loggato e admin)
-onMounted(() => {
-  fetchUsers();
-});
-
 // Logica responsive con VueUse
 const isDesktop = useMediaQuery('(min-width: 769px)');
 </script>
