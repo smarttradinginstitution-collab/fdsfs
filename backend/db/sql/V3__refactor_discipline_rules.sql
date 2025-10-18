@@ -45,7 +45,7 @@ CREATE TABLE "public"."daily_rule_instances" (
     CONSTRAINT "daily_rule_instances_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "daily_rule_instances_manual_rule_id_fkey" FOREIGN KEY ("manual_rule_id") REFERENCES "public"."manual_rules"("id") ON DELETE CASCADE,
     CONSTRAINT "daily_rule_instances_trading_account_id_fkey" FOREIGN KEY ("trading_account_id") REFERENCES "public"."trading_accounts"("id") ON DELETE CASCADE,
-    CONSTRAINT "daily_rule_instances_manual_rule_id_date_trading_account_id_key" UNIQUE ("manual_rule_id", "date", "trading_account_id")
+    CONSTRAINT "daily_rule_instances_manual_rule_id_date_trading_account_id_key" UNIQUE ("manual_rule_id", "date", "trading_account_id", "daily_journal_id")
 );
 
 -- Enable RLS

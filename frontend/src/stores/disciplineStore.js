@@ -95,6 +95,23 @@ export const useDisciplineStore = defineStore('discipline', () => {
       }
   }
 
+  async function updateManualRule(ruleId, ruleData) {
+      isLoading.value = true;
+      try {
+          const { data } = await apiClient.put(`/manual-rules/${ruleId}`, ruleData);
+          const index = manualRules.value.findIndex(r => r.id === ruleId);
+          if (index !== -1) {
+              manualRules.value[index] = data;
+          }
+      } catch (err) {
+          error.value = err.response?.data?.detail || 'Failed to update manual rule.';
+          console.error(error.value);
+          throw err;
+      } finally {
+          isLoading.value = false;
+      }
+  }
+
   async function deleteManualRule(ruleId) {
       isLoading.value = true;
       try {
@@ -137,6 +154,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
     saveDisciplineSettings,
     fetchManualRules,
     addManualRule,
+    updateManualRule,
     deleteManualRule,
     fetchDailyChecklist,
     updateManualRuleStatus,

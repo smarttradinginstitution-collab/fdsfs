@@ -92,9 +92,60 @@ class DisciplineSettingsService:
 
     async def evaluate_automated_rules(self, settings, trading_account_id: UUID, date: datetime.date):
         trades_today = await self.trade_repo.get_filtered_trades(trading_account_id, date, date)
-        # This is where the logic for each automated rule goes
-        # For now, returning a placeholder
-        return []
+        account_balance = await self.trade_repo.get_account_balance(trading_account_id) # Assuming this method exists
+
+        rules_status = []
+
+        # Rule: Start my day by
+        # This rule is tricky to evaluate here. It's better handled on the frontend or a different service.
+        # For now, we'll represent it but mark as 'pending'.
+        if settings.start_day_by:
+            rules_status.append({"name": "Start my day by", "status": "pending"})
+
+        # Rule: Link trades to playbook
+        if settings.link_trades_to_playbook_threshold is not None:
+            total_trades = len(trades_today)
+            if total_trades > 0:
+                linked_trades = sum(1 for trade in trades_today if trade.playbook_id is not None)
+                percentage = (linked_trades / total_trades) * 100
+                status = "completed" if percentage >= settings.link_trades_to_playbook_threshold else "failed"
+            else:
+                status = "completed" # No trades, so rule is not broken
+            rules_status.append({"name": "Link trades to playbook", "status": status})
+
+        # Rule: Trade has stop loss
+        if settings.trade_has_stop_loss_threshold is not None:
+            total_trades = len(trades_today)
+            if total_trades > 0:
+                trades_with_sl = sum(1 for trade in trades_today if trade.stop_loss_price is not None)
+                percentage = (trades_with_sl / total_trades) * 100
+                status = "completed" if percentage >= settings.trade_has_stop_loss_threshold else "failed"
+            else:
+                status = "completed"
+            rules_status.append({"name": "Trade has stop loss", "status": status})
+
+        # Rule: Max loss per trade
+        if settings.max_loss_per_trade_value is not None:
+            status = "completed"
+            for trade in trades_today:
+                if trade.p_l is None: continue
+
+                max_loss = settings.max_loss_per_trade_value
+                if settings.max_loss_per_trade_type == '%':
+                    max_loss = (account_balance / 100) * settings.max_loss_per_trade_value
+
+                if trade.p_l < -max_loss:
+                    status = "failed"
+                    break
+            rules_status.append({"name": "Max loss per trade", "status": status})
+
+        # Rule: Max loss per day
+        if settings.max_loss_per_day is not None:
+            total_pnl = sum(trade.p_l for trade in trades_today if trade.p_l is not None)
+            status = "completed" if total_pnl >= -settings.max_loss_per_day else "failed"
+            rules_status.append({"name": "Max loss per day", "status": status})
+
+        return rules_status
 
     async def update_manual_rule_status(self, instance_id: UUID, status: str):
         # This logic remains largely the same

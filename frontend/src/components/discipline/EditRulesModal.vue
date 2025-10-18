@@ -192,12 +192,18 @@ async function save() {
       }
   }
 
-  // Rules to add
+  // Rules to add or update
   for (const newRule of newRules) {
       if (!newRule.id) {
+          // Add new rule
           await disciplineStore.addManualRule({ name: newRule.name, frequency: newRule.frequency });
+      } else {
+          // Check if rule has changed before updating
+          const oldRule = originalRules.find(r => r.id === newRule.id);
+          if (oldRule.name !== newRule.name || JSON.stringify(oldRule.frequency) !== JSON.stringify(newRule.frequency)) {
+              await disciplineStore.updateManualRule(newRule.id, { name: newRule.name, frequency: newRule.frequency });
+          }
       }
-      // Note: Update logic is not implemented for simplicity, as per user request to "delete and recreate"
   }
 
   emit('save');

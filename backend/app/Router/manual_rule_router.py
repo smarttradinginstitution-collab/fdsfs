@@ -34,6 +34,17 @@ async def create_manual_rule(
     rule_data["general_account_id"] = general_account_id
     return await repo.create(rule_data)
 
+@router.put("/{rule_id}", response_model=ManualRuleRead)
+async def update_manual_rule(
+    rule_id: UUID,
+    rule_in: ManualRuleUpdate,
+    repo: ManualRuleRepository = Depends(get_manual_rule_repo),
+):
+    updated_rule = await repo.update(rule_id, rule_in)
+    if not updated_rule:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+    return updated_rule
+
 @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_manual_rule(
     rule_id: UUID,

@@ -17,10 +17,10 @@ def mock_settings_repo():
     return repo
 
 @pytest.fixture
-def discipline_settings_service(mock_db_session):
+def discipline_settings_service(mock_db_session, mock_settings_repo):
     service = DisciplineSettingsService(mock_db_session)
     # Replace the real repo with the mock
-    service.settings_repo = mock_settings_repo()
+    service.settings_repo = mock_settings_repo
     return service
 
 @pytest.mark.asyncio

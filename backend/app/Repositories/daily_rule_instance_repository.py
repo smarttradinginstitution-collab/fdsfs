@@ -8,10 +8,11 @@ from app.Models.daily_rule_instance import DailyRuleInstance
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
 from app.Repositories.base_repository import BaseRepository
+from app.Schemas.discipline.daily_rule_instance import DailyRuleInstanceCreate, DailyRuleInstanceUpdate
 
-class DailyRuleInstanceRepository(BaseRepository):
+class DailyRuleInstanceRepository(BaseRepository[DailyRuleInstance, DailyRuleInstanceCreate, DailyRuleInstanceUpdate]):
     def __init__(self, db: AsyncSession):
-        super().__init__(db, DailyRuleInstance)
+        super().__init__(DailyRuleInstance, db)
 
     async def get_or_create(self, **kwargs) -> DailyRuleInstance:
         instance = await self.db.execute(

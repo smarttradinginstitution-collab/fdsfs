@@ -3,10 +3,11 @@ from sqlalchemy.future import select
 from uuid import UUID
 from app.Models.manual_rule import ManualRule
 from app.Repositories.base_repository import BaseRepository
+from app.Schemas.manual_rule_schema import ManualRuleCreate, ManualRuleUpdate
 
-class ManualRuleRepository(BaseRepository):
+class ManualRuleRepository(BaseRepository[ManualRule, ManualRuleCreate, ManualRuleUpdate]):
     def __init__(self, db: AsyncSession):
-        super().__init__(db, ManualRule)
+        super().__init__(ManualRule, db)
 
     async def list_by_general_account(self, general_account_id: UUID) -> list[ManualRule]:
         result = await self.db.execute(
