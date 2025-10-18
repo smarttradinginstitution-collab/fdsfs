@@ -1,36 +1,32 @@
 from __future__ import annotations
 import uuid
-from typing import Any, TYPE_CHECKING, Optional
-from sqlalchemy import String, TIMESTAMP, func, ForeignKey, Text
+from typing import Any, TYPE_CHECKING
+from sqlalchemy import String, TIMESTAMP, func, ForeignKey, Text, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Infrastructure.db import Base
 
 if TYPE_CHECKING:
+    from app.Models.manual_rule import ManualRule
+    from app.Models.trading_account import TradingAccount
     from app.Models.note import Note
-    from app.Models.discipline_rule import DisciplineRule
 
 class DailyRuleInstance(Base):
     __tablename__ = "daily_rule_instances"
     __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    manual_rule_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("public.manual_rules.id", ondelete="CASCADE"), nullable=False)
+    trading_account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("public.trading_accounts.id", ondelete="CASCADE"), nullable=False)
     daily_journal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("public.notes.id", ondelete="CASCADE"), nullable=False)
-    rule_template_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("public.discipline_rules.id", ondelete="SET NULL"), nullable=True)
 
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    rule_type: Mapped[str] = mapped_column(Text, nullable=False)
-
+    date: Mapped[Any] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False, default='pending')
 
-    actual_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
     created_at: Mapped[Any] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[Any] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    daily_journal: Mapped["Note"] = relationship("Note", back_populates="daily_rule_instances")
-    rule_template: Mapped[Optional["DisciplineRule"]] = relationship("DisciplineRule", back_populates="daily_instances")
-
-# Add the relationship to the Note model
-from app.Models.note import Note
-Note.daily_rule_instances = relationship("DailyRuleInstance", order_by=DailyRuleInstance.id, back_populates="daily_journal")
+    rule_template: Mapped["ManualRule"] = relationship("ManualRule")
+    trading_account: Mapped["TradingAccount"] = relationship("TradingAccount")
+    daily_journal: Mapped["Note"] = relationship("Note")

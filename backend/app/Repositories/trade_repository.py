@@ -292,3 +292,22 @@ class TradeRepository:
 
         result = await self.db.execute(stmt)
         return result.all()
+
+    async def get_account_balance(self, trading_account_id: UUID) -> float:
+        """
+        Calculates the current account balance by taking the initial balance
+        and adding the sum of all trade P/L.
+        """
+        # Get the initial balance
+        account_result = await self.db.execute(
+            select(TradingAccount.initial_balance).where(TradingAccount.id == trading_account_id)
+        )
+        initial_balance = account_result.scalar_one_or_none() or 0.0
+
+        # Get the sum of P/L
+        pnl_result = await self.db.execute(
+            select(func.sum(Trade.p_l)).where(Trade.trading_account_id == trading_account_id)
+        )
+        total_pnl = pnl_result.scalar_one_or_none() or 0.0
+
+        return initial_balance + total_pnl

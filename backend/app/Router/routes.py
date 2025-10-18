@@ -224,10 +224,22 @@ router.include_router(
 # ──────────────────────────────────────────────────────────────────────────────
 # 🛡️ DISCIPLINE (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
-from app.Router import discipline_router
+from app.Router import discipline_settings_router
+from app.Router import manual_rule_router
+from app.Router import daily_checklist_router
 
 router.include_router(
-    discipline_router.router,
+    discipline_settings_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+router.include_router(
+    manual_rule_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+router.include_router(
+    daily_checklist_router.router,
     dependencies=[Depends(get_current_claims)],
 )
 
