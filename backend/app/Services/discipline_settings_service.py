@@ -97,10 +97,10 @@ class DisciplineSettingsService:
         rules_status = []
 
         # Rule: Start my day by
-        # This rule is tricky to evaluate here. It's better handled on the frontend or a different service.
-        # For now, we'll represent it but mark as 'pending'.
         if settings.start_day_by:
-            rules_status.append({"name": "Start my day by", "status": "pending"})
+            daily_note = await self.note_repo.find_by_date_and_general_account(date, trading_account_id)
+            status = "completed" if daily_note and daily_note.created_at.time() <= settings.start_day_by else "failed"
+            rules_status.append({"name": "Start my day by", "status": status})
 
         # Rule: Link trades to playbook
         if settings.link_trades_to_playbook_threshold is not None:

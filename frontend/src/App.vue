@@ -85,6 +85,11 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
 </template>
 
 <style lang="scss">
+/* Global style to prevent background scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
 .fullscreen-layout {
   min-height: 100vh;
   background-color: var(--semantic-color-surface-page);

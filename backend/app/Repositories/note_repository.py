@@ -58,6 +58,15 @@ class NoteRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def find_by_date_and_general_account(self, note_date: date, general_account_id: UUID) -> Note | None:
+        """Find a note by date for a specific general account."""
+        stmt = select(Note).join(Note.folder).where(
+            Note.note_date == note_date,
+            NotebookFolder.general_account_id == general_account_id
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def get_by_trade_id(self, trade_id: UUID, general_account_id: UUID) -> Note | None:
         """
         Get a note by its trade_id and verify ownership via general_account_id.
