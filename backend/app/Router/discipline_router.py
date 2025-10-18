@@ -27,8 +27,9 @@ async def list_discipline_rules(
 ):
     """
     List all discipline rules for the current user's general account.
+    If default automated rules do not exist, they will be created.
     """
-    return await service.rule_repo.list_by_general_account(general_account_id)
+    return await service.list_or_create_discipline_rules(general_account_id)
 
 @router.post("/rules/bulk-update", response_model=List[DisciplineRuleRead])
 async def bulk_update_discipline_rules(

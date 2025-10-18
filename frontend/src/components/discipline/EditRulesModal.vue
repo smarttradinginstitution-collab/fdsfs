@@ -255,7 +255,7 @@ const dayOptions = [
 .modal-body {
     max-height: 70vh;
     overflow-y: auto;
-    padding-right: 1rem; /* for scrollbar */
+    padding: var(--semantic-size-inset-lg);
 }
 
 .rules-form {

@@ -23,6 +23,15 @@ class DisciplineService:
         self.folder_repo = NotebookFolderRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
 
+    async def list_or_create_discipline_rules(self, general_account_id: UUID) -> list[DisciplineRule]:
+        """
+        Lists all discipline rules for a user. If no automated rules exist,
+        it creates the default set before returning them. This prevents a race
+        condition on the frontend.
+        """
+        await self._create_default_automated_rules_if_not_exist(general_account_id)
+        return await self.rule_repo.list_by_general_account(general_account_id)
+
     async def get_or_create_daily_checklist(self, general_account_id: UUID, trading_account_id: UUID) -> list[DailyRuleInstance]:
         today = datetime.date.today()
 
@@ -61,8 +70,7 @@ class DisciplineService:
             )
             daily_note = await self.note_repo.create(note_schema)
 
-            # 4. Create default rules if they don't exist, then get all rules
-            await self._create_default_automated_rules_if_not_exist(general_account_id)
+            # 4. Get all rules (defaults are created by the list endpoint if needed)
             rules = await self.rule_repo.list_by_general_account(general_account_id)
 
             # 5. Create instances for the new note
