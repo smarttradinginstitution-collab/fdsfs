@@ -15,6 +15,7 @@ import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import { useNotebookStore } from '@/stores/notebookStore';
 import { useTradingDnaStore } from '@/stores/tradingDnaStore';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
@@ -25,6 +26,7 @@ const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
+const notebookStore = useNotebookStore();
 const tradingDnaStore = useTradingDnaStore();
 
 const layout = computed(() => dashboardLayoutStore.layout);
@@ -54,8 +56,12 @@ const editButtonText = computed(() => {
 async function fetchDashboardData() {
   if (!tradingAccountsStore.selectedTradingAccount) return;
 
-  // GRUPPO 2: Dati aggregati per widget
-  await tradesStore.fetchAllDataForDashboard();
+  // GRUPPO 2: Dati Core della Dashboard (inclusi dati pesanti)
+  await Promise.allSettled([
+      tradesStore.fetchTrades({ ignoreFilters: true }),
+      notebookStore.fetchAllNotes(),
+      tradesStore.fetchAllDataForDashboard()
+  ]);
 
   // GRUPPO 3: Dati di supporto per la dashboard
   await tradingDnaStore.fetchTradingDnaReport();

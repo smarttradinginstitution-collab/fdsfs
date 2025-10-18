@@ -8,18 +8,49 @@
 -->
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useTradesStore } from '@/stores/trades';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import KpiDashboard from '@/components/KpiDashboard.vue';
-import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseButton from '@/components/ui/BaseButton.vue'; // Importiamo il componente bottone
 import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
 // --- STORE E STATO LOCALE ---
 const tradesStore = useTradesStore();
 const selectedTrades = ref([]); // Stato per le righe selezionate
 
+import { watch } from 'vue';
+import { useFilterStore } from '@/stores/filterStore';
+import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+
+// --- STORE E STATO LOCALE ---
+const tradesStore = useTradesStore();
+const filterStore = useFilterStore();
+const tradingAccountsStore = useTradingAccountsStore();
+const selectedTrades = ref([]); // Stato per le righe selezionate
+
 // --- LOGICA DEL COMPONENTE ---
+
+async function fetchTradeViewData() {
+  if (!tradingAccountsStore.selectedTradingAccount) return;
+  // Carica sia la lista dei trade (filtrata per default) sia i dati per le KPI
+  await Promise.allSettled([
+    tradesStore.fetchTrades(),
+    tradesStore.fetchAllDataForDashboard(),
+  ]);
+}
+
+// Esegui il caricamento quando il componente monta o quando i filtri/account cambiano
+watch(
+  () => [
+    filterStore.startDate,
+    filterStore.endDate,
+    filterStore.selectedStrategy,
+    tradingAccountsStore.selectedTradingAccount,
+  ],
+  fetchTradeViewData,
+  { deep: true, immediate: true }
+);
 
 const handleBulkDelete = () => {
   if (selectedTrades.value.length === 0) {

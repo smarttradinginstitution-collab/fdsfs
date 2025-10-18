@@ -12,7 +12,6 @@ import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
 import { useTagsStore } from './tagsStore';
-import { useTradesStore } from './trades';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -33,22 +32,18 @@ export const useAuthStore = defineStore('auth', () => {
   // --- ACTIONS ---
 
   /**
-   * Azione centralizzata per caricare tutti i dati di sessione globali
-   * dopo che l'autenticazione è stata confermata.
+   * Azione centralizzata per caricare i dati di sessione di base.
    */
   async function initSessionData() {
     const notebookStore = useNotebookStore();
-    const tradesStore = useTradesStore();
     const playbookStore = usePlaybookStore();
     const tagsStore = useTagsStore();
 
-    // Carica tutti i dati di sessione globali in parallelo
+    // Carica solo i dati di base, leggeri e globali
     await Promise.allSettled([
       playbookStore.fetchPlaybooks(),
       tagsStore.fetchAllTagsData(),
       notebookStore.fetchFolders(),
-      notebookStore.fetchAllNotes(),
-      tradesStore.fetchTrades({ ignoreFilters: true }),
     ]);
   }
 
@@ -59,9 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
 
-      // Una volta ottenuto il GA, avvia il caricamento dei dati di sessione.
       await initSessionData();
-
       return true;
     } catch (error) {
       console.error('Errore nel recupero del General Account:', error);
