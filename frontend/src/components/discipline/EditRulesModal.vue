@@ -118,7 +118,7 @@ import { useDisciplineStore } from '@/stores/disciplineStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseSelect from '@/components/ui/BaseSelect.vue';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 
 const props = defineProps({
   isOpen: {
