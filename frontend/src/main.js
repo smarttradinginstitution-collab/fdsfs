@@ -7,7 +7,6 @@
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'; // Importa il plugin
 import App from './App.vue';
 import router from './router';
 import { useAuthStore } from '@/stores/auth'; // (AGGIUNTA) Store di autenticazione per ripristinare il token
@@ -37,7 +36,6 @@ const app = createApp(App);
 
 // 2. Creiamo un'istanza di Pinia (così possiamo anche usarla fuori dai componenti).
 const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate); // Usa il plugin
 
 // 3. Diciamo a Vue di usare Pinia per la gestione dello stato.
 app.use(pinia);

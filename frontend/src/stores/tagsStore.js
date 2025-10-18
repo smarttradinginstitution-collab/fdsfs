@@ -230,6 +230,4 @@ export const useTagsStore = defineStore('tags', () => {
       }
     }
   };
-}, {
-  persist: true,
 });
