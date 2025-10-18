@@ -14,8 +14,15 @@ export const useDisciplineStore = defineStore('discipline', () => {
   const error = ref(null);
 
   // --- GETTERS ---
-  const completedRulesCount = computed(() => dailyChecklist.value.filter(item => item.status === 'completed').length);
-  const totalRulesCount = computed(() => dailyChecklist.value.length); // This will need adjustment based on automated rules logic
+  const completedRulesCount = computed(() => {
+    const manualCompleted = dailyChecklist.value.manual_rules.filter(item => item.status === 'completed').length;
+    const automatedCompleted = dailyChecklist.value.automated_rules.filter(item => item.status === 'completed').length;
+    return manualCompleted + automatedCompleted;
+  });
+
+  const totalRulesCount = computed(() => {
+    return (dailyChecklist.value.manual_rules?.length || 0) + (dailyChecklist.value.automated_rules?.length || 0);
+  });
 
   const dailyScore = computed(() => {
     if (totalRulesCount.value === 0) return 0;
