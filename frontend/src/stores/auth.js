@@ -37,13 +37,14 @@ export const useAuthStore = defineStore('auth', () => {
    * dopo che l'autenticazione è stata confermata.
    */
   async function initSessionData() {
+    console.log('%c[AuthStore] Inizio initSessionData (Gruppo 3)...', 'color: purple;');
     // Carica i dati di sessione del Gruppo 3
     await Promise.allSettled([
       usePlaybookStore().fetchPlaybooks(),
-      // useNotebookStore().fetchFolders(), // Spostato per evitare duplicati e centralizzare
       useTagsStore().fetchAllTagsData(),
       useTradingDnaStore().fetchTradingDnaReport(),
     ]);
+    console.log('%c[AuthStore] Completato initSessionData.', 'color: purple;');
   }
 
   // Funzione per recuperare il General Account

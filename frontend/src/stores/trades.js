@@ -382,12 +382,13 @@ export const useTradesStore = defineStore('trades', {
      * @param {boolean} options.ignoreFilters - Se true, carica tutti i trade senza filtri.
      */
     async fetchTrades(options = { ignoreFilters: false }) {
+      console.log(`%c[TradesStore] Inizio fetchTrades... (ignoreFilters: ${options.ignoreFilters})`, 'color: green;');
       this.isLoading = true;
       const tradingAccountsStore = useTradingAccountsStore();
       const selectedAccount = tradingAccountsStore.selectedTradingAccount;
 
       if (!selectedAccount) {
-        console.log("Nessun trading account selezionato. Non carico i trade.");
+        console.warn("[TradesStore] Nessun trading account selezionato. Non carico i trade.");
         this.trades = [];
         this.isLoading = false;
         return;
@@ -433,20 +434,23 @@ export const useTradesStore = defineStore('trades', {
      * Non ricarica la lista dei trade, ma solo le statistiche aggregate.
      */
     async fetchAllDataForDashboard() {
+      console.log('%c[TradesStore] Inizio fetchAllDataForDashboard (dati aggregati)...', 'color: green;');
       // LOCK: Se un caricamento è già in corso, non avviarne un altro.
       if (this.isLoading) {
-        console.log("Caricamento dashboard già in corso. Salto il fetch duplicato.");
+        console.warn("[TradesStore] Caricamento dashboard già in corso. Salto il fetch duplicato.");
         return;
       }
       this.isLoading = true;
       try {
-        await Promise.allSettled([
+        const promises = [
           this.fetchDashboardStats(),
           this.fetchCalendarData(),
           this.fetchProcessedStats(),
           this.fetchEquityCurve(),
           this.fetchVantageScore(),
-        ]);
+        ];
+        await Promise.allSettled(promises);
+        console.log('%c[TradesStore] Completato fetchAllDataForDashboard.', 'color: green;');
       } finally {
         this.isLoading = false;
       }

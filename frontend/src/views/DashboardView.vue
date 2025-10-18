@@ -54,7 +54,10 @@ const editButtonText = computed(() => {
 // --- Data Fetching Orchestration ---
 
 async function orchestrateDashboardLoad() {
+  console.log('%c[Orchestrator] Inizio caricamento dati dashboard...', 'color: blue; font-weight: bold;');
+
   // --- GRUPPO 2: Dati principali della Dashboard ---
+  console.log('%c[Orchestrator] Avvio GRUPPO 2 (Dati Core Dashboard)', 'color: blue;');
   const group2Promises = [
     dashboardLayoutStore.fetchLayout(),
     tradesStore.fetchAllDataForDashboard(),
@@ -63,8 +66,10 @@ async function orchestrateDashboardLoad() {
     tradesStore.fetchTrades({ ignoreFilters: true }),
   ];
   await Promise.allSettled(group2Promises);
+  console.log('%c[Orchestrator] Completato GRUPPO 2.', 'color: blue;');
 
   // --- GRUPPO 3: Dati di sessione (lanciato dopo il Gruppo 2) ---
+  console.log('%c[Orchestrator] Avvio GRUPPO 3 (Dati di Sessione)', 'color: blue;');
   authStore.initSessionData();
 }
 
