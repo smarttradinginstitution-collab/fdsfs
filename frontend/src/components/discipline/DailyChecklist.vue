@@ -65,12 +65,16 @@ function toggleStatus(rule) {
 <style scoped>
 .daily-checklist {
   flex-grow: 1;
-  padding: 0 var(--semantic-size-inset-lg);
+  background-color: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-lg);
+  box-shadow: var(--semantic-effect-shadow-elevation-low);
+  align-self: flex-start; /* Prevent stretching */
 }
 
 .view-title {
-  font: var(--semantic-font-style-heading-xl);
-  margin-bottom: var(--semantic-size-stack-xl);
+  font: var(--semantic-font-style-heading-lg);
+  margin-bottom: var(--semantic-size-stack-lg);
 }
 
 .rules-section {
