@@ -14,7 +14,7 @@
       <CalendarHeatmap :heatmap-data="disciplineStore.heatmapData" />
     </div>
     <RulesTable
-      :rules="disciplineStore.manualRules"
+      :rules="disciplineStore.allRules"
       @edit-rules="isEditModalOpen = true"
     />
     <EditRulesModal

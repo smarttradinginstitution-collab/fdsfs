@@ -29,6 +29,19 @@ export const useDisciplineStore = defineStore('discipline', () => {
     return Math.round((completedRulesCount.value / totalRulesCount.value) * 100);
   });
 
+  const allRules = computed(() => {
+    const automated = [];
+    if (settings.value) {
+        if (settings.value.start_day_by) automated.push({ id: 'auto-1', name: 'Start my day by', settings: settings.value, isManual: false });
+        if (settings.value.link_trades_to_playbook_threshold !== null) automated.push({ id: 'auto-2', name: 'Link trades to playbook', settings: settings.value, isManual: false });
+        if (settings.value.trade_has_stop_loss_threshold !== null) automated.push({ id: 'auto-3', name: 'Trade has stop loss', settings: settings.value, isManual: false });
+        if (settings.value.max_loss_per_trade_value !== null) automated.push({ id: 'auto-4', name: 'Max loss per trade', settings: settings.value, isManual: false });
+        if (settings.value.max_loss_per_day !== null) automated.push({ id: 'auto-5', name: 'Max loss per day', settings: settings.value, isManual: false });
+    }
+    const manual = manualRules.value.map(rule => ({ ...rule, isManual: true }));
+    return [...automated, ...manual];
+  });
+
   // --- ACTIONS ---
 
   async function fetchDisciplineSettings() {
@@ -175,6 +188,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
     completedRulesCount,
     totalRulesCount,
     dailyScore,
+    allRules,
     fetchDisciplineSettings,
     saveDisciplineSettings,
     fetchManualRules,
