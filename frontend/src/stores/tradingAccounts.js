@@ -91,14 +91,13 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
     if (account) {
       localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
-      // Avvia il caricamento di tutti i dati per l'account selezionato.
-      const tradesStore = useTradesStore();
-      tradesStore.fetchAllDataForAccount();
+      // La logica di fetch è stata spostata nell'orchestratore `init.js`
+      // per un caricamento controllato.
     } else {
       localStorage.removeItem('selectedTradingAccount');
-      // Qui potremmo voler pulire i dati dei trade, se necessario.
+      // Pulisce lo store dei trade quando un account viene deselezionato.
       const tradesStore = useTradesStore();
-      tradesStore.$reset(); // Resetta lo store dei trade a stato iniziale
+      tradesStore.$reset();
     }
   }
 

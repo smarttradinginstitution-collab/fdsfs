@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.js'],
+    exclude: ['node_modules'],
     deps: {
       inline: ['@vueuse/core'],
     },

@@ -108,12 +108,14 @@ const router = createRouter({
 // --- NAVIGATION GUARD ---
 import { useAuthStore } from '../stores/auth';
 import { useTradingAccountsStore } from '../stores/tradingAccounts';
+import { useInitStore } from '../stores/init'; // Importa il nuovo store
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const tradingAccountsStore = useTradingAccountsStore();
+  const initStore = useInitStore(); // Usa il nuovo store
 
-  // Ensure auth status is loaded from token
+  // Assicura che lo stato di autenticazione sia caricato dal token
   if (!authStore.token && localStorage.getItem('token')) {
     await authStore.initAuth();
   }
@@ -121,44 +123,42 @@ router.beforeEach(async (to, from, next) => {
   const isAuthenticated = authStore.isAuthenticated;
   const authRequired = !to.meta.public;
 
-  // 1. Handle unauthenticated users trying to access protected routes
+  // 1. Gestisce gli utenti non autenticati che cercano di accedere a route protette
   if (authRequired && !isAuthenticated) {
     return next({ name: 'login', query: { redirect: to.fullPath } });
   }
 
-  // 2. Handle authenticated users
+  // 2. Gestisce gli utenti autenticati
   if (isAuthenticated) {
-    // Redirect away from login/register page if already authenticated
+    // Reindirizza lontano dalla pagina di login/registrazione se già autenticato
     if (to.name === 'login' || to.name === 'register') {
       return next({ name: 'dashboard' });
     }
 
-    // Fetch trading accounts if they haven't been loaded yet.
-    // This is crucial for users who reload the page on a protected route.
-    if (tradingAccountsStore.tradingAccounts.length === 0) {
-      await tradingAccountsStore.fetchTradingAccounts();
+    // Carica i dati della sessione in modo orchestrato se non è già stato fatto.
+    // Questo sostituisce la vecchia logica di caricamento a cascata.
+    if (!initStore.isInitialized) {
+      await initStore.initSessionData();
     }
 
+    // La logica di reindirizzamento si basa sullo stato caricato dall'initStore.
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
     const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
 
-    // Handle routing based on account status
+    // Gestisce il routing basato sullo stato dell'account
     if (to.name === 'add-account') {
-      // If user has accounts, they shouldn't be on the 'add-account' page
       if (hasAccounts) return next({ name: 'dashboard' });
     } else if (to.name === 'select-account') {
-      // If user has NO accounts, they must go to the 'add-account' page first
       if (!hasAccounts) return next({ name: 'add-account' });
-      // If user has already selected an account, send them to the dashboard
       if (hasSelectedAccount) return next({ name: 'dashboard' });
     } else if (authRequired) {
-      // For any other protected page, enforce the setup flow
+      // Per qualsiasi altra pagina protetta, impone il flusso di setup
       if (!hasAccounts) return next({ name: 'add-account' });
       if (!hasSelectedAccount) return next({ name: 'select-account' });
     }
   }
 
-  // 3. If none of the above conditions apply, proceed with navigation
+  // 3. Se nessuna delle condizioni precedenti si applica, procedi con la navigazione
   next();
 });
 
