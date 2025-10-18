@@ -404,5 +404,4 @@ export const useNotebookStore = defineStore('notebook', {
       }
     },
   },
-  persist: true,
 });
