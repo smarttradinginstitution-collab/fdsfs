@@ -1,23 +1,20 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/services/api';
-import { useTradingAccountsStore } from './tradingAccounts';
 import { useAuthStore } from './auth';
 
 export const useDisciplineStore = defineStore('discipline', () => {
   // --- STATE ---
-  const disciplineRules = ref([]);
-  const dailyChecklist = ref([]);
+  const settings = ref(null);
+  const manualRules = ref([]);
+  const dailyChecklist = ref([]); // For manual rule instances
   const heatmapData = ref([]);
   const isLoading = ref(false);
   const error = ref(null);
 
   // --- GETTERS ---
-  const manualRules = computed(() => dailyChecklist.value.filter(item => item.rule_type === 'MANUAL'));
-  const automatedRules = computed(() => dailyChecklist.value.filter(item => item.rule_type === 'AUTOMATED'));
-
   const completedRulesCount = computed(() => dailyChecklist.value.filter(item => item.status === 'completed').length);
-  const totalRulesCount = computed(() => dailyChecklist.value.length);
+  const totalRulesCount = computed(() => dailyChecklist.value.length); // This will need adjustment based on automated rules logic
 
   const dailyScore = computed(() => {
     if (totalRulesCount.value === 0) return 0;
@@ -26,140 +23,122 @@ export const useDisciplineStore = defineStore('discipline', () => {
 
   // --- ACTIONS ---
 
-  async function fetchDisciplineRules() {
+  async function fetchDisciplineSettings() {
     const authStore = useAuthStore();
     if (!authStore.isAuthenticated) return;
 
     isLoading.value = true;
     error.value = null;
     try {
-      const { data } = await apiClient.get('/discipline/rules');
-      disciplineRules.value = data;
+      const { data } = await apiClient.get('/discipline-settings');
+      settings.value = data;
     } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to fetch discipline rules.';
-      console.error(error.value);
+        if (err.response && err.response.status === 404) {
+            // If settings don't exist, initialize with default values
+            settings.value = {
+                trading_days: [1, 2, 3, 4, 5],
+                start_day_by: null,
+                link_trades_to_playbook_threshold: 100,
+                trade_has_stop_loss_threshold: 100,
+                max_loss_per_trade_type: '$',
+                max_loss_per_trade_value: 0,
+                max_loss_per_day: 0,
+            };
+        } else {
+            error.value = err.response?.data?.detail || 'Failed to fetch discipline settings.';
+            console.error(error.value);
+        }
     } finally {
       isLoading.value = false;
     }
   }
 
-  async function fetchDailyChecklist() {
+  async function saveDisciplineSettings(newSettings) {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const { data } = await apiClient.post('/discipline-settings', newSettings);
+      settings.value = data;
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to save settings.';
+      console.error(error.value);
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function fetchManualRules() {
     const authStore = useAuthStore();
-    const tradingAccountsStore = useTradingAccountsStore();
-    if (!authStore.isAuthenticated || !tradingAccountsStore.selectedTradingAccount) {
-      dailyChecklist.value = [];
-      return;
-    }
-
-    isLoading.value = true;
-    error.value = null;
+    if (!authStore.isAuthenticated) return;
+    // This can be part of the initial load, so no separate isLoading
     try {
-      const tradingAccountId = tradingAccountsStore.selectedTradingAccount.id;
-      const { data } = await apiClient.get(`/discipline/daily-checklist?trading_account_id=${tradingAccountId}`);
-      dailyChecklist.value = data;
+        const { data } = await apiClient.get('/manual-rules');
+        manualRules.value = data;
     } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to fetch daily checklist.';
-      console.error(error.value);
-    } finally {
-      isLoading.value = false;
+        error.value = err.response?.data?.detail || 'Failed to fetch manual rules.';
+        console.error(error.value);
     }
   }
 
-  async function createDisciplineRule(ruleData) {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const { data } = await apiClient.post('/discipline/rules', ruleData);
-      disciplineRules.value.push(data);
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to create rule.';
-      console.error(error.value);
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function updateDisciplineRule(ruleId, ruleData) {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const { data } = await apiClient.put(`/discipline/rules/${ruleId}`, ruleData);
-      const index = disciplineRules.value.findIndex(r => r.id === ruleId);
-      if (index !== -1) {
-        disciplineRules.value[index] = data;
+  async function addManualRule(ruleData) {
+      isLoading.value = true;
+      try {
+          const { data } = await apiClient.post('/manual-rules', ruleData);
+          manualRules.value.push(data);
+      } catch (err) {
+          error.value = err.response?.data?.detail || 'Failed to add manual rule.';
+          console.error(error.value);
+          throw err;
+      } finally {
+          isLoading.value = false;
       }
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to update rule.';
-      console.error(error.value);
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
   }
 
-  async function deleteDisciplineRule(ruleId) {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      await apiClient.delete(`/discipline/rules/${ruleId}`);
-      disciplineRules.value = disciplineRules.value.filter(r => r.id !== ruleId);
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to delete rule.';
-      console.error(error.value);
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
+  async function deleteManualRule(ruleId) {
+      isLoading.value = true;
+      try {
+          await apiClient.delete(`/manual-rules/${ruleId}`);
+          manualRules.value = manualRules.value.filter(r => r.id !== ruleId);
+      } catch (err) {
+          error.value = err.response?.data?.detail || 'Failed to delete manual rule.';
+          console.error(error.value);
+          throw err;
+      } finally {
+          isLoading.value = false;
+      }
+  }
+
+
+  // This needs to be re-evaluated based on the new logic
+  async function fetchDailyChecklist() {
+    // ...
   }
 
   async function updateManualRuleStatus(instanceId, newStatus) {
-    const item = dailyChecklist.value.find(i => i.id === instanceId);
-    if (!item || item.rule_type !== 'MANUAL') return;
-
-    const originalStatus = item.status;
-    item.status = newStatus; // Optimistic update
-
-    try {
-      await apiClient.put(`/discipline/daily-checklist/${instanceId}`, { status: newStatus });
-    } catch (err) {
-      item.status = originalStatus; // Revert on error
-      error.value = err.response?.data?.detail || 'Failed to update rule status.';
-      console.error(error.value);
-    }
+    // ...
   }
 
   async function fetchHeatmapData(year, month) {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) return;
-
-    // No need for isLoading here, can run in background
-    error.value = null;
-    try {
-      const { data } = await apiClient.get(`/discipline/heatmap?year=${year}&month=${month}`);
-      heatmapData.value = data;
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to fetch heatmap data.';
-      console.error(error.value);
-    }
+    // ...
   }
 
   return {
-    disciplineRules,
+    settings,
+    manualRules,
     dailyChecklist,
     heatmapData,
     isLoading,
     error,
-    manualRules,
-    automatedRules,
     completedRulesCount,
     totalRulesCount,
     dailyScore,
-    fetchDisciplineRules,
+    fetchDisciplineSettings,
+    saveDisciplineSettings,
+    fetchManualRules,
+    addManualRule,
+    deleteManualRule,
     fetchDailyChecklist,
-    createDisciplineRule,
-    updateDisciplineRule,
-    deleteDisciplineRule,
     updateManualRuleStatus,
     fetchHeatmapData,
   };

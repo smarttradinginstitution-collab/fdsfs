@@ -8,13 +8,13 @@
       />
       <DailyChecklist
         :manual-rules="disciplineStore.manualRules"
-        :automated-rules="disciplineStore.automatedRules"
+        :automated-rules="[]"
         @update-rule-status="handleUpdateStatus"
       />
       <CalendarHeatmap :heatmap-data="disciplineStore.heatmapData" />
     </div>
     <RulesTable
-      :rules="disciplineStore.disciplineRules"
+      :rules="disciplineStore.manualRules"
       @edit-rules="isEditModalOpen = true"
     />
     <EditRulesModal
@@ -38,8 +38,9 @@ const disciplineStore = useDisciplineStore();
 const isEditModalOpen = ref(false);
 
 onMounted(() => {
+  disciplineStore.fetchDisciplineSettings();
+  disciplineStore.fetchManualRules();
   disciplineStore.fetchDailyChecklist();
-  disciplineStore.fetchDisciplineRules();
 
   const today = new Date();
   const year = today.getFullYear();
@@ -52,8 +53,10 @@ function handleUpdateStatus(instanceId, newStatus) {
 }
 
 function handleSaveRules() {
-  // Logic to save rules will be implemented here
-  console.log('Saving rules...');
+  // Refetch data to ensure the view is up-to-date
+  disciplineStore.fetchDisciplineSettings();
+  disciplineStore.fetchManualRules();
+  isEditModalOpen.value = false;
 }
 </script>
 

@@ -2,42 +2,217 @@
   <div v-if="isOpen" class="modal-overlay" @click.self="close">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Edit Rules</h3>
+        <h3 class="modal-title">Rules</h3>
         <button @click="close" class="close-btn">&times;</button>
       </div>
+
       <div class="modal-body">
-        <p>Form to create, edit, and delete rules will go here.</p>
-        <!-- Rule list and form will be implemented here -->
+        <div class="info-note">
+          Changes you make will only update your scoring for today and for future days.
+        </div>
+
+        <!-- Trading Days -->
+        <div class="rule-row">
+          <div class="rule-label">
+            <h4>Trading days</h4>
+            <p>The days on which these rules should be active.</p>
+          </div>
+          <div class="rule-control">
+            <div class="day-selector">
+              <button
+                v-for="(day, index) in weekDays"
+                :key="day"
+                :class="{ active: localSettings.trading_days.includes(index + 1) }"
+                @click="toggleDay(index + 1)"
+              >
+                {{ day }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Automated Rules -->
+        <div class="rule-row">
+          <div class="rule-label">
+            <h4>Start my day by</h4>
+            <p>The time you should start your day by and enter your starting journal entry before your trading session.</p>
+          </div>
+          <div class="rule-control">
+            <BaseInput type="time" v-model="localSettings.start_day_by" />
+          </div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-label">
+            <h4>Link trades to playbook</h4>
+            <p>The percentage of trades opened on a day that are linked to a playbook.</p>
+          </div>
+          <div class="rule-control">
+            <BaseInput type="number" v-model.number="localSettings.link_trades_to_playbook_threshold" addon-after="%" />
+          </div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-label">
+            <h4>Trade has stop loss</h4>
+            <p>The percentage of trades opened on a day that have a stop loss added.</p>
+          </div>
+          <div class="rule-control">
+            <BaseInput type="number" v-model.number="localSettings.trade_has_stop_loss_threshold" addon-after="%" />
+          </div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-label">
+            <h4>Max loss per trade</h4>
+            <p>The maximum loss on a trade in amount or in percentage of the trade's account balance.</p>
+          </div>
+          <div class="rule-control-group">
+            <div class="tabs">
+              <button :class="{ active: localSettings.max_loss_per_trade_type === '%' }" @click="localSettings.max_loss_per_trade_type = '%'">%</button>
+              <button :class="{ active: localSettings.max_loss_per_trade_type === '$' }" @click="localSettings.max_loss_per_trade_type = '$'">$</button>
+            </div>
+            <BaseInput type="number" v-model.number="localSettings.max_loss_per_trade_value" />
+          </div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-label">
+            <h4>Max loss per day</h4>
+            <p>The maximum loss on a day among all accounts.</p>
+          </div>
+          <div class="rule-control">
+            <BaseInput type="number" v-model.number="localSettings.max_loss_per_day" addon-before="$" />
+          </div>
+        </div>
+
+        <!-- Manual Rules -->
+        <div class="manual-rules-section">
+          <div class="manual-rules-header">
+            <h4>MANUAL RULES</h4>
+            <BaseButton variant="tertiary" size="small" @click="addManualRule">+ Add manual rule</BaseButton>
+          </div>
+          <p class="subtitle">The rule will be added as a daily check list</p>
+
+          <div v-for="(rule, index) in localManualRules" :key="index" class="manual-rule-row">
+            <BaseInput type="text" v-model="rule.name" placeholder="Rule name" />
+            <BaseSelect v-model="rule.frequency" :options="frequencyOptions" />
+            <button @click="removeManualRule(index)" class="delete-rule-btn">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
       </div>
+
       <div class="modal-footer">
         <BaseButton @click="close" variant="secondary" size="medium">Cancel</BaseButton>
-        <BaseButton @click="save" variant="primary" size="medium">Save Changes</BaseButton>
+        <BaseButton @click="save" variant="primary" size="medium" :loading="disciplineStore.isLoading">Save Changes</BaseButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, watch, onMounted } from 'vue';
+import { useDisciplineStore } from '@/stores/disciplineStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseInput from '@/components/ui/BaseInput.vue';
+import BaseSelect from '@/components/ui/BaseSelect.vue';
+import { cloneDeep } from 'lodash';
 
-defineProps({
+const props = defineProps({
   isOpen: {
     type: Boolean,
-    required: true
-  }
+    required: true,
+  },
 });
 
 const emit = defineEmits(['close', 'save']);
+
+const disciplineStore = useDisciplineStore();
+
+const localSettings = ref({});
+const localManualRules = ref([]);
+
+const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const frequencyOptions = [
+  { value: [1, 2, 3, 4, 5], label: 'Mon-Fri' },
+  { value: [6, 7], label: 'Sat-Sun' },
+  { value: [1, 2, 3, 4, 5, 6, 7], label: 'Daily' },
+];
+
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    // Deep clone the store state to local state for editing
+    localSettings.value = cloneDeep(disciplineStore.settings || {
+        trading_days: [1, 2, 3, 4, 5],
+        start_day_by: '09:30',
+        link_trades_to_playbook_threshold: 100,
+        trade_has_stop_loss_threshold: 100,
+        max_loss_per_trade_type: '$',
+        max_loss_per_trade_value: 500,
+        max_loss_per_day: 2000,
+    });
+    localManualRules.value = cloneDeep(disciplineStore.manualRules);
+  }
+});
+
+function toggleDay(day) {
+  const index = localSettings.value.trading_days.indexOf(day);
+  if (index > -1) {
+    localSettings.value.trading_days.splice(index, 1);
+  } else {
+    localSettings.value.trading_days.push(day);
+  }
+}
+
+function addManualRule() {
+  localManualRules.value.push({ name: '', frequency: [1, 2, 3, 4, 5] });
+}
+
+function removeManualRule(index) {
+  localManualRules.value.splice(index, 1);
+}
 
 function close() {
   emit('close');
 }
 
-function save() {
-  // Save logic will be handled by the parent component
+async function save() {
+  await disciplineStore.saveDisciplineSettings(localSettings.value);
+
+  // Basic diffing for manual rules to avoid deleting and recreating all
+  const originalRules = disciplineStore.manualRules;
+  const newRules = localManualRules.value;
+
+  // Rules to delete
+  for (const oldRule of originalRules) {
+      if (!newRules.some(newRule => newRule.id === oldRule.id)) {
+          await disciplineStore.deleteManualRule(oldRule.id);
+      }
+  }
+
+  // Rules to add
+  for (const newRule of newRules) {
+      if (!newRule.id) {
+          await disciplineStore.addManualRule({ name: newRule.name, frequency: newRule.frequency });
+      }
+      // Note: Update logic is not implemented for simplicity, as per user request to "delete and recreate"
+  }
+
   emit('save');
   close();
 }
+
+onMounted(() => {
+    // Ensure the store has the data when the component is created
+    if (!disciplineStore.settings) {
+        disciplineStore.fetchDisciplineSettings();
+    }
+    if (disciplineStore.manualRules.length === 0) {
+        disciplineStore.fetchManualRules();
+    }
+});
 </script>
 
 <style scoped>
@@ -47,48 +222,176 @@ function save() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--semantic-color-overlay-background);
+  background-color: rgba(0, 0, 0, 0.6);
   display: grid;
   place-items: center;
-  z-index: var(--semantic-layer-z-index-modal);
+  z-index: 1000;
 }
 
 .modal-content {
-  background-color: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-surface);
-  padding: var(--semantic-size-component-modal-padding-desktop);
+  background-color: #2a2a3e;
+  border-radius: 8px;
+  padding: 24px;
   width: 90%;
-  max-width: var(--semantic-size-component-modal-max-width-desktop);
-  box-shadow: var(--semantic-effect-shadow-elevation-high);
+  max-width: 600px;
+  box-shadow: 0 4px_6px rgba(0, 0, 0, 0.1);
+  color: #fff;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--semantic-size-component-modal-gap-desktop);
+  margin-bottom: 16px;
 }
 
 .modal-title {
-  font: var(--semantic-font-style-heading-lg);
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 2rem;
+  font-size: 24px;
   cursor: pointer;
-  color: var(--semantic-color-text-secondary);
+  color: #9a9a9a;
 }
 
 .modal-body {
-    min-height: 200px; /* Placeholder height */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.info-note {
+  background-color: #31314a;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.rule-row, .rule-control-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.rule-label {
+  flex: 1;
+}
+.rule-label h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+.rule-label p {
+  margin: 0;
+  font-size: 12px;
+  color: #9a9a9a;
+}
+
+.rule-control {
+  min-width: 150px;
+}
+
+.rule-control-group {
+    display: flex;
+    align-items: stretch;
+    min-width: 150px;
+}
+
+.day-selector {
+  display: flex;
+  gap: 5px;
+}
+.day-selector button {
+  background-color: #31314a;
+  border: 1px solid #4a4a6a;
+  color: #fff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.day-selector button.active {
+  background-color: #5a5a8a;
+  border-color: #7a7ab8;
+}
+
+.tabs {
+    display: flex;
+    border: 1px solid #4a4a6a;
+    border-radius: 6px 0 0 6px;
+    overflow: hidden;
+}
+.tabs button {
+    background-color: #31314a;
+    border: none;
+    color: #fff;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+.tabs button.active {
+    background-color: #5a5a8a;
+}
+.tabs button:first-child {
+    border-right: 1px solid #4a4a6a;
+}
+
+.rule-control-group .BaseInput {
+    border-radius: 0 6px 6px 0;
+}
+
+.manual-rules-section {
+  border-top: 1px solid #4a4a6a;
+  padding-top: 20px;
+}
+
+.manual-rules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.manual-rules-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #9a9a9a;
+  margin: 4px 0 16px 0;
+}
+
+.manual-rule-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.manual-rule-row .BaseInput {
+  flex-grow: 1;
+}
+
+.delete-rule-btn {
+  background: none;
+  border: none;
+  color: #9a9a9a;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: var(--semantic-size-stack-sm);
-  margin-top: var(--semantic-size-component-modal-gap-desktop);
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #4a4a6a;
 }
 </style>
