@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, TYPE_CHECKING, Optional, List
 from datetime import date
-from sqlalchemy import String, TIMESTAMP, func, ForeignKey, DATE
+from sqlalchemy import String, TIMESTAMP, func, ForeignKey, DATE, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -49,6 +49,9 @@ class Note(Base):
     )
     deleted_at: Mapped[Optional[Any]] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
+    )
+    starting_balance_of_day: Mapped[Optional[float]] = mapped_column(
+        Numeric, nullable=True
     )
 
     # Relationships

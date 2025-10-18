@@ -69,3 +69,14 @@ class DailyRuleInstanceRepository:
             await self.db.commit()
             await self.db.refresh(instance)
         return instance
+
+    async def delete(self, instance_id: UUID) -> bool:
+        """
+        Deletes a daily rule instance by its ID.
+        """
+        instance = await self.get_by_id(instance_id)
+        if instance:
+            await self.db.delete(instance)
+            await self.db.commit()
+            return True
+        return False

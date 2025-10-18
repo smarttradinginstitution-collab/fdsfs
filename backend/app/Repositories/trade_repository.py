@@ -74,6 +74,12 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def get_all_trades_for_account(self, trading_account_id: UUID) -> List[Trade]:
+        """Recupera tutti i trade per un dato trading account, senza filtri di data."""
+        query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
+        result = await self.db.execute(query)
+        return result.unique().scalars().all()
+
     async def get_trades_for_dna_analysis(
         self,
         general_account_id: UUID,

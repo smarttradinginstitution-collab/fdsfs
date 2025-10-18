@@ -14,13 +14,11 @@ class DisciplineRuleBase(BaseModel):
 class DisciplineRuleCreate(DisciplineRuleBase):
     pass
 
-class DisciplineRuleUpdate(BaseModel):
-    rule_type: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    condition_type: Optional[str] = None
-    condition_value: Optional[Dict[str, Any]] = None
-    active_days: Optional[List[int]] = None
+class DisciplineRuleUpdate(DisciplineRuleBase):
+    id: Optional[uuid.UUID] = None # Used to identify existing rules during bulk update
+
+class DisciplineRuleBulkUpdate(BaseModel):
+    rules: List[DisciplineRuleUpdate]
 
 class DisciplineRuleRead(DisciplineRuleBase):
     id: uuid.UUID

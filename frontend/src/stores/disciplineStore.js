@@ -65,49 +65,30 @@ export const useDisciplineStore = defineStore('discipline', () => {
     }
   }
 
-  async function createDisciplineRule(ruleData) {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const { data } = await apiClient.post('/discipline/rules', ruleData);
-      disciplineRules.value.push(data);
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to create rule.';
-      console.error(error.value);
-      throw err;
-    } finally {
-      isLoading.value = false;
+  async function bulkUpdateDisciplineRules(rules) {
+    const tradingAccountsStore = useTradingAccountsStore();
+    if (!tradingAccountsStore.selectedTradingAccount) {
+      error.value = "No trading account selected.";
+      return;
     }
-  }
 
-  async function updateDisciplineRule(ruleId, ruleData) {
     isLoading.value = true;
     error.value = null;
     try {
-      const { data } = await apiClient.put(`/discipline/rules/${ruleId}`, ruleData);
-      const index = disciplineRules.value.findIndex(r => r.id === ruleId);
-      if (index !== -1) {
-        disciplineRules.value[index] = data;
-      }
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to update rule.';
-      console.error(error.value);
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  }
+      const tradingAccountId = tradingAccountsStore.selectedTradingAccount.id;
+      const payload = { rules: rules };
+      const { data } = await apiClient.post(`/discipline/rules/bulk-update?trading_account_id=${tradingAccountId}`, payload);
 
-  async function deleteDisciplineRule(ruleId) {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      await apiClient.delete(`/discipline/rules/${ruleId}`);
-      disciplineRules.value = disciplineRules.value.filter(r => r.id !== ruleId);
+      // Replace local rules with the server's response
+      disciplineRules.value = data;
+
+      // Refresh the daily checklist to reflect changes
+      await fetchDailyChecklist();
+
     } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to delete rule.';
+      error.value = err.response?.data?.detail || 'Failed to update rules.';
       console.error(error.value);
-      throw err;
+      throw err; // Re-throw to be caught in the component
     } finally {
       isLoading.value = false;
     }
@@ -157,9 +138,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
     dailyScore,
     fetchDisciplineRules,
     fetchDailyChecklist,
-    createDisciplineRule,
-    updateDisciplineRule,
-    deleteDisciplineRule,
+    bulkUpdateDisciplineRules,
     updateManualRuleStatus,
     fetchHeatmapData,
   };

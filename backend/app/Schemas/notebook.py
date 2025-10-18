@@ -22,6 +22,7 @@ class NoteCreate(NoteBase):
     folder_id: UUID = Field(..., description="The ID of the folder this note belongs to")
     title: str = Field(..., description="The title of the note is required for creation")
     trade_id: Optional[UUID] = Field(None, description="The optional ID of the trade this note is linked to")
+    starting_balance_of_day: Optional[float] = Field(None, description="The balance of the trading account at the start of the day")
 
 class NoteUpdate(NoteBase):
     pass
@@ -30,6 +31,7 @@ class NoteRead(NoteBase):
     id: UUID
     folder_id: UUID
     trade_id: Optional[UUID] = None
+    starting_balance_of_day: Optional[float] = None
     trade: Optional[TradeRead] = None # Include full trade details
     templates: List[NoteTemplateRead] = []
     created_at: datetime

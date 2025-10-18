@@ -7,7 +7,7 @@ from app.Infrastructure.db import get_db
 from app.Services.discipline_service import DisciplineService
 from app.Router.dependencies import get_current_general_account_id
 import datetime
-from app.Schemas.discipline.discipline_rule import DisciplineRuleCreate, DisciplineRuleRead, DisciplineRuleUpdate
+from app.Schemas.discipline.discipline_rule import DisciplineRuleRead, DisciplineRuleBulkUpdate
 from app.Schemas.discipline.daily_rule_instance import DailyRuleInstanceRead, DailyRuleInstanceUpdate
 from app.Schemas.discipline.heatmap import HeatmapData
 
@@ -30,43 +30,27 @@ async def list_discipline_rules(
     """
     return await service.rule_repo.list_by_general_account(general_account_id)
 
-@router.post("/rules", response_model=DisciplineRuleRead, status_code=status.HTTP_201_CREATED)
-async def create_discipline_rule(
-    rule_in: DisciplineRuleCreate,
+@router.post("/rules/bulk-update", response_model=List[DisciplineRuleRead])
+async def bulk_update_discipline_rules(
+    update_data: DisciplineRuleBulkUpdate,
+    trading_account_id: UUID, # Needed to find today's checklist
     general_account_id: UUID = Depends(get_current_general_account_id),
     service: DisciplineService = Depends(get_discipline_service),
 ):
     """
-    Create a new discipline rule.
+    Create, update, and delete discipline rules in a single transaction
+    and intelligently update the current day's checklist.
     """
-    rule_data = rule_in.model_dump()
-    rule_data["general_account_id"] = general_account_id
-    return await service.rule_repo.create(rule_data)
-
-@router.put("/rules/{rule_id}", response_model=DisciplineRuleRead)
-async def update_discipline_rule(
-    rule_id: UUID,
-    rule_in: DisciplineRuleUpdate,
-    service: DisciplineService = Depends(get_discipline_service),
-):
-    """
-    Update an existing discipline rule.
-    """
-    updated_rule = await service.rule_repo.update(rule_id, rule_in.model_dump(exclude_unset=True))
-    if not updated_rule:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
-    return updated_rule
-
-@router.delete("/rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_discipline_rule(
-    rule_id: UUID,
-    service: DisciplineService = Depends(get_discipline_service),
-):
-    """
-    Delete a discipline rule.
-    """
-    if not await service.rule_repo.delete(rule_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+    try:
+        updated_rules = await service.bulk_update_rules(
+            general_account_id=general_account_id,
+            trading_account_id=trading_account_id,
+            rules_in=update_data.rules
+        )
+        return updated_rules
+    except Exception as e:
+        # A more specific exception handling could be implemented
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @router.get("/daily-checklist", response_model=List[DailyRuleInstanceRead])
 async def get_daily_checklist(
