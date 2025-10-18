@@ -18,7 +18,7 @@ const authStore = useAuthStore();
 // --- Inactivity Timer ---
 const { start: startInactivityTimer, stop: stopInactivityTimer } = useInactivityTimer(
   authStore.logout,
-  600 // 60 secondi di inattività
+  600 // 600 secondi di inattività
 );
 
 watch(
