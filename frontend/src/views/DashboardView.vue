@@ -15,8 +15,6 @@ import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
-import { useAuthStore } from '@/stores/auth';
-import { useNotebookStore } from '@/stores/notebookStore';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
@@ -26,8 +24,6 @@ const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
-const authStore = useAuthStore();
-const notebookStore = useNotebookStore();
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -51,49 +47,28 @@ const editButtonText = computed(() => {
   return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
 });
 
-// --- Data Fetching Orchestration ---
+// --- Data Fetching ---
+onMounted(() => {
+  // Carica il layout della dashboard al montaggio del componente.
+  dashboardLayoutStore.fetchLayout();
+});
 
-async function orchestrateDashboardLoad() {
-  console.log('%c[Orchestrator] Inizio caricamento dati dashboard...', 'color: blue; font-weight: bold;');
-
-  // --- GRUPPO 2: Dati principali della Dashboard ---
-  console.log('%c[Orchestrator] Avvio GRUPPO 2 (Dati Core Dashboard)', 'color: blue;');
-  const group2Promises = [
-    dashboardLayoutStore.fetchLayout(),
-    tradesStore.fetchAllDataForDashboard(),
-    notebookStore.fetchFolders(),
-    notebookStore.fetchAllNotes(),
-    tradesStore.fetchTrades({ ignoreFilters: true }),
-  ];
-  await Promise.allSettled(group2Promises);
-  console.log('%c[Orchestrator] Completato GRUPPO 2.', 'color: blue;');
-
-  // --- GRUPPO 3: Dati di sessione (lanciato dopo il Gruppo 2) ---
-  console.log('%c[Orchestrator] Avvio GRUPPO 3 (Dati di Sessione)', 'color: blue;');
-  authStore.initSessionData();
-}
-
-// Esegui l'orchestrazione completa quando il componente viene montato
-// e ogni volta che il conto di trading selezionato cambia.
+// Watch for filter changes and refetch all dashboard data
 watch(
-  () => tradingAccountsStore.selectedTradingAccount,
-  (newAccount) => {
-    if (newAccount) {
-      orchestrateDashboardLoad();
-    }
-  },
-  { immediate: true } // Esegui subito al primo caricamento
-);
-
-// Watch per i cambi di filtri: ricarica solo i dati della dashboard (Gruppo 2), non i dati di sessione.
-watch(
-  () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
-  (newValue, oldValue) => {
-    if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
+  () => [
+    filterStore.startDate,
+    filterStore.endDate,
+    filterStore.selectedStrategy,
+    tradingAccountsStore.selectedTradingAccount
+  ],
+  () => {
+    // I dati globali (trades, notes, etc.) sono già stati caricati da initSessionData.
+    // Qui carichiamo solo i dati aggregati che dipendono dai filtri e dall'account selezionato.
+    if (tradingAccountsStore.selectedTradingAccount) {
       tradesStore.fetchAllDataForDashboard();
     }
   },
-  { deep: true }
+  { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
 );
 
 // Watch for the user finishing layout editing

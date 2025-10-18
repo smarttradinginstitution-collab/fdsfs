@@ -13,6 +13,7 @@ import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
 import { useTagsStore } from './tagsStore';
 import { useTradingDnaStore } from './tradingDnaStore';
+import { useTradesStore } from './trades';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -37,14 +38,18 @@ export const useAuthStore = defineStore('auth', () => {
    * dopo che l'autenticazione è stata confermata.
    */
   async function initSessionData() {
-    console.log('%c[AuthStore] Inizio initSessionData (Gruppo 3)...', 'color: purple;');
-    // Carica i dati di sessione del Gruppo 3
+    const notebookStore = useNotebookStore();
+    const tradesStore = useTradesStore();
+
+    // Carica tutti i dati di sessione globali in parallelo
     await Promise.allSettled([
       usePlaybookStore().fetchPlaybooks(),
       useTagsStore().fetchAllTagsData(),
       useTradingDnaStore().fetchTradingDnaReport(),
+      notebookStore.fetchFolders(),
+      notebookStore.fetchAllNotes(),
+      tradesStore.fetchTrades({ ignoreFilters: true }), // Carica tutti i trade per l'account
     ]);
-    console.log('%c[AuthStore] Completato initSessionData.', 'color: purple;');
   }
 
   // Funzione per recuperare il General Account
@@ -54,8 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
       generalAccount.value = data;
       localStorage.setItem('generalAccount', JSON.stringify(data));
 
-      // Il caricamento dei dati di sessione verrà ora gestito dalla DashboardView.
-      // await initSessionData();
+      // Una volta ottenuto il GA, avvia il caricamento dei dati di sessione.
+      await initSessionData();
 
       return true;
     } catch (error) {
