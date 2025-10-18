@@ -8,20 +8,14 @@
 -->
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import { useTradesStore } from '@/stores/trades';
-import BaseTable from '@/components/ui/BaseTable.vue';
-import KpiDashboard from '@/components/KpiDashboard.vue';
-import BaseButton from '@/components/ui/BaseButton.vue'; // Importiamo il componente bottone
-import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
-
-// --- STORE E STATO LOCALE ---
-const tradesStore = useTradesStore();
-const selectedTrades = ref([]); // Stato per le righe selezionate
-
-import { watch } from 'vue';
 import { useFilterStore } from '@/stores/filterStore';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import BaseTable from '@/components/ui/BaseTable.vue';
+import KpiDashboard from '@/components/KpiDashboard.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
 // --- STORE E STATO LOCALE ---
 const tradesStore = useTradesStore();
