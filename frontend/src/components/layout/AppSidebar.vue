@@ -50,6 +50,7 @@ const navLinks = [
   { to: '/playbooks', text: 'Playbooks', icon: BuildingLibraryIcon },
   { to: '/trades', text: 'Trades', icon: ViewListIcon },
   { to: '/notebook', text: 'Notebook', icon: BookOpenIcon },
+  { to: '/progress-tracker', text: 'Progress', icon: ChartBarIcon },
   { to: '/analytics', text: 'Analytics', icon: SparkleIcon },
   { to: '/library', text: 'Library', icon: FilterIcon },
   { to: '#', text: 'Settings', icon: SettingsIcon },
