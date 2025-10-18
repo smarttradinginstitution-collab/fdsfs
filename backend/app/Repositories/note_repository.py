@@ -103,20 +103,36 @@ class NoteRepository:
 
     async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
-        db_note = Note(**note_in.model_dump())
+        # First, fetch the parent folder to get the general_account_id
+        folder = await self.db.get(NotebookFolder, note_in.folder_id)
+        if not folder:
+            raise HTTPException(status_code=404, detail="Parent folder not found.")
+
+        note_data = note_in.model_dump()
+        note_data["general_account_id"] = folder.general_account_id
+
+        db_note = Note(**note_data)
         self.db.add(db_note)
         try:
             await self.db.commit()
-        except IntegrityError:
+        except IntegrityError as e:
             await self.db.rollback()
+            # A more specific error message could be useful here
+            # Check for unique constraint violation message, which can differ between DBs
+            if 'UNIQUE constraint failed' in str(e) or 'notes_trade_id_key' in str(e):
+                 raise HTTPException(
+                    status_code=409,
+                    detail="A note for this trade already exists.",
+                )
+            # Re-raise for other integrity errors, providing more context
             raise HTTPException(
-                status_code=409,
-                detail="A note for this trade already exists.",
+                status_code=500,
+                detail=f"An integrity error occurred: {e.orig}",
             )
 
         newly_created_note = await self.get_by_id(db_note.id)
         if not newly_created_note:
-            raise Exception("Failed to fetch newly created note.")
+            raise Exception("Failed to fetch newly created note after creation.") # Changed error message for clarity
         return newly_created_note
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:

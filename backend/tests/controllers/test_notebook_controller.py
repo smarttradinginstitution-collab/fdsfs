@@ -69,6 +69,7 @@ async def setup_entities(async_client: AsyncClient, db_session: AsyncSession):
         content={"type": "doc", "content": [{"type": "paragraph"}]},
         folder_id=UUID(folder["id"]),
         trade_id=trade.id,
+        general_account_id=trading_account.general_account_id,
     )
     db_session.add(note)
     await db_session.commit()

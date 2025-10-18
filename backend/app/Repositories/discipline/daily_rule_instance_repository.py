@@ -38,6 +38,23 @@ class DailyRuleInstanceRepository:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+    async def find_by_account_and_date_range(self, general_account_id: UUID, start_date: datetime.date, end_date: datetime.date) -> Sequence[tuple[DailyRuleInstance, datetime.date]]:
+        """
+        Finds all daily rule instances for a general account within a date range,
+        returning both the instance and the note's date to avoid N+1 queries.
+        """
+        stmt = (
+            select(DailyRuleInstance, Note.note_date)
+            .join(Note, DailyRuleInstance.daily_journal_id == Note.id)
+            .where(
+                Note.general_account_id == general_account_id,
+                Note.note_date >= start_date,
+                Note.note_date <= end_date
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.all()
+
     async def update(self, instance_id: UUID, data: dict) -> Optional[DailyRuleInstance]:
         """
         Updates a daily rule instance.

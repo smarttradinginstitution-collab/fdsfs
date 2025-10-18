@@ -11,7 +11,7 @@
         :automated-rules="disciplineStore.automatedRules"
         @update-rule-status="handleUpdateStatus"
       />
-      <CalendarHeatmap />
+      <CalendarHeatmap :heatmap-data="disciplineStore.heatmapData" />
     </div>
     <RulesTable
       :rules="disciplineStore.disciplineRules"
@@ -40,6 +40,11 @@ const isEditModalOpen = ref(false);
 onMounted(() => {
   disciplineStore.fetchDailyChecklist();
   disciplineStore.fetchDisciplineRules();
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1; // JS months are 0-indexed
+  disciplineStore.fetchHeatmapData(year, month);
 });
 
 function handleUpdateStatus(instanceId, newStatus) {

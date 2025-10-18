@@ -90,10 +90,10 @@ async def test_update_note_raises_on_duplicate_trade_id(db_session: AsyncSession
     folder, trade1, trading_account = setup_dependencies
 
     # 1. ARRANGE: Create and commit the initial state
-    note1 = Note(id=uuid4(), title="Note 1", folder_id=folder.id, trade_id=trade1.id, content={})
+    note1 = Note(id=uuid4(), title="Note 1", folder_id=folder.id, trade_id=trade1.id, content={}, general_account_id=folder.general_account_id)
 
     trade2 = Trade(id=uuid4(), trading_account_id=trading_account.id)
-    note2 = Note(id=uuid4(), title="Note 2", folder_id=folder.id, trade_id=trade2.id, content={})
+    note2 = Note(id=uuid4(), title="Note 2", folder_id=folder.id, trade_id=trade2.id, content={}, general_account_id=folder.general_account_id)
 
     db_session.add_all([note1, trade2, note2])
     await db_session.commit()

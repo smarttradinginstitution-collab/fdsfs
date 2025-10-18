@@ -6,8 +6,10 @@ from typing import List
 from app.Infrastructure.db import get_db
 from app.Services.discipline_service import DisciplineService
 from app.Router.dependencies import get_current_general_account_id
+import datetime
 from app.Schemas.discipline.discipline_rule import DisciplineRuleCreate, DisciplineRuleRead, DisciplineRuleUpdate
 from app.Schemas.discipline.daily_rule_instance import DailyRuleInstanceRead, DailyRuleInstanceUpdate
+from app.Schemas.discipline.heatmap import HeatmapData
 
 router = APIRouter(
     prefix="/api/v1/discipline",
@@ -90,3 +92,23 @@ async def update_daily_checklist_item(
     if not updated_instance:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instance not found or not a manual rule")
     return updated_instance
+
+@router.get("/heatmap", response_model=List[HeatmapData])
+async def get_heatmap_data(
+    year: int,
+    month: int,
+    general_account_id: UUID = Depends(get_current_general_account_id),
+    service: DisciplineService = Depends(get_discipline_service),
+):
+    """
+    Get the heatmap data for a specific month.
+    """
+    if not 1 <= month <= 12:
+        raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+
+    # You might want to add validation for the year as well
+    current_year = datetime.datetime.now().year
+    if not 2000 <= year <= current_year + 1:
+        raise HTTPException(status_code=400, detail=f"Year must be between 2000 and {current_year + 1}")
+
+    return await service.get_heatmap_data(general_account_id, year, month)

@@ -8,6 +8,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
   // --- STATE ---
   const disciplineRules = ref([]);
   const dailyChecklist = ref([]);
+  const heatmapData = ref([]);
   const isLoading = ref(false);
   const error = ref(null);
 
@@ -128,9 +129,25 @@ export const useDisciplineStore = defineStore('discipline', () => {
     }
   }
 
+  async function fetchHeatmapData(year, month) {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
+    // No need for isLoading here, can run in background
+    error.value = null;
+    try {
+      const { data } = await apiClient.get(`/discipline/heatmap?year=${year}&month=${month}`);
+      heatmapData.value = data;
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to fetch heatmap data.';
+      console.error(error.value);
+    }
+  }
+
   return {
     disciplineRules,
     dailyChecklist,
+    heatmapData,
     isLoading,
     error,
     manualRules,
@@ -144,5 +161,6 @@ export const useDisciplineStore = defineStore('discipline', () => {
     updateDisciplineRule,
     deleteDisciplineRule,
     updateManualRuleStatus,
+    fetchHeatmapData,
   };
 });

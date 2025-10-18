@@ -51,7 +51,13 @@ class Note(Base):
         TIMESTAMP(timezone=True), nullable=True
     )
 
+    general_account_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     # Relationships
+    general_account: Mapped["GeneralAccount"] = relationship(back_populates="notes")
     folder: Mapped["NotebookFolder"] = relationship(
         "NotebookFolder", back_populates="notes"
     )

@@ -107,3 +107,34 @@ class DisciplineService:
         if instance and instance.rule_type == 'MANUAL':
             return await self.instance_repo.update(instance_id, {"status": status})
         return None
+
+    async def get_heatmap_data(self, general_account_id: UUID, year: int, month: int) -> list[dict]:
+        import calendar
+        from collections import defaultdict
+
+        # 1. Get the date range for the given month
+        _, num_days = calendar.monthrange(year, month)
+        start_date = datetime.date(year, month, 1)
+        end_date = datetime.date(year, month, num_days)
+
+        # 2. Fetch all relevant rule instances and their dates for the month
+        instance_date_tuples = await self.instance_repo.find_by_account_and_date_range(general_account_id, start_date, end_date)
+
+        # 3. Group instances by date
+        instances_by_date = defaultdict(list)
+        for instance, note_date in instance_date_tuples:
+            instances_by_date[note_date].append(instance)
+
+        # 4. Calculate score for each day
+        heatmap_data = []
+        for day, day_instances in instances_by_date.items():
+            if not day_instances:
+                continue
+
+            completed_count = sum(1 for i in day_instances if i.status == 'completed')
+            total_count = len(day_instances)
+            score = (completed_count / total_count) if total_count > 0 else 0.0
+
+            heatmap_data.append({"date": day, "score": score})
+
+        return heatmap_data
