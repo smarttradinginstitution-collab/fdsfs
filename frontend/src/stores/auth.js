@@ -9,17 +9,21 @@ import { ref, computed } from 'vue';
 import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
 import { useUiStore } from './uiStore';
+import { usePlaybookStore } from './playbookStore';
+import { useNotebookStore } from './notebookStore';
+import { useTagsStore } from './tagsStore';
+import { useTradesStore } from './trades';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
   const user = ref(JSON.parse(localStorage.getItem('user')) || null);
   const token = ref(localStorage.getItem('token') || null);
-  const generalAccount = ref(JSON.parse(localStorage.getItem('generalAccount')) || null); // Nuovo state per il General Account
+  const generalAccount = ref(JSON.parse(localStorage.getItem('generalAccount')) || null);
   const mfaChallenge = ref(null);
-  const mfaAal1Token = ref(null); // Token temporaneo AAL1 per la verifica
+  const mfaAal1Token = ref(null);
 
   // --- GETTERS ---
-  const isAuthenticated = computed(() => !!token.value && !!generalAccount.value); // L'utente è autenticato solo se ha anche un General Account
+  const isAuthenticated = computed(() => !!token.value && !!generalAccount.value);
   const isMfaActive = computed(() => user.value?.factors?.some(f => f.factor_type === 'totp' && f.status === 'verified'));
   const getMfaFactor = computed(() => {
     if (!isMfaActive.value) return null;
@@ -29,13 +33,23 @@ export const useAuthStore = defineStore('auth', () => {
   // --- ACTIONS ---
 
   /**
-   * Azione centralizzata per caricare tutti i dati di sessione necessari
+   * Azione centralizzata per caricare tutti i dati di sessione globali
    * dopo che l'autenticazione è stata confermata.
    */
   async function initSessionData() {
-    // Questa funzione è ora vuota. Il caricamento dei dati è gestito
-    // dall'orchestratore nella vista appropriata (es. DashboardView).
-    return Promise.resolve();
+    const notebookStore = useNotebookStore();
+    const tradesStore = useTradesStore();
+    const playbookStore = usePlaybookStore();
+    const tagsStore = useTagsStore();
+
+    // Carica tutti i dati di sessione globali in parallelo
+    await Promise.allSettled([
+      playbookStore.fetchPlaybooks(),
+      tagsStore.fetchAllTagsData(),
+      notebookStore.fetchFolders(),
+      notebookStore.fetchAllNotes(),
+      tradesStore.fetchTrades({ ignoreFilters: true }),
+    ]);
   }
 
   // Funzione per recuperare il General Account
@@ -66,11 +80,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('user', JSON.stringify(userData));
     setAuthToken(accessToken);
 
-    // Dopo aver impostato il token, recupera il General Account
     return await fetchGeneralAccount();
   }
 
-  // Carica il nome del ruolo dell'utente. Funzione di supporto.
   async function loadCurrentRoleName() {
     try {
       const userId = user.value?.id;
@@ -91,7 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
     const response = await apiClient.post('/auth/login', { email, password });
 
     if (response.data.status === 'mfa_required') {
-      mfaChallenge.value = response.data; // Salva tutta la challenge
+      mfaChallenge.value = response.data;
       mfaAal1Token.value = response.data.access_token;
       return { mfaRequired: true };
     } else {
@@ -113,8 +125,6 @@ export const useAuthStore = defineStore('auth', () => {
       password,
       confirm_password,
     });
-    // Dopo la registrazione, non facciamo il login automatico.
-    // La vista reindirizzerà alla pagina di login con un messaggio.
   }
 
   async function verifyMfaAndLogin(otpCode) {
@@ -148,7 +158,6 @@ export const useAuthStore = defineStore('auth', () => {
       challenge_id: challengeId,
       code: otpCode,
     });
-    // Qui non facciamo il redirect, ma aggiorniamo lo stato
     const authSuccessful = await _setAuthentication(data.access_token, data.user);
     if (authSuccessful) {
       await loadCurrentRoleName();
@@ -156,8 +165,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function unenrollMfa(factorId) {
-    // Non fa nulla allo stato locale, serve solo per pulizia.
-    // L'utente non è autenticato con questo fattore, quindi non c'è bisogno di aggiornare lo stato.
     try {
       await apiClient.delete(`/auth/mfa/factors/${factorId}`);
     } catch (error) {
@@ -183,12 +190,12 @@ export const useAuthStore = defineStore('auth', () => {
 
     user.value = null;
     token.value = null;
-    generalAccount.value = null; // Pulisci il General Account
+    generalAccount.value = null;
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('generalAccount'); // Rimuovi dal localStorage
+    localStorage.removeItem('generalAccount');
     setAuthToken(null);
     router.push('/login');
   }
@@ -198,19 +205,16 @@ export const useAuthStore = defineStore('auth', () => {
     if (storedToken) {
       token.value = storedToken;
       setAuthToken(storedToken);
-      // Se c'è un token, proviamo a recuperare i dati dell'utente e del GA
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
           user.value = JSON.parse(storedUser);
-          // Tentativo di recuperare il General Account all'avvio
           await fetchGeneralAccount();
         } catch {
-          // Se qualcosa va storto, puliamo tutto
           await logout();
         }
       } else {
-        await logout(); // Se non ci sono dati utente, il token è invalido
+        await logout();
       }
     }
   }
@@ -218,7 +222,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     token,
-    generalAccount, // Esponi il nuovo state
+    generalAccount,
     isAuthenticated,
     isMfaActive,
     getMfaFactor,
@@ -228,7 +232,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     initAuth,
-    initSessionData, // Esponi la nuova azione
+    initSessionData,
     verifyMfaAndLogin,
     enrollMfa,
     verifyAndEnableMfa,

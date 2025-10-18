@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch, ref } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import VantageScoreWidget from '../components/dashboard/widgets/charts/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
@@ -15,9 +15,6 @@ import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
-import { useNotebookStore } from '@/stores/notebookStore';
-import { useTagsStore } from '@/stores/tagsStore';
-import { usePlaybookStore } from '@/stores/playbookStore';
 import { useTradingDnaStore } from '@/stores/tradingDnaStore';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
@@ -28,9 +25,6 @@ const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
-const notebookStore = useNotebookStore();
-const tagsStore = useTagsStore();
-const playbookStore = usePlaybookStore();
 const tradingDnaStore = useTradingDnaStore();
 
 const layout = computed(() => dashboardLayoutStore.layout);
@@ -55,60 +49,33 @@ const editButtonText = computed(() => {
   return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
 });
 
-// --- Data Fetching Orchestration ---
+// --- Data Fetching ---
 
-async function orchestrateDashboardLoad() {
-  if (!tradingAccountsStore.selectedTradingAccount) {
-    console.warn("[Orchestrator] Nessun conto di trading selezionato, caricamento saltato.");
-    return;
-  }
-  console.log('%c[Orchestrator] Inizio caricamento dati dashboard...', 'color: blue; font-weight: bold;');
+async function fetchDashboardData() {
+  if (!tradingAccountsStore.selectedTradingAccount) return;
 
-  // --- GRUPPO 2: Dati Core della Dashboard ---
-  console.log('%c[Orchestrator] Avvio GRUPPO 2...', 'color: blue;');
-  const group2Promises = [
-    dashboardLayoutStore.fetchLayout(),
-    tradesStore.fetchTrades({ ignoreFilters: true }),
-    tradesStore.fetchAllDataForDashboard(), // Dati aggregati per i widget
-    notebookStore.fetchFolders(),
-    notebookStore.fetchAllNotes(),
-  ];
-  await Promise.allSettled(group2Promises);
-  console.log('%c[Orchestrator] Completato GRUPPO 2.', 'color: blue; font-weight: bold;');
+  // GRUPPO 2: Dati aggregati per widget
+  await tradesStore.fetchAllDataForDashboard();
 
-  // --- GRUPPO 3: Dati di Supporto ---
-  console.log('%c[Orchestrator] Avvio GRUPPO 3...', 'color: purple;');
-  const group3Promises = [
-    tagsStore.fetchAllTagsData(),
-    playbookStore.fetchPlaybooks(),
-    tradingDnaStore.fetchTradingDnaReport(),
-  ];
-  await Promise.allSettled(group3Promises);
-  console.log('%c[Orchestrator] Completato GRUPPO 3.', 'color: purple; font-weight: bold;');
+  // GRUPPO 3: Dati di supporto per la dashboard
+  await tradingDnaStore.fetchTradingDnaReport();
 }
 
-// Watch per il cambio di account, per rieseguire l'intera orchestrazione
-watch(
-  () => tradingAccountsStore.selectedTradingAccount,
-  (newAccount) => {
-    if (newAccount) {
-      orchestrateDashboardLoad();
-    }
-  },
-  { immediate: true }
-);
+// Carica il layout una sola volta
+onMounted(() => {
+  dashboardLayoutStore.fetchLayout();
+});
 
-// Watch per i cambi di filtri: ricarica solo i dati aggregati della dashboard
+// Riesegui il caricamento dei dati della dashboard quando cambiano i filtri o l'account
 watch(
-  () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
-  (newValue, oldValue) => {
-    // Evita di rieseguire al primo caricamento, già gestito dal watcher sull'account
-    if (JSON.stringify(newValue) !== JSON.stringify(oldValue) && tradingAccountsStore.selectedTradingAccount) {
-      console.log('%c[Orchestrator] Filtri cambiati, ricarico solo i dati aggregati.', 'color: orange;');
-      tradesStore.fetchAllDataForDashboard();
-    }
-  },
-  { deep: true }
+  () => [
+    filterStore.startDate,
+    filterStore.endDate,
+    filterStore.selectedStrategy,
+    tradingAccountsStore.selectedTradingAccount,
+  ],
+  fetchDashboardData,
+  { deep: true, immediate: true }
 );
 
 // Watch for the user finishing layout editing

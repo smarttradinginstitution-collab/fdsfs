@@ -8,11 +8,11 @@
 -->
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useTradesStore } from '@/stores/trades';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import KpiDashboard from '@/components/KpiDashboard.vue';
-import BaseButton from '@/components/ui/BaseButton.vue'; // Importiamo il componente bottone
+import BaseButton from '@/components/ui/BaseButton.vue';
 import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
 // --- STORE E STATO LOCALE ---
@@ -20,13 +20,6 @@ const tradesStore = useTradesStore();
 const selectedTrades = ref([]); // Stato per le righe selezionate
 
 // --- LOGICA DEL COMPONENTE ---
-onMounted(() => {
-  // Se l'utente atterra direttamente su questa pagina e i trade non sono stati
-  // ancora caricati (es. tramite il login), li carichiamo ora.
-  if (tradesStore.trades.length === 0) {
-    tradesStore.fetchAllDataForDashboard();
-  }
-});
 
 const handleBulkDelete = () => {
   if (selectedTrades.value.length === 0) {
