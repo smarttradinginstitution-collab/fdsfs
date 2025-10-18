@@ -688,64 +688,6 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
-    async fetchAllDataForAccount() {
-      if (this.isLoading) {
-        console.log("Caricamento dati account già in corso. Salto il fetch duplicato.");
-        return;
-      }
-
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
-      const notebookStore = useNotebookStore();
-      const uiStore = useUiStore();
-
-      if (!selectedAccount) {
-        this.trades = [];
-        this.dashboardStats = null;
-        // ... reset altri stati ...
-        return;
-      }
-
-      // Usa una firma più semplice basata solo sull'ID dell'account
-      // per evitare ricaricamenti non necessari quando cambiano solo i filtri.
-      const newSignature = selectedAccount.id;
-
-      if (this.dataSignature === newSignature) {
-        console.log("Dati per questo account già caricati. Salto il fetch.");
-        if (uiStore.isInitialLoadPending) {
-          uiStore.hideLoader();
-          uiStore.setInitialLoadPending(false);
-        }
-        return;
-      }
-
-      this.isLoading = true;
-      if (uiStore.isInitialLoadPending) {
-        uiStore.showLoader('Caricamento di tutti i dati del tuo account...');
-      }
-
-      try {
-        await Promise.allSettled([
-          this.fetchTrades({ ignoreFilters: true }), // Carica TUTTI i trade per l'account
-          this.fetchDashboardStats(),
-          this.fetchCalendarData(),
-          this.fetchProcessedStats(),
-          this.fetchEquityCurve(),
-          this.fetchVantageScore(),
-          notebookStore.fetchFolders(), // Carica le cartelle del notebook
-          notebookStore.fetchAllNotes(), // Carica TUTTE le note
-        ]);
-        // La firma ora rappresenta che tutti i dati per questo account sono stati caricati.
-        this.dataSignature = newSignature;
-      } finally {
-        this.isLoading = false;
-        if (uiStore.isInitialLoadPending) {
-          uiStore.hideLoader();
-          uiStore.setInitialLoadPending(false);
-        }
-      }
-    },
-
     async deleteTrade(tradeId) {
       this.isLoading = true;
       try {

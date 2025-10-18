@@ -82,7 +82,7 @@ const handleUpdateTradeDetails = async (payload) => {
   if (trade.value) {
     await tradesStore.updateTrade(trade.value.id, payload);
     // After a successful update, force a refresh of all account data
-    await tradesStore.fetchAllDataForAccount();
+    await tradesStore.fetchAllDataForDashboard();
   }
 };
 

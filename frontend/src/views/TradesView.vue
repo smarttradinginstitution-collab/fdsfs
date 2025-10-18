@@ -24,7 +24,7 @@ onMounted(() => {
   // Se l'utente atterra direttamente su questa pagina e i trade non sono stati
   // ancora caricati (es. tramite il login), li carichiamo ora.
   if (tradesStore.trades.length === 0) {
-    tradesStore.fetchAllDataForDashboard();
+    tradesStore.fetchTrades({ ignoreFilters: true });
   }
 });
 
