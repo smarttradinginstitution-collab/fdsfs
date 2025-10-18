@@ -107,8 +107,8 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const tradingAccountsStore = useTradingAccountsStore();
 
-  // Ensure auth status is loaded from token
-  if (!authStore.token && localStorage.getItem('token')) {
+  // Ensure auth status is loaded from token. This is now the single source of truth for initialization.
+  if (!authStore.isAuthenticated && localStorage.getItem('token')) {
     await authStore.initAuth();
   }
 

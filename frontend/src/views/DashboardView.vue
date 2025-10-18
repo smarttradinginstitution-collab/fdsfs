@@ -15,6 +15,8 @@ import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import { useAuthStore } from '@/stores/auth';
+import { useNotebookStore } from '@/stores/notebookStore';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
@@ -24,6 +26,8 @@ const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
+const authStore = useAuthStore();
+const notebookStore = useNotebookStore();
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -47,20 +51,37 @@ const editButtonText = computed(() => {
   return uiStore.isLayoutEditing ? 'Fine Modifiche' : 'Modifica Widget';
 });
 
-// --- Data Fetching ---
+// --- Data Fetching Orchestration ---
+
+async function orchestrateDashboardLoad() {
+  // --- GRUPPO 2: Dati principali della Dashboard ---
+  const group2Promises = [
+    dashboardLayoutStore.fetchLayout(),
+    tradesStore.fetchAllDataForDashboard(),
+    notebookStore.fetchFolders(),
+    notebookStore.fetchAllNotes(), // Ripristina il caricamento di tutte le note
+    tradesStore.fetchTrades({ ignoreFilters: true }),
+  ];
+  await Promise.allSettled(group2Promises);
+
+  // --- GRUPPO 3: Dati di sessione (lanciato dopo il Gruppo 2) ---
+  // La chiamata viene fatta senza 'await' per non bloccare il rendering,
+  // ma solo dopo che il gruppo 2 è terminato.
+  authStore.initSessionData();
+}
+
+// Esegui l'orchestrazione completa solo la prima volta che il componente viene montato.
 onMounted(() => {
-  dashboardLayoutStore.fetchLayout();
+  orchestrateDashboardLoad();
 });
 
-// Watch for filter changes and refetch all dashboard data
+// Watch per i cambi di filtri: ricarica solo i dati della dashboard (Gruppo 2), non i dati di sessione.
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
-    // Quando i filtri cambiano, aggiorniamo solo i dati della dashboard.
-    // L'azione `fetchAllDataForAccount` è già stata chiamata al momento della selezione dell'account.
     tradesStore.fetchAllDataForDashboard();
   },
-  { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
+  { deep: true } // Non più 'immediate', gestito da onMounted
 );
 
 // Watch for the user finishing layout editing
