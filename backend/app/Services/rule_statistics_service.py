@@ -31,21 +31,17 @@ class RuleStatisticsService:
 
         automated_rules = self._get_automated_rules_from_settings(settings)
 
-        automated_tasks = [self._calculate_automated_rule_stats(rule, trading_account_id, date_range) for rule in automated_rules]
-        manual_tasks = [self._calculate_manual_rule_stats(rule.id, trading_account_id, date_range) for rule in manual_rules]
+        for rule in automated_rules:
+            stats = await self._calculate_automated_rule_stats(rule, trading_account_id, date_range)
+            all_rules_with_stats.append({**rule, **stats})
 
-        automated_stats = await asyncio.gather(*automated_tasks)
-        manual_stats = await asyncio.gather(*manual_tasks)
-
-        for i, rule in enumerate(automated_rules):
-            all_rules_with_stats.append({**rule, **automated_stats[i]})
-
-        for i, rule in enumerate(manual_rules):
+        for rule in manual_rules:
+            stats = await self._calculate_manual_rule_stats(rule.id, trading_account_id, date_range)
             all_rules_with_stats.append({
                 "id": rule.id,
                 "name": rule.name,
                 "isManual": True,
-                **manual_stats[i]
+                **stats
             })
 
         return all_rules_with_stats
