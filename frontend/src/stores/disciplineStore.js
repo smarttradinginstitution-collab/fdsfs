@@ -29,20 +29,31 @@ export const useDisciplineStore = defineStore('discipline', () => {
     return Math.round((completedRulesCount.value / totalRulesCount.value) * 100);
   });
 
-  const allRules = computed(() => {
-    const automated = [];
-    if (settings.value) {
-        if (settings.value.start_day_by) automated.push({ id: 'auto-1', name: 'Start my day by', settings: settings.value, isManual: false });
-        if (settings.value.link_trades_to_playbook_threshold !== null) automated.push({ id: 'auto-2', name: 'Link trades to playbook', settings: settings.value, isManual: false });
-        if (settings.value.trade_has_stop_loss_threshold !== null) automated.push({ id: 'auto-3', name: 'Trade has stop loss', settings: settings.value, isManual: false });
-        if (settings.value.max_loss_per_trade_value !== null) automated.push({ id: 'auto-4', name: 'Max loss per trade', settings: settings.value, isManual: false });
-        if (settings.value.max_loss_per_day !== null) automated.push({ id: 'auto-5', name: 'Max loss per day', settings: settings.value, isManual: false });
-    }
-    const manual = manualRules.value.map(rule => ({ ...rule, isManual: true }));
-    return [...automated, ...manual];
-  });
+  const allRules = ref([]);
 
   // --- ACTIONS ---
+
+  async function fetchAllRules() {
+    const authStore = useAuthStore();
+    const tradingAccountsStore = useTradingAccountsStore();
+    if (!authStore.isAuthenticated || !tradingAccountsStore.selectedTradingAccount) {
+      allRules.value = [];
+      return;
+    }
+
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const tradingAccountId = tradingAccountsStore.selectedTradingAccount.id;
+      const { data } = await apiClient.get(`/rules-with-statistics?trading_account_id=${tradingAccountId}`);
+      allRules.value = data;
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to fetch rules.';
+      console.error(error.value);
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   async function fetchDisciplineSettings() {
     const authStore = useAuthStore();
@@ -86,19 +97,6 @@ export const useDisciplineStore = defineStore('discipline', () => {
       throw err;
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  async function fetchManualRules() {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) return;
-    // This can be part of the initial load, so no separate isLoading
-    try {
-        const { data } = await apiClient.get('/manual-rules');
-        manualRules.value = data;
-    } catch (err) {
-        error.value = err.response?.data?.detail || 'Failed to fetch manual rules.';
-        console.error(error.value);
     }
   }
 
@@ -189,9 +187,9 @@ export const useDisciplineStore = defineStore('discipline', () => {
     totalRulesCount,
     dailyScore,
     allRules,
+    fetchAllRules,
     fetchDisciplineSettings,
     saveDisciplineSettings,
-    fetchManualRules,
     addManualRule,
     updateManualRule,
     deleteManualRule,

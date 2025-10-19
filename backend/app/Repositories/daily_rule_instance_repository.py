@@ -1,6 +1,7 @@
 from typing import Sequence, Optional
 from uuid import UUID
 import datetime
+from datetime import date
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -46,3 +47,12 @@ class DailyRuleInstanceRepository(BaseRepository[DailyRuleInstance, DailyRuleIns
         )
         result = await self.db.execute(stmt)
         return result.all()
+
+    async def find_by_rule_and_date_range(self, rule_id: UUID, trading_account_id: UUID, date_range: list[date]) -> Sequence[DailyRuleInstance]:
+        stmt = select(self.model).where(
+            self.model.manual_rule_id == rule_id,
+            self.model.trading_account_id == trading_account_id,
+            self.model.date.in_(date_range)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()

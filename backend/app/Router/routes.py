@@ -227,6 +227,7 @@ router.include_router(
 from app.Router import discipline_settings_router
 from app.Router import manual_rule_router
 from app.Router import daily_checklist_router
+from app.Router import rule_statistics_router
 
 router.include_router(
     discipline_settings_router.router,
@@ -240,6 +241,11 @@ router.include_router(
 
 router.include_router(
     daily_checklist_router.router,
+    dependencies=[Depends(get_current_claims)],
+)
+
+router.include_router(
+    rule_statistics_router.router,
     dependencies=[Depends(get_current_claims)],
 )
 

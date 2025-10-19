@@ -38,8 +38,7 @@ const disciplineStore = useDisciplineStore();
 const isEditModalOpen = ref(false);
 
 onMounted(() => {
-  disciplineStore.fetchDisciplineSettings();
-  disciplineStore.fetchManualRules();
+  disciplineStore.fetchAllRules();
   disciplineStore.fetchDailyChecklist();
 
   const today = new Date();

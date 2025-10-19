@@ -311,3 +311,65 @@ class TradeRepository:
         total_pnl = pnl_result.scalar_one_or_none() or 0.0
 
         return initial_balance + total_pnl
+
+    async def get_daily_pnl(self, trading_account_id: UUID, specific_date: date) -> float:
+        """Calculates the total P/L for a specific day."""
+        from datetime import datetime, time
+        start_datetime = datetime.combine(specific_date, time.min)
+        end_datetime = datetime.combine(specific_date, time.max)
+
+        pnl_result = await self.db.execute(
+            select(func.sum(Trade.p_l)).where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime
+            )
+        )
+        return pnl_result.scalar_one_or_none() or 0.0
+
+    async def get_trades_with_stop_loss_count(self, trading_account_id: UUID, specific_date: date) -> int:
+        """Counts trades with a stop loss for a specific day."""
+        from datetime import datetime, time
+        start_datetime = datetime.combine(specific_date, time.min)
+        end_datetime = datetime.combine(specific_date, time.max)
+
+        count_result = await self.db.execute(
+            select(func.count(Trade.id)).where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+                Trade.stop_loss_price.isnot(None)
+            )
+        )
+        return count_result.scalar_one()
+
+    async def get_trades_linked_to_playbook_count(self, trading_account_id: UUID, specific_date: date) -> int:
+        """Counts trades linked to a playbook for a specific day."""
+        from datetime import datetime, time
+        start_datetime = datetime.combine(specific_date, time.min)
+        end_datetime = datetime.combine(specific_date, time.max)
+
+        count_result = await self.db.execute(
+            select(func.count(Trade.id)).where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+                Trade.playbook_id.isnot(None)
+            )
+        )
+        return count_result.scalar_one()
+
+    async def get_trades_count(self, trading_account_id: UUID, specific_date: date) -> int:
+        """Counts total trades for a specific day."""
+        from datetime import datetime, time
+        start_datetime = datetime.combine(specific_date, time.min)
+        end_datetime = datetime.combine(specific_date, time.max)
+
+        count_result = await self.db.execute(
+            select(func.count(Trade.id)).where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime
+            )
+        )
+        return count_result.scalar_one()

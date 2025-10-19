@@ -28,10 +28,10 @@
               <span class="condition">{{ formatCondition(rule) }}</span>
             </td>
             <td>
-              <!-- Placeholder -->
+              <span class="avg-performance">{{ formatAvgPerformance(rule) }}</span>
             </td>
             <td>
-              <!-- Placeholder -->
+              <span class="follow-rate">{{ rule.follow_rate.toFixed(1) }}%</span>
             </td>
           </tr>
         </tbody>
@@ -76,6 +76,24 @@ function formatCondition(rule) {
     default:
       return '-';
   }
+}
+
+function formatAvgPerformance(rule) {
+    if (rule.isManual || rule.avg_performance === 'N/A') {
+        return '-';
+    }
+
+    const value = parseFloat(rule.avg_performance);
+
+    if (rule.name === 'Link trades to playbook' || rule.name === 'Trade has stop loss') {
+        return `${value.toFixed(1)}%`;
+    }
+
+    if (rule.name === 'Max loss per day') {
+        return `$${value.toFixed(2)}`;
+    }
+
+    return value;
 }
 </script>
 

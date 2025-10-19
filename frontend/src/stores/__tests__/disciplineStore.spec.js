@@ -2,6 +2,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { useDisciplineStore } from '../disciplineStore';
 import apiClient from '@/services/api';
 import { useAuthStore } from '../auth';
+import { useTradingAccountsStore } from '../tradingAccounts';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the external dependencies
@@ -10,6 +11,11 @@ vi.mock('../auth', () => ({
   useAuthStore: () => ({
     isAuthenticated: true,
   }),
+}));
+vi.mock('../tradingAccounts', () => ({
+    useTradingAccountsStore: vi.fn(() => ({
+        selectedTradingAccount: { id: 'test-account-id' },
+    })),
 }));
 
 describe('Discipline Store', () => {
@@ -51,15 +57,15 @@ describe('Discipline Store', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/discipline-settings', newSettings);
   });
 
-  it('fetches manual rules', async () => {
+  it('fetches all rules with statistics', async () => {
     const disciplineStore = useDisciplineStore();
-    const mockRules = [{ id: '1', name: 'Rule 1' }];
+    const mockRules = [{ id: '1', name: 'Rule 1', follow_rate: 100, avg_performance: 'N/A' }];
     apiClient.get.mockResolvedValue({ data: mockRules });
 
-    await disciplineStore.fetchManualRules();
+    await disciplineStore.fetchAllRules();
 
-    expect(disciplineStore.manualRules).toEqual(mockRules);
-    expect(apiClient.get).toHaveBeenCalledWith('/manual-rules');
+    expect(disciplineStore.allRules).toEqual(mockRules);
+    expect(apiClient.get).toHaveBeenCalledWith('/rules-with-statistics?trading_account_id=test-account-id');
   });
 
   it('adds a manual rule', async () => {
