@@ -14,7 +14,8 @@
       <CalendarHeatmap :heatmap-data="disciplineStore.heatmapData" />
     </div>
     <RulesTable
-      :rules="disciplineStore.manualRules"
+      :rules="disciplineStore.allRules"
+      :is-loading="disciplineStore.isLoading"
       @edit-rules="isEditModalOpen = true"
     />
     <EditRulesModal
@@ -38,9 +39,7 @@ const disciplineStore = useDisciplineStore();
 const isEditModalOpen = ref(false);
 
 onMounted(() => {
-  disciplineStore.fetchDisciplineSettings();
-  disciplineStore.fetchManualRules();
-  disciplineStore.fetchDailyChecklist();
+  disciplineStore.initializeStore();
 
   const today = new Date();
   const year = today.getFullYear();
@@ -52,10 +51,9 @@ function handleUpdateStatus(instanceId, newStatus) {
   disciplineStore.updateManualRuleStatus(instanceId, newStatus);
 }
 
-function handleSaveRules() {
-  // Refetch data to ensure the view is up-to-date
-  disciplineStore.fetchDisciplineSettings();
-  disciplineStore.fetchManualRules();
+async function handleSaveRules() {
+  // The initializeStore action will refetch everything needed.
+  await disciplineStore.initializeStore();
   isEditModalOpen.value = false;
 }
 </script>

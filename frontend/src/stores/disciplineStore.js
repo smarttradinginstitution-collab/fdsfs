@@ -29,33 +29,72 @@ export const useDisciplineStore = defineStore('discipline', () => {
     return Math.round((completedRulesCount.value / totalRulesCount.value) * 100);
   });
 
+  const allRules = ref([]);
+
   // --- ACTIONS ---
 
-  async function fetchDisciplineSettings() {
+  async function fetchAllRules() {
     const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) return;
+    const tradingAccountsStore = useTradingAccountsStore();
+    if (!authStore.isAuthenticated || !tradingAccountsStore.selectedTradingAccount) {
+      allRules.value = [];
+      return;
+    }
 
+    const tradingAccountId = tradingAccountsStore.selectedTradingAccount.id;
+    const { data } = await apiClient.get(`/rules-with-statistics?trading_account_id=${tradingAccountId}`);
+    allRules.value = data;
+
+    // Extract settings and manual rules from the allRules response
+    const automatedRulesSettings = data.find(rule => !rule.isManual)?.settings;
+    if (automatedRulesSettings) {
+        settings.value = automatedRulesSettings;
+    } else {
+        // If no automated rules, fetch settings separately or set defaults
+        await fetchDisciplineSettings();
+    }
+    manualRules.value = data.filter(rule => rule.isManual);
+  }
+
+  // This function can be kept for cases where only settings are needed,
+  // or be removed if fetchAllRules is always the entry point.
+  async function fetchDisciplineSettings() {
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) return;
+
+      try {
+          const { data } = await apiClient.get('/discipline-settings');
+          settings.value = data;
+      } catch (err) {
+          if (err.response && err.response.status === 404) {
+              settings.value = {
+                  trading_days: [1, 2, 3, 4, 5],
+                  start_day_by: null,
+                  link_trades_to_playbook_threshold: 100,
+                  trade_has_stop_loss_threshold: 100,
+                  max_loss_per_trade_type: '$',
+                  max_loss_per_trade_value: 0,
+                  max_loss_per_day: 0,
+              };
+          } else {
+              error.value = err.response?.data?.detail || 'Failed to fetch discipline settings.';
+              console.error(error.value);
+          }
+      }
+  }
+
+  // New action to orchestrate initial data loading
+  async function initializeStore() {
     isLoading.value = true;
     error.value = null;
     try {
-      const { data } = await apiClient.get('/discipline-settings');
-      settings.value = data;
+      await Promise.all([
+        fetchAllRules(),
+        fetchDailyChecklist(),
+      ]);
     } catch (err) {
-        if (err.response && err.response.status === 404) {
-            // If settings don't exist, initialize with default values
-            settings.value = {
-                trading_days: [1, 2, 3, 4, 5],
-                start_day_by: null,
-                link_trades_to_playbook_threshold: 100,
-                trade_has_stop_loss_threshold: 100,
-                max_loss_per_trade_type: '$',
-                max_loss_per_trade_value: 0,
-                max_loss_per_day: 0,
-            };
-        } else {
-            error.value = err.response?.data?.detail || 'Failed to fetch discipline settings.';
-            console.error(error.value);
-        }
+      // Error is already set by the individual functions
+      console.error("Failed to initialize discipline store:", err);
     } finally {
       isLoading.value = false;
     }
@@ -73,19 +112,6 @@ export const useDisciplineStore = defineStore('discipline', () => {
       throw err;
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  async function fetchManualRules() {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) return;
-    // This can be part of the initial load, so no separate isLoading
-    try {
-        const { data } = await apiClient.get('/manual-rules');
-        manualRules.value = data;
-    } catch (err) {
-        error.value = err.response?.data?.detail || 'Failed to fetch manual rules.';
-        console.error(error.value);
     }
   }
 
@@ -175,14 +201,16 @@ export const useDisciplineStore = defineStore('discipline', () => {
     completedRulesCount,
     totalRulesCount,
     dailyScore,
+    allRules,
+    fetchAllRules,
     fetchDisciplineSettings,
     saveDisciplineSettings,
-    fetchManualRules,
     addManualRule,
     updateManualRule,
     deleteManualRule,
     fetchDailyChecklist,
     updateManualRuleStatus,
     fetchHeatmapData,
+    initializeStore,
   };
 });

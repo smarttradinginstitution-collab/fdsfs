@@ -2,7 +2,7 @@
   <div class="rules-table-container">
     <div class="table-header">
       <h3 class="table-title">Current Rules</h3>
-      <BaseButton @click="$emit('edit-rules')" variant="primary" size="medium">
+      <BaseButton @click="$emit('edit-rules')" variant="primary" size="medium" :disabled="isLoading">
         Edit Rules
       </BaseButton>
     </div>
@@ -10,20 +10,28 @@
       <table class="rules-table">
         <thead>
           <tr>
-            <th>MANUAL RULE</th>
-            <th>FREQUENCY</th>
+            <th>RULE</th>
+            <th>CONDITION</th>
+            <th>AVG PERFORMANCE</th>
+            <th>FOLLOW RATE</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="rules.length === 0">
-            <td colspan="2" class="empty-state">No manual rules defined yet.</td>
+            <td colspan="4" class="empty-state">No rules defined yet.</td>
           </tr>
           <tr v-for="rule in rules" :key="rule.id">
             <td>
               <div class="rule-name">{{ rule.name }}</div>
             </td>
             <td>
-              <span class="frequency">{{ formatFrequency(rule.frequency) }}</span>
+              <span class="condition">{{ formatCondition(rule) }}</span>
+            </td>
+            <td>
+              <span class="avg-performance">{{ formatAvgPerformance(rule) }}</span>
+            </td>
+            <td>
+              <span class="follow-rate">{{ rule.follow_rate ? rule.follow_rate.toFixed(1) + '%' : '-' }}</span>
             </td>
           </tr>
         </tbody>
@@ -40,20 +48,56 @@ defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 });
 
 defineEmits(['edit-rules']);
 
-const frequencyMap = {
-  '[1,2,3,4,5]': 'Mon-Fri',
-  '[6,7]': 'Sat-Sun',
-  '[1,2,3,4,5,6,7]': 'Daily'
-};
+function formatCondition(rule) {
+  if (rule.isManual || !rule.settings) {
+    return '-';
+  }
 
-function formatFrequency(frequency) {
-  const key = JSON.stringify(frequency.sort());
-  return frequencyMap[key] || 'Custom';
+  const { settings } = rule;
+  switch (rule.name) {
+    case 'Start my day by':
+      return settings.start_day_by || '-';
+    case 'Link trades to playbook':
+      return `${settings.link_trades_to_playbook_threshold || 0}%`;
+    case 'Trade has stop loss':
+      return `${settings.trade_has_stop_loss_threshold || 0}%`;
+    case 'Max loss per trade':
+      if (settings.max_loss_per_trade_type === '%') {
+        return `${settings.max_loss_per_trade_value || 0}%`;
+      }
+      return `$${settings.max_loss_per_trade_value || 0}`;
+    case 'Max loss per day':
+      return `$${settings.max_loss_per_day || 0}`;
+    default:
+      return '-';
+  }
+}
+
+function formatAvgPerformance(rule) {
+    if (rule.isManual || rule.avg_performance === 'N/A') {
+        return '-';
+    }
+
+    const value = parseFloat(rule.avg_performance);
+
+    if (rule.name === 'Link trades to playbook' || rule.name === 'Trade has stop loss') {
+        return `${value.toFixed(1)}%`;
+    }
+
+    if (rule.name === 'Max loss per day') {
+        return `$${value.toFixed(2)}`;
+    }
+
+    return value;
 }
 </script>
 
@@ -104,14 +148,9 @@ th {
   color: var(--semantic-color-text-primary);
 }
 
-.rule-condition {
+.condition {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-}
-
-.follow-rate {
-  font: var(--semantic-font-style-label-md);
-  color: var(--semantic-color-feedback-positive-text);
 }
 
 .empty-state {
