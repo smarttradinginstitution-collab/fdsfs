@@ -41,18 +41,9 @@ export const useTagsStore = defineStore('tags', () => {
       console.log("User not authenticated. Skipping tags fetch.");
       return;
     }
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const response = await apiClient.get('/me/tags');
-      tags.value = response.data;
-    } catch (err) {
-      console.error('Error fetching tags:', err);
-      error.value = err.response?.data?.detail || 'An unexpected error occurred.';
-      tags.value = [];
-    } finally {
-      isLoading.value = false;
-    }
+    // isLoading and error are handled by the calling function (fetchAllTagsData)
+    const response = await apiClient.get('/me/tags');
+    tags.value = response.data;
   }
 
   async function fetchTagGroups() {
@@ -61,31 +52,26 @@ export const useTagsStore = defineStore('tags', () => {
       console.log("User not authenticated. Skipping tag groups fetch.");
       return;
     }
+    // isLoading and error are handled by the calling function (fetchAllTagsData)
+    const response = await apiClient.get('/tags-groups/');
+    tagGroups.value = response.data;
+  }
+
+  async function fetchAllTagsData() {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get('/tags-groups/');
-      tagGroups.value = response.data;
+      await Promise.all([fetchTags(), fetchTagGroups()]);
     } catch (err) {
-      console.error('Error fetching tag groups:', err);
-      error.value = err.response?.data?.detail || 'An unexpected error occurred.';
+      console.error('Error fetching all tags data:', err);
+      const errorMessage = err.response?.data?.detail || 'An error occurred while fetching tags information.';
+      error.value = errorMessage;
+      // In case of a partial failure, ensure we don't display incomplete data.
+      tags.value = [];
       tagGroups.value = [];
     } finally {
       isLoading.value = false;
     }
-  }
-
-  async function fetchAllTagsData() {
-      isLoading.value = true;
-      error.value = null;
-      try {
-          await Promise.all([fetchTags(), fetchTagGroups()]);
-      } catch (err) {
-          console.error('Error fetching all tags data:', err);
-          error.value = 'An error occurred while fetching tags information.';
-      } finally {
-          isLoading.value = false;
-      }
   }
 
   // --- GROUP ACTIONS ---
