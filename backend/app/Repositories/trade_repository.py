@@ -310,7 +310,7 @@ class TradeRepository:
         )
         total_pnl = pnl_result.scalar_one_or_none() or 0.0
 
-        return initial_balance + total_pnl
+        return initial_balance + float(total_pnl)
 
     async def get_daily_pnl(self, trading_account_id: UUID, specific_date: date) -> float:
         """Calculates the total P/L for a specific day."""
