@@ -222,15 +222,6 @@ async function save() {
   close();
 }
 
-onMounted(() => {
-    // Ensure the store has the data when the component is created
-    if (!disciplineStore.settings) {
-        disciplineStore.fetchDisciplineSettings();
-    }
-    if (disciplineStore.manualRules.length === 0) {
-        disciplineStore.fetchManualRules();
-    }
-});
 </script>
 
 <style scoped>
