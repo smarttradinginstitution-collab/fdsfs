@@ -7,6 +7,7 @@ from app.Repositories.daily_rule_instance_repository import DailyRuleInstanceRep
 from app.Repositories.discipline_settings_repository import DisciplineSettingsRepository
 from app.Repositories.manual_rule_repository import ManualRuleRepository
 from app.Services.discipline_settings_service import DisciplineSettingsService
+from app.Schemas.discipline_settings_schema import DisciplineSettingsSchema
 
 class RuleStatisticsService:
     def __init__(self, db: AsyncSession):
@@ -48,11 +49,14 @@ class RuleStatisticsService:
 
     def _get_automated_rules_from_settings(self, settings):
         rules = []
-        if settings.start_day_by: rules.append({"id": "auto_start_day", "name": "Start my day by", "settings": settings, "isManual": False})
-        if settings.link_trades_to_playbook_threshold is not None: rules.append({"id": "auto_link_playbook", "name": "Link trades to playbook", "settings": settings, "isManual": False})
-        if settings.trade_has_stop_loss_threshold is not None: rules.append({"id": "auto_stop_loss", "name": "Trade has stop loss", "settings": settings, "isManual": False})
-        if settings.max_loss_per_trade_value is not None: rules.append({"id": "auto_max_loss_trade", "name": "Max loss per trade", "settings": settings, "isManual": False})
-        if settings.max_loss_per_day is not None: rules.append({"id": "auto_max_loss_day", "name": "Max loss per day", "settings": settings, "isManual": False})
+        # Convert the ORM model to a Pydantic schema to ensure it's serializable
+        settings_schema = DisciplineSettingsSchema.model_validate(settings)
+
+        if settings.start_day_by: rules.append({"id": "auto_start_day", "name": "Start my day by", "settings": settings_schema, "isManual": False})
+        if settings.link_trades_to_playbook_threshold is not None: rules.append({"id": "auto_link_playbook", "name": "Link trades to playbook", "settings": settings_schema, "isManual": False})
+        if settings.trade_has_stop_loss_threshold is not None: rules.append({"id": "auto_stop_loss", "name": "Trade has stop loss", "settings": settings_schema, "isManual": False})
+        if settings.max_loss_per_trade_value is not None: rules.append({"id": "auto_max_loss_trade", "name": "Max loss per trade", "settings": settings_schema, "isManual": False})
+        if settings.max_loss_per_day is not None: rules.append({"id": "auto_max_loss_day", "name": "Max loss per day", "settings": settings_schema, "isManual": False})
         return rules
 
     async def _calculate_automated_rule_stats(self, rule, general_account_id, trading_account_id, date_range):

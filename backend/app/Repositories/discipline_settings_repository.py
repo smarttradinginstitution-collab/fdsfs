@@ -3,9 +3,9 @@ from sqlalchemy.future import select
 from uuid import UUID
 from app.Models.discipline_settings import DisciplineSettings
 from app.Repositories.base_repository import BaseRepository
-from app.Schemas.discipline_settings_schema import DisciplineSettingsUpdate, DisciplineSettingsRead
+from app.Schemas.discipline_settings_schema import DisciplineSettingsCreate, DisciplineSettingsUpdate, DisciplineSettingsSchema
 
-class DisciplineSettingsRepository(BaseRepository[DisciplineSettings, DisciplineSettingsUpdate, DisciplineSettingsUpdate]):
+class DisciplineSettingsRepository(BaseRepository[DisciplineSettings, DisciplineSettingsCreate, DisciplineSettingsUpdate]):
     def __init__(self, db: AsyncSession):
         super().__init__(DisciplineSettings, db)
 
