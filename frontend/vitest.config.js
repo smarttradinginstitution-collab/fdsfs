@@ -10,6 +10,11 @@ export default defineConfig({
     deps: {
       inline: ['@vueuse/core'],
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json'],
+      clean: true,
+    },
   },
   resolve: {
     alias: {
