@@ -112,9 +112,16 @@ const error = computed(() => {
 });
 
 onMounted(() => {
-  tagsStore.fetchAllTagsData();
-  libraryStore.fetchAllLibraryData();
-  dnaStore.fetchTradingDnaReport();
+  // Fetch data only if it hasn't been fetched before to avoid redundant API calls.
+  if (tagsStore.groupedTags.length === 0) {
+    tagsStore.fetchAllTagsData();
+  }
+  if (libraryStore.mistakes.length === 0 && libraryStore.psychologyStates.length === 0) {
+    libraryStore.fetchAllLibraryData();
+  }
+  if (!dnaStore.report) {
+    dnaStore.fetchTradingDnaReport();
+  }
 });
 </script>
 
