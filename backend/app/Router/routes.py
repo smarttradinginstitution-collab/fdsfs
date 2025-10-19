@@ -165,29 +165,31 @@ router_roles.delete("/{role_id}")(roles.delete_role)
 router.include_router(router_roles)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 🔗 USER ↔ ROLES (protetto: admin)
+# 🔗 USER ↔ ROLES (protetto: admin tranne GET)
 # ──────────────────────────────────────────────────────────────────────────────
 router_user_roles = APIRouter(
     prefix="/api/v1",
     tags=["User-Roles"],
-    dependencies=[Depends(require_roles(["admin"]))],
 )
 
-# Ritorna direttamente i RUOLI (RoleRead) assegnati all'utente
+# Ritorna direttamente i RUOLI (RoleRead) assegnati all'utente [protetto: user]
 router_user_roles.get(
     "/users/{user_id}/roles",
     response_model=list[RoleRead],
+    dependencies=[Depends(get_current_claims)],
 )(user_roles.list_user_roles)
 
-# Assegna un ruolo a un utente, e restituisce il ruolo assegnato
+# Assegna un ruolo a un utente, e restituisce il ruolo assegnato [protetto: admin]
 router_user_roles.post(
     "/users/assign-role",
     response_model=RoleRead,
+    dependencies=[Depends(require_roles(["admin"]))],
 )(user_roles.assign_role)
 
-# Rimuove un ruolo da un utente
+# Rimuove un ruolo da un utente [protetto: admin]
 router_user_roles.delete(
     "/users/{user_id}/roles/{role_id}",
+    dependencies=[Depends(require_roles(["admin"]))],
 )(user_roles.unassign_role)
 
 router.include_router(router_user_roles)
