@@ -62,6 +62,9 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
   }
 
   async function fetchAllNewsImpactsData() {
+    if (newsImpacts.value.length > 0 && newsImpactsGroups.value.length > 0) {
+      return;
+    }
     const authStore = useAuthStore();
     if (!authStore.isAuthenticated) {
       console.log("User not authenticated. Skipping all news impacts data fetch.");

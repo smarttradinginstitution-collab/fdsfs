@@ -18,6 +18,9 @@ export const useTradingDnaStore = defineStore('tradingDna', () => {
 
   // --- ACTIONS ---
   async function fetchTradingDnaReport() {
+    if (report.value) {
+      return;
+    }
     isLoading.value = true;
     error.value = null;
     const uiStore = useUiStore();

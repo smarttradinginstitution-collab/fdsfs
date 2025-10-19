@@ -19,11 +19,13 @@ export const useLibraryStore = defineStore('library', () => {
 
   // --- PRIVATE FETCH ACTIONS ---
   async function fetchMistakes() {
+    if (mistakes.value.length > 0) return;
     const response = await apiClient.get('/me/mistakes');
     mistakes.value = response.data;
   }
 
   async function fetchPsychologyStates() {
+    if (psychologyStates.value.length > 0) return;
     const response = await apiClient.get('/me/psychology-states');
     psychologyStates.value = response.data;
   }
