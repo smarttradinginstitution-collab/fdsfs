@@ -49,7 +49,7 @@ class DisciplineSettingsService:
         await self._create_manual_rule_instances_for_day(daily_note.id, general_account_id, trading_account_id, today)
 
         # Evaluate automated rules and get their status
-        automated_rules_status = await self.evaluate_automated_rules(settings, trading_account_id, today)
+        automated_rules_status = await self.evaluate_automated_rules(settings, general_account_id, trading_account_id, today)
 
         # Get manual rule instances for the day
         manual_rules_instances = await self.instance_repo.find_by_note_and_trading_account(daily_note.id, trading_account_id)
@@ -90,7 +90,7 @@ class DisciplineSettingsService:
                     date=date
                 )
 
-    async def evaluate_automated_rules(self, settings, trading_account_id: UUID, date: datetime.date):
+    async def evaluate_automated_rules(self, settings, general_account_id: UUID, trading_account_id: UUID, date: datetime.date):
         trades_today = await self.trade_repo.get_filtered_trades(trading_account_id, date, date)
         account_balance = await self.trade_repo.get_account_balance(trading_account_id) # Assuming this method exists
 
@@ -98,7 +98,7 @@ class DisciplineSettingsService:
 
         # Rule: Start my day by
         if settings.start_day_by:
-            daily_note = await self.note_repo.find_by_date_and_general_account(date, trading_account_id)
+            daily_note = await self.note_repo.find_by_date_and_general_account(date, general_account_id)
             status = "completed" if daily_note and daily_note.created_at.time() <= settings.start_day_by else "failed"
             rules_status.append({"name": "Start my day by", "status": status})
 

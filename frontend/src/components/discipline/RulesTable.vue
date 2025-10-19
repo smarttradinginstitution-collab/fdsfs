@@ -2,7 +2,7 @@
   <div class="rules-table-container">
     <div class="table-header">
       <h3 class="table-title">Current Rules</h3>
-      <BaseButton @click="$emit('edit-rules')" variant="primary" size="medium">
+      <BaseButton @click="$emit('edit-rules')" variant="primary" size="medium" :disabled="isLoading">
         Edit Rules
       </BaseButton>
     </div>
@@ -31,7 +31,7 @@
               <span class="avg-performance">{{ formatAvgPerformance(rule) }}</span>
             </td>
             <td>
-              <span class="follow-rate">{{ rule.follow_rate.toFixed(1) }}%</span>
+              <span class="follow-rate">{{ rule.follow_rate ? rule.follow_rate.toFixed(1) + '%' : '-' }}</span>
             </td>
           </tr>
         </tbody>
@@ -48,13 +48,17 @@ defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 });
 
 defineEmits(['edit-rules']);
 
 function formatCondition(rule) {
-  if (rule.isManual) {
+  if (rule.isManual || !rule.settings) {
     return '-';
   }
 
@@ -63,16 +67,16 @@ function formatCondition(rule) {
     case 'Start my day by':
       return settings.start_day_by || '-';
     case 'Link trades to playbook':
-      return `${settings.link_trades_to_playbook_threshold}%`;
+      return `${settings.link_trades_to_playbook_threshold || 0}%`;
     case 'Trade has stop loss':
-      return `${settings.trade_has_stop_loss_threshold}%`;
+      return `${settings.trade_has_stop_loss_threshold || 0}%`;
     case 'Max loss per trade':
       if (settings.max_loss_per_trade_type === '%') {
-        return `${settings.max_loss_per_trade_value}%`;
+        return `${settings.max_loss_per_trade_value || 0}%`;
       }
-      return `$${settings.max_loss_per_trade_value}`;
+      return `$${settings.max_loss_per_trade_value || 0}`;
     case 'Max loss per day':
-      return `$${settings.max_loss_per_day}`;
+      return `$${settings.max_loss_per_day || 0}`;
     default:
       return '-';
   }

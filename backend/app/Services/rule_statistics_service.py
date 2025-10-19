@@ -32,7 +32,7 @@ class RuleStatisticsService:
         automated_rules = self._get_automated_rules_from_settings(settings)
 
         for rule in automated_rules:
-            stats = await self._calculate_automated_rule_stats(rule, trading_account_id, date_range)
+            stats = await self._calculate_automated_rule_stats(rule, general_account_id, trading_account_id, date_range)
             all_rules_with_stats.append({**rule, **stats})
 
         for rule in manual_rules:
@@ -55,13 +55,13 @@ class RuleStatisticsService:
         if settings.max_loss_per_day is not None: rules.append({"id": "auto_max_loss_day", "name": "Max loss per day", "settings": settings, "isManual": False})
         return rules
 
-    async def _calculate_automated_rule_stats(self, rule, trading_account_id, date_range):
+    async def _calculate_automated_rule_stats(self, rule, general_account_id, trading_account_id, date_range):
         total_days = 0
         completed_days = 0
         performance_values = []
 
         for day in date_range:
-            daily_statuses = await self.discipline_service.evaluate_automated_rules(rule['settings'], trading_account_id, day)
+            daily_statuses = await self.discipline_service.evaluate_automated_rules(rule['settings'], general_account_id, trading_account_id, day)
             rule_status_for_day = next((s for s in daily_statuses if s['name'] == rule['name']), None)
 
             if rule_status_for_day:
@@ -82,7 +82,8 @@ class RuleStatisticsService:
                         performance_values.append((trades_with_sl / total_trades) * 100)
                 elif rule['name'] == 'Max loss per day':
                     pnl = await self.trade_repo.get_daily_pnl(trading_account_id, day)
-                    performance_values.append(pnl)
+                    if pnl is not None:
+                        performance_values.append(float(pnl))
 
         follow_rate = (completed_days / total_days) * 100 if total_days > 0 else 100.0
 

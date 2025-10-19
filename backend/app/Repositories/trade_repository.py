@@ -310,7 +310,7 @@ class TradeRepository:
         )
         total_pnl = pnl_result.scalar_one_or_none() or 0.0
 
-        return initial_balance + float(total_pnl)
+        return float(initial_balance) + float(total_pnl)
 
     async def get_daily_pnl(self, trading_account_id: UUID, specific_date: date) -> float:
         """Calculates the total P/L for a specific day."""
@@ -325,7 +325,8 @@ class TradeRepository:
                 Trade.entry_timestamp <= end_datetime
             )
         )
-        return pnl_result.scalar_one_or_none() or 0.0
+        pnl = pnl_result.scalar_one_or_none()
+        return float(pnl) if pnl is not None else 0.0
 
     async def get_trades_with_stop_loss_count(self, trading_account_id: UUID, specific_date: date) -> int:
         """Counts trades with a stop loss for a specific day."""
