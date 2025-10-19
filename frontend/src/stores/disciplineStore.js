@@ -211,5 +211,6 @@ export const useDisciplineStore = defineStore('discipline', () => {
     fetchDailyChecklist,
     updateManualRuleStatus,
     fetchHeatmapData,
+    initializeStore,
   };
 });
