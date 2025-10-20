@@ -58,10 +58,12 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5173",
             "http://127.0.0.1:5174",
             "http://127.0.0.1:5175",
+            "http://127.0.0.1:8000", # Allow backend's own origin
         }
 
-        # Per lo sviluppo, è spesso utile permettere tutte le origini.
-        # In produzione, questa logica dovrebbe essere più restrittiva.
+        # For development, allowing wildcard is often useful but can be insecure.
+        # The explicit list above is safer. We will keep the wildcard for 'dev' env
+        # as a fallback.
         if self.ENV == "dev":
             origins.add("*")
 
