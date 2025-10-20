@@ -755,7 +755,9 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
       try {
         const response = await apiClient.get(`/trades/${tradeId}`);
-        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+        const trade = mapBackendTradeToFrontend(response.data);
+        this.selectedTrade = trade;
+        return trade; // Restituisce il trade
       } catch (error) {
         console.error(`Errore nel recupero del trade ${tradeId}:`, error);
         this.selectedTrade = null;
