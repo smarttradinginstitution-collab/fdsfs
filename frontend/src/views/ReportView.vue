@@ -144,12 +144,46 @@ const selectTradeFromStore = async (tradeId) => {
 
     await Promise.all(promises);
 
+    // Una volta caricato il trade corrente, avvia il pre-fetch per il precedente e il successivo
+    const prevId = tradesStore.getPreviousTradeId;
+    const nextId = tradesStore.getNextTradeId;
+    if (prevId) prefetchTradeData(prevId);
+    if (nextId) prefetchTradeData(nextId);
+
   } catch (e) {
     console.error("Error loading trade data:", e);
     error.value = "Failed to load trade data.";
     tradesStore.selectedTrade = null;
   } finally {
     loadingStore.stopLoading();
+  }
+};
+
+const prefetchTradeData = async (tradeId) => {
+  if (!tradeId) return;
+
+  try {
+    const promises = [];
+    const isTradeAlreadyFetched = tradesStore.trades.some(t => t.id === tradeId);
+
+    if (!isTradeAlreadyFetched) {
+      promises.push(tradesStore.fetchTradeById(tradeId));
+    }
+
+    promises.push(imageStore.fetchImagesForTrade(tradeId));
+
+    const notePromise = notebookStore.fetchNoteByTradeId(tradeId)
+      .catch(e => {
+        if (e.response && e.response.status === 404) {
+          return null;
+        }
+        throw e;
+      });
+
+    promises.push(notePromise);
+    await Promise.all(promises);
+  } catch (error) {
+    console.warn(`Failed to prefetch data for trade ${tradeId}:`, error);
   }
 };
 
