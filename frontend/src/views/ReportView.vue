@@ -13,6 +13,7 @@ import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
+import { useNotebookStore } from '@/stores/notebookStore';
 import { useLoadingStore } from '@/stores/loadingStore';
 import { storeToRefs } from 'pinia';
 
@@ -21,15 +22,20 @@ const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
+const notebookStore = useNotebookStore();
 const loadingStore = useLoadingStore();
+
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
-
-// Lightbox state
 const isLightboxOpen = ref(false);
 const lightboxCurrentIndex = ref(0);
+const error = ref(null);
+
+// --- Advanced Performance State ---
+const tradeDataCache = ref({});
+const isNoteLoading = ref(false);
 
 const leftColumnTabs = [
   { id: 'stats', label: 'Stats' },
@@ -40,38 +46,30 @@ const leftColumnTabs = [
 
 // --- COMPUTED ---
 const trade = computed(() => tradesStore.selectedTrade);
-const isLoading = computed(() => tradesStore.isTradeLoading || imageStore.isLoading);
 const { imagesForCurrentTrade } = storeToRefs(imageStore);
+const { selectedNote } = storeToRefs(notebookStore);
 
-const primaryBeforeImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_before));
-const primaryAfterImage = computed(() => imagesForCurrentTrade.value.find(img => img.is_primary_after));
-const error = ref(null);
+const primaryBeforeImage = computed(() => Array.isArray(imagesForCurrentTrade.value) ? imagesForCurrentTrade.value.find(img => img.is_primary_before) : null);
+const primaryAfterImage = computed(() => Array.isArray(imagesForCurrentTrade.value) ? imagesForCurrentTrade.value.find(img => img.is_primary_after) : null);
 
 const tradeDate = computed(() => {
   if (!trade.value?.entry_timestamp) return '';
   const date = new Date(trade.value.entry_timestamp);
   return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
   });
 });
 
 // --- METHODS ---
-const handlePrevious = () => {
-  const prevId = tradesStore.getPreviousTradeId;
-  if (prevId) router.push({ name: 'report-detail', params: { id: prevId } });
+
+const handleNavigation = (targetId) => {
+  if (targetId) router.push({ name: 'report-detail', params: { id: targetId } });
 };
 
-const handleNext = () => {
-  const nextId = tradesStore.getNextTradeId;
-  if (nextId) router.push({ name: 'report-detail', params: { id: nextId } });
-};
+const handlePrevious = () => handleNavigation(tradesStore.getPreviousTradeId);
+const handleNext = () => handleNavigation(tradesStore.getNextTradeId);
 
-const openEditModal = () => {
-  isEditModalOpen.value = true;
-};
+const openEditModal = () => { isEditModalOpen.value = true; };
 
 const handleEditImage = (image) => {
   selectedImageForEdit.value = image;
@@ -81,7 +79,7 @@ const handleEditImage = (image) => {
 const handleUpdateTradeDetails = async (payload) => {
   if (trade.value) {
     await tradesStore.updateTrade(trade.value.id, payload);
-    // After a successful update, force a refresh of all account data
+    tradeDataCache.value[trade.value.id] = undefined; // Invalidate cache
     await tradesStore.fetchAllDataForDashboard();
   }
 };
@@ -91,43 +89,80 @@ const openLightbox = (index) => {
   isLightboxOpen.value = true;
 };
 
-const closeLightbox = () => {
-  isLightboxOpen.value = false;
-};
+const prefetchTradeData = async (tradeId) => {
+  if (!tradeId || tradeDataCache.value[tradeId]) {
+    return;
+  }
+  try {
+    const [fetchedTrade, fetchedImages, fetchedNote] = await Promise.all([
+      tradesStore.fetchTradeById(tradeId),
+      imageStore.fetchImagesForTrade(tradeId),
+      notebookStore.fetchNoteByTradeId(tradeId),
+    ]);
 
-const nextImage = () => {
-  lightboxCurrentIndex.value = (lightboxCurrentIndex.value + 1) % imagesForCurrentTrade.value.length;
-};
-
-const prevImage = () => {
-  lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
+    if (fetchedTrade && fetchedTrade.id) {
+      tradeDataCache.value[tradeId] = {
+        trade: fetchedTrade,
+        images: fetchedImages,
+        note: fetchedNote,
+      };
+    }
+  } catch (e) {
+    console.error(`Failed to prefetch data for trade ${tradeId}:`, e);
+    // Do not pollute cache with failed attempts
+  }
 };
 
 const selectTradeFromStore = async (tradeId) => {
-  loadingStore.startLoading();
   error.value = null;
+
+  // 1. Check cache first
+  const cachedData = tradeDataCache.value[tradeId];
+  if (cachedData && cachedData.trade) {
+    tradesStore.selectedTrade = cachedData.trade;
+    imageStore.imagesForCurrentTrade = cachedData.images;
+    notebookStore.selectedNote = cachedData.note;
+    return; // Instant navigation
+  }
+
+  // 2. If not in cache, fetch data
+  loadingStore.startLoading();
+  isNoteLoading.value = true;
+  tradesStore.selectedTrade = null; // Clear previous trade to prevent flicker
+
   try {
-    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+    const [fetchedTrade, fetchedImages, fetchedNote] = await Promise.all([
+      tradesStore.fetchTradeById(tradeId),
+      imageStore.fetchImagesForTrade(tradeId),
+      notebookStore.fetchNoteByTradeId(tradeId),
+    ]);
 
-    // Usa una Promise.all per eseguire le chiamate in parallelo
-    const promises = [];
-    if (tradeFromList) {
-      tradesStore.selectedTrade = { ...tradeFromList };
-    } else {
-      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-      promises.push(tradesStore.fetchTradeById(tradeId));
+    if (!fetchedTrade) {
+      throw new Error("Trade data could not be fetched.");
     }
-    promises.push(imageStore.fetchImagesForTrade(tradeId));
 
-    await Promise.all(promises);
+    // 3. Update state and populate cache
+    tradesStore.selectedTrade = fetchedTrade;
+    imageStore.imagesForCurrentTrade = fetchedImages;
+    notebookStore.selectedNote = fetchedNote;
+
+    tradeDataCache.value[tradeId] = {
+      trade: fetchedTrade,
+      images: fetchedImages,
+      note: fetchedNote,
+    };
+
+    // 4. Trigger pre-fetching for next/prev trades
+    prefetchTradeData(tradesStore.getNextTradeId);
+    prefetchTradeData(tradesStore.getPreviousTradeId);
 
   } catch (e) {
-    console.error("Errore nel caricamento del trade:", e);
-    error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
+    console.error("Error loading trade:", e);
+    error.value = "Could not load trade data.";
     tradesStore.selectedTrade = null;
   } finally {
     loadingStore.stopLoading();
+    isNoteLoading.value = false;
   }
 };
 
@@ -136,11 +171,8 @@ watch(() => route.params.id, (newId) => {
   if (newId) {
     selectTradeFromStore(newId);
   }
-});
+}, { immediate: true });
 
-onMounted(() => {
-  selectTradeFromStore(route.params.id);
-});
 </script>
 
 <template>
@@ -195,7 +227,12 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
-            <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
+            <TradeNoteEditor
+              :trade-id="trade.id"
+              :trade-details="trade"
+              :initial-note="selectedNote"
+              :is-loading="isNoteLoading"
+            />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
@@ -231,7 +268,7 @@ onMounted(() => {
     </template>
     <EditTradeDetailsModal v-if="trade" v-model="isEditModalOpen" :trade="trade" @save="handleUpdateTradeDetails" />
     <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit" @close="isMetadataModalOpen = false" />
-    <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage" @prev="prevImage" />
+    <ImageLightbox v-if="imagesForCurrentTrade && imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="isLightboxOpen = false" @next="lightboxCurrentIndex = (lightboxCurrentIndex + 1) % imagesForCurrentTrade.length" @prev="lightboxCurrentIndex = (lightboxCurrentIndex - 1 + imagesForCurrentTrade.length) % imagesForCurrentTrade.length" />
   </div>
 </template>
 

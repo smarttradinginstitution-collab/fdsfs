@@ -34,6 +34,7 @@ class Note(Base):
         ForeignKey("public.trades.id", ondelete="SET NULL"),
         nullable=True,
         unique=True,
+        index=True,
     )
     note_date: Mapped[Optional[date]] = mapped_column(DATE, nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)

@@ -11,16 +11,18 @@ export const useImageStore = defineStore('imageStore', () => {
   async function fetchImagesForTrade(tradeId) {
     if (!tradeId) {
       imagesForCurrentTrade.value = [];
-      return;
+      return [];
     }
     isLoading.value = true;
     try {
       const response = await apiClient.get(`/trades/${tradeId}/images`);
       imagesForCurrentTrade.value = response.data;
+      return response.data; // Restituisce i dati delle immagini
     } catch (error) {
       console.error('Error fetching images for trade:', error);
       uiStore.showNotification({ message: 'Failed to load trade images.', type: 'error' });
       imagesForCurrentTrade.value = [];
+      return []; // Restituisce un array vuoto in caso di errore
     } finally {
       isLoading.value = false;
     }

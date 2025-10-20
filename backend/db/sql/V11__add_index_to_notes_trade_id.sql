@@ -1,0 +1,1 @@
+CREATE INDEX ix_notes_trade_id ON public.notes (trade_id);

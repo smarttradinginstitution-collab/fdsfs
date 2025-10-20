@@ -26,17 +26,17 @@ class NoteRepository:
     def _get_note_load_options(self):
         """Centralized method to define eager loading options for notes."""
         return [
+            selectinload(Note.templates),
             joinedload(Note.folder),
-            joinedload(Note.trade).options(
+            selectinload(Note.trade).options(
                 joinedload(Trade.asset),
+                joinedload(Trade.playbook),
                 selectinload(Trade.tags),
                 selectinload(Trade.mistakes),
-                joinedload(Trade.playbook),
                 selectinload(Trade.news_impacts),
                 selectinload(Trade.psychology_states),
                 selectinload(Trade.rules_followed),
             ),
-            selectinload(Note.templates),
         ]
 
     async def get_by_id(self, note_id: UUID) -> Note | None:
