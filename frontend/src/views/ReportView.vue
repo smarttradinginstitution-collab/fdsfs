@@ -211,6 +211,7 @@ onMounted(() => {
                 @edit-image="handleEditImage"
                 @open-lightbox="openLightbox"
               />
+              </LazyLoad>
             </BaseWidget>
           </div>
         </main>
