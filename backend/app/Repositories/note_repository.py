@@ -27,14 +27,14 @@ class NoteRepository:
         """Centralized method to define eager loading options for notes."""
         return [
             joinedload(Note.folder),
-            joinedload(Note.trade).options(
-                joinedload(Trade.asset),
+            selectinload(Note.trade).options(
                 selectinload(Trade.tags),
                 selectinload(Trade.mistakes),
-                joinedload(Trade.playbook),
                 selectinload(Trade.news_impacts),
                 selectinload(Trade.psychology_states),
                 selectinload(Trade.rules_followed),
+                joinedload(Trade.asset),
+                joinedload(Trade.playbook)
             ),
             selectinload(Note.templates),
         ]
