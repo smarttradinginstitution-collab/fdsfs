@@ -97,26 +97,25 @@ function toggleStatus(rule) {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
 }
 
 .rule-item {
   display: flex;
   align-items: center;
-  gap: var(--semantic-size-stack-md);
-  padding: var(--semantic-size-inset-sm) 0;
+  gap: var(--semantic-size-stack-xs); /* Adjusted gap for alignment */
+  padding: var(--semantic-size-inset-xs) 0; /* Reduced padding */
 }
 
 .rule-label {
     font: var(--semantic-font-style-body-base);
     color: var(--semantic-color-text-primary);
-    flex-grow: 1; /* Allows the label to take up available space */
+    flex-grow: 1;
 }
 
 .progress-text {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-secondary);
-  margin-left: auto; /* Pushes the progress text to the right */
+  margin-left: auto;
   padding-left: var(--semantic-size-stack-md);
 }
 
