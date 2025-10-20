@@ -6,11 +6,14 @@
       <h3 class="section-title">MANUAL RULES ({{ manualRules.length }})</h3>
       <ul class="rules-list">
         <li v-for="rule in manualRules" :key="rule.id" class="rule-item">
-          <span @click="toggleStatus(rule)" class="status-icon manual-rule">
-            <CheckCircleIcon v-if="rule.status === 'completed'" class="icon-completed" />
-            <XCircleIconOutline v-else class="icon-pending" />
-          </span>
-          <span class="rule-label">{{ rule.name }}</span>
+          <input
+            type="checkbox"
+            :id="`rule-${rule.id}`"
+            :checked="rule.status === 'completed'"
+            @change="toggleStatus(rule)"
+            class="custom-checkbox"
+          />
+          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.name }}</label>
         </li>
       </ul>
     </div>
@@ -118,17 +121,20 @@ function toggleStatus(rule) {
   padding-left: var(--semantic-size-stack-md);
 }
 
+.custom-checkbox {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: var(--semantic-color-interactive-primary-default);
+}
+
 .status-icon {
   flex-shrink: 0;
-  width: 24px; /* Standard icon size */
-  height: 24px; /* Standard icon size */
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.manual-rule {
-  cursor: pointer;
 }
 
 .icon-completed {
