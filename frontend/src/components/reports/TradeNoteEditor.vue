@@ -4,19 +4,24 @@
       <template #header>
         <span>Trade Note</span>
       </template>
-      <div v-if="currentNote">
-        <NoteEditor
-          :key="currentNote.id"
-          :show-financial-data="false"
-          :show-trade-details-link="false"
-        />
+      <div v-if="isLoading" class="loading-state">
+        <p>Loading Note...</p>
       </div>
-      <div v-else class="empty-state">
-        <p>No note found for this trade.</p>
-        <BaseButton @click="createNoteForTrade" :is-loading="isCreating">
-          Create Note for this Trade
-        </BaseButton>
-      </div>
+      <template v-else>
+        <div v-if="currentNote">
+          <NoteEditor
+            :key="currentNote.id"
+            :show-financial-data="false"
+            :show-trade-details-link="false"
+          />
+        </div>
+        <div v-else class="empty-state">
+          <p>No note found for this trade.</p>
+          <BaseButton @click="createNoteForTrade" :is-loading="isCreating">
+            Create Note for this Trade
+          </BaseButton>
+        </div>
+      </template>
     </BaseWidget>
   </div>
 </template>
@@ -36,6 +41,10 @@ const props = defineProps({
   tradeDetails: {
     type: Object,
     required: true,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
   }
 });
 

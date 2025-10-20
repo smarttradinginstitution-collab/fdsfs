@@ -30,6 +30,7 @@ const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
 const tradeNote = ref(null);
 const tradeDataCache = ref({});
+const isNoteLoading = ref(true);
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -108,6 +109,7 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
+  isNoteLoading.value = true;
   const cachedData = tradeDataCache.value[tradeId];
   // Controllo di validità: usa la cache solo se i dati essenziali esistono
   if (cachedData && cachedData.trade && cachedData.trade.id) {
@@ -119,6 +121,7 @@ const selectTradeFromStore = async (tradeId) => {
     } else {
       notebookStore.deselectNote();
     }
+    isNoteLoading.value = false;
     return; // Dati caricati dalla cache, esci dalla funzione
   }
 
@@ -182,6 +185,7 @@ const selectTradeFromStore = async (tradeId) => {
     tradesStore.selectedTrade = null;
   } finally {
     loadingStore.stopLoading();
+    isNoteLoading.value = false;
   }
 };
 
@@ -296,7 +300,7 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
-            <TradeNoteEditor :initial-note="tradeNote" :trade-details="trade" />
+            <TradeNoteEditor :initial-note="tradeNote" :trade-details="trade" :is-loading="isNoteLoading" />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
