@@ -9,6 +9,7 @@ from app.Repositories.note_repository import NoteRepository
 from app.Repositories.notebook_folder_repository import NotebookFolderRepository
 from app.Schemas.discipline_settings_schema import DisciplineSettingsUpdate
 from app.Schemas.notebook import NoteCreate
+from app.Schemas.daily_rule_instance_schema import DailyRuleInstanceSchema
 
 class DisciplineSettingsService:
     def __init__(self, db: AsyncSession):
@@ -54,9 +55,12 @@ class DisciplineSettingsService:
         # Get manual rule instances for the day
         manual_rules_instances = await self.instance_repo.find_by_note_and_trading_account(daily_note.id, trading_account_id)
 
+        # Convert to Pydantic schemas before returning
+        manual_rules_schemas = [DailyRuleInstanceSchema.model_validate(instance) for instance in manual_rules_instances]
+
         return {
             "automated_rules": automated_rules_status,
-            "manual_rules": manual_rules_instances
+            "manual_rules": manual_rules_schemas
         }
 
     async def _get_or_create_daily_note(self, general_account_id: UUID, date: datetime.date):
