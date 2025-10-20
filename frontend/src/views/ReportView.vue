@@ -29,6 +29,7 @@ const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
 const tradeNote = ref(null);
+const tradeDataCache = ref({});
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -107,6 +108,19 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
+  if (tradeDataCache.value[tradeId]) {
+    const cachedData = tradeDataCache.value[tradeId];
+    tradesStore.selectedTrade = cachedData.trade;
+    imageStore.imagesForCurrentTrade = cachedData.images;
+    tradeNote.value = cachedData.note;
+    if (cachedData.note) {
+      notebookStore.selectNote(cachedData.note.id);
+    } else {
+      notebookStore.deselectNote();
+    }
+    return; // Dati caricati dalla cache, esci dalla funzione
+  }
+
   const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
   // Mostra il caricamento solo se il trade non è già stato pre-caricato
@@ -148,7 +162,14 @@ const selectTradeFromStore = async (tradeId) => {
 
     await Promise.all(promises);
 
-    // Una volta caricato il trade corrente, avvia il pre-fetch per il precedente e il successivo
+    // Una volta caricato il trade corrente, salva i dati nella cache
+    tradeDataCache.value[tradeId] = {
+      trade: tradesStore.selectedTrade,
+      images: imageStore.imagesForCurrentTrade,
+      note: tradeNote.value,
+    };
+
+    // E poi avvia il pre-fetch per il precedente e il successivo
     const prevId = tradesStore.getPreviousTradeId;
     const nextId = tradesStore.getNextTradeId;
     if (prevId) prefetchTradeData(prevId);
@@ -185,7 +206,15 @@ const prefetchTradeData = async (tradeId) => {
       });
 
     promises.push(notePromise);
-    await Promise.all(promises);
+    const [tradeDetails, images, note] = await Promise.all(promises);
+
+    // Salva i dati pre-caricati nella cache
+    tradeDataCache.value[tradeId] = {
+      trade: tradeDetails || tradesStore.trades.find(t => t.id === tradeId),
+      images,
+      note,
+    };
+
   } catch (error) {
     console.warn(`Failed to prefetch data for trade ${tradeId}:`, error);
   }
