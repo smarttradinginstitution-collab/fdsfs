@@ -6,14 +6,11 @@
       <h3 class="section-title">MANUAL RULES ({{ manualRules.length }})</h3>
       <ul class="rules-list">
         <li v-for="rule in manualRules" :key="rule.id" class="rule-item">
-          <input
-            type="checkbox"
-            :id="`rule-${rule.id}`"
-            :checked="rule.status === 'completed'"
-            @change="toggleStatus(rule)"
-            class="custom-checkbox"
-          />
-          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.name }}</label>
+          <span @click="toggleStatus(rule)" class="status-icon manual-rule">
+            <CheckCircleIcon v-if="rule.status === 'completed'" class="icon-completed" />
+            <XCircleIconOutline v-else class="icon-pending" />
+          </span>
+          <span class="rule-label">{{ rule.name }}</span>
         </li>
       </ul>
     </div>
@@ -23,9 +20,9 @@
       <ul class="rules-list">
         <li v-for="rule in automatedRules" :key="rule.name" class="rule-item">
           <span class="status-icon">
-            <template v-if="rule.status === 'completed'">✅</template>
-            <template v-if="rule.status === 'failed'">❌</template>
-            <template v-if="rule.status === 'pending'">⚪️</template>
+            <CheckCircleIcon v-if="rule.status === 'completed'" class="icon-completed" />
+            <XCircleIconSolid v-if="rule.status === 'failed'" class="icon-failed" />
+            <XCircleIconOutline v-if="rule.status === 'pending'" class="icon-pending" />
           </span>
           <span class="rule-label">{{ rule.name }}</span>
           <span v-if="rule.progress" class="progress-text">{{ rule.progress }}</span>
@@ -37,6 +34,8 @@
 
 <script setup>
 import { computed } from 'vue';
+import { CheckCircleIcon, XCircleIcon as XCircleIconSolid } from '@heroicons/vue/24/solid';
+import { XCircleIcon as XCircleIconOutline } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   manualRules: {
@@ -119,16 +118,28 @@ function toggleStatus(rule) {
   padding-left: var(--semantic-size-stack-md);
 }
 
-.custom-checkbox {
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-  accent-color: var(--semantic-color-interactive-primary-default);
+.status-icon {
+  flex-shrink: 0;
+  width: 24px; /* Standard icon size */
+  height: 24px; /* Standard icon size */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.status-icon {
-  font-size: 1em;
-  line-height: 1;
-  flex-shrink: 0;
+.manual-rule {
+  cursor: pointer;
+}
+
+.icon-completed {
+  color: var(--semantic-color-text-success);
+}
+
+.icon-failed {
+  color: var(--semantic-color-text-danger);
+}
+
+.icon-pending {
+  color: var(--semantic-color-text-disabled);
 }
 </style>
