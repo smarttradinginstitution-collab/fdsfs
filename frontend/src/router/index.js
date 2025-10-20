@@ -133,32 +133,55 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'dashboard' });
     }
 
-    // Fetch trading accounts if they haven't been loaded yet.
-    // This is crucial for users who reload the page on a protected route.
+    // Fetch accounts if not already loaded.
     if (tradingAccountsStore.tradingAccounts.length === 0) {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+    const accountsCount = tradingAccountsStore.tradingAccounts.length;
+    let hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
 
-    // Handle routing based on account status
-    if (to.name === 'add-account') {
-      // If user has accounts, they shouldn't be on the 'add-account' page
-      if (hasAccounts) return next({ name: 'dashboard' });
-    } else if (to.name === 'select-account') {
-      // If user has NO accounts, they must go to the 'add-account' page first
-      if (!hasAccounts) return next({ name: 'add-account' });
-      // If user has already selected an account, send them to the dashboard
-      if (hasSelectedAccount) return next({ name: 'dashboard' });
-    } else if (authRequired) {
-      // For any other protected page, enforce the setup flow
-      if (!hasAccounts) return next({ name: 'add-account' });
-      if (!hasSelectedAccount) return next({ name: 'select-account' });
+    // --- FINAL, EXPLICIT REDIRECTION LOGIC ---
+
+    // CASE 1: User has no accounts. They must create one.
+    if (!hasAccounts) {
+      if (to.name !== 'add-account') {
+        return next({ name: 'add-account' });
+      }
+      return next();
+    }
+
+    // CASE 2: User has accounts, but none selected in the store/localStorage.
+    if (!hasSelectedAccount) {
+      // Subcase 2a: Auto-select the single account.
+      if (accountsCount === 1) {
+        const singleAccount = tradingAccountsStore.tradingAccounts[0];
+        tradingAccountsStore.selectTradingAccount(singleAccount);
+        // Re-check selection status, as it has just been updated.
+        hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+        // Now, we can proceed as if an account was already selected.
+      } else {
+        // Subcase 2b: Multiple accounts, user must choose.
+        if (to.name !== 'select-account') {
+          return next({ name: 'select-account' });
+        }
+        return next();
+      }
+    }
+
+    // CASE 3: User has a selected account.
+    if (hasSelectedAccount) {
+      // Prevent access to setup pages.
+      if (to.name === 'add-account' || to.name === 'select-account') {
+        return next({ name: 'dashboard' });
+      }
+      // Otherwise, allow navigation.
+      return next();
     }
   }
 
-  // 3. If none of the above conditions apply, proceed with navigation
+  // 3. If not authenticated and no auth is required, or any other case, proceed.
   next();
 });
 
