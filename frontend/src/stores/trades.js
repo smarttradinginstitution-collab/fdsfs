@@ -784,7 +784,7 @@ export const useTradesStore = defineStore('trades', {
         uiStore.showNotification({ message: 'Trade updated successfully!', type: 'success' });
 
         // Refresh dashboard stats to reflect changes
-        await this.fetchAllDataForDashboard();
+        // await this.fetchAllDataForDashboard(); // RIMOSSO: Questo causava il rallentamento
 
       } catch (error) {
         console.error('Error updating trade:', error);

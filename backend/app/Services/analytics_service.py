@@ -48,38 +48,26 @@ class AnalyticsService:
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> PerformanceMetrics:
         """
-        Calculates and returns main performance metrics.
+        Calculates and returns main performance metrics using optimized aggregation.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
-        all_metrics = calculator.get_all_metrics()
-
-        # Map calculator results to the PerformanceStats Pydantic schema
-        stats = PerformanceStats(
-            net_pnl=all_metrics["net_pnl"],
-            roi_percentage=all_metrics["roi_percentage"],
-            gross_profit=all_metrics["gross_profit"],
-            gross_loss=all_metrics["gross_loss"],
-            win_rate=all_metrics["win_rate"],
-            trade_count=all_metrics["trade_count"],
-            winning_trades=all_metrics["winning_trades"],
-            losing_trades=all_metrics["losing_trades"],
-            breakeven_trades=all_metrics["breakeven_trades"],
-            profit_factor=all_metrics["profit_factor"],
-            profit_factor_label=all_metrics["profit_factor_label"],
-            avg_win=all_metrics["avg_win"],
-            avg_loss=all_metrics["avg_loss"],
-            largest_profit=all_metrics["largest_profit"],
-            largest_loss=all_metrics["largest_loss"],
-            max_consecutive_wins=all_metrics["max_consecutive_wins"],
-            max_consecutive_losses=all_metrics["max_consecutive_losses"],
-            average_hold_time=all_metrics["average_hold_time"],
-            expectancy=all_metrics["expectancy"],
-            average_trade_pnl=all_metrics["average_trade_pnl"],
-            avg_realized_rr=all_metrics["avg_realized_rr"],
-            max_drawdown_abs=all_metrics["max_drawdown_abs"],
-            max_drawdown_percentage=all_metrics["max_drawdown_percentage"],
-            sharpe_ratio=all_metrics["sharpe_ratio"]
+        # 1. Get aggregated stats directly from the database (fast)
+        aggregated_stats = await self.trade_repo.get_aggregated_performance_stats(
+            trading_account_id, start_date, end_date
         )
+
+        # 2. Get the full list of trades for more complex, in-memory calculations (slower but necessary for now)
+        # This is the part we want to optimize further in the future if needed.
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+
+        # 3. Calculate complex metrics that are hard to do in pure SQL
+        # We pass the pre-aggregated stats to the calculator to avoid re-calculating them.
+        complex_metrics = calculator.get_all_metrics(pre_calculated_stats=aggregated_stats)
+
+        # 4. Combine the results
+        all_metrics = {**aggregated_stats, **complex_metrics}
+
+        # Map results to the PerformanceStats Pydantic schema
+        stats = PerformanceStats(**all_metrics)
         return PerformanceMetrics(stats=stats)
 
     async def get_calendar_data(
