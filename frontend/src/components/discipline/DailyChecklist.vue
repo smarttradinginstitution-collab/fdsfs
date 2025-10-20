@@ -10,8 +10,9 @@
             :id="`rule-${rule.id}`"
             :model-value="rule.status === 'completed'"
             @update:model-value="toggleStatus(rule)"
-            :label="rule.name"
-          />
+          >
+            <span class="manual-rule-label">{{ rule.name }}</span>
+          </BaseCheckbox>
         </li>
       </ul>
     </div>
@@ -105,13 +106,12 @@ function toggleStatus(rule) {
 
 /* BaseCheckbox handles its own styling, so custom styles for checkbox and label are no longer needed here. */
 
-/*
-  Override the default text color of the BaseCheckbox label to make it more prominent,
-  matching the design specification.
-*/
-.rule-item :deep(.checkbox-label) {
+.manual-rule-label {
   font: var(--semantic-font-style-body-base);
   color: var(--semantic-color-text-primary);
+  /* Ensure the label aligns nicely with the custom checkbox */
+  position: relative;
+  top: -2px;
 }
 
 .status-icon {

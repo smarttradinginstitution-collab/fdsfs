@@ -7,8 +7,8 @@
         :total="disciplineStore.totalRulesCount"
       />
       <DailyChecklist
-        :manual-rules="disciplineStore.dailyChecklist.manual_rules"
-        :automated-rules="disciplineStore.dailyChecklist.automated_rules"
+        :manual-rules="disciplineStore.mergedChecklist.manual_rules"
+        :automated-rules="disciplineStore.mergedChecklist.automated_rules"
         @update-rule-status="handleUpdateStatus"
       />
       <CalendarHeatmap :heatmap-data="disciplineStore.heatmapData" />

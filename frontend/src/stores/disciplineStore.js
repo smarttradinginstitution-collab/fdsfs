@@ -31,6 +31,25 @@ export const useDisciplineStore = defineStore('discipline', () => {
 
   const allRules = ref([]);
 
+  const mergedChecklist = computed(() => {
+    const mergeRules = (checklistRules) => {
+      return checklistRules.map(instance => {
+        const ruleDetails = allRules.value.find(rule => rule.id === instance.rule_id);
+        return {
+          ...instance,
+          name: ruleDetails?.name || 'Unknown Rule',
+          code: ruleDetails?.code,
+          statistics: ruleDetails?.statistics,
+        };
+      });
+    };
+
+    return {
+      manual_rules: mergeRules(dailyChecklist.value.manual_rules || []),
+      automated_rules: mergeRules(dailyChecklist.value.automated_rules || []),
+    };
+  });
+
   // --- ACTIONS ---
 
   async function fetchAllRules() {
@@ -202,6 +221,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
     totalRulesCount,
     dailyScore,
     allRules,
+    mergedChecklist,
     fetchAllRules,
     fetchDisciplineSettings,
     saveDisciplineSettings,
