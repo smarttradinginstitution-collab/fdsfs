@@ -241,7 +241,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .loading-state {
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
