@@ -14,6 +14,7 @@ import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
 import { storeToRefs } from 'pinia';
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 // --- STATE ---
 const route = useRoute();
@@ -103,18 +104,32 @@ const prevImage = () => {
   lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
-const selectTradeFromStore = (tradeId) => {
+const selectTradeFromStore = async (tradeId) => {
   isPageLoading.value = true;
-  const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+  error.value = null;
+  try {
+    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
-  if (tradeFromList) {
-    tradesStore.selectedTrade = { ...tradeFromList };
-  } else {
-    console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-    tradesStore.fetchTradeById(tradeId);
+    // Usa una Promise.all per eseguire le chiamate in parallelo
+    const promises = [];
+    if (tradeFromList) {
+      tradesStore.selectedTrade = { ...tradeFromList };
+    } else {
+      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
+      promises.push(tradesStore.fetchTradeById(tradeId));
+    }
+    promises.push(imageStore.fetchImagesForTrade(tradeId));
+
+    await Promise.all(promises);
+
+  } catch (e) {
+    console.error("Errore nel caricamento del trade:", e);
+    error.value = "Impossibile caricare i dati del trade.";
+    // Assicurati che il trade selezionato sia nullo in caso di errore
+    tradesStore.selectedTrade = null;
+  } finally {
+    isPageLoading.value = false;
   }
-  imageStore.fetchImagesForTrade(tradeId);
-  isPageLoading.value = false;
 };
 
 // --- LIFECYCLE & WATCHERS ---
@@ -132,7 +147,7 @@ onMounted(() => {
 <template>
   <div class="report-detail-view">
     <div v-if="isPageLoading" class="loading-state">
-      <p>Loading trade details...</p>
+      <LoadingSpinner />
     </div>
     <template v-else>
       <div v-if="error" class="error-state">
@@ -225,6 +240,13 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
 .report-detail-view {
   display: flex;
   flex-direction: column;
