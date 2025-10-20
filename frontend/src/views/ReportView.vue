@@ -13,16 +13,15 @@ import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
+import { useLoadingStore } from '@/stores/loadingStore';
 import { storeToRefs } from 'pinia';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 // --- STATE ---
 const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
-
-const isPageLoading = ref(true);
+const loadingStore = useLoadingStore();
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
@@ -105,7 +104,7 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
-  isPageLoading.value = true;
+  loadingStore.startLoading();
   error.value = null;
   try {
     const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
@@ -128,7 +127,7 @@ const selectTradeFromStore = async (tradeId) => {
     // Assicurati che il trade selezionato sia nullo in caso di errore
     tradesStore.selectedTrade = null;
   } finally {
-    isPageLoading.value = false;
+    loadingStore.stopLoading();
   }
 };
 
@@ -146,10 +145,7 @@ onMounted(() => {
 
 <template>
   <div class="report-detail-view">
-    <div v-if="isPageLoading" class="loading-state">
-      <LoadingSpinner />
-    </div>
-    <template v-else>
+    <template v-if="!loadingStore.isLoading">
       <div v-if="error" class="error-state">
         <h2>Error</h2>
         <p>{{ error }}</p>
@@ -240,16 +236,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-.loading-state {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10; /* Ensure it's above other content */
-}
-
 .report-detail-view {
-  position: relative; /* Needed for absolute positioning of children */
   display: flex;
   flex-direction: column;
   height: 100%;
