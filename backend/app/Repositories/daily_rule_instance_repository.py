@@ -27,10 +27,11 @@ class DailyRuleInstanceRepository(BaseRepository[DailyRuleInstance, DailyRuleIns
         return await self.create(kwargs)
 
     async def find_by_note_and_trading_account(self, daily_note_id: UUID, trading_account_id: UUID) -> Sequence[DailyRuleInstance]:
+        from sqlalchemy.orm import joinedload
         stmt = select(self.model).where(
             self.model.daily_journal_id == daily_note_id,
             self.model.trading_account_id == trading_account_id
-        ).options(selectinload(self.model.rule_template))
+        ).options(joinedload(self.model.rule_template))
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
