@@ -8,10 +8,12 @@ import ToastNotification from './components/ui/ToastNotification.vue';
 import FullScreenLoader from './components/ui/FullScreenLoader.vue';
 import ImageLightbox from './components/ui/ImageLightbox.vue';
 import { useUiStore } from './stores/uiStore';
+import { useLoadingStore } from './stores/loadingStore';
 import { useAuthStore } from './stores/auth';
 import { useInactivityTimer } from './composables/useInactivityTimer';
 
 const uiStore = useUiStore();
+const loadingStore = useLoadingStore();
 const route = useRoute();
 const authStore = useAuthStore();
 
@@ -78,7 +80,7 @@ const isFullScreenRoute = computed(() => route.meta.fullScreen);
   </div>
 
   <!-- Global Full Screen Loader -->
-  <FullScreenLoader v-if="uiStore.isAppLoading" :message="uiStore.loaderMessage" />
+  <FullScreenLoader v-if="loadingStore.isLoading" />
 
   <!-- Global Image Lightbox -->
   <ImageLightbox />

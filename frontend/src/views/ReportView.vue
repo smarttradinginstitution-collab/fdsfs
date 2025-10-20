@@ -13,6 +13,7 @@ import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
+import { useLoadingStore } from '@/stores/loadingStore';
 import { storeToRefs } from 'pinia';
 
 // --- STATE ---
@@ -20,8 +21,7 @@ const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
-
-const isPageLoading = ref(true);
+const loadingStore = useLoadingStore();
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
@@ -103,18 +103,32 @@ const prevImage = () => {
   lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + imagesForCurrentTrade.value.length) % imagesForCurrentTrade.value.length;
 };
 
-const selectTradeFromStore = (tradeId) => {
-  isPageLoading.value = true;
-  const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+const selectTradeFromStore = async (tradeId) => {
+  loadingStore.startLoading();
+  error.value = null;
+  try {
+    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
-  if (tradeFromList) {
-    tradesStore.selectedTrade = { ...tradeFromList };
-  } else {
-    console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-    tradesStore.fetchTradeById(tradeId);
+    // Usa una Promise.all per eseguire le chiamate in parallelo
+    const promises = [];
+    if (tradeFromList) {
+      tradesStore.selectedTrade = { ...tradeFromList };
+    } else {
+      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
+      promises.push(tradesStore.fetchTradeById(tradeId));
+    }
+    promises.push(imageStore.fetchImagesForTrade(tradeId));
+
+    await Promise.all(promises);
+
+  } catch (e) {
+    console.error("Errore nel caricamento del trade:", e);
+    error.value = "Impossibile caricare i dati del trade.";
+    // Assicurati che il trade selezionato sia nullo in caso di errore
+    tradesStore.selectedTrade = null;
+  } finally {
+    loadingStore.stopLoading();
   }
-  imageStore.fetchImagesForTrade(tradeId);
-  isPageLoading.value = false;
 };
 
 // --- LIFECYCLE & WATCHERS ---
@@ -131,10 +145,7 @@ onMounted(() => {
 
 <template>
   <div class="report-detail-view">
-    <div v-if="isPageLoading" class="loading-state">
-      <p>Loading trade details...</p>
-    </div>
-    <template v-else>
+    <template v-if="!loadingStore.isLoading">
       <div v-if="error" class="error-state">
         <h2>Error</h2>
         <p>{{ error }}</p>
