@@ -4,12 +4,9 @@
       <template #header>
         <span>Trade Note</span>
       </template>
-      <div v-if="isLoading" class="loading-state">
-        <p>Loading Note...</p>
-      </div>
-      <div v-else-if="store.selectedNote && store.selectedNote.trade_id === tradeId">
+      <div v-if="currentNote">
         <NoteEditor
-          :key="store.selectedNote.id"
+          :key="currentNote.id"
           :show-financial-data="false"
           :show-trade-details-link="false"
         />
@@ -25,16 +22,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import NoteEditor from '../notebook/NoteEditor.vue';
 
 const props = defineProps({
-  tradeId: {
-    type: String,
-    required: true,
+  initialNote: {
+    type: Object,
+    default: null,
   },
   tradeDetails: {
     type: Object,
@@ -43,33 +40,11 @@ const props = defineProps({
 });
 
 const store = useNotebookStore();
-const isLoading = ref(true);
 const isCreating = ref(false);
 
-const fetchNote = async () => {
-  if (!props.tradeId) return;
-  isLoading.value = true;
-  try {
-    const fetchedNote = await store.fetchNoteByTradeId(props.tradeId);
-    if (fetchedNote) {
-      store.selectNote(fetchedNote.id);
-    } else {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
-    } else {
-      console.error("Error fetching trade note:", error);
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
+// The presence of a note is now determined by the prop or if one is selected in the store
+// This handles the case where a new note is created and now exists in the store
+const currentNote = computed(() => props.initialNote || store.selectedNote);
 
 const createNoteForTrade = async () => {
   isCreating.value = true;
@@ -104,16 +79,18 @@ const createNoteForTrade = async () => {
   }
 };
 
-onMounted(async () => {
-  if (store.folders.length === 0) {
-    await store.fetchFolders();
+watch(() => props.tradeDetails.id, async (newTradeId, oldTradeId) => {
+  if (newTradeId !== oldTradeId) {
+    // A new trade is being viewed, so we rely on the parent to pass the new note.
+    // The logic inside `selectTradeFromStore` in the parent handles fetching and updating the note.
+    if (props.initialNote) {
+      store.selectNote(props.initialNote.id);
+    } else {
+      // If the new trade has no note, deselect the previous one.
+      store.deselectNote();
+    }
   }
-  fetchNote();
-});
-
-watch(() => props.tradeId, () => {
-  fetchNote();
-});
+}, { immediate: true });
 
 </script>
 

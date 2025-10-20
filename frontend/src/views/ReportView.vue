@@ -14,6 +14,7 @@ import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
 import { useLoadingStore } from '@/stores/loadingStore';
+import { useNotebookStore } from '@/stores/notebookStore';
 import { storeToRefs } from 'pinia';
 
 // --- STATE ---
@@ -22,10 +23,12 @@ const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
 const loadingStore = useLoadingStore();
+const notebookStore = useNotebookStore();
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
 const selectedImageForEdit = ref(null);
+const tradeNote = ref(null);
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -106,25 +109,44 @@ const prevImage = () => {
 const selectTradeFromStore = async (tradeId) => {
   loadingStore.startLoading();
   error.value = null;
+  tradeNote.value = null;
   try {
     const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
 
-    // Usa una Promise.all per eseguire le chiamate in parallelo
     const promises = [];
     if (tradeFromList) {
       tradesStore.selectedTrade = { ...tradeFromList };
     } else {
-      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
+      console.warn(`Trade ${tradeId} not found in store, fetching individually.`);
       promises.push(tradesStore.fetchTradeById(tradeId));
     }
     promises.push(imageStore.fetchImagesForTrade(tradeId));
 
+    const notePromise = notebookStore.fetchNoteByTradeId(tradeId)
+      .then(note => {
+        tradeNote.value = note;
+        if (note) {
+          notebookStore.selectNote(note.id);
+        } else {
+          notebookStore.deselectNote();
+        }
+      })
+      .catch(e => {
+        if (e.response && e.response.status === 404) {
+          tradeNote.value = null;
+          notebookStore.deselectNote();
+        } else {
+          console.error("Error fetching trade note:", e);
+          throw e;
+        }
+      });
+    promises.push(notePromise);
+
     await Promise.all(promises);
 
   } catch (e) {
-    console.error("Errore nel caricamento del trade:", e);
-    error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
+    console.error("Error loading trade data:", e);
+    error.value = "Failed to load trade data.";
     tradesStore.selectedTrade = null;
   } finally {
     loadingStore.stopLoading();
@@ -195,7 +217,7 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
-            <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
+            <TradeNoteEditor :initial-note="tradeNote" :trade-details="trade" />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
