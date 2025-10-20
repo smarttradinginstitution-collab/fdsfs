@@ -53,7 +53,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
 
   // --- ACTIONS ---
 
-  async function fetchAllRules() {
+  async function fetchAutomatedRulesAndSettings() {
     const authStore = useAuthStore();
     const tradingAccountsStore = useTradingAccountsStore();
     if (!authStore.isAuthenticated || !tradingAccountsStore.selectedTradingAccount) {
@@ -73,7 +73,14 @@ export const useDisciplineStore = defineStore('discipline', () => {
         // If no automated rules, fetch settings separately or set defaults
         await fetchDisciplineSettings();
     }
-    manualRules.value = data.filter(rule => rule.isManual);
+  // This function now only returns the automated rules
+  return data.filter(rule => !rule.isManual);
+}
+
+async function fetchAllRules() {
+  const automatedRules = await fetchAutomatedRulesAndSettings();
+  // manualRules is already fetched and populated by fetchManualRules
+  allRules.value = [...automatedRules, ...manualRules.value];
   }
 
   // This function can be kept for cases where only settings are needed,
@@ -108,15 +115,30 @@ export const useDisciplineStore = defineStore('discipline', () => {
     isLoading.value = true;
     error.value = null;
     try {
+      // Fetch manual rules and the daily checklist in parallel first
       await Promise.all([
-        fetchAllRules(),
+        fetchManualRules(),
         fetchDailyChecklist(),
       ]);
+      // Then fetch automated rules, which depends on manual rules being available for merge
+      await fetchAllRules();
     } catch (err) {
       // Error is already set by the individual functions
       console.error("Failed to initialize discipline store:", err);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  async function fetchManualRules() {
+    try {
+      // Manual rules are global, not tied to a specific trading account
+      const { data } = await apiClient.get('/manual-rules');
+      manualRules.value = data;
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to fetch manual rules.';
+      console.error(error.value);
+      throw err; // Re-throw for Promise.all to catch
     }
   }
 
@@ -224,6 +246,7 @@ export const useDisciplineStore = defineStore('discipline', () => {
     allRules,
     mergedChecklist,
     fetchAllRules,
+    fetchManualRules,
     fetchDisciplineSettings,
     saveDisciplineSettings,
     addManualRule,
