@@ -31,9 +31,7 @@ const deletingFromGroupId = ref(null);
 
 // --- LIFECYCLE ---
 onMounted(() => {
-  if (newsImpactsStore.newsImpactsGroups.length === 0 || newsImpactsStore.newsImpacts.length === 0) {
-    newsImpactsStore.fetchAllNewsImpactsData();
-  }
+  newsImpactsStore.ensureDataIsFetched();
 });
 
 onClickOutside(popoverRef, () => {

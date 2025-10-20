@@ -10,6 +10,7 @@ import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import ImageLightbox from '@/components/images/ImageLightbox.vue';
 import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
+import LazyLoad from '@/components/ui/LazyLoad.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
@@ -107,24 +108,14 @@ const selectTradeFromStore = async (tradeId) => {
   loadingStore.startLoading();
   error.value = null;
   try {
-    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
-
-    // Usa una Promise.all per eseguire le chiamate in parallelo
-    const promises = [];
-    if (tradeFromList) {
-      tradesStore.selectedTrade = { ...tradeFromList };
-    } else {
-      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-      promises.push(tradesStore.fetchTradeById(tradeId));
-    }
-    promises.push(imageStore.fetchImagesForTrade(tradeId));
-
-    await Promise.all(promises);
+    // Chiamata unica per recuperare il trade con tutti i dati necessari.
+    // L'unica cosa che non carichiamo qui sono le immagini, che verranno
+    // caricate in modo "pigro" (lazy-loaded) quando l'utente scorre.
+    await tradesStore.fetchTradeById(tradeId);
 
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
     error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
     tradesStore.selectedTrade = null;
   } finally {
     loadingStore.stopLoading();
@@ -184,7 +175,6 @@ onMounted(() => {
                 <template #attachments>
                   <TradeImageGallery
                     :trade-id="trade.id"
-                    :images="imagesForCurrentTrade"
                     mode="uploader-only"
                     :allow-insertion="false"
                     @edit-image="handleEditImage"
@@ -195,7 +185,9 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
-            <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
+            <LazyLoad>
+              <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
+            </LazyLoad>
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
@@ -211,14 +203,15 @@ onMounted(() => {
                 </div>
               </div>
               <hr v-if="primaryBeforeImage || primaryAfterImage" class="section-divider" />
-              <TradeImageGallery
-                :trade-id="trade.id"
-                :images="imagesForCurrentTrade"
+              <LazyLoad>
+                <TradeImageGallery
+                  :trade-id="trade.id"
                 mode="gallery-only"
                 :allow-insertion="false"
                 @edit-image="handleEditImage"
                 @open-lightbox="openLightbox"
               />
+              </LazyLoad>
             </BaseWidget>
           </div>
         </main>

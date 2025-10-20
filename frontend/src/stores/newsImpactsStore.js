@@ -13,6 +13,7 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
   const error = ref(null);
   const isCreatingGroup = ref(false);
   const creatingTagInGroupId = ref(null);
+  const hasDataBeenFetched = ref(false); // Aggiunto per tracciare il fetch
 
   // --- ACTIONS ---
   function setCreatingGroup(status) {
@@ -71,11 +72,18 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     error.value = null;
     try {
       await Promise.all([fetchNewsImpacts(), fetchNewsImpactsGroups()]);
+      hasDataBeenFetched.value = true; // Imposta il flag dopo il successo
     } catch (err) {
       console.error('Error fetching all news impacts data:', err);
       error.value = 'An error occurred while fetching news impacts information.';
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  async function ensureDataIsFetched() {
+    if (!hasDataBeenFetched.value && !isLoading.value) {
+      await fetchAllNewsImpactsData();
     }
   }
 
@@ -196,6 +204,7 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     setCreatingTagInGroup,
     groupedNewsImpacts,
     fetchAllNewsImpactsData,
+    ensureDataIsFetched, // <-- Aggiunta la funzione mancante
     createNewsImpactGroup,
     updateNewsImpactGroup,
     deleteNewsImpactGroup,
