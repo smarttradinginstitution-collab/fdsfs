@@ -204,6 +204,7 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     setCreatingTagInGroup,
     groupedNewsImpacts,
     fetchAllNewsImpactsData,
+    ensureDataIsFetched, // <-- Aggiunta la funzione mancante
     createNewsImpactGroup,
     updateNewsImpactGroup,
     deleteNewsImpactGroup,

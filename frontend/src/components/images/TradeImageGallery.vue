@@ -40,12 +40,6 @@ onMounted(() => {
   imageStore.fetchImagesForTrade(props.tradeId);
 });
 
-watch(() => props.tradeId, (newTradeId) => {
-  if (props.mode === 'full') {
-    imageStore.fetchImagesForTrade(newTradeId);
-  }
-});
-
 const handleFileDrop = (event) => {
   isDragging.value = false;
   const files = event.dataTransfer.files;
