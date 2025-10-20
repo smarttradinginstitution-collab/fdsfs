@@ -120,14 +120,14 @@ function toggleStatus(rule) {
 }
 
 .custom-checkbox {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
   accent-color: var(--semantic-color-interactive-primary-default);
 }
 
 .status-icon {
-  font-size: 1.2em;
+  font-size: 1em;
   line-height: 1;
   flex-shrink: 0;
 }
