@@ -157,7 +157,7 @@ const removeItem = async (itemToRemove) => {
             <p v-if="tradeLabels.length === 0" class="no-items-message">-</p>
         </div>
 
-        <IconButton v-if="!isDeleting" @click="openPopover($event)">
+        <IconButton v-if="!isDeleting" :aria-label="`Add new ${title}`" @click="openPopover($event)">
             <PlusIcon/>
         </IconButton>
         <BaseButton v-else variant="secondary" size="small" @click.stop="exitDeleteMode">Done</BaseButton>

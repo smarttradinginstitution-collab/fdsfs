@@ -166,7 +166,7 @@ const removeTag = async (tagToRemove) => {
             <p v-if="group.tradeTags.length === 0" class="no-tags-message">-</p>
         </div>
 
-        <IconButton v-if="deletingFromGroupId !== group.id" @click="openPopover($event, group)">
+        <IconButton v-if="deletingFromGroupId !== group.id" :aria-label="`Add new ${group.name}`" @click="openPopover($event, group)">
             <PlusIcon/>
         </IconButton>
         <BaseButton v-else variant="secondary" size="small" @click.stop="exitDeleteMode">Done</BaseButton>
