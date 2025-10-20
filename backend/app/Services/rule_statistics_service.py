@@ -19,39 +19,49 @@ class RuleStatisticsService:
         self.discipline_service = DisciplineSettingsService(db)
 
     async def get_rules_with_statistics(self, general_account_id: UUID, trading_account_id: UUID):
-        settings = await self.settings_repo.get_by_general_account_id(general_account_id)
-        manual_rules = await self.manual_rule_repo.list_by_general_account(general_account_id)
+        settings, manual_rules = await asyncio.gather(
+            self.settings_repo.get_by_general_account_id(general_account_id),
+            self.manual_rule_repo.list_by_general_account(general_account_id)
+        )
 
         if not settings:
             return []
 
         today = date.today()
-        date_range = [today - timedelta(days=i) for i in range(30)]
+        start_date = today - timedelta(days=29)
+
+        # Fetch manual rule stats and evaluated automated rule statuses in parallel
+        manual_rule_stats, statuses_by_day = await asyncio.gather(
+            self.instance_repo.get_stats_by_manual_rule_for_date_range(
+                [rule.id for rule in manual_rules], trading_account_id, start_date, today
+            ),
+            self.discipline_service.evaluate_automated_rules_for_date_range(
+                settings, general_account_id, trading_account_id, start_date, today
+            )
+        )
 
         all_rules_with_stats = []
-
         automated_rules = self._get_automated_rules_from_settings(settings)
 
         for rule in automated_rules:
-            stats = await self._calculate_automated_rule_stats(rule, general_account_id, trading_account_id, date_range)
+            stats = self._calculate_automated_rule_stats(rule, statuses_by_day)
             all_rules_with_stats.append({**rule, **stats})
 
         for rule in manual_rules:
-            stats = await self._calculate_manual_rule_stats(rule.id, trading_account_id, date_range)
+            stats = manual_rule_stats.get(rule.id, {"follow_rate": 100.0})
             all_rules_with_stats.append({
                 "id": rule.id,
                 "name": rule.name,
                 "isManual": True,
-                **stats
+                "follow_rate": stats["follow_rate"],
+                "avg_performance": "-"
             })
 
         return all_rules_with_stats
 
     def _get_automated_rules_from_settings(self, settings):
         rules = []
-        # Convert the ORM model to a Pydantic schema to ensure it's serializable
         settings_schema = DisciplineSettingsSchema.model_validate(settings)
-
         if settings.start_day_by: rules.append({"id": "auto_start_day", "name": "Start my day by", "settings": settings_schema, "isManual": False})
         if settings.link_trades_to_playbook_threshold is not None: rules.append({"id": "auto_link_playbook", "name": "Link trades to playbook", "settings": settings_schema, "isManual": False})
         if settings.trade_has_stop_loss_threshold is not None: rules.append({"id": "auto_stop_loss", "name": "Trade has stop loss", "settings": settings_schema, "isManual": False})
@@ -59,13 +69,12 @@ class RuleStatisticsService:
         if settings.max_loss_per_day is not None: rules.append({"id": "auto_max_loss_day", "name": "Max loss per day", "settings": settings_schema, "isManual": False})
         return rules
 
-    async def _calculate_automated_rule_stats(self, rule, general_account_id, trading_account_id, date_range):
+    def _calculate_automated_rule_stats(self, rule, statuses_by_day):
         total_days = 0
         completed_days = 0
         performance_values = []
 
-        for day in date_range:
-            daily_statuses = await self.discipline_service.evaluate_automated_rules(rule['settings'], general_account_id, trading_account_id, day)
+        for day, daily_statuses in statuses_by_day.items():
             rule_status_for_day = next((s for s in daily_statuses if s['name'] == rule['name']), None)
 
             if rule_status_for_day:
@@ -73,36 +82,22 @@ class RuleStatisticsService:
                 if rule_status_for_day['status'] == 'completed':
                     completed_days += 1
 
-                # Performance calculation
-                if rule['name'] == 'Link trades to playbook':
-                    total_trades = await self.trade_repo.get_trades_count(trading_account_id, day)
-                    if total_trades > 0:
-                        linked_trades = await self.trade_repo.get_trades_linked_to_playbook_count(trading_account_id, day)
-                        performance_values.append((linked_trades / total_trades) * 100)
-                elif rule['name'] == 'Trade has stop loss':
-                    total_trades = await self.trade_repo.get_trades_count(trading_account_id, day)
-                    if total_trades > 0:
-                        trades_with_sl = await self.trade_repo.get_trades_with_stop_loss_count(trading_account_id, day)
-                        performance_values.append((trades_with_sl / total_trades) * 100)
-                elif rule['name'] == 'Max loss per day':
-                    pnl = await self.trade_repo.get_daily_pnl(trading_account_id, day)
-                    if pnl is not None:
-                        performance_values.append(float(pnl))
+                # Extract performance data from progress string
+                progress = rule_status_for_day.get("progress")
+                if progress:
+                    if rule['name'] in ['Link trades to playbook', 'Trade has stop loss']:
+                        parts = progress.split('/')
+                        if len(parts) == 2 and int(parts[1]) > 0:
+                            performance_values.append((int(parts[0]) / int(parts[1])) * 100)
+                    elif rule['name'] == 'Max loss per day':
+                        # Example progress: "$123.45/$-500.00"
+                        pnl_str = progress.split('/')[0].replace('$', '')
+                        try:
+                            performance_values.append(float(pnl_str))
+                        except (ValueError, IndexError):
+                            pass
 
         follow_rate = (completed_days / total_days) * 100 if total_days > 0 else 100.0
-
-        avg_performance = "N/A"
-        if performance_values:
-            avg_performance = sum(performance_values) / len(performance_values)
+        avg_performance = sum(performance_values) / len(performance_values) if performance_values else "N/A"
 
         return {"follow_rate": follow_rate, "avg_performance": avg_performance}
-
-    async def _calculate_manual_rule_stats(self, rule_id, trading_account_id, date_range):
-        instances = await self.instance_repo.find_by_rule_and_date_range(rule_id, trading_account_id, date_range)
-        total_days = len(instances)
-        if total_days == 0:
-            return {"follow_rate": 100.0, "avg_performance": "-"}
-
-        completed_days = sum(1 for i in instances if i.status == 'completed')
-        follow_rate = (completed_days / total_days) * 100
-        return {"follow_rate": follow_rate, "avg_performance": "-"}

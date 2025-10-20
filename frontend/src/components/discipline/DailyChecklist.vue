@@ -13,7 +13,7 @@
             @change="toggleStatus(rule)"
             class="custom-checkbox"
           />
-          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.name }}</label>
+          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.rule_template.name }}</label>
         </li>
       </ul>
     </div>
@@ -21,13 +21,14 @@
     <div v-if="automatedRules.length > 0" class="rules-section">
       <h3 class="section-title">AUTOMATED RULES ({{ automatedRules.length }})</h3>
       <ul class="rules-list">
-        <li v-for="rule in automatedRules" :key="rule.id" class="rule-item">
+        <li v-for="rule in automatedRules" :key="rule.name" class="rule-item">
           <span class="status-icon">
             <template v-if="rule.status === 'completed'">✅</template>
-            <template v-else-if="rule.status === 'failed'">❌</template>
-            <template v-else>⚪</template>
+            <template v-if="rule.status === 'failed'">❌</template>
+            <template v-if="rule.status === 'pending'">⚪️</template>
           </span>
           <span class="rule-label">{{ rule.name }}</span>
+          <span v-if="rule.progress" class="progress-text">{{ rule.progress }}</span>
         </li>
       </ul>
     </div>
@@ -72,7 +73,7 @@ function toggleStatus(rule) {
   border-radius: var(--semantic-border-radius-surface);
   padding: var(--semantic-size-inset-lg);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  align-self: flex-start; /* Prevent stretching */
+  align-self: flex-start;
 }
 
 .view-title {
@@ -109,6 +110,14 @@ function toggleStatus(rule) {
 .rule-label {
     font: var(--semantic-font-style-body-base);
     color: var(--semantic-color-text-primary);
+    flex-grow: 1; /* Allows the label to take up available space */
+}
+
+.progress-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  margin-left: auto; /* Pushes the progress text to the right */
+  padding-left: var(--semantic-size-stack-md);
 }
 
 .custom-checkbox {
@@ -119,8 +128,8 @@ function toggleStatus(rule) {
 }
 
 .status-icon {
-  font-size: 1.2em; /* Adjust size of the emoji */
-  line-height: 1; /* Ensure proper vertical alignment */
+  font-size: 1.2em;
+  line-height: 1;
   flex-shrink: 0;
 }
 </style>

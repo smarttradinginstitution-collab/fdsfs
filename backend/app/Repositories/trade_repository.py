@@ -344,6 +344,78 @@ class TradeRepository:
         )
         return count_result.scalar_one()
 
+    async def get_trade_stats_by_day_for_date_range(
+        self, trading_account_id: UUID, start_date: date, end_date: date
+    ) -> dict[date, dict[str, int]]:
+        """
+        Calculates trade statistics (total, with stop loss, linked to playbook)
+        for each day in a given date range.
+        Returns a dictionary mapping dates to their stats.
+        """
+        from datetime import datetime, time
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Use DATE() function to truncate timestamp to date for grouping
+        trade_date = func.date(Trade.entry_timestamp).label("trade_date")
+
+        stmt = (
+            select(
+                trade_date,
+                func.count(Trade.id).label("total_trades"),
+                func.count(case((Trade.stop_loss_price.isnot(None), Trade.id))).label("trades_with_sl"),
+                func.count(case((Trade.playbook_id.isnot(None), Trade.id))).label("trades_linked_to_playbook")
+            )
+            .where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime
+            )
+            .group_by(trade_date)
+        )
+
+        result = await self.db.execute(stmt)
+        stats_by_day = {
+            row.trade_date: {
+                "total_trades": row.total_trades,
+                "trades_with_sl": row.trades_with_sl,
+                "trades_linked_to_playbook": row.trades_linked_to_playbook
+            }
+            for row in result.all()
+        }
+        return stats_by_day
+
+    async def get_daily_pnl_for_date_range(
+        self, trading_account_id: UUID, start_date: date, end_date: date
+    ) -> dict[date, float]:
+        """
+        Calculates the total P/L for each day in a given date range.
+        Returns a dictionary mapping dates to their P/L.
+        """
+        from datetime import datetime, time
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Use DATE() function to truncate timestamp to date for grouping
+        trade_date = func.date(Trade.entry_timestamp).label("trade_date")
+
+        stmt = (
+            select(
+                trade_date,
+                func.sum(Trade.p_l).label("daily_pnl")
+            )
+            .where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime
+            )
+            .group_by(trade_date)
+        )
+
+        result = await self.db.execute(stmt)
+        pnl_by_day = {row.trade_date: float(row.daily_pnl) for row in result.all()}
+        return pnl_by_day
+
     async def get_trades_linked_to_playbook_count(self, trading_account_id: UUID, specific_date: date) -> int:
         """Counts trades linked to a playbook for a specific day."""
         from datetime import datetime, time
