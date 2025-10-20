@@ -23,9 +23,9 @@
       <ul class="rules-list">
         <li v-for="rule in automatedRules" :key="rule.name" class="rule-item">
           <span class="status-icon">
-            <template v-if="rule.status === 'completed'">✅</template>
-            <template v-if="rule.status === 'failed'">❌</template>
-            <template v-if="rule.status === 'pending'">⚪️</template>
+            <CheckCircleIcon v-if="rule.status === 'completed'" class="icon-completed" />
+            <XCircleIconSolid v-if="rule.status === 'failed'" class="icon-failed" />
+            <XCircleIconOutline v-if="rule.status === 'pending'" class="icon-pending" />
           </span>
           <span class="rule-label">{{ rule.name }}</span>
           <span v-if="rule.progress" class="progress-text">{{ rule.progress }}</span>
@@ -37,6 +37,8 @@
 
 <script setup>
 import { computed } from 'vue';
+import { CheckCircleIcon, XCircleIcon as XCircleIconSolid } from '@heroicons/vue/24/solid';
+import { XCircleIcon as XCircleIconOutline } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   manualRules: {
@@ -127,8 +129,23 @@ function toggleStatus(rule) {
 }
 
 .status-icon {
-  font-size: 1em;
-  line-height: 1;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-completed {
+  color: var(--semantic-color-text-success);
+}
+
+.icon-failed {
+  color: var(--semantic-color-text-danger);
+}
+
+.icon-pending {
+  color: var(--semantic-color-text-disabled);
 }
 </style>
