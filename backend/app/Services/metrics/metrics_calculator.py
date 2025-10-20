@@ -53,56 +53,75 @@ class MetricsCalculator:
         self.gross_profit = sum(t.p_l for t in self.winning_trades_list)
         self.gross_loss = abs(sum(t.p_l for t in self.losing_trades_list))
 
-    def get_all_metrics(self) -> Dict[str, Any]:
+    def get_all_metrics(self, pre_calculated_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Returns a dictionary containing all calculated performance metrics.
-        This is the main method called by AnalyticsService.
+        Accepts an optional dictionary of pre-calculated stats to avoid redundant calculations.
         """
-        if self.trade_count == 0:
+        if self.trade_count == 0 and not pre_calculated_stats:
             return self._get_default_metrics()
 
-        # Core Metrics
+        base_metrics = {}
+        # If pre_calculated_stats are provided, use them. Otherwise, calculate them.
+        if pre_calculated_stats:
+            base_metrics = pre_calculated_stats
+            net_pnl = Decimal(str(base_metrics.get("net_pnl", 0.0)))
+            gross_profit = Decimal(str(base_metrics.get("gross_profit", 0.0)))
+            gross_loss = Decimal(str(base_metrics.get("gross_loss", 0.0)))
+            winning_trades_count = base_metrics.get("winning_trades", 0)
+            losing_trades_count = base_metrics.get("losing_trades", 0)
+            trade_count = base_metrics.get("trade_count", 0)
+            avg_win = Decimal(str(base_metrics.get("avg_win", 0.0)))
+            avg_loss = Decimal(str(base_metrics.get("avg_loss", 0.0)))
+        else:
+            # Fallback to in-memory calculation if no pre-calculated stats are provided
+            net_pnl = self.net_pnl
+            gross_profit = self.gross_profit
+            gross_loss = self.gross_loss
+            winning_trades_count = self.winning_trades_count
+            losing_trades_count = self.losing_trades_count
+            trade_count = self.trade_count
+            avg_win = gross_profit / winning_trades_count if winning_trades_count > 0 else Decimal('0')
+            avg_loss = gross_loss / losing_trades_count if losing_trades_count > 0 else Decimal('0')
+            base_metrics = {
+                "net_pnl": net_pnl,
+                "gross_profit": gross_profit,
+                "gross_loss": gross_loss,
+                "winning_trades": winning_trades_count,
+                "losing_trades": losing_trades_count,
+                "breakeven_trades": self.breakeven_trades_count,
+                "trade_count": trade_count,
+                "avg_win": avg_win,
+                "avg_loss": avg_loss,
+                "largest_profit": max(self.pnl_series) if any(p > 0 for p in self.pnl_series) else 0,
+                "largest_loss": min(self.pnl_series) if any(p < 0 for p in self.pnl_series) else 0,
+                "avg_realized_rr": self._calculate_avg_realized_rr(),
+            }
+
+        win_rate = (winning_trades_count / trade_count) * 100 if trade_count > 0 else 0
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
+
+        # These metrics still require the full trade list for now
         equity_curve_data = self.calculate_equity_curve()
         max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(equity_curve_data['data'])
-        avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else Decimal('0')
-        avg_loss = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else Decimal('0')
-        win_rate = (self.winning_trades_count / self.trade_count) * 100 if self.trade_count > 0 else 0
-        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
-
-        # Processed Stats
-        processed_stats = self.calculate_processed_stats()
 
         # Consolidate all metrics into a single dictionary
-        metrics = {
-            "net_pnl": self.net_pnl,
-            "roi_percentage": self.calculate_roi(),
-            "gross_profit": self.gross_profit,
-            "gross_loss": self.gross_loss,
-            "win_rate": win_rate,
-            "trade_count": self.trade_count,
-            "winning_trades": self.winning_trades_count,
-            "losing_trades": self.losing_trades_count,
-            "breakeven_trades": self.breakeven_trades_count,
+        complex_metrics = {
+            "roi_percentage": self.calculate_roi(net_pnl),
+            "win_rate": win_rate, # Recalculate for consistency, it's fast
             "profit_factor": profit_factor,
             "profit_factor_label": f"{profit_factor:.2f}" if profit_factor is not None else "∞",
-            "avg_win": avg_win,
-            "avg_loss": avg_loss,
-            "largest_profit": max(self.pnl_series) if any(p > 0 for p in self.pnl_series) else 0,
-            "largest_loss": min(self.pnl_series) if any(p < 0 for p in self.pnl_series) else 0,
-            "max_consecutive_wins": self._calculate_max_consecutive_wins_losses()[0],
-            "max_consecutive_losses": self._calculate_max_consecutive_wins_losses()[1],
-            "average_hold_time": self._calculate_average_hold_time(),
             "expectancy": self._calculate_expectancy(win_rate, avg_win, avg_loss),
-            "average_trade_pnl": self.net_pnl / self.trade_count if self.trade_count > 0 else 0,
-            "avg_realized_rr": self._calculate_avg_realized_rr(),
+            "average_trade_pnl": net_pnl / trade_count if trade_count > 0 else 0,
             "max_drawdown_abs": max_drawdown_abs,
             "max_drawdown_percentage": max_drawdown_perc,
             "sharpe_ratio": self._calculate_sharpe_ratio(),
-            "equity_curve": equity_curve_data,
-            "calendar_data": self.calculate_calendar_data(),
-            **processed_stats  # Unpack all processed stats into the main dictionary
+            # These still require iterating the list
+            "max_consecutive_wins": self._calculate_max_consecutive_wins_losses()[0],
+            "max_consecutive_losses": self._calculate_max_consecutive_wins_losses()[1],
+            "average_hold_time": self._calculate_average_hold_time(),
         }
-        return metrics
+        return {**base_metrics, **complex_metrics}
 
     def get_playbook_summary_metrics(self) -> Dict[str, Any]:
         """
@@ -158,11 +177,15 @@ class MetricsCalculator:
             **default_processed
         }
 
-    def calculate_roi(self) -> float:
+    def calculate_roi(self, net_pnl: Optional[Decimal] = None) -> float:
         """Calculates the Return on Investment (ROI) based on initial balance."""
         if self.initial_balance == 0:
             return 0.0
-        return (self.net_pnl / self.initial_balance) * 100
+
+        # Use provided net_pnl if available, otherwise use the one calculated in the instance
+        pnl_to_use = net_pnl if net_pnl is not None else self.net_pnl
+
+        return (pnl_to_use / self.initial_balance) * 100
 
     def calculate_equity_curve(self) -> Dict[str, List[Any]]:
         """

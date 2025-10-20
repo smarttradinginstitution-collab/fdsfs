@@ -240,6 +240,78 @@ class TradeRepository:
 
         # Il commit verrà gestito dal service layer
 
+    async def get_aggregated_performance_stats(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date,
+    ) -> dict[str, Any]:
+        """
+        Calcola le metriche di performance aggregate direttamente nel database per la massima efficienza.
+        """
+        from datetime import datetime, time
+        from sqlalchemy import cast, Numeric
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Filtri comuni per le query
+        filters = [
+            Trade.trading_account_id == trading_account_id,
+            Trade.entry_timestamp >= start_datetime,
+            Trade.entry_timestamp <= end_datetime,
+            Trade.p_l.isnot(None)
+        ]
+
+        # Definizioni delle aggregazioni
+        query_aggs = [
+            func.sum(Trade.p_l).label("net_pnl"),
+            func.count(Trade.id).label("trade_count"),
+            func.count(case((Trade.p_l > 0, 1))).label("winning_trades"),
+            func.count(case((Trade.p_l < 0, 1))).label("losing_trades"),
+            func.sum(case((Trade.p_l > 0, Trade.p_l), else_=0)).label("gross_profit"),
+            func.sum(case((Trade.p_l < 0, Trade.p_l), else_=0)).label("gross_loss"),
+            func.max(Trade.p_l).label("largest_profit"),
+            func.min(Trade.p_l).label("largest_loss"),
+            func.avg(Trade.r_multiple).label("avg_realized_rr")
+        ]
+
+        stmt = select(*query_aggs).where(*filters)
+
+        result = await self.db.execute(stmt)
+        stats = result.mappings().first()
+
+        # Se non ci sono trade, restituisce una struttura dati vuota/default
+        if not stats or stats['trade_count'] == 0:
+            return {
+                "net_pnl": 0.0, "trade_count": 0, "winning_trades": 0, "losing_trades": 0,
+                "breakeven_trades": 0, "gross_profit": 0.0, "gross_loss": 0.0,
+                "avg_win": 0.0, "avg_loss": 0.0, "largest_profit": 0.0, "largest_loss": 0.0,
+                "avg_realized_rr": 0.0,
+            }
+
+        # Post-elaborazione dei risultati per calcolare medie e valori derivati
+        win_count = stats['winning_trades'] or 0
+        loss_count = stats['losing_trades'] or 0
+        total_count = stats['trade_count'] or 0
+
+        processed_stats = {
+            "net_pnl": float(stats['net_pnl'] or 0.0),
+            "trade_count": total_count,
+            "winning_trades": win_count,
+            "losing_trades": loss_count,
+            "breakeven_trades": total_count - (win_count + loss_count),
+            "gross_profit": float(stats['gross_profit'] or 0.0),
+            "gross_loss": abs(float(stats['gross_loss'] or 0.0)),
+            "avg_win": (float(stats['gross_profit']) / win_count) if win_count > 0 else 0.0,
+            "avg_loss": abs(float(stats['gross_loss']) / loss_count) if loss_count > 0 else 0.0,
+            "largest_profit": float(stats['largest_profit'] or 0.0),
+            "largest_loss": float(stats['largest_loss'] or 0.0),
+            "avg_realized_rr": float(stats['avg_realized_rr'] or 0.0),
+        }
+
+        return processed_stats
+
     async def get_tag_performance_stats(
         self,
         trading_account_id: UUID,
