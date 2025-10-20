@@ -21,10 +21,14 @@
     <div v-if="automatedRules.length > 0" class="rules-section">
       <h3 class="section-title">AUTOMATED RULES ({{ automatedRules.length }})</h3>
       <ul class="rules-list">
-        <li v-for="rule in automatedRules" :key="rule.id" class="rule-item">
-          <span class="status-icon" :class="`status-${rule.status}`"></span>
+        <li v-for="rule in automatedRules" :key="rule.name" class="rule-item">
+          <span class="status-icon">
+            <template v-if="rule.status === 'completed'">✅</template>
+            <template v-if="rule.status === 'failed'">❌</template>
+            <template v-if="rule.status === 'pending'">⚪️</template>
+          </span>
           <span class="rule-label">{{ rule.name }}</span>
-          <span class="actual-value">{{ rule.actual_value || '' }}</span>
+          <span v-if="rule.progress" class="progress-text">{{ rule.progress }}</span>
         </li>
       </ul>
     </div>
@@ -69,7 +73,7 @@ function toggleStatus(rule) {
   border-radius: var(--semantic-border-radius-surface);
   padding: var(--semantic-size-inset-lg);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
-  align-self: flex-start; /* Prevent stretching */
+  align-self: flex-start;
 }
 
 .view-title {
@@ -106,6 +110,14 @@ function toggleStatus(rule) {
 .rule-label {
     font: var(--semantic-font-style-body-base);
     color: var(--semantic-color-text-primary);
+    flex-grow: 1; /* Allows the label to take up available space */
+}
+
+.progress-text {
+  font: var(--semantic-font-style-body-sm);
+  color: var(--semantic-color-text-secondary);
+  margin-left: auto; /* Pushes the progress text to the right */
+  padding-left: var(--semantic-size-stack-md);
 }
 
 .custom-checkbox {
@@ -116,30 +128,8 @@ function toggleStatus(rule) {
 }
 
 .status-icon {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  font-size: 1.2em;
+  line-height: 1;
   flex-shrink: 0;
-}
-
-.status-pending {
-  background-color: var(--semantic-color-surface-secondary);
-  border: 1px solid var(--semantic-color-border-default);
-}
-
-.status-completed {
-  background-color: var(--semantic-color-feedback-positive-surface);
-  border: 1px solid var(--semantic-color-feedback-positive-text);
-}
-
-.status-failed {
-  background-color: var(--semantic-color-feedback-negative-surface);
-  border: 1px solid var(--semantic-color-feedback-negative-text);
-}
-
-.actual-value {
-  margin-left: auto;
-  font: var(--semantic-font-style-body-sm);
-  color: var(--semantic-color-text-secondary);
 }
 </style>

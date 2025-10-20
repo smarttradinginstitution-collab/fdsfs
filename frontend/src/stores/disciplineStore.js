@@ -184,7 +184,21 @@ export const useDisciplineStore = defineStore('discipline', () => {
   }
 
   async function updateManualRuleStatus(instanceId, newStatus) {
-    // ...
+    const rule = dailyChecklist.value.manual_rules.find(r => r.id === instanceId);
+    if (!rule) return;
+
+    const originalStatus = rule.status;
+    rule.status = newStatus; // Optimistic update
+
+    try {
+      await apiClient.put(`/daily-checklist/${instanceId}`, { status: newStatus });
+      // After a successful update, refresh the rules table to show new stats
+      await fetchAllRules();
+    } catch (err) {
+      rule.status = originalStatus; // Rollback on error
+      error.value = err.response?.data?.detail || 'Failed to update rule status.';
+      console.error(error.value);
+    }
   }
 
   async function fetchHeatmapData(year, month) {

@@ -27,12 +27,44 @@ class DailyRuleInstanceRepository(BaseRepository[DailyRuleInstance, DailyRuleIns
         return await self.create(kwargs)
 
     async def find_by_note_and_trading_account(self, daily_note_id: UUID, trading_account_id: UUID) -> Sequence[DailyRuleInstance]:
+        from sqlalchemy.orm import joinedload
         stmt = select(self.model).where(
             self.model.daily_journal_id == daily_note_id,
             self.model.trading_account_id == trading_account_id
-        ).options(selectinload(self.model.rule_template))
+        ).options(joinedload(self.model.rule_template))
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_stats_by_manual_rule_for_date_range(
+        self, manual_rule_ids: list[UUID], trading_account_id: UUID, start_date: date, end_date: date
+    ) -> dict[UUID, dict[str, float]]:
+        """
+        Calculates follow rate statistics for a list of manual rules over a date range.
+        Returns a dictionary mapping rule_id to its follow_rate.
+        """
+        from sqlalchemy import func, case, Float
+
+        stmt = (
+            select(
+                self.model.manual_rule_id,
+                func.count(self.model.id).label("total_days"),
+                func.count(case((self.model.status == 'completed', self.model.id))).label("completed_days")
+            )
+            .where(
+                self.model.manual_rule_id.in_(manual_rule_ids),
+                self.model.trading_account_id == trading_account_id,
+                self.model.date >= start_date,
+                self.model.date <= end_date
+            )
+            .group_by(self.model.manual_rule_id)
+        )
+
+        result = await self.db.execute(stmt)
+        stats = {}
+        for row in result.all():
+            follow_rate = (row.completed_days / row.total_days) * 100 if row.total_days > 0 else 100.0
+            stats[row.manual_rule_id] = {"follow_rate": follow_rate}
+        return stats
 
     async def find_by_account_and_date_range(self, general_account_id: UUID, start_date: datetime.date, end_date: datetime.date) -> Sequence[tuple[DailyRuleInstance, datetime.date]]:
         stmt = (
