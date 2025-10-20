@@ -104,7 +104,10 @@ const createNoteForTrade = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  if (store.folders.length === 0) {
+    await store.fetchFolders();
+  }
   fetchNote();
 });
 

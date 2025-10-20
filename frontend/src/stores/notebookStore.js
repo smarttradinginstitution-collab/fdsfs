@@ -166,8 +166,22 @@ export const useNotebookStore = defineStore('notebook', {
       this.error = null;
       try {
         const response = await apiClient.get(`/notebook/notes/by_trade/${tradeId}`);
-        return response.data;
+        const note = response.data;
+
+        // Aggiungi o aggiorna la nota nell'elenco globale
+        const index = this.notes.findIndex(n => n.id === note.id);
+        if (index !== -1) {
+          this.notes[index] = note;
+        } else {
+          this.notes.push(note);
+        }
+
+        return note;
       } catch (err) {
+        // Non trattare il 404 come un errore che blocca, è uno stato valido
+        if (err.response && err.response.status === 404) {
+          return null; // La nota semplicemente non esiste
+        }
         console.error(`Error fetching note for trade ${tradeId}:`, err);
         this.error = err.response?.data?.detail || 'Failed to fetch note.';
         throw err;
