@@ -108,10 +108,11 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
-  if (tradeDataCache.value[tradeId]) {
-    const cachedData = tradeDataCache.value[tradeId];
+  const cachedData = tradeDataCache.value[tradeId];
+  // Controllo di validità: usa la cache solo se i dati essenziali esistono
+  if (cachedData && cachedData.trade && cachedData.trade.id) {
     tradesStore.selectedTrade = cachedData.trade;
-    imageStore.imagesForCurrentTrade = cachedData.images;
+    imageStore.imagesForCurrentTrade = cachedData.images || [];
     tradeNote.value = cachedData.note;
     if (cachedData.note) {
       notebookStore.selectNote(cachedData.note.id);
@@ -206,14 +207,25 @@ const prefetchTradeData = async (tradeId) => {
       });
 
     promises.push(notePromise);
-    const [tradeDetails, images, note] = await Promise.all(promises);
+    const results = await Promise.all(promises.map(p => p.catch(e => e)));
 
-    // Salva i dati pre-caricati nella cache
-    tradeDataCache.value[tradeId] = {
-      trade: tradeDetails || tradesStore.trades.find(t => t.id === tradeId),
-      images,
-      note,
-    };
+    // Estrai i risultati. Se c'è stato un errore in una promise, sarà un oggetto Error.
+    const tradeDetailsResult = results[0];
+    const imagesResult = results[1];
+    const noteResult = results[2];
+
+    const trade = tradeDetailsResult instanceof Error ? null : (tradeDetailsResult || tradesStore.trades.find(t => t.id === tradeId));
+    const images = imagesResult instanceof Error ? [] : imagesResult;
+    const note = noteResult instanceof Error ? null : noteResult;
+
+    // Salva nella cache solo se abbiamo i dettagli del trade
+    if (trade && trade.id) {
+      tradeDataCache.value[tradeId] = {
+        trade,
+        images,
+        note,
+      };
+    }
 
   } catch (error) {
     console.warn(`Failed to prefetch data for trade ${tradeId}:`, error);
