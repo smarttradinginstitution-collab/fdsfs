@@ -190,7 +190,7 @@ const removeImpact = async (impactToRemove) => {
             <p v-if="group.tradeImpacts.length === 0" class="no-impacts-message">-</p>
         </div>
 
-        <IconButton v-if="deletingFromGroupId !== group.id" @click="openPopover($event, group)">
+        <IconButton v-if="deletingFromGroupId !== group.id" :aria-label="`Add new ${group.name}`" @click="openPopover($event, group)">
             <PlusIcon/>
         </IconButton>
         <BaseButton v-else variant="secondary" size="small" @click.stop="exitDeleteMode">Done</BaseButton>
