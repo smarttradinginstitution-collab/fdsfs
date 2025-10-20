@@ -794,22 +794,6 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
-    async fetchTradeTags(tradeId) {
-      this.isTradeLoading = true;
-      try {
-        const response = await apiClient.get(`/trades/${tradeId}/tags`);
-        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
-          this.selectedTrade.tags = response.data;
-        }
-      } catch (error) {
-        console.error(`Error fetching tags for trade ${tradeId}:`, error);
-        const uiStore = useUiStore();
-        uiStore.showNotification({ message: 'Failed to load trade tags.', type: 'danger' });
-      } finally {
-        this.isTradeLoading = false;
-      }
-    },
-
     async updateTradeTags(tradeId, tagIds) {
       this.isTradeLoading = true;
       const uiStore = useUiStore();

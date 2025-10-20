@@ -31,14 +31,13 @@ const { imagesForCurrentTrade: imagesFromStore, isLoading } = storeToRefs(imageS
 
 const isDragging = ref(false);
 
-const imagesForCurrentTrade = computed(() => {
-  return props.mode === 'full' ? imagesFromStore.value : props.images;
-});
+// Il componente ora si affida sempre allo store per i suoi dati.
+// ReportView non ha più bisogno di passare le immagini come prop.
+const imagesForCurrentTrade = computed(() => imagesFromStore.value);
 
 onMounted(() => {
-  if (props.mode === 'full') {
-    imageStore.fetchImagesForTrade(props.tradeId);
-  }
+  // Quando il componente viene montato (grazie a LazyLoad), carica le sue immagini.
+  imageStore.fetchImagesForTrade(props.tradeId);
 });
 
 watch(() => props.tradeId, (newTradeId) => {
