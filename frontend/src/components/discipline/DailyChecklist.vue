@@ -6,14 +6,12 @@
       <h3 class="section-title">MANUAL RULES ({{ manualRules.length }})</h3>
       <ul class="rules-list">
         <li v-for="rule in manualRules" :key="rule.id" class="rule-item">
-          <input
-            type="checkbox"
+          <BaseCheckbox
             :id="`rule-${rule.id}`"
-            :checked="rule.status === 'completed'"
-            @change="toggleStatus(rule)"
-            class="custom-checkbox"
+            :model-value="rule.status === 'completed'"
+            @update:model-value="toggleStatus(rule)"
+            :label="rule.name"
           />
-          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.name }}</label>
         </li>
       </ul>
     </div>
@@ -21,14 +19,11 @@
     <div v-if="automatedRules.length > 0" class="rules-section">
       <h3 class="section-title">AUTOMATED RULES ({{ automatedRules.length }})</h3>
       <ul class="rules-list">
-        <li v-for="rule in automatedRules" :key="rule.id" class="rule-item">
-          <span class="status-icon">
-            <template v-if="rule.status === 'completed'">✅</template>
-            <template v-else-if="rule.status === 'failed'">❌</template>
-            <template v-else>⚪</template>
-          </span>
-          <span class="rule-label">{{ rule.name }}</span>
-        </li>
+        <AutomatedRuleItem
+          v-for="rule in automatedRules"
+          :key="rule.id"
+          :rule="rule"
+        />
       </ul>
     </div>
   </div>
@@ -36,6 +31,8 @@
 
 <script setup>
 import { computed } from 'vue';
+import AutomatedRuleItem from './AutomatedRuleItem.vue';
+import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 
 const props = defineProps({
   manualRules: {
@@ -106,17 +103,7 @@ function toggleStatus(rule) {
   padding: var(--semantic-size-inset-sm) 0;
 }
 
-.rule-label {
-    font: var(--semantic-font-style-body-base);
-    color: var(--semantic-color-text-primary);
-}
-
-.custom-checkbox {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: var(--semantic-color-interactive-primary-default);
-}
+/* BaseCheckbox handles its own styling, so custom styles for checkbox and label are no longer needed here. */
 
 .status-icon {
   font-size: 1.2em; /* Adjust size of the emoji */
