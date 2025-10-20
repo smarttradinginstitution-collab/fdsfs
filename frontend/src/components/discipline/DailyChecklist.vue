@@ -105,6 +105,15 @@ function toggleStatus(rule) {
 
 /* BaseCheckbox handles its own styling, so custom styles for checkbox and label are no longer needed here. */
 
+/*
+  Override the default text color of the BaseCheckbox label to make it more prominent,
+  matching the design specification.
+*/
+.rule-item :deep(.checkbox-label) {
+  font: var(--semantic-font-style-body-base);
+  color: var(--semantic-color-text-primary);
+}
+
 .status-icon {
   font-size: 1.2em; /* Adjust size of the emoji */
   line-height: 1; /* Ensure proper vertical alignment */
