@@ -107,12 +107,16 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
-  loadingStore.startLoading();
+  const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+
+  // Mostra il caricamento solo se il trade non è già stato pre-caricato
+  if (!tradeFromList) {
+    loadingStore.startLoading();
+  }
+
   error.value = null;
   tradeNote.value = null;
   try {
-    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
-
     const promises = [];
     if (tradeFromList) {
       tradesStore.selectedTrade = { ...tradeFromList };
