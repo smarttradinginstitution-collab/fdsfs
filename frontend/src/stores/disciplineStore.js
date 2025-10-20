@@ -34,7 +34,8 @@ export const useDisciplineStore = defineStore('discipline', () => {
   const mergedChecklist = computed(() => {
     const mergeRules = (checklistRules) => {
       return checklistRules.map(instance => {
-        const ruleDetails = allRules.value.find(rule => rule.id === instance.rule_id);
+        // Using == instead of === to handle potential type mismatch (e.g., number vs string)
+        const ruleDetails = allRules.value.find(rule => rule.id == instance.rule_id);
         return {
           ...instance,
           name: ruleDetails?.name || 'Unknown Rule',
