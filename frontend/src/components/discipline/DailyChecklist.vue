@@ -138,14 +138,14 @@ function toggleStatus(rule) {
 }
 
 .icon-completed {
-  color: var(--semantic-color-text-success);
+  color: rgb(11, 119, 11);
 }
 
 .icon-failed {
-  color: var(--semantic-color-text-danger);
+  color: rgb(98, 10, 10);
 }
 
 .icon-pending {
-  color: var(--semantic-color-text-disabled);
+  color: grey;
 }
 </style>
