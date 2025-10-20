@@ -10,7 +10,6 @@ import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { FontSize } from '@/utils/tiptap/FontSize.js';
-import Underline from '@tiptap/extension-underline';
 import { ResizableImageExtension } from '@/utils/tiptap/ResizableImageExtension.js';
 
 // Custom UI Components
@@ -69,7 +68,6 @@ const editor = useEditor({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
       link: { openOnClick: false },
     }),
-    Underline,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     FontFamily,
     TextStyle,
