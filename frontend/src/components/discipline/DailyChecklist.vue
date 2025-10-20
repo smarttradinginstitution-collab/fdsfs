@@ -13,7 +13,7 @@
             @change="toggleStatus(rule)"
             class="custom-checkbox"
           />
-          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.rule_template.name }}</label>
+          <label :for="`rule-${rule.id}`" class="rule-label">{{ rule.name }}</label>
         </li>
       </ul>
     </div>
