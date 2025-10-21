@@ -10,7 +10,6 @@ from sqlalchemy.orm import noload
 
 from app.Models.note import Note
 from app.Models.notebook_folder import NotebookFolder
-from app.Models.enums import FolderType
 from app.Schemas.notebook import NotebookFolderCreate, NotebookFolderUpdate
 
 
@@ -20,13 +19,29 @@ class NotebookFolderRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
+    # ------------------------
+    # Helpers per predicate
+    # ------------------------
+    @staticmethod
+    def _not_deleted_folder():
+        """Predicate per sfruttare gli indici parziali su notebook_folders (deleted_at IS NULL)."""
+        return NotebookFolder.deleted_at.is_(None)
+
+    @staticmethod
+    def _not_deleted_note():
+        """Predicate per escludere le note soft-deleted dal conteggio."""
+        return Note.deleted_at.is_(None)
+
+    # ------------------------
+    # Reads
+    # ------------------------
     async def get_by_id(self, folder_id: UUID) -> NotebookFolder | None:
-        """Get a folder by its ID, with its note count."""
+        """Get a folder by its ID, with its note count (excluding deleted notes)."""
         stmt = (
             select(NotebookFolder, func.count(Note.id).label("note_count"))
             .options(noload(NotebookFolder.notes))
-            .outerjoin(Note, Note.folder_id == NotebookFolder.id)
-            .where(NotebookFolder.id == folder_id)
+            .outerjoin(Note, (Note.folder_id == NotebookFolder.id) & (self._not_deleted_note()))
+            .where(NotebookFolder.id == folder_id, self._not_deleted_folder())
             .group_by(NotebookFolder.id)
         )
         result = await self.db.execute(stmt)
@@ -38,10 +53,11 @@ class NotebookFolderRepository:
         return None
 
     async def find_by_name_and_account(self, name: str, general_account_id: UUID) -> NotebookFolder | None:
-        """Find a folder by name for a specific general account."""
+        """Find a folder by name for a specific general account (excluding deleted folders)."""
         stmt = select(NotebookFolder).where(
             NotebookFolder.name == name,
-            NotebookFolder.general_account_id == general_account_id
+            NotebookFolder.general_account_id == general_account_id,
+            self._not_deleted_folder()
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
@@ -49,12 +65,15 @@ class NotebookFolderRepository:
     async def list_by_general_account_id(
         self, general_account_id: UUID
     ) -> Sequence[NotebookFolder]:
-        """List all folders for a given general account, with note counts."""
+        """List all non-deleted folders for a given general account, with note counts."""
         stmt = (
             select(NotebookFolder, func.count(Note.id).label("note_count"))
             .options(noload(NotebookFolder.notes))
-            .outerjoin(Note, Note.folder_id == NotebookFolder.id)
-            .where(NotebookFolder.general_account_id == general_account_id)
+            .outerjoin(Note, (Note.folder_id == NotebookFolder.id) & (self._not_deleted_note()))
+            .where(
+                NotebookFolder.general_account_id == general_account_id,
+                self._not_deleted_folder()
+            )
             .group_by(NotebookFolder.id)
             .order_by(NotebookFolder.name.asc())
         )
@@ -67,7 +86,9 @@ class NotebookFolderRepository:
 
         return folders_with_counts
 
-
+    # ------------------------
+    # Mutations
+    # ------------------------
     async def create(
         self, folder_in: NotebookFolderCreate, general_account_id: UUID
     ) -> NotebookFolder:
@@ -77,7 +98,7 @@ class NotebookFolderRepository:
         )
         self.db.add(db_folder)
         await self.db.commit()
-        await self.db.refresh(db_folder)
+        # After creation, get_by_id will correctly fetch it with the count
         return await self.get_by_id(db_folder.id)
 
     async def update(
@@ -89,10 +110,10 @@ class NotebookFolderRepository:
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
-        await self.db.refresh(db_obj)
+        # After update, get_by_id will correctly fetch it with the count
         return await self.get_by_id(db_obj.id)
 
     async def delete(self, db_obj: NotebookFolder) -> None:
-        """Delete a folder."""
+        """Delete a folder (hard delete)."""
         await self.db.delete(db_obj)
         await self.db.commit()
