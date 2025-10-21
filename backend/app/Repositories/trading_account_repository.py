@@ -5,7 +5,7 @@ from uuid import UUID
 from typing import Optional, List
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.trading_account import TradingAccount
@@ -21,7 +21,7 @@ class TradingAccountRepository:
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.id == account_id)
-            .options(selectinload(TradingAccount.broker))
+            .options(joinedload(TradingAccount.broker))
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
@@ -31,7 +31,7 @@ class TradingAccountRepository:
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.general_account_id == general_account_id)
-            .options(selectinload(TradingAccount.broker))
+            .options(joinedload(TradingAccount.broker))
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
