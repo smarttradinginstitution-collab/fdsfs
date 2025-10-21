@@ -4,6 +4,7 @@ from __future__ import annotations
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from datetime import datetime
 from decimal import Decimal
 from app.Repositories.playbook_repository import PlaybookRepository
 from app.Schemas.playbook import PlaybookAnalytics, PlaybookAnalyticsMetrics
@@ -52,35 +53,42 @@ class PlaybookAnalyticsService:
         )
 
     def _calculate_derived_metrics(self, stats: dict) -> PlaybookAnalyticsMetrics:
-        """Calculates derived metrics from the raw aggregated data."""
-        trades_count = stats.get('trades_count', 0)
-        winning_trades = stats.get('winning_trades', 0)
-        losing_trades = stats.get('losing_trades', 0)
-        gross_profit = Decimal(str(stats.get('gross_profit', 0.0)))
-        gross_loss = Decimal(str(abs(stats.get('gross_loss', 0.0))))
+        """Calculates derived metrics from the raw aggregated data, handling None values."""
 
+        # Securely retrieve raw stats, defaulting None to 0 or 0.0
+        net_pnl = stats.get('net_pnl') or 0.0
+        trades_count = stats.get('trades_count') or 0
+        winning_trades = stats.get('winning_trades') or 0
+        losing_trades = stats.get('losing_trades') or 0
+        gross_profit = stats.get('gross_profit') or 0.0
+        gross_loss = abs(stats.get('gross_loss') or 0.0)
+        largest_profit = stats.get('largest_profit') or 0.0
+        largest_loss = stats.get('largest_loss') or 0.0
+        total_r_multiple = stats.get('total_r_multiple') or 0.0
+
+        # Use Decimal for precise financial calculations
+        gross_profit_dec = Decimal(str(gross_profit))
+        gross_loss_dec = Decimal(str(gross_loss))
+
+        # Calculate derived metrics
         win_rate = (winning_trades / trades_count) * 100 if trades_count > 0 else 0
         loss_rate = (losing_trades / trades_count) * 100 if trades_count > 0 else 0
-        profit_factor = float(gross_profit / gross_loss) if gross_loss > 0 else None
-        avg_winner = float(gross_profit / winning_trades) if winning_trades > 0 else 0
-        avg_loser = float(gross_loss / losing_trades) if losing_trades > 0 else 0
+        profit_factor = float(gross_profit_dec / gross_loss_dec) if gross_loss_dec > 0 else None
+        avg_winner = float(gross_profit_dec / winning_trades) if winning_trades > 0 else 0
+        avg_loser = float(gross_loss_dec / losing_trades) if losing_trades > 0 else 0
         expectancy = ((win_rate / 100) * avg_winner) - ((loss_rate / 100) * avg_loser)
 
-        # Helper per convertire in float in modo sicuro, gestendo None
-        def safe_float(value, default=0.0):
-            return float(value) if value is not None else default
-
         return PlaybookAnalyticsMetrics(
-            net_pnl=safe_float(stats.get('net_pnl')),
+            net_pnl=float(net_pnl),
             trades=trades_count,
             win_rate=win_rate,
             profit_factor=profit_factor,
             expectancy=expectancy,
             average_winner=avg_winner,
             average_loser=avg_loser,
-            largest_profit=safe_float(stats.get('largest_profit')),
-            largest_loss=safe_float(stats.get('largest_loss')),
-            total_r_multiple=safe_float(stats.get('total_r_multiple')),
+            largest_profit=float(largest_profit),
+            largest_loss=float(largest_loss),
+            total_r_multiple=float(total_r_multiple),
             missed_trades=0,  # Placeholder
             rules_followed=0.0,  # Placeholder
         )
@@ -93,7 +101,7 @@ class PlaybookAnalyticsService:
         # Sort data by date, just in case
         sorted_curve = sorted(curve_data, key=lambda x: x['date'])
 
-        labels = [item['date'].date() for item in sorted_curve]
+        labels = [datetime.fromisoformat(item['date']).date() for item in sorted_curve]
         # Start the curve with an initial balance of 0
         data = [0.0] + [float(item['cumulative_pnl']) for item in sorted_curve]
 
