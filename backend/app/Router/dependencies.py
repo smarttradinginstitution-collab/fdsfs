@@ -62,9 +62,18 @@ async def get_current_general_account_id(
     Recupera il general_account_id associato all'utente corrente.
     Lancia un'eccezione 404 se non viene trovato nessun account.
     """
+    import time
+    start_time = time.time()
+    print(f"GET_ACCOUNT_ID: Start at {start_time:.4f}")
+
     stmt = select(GeneralAccount.id).where(GeneralAccount.user_id == current_user.id).limit(1)
+
+    query_start_time = time.time()
+    print(f"GET_ACCOUNT_ID: Executing query at {query_start_time:.4f}")
     result = await db.execute(stmt)
     general_account_id = result.scalar_one_or_none()
+    query_end_time = time.time()
+    print(f"GET_ACCOUNT_ID: Query finished at {query_end_time:.4f}. Duration: {query_end_time - query_start_time:.4f}s")
 
     if not general_account_id:
         raise HTTPException(
