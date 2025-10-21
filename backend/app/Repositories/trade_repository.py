@@ -480,6 +480,7 @@ class TradeRepository:
 
         class dow_isodow(FunctionElement):
             name = 'isodow'
+            inherit_cache = True
 
         @compiles(dow_isodow, 'postgresql')
         def pg_isodow(element, compiler, **kw):
