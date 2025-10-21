@@ -4,11 +4,10 @@ from __future__ import annotations
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from decimal import Decimal
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Services.metrics.metrics_calculator import MetricsCalculator
 from app.Schemas.playbook import PlaybookAnalytics, PlaybookAnalyticsMetrics
 from app.Schemas.analytics import EquityCurveData
-from app.Models.trade import Trade
 
 class PlaybookAnalyticsService:
     def __init__(self, db_session: AsyncSession):
@@ -17,30 +16,34 @@ class PlaybookAnalyticsService:
 
     async def get_playbook_analytics(self, playbook_id: UUID, current_user_id: UUID, is_admin: bool) -> PlaybookAnalytics:
         """
-        Gathers all data required for the playbook detail page analytics.
+        Gathers all data required for the playbook detail page analytics using
+        a single, optimized database query.
         """
-        playbook = await self.playbook_repo.get_by_id_with_trades(playbook_id)
-
+        # Step 1: Verify ownership (without loading all trades)
+        playbook = await self.playbook_repo.get_by_id(playbook_id)
         if not playbook:
-            # This will be caught by the controller and turned into a 404
             return None
-
-        # Basic security check
         if not is_admin and playbook.general_account.user_id != current_user_id:
-            # This will be caught and turned into a 403
             return None
 
-        trades = playbook.trades
-        # For playbook metrics, initial_balance is not relevant.
-        calculator = MetricsCalculator(trades=trades, initial_balance=0.0)
+        # Step 2: Fetch pre-aggregated stats from the repository
+        stats = await self.playbook_repo.get_analytics_by_playbook_id(playbook_id)
+        if not stats:
+            # Handle case with no trades
+            return PlaybookAnalytics(
+                id=playbook.id,
+                title=playbook.title,
+                metrics=PlaybookAnalyticsMetrics(),
+                equity_curve=EquityCurveData(labels=[], data=[0.0])
+            )
 
-        # 1. Calculate all metrics
-        metrics = self._calculate_metrics(calculator, trades)
+        # Step 3: Calculate derived metrics
+        metrics = self._calculate_derived_metrics(stats)
 
-        # 2. Calculate equity curve
-        equity_curve = self._calculate_equity_curve(calculator)
+        # Step 4: Format equity curve data
+        equity_curve = self._format_equity_curve(stats['equity_curve_data'])
 
-        # 3. Assemble response
+        # Step 5: Assemble response
         return PlaybookAnalytics(
             id=playbook.id,
             title=playbook.title,
@@ -48,46 +51,46 @@ class PlaybookAnalyticsService:
             equity_curve=equity_curve
         )
 
-    def _calculate_metrics(self, calculator: MetricsCalculator, trades: list[Trade]) -> PlaybookAnalyticsMetrics:
-        """Calculates and assembles the metrics part of the response."""
-        if not trades:
-            return PlaybookAnalyticsMetrics() # Return default values
+    def _calculate_derived_metrics(self, stats: dict) -> PlaybookAnalyticsMetrics:
+        """Calculates derived metrics from the raw aggregated data."""
+        trades_count = stats.get('trades_count', 0)
+        winning_trades = stats.get('winning_trades', 0)
+        losing_trades = stats.get('losing_trades', 0)
+        gross_profit = Decimal(str(stats.get('gross_profit', 0.0)))
+        gross_loss = Decimal(str(abs(stats.get('gross_loss', 0.0))))
 
-        win_rate = (calculator.winning_trades_count / calculator.trade_count) * 100 if calculator.trade_count > 0 else 0
-        avg_winner = calculator.gross_profit / calculator.winning_trades_count if calculator.winning_trades_count > 0 else 0
-        avg_loser = calculator.gross_loss / calculator.losing_trades_count if calculator.losing_trades_count > 0 else 0
-        expectancy = calculator._calculate_expectancy(win_rate, avg_winner, avg_loser)
-        profit_factor = calculator.gross_profit / calculator.gross_loss if calculator.gross_loss > 0 else None
-
-        # Sum of R-multiples
-        total_r_multiple = sum(t.r_multiple for t in trades if t.r_multiple is not None)
+        win_rate = (winning_trades / trades_count) * 100 if trades_count > 0 else 0
+        loss_rate = (losing_trades / trades_count) * 100 if trades_count > 0 else 0
+        profit_factor = float(gross_profit / gross_loss) if gross_loss > 0 else None
+        avg_winner = float(gross_profit / winning_trades) if winning_trades > 0 else 0
+        avg_loser = float(gross_loss / losing_trades) if losing_trades > 0 else 0
+        expectancy = ((win_rate / 100) * avg_winner) - ((loss_rate / 100) * avg_loser)
 
         return PlaybookAnalyticsMetrics(
-            net_pnl=calculator.net_pnl,
-            trades=calculator.trade_count,
+            net_pnl=float(stats.get('net_pnl', 0.0)),
+            trades=trades_count,
             win_rate=win_rate,
             profit_factor=profit_factor,
-            missed_trades=0, # Placeholder
             expectancy=expectancy,
-            rules_followed=0.0, # Placeholder
             average_winner=avg_winner,
             average_loser=avg_loser,
-            largest_profit=max(calculator.pnl_series) if any(p > 0 for p in calculator.pnl_series) else 0,
-            largest_loss=min(calculator.pnl_series) if any(p < 0 for p in calculator.pnl_series) else 0,
-            total_r_multiple=total_r_multiple
+            largest_profit=float(stats.get('largest_profit', 0.0)),
+            largest_loss=float(stats.get('largest_loss', 0.0)),
+            total_r_multiple=float(stats.get('total_r_multiple', 0.0)),
+            missed_trades=0,  # Placeholder
+            rules_followed=0.0,  # Placeholder
         )
 
-    def _calculate_equity_curve(self, calculator: MetricsCalculator) -> EquityCurveData:
-        """
-        Calculates and assembles the equity curve part of the response
-        by calling the dedicated method in MetricsCalculator.
-        """
-        equity_curve_result = calculator.get_equity_curve()
+    def _format_equity_curve(self, curve_data: list) -> EquityCurveData:
+        """Formats the equity curve data from the database into the Pydantic schema."""
+        if not curve_data:
+            return EquityCurveData(labels=[], data=[0.0])
 
-        # The result from get_equity_curve is already in the correct format.
-        # The first data point is the initial balance (0), and subsequent points
-        # are the cumulative P/L. The labels are also correctly formatted.
-        return EquityCurveData(
-            labels=equity_curve_result.get("labels", []),
-            data=equity_curve_result.get("data", [])
-        )
+        # Sort data by date, just in case
+        sorted_curve = sorted(curve_data, key=lambda x: x['date'])
+
+        labels = [item['date'].date() for item in sorted_curve]
+        # Start the curve with an initial balance of 0
+        data = [0.0] + [float(item['cumulative_pnl']) for item in sorted_curve]
+
+        return EquityCurveData(labels=labels, data=data)
