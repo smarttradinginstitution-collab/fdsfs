@@ -26,7 +26,9 @@ async def get_current_claims(
     print(f"*** AUTH_LOG: Starting local token validation at {start_time:.4f}")
 
     token = creds.credentials
+    print("DEBUG_AUTH: About to call get_jwks()")
     jwks = await get_jwks()
+    print("DEBUG_AUTH: Returned from get_jwks(), about to call validate_token_local()")
     payload = validate_token_local(token, jwks)
 
     end_time = time.time()
