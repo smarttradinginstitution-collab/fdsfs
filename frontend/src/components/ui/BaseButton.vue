@@ -52,6 +52,7 @@ export default {
 <style scoped>
 /* Stili di base comuni a tutte le varianti */
 .button {
+  position: relative; /* Contesto per lo spinner */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -113,6 +114,13 @@ export default {
 /* Stili per lo stato di caricamento */
 .button.is-loading {
   cursor: wait;
+}
+
+.content {
+  display: inherit; /* Usa il display: inline-flex del genitore */
+  align-items: center;
+  justify-content: center;
+  gap: inherit; /* Eredita il gap dal genitore */
 }
 
 .content.is-hidden {

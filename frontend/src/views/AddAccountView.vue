@@ -52,9 +52,9 @@
               <option value="GBP">GBP</option>
             </select>
           </div>
-          <button type="submit" class="submit-btn" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Creating...' : 'Create Account' }}
-          </button>
+          <BaseButton type="submit" :is-loading="isSubmitting" class="submit-btn">
+            Create Account
+          </BaseButton>
           <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         </form>
       </div>
@@ -67,6 +67,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import brokerService from '@/services/brokerService';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import BaseButton from '@/components/ui/BaseButton.vue';
 
 // Component State
 const currentStep = ref('welcome'); // 'welcome', 'select-broker', 'account-details'
