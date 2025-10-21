@@ -66,17 +66,21 @@ class PlaybookAnalyticsService:
         avg_loser = float(gross_loss / losing_trades) if losing_trades > 0 else 0
         expectancy = ((win_rate / 100) * avg_winner) - ((loss_rate / 100) * avg_loser)
 
+        # Helper per convertire in float in modo sicuro, gestendo None
+        def safe_float(value, default=0.0):
+            return float(value) if value is not None else default
+
         return PlaybookAnalyticsMetrics(
-            net_pnl=float(stats.get('net_pnl', 0.0)),
+            net_pnl=safe_float(stats.get('net_pnl')),
             trades=trades_count,
             win_rate=win_rate,
             profit_factor=profit_factor,
             expectancy=expectancy,
             average_winner=avg_winner,
             average_loser=avg_loser,
-            largest_profit=float(stats.get('largest_profit', 0.0)),
-            largest_loss=float(stats.get('largest_loss', 0.0)),
-            total_r_multiple=float(stats.get('total_r_multiple', 0.0)),
+            largest_profit=safe_float(stats.get('largest_profit')),
+            largest_loss=safe_float(stats.get('largest_loss')),
+            total_r_multiple=safe_float(stats.get('total_r_multiple')),
             missed_trades=0,  # Placeholder
             rules_followed=0.0,  # Placeholder
         )
