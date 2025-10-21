@@ -60,6 +60,78 @@ class PlaybookRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def get_playbook_with_stats_by_id(self, playbook_id: UUID) -> Optional[Dict[str, Any]]:
+        """
+        Recupera un singolo playbook con le statistiche aggregate calcolate
+        direttamente nel database per la massima efficienza.
+        """
+        # Subquery per aggregare le statistiche dei trade per il playbook specificato
+        trade_stats_subquery = (
+            select(
+                Trade.playbook_id,
+                func.count(Trade.id).label("total_trades"),
+                func.sum(Trade.p_l).label("total_p_l"),
+                func.sum(case((Trade.p_l > 0, 1)), else_=0).label("winning_trades"),
+                func.sum(case((Trade.p_l < 0, 1)), else_=0).label("losing_trades"),
+                func.sum(case((Trade.p_l > 0, Trade.p_l)), else_=0).label("gross_profit"),
+                func.sum(case((Trade.p_l < 0, Trade.p_l)), else_=0).label("gross_loss"),
+                func.avg(Trade.r_multiple).label("avg_r_multiple"),
+                func.avg(Trade.p_l).label("avg_p_l"),
+                func.max(Trade.p_l).label("largest_profit"),
+                func.min(Trade.p_l).label("largest_loss"),
+                func.sum(Trade.r_multiple).label("total_r_multiple")
+            )
+            .where(Trade.playbook_id == playbook_id)
+            .group_by(Trade.playbook_id)
+            .subquery("trade_stats")
+        )
+
+        # Query principale per recuperare il playbook e fare un LEFT JOIN con le statistiche
+        stmt = (
+            select(
+                Playbook,
+                trade_stats_subquery.c.total_trades,
+                trade_stats_subquery.c.total_p_l,
+                trade_stats_subquery.c.winning_trades,
+                trade_stats_subquery.c.losing_trades,
+                trade_stats_subquery.c.gross_profit,
+                trade_stats_subquery.c.gross_loss,
+                trade_stats_subquery.c.avg_r_multiple,
+                trade_stats_subquery.c.avg_p_l,
+                trade_stats_subquery.c.largest_profit,
+                trade_stats_subquery.c.largest_loss,
+                trade_stats_subquery.c.total_r_multiple
+            )
+            .outerjoin(trade_stats_subquery, Playbook.id == trade_stats_subquery.c.playbook_id)
+            .where(Playbook.id == playbook_id)
+            .options(
+                joinedload(Playbook.general_account) # Necessario per i controlli di accesso
+            )
+        )
+
+        result = await self.db.execute(stmt)
+        row = result.first()
+
+        if not row:
+            return None
+
+        playbook = row[0]
+        stats = {
+            "total_trades": row.total_trades or 0,
+            "total_p_l": float(row.total_p_l) if row.total_p_l is not None else 0.0,
+            "winning_trades": row.winning_trades or 0,
+            "losing_trades": row.losing_trades or 0,
+            "gross_profit": float(row.gross_profit) if row.gross_profit is not None else 0.0,
+            "gross_loss": float(abs(row.gross_loss)) if row.gross_loss is not None else 0.0,
+            "avg_r_multiple": float(row.avg_r_multiple) if row.avg_r_multiple is not None else 0.0,
+            "avg_p_l": float(row.avg_p_l) if row.avg_p_l is not None else 0.0,
+            "largest_profit": float(row.largest_profit) if row.largest_profit is not None and row.largest_profit > 0 else 0.0,
+            "largest_loss": float(row.largest_loss) if row.largest_loss is not None and row.largest_loss < 0 else 0.0,
+            "total_r_multiple": float(row.total_r_multiple) if row.total_r_multiple is not None else 0.0
+        }
+
+        return {"playbook": playbook, "stats": stats}
+
     async def list_by_general_account_id(self, general_account_id: UUID) -> Sequence[Playbook]:
         stmt = (
             select(Playbook)

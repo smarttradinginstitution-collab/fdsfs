@@ -512,6 +512,19 @@ class TradeRepository:
         result = await self.db.execute(stmt)
         return result.mappings().all()
 
+    async def get_equity_curve_data_for_playbook(self, playbook_id: UUID) -> list[tuple[date, float]]:
+        """
+        Recupera i dati essenziali (data e P/L) per costruire la curva di equità
+        per un playbook specifico, in modo molto efficiente.
+        """
+        stmt = (
+            select(Trade.close_time, Trade.p_l)
+            .where(Trade.playbook_id == playbook_id, Trade.p_l.isnot(None))
+            .order_by(Trade.close_time.asc())
+        )
+        result = await self.db.execute(stmt)
+        return result.all()
+
     async def get_tag_performance_stats(
         self,
         trading_account_id: UUID,
