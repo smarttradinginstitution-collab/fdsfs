@@ -1,6 +1,8 @@
 # app/Controllers/user_dashboard_layout_controller.py
 from __future__ import annotations
 
+import logging
+import time
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
@@ -27,11 +29,19 @@ class UserDashboardLayoutController:
         Retrieves the layout for the currently authenticated user.
         Raises 404 if no layout is found.
         """
+        logging.basicConfig(level=logging.INFO)
+        logging.info("CONTROLLER: Inizio richiesta get_user_layout")
+        start_time = time.time()
+
         user_id = UUID(claims["sub"])
         service = UserDashboardLayoutService(db)
         layout = await service.get_layout(user_id)
+
         if layout is None:
             raise HTTPException(status_code=404, detail="Dashboard layout not found.")
+
+        end_time = time.time()
+        logging.info(f"CONTROLLER: Fine richiesta. Tempo totale impiegato: {end_time - start_time:.4f} secondi")
         return layout
 
     async def save_user_layout(

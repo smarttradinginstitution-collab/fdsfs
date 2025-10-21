@@ -1,6 +1,8 @@
 # app/Repositories/user_dashboard_layout_repository.py
 from __future__ import annotations
 
+import logging
+import time
 from typing import Optional
 from uuid import UUID
 
@@ -23,9 +25,17 @@ class UserDashboardLayoutRepository:
 
     async def get_by_user_id(self, user_id: UUID) -> Optional[UserDashboardLayout]:
         """Ritorna il layout per user_id."""
+        logging.basicConfig(level=logging.INFO)
+        logging.info("REPOSITORY: Inizio query get_by_user_id")
+        start_time = time.time()
+
         q = select(UserDashboardLayout).where(UserDashboardLayout.user_id == user_id)
         res = await self.db.execute(q)
-        return res.scalars().first()
+        result = res.scalars().first()
+
+        end_time = time.time()
+        logging.info(f"REPOSITORY: Fine query. Tempo impiegato: {end_time - start_time:.4f} secondi")
+        return result
 
     async def create(self, layout_data: UserDashboardLayoutCreate) -> UserDashboardLayout:
         """Crea un nuovo layout per un utente, verificando l'unicità."""
