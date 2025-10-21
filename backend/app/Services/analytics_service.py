@@ -214,11 +214,22 @@ class AnalyticsService:
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> EquityCurveData:
         """
-        Returns data for the equity curve chart.
+        Returns data for the equity curve chart, calculated efficiently in the database.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
-        equity_curve_data = calculator.calculate_equity_curve()
-        return EquityCurveData(**equity_curve_data)
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+        initial_balance = trading_account.initial_balance if trading_account else 0.0
+
+        # La query del repo calcola il P&L cumulativo per ogni trade
+        aggregated_points = await self.trade_repo.get_equity_curve_aggregated(
+            trading_account_id, start_date, end_date
+        )
+
+        # Aggiungiamo il bilancio iniziale a ogni punto per ottenere il valore assoluto della curva
+        # Convertiamo i datetime in oggetti date per la validazione Pydantic
+        labels = [start_date] + [point['label'].date() for point in aggregated_points]
+        data = [float(initial_balance)] + [float(float(initial_balance) + float(point['value'])) for point in aggregated_points]
+
+        return EquityCurveData(labels=labels, data=data)
 
     async def get_trade_summary(
         self, trading_account_id: UUID, start_date: date, end_date: date

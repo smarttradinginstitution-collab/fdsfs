@@ -102,8 +102,10 @@ class MetricsCalculator:
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
 
         # These metrics still require the full trade list for now
-        equity_curve_data = self.calculate_equity_curve()
-        max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(equity_curve_data['data'])
+        # NOTA: La logica per max_drawdown è ancora qui, ma la curva stessa viene ora generata nel service.
+        # Questo calcolo è l'ultimo pezzo che richiede la lista completa dei trade.
+        temp_equity_curve = [float(self.initial_balance)] + [float(self.initial_balance) + float(pnl) for pnl in np.cumsum(self.pnl_series)]
+        max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(temp_equity_curve)
 
         # Consolidate all metrics into a single dictionary
         complex_metrics = {
@@ -186,33 +188,6 @@ class MetricsCalculator:
         pnl_to_use = net_pnl if net_pnl is not None else self.net_pnl
 
         return (pnl_to_use / self.initial_balance) * 100
-
-    def calculate_equity_curve(self) -> Dict[str, List[Any]]:
-        """
-        Calculates the equity curve, starting from the initial balance.
-        A data point is generated for each trade to show intra-day progression.
-        It explicitly converts all Decimal types to floats for JSON serialization.
-        """
-        # Explicitly convert initial_balance to float for the first data point
-        equity_data = [float(self.initial_balance)]
-        current_balance = self.initial_balance
-
-        # The label for the initial data point is the date of the first trade, or today if no trades.
-        start_date = self.trades[0].entry_timestamp.date() if self.trades else date.today()
-        labels = [start_date]
-
-        for trade in self.trades:
-            if trade.p_l is not None:
-                current_balance += trade.p_l
-                # Convert each new data point to float before appending
-                equity_data.append(float(current_balance))
-
-                # Each new data point needs a label
-                trade_date = (trade.exit_timestamp or trade.entry_timestamp).date()
-                labels.append(trade_date)
-
-        return {"labels": labels, "data": equity_data}
-
 
     def calculate_max_drawdown(self, equity_curve: List[float]) -> (float, float):
         """
