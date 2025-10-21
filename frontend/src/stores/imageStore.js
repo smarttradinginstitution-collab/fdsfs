@@ -87,6 +87,20 @@ export const useImageStore = defineStore('imageStore', () => {
     }
   }
 
+  async function prefetchImagesForTrade(tradeId) {
+    if (!tradeId || imageCache.value[tradeId]) {
+      return; // Non fare nulla se non c'è ID o se i dati sono già in cache
+    }
+
+    try {
+      const response = await apiClient.get(`/trades/${tradeId}/images`);
+      imageCache.value[tradeId] = response.data;
+      console.log(`Pre-fetched e cachate immagini per il trade con ID: ${tradeId}`);
+    } catch (error) {
+      console.warn(`Pre-fetching delle immagini fallito per il trade ${tradeId}:`, error);
+    }
+  }
+
   return {
     imagesForCurrentTrade,
     isLoading,
@@ -94,5 +108,6 @@ export const useImageStore = defineStore('imageStore', () => {
     uploadImage,
     updateImageMetadata,
     deleteImage,
+    prefetchImagesForTrade, // Esponi la nuova azione
   };
 });

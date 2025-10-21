@@ -9,6 +9,7 @@ import { useTradingAccountsStore } from './tradingAccounts';
 import { useUiStore } from './uiStore';
 import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
+import { useImageStore } from './imageStore'; // Importa l'imageStore
 import apiClient from '../services/api';
 
 /**
@@ -38,6 +39,7 @@ const mapBackendTradeToFrontend = (trade) => ({
 export const useTradesStore = defineStore('trades', {
   state: () => ({
     trades: [], // Inizializzato vuoto, verrà popolato dal backend
+    tradeCache: new Map(), // Cache per i dettagli dei trade
     playbookTrades: [], // Trades specifici per un playbook
     // 'playbooks' rimosso, verrà letto da playbookStore
     dashboardStats: null,
@@ -754,15 +756,65 @@ export const useTradesStore = defineStore('trades', {
     async fetchTradeById(tradeId) {
       this.isTradeLoading = true;
       try {
+        if (this.tradeCache.has(tradeId)) {
+          this.selectedTrade = this.tradeCache.get(tradeId);
+          this.isTradeLoading = false; // Interrompi il caricamento prima del pre-fetching
+          await this.prefetchAdjacentTrades();
+          return;
+        }
+
         const response = await apiClient.get(`/trades/${tradeId}`);
-        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+        const tradeData = mapBackendTradeToFrontend(response.data);
+        this.tradeCache.set(tradeId, tradeData);
+        this.selectedTrade = tradeData;
+
+        // Esegui il pre-fetching dopo aver caricato il trade corrente
+        await this.prefetchAdjacentTrades();
+
       } catch (error) {
         console.error(`Errore nel recupero del trade ${tradeId}:`, error);
         this.selectedTrade = null;
-        // Potremmo voler mostrare un errore all'utente qui
       } finally {
         this.isTradeLoading = false;
       }
+    },
+
+    async prefetchAdjacentTrades() {
+      const prevId = this.getPreviousTradeId;
+      const nextId = this.getNextTradeId;
+
+      const tradesToFetch = [];
+      if (prevId && !this.tradeCache.has(prevId)) {
+        tradesToFetch.push(prevId);
+      }
+      if (nextId && !this.tradeCache.has(nextId)) {
+        tradesToFetch.push(nextId);
+      }
+
+      if (tradesToFetch.length === 0) {
+        return;
+      }
+
+      const imageStore = useImageStore();
+
+      // Esegui il pre-fetching in background senza bloccare l'UI
+      Promise.all(tradesToFetch.map(async (id) => {
+        try {
+          // Pre-fetch dei dati del trade
+          if (!this.tradeCache.has(id)) {
+            const response = await apiClient.get(`/trades/${id}`);
+            const tradeData = mapBackendTradeToFrontend(response.data);
+            this.tradeCache.set(id, tradeData);
+            console.log(`Pre-fetched e cachato trade con ID: ${id}`);
+          }
+
+          // Pre-fetch delle immagini associate
+          await imageStore.prefetchImagesForTrade(id);
+
+        } catch (error) {
+          console.warn(`Pre-fetching fallito per il trade ${id}:`, error);
+        }
+      }));
     },
 
     async updateTrade(tradeId, payload) {

@@ -11,6 +11,7 @@ import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
 import ImageLightbox from '@/components/images/ImageLightbox.vue';
 import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
+import ReportViewSkeleton from '@/components/reports/ReportViewSkeleton.vue'; // Importa lo skeleton
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
 import { useLoadingStore } from '@/stores/loadingStore';
@@ -107,24 +108,15 @@ const selectTradeFromStore = async (tradeId) => {
   loadingStore.startLoading();
   error.value = null;
   try {
-    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+    // La nuova logica di fetchTradeById gestisce cache e pre-fetching
+    await tradesStore.fetchTradeById(tradeId);
 
-    // Usa una Promise.all per eseguire le chiamate in parallelo
-    const promises = [];
-    if (tradeFromList) {
-      tradesStore.selectedTrade = { ...tradeFromList };
-    } else {
-      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-      promises.push(tradesStore.fetchTradeById(tradeId));
-    }
-    promises.push(imageStore.fetchImagesForTrade(tradeId));
-
-    await Promise.all(promises);
+    // Carica le immagini per il trade corrente (userà la cache se disponibile)
+    await imageStore.fetchImagesForTrade(tradeId);
 
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
     error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
     tradesStore.selectedTrade = null;
   } finally {
     loadingStore.stopLoading();
@@ -145,7 +137,8 @@ onMounted(() => {
 
 <template>
   <div class="report-detail-view">
-    <template v-if="!loadingStore.isLoading">
+    <ReportViewSkeleton v-if="loadingStore.isLoading" />
+    <template v-else>
       <div v-if="error" class="error-state">
         <h2>Error</h2>
         <p>{{ error }}</p>
@@ -232,6 +225,7 @@ onMounted(() => {
     <EditTradeDetailsModal v-if="trade" v-model="isEditModalOpen" :trade="trade" @save="handleUpdateTradeDetails" />
     <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit" @close="isMetadataModalOpen = false" />
     <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage" @prev="prevImage" />
+    </template>
   </div>
 </template>
 
