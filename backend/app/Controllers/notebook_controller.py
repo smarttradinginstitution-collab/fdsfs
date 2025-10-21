@@ -9,9 +9,11 @@ from fastapi import Depends, Response, status
 from app.Services.notebook_service import NotebookService
 from app.Schemas.notebook import (
     NotebookFolderRead,
+    NotebookFolderReadWithCount,
     NotebookFolderCreate,
     NotebookFolderUpdate,
     NoteRead,
+    NoteReadBasic,
     NoteCreate,
     NoteUpdate,
 )
@@ -27,16 +29,19 @@ class NotebookController:
         self,
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
-    ) -> List[NotebookFolderRead]:
-        return await service.get_all_folders(user_id=current_user.id)
+    ) -> List[NotebookFolderReadWithCount]:
+        folders = await service.get_all_folders(user_id=current_user.id)
+        # Explicitly cast to the correct schema to avoid loading the `notes` relationship
+        return [NotebookFolderReadWithCount.model_validate(f) for f in folders]
 
     async def create_folder(
         self,
         folder_in: NotebookFolderCreate,
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
-    ) -> NotebookFolderRead:
-        return await service.create_folder(folder_in=folder_in, user_id=current_user.id)
+    ) -> NotebookFolderReadWithCount:
+        folder = await service.create_folder(folder_in=folder_in, user_id=current_user.id)
+        return NotebookFolderReadWithCount.model_validate(folder)
 
     async def update_folder(
         self,
@@ -44,10 +49,11 @@ class NotebookController:
         folder_in: NotebookFolderUpdate,
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
-    ) -> NotebookFolderRead:
-        return await service.update_folder(
+    ) -> NotebookFolderReadWithCount:
+        folder = await service.update_folder(
             folder_id=folder_id, folder_in=folder_in, user_id=current_user.id
         )
+        return NotebookFolderReadWithCount.model_validate(folder)
 
     async def delete_folder(
         self,
@@ -81,8 +87,9 @@ class NotebookController:
         note_in: NoteCreate,
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
-    ) -> NoteRead:
-        return await service.create_note(note_in=note_in, user_id=current_user.id)
+    ) -> NoteReadBasic:
+        note = await service.create_note(note_in=note_in, user_id=current_user.id)
+        return NoteReadBasic.model_validate(note)
 
     async def get_note(
         self,
@@ -108,10 +115,11 @@ class NotebookController:
         note_in: NoteUpdate,
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
-    ) -> NoteRead:
-        return await service.update_note(
+    ) -> NoteReadBasic:
+        note = await service.update_note(
             note_id=note_id, note_in=note_in, user_id=current_user.id
         )
+        return NoteReadBasic.model_validate(note)
 
     async def delete_note(
         self,

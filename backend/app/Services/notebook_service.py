@@ -46,21 +46,43 @@ class NotebookService:
         return general_account.id
 
     async def _ensure_system_folders_exist(self, general_account_id: UUID):
-        """Checks for and creates missing system folders."""
-        for folder_name, identifier in SYSTEM_FOLDERS.items():
-            existing_folder = await self.folder_repo.find_by_name_and_account(
-                name=folder_name, general_account_id=general_account_id
-            )
-            if not existing_folder:
-                new_folder = NotebookFolder(
-                    name=folder_name,
-                    general_account_id=general_account_id,
-                    folder_type=FolderType.SYSTEM,
-                    is_system_folder=True,
-                    system_folder_identifier=identifier,
+        """
+        Checks for and creates missing system folders in a single efficient operation.
+        """
+        # Get all system folder identifiers that should exist
+        required_identifiers = set(SYSTEM_FOLDERS.values())
+
+        # Fetch all system folders that already exist for this account in one query
+        existing_folders = await self.folder_repo.find_system_folders_by_account(
+            general_account_id
+        )
+        existing_identifiers = {
+            folder.system_folder_identifier for folder in existing_folders
+        }
+
+        # Determine which folders are missing
+        missing_identifiers = required_identifiers - existing_identifiers
+
+        # If any are missing, create them
+        if missing_identifiers:
+            folders_to_create = []
+            # Create a reverse mapping from identifier to name
+            identifier_to_name = {v: k for k, v in SYSTEM_FOLDERS.items()}
+
+            for identifier in missing_identifiers:
+                folder_name = identifier_to_name[identifier]
+                folders_to_create.append(
+                    NotebookFolder(
+                        name=folder_name,
+                        general_account_id=general_account_id,
+                        folder_type=FolderType.SYSTEM,
+                        is_system_folder=True,
+                        system_folder_identifier=identifier,
+                    )
                 )
-                self.db.add(new_folder)
-        await self.db.commit()
+
+            self.db.add_all(folders_to_create)
+            await self.db.commit()
 
     # --- Folder Operations ---
 

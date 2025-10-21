@@ -208,10 +208,9 @@ class NoteRepository:
                 detail="A note for this trade already exists.",
             )
 
-        newly_created_note = await self.get_by_id(db_note.id)
-        if not newly_created_note:
-            raise RuntimeError("Failed to fetch newly created note.")
-        return newly_created_note
+        # Refresh the instance to get server-side defaults (like created_at)
+        await self.db.refresh(db_note)
+        return db_note
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:
         """Update an existing note."""
@@ -230,10 +229,9 @@ class NoteRepository:
                 detail="A note with this trade_id already exists.",
             )
 
-        updated_note = await self.get_by_id(db_obj.id)
-        if not updated_note:
-            raise RuntimeError("Failed to fetch updated note.")
-        return updated_note
+        # Refresh the instance to get the updated timestamp
+        await self.db.refresh(db_obj)
+        return db_obj
 
     async def delete(self, db_obj: Note) -> None:
         """

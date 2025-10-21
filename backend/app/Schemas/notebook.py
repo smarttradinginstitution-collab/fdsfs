@@ -37,6 +37,16 @@ class NoteRead(NoteBase):
     title: str
 
 
+class NoteReadBasic(NoteBase):
+    """A basic read schema for a Note, without heavy relationships."""
+    id: UUID
+    folder_id: UUID
+    trade_id: Optional[UUID] = None
+    created_at: datetime
+    updated_at: datetime
+    title: str
+
+
 # --- NotebookFolder Schemas ---
 
 class NotebookFolderBase(BaseModel):

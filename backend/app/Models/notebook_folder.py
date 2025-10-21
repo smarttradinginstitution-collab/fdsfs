@@ -66,4 +66,5 @@ class NotebookFolder(Base):
         "Note",
         back_populates="folder",
         cascade="all, delete-orphan",
+        lazy="raise",
     )

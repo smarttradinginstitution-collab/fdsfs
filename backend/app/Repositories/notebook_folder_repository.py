@@ -62,6 +62,18 @@ class NotebookFolderRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def find_system_folders_by_account(
+        self, general_account_id: UUID
+    ) -> Sequence[NotebookFolder]:
+        """Find all system folders for a specific general account."""
+        stmt = select(NotebookFolder).where(
+            NotebookFolder.general_account_id == general_account_id,
+            NotebookFolder.is_system_folder == True,
+            self._not_deleted_folder()
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
     async def list_by_general_account_id(
         self, general_account_id: UUID
     ) -> Sequence[NotebookFolder]:
@@ -98,8 +110,10 @@ class NotebookFolderRepository:
         )
         self.db.add(db_folder)
         await self.db.commit()
-        # After creation, get_by_id will correctly fetch it with the count
-        return await self.get_by_id(db_folder.id)
+        await self.db.refresh(db_folder)
+        # Manually set the count for the new folder, which is always 0
+        db_folder.note_count = 0
+        return db_folder
 
     async def update(
         self, db_obj: NotebookFolder, obj_in: NotebookFolderUpdate
@@ -110,8 +124,15 @@ class NotebookFolderRepository:
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
-        # After update, get_by_id will correctly fetch it with the count
-        return await self.get_by_id(db_obj.id)
+        await self.db.refresh(db_obj)
+        # Manually refresh the note count as it might have changed
+        count_stmt = (
+            select(func.count(Note.id))
+            .where(Note.folder_id == db_obj.id, self._not_deleted_note())
+        )
+        note_count = await self.db.scalar(count_stmt)
+        db_obj.note_count = note_count
+        return db_obj
 
     async def delete(self, db_obj: NotebookFolder) -> None:
         """Delete a folder (hard delete)."""

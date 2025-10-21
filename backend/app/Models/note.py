@@ -62,4 +62,5 @@ class Note(Base):
         "NoteTemplate",
         secondary=notes_note_templates_association,
         back_populates="notes",
+        lazy="raise",
     )
