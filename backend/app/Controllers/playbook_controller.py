@@ -76,26 +76,34 @@ class PlaybookController:
 
             # 1. Convalida e arricchisci le statistiche del playbook
             playbook_read = PlaybookRead.model_validate(playbook_orm)
-            playbook_read.stats = PlaybookStats(
-                total_trades=stats_data.get("total_trades", 0),
-                net_pnl=stats_data.get("total_p_l", 0.0),
-                win_rate=0,
-                profit_factor=0,
-                avg_pnl=stats_data.get("avg_p_l", 0.0),
-                avg_r_multiple=stats_data.get("avg_r_multiple", 0.0)
-            )
-
+            # Estrai i dati grezzi per i calcoli
             winning_trades = stats_data.get("winning_trades", 0)
+            losing_trades = stats_data.get("losing_trades", 0)
             total_trades = stats_data.get("total_trades", 0)
             gross_profit = stats_data.get("gross_profit", 0.0)
             gross_loss = stats_data.get("gross_loss", 0.0)
 
-            if total_trades > 0:
-                playbook_read.stats.win_rate = (winning_trades / total_trades) * 100
-            if gross_loss > 0:
-                playbook_read.stats.profit_factor = gross_profit / gross_loss
-            else:
-                playbook_read.stats.profit_factor = None
+            # Calcola le metriche derivate
+            win_rate = (winning_trades / total_trades) * 100 if total_trades > 0 else 0
+            loss_rate = (losing_trades / total_trades) * 100 if total_trades > 0 else 0
+            profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
+            avg_winner = gross_profit / winning_trades if winning_trades > 0 else 0
+            avg_loser = gross_loss / losing_trades if losing_trades > 0 else 0
+
+            expectancy = ((win_rate / 100) * avg_winner) - ((loss_rate / 100) * avg_loser)
+
+            # Arricchisci lo schema con tutte le statistiche calcolate
+            playbook_read.stats = PlaybookStats(
+                total_trades=total_trades,
+                net_pnl=stats_data.get("total_p_l", 0.0),
+                win_rate=win_rate,
+                profit_factor=profit_factor,
+                avg_pnl=stats_data.get("avg_p_l", 0.0),
+                avg_r_multiple=stats_data.get("avg_r_multiple", 0.0),
+                avg_winner=avg_winner,
+                avg_loser=avg_loser,
+                expectancy=expectancy
+            )
 
             # 2. Assegna le statistiche a ogni regola
             for group in playbook_read.rules_groups:
