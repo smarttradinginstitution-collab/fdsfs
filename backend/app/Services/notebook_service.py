@@ -1,6 +1,5 @@
 # app/Services/notebook_service.py
 from __future__ import annotations
-import time
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -89,14 +88,9 @@ class NotebookService:
 
     async def get_all_folders(self, user_id: UUID):
         """Get all folders for the current user, ensuring system folders are created."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START get_all_folders service")
         general_account_id = await self._get_general_account_id(user_id)
         await self._ensure_system_folders_exist(general_account_id)
-        result = await self.folder_repo.list_by_general_account_id(general_account_id)
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END get_all_folders service. Duration: {end_time - start_time:.4f}s")
-        return result
+        return await self.folder_repo.list_by_general_account_id(general_account_id)
 
     async def get_folder(self, folder_id: UUID, user_id: UUID) -> NotebookFolder:
         """Get a specific folder, ensuring it belongs to the user."""
@@ -110,8 +104,6 @@ class NotebookService:
 
     async def create_folder(self, folder_in: NotebookFolderCreate, user_id: UUID) -> NotebookFolder:
         """Create a new folder for the user."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START create_folder service")
         general_account_id = await self._get_general_account_id(user_id)
         # Check for uniqueness
         existing_folder = await self.folder_repo.find_by_name_and_account(
@@ -122,22 +114,14 @@ class NotebookService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"A folder with the name '{folder_in.name}' already exists.",
             )
-        result = await self.folder_repo.create(folder_in, general_account_id)
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END create_folder service. Duration: {end_time - start_time:.4f}s")
-        return result
+        return await self.folder_repo.create(folder_in, general_account_id)
 
     async def update_folder(
         self, folder_id: UUID, folder_in: NotebookFolderUpdate, user_id: UUID
     ) -> NotebookFolder:
         """Update a folder, ensuring it belongs to the user."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START update_folder service")
         folder = await self.get_folder(folder_id, user_id)
-        result = await self.folder_repo.update(folder, folder_in)
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END update_folder service. Duration: {end_time - start_time:.4f}s")
-        return result
+        return await self.folder_repo.update(folder, folder_in)
 
     async def delete_folder(self, folder_id: UUID, user_id: UUID) -> None:
         """Delete a folder, ensuring it belongs to the user."""
@@ -165,8 +149,6 @@ class NotebookService:
 
     async def get_note(self, note_id: UUID, user_id: UUID) -> Note:
         """Get a specific note, ensuring it belongs to the user."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START get_note service")
         general_account_id = await self._get_general_account_id(user_id)
         note = await self.note_repo.get_by_id(note_id)
         # The folder is eager-loaded by the repository's get_by_id method
@@ -174,8 +156,6 @@ class NotebookService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Note not found"
             )
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END get_note service. Duration: {end_time - start_time:.4f}s")
         return note
 
     async def get_note_by_trade_id(self, trade_id: UUID, user_id: UUID) -> Note:
@@ -212,15 +192,28 @@ class NotebookService:
 
         return await self.note_repo.create(note_in)
 
+    async def _get_note_for_update(self, note_id: UUID, user_id: UUID) -> Note:
+        """
+        Lightweight fetch for a note to be updated.
+        Verifies ownership but avoids loading heavy relationships.
+        """
+        general_account_id = await self._get_general_account_id(user_id)
+        # Use a simple, non-eager loading method from the repository
+        note = await self.note_repo.get_by_id_simple(note_id)
+
+        # We still need to verify that the note belongs to the user.
+        # This requires fetching the folder relationship, but it's a single join.
+        if not note or note.folder.general_account_id != general_account_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Note not found"
+            )
+        return note
+
     async def update_note(self, note_id: UUID, note_in: NoteUpdate, user_id: UUID) -> Note:
         """Update a note, ensuring it belongs to the user."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START update_note service")
-        note = await self.get_note(note_id, user_id)
-        result = await self.note_repo.update(note, note_in)
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END update_note service. Duration: {end_time - start_time:.4f}s")
-        return result
+        # Use the lightweight fetch method instead of the heavy get_note
+        note = await self._get_note_for_update(note_id, user_id)
+        return await self.note_repo.update(note, note_in)
 
     async def delete_note(self, note_id: UUID, user_id: UUID) -> None:
         """Delete a note, ensuring it belongs to the user."""

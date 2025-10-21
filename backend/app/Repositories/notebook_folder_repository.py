@@ -1,7 +1,6 @@
 # app/Repositories/notebook_folder_repository.py
 from __future__ import annotations
 
-import time
 from typing import Sequence
 from uuid import UUID
 
@@ -79,8 +78,6 @@ class NotebookFolderRepository:
         self, general_account_id: UUID
     ) -> Sequence[NotebookFolder]:
         """List all non-deleted folders for a given general account, with note counts."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START list_by_general_account_id repo query")
         stmt = (
             select(NotebookFolder, func.count(Note.id).label("note_count"))
             .options(noload(NotebookFolder.notes))
@@ -99,8 +96,6 @@ class NotebookFolderRepository:
             folder.note_count = count
             folders_with_counts.append(folder)
 
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END list_by_general_account_id repo query. Duration: {end_time - start_time:.4f}s")
         return folders_with_counts
 
     # ------------------------
@@ -110,8 +105,6 @@ class NotebookFolderRepository:
         self, folder_in: NotebookFolderCreate, general_account_id: UUID
     ) -> NotebookFolder:
         """Create a new folder."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START create folder repo query")
         db_folder = NotebookFolder(
             **folder_in.model_dump(), general_account_id=general_account_id
         )
@@ -120,16 +113,12 @@ class NotebookFolderRepository:
         await self.db.refresh(db_folder)
         # Manually set the count for the new folder, which is always 0
         db_folder.note_count = 0
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END create folder repo query. Duration: {end_time - start_time:.4f}s")
         return db_folder
 
     async def update(
         self, db_obj: NotebookFolder, obj_in: NotebookFolderUpdate
     ) -> NotebookFolder:
         """Update an existing folder."""
-        start_time = time.time()
-        print(f"NOTEBOOK_TIMING: START update folder repo query")
         update_data = obj_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
@@ -143,8 +132,6 @@ class NotebookFolderRepository:
         )
         note_count = await self.db.scalar(count_stmt)
         db_obj.note_count = note_count
-        end_time = time.time()
-        print(f"NOTEBOOK_TIMING: END update folder repo query. Duration: {end_time - start_time:.4f}s")
         return db_obj
 
     async def delete(self, db_obj: NotebookFolder) -> None:
