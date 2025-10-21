@@ -435,9 +435,7 @@ class TradeRepository:
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
 
-        # Usiamo strftime('%w') che è compatibile sia con PostgreSQL che con SQLite.
-        # %w: Domenica=0, Lunedì=1, ..., Sabato=6
-        day_of_week = func.strftime('%w', Trade.entry_timestamp).label("day_of_week")
+        day_of_week = func.extract('isodow', Trade.entry_timestamp).label("day_of_week")
 
         stmt = (
             select(

@@ -110,13 +110,10 @@ class AnalyticsService:
         max_abs_pnl = max((abs(s.total_pnl) for s in by_strategy.values()), default=Decimal('0.0'))
 
         # 2. Process stats by day of the week
-        # La mappa ora segue lo standard di strftime('%w'): Domenica=0, Lunedì=1, ..., Sabato=6
-        day_map = {0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
+        day_map = {1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday", 7: "Sunday"}
         by_day_of_week = {day: {"total_pnl": Decimal('0.0'), "trade_count": 0} for day in day_map.values()}
         for item in raw_by_day_of_week:
-            # La query restituisce stringhe, quindi convertiamo in intero
-            day_index = int(item['day_of_week'])
-            day_name = day_map.get(day_index)
+            day_name = day_map.get(item['day_of_week'])
             if day_name:
                 by_day_of_week[day_name] = {
                     "total_pnl": item['total_pnl'],
