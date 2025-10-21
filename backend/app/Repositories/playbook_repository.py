@@ -100,6 +100,8 @@ class PlaybookRepository:
                 func.sum(Trade.p_l).label("total_p_l"),
                 func.sum(case((Trade.p_l > 0, 1)), else_=0).label("winning_trades"),
                 func.sum(case((Trade.p_l < 0, 1)), else_=0).label("losing_trades"),
+                func.sum(case((Trade.p_l > 0, Trade.p_l)), else_=0).label("gross_profit"),
+                func.sum(case((Trade.p_l < 0, Trade.p_l)), else_=0).label("gross_loss"),
                 func.avg(Trade.r_multiple).label("avg_r_multiple"),
                 func.avg(Trade.p_l).label("avg_p_l")
             )
@@ -116,6 +118,8 @@ class PlaybookRepository:
                 trade_stats_subquery.c.total_p_l,
                 trade_stats_subquery.c.winning_trades,
                 trade_stats_subquery.c.losing_trades,
+                trade_stats_subquery.c.gross_profit,
+                trade_stats_subquery.c.gross_loss,
                 trade_stats_subquery.c.avg_r_multiple,
                 trade_stats_subquery.c.avg_p_l
             )
@@ -133,7 +137,8 @@ class PlaybookRepository:
         # Processa i risultati per combinare il modello Playbook con le statistiche
         playbooks_with_stats = []
         for row in result.all():
-            playbook, total_trades, total_p_l, winning_trades, losing_trades, avg_r_multiple, avg_p_l = row
+            (playbook, total_trades, total_p_l, winning_trades, losing_trades,
+             gross_profit, gross_loss, avg_r_multiple, avg_p_l) = row
             playbooks_with_stats.append({
                 "playbook": playbook,
                 "stats": {
@@ -141,6 +146,8 @@ class PlaybookRepository:
                     "total_p_l": float(total_p_l) if total_p_l is not None else 0.0,
                     "winning_trades": winning_trades or 0,
                     "losing_trades": losing_trades or 0,
+                    "gross_profit": float(gross_profit) if gross_profit is not None else 0.0,
+                    "gross_loss": float(abs(gross_loss)) if gross_loss is not None else 0.0,
                     "avg_r_multiple": float(avg_r_multiple) if avg_r_multiple is not None else 0.0,
                     "avg_p_l": float(avg_p_l) if avg_p_l is not None else 0.0
                 }

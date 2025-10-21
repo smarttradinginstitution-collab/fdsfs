@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
+from app.Repositories.rule_playbook_repository import RulePlaybookRepository
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.playbook import (
     PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
@@ -53,40 +54,58 @@ class PlaybookController:
     ) -> List[PlaybookRead]:
         """
         Lista tutti i playbook dell'utente autenticato, arricchiti con le statistiche
-        calcolate in modo efficiente a livello di database.
+        sia per il playbook che per ogni regola, calcolate in modo efficiente.
         """
-        repo = PlaybookRepository(db)
-        playbooks_data = await repo.list_playbooks_with_stats(general_account_id)
+        playbook_repo = PlaybookRepository(db)
+        playbooks_data = await playbook_repo.list_playbooks_with_stats(general_account_id)
+
+        if not playbooks_data:
+            return []
+
+        # Estrai gli ID dei playbook per la query successiva
+        playbook_ids = [item["playbook"].id for item in playbooks_data]
+
+        # Recupera le statistiche per tutte le regole di tutti i playbook in una sola query
+        rule_repo = RulePlaybookRepository(db)
+        rule_stats_map = await rule_repo.get_stats_for_rules_in_playbooks(playbook_ids)
 
         response_playbooks = []
         for item in playbooks_data:
             playbook_orm = item["playbook"]
             stats_data = item["stats"]
 
-            # Convalida il modello ORM con lo schema Pydantic
+            # 1. Convalida e arricchisci le statistiche del playbook
             playbook_read = PlaybookRead.model_validate(playbook_orm)
-
-            # Arricchisci lo schema con le statistiche aggregate
             playbook_read.stats = PlaybookStats(
                 total_trades=stats_data.get("total_trades", 0),
                 net_pnl=stats_data.get("total_p_l", 0.0),
-                win_rate=0,  # Da calcolare
-                profit_factor=0,  # Da calcolare
+                win_rate=0,
+                profit_factor=0,
                 avg_pnl=stats_data.get("avg_p_l", 0.0),
                 avg_r_multiple=stats_data.get("avg_r_multiple", 0.0)
             )
 
-            # Calcola metriche derivate come win_rate e profit_factor
             winning_trades = stats_data.get("winning_trades", 0)
-            losing_trades = stats_data.get("losing_trades", 0)
-            total_trades = winning_trades + losing_trades
+            total_trades = stats_data.get("total_trades", 0)
+            gross_profit = stats_data.get("gross_profit", 0.0)
+            gross_loss = stats_data.get("gross_loss", 0.0)
 
             if total_trades > 0:
                 playbook_read.stats.win_rate = (winning_trades / total_trades) * 100
+            if gross_loss > 0:
+                playbook_read.stats.profit_factor = gross_profit / gross_loss
+            else:
+                playbook_read.stats.profit_factor = None
 
-            # Nota: il calcolo del profit factor richiede la somma delle vincite e delle perdite,
-            # che non abbiamo direttamente. Per semplicità, lo lasciamo a 0.
-            # Per un calcolo preciso, dovremmo estendere la query.
+            # 2. Assegna le statistiche a ogni regola
+            for group in playbook_read.rules_groups:
+                for rule in group.rules:
+                    rule_stats = rule_stats_map.get(rule.id)
+                    if rule_stats:
+                        rule.metrics = RuleMetrics(**rule_stats)
+                    else:
+                        # Assicura che ci sia un valore di default se la regola non ha statistiche
+                        rule.metrics = RuleMetrics(follow_rate=0, net_pnl=0, win_rate=0, profit_factor=None)
 
             response_playbooks.append(playbook_read)
 
