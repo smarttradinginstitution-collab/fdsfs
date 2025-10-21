@@ -21,19 +21,9 @@ async def get_current_claims(
     evitare chiamate di rete lente a Supabase.
     Ritorna il payload del token decodificato.
     """
-    import time
-    start_time = time.time()
-    print(f"*** AUTH_LOG: Starting local token validation at {start_time:.4f}")
-
     token = creds.credentials
-    print("DEBUG_AUTH: About to call get_jwks()")
     jwks = await get_jwks()
-    print("DEBUG_AUTH: Returned from get_jwks(), about to call validate_token_local()")
     payload = validate_token_local(token, jwks)
-
-    end_time = time.time()
-    print(f"*** AUTH_LOG: Finished local token validation at {end_time:.4f}. Duration: {end_time - start_time:.4f}s")
-
     return payload
 
 
