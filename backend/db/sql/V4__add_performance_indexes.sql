@@ -43,3 +43,6 @@ CREATE INDEX IF NOT EXISTS idx_rules_playbook_rules_groups_playbook_id ON public
 -- ma li includiamo qui con IF NOT EXISTS per sicurezza e completezza.
 CREATE INDEX IF NOT EXISTS idx_trades_rules_trade_id ON public.trades_rules (trade_id);
 CREATE INDEX IF NOT EXISTS idx_trades_rules_rule_id ON public.trades_rules (rule_id);
+
+-- Indice su user_id in general_accounts per accelerare il recupero dell'account per utente (eseguito su ogni richiesta API protetta)
+CREATE INDEX IF NOT EXISTS idx_general_accounts_user_id ON public.general_accounts (user_id);

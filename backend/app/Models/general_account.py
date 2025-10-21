@@ -36,6 +36,7 @@ class GeneralAccount(Base):
         ForeignKey("auth.users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
+        index=True,
     )
     label: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[Any] = mapped_column(
