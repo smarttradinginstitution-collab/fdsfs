@@ -24,10 +24,9 @@ let observer;
 
 // --- LOGICA DEL COMPONENTE ---
 onMounted(() => {
-  // Carica la prima pagina solo se la lista è vuota
-  if (tradesStore.trades.length === 0) {
-    tradesStore.fetchTrades({ ignoreFilters: true });
-  }
+  // Esegui in parallelo il caricamento delle statistiche e della prima pagina dei trade
+  tradesStore.fetchAllDataForDashboard();
+  tradesStore.fetchTrades({ ignoreFilters: true });
 
   // Configura l'IntersectionObserver per il caricamento infinito
   observer = new IntersectionObserver(

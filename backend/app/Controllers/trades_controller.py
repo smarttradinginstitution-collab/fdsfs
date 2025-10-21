@@ -125,26 +125,16 @@ class TradesController:
         self,
         claims: dict,
         trading_account_id: UUID,
-        limit: int,
-        offset: int,
         start_date: Optional[date],
         end_date: Optional[date],
         service: TradeService,
-    ):
-        trades, total_count = await service.list_trades_by_trading_account(
+    ) -> list[TradeRead]:
+        return await service.list_trades_by_trading_account(
             claims=claims,
             trading_account_id=trading_account_id,
-            limit=limit,
-            offset=offset,
             start_date=start_date,
             end_date=end_date,
         )
-        return {
-            "total": total_count,
-            "trades": trades,
-            "limit": limit,
-            "offset": offset,
-        }
 
     async def list_recent_trades(
         self,

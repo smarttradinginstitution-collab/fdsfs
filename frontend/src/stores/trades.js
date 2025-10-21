@@ -467,7 +467,7 @@ export const useTradesStore = defineStore('trades', {
       this.isLoading = true;
       try {
         await Promise.allSettled([
-          this.fetchTrades(), // Carica i trade in base ai filtri della dashboard
+          // this.fetchTrades(), // RIMOSSO: La lista dei trade verrà caricata separatamente e in modo paginato
           this.fetchDashboardStats(),
           this.fetchCalendarData(),
           this.fetchProcessedStats(),

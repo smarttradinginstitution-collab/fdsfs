@@ -66,38 +66,13 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().first()
 
-    async def list_all_by_trading_account_id(self, trading_account_id: UUID) -> List[Trade]:
-        """Elenca TUTTI i trade per un dato trading account, senza paginazione."""
+    async def list_by_trading_account_id(
+        self, trading_account_id: UUID
+    ) -> List[Trade]:
+        """Elenca tutti i trade per un dato trading account."""
         query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
         result = await self.db.execute(query)
         return result.unique().scalars().all()
-
-    async def list_by_trading_account_id(
-        self, trading_account_id: UUID, limit: int, offset: int
-    ) -> tuple[List[Trade], int]:
-        """
-        Elenca i trade per un dato trading account con paginazione e restituisce
-        anche il conteggio totale dei trade.
-        """
-        # Query per contare il numero totale di trade
-        count_query = select(func.count()).select_from(Trade).where(
-            Trade.trading_account_id == trading_account_id
-        )
-        total_count_result = await self.db.execute(count_query)
-        total_count = total_count_result.scalar_one()
-
-        # Query per recuperare la "fetta" di trade per la pagina corrente
-        query = (
-            self._get_trade_query()
-            .where(Trade.trading_account_id == trading_account_id)
-            .order_by(Trade.entry_timestamp.desc()) # Ordinamento cronologico
-            .offset(offset)
-            .limit(limit)
-        )
-        result = await self.db.execute(query)
-        trades = result.unique().scalars().all()
-
-        return trades, total_count
 
     async def get_trades_for_dna_analysis(
         self,
@@ -206,44 +181,6 @@ class TradeRepository:
         )
         result = await self.db.execute(query)
         return result.unique().scalars().all()
-
-    async def get_filtered_trades_paginated(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-        limit: int,
-        offset: int
-    ) -> tuple[List[Trade], int]:
-        """Recupera i trade filtrati per data con paginazione."""
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        base_where = [
-            Trade.trading_account_id == trading_account_id,
-            Trade.entry_timestamp >= start_datetime,
-            Trade.entry_timestamp <= end_datetime,
-        ]
-
-        # Query per contare il totale
-        count_query = select(func.count()).select_from(Trade).where(*base_where)
-        total_count_result = await self.db.execute(count_query)
-        total_count = total_count_result.scalar_one()
-
-        # Query per prendere la pagina di risultati
-        query = (
-            self._get_trade_query()
-            .where(*base_where)
-            .order_by(Trade.entry_timestamp.desc())
-            .offset(offset)
-            .limit(limit)
-        )
-        result = await self.db.execute(query)
-        trades = result.unique().scalars().all()
-
-        return trades, total_count
 
     async def get_trade_by_id_simple(self, trade_id: UUID) -> Optional[Trade]:
         """Recupera un trade per ID senza controlli di appartenenza."""

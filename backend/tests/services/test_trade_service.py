@@ -96,25 +96,13 @@ async def test_list_trades_by_trading_account_succeeds(trade_service: TradeServi
     trade_service.trading_account_repo.get_by_id.return_value = trading_account
 
     trades = [create_mock_trade(as_enum=False), create_mock_trade(as_enum=False)]
-    # Il mock ora deve restituire una tupla (trades, total_count)
-    trade_service.repo.list_by_trading_account_id.return_value = (trades, len(trades))
+    trade_service.repo.list_by_trading_account_id.return_value = trades
 
-    # Chiama il servizio con i parametri di paginazione
-    result_trades, total_count = await trade_service.list_trades_by_trading_account(
-        claims=mock_claims,
-        trading_account_id=trading_account_id,
-        limit=10,
-        offset=0
-    )
+    result = await trade_service.list_trades_by_trading_account(mock_claims, trading_account_id, None, None)
 
-    assert total_count == 2
-    assert len(result_trades) == 2
-    # Verifica che la chiamata al repository includa i parametri di paginazione
-    trade_service.repo.list_by_trading_account_id.assert_called_once_with(
-        trading_account_id=trading_account_id,
-        limit=10,
-        offset=0
-    )
+    assert result is not None
+    assert len(result) == 2
+    trade_service.repo.list_by_trading_account_id.assert_called_once_with(trading_account_id)
 
 async def test_get_trade_succeeds(trade_service: TradeService, mock_claims):
     trade_id = uuid4()
