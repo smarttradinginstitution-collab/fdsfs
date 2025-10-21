@@ -463,6 +463,11 @@ class TradeRepository:
         # Implementazione ottimizzata per PostgreSQL
         if dialect == 'postgresql':
             from sqlalchemy import text
+            from datetime import timedelta
+
+            # Calcola la data di fine inclusiva in Python per evitare logica complessa in SQL
+            end_date_inclusive = end_date + timedelta(days=1)
+
             sql_query = text("""
                 WITH trades_in_range AS (
                     SELECT
@@ -475,7 +480,7 @@ class TradeRepository:
                     LEFT JOIN playbooks p ON t.playbook_id = p.id
                     WHERE t.trading_account_id = :trading_account_id
                       AND t.entry_timestamp >= :start_date
-                  AND t.entry_timestamp < (:end_date::timestamp + INTERVAL '1 day')
+                      AND t.entry_timestamp < :end_date_inclusive
                       AND t.p_l IS NOT NULL
                 ),
                 strategy_stats AS (
@@ -492,7 +497,11 @@ class TradeRepository:
                 )
                 SELECT (SELECT by_strategy FROM strategy_stats), (SELECT by_day_of_week FROM day_of_week_stats), (SELECT daily_pnl FROM daily_pnl_stats);
             """)
-            result = await self.db.execute(sql_query, {"trading_account_id": trading_account_id, "start_date": start_date, "end_date": end_date})
+            result = await self.db.execute(sql_query, {
+                "trading_account_id": trading_account_id,
+                "start_date": start_date,
+                "end_date_inclusive": end_date_inclusive
+            })
             raw_results = result.first()
 
             by_strategy_data = raw_results[0] if raw_results and raw_results[0] is not None else {}
