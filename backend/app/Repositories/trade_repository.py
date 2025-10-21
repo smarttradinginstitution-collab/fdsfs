@@ -7,6 +7,7 @@ from datetime import date
 from collections import defaultdict
 from decimal import Decimal
 import datetime
+import json
 
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import select, func, case, Float
@@ -453,92 +454,89 @@ class TradeRepository:
         end_date: date,
     ) -> dict[str, Any]:
         """
-        Calcola tutte le statistiche aggregate per l'endpoint processed-stats in un'unica query
-        per la massima efficienza, recuperando i dati grezzi e aggregandoli in Python.
+        Calcola tutte le statistiche aggregate per l'endpoint processed-stats, utilizzando
+        una query ottimizzata per PostgreSQL in produzione e un fallback per SQLite nei test.
         """
+        # Determina il dialetto del DB per decidere quale implementazione usare
+        dialect = self.db.bind.dialect.name
 
-        start_datetime = datetime.datetime.combine(start_date, datetime.time.min)
-        end_datetime = datetime.datetime.combine(end_date, datetime.time.max)
+        # Implementazione ottimizzata per PostgreSQL
+        if dialect == 'postgresql':
+            from sqlalchemy import text
+            sql_query = text("""
+                WITH trades_in_range AS (
+                    SELECT
+                        t.p_l,
+                        t.entry_timestamp,
+                        p.title AS strategy_name,
+                        EXTRACT(isodow FROM t.entry_timestamp) AS day_of_week,
+                        DATE(t.entry_timestamp) AS trade_date
+                    FROM trades t
+                    LEFT JOIN playbooks p ON t.playbook_id = p.id
+                    WHERE t.trading_account_id = :trading_account_id
+                      AND t.entry_timestamp >= :start_date
+                  AND t.entry_timestamp < :end_date + INTERVAL '1 day'
+                      AND t.p_l IS NOT NULL
+                ),
+                strategy_stats AS (
+                    SELECT json_object_agg(strategy_name, json_build_object('trade_count', trade_count, 'total_pnl', total_pnl, 'winning_trades', winning_trades)) AS by_strategy
+                    FROM (SELECT strategy_name, count(*) AS trade_count, sum(p_l) AS total_pnl, count(*) FILTER (WHERE p_l > 0) AS winning_trades FROM trades_in_range WHERE strategy_name IS NOT NULL GROUP BY strategy_name) AS s
+                ),
+                day_of_week_stats AS (
+                    SELECT json_object_agg(day_of_week, json_build_object('trade_count', trade_count, 'total_pnl', total_pnl)) AS by_day_of_week
+                    FROM (SELECT day_of_week, count(*) AS trade_count, sum(p_l) AS total_pnl FROM trades_in_range GROUP BY day_of_week) AS d
+                ),
+                daily_pnl_stats AS (
+                    SELECT json_object_agg(trade_date, daily_pnl) AS daily_pnl
+                    FROM (SELECT trade_date, sum(p_l) AS daily_pnl FROM trades_in_range GROUP BY trade_date) AS dp
+                )
+                SELECT (SELECT by_strategy FROM strategy_stats), (SELECT by_day_of_week FROM day_of_week_stats), (SELECT daily_pnl FROM daily_pnl_stats);
+            """)
+            result = await self.db.execute(sql_query, {"trading_account_id": trading_account_id, "start_date": start_date, "end_date": end_date})
+            raw_results = result.first()
 
-        # Query base per recuperare tutti i dati necessari in un colpo solo
-        base_query = (
-            select(
-                Trade.p_l,
-                Trade.entry_timestamp,
-                Playbook.title.label("strategy_name")
+            by_strategy_data = raw_results[0] if raw_results and raw_results[0] is not None else {}
+            by_day_of_week_data = {int(k): v for k, v in raw_results[1].items()} if raw_results and raw_results[1] is not None else {}
+            daily_pnl_data = raw_results[2] if raw_results and raw_results[2] is not None else {}
+
+            return {"by_strategy": by_strategy_data, "by_day_of_week": by_day_of_week_data, "daily_pnl": daily_pnl_data}
+
+        # Fallback per SQLite (usato nei test)
+        else:
+            base_query = (
+                select(Trade.p_l, Trade.entry_timestamp, Playbook.title.label("strategy_name"))
+                .outerjoin(Playbook, Trade.playbook_id == Playbook.id)
+                .where(
+                    Trade.trading_account_id == trading_account_id,
+                    Trade.entry_timestamp >= datetime.datetime.combine(start_date, datetime.time.min),
+                    Trade.entry_timestamp <= datetime.datetime.combine(end_date, datetime.time.max),
+                    Trade.p_l.isnot(None)
+                )
             )
-            .outerjoin(Playbook, Trade.playbook_id == Playbook.id)
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None)
-            )
-        )
+            trades = (await self.db.execute(base_query)).mappings().all()
+            if not trades:
+                return {"by_strategy": {}, "by_day_of_week": {}, "daily_pnl": {}}
 
-        trades = (await self.db.execute(base_query)).mappings().all()
+            by_strategy = defaultdict(lambda: {"trade_count": 0, "total_pnl": Decimal("0.0"), "winning_trades": 0})
+            by_day_of_week = defaultdict(lambda: {"trade_count": 0, "total_pnl": Decimal("0.0")})
+            daily_pnl_agg = defaultdict(lambda: Decimal("0.0"))
 
-        # Se non ci sono trade, restituisce una struttura dati vuota/default
-        if not trades:
+            for trade in trades:
+                pnl, dt, strategy = trade.p_l, trade.entry_timestamp, trade.strategy_name
+                if strategy:
+                    by_strategy[strategy]["trade_count"] += 1
+                    by_strategy[strategy]["total_pnl"] += pnl
+                    if pnl > 0: by_strategy[strategy]["winning_trades"] += 1
+                day_index = dt.isoweekday()
+                by_day_of_week[day_index]["trade_count"] += 1
+                by_day_of_week[day_index]["total_pnl"] += pnl
+                daily_pnl_agg[dt.date()] += pnl
+
             return {
-                "by_strategy": [],
-                "by_day_of_week": [],
-                "daily_pnl": []
+                "by_strategy": {name: dict(data) for name, data in by_strategy.items()},
+                "by_day_of_week": {day: dict(data) for day, data in by_day_of_week.items()},
+                "daily_pnl": {d.isoformat(): p for d, p in daily_pnl_agg.items()},
             }
-
-        # Elaborazione in Python
-        by_strategy = defaultdict(lambda: {"trade_count": 0, "total_pnl": Decimal("0.0"), "winning_trades": 0})
-        by_day_of_week = defaultdict(lambda: {"trade_count": 0, "total_pnl": Decimal("0.0")})
-        daily_pnl_agg = defaultdict(lambda: Decimal("0.0"))
-
-        for trade in trades:
-            pnl = trade.p_l
-            dt = trade.entry_timestamp
-            strategy = trade.strategy_name
-
-            # 1. Aggregazione per strategia
-            if strategy:
-                by_strategy[strategy]["trade_count"] += 1
-                by_strategy[strategy]["total_pnl"] += pnl
-                if pnl > 0:
-                    by_strategy[strategy]["winning_trades"] += 1
-
-            # 2. Aggregazione per giorno della settimana (usando isoweekday: 1=Lunedì, 7=Domenica)
-            # Corrisponde a isodow di PostgreSQL
-            day_index = dt.isoweekday()
-            by_day_of_week[day_index]["trade_count"] += 1
-            by_day_of_week[day_index]["total_pnl"] += pnl
-
-            # 3. Aggregazione per P&L giornaliero
-            daily_pnl_agg[dt.date()] += pnl
-
-        # Formattazione finale dei risultati in un formato simile a quello delle vecchie query
-        final_by_strategy = [
-            {
-                "strategy_name": name,
-                "trade_count": data["trade_count"],
-                "total_pnl": data["total_pnl"],
-                "winning_trades": data["winning_trades"],
-            }
-            for name, data in by_strategy.items()
-        ]
-
-        final_by_day_of_week = [
-            {
-                "day_of_week": day_index,
-                "trade_count": data["trade_count"],
-                "total_pnl": data["total_pnl"],
-            }
-            for day_index, data in by_day_of_week.items()
-        ]
-
-        final_daily_pnl = [{"trade_date": d, "daily_pnl": p} for d, p in daily_pnl_agg.items()]
-
-        return {
-            "by_strategy": final_by_strategy,
-            "by_day_of_week": final_by_day_of_week,
-            "daily_pnl": final_daily_pnl,
-        }
 
     async def get_account_balance(self, trading_account_id: UUID) -> float:
         """

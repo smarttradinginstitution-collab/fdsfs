@@ -92,7 +92,7 @@ class AnalyticsService:
         """
         from decimal import Decimal
 
-        # Unica chiamata al repository per ottenere tutti i dati pre-aggregati
+        # Unica chiamata al repository per ottenere tutti i dati già aggregati dal DB
         aggregated_data = await self.trade_repo.get_processed_stats_aggregated(
             trading_account_id, start_date, end_date
         )
@@ -101,38 +101,38 @@ class AnalyticsService:
         raw_by_day_of_week = aggregated_data["by_day_of_week"]
         raw_daily_pnl = aggregated_data["daily_pnl"]
 
-        # 1. Process stats by strategy
+        # 1. Process stats by strategy - La struttura è già quasi corretta
         by_strategy = {
-            item['strategy_name']: StrategyPerformance(
-                trade_count=item['trade_count'],
-                total_pnl=item['total_pnl'],
-                win_rate=(item['winning_trades'] / item['trade_count'] * 100) if item['trade_count'] > 0 else 0,
+            name: StrategyPerformance(
+                trade_count=data['trade_count'],
+                total_pnl=Decimal(str(data['total_pnl'])), # Casting da text/JSON
+                win_rate=(data['winning_trades'] / data['trade_count'] * 100) if data['trade_count'] > 0 else 0,
             )
-            for item in raw_by_strategy
+            for name, data in raw_by_strategy.items()
         }
         max_abs_pnl = max((abs(s.total_pnl) for s in by_strategy.values()), default=Decimal('0.0'))
 
-        # 2. Process stats by day of the week
+        # 2. Process stats by day of the week - La struttura è già quasi corretta
         day_map = {1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday", 7: "Sunday"}
         by_day_of_week = {day: {"total_pnl": Decimal('0.0'), "trade_count": 0} for day in day_map.values()}
-        for item in raw_by_day_of_week:
-            day_name = day_map.get(item['day_of_week'])
+        for day_index, data in raw_by_day_of_week.items():
+            day_name = day_map.get(day_index)
             if day_name:
                 by_day_of_week[day_name] = {
-                    "total_pnl": item['total_pnl'],
-                    "trade_count": item['trade_count'],
+                    "total_pnl": Decimal(str(data['total_pnl'])),
+                    "trade_count": data['trade_count'],
                 }
 
-        # 3. Process daily PnL to get win/loss days and monthly/weekly totals
+        # 3. Process daily PnL - La logica rimane in Python perché richiede iterazione
         winning_days = 0
         losing_days = 0
         breakeven_days = 0
         monthly_totals = {}
         weekly_totals = {}
 
-        for item in raw_daily_pnl:
-            pnl = item['daily_pnl']
-            trade_date = item['trade_date']
+        for date_str, pnl_str in raw_daily_pnl.items():
+            trade_date = date.fromisoformat(date_str)
+            pnl = Decimal(pnl_str)
 
             if pnl > 0: winning_days += 1
             elif pnl < 0: losing_days += 1
