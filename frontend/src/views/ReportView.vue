@@ -13,15 +13,16 @@ import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
-import { useLoadingStore } from '@/stores/loadingStore';
 import { storeToRefs } from 'pinia';
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 // --- STATE ---
 const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
-const loadingStore = useLoadingStore();
+
+const isPageLoading = ref(true);
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
@@ -104,7 +105,6 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
-  loadingStore.startLoading();
   error.value = null;
   try {
     const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
@@ -114,6 +114,7 @@ const selectTradeFromStore = async (tradeId) => {
     if (tradeFromList) {
       tradesStore.selectedTrade = { ...tradeFromList };
     } else {
+      isPageLoading.value = true;
       console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
       promises.push(tradesStore.fetchTradeById(tradeId));
     }
@@ -127,7 +128,7 @@ const selectTradeFromStore = async (tradeId) => {
     // Assicurati che il trade selezionato sia nullo in caso di errore
     tradesStore.selectedTrade = null;
   } finally {
-    loadingStore.stopLoading();
+    isPageLoading.value = false;
   }
 };
 
@@ -145,7 +146,10 @@ onMounted(() => {
 
 <template>
   <div class="report-detail-view">
-    <template v-if="!loadingStore.isLoading">
+    <div v-if="isPageLoading" class="loading-state">
+      <LoadingSpinner />
+    </div>
+    <template v-else>
       <div v-if="error" class="error-state">
         <h2>Error</h2>
         <p>{{ error }}</p>
@@ -236,6 +240,13 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
 .report-detail-view {
   display: flex;
   flex-direction: column;
