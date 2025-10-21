@@ -22,6 +22,10 @@ async def get_current_claims(
     Non fa decodifica JWT locale: delega la validazione a Supabase.
     Ritorna un dict con almeno: {"sub": <user_id>, "email": <email>}
     """
+    import time
+    start_time = time.time()
+    print(f"*** AUTH_LOG: Starting Supabase token validation at {start_time:.4f}")
+
     token = creds.credentials
     sb = get_supabase_client()
 
@@ -31,9 +35,15 @@ async def get_current_claims(
         user = res.user
         if not user:
             raise HTTPException(status_code=401, detail="Token non valido")
+
+        end_time = time.time()
+        print(f"*** AUTH_LOG: Finished Supabase token validation at {end_time:.4f}. Duration: {end_time - start_time:.4f}s")
+
         # user.id è lo UUID dell'utente Supabase
         return {"sub": str(user.id), "email": user.email}
-    except Exception:
+    except Exception as e:
+        end_time = time.time()
+        print(f"*** AUTH_LOG: FAILED Supabase token validation at {end_time:.4f}. Duration: {end_time - start_time:.4f}s. Error: {e}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token non valido")
 
 
