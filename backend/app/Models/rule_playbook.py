@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 trades_rules_association = Table(
     'trades_rules',
     Base.metadata,
-    Column('trade_id', UUID(as_uuid=True), ForeignKey('public.trades.id', ondelete="CASCADE"), primary_key=True),
-    Column('rule_id', UUID(as_uuid=True), ForeignKey('public.rules_playbook.id', ondelete="CASCADE"), primary_key=True),
+    Column('trade_id', UUID(as_uuid=True), ForeignKey('public.trades.id', ondelete="CASCADE"), primary_key=True, index=True),
+    Column('rule_id', UUID(as_uuid=True), ForeignKey('public.rules_playbook.id', ondelete="CASCADE"), primary_key=True, index=True),
     schema="public"
 )
 
@@ -36,6 +36,7 @@ class RulePlaybook(Base):
         UUID(as_uuid=True),
         ForeignKey("public.rules_groups_playbook.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     rule: Mapped[str] = mapped_column(Text, nullable=False)
     order: Mapped[int] = mapped_column(Integer, nullable=True)

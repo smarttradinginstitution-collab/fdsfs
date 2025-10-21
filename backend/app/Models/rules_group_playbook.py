@@ -29,6 +29,7 @@ class RulesGroupPlaybook(Base):
         UUID(as_uuid=True),
         ForeignKey("public.playbooks.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     name_group: Mapped[str] = mapped_column(Text, nullable=False)
     order: Mapped[int] = mapped_column(Integer, nullable=True)
