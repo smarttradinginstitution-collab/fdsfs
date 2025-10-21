@@ -21,21 +21,12 @@ class GeneralAccountRepository:
 
     async def get_by_user_id(self, user_id: UUID) -> Optional[GeneralAccount]:
         """Recupera un GeneralAccount tramite user_id, con eager loading dell'utente."""
-        import time
-        start_time = time.time()
-        print(f"PRECISION_LOG: Starting get_by_user_id query at {start_time:.4f}")
-
         stmt = (
             select(GeneralAccount)
             .where(GeneralAccount.user_id == user_id)
         )
         result = await self.db.execute(stmt)
-        account = result.scalars().first()
-
-        end_time = time.time()
-        print(f"PRECISION_LOG: Finished get_by_user_id query at {end_time:.4f}. Duration: {end_time - start_time:.4f}s")
-
-        return account
+        return result.scalars().first()
 
     async def create_general_account(
         self, user_id: UUID, account_data: GeneralAccountCreate
