@@ -385,6 +385,46 @@ class TradeRepository:
         result = await self.db.execute(stmt)
         return result.mappings().all()
 
+    async def get_equity_curve_aggregated(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date,
+    ) -> list[dict[str, Any]]:
+        """
+        Calcola i punti della curva di equità usando le Window Functions di SQL.
+        """
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Subquery per ordinare i trade e calcolare il P&L cumulativo
+        subquery = (
+            select(
+                Trade.entry_timestamp.label("timestamp"),
+                func.sum(Trade.p_l).over(
+                    order_by=Trade.entry_timestamp
+                ).label("cumulative_pnl")
+            )
+            .where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+                Trade.p_l.isnot(None)
+            )
+            .subquery()
+        )
+
+        # Query principale per selezionare i dati dalla subquery
+        stmt = select(
+            subquery.c.timestamp.label("label"),
+            subquery.c.cumulative_pnl.label("value")
+        ).order_by(subquery.c.timestamp)
+
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
+
     async def get_daily_pnl_stats(
         self,
         trading_account_id: UUID,
@@ -435,7 +475,24 @@ class TradeRepository:
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
 
-        day_of_week = func.extract('isodow', Trade.entry_timestamp).label("day_of_week")
+        from sqlalchemy.ext.compiler import compiles
+        from sqlalchemy.sql.expression import FunctionElement
+
+        class dow_isodow(FunctionElement):
+            name = 'isodow'
+
+        @compiles(dow_isodow, 'postgresql')
+        def pg_isodow(element, compiler, **kw):
+            return "EXTRACT(isodow FROM %s)" % compiler.process(element.clauses)
+
+        @compiles(dow_isodow, 'sqlite')
+        def sqlite_isodow(element, compiler, **kw):
+            # In SQLite, %w is 0 for Sunday. ISO week day is 7 for Sunday.
+            return "CASE CAST(strftime('%%w', %s) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%%w', %s) AS INTEGER) END" % (
+                compiler.process(element.clauses), compiler.process(element.clauses)
+            )
+
+        day_of_week = dow_isodow(Trade.entry_timestamp).label("day_of_week")
 
         stmt = (
             select(
