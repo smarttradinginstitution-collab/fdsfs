@@ -186,13 +186,8 @@ onMounted(() => {
                   <div>Contenuto Executions</div>
                 </template>
                 <template #attachments>
-                  <TradeImageGallery
-                    :trade-id="trade.id"
-                    :images="imagesForCurrentTrade"
-                    mode="uploader-only"
-                    :allow-insertion="false"
-                    @edit-image="handleEditImage"
-                  />
+                  <TradeImageGallery :trade-id="trade.id" :images="imagesForCurrentTrade" mode="uploader-only"
+                    :allow-insertion="false" @edit-image="handleEditImage" />
                 </template>
               </BaseTabs>
             </BaseWidget>
@@ -215,14 +210,8 @@ onMounted(() => {
                 </div>
               </div>
               <hr v-if="primaryBeforeImage || primaryAfterImage" class="section-divider" />
-              <TradeImageGallery
-                :trade-id="trade.id"
-                :images="imagesForCurrentTrade"
-                mode="gallery-only"
-                :allow-insertion="false"
-                @edit-image="handleEditImage"
-                @open-lightbox="openLightbox"
-              />
+              <TradeImageGallery :trade-id="trade.id" :images="imagesForCurrentTrade" mode="gallery-only"
+                :allow-insertion="false" @edit-image="handleEditImage" @open-lightbox="openLightbox" />
             </BaseWidget>
           </div>
         </main>
@@ -234,17 +223,26 @@ onMounted(() => {
       </div>
     </template>
     <EditTradeDetailsModal v-if="trade" v-model="isEditModalOpen" :trade="trade" @save="handleUpdateTradeDetails" />
-    <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit" @close="isMetadataModalOpen = false" />
-    <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage" @prev="prevImage" />
+    <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit"
+      @close="isMetadataModalOpen = false" />
+    <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade"
+      :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage"
+      @prev="prevImage" />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .loading-state {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
+  // background-color: rgba(255, 255, 255, 0.8); // opzionale, per effetto overlay
+  // z-index: 9999; // in modo che stia sopra tutto
 }
 
 .report-detail-view {
@@ -270,17 +268,20 @@ onMounted(() => {
 
 .trade-identifier {
   text-align: center;
+
   .asset-name {
     font: var(--semantic-font-style-heading-xl);
     color: var(--semantic-color-text-primary);
   }
+
   .trade-date {
     font: var(--semantic-font-style-body-sm);
     color: var(--semantic-color-text-secondary);
   }
 }
 
-.nav-button, .action-button {
+.nav-button,
+.action-button {
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-interactive);
   border: 1px solid var(--semantic-color-border-default);
@@ -332,7 +333,8 @@ onMounted(() => {
 }
 
 .visual-analysis-widget {
-  flex-grow: 2; /* Make notes widget larger */
+  flex-grow: 2;
+  /* Make notes widget larger */
 }
 
 .visual-analysis-widget {
