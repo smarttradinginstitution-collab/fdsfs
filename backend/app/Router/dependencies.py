@@ -46,17 +46,10 @@ async def get_current_user(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token claim 'sub' non è un UUID valido")
 
-    import time
-    start_time = time.time()
-    print(f"    GET_USER_ROLES: Start query at {start_time:.4f}")
-
     repo = UserRoleRepository(db)
     user_roles_models = await repo.list_user_roles(user_id)
     roles = [role.name for role in user_roles_models]
     is_admin = "admin" in roles
-
-    end_time = time.time()
-    print(f"    GET_USER_ROLES: End query. Duration: {end_time - start_time:.4f}s")
 
     return CurrentUser(id=user_id, email=cast(str, claims.get("email")), roles=roles, is_admin=is_admin)
 
@@ -69,16 +62,9 @@ async def get_current_general_account_id(
     Recupera il general_account_id associato all'utente corrente.
     Lancia un'eccezione 404 se non viene trovato nessun account.
     """
-    import time
-    start_time = time.time()
-    print(f"        GET_GEN_ACCOUNT: Start query at {start_time:.4f}")
-
     stmt = select(GeneralAccount.id).where(GeneralAccount.user_id == current_user.id).limit(1)
     result = await db.execute(stmt)
     general_account_id = result.scalar_one_or_none()
-
-    end_time = time.time()
-    print(f"        GET_GEN_ACCOUNT: End query. Duration: {end_time - start_time:.4f}s")
 
     if not general_account_id:
         raise HTTPException(

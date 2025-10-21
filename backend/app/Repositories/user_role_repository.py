@@ -24,22 +24,13 @@ class UserRoleRepository:
         """
         Ritorna direttamente i RUOLI assegnati a user_id, tramite JOIN sul ponte.
         """
-        import time
-        start_time = time.time()
-        print(f"    *** PRECISION_LOG (USER_ROLES): Starting query at {start_time:.4f}")
-
         stmt = (
             select(Role)
             .join(UserRole, UserRole.role_id == Role.id)
             .where(UserRole.user_id == user_id)
         )
         res = await self.db.execute(stmt)
-        roles = res.scalars().all()
-
-        end_time = time.time()
-        print(f"    *** PRECISION_LOG (USER_ROLES): Finished query at {end_time:.4f}. Duration: {end_time - start_time:.4f}s")
-
-        return roles
+        return res.scalars().all()
 
     async def list_role_names(self, user_id: UUID) -> List[str]:
         """
