@@ -1,7 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import DashboardView from '../views/DashboardView.vue';
-import AddTradeView from '../views/AddTradeView.vue';
-import AddAccountView from '../views/AddAccountView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,7 +18,7 @@ const router = createRouter({
     {
       path: '/add-account',
       name: 'add-account',
-      component: AddAccountView,
+      component: () => import('../views/AddAccountView.vue'),
       meta: { title: 'Add Account', fullScreen: true },
     },
     {
@@ -33,13 +30,13 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: DashboardView,
+      component: () => import('../views/DashboardView.vue'),
       meta: { title: 'Dashboard' },
     },
     {
       path: '/add-trade',
       name: 'add-trade',
-      component: AddTradeView,
+      component: () => import('../views/AddTradeView.vue'),
       meta: { title: 'Add Trade' },
     },
     {

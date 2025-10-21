@@ -1,17 +1,16 @@
 # app/Repositories/playbook_repository.py
 from __future__ import annotations
-
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List, Dict, Any
 from uuid import UUID
 from fastapi import HTTPException, status
-from sqlalchemy import select, insert, func
+from sqlalchemy import select, insert, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
-
 from app.Models.playbook import Playbook
 from app.Models.general_account import GeneralAccount
 from app.Models.rules_group_playbook import RulesGroupPlaybook
 from app.Models.rule_playbook import RulePlaybook
+from app.Models.trade import Trade
 from app.Schemas.playbook import PlaybookCreate, PlaybookUpdate
 
 
@@ -41,7 +40,10 @@ class PlaybookRepository:
         stmt = (
             select(Playbook)
             .where(Playbook.id == playbook_id)
-            .options(selectinload(Playbook.rules_groups))
+            .options(
+                selectinload(Playbook.rules_groups)
+                .selectinload(RulesGroupPlaybook.rules)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
@@ -69,6 +71,10 @@ class PlaybookRepository:
         return res.scalars().all()
 
     async def list_by_general_account_id_with_trades(self, general_account_id: UUID) -> Sequence[Playbook]:
+        """
+        DEPRECATED: inefficient, loads all trades.
+        Use list_playbooks_with_stats instead for overviews.
+        """
         stmt = (
             select(Playbook)
             .where(Playbook.general_account_id == general_account_id)
@@ -80,6 +86,67 @@ class PlaybookRepository:
         )
         res = await self.db.execute(stmt)
         return res.unique().scalars().all()
+
+    async def list_playbooks_with_stats(self, general_account_id: UUID) -> List[Dict[str, Any]]:
+        """
+        Recupera tutti i playbook di un utente con le statistiche aggregate calcolate
+        direttamente nel database per la massima efficienza.
+        """
+        # Subquery per aggregare le statistiche dei trade per ogni playbook
+        trade_stats_subquery = (
+            select(
+                Trade.playbook_id,
+                func.count(Trade.id).label("total_trades"),
+                func.sum(Trade.p_l).label("total_p_l"),
+                func.sum(case((Trade.p_l > 0, 1)), else_=0).label("winning_trades"),
+                func.sum(case((Trade.p_l < 0, 1)), else_=0).label("losing_trades"),
+                func.avg(Trade.r_multiple).label("avg_r_multiple"),
+                func.avg(Trade.p_l).label("avg_p_l")
+            )
+            .where(Trade.playbook_id.isnot(None))
+            .group_by(Trade.playbook_id)
+            .subquery("trade_stats")
+        )
+
+        # Query principale per recuperare i playbook e fare un LEFT JOIN con le statistiche
+        stmt = (
+            select(
+                Playbook,
+                trade_stats_subquery.c.total_trades,
+                trade_stats_subquery.c.total_p_l,
+                trade_stats_subquery.c.winning_trades,
+                trade_stats_subquery.c.losing_trades,
+                trade_stats_subquery.c.avg_r_multiple,
+                trade_stats_subquery.c.avg_p_l
+            )
+            .outerjoin(trade_stats_subquery, Playbook.id == trade_stats_subquery.c.playbook_id)
+            .where(Playbook.general_account_id == general_account_id)
+            .options(
+                selectinload(Playbook.rules_groups)
+                .selectinload(RulesGroupPlaybook.rules)
+            )
+            .order_by(Playbook.title.asc())
+        )
+
+        result = await self.db.execute(stmt)
+
+        # Processa i risultati per combinare il modello Playbook con le statistiche
+        playbooks_with_stats = []
+        for row in result.all():
+            playbook, total_trades, total_p_l, winning_trades, losing_trades, avg_r_multiple, avg_p_l = row
+            playbooks_with_stats.append({
+                "playbook": playbook,
+                "stats": {
+                    "total_trades": total_trades or 0,
+                    "total_p_l": float(total_p_l) if total_p_l is not None else 0.0,
+                    "winning_trades": winning_trades or 0,
+                    "losing_trades": losing_trades or 0,
+                    "avg_r_multiple": float(avg_r_multiple) if avg_r_multiple is not None else 0.0,
+                    "avg_p_l": float(avg_p_l) if avg_p_l is not None else 0.0
+                }
+            })
+
+        return playbooks_with_stats
 
     async def create(self, playbook_in: PlaybookCreate, general_account_id: UUID) -> Playbook:
         await self._check_duplicate_title(general_account_id, playbook_in.title)

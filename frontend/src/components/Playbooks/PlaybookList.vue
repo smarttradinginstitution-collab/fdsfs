@@ -1,6 +1,6 @@
 <template>
-  <div v-if="isLoading" class="loading-state">
-    <p>Loading playbooks...</p>
+  <div v-if="isLoading" :class="['playbook-list', layoutClass]">
+    <PlaybookCardSkeleton v-for="n in 6" :key="n" :layout="layout" />
   </div>
   <div v-else-if="playbooks.length === 0" class="empty-state">
     <p>No playbooks found. Start by creating one!</p>
@@ -18,6 +18,7 @@
 <script setup>
 import { computed, defineProps } from 'vue';
 import PlaybookCard from './PlaybookCard.vue';
+import PlaybookCardSkeleton from './PlaybookCardSkeleton.vue';
 
 const props = defineProps({
   playbooks: {

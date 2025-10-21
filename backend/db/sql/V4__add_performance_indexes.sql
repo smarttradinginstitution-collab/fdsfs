@@ -29,3 +29,9 @@ CREATE INDEX IF NOT EXISTS idx_trades_psychology_psychology_id ON public.trades_
 
 CREATE INDEX IF NOT EXISTS idx_trades_rules_trade_id ON public.trades_rules (trade_id);
 CREATE INDEX IF NOT EXISTS idx_trades_rules_rule_id ON public.trades_rules (rule_id);
+
+-- Indice su playbook_id in trades per accelerare le aggregazioni per playbook
+CREATE INDEX IF NOT EXISTS idx_trades_playbook_id ON public.trades (playbook_id);
+
+-- Indice su general_account_id in playbooks per accelerare il recupero dei playbook per utente
+CREATE INDEX IF NOT EXISTS idx_playbooks_general_account_id ON public.playbooks (general_account_id);

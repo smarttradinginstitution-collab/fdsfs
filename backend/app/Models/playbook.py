@@ -27,6 +27,7 @@ class Playbook(Base):
         UUID(as_uuid=True),
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     title: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
