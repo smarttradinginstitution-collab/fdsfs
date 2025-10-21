@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
-from app.Services.supabase_client import get_supabase_client
+from app.Services.jwt_service import get_jwks, validate_token_local
 from app.Repositories.user_role_repository import UserRoleRepository
 
 bearer = HTTPBearer(auto_error=True)
@@ -17,34 +17,22 @@ async def get_current_claims(
     creds: HTTPAuthorizationCredentials = Depends(bearer),
 ):
     """
-    Legge il Bearer token dall'header Authorization e chiede a Supabase
-    i dati dell'utente: supabase.auth.get_user(<token>).
-    Non fa decodifica JWT locale: delega la validazione a Supabase.
-    Ritorna un dict con almeno: {"sub": <user_id>, "email": <email>}
+    Valida il token JWT localmente usando le chiavi JWKS in cache per
+    evitare chiamate di rete lente a Supabase.
+    Ritorna il payload del token decodificato.
     """
     import time
     start_time = time.time()
-    print(f"*** AUTH_LOG: Starting Supabase token validation at {start_time:.4f}")
+    print(f"*** AUTH_LOG: Starting local token validation at {start_time:.4f}")
 
     token = creds.credentials
-    sb = get_supabase_client()
+    jwks = await get_jwks()
+    payload = validate_token_local(token, jwks)
 
-    try:
-        # Nota: supabase-py v2 -> get_user(token) ritorna un oggetto con .user
-        res = sb.auth.get_user(token)
-        user = res.user
-        if not user:
-            raise HTTPException(status_code=401, detail="Token non valido")
+    end_time = time.time()
+    print(f"*** AUTH_LOG: Finished local token validation at {end_time:.4f}. Duration: {end_time - start_time:.4f}s")
 
-        end_time = time.time()
-        print(f"*** AUTH_LOG: Finished Supabase token validation at {end_time:.4f}. Duration: {end_time - start_time:.4f}s")
-
-        # user.id è lo UUID dell'utente Supabase
-        return {"sub": str(user.id), "email": user.email}
-    except Exception as e:
-        end_time = time.time()
-        print(f"*** AUTH_LOG: FAILED Supabase token validation at {end_time:.4f}. Duration: {end_time - start_time:.4f}s. Error: {e}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token non valido")
+    return payload
 
 
 def require_roles(roles: list[str]):
