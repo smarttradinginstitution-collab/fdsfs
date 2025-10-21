@@ -226,7 +226,7 @@ class AnalyticsService:
 
         # Aggiungiamo il bilancio iniziale a ogni punto per ottenere il valore assoluto della curva
         labels = [start_date] + [point['label'] for point in aggregated_points]
-        data = [float(initial_balance)] + [float(initial_balance + point['value']) for point in aggregated_points]
+        data = [float(initial_balance)] + [float(float(initial_balance) + float(point['value'])) for point in aggregated_points]
 
         return EquityCurveData(labels=labels, data=data)
 
