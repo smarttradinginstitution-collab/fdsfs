@@ -230,6 +230,11 @@ class PlaybookRepository:
             )
             .select_from(trades_cte)
         )
+        from sqlalchemy.dialects import postgresql
+        compiled_stmt = stmt.compile(dialect=postgresql.dialect())
+        print("--- BEGIN SQL QUERY ---")
+        print(compiled_stmt.string)
+        print("--- END SQL QUERY ---")
 
         result = await self.db.execute(stmt)
         stats = result.first()
