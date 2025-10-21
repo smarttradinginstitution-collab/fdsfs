@@ -1,6 +1,7 @@
 # app/Repositories/note_repository.py
 from __future__ import annotations
 
+import time
 from datetime import date
 from typing import Sequence
 from uuid import UUID
@@ -67,13 +68,18 @@ class NoteRepository:
         Get a note by its ID, including related folder, trade, and sub-relationships.
         Filtra anche deleted_at per aderire ai parziali ed evitare di mostrare note soft-deleted.
         """
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START get_by_id repo query")
         stmt = (
             select(Note)
             .options(*self._get_note_load_options())
             .where(Note.id == note_id, self._not_deleted_note())
         )
         result = await self.db.execute(stmt)
-        return result.unique().scalars().first()
+        note = result.unique().scalars().first()
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END get_by_id repo query. Duration: {end_time - start_time:.4f}s")
+        return note
 
     async def find_by_date_and_folder(self, note_date: date, folder_id: UUID) -> Note | None:
         """
@@ -196,6 +202,8 @@ class NoteRepository:
     # ------------------------
     async def create(self, note_in: NoteCreate) -> Note:
         """Create a new note."""
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START create note repo query")
         db_note = Note(**note_in.model_dump())
         self.db.add(db_note)
         try:
@@ -210,10 +218,14 @@ class NoteRepository:
 
         # Refresh the instance to get server-side defaults (like created_at)
         await self.db.refresh(db_note)
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END create note repo query. Duration: {end_time - start_time:.4f}s")
         return db_note
 
     async def update(self, db_obj: Note, obj_in: NoteUpdate) -> Note:
         """Update an existing note."""
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START update note repo query")
         update_data = obj_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
@@ -231,6 +243,8 @@ class NoteRepository:
 
         # Refresh the instance to get the updated timestamp
         await self.db.refresh(db_obj)
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END update note repo query. Duration: {end_time - start_time:.4f}s")
         return db_obj
 
     async def delete(self, db_obj: Note) -> None:

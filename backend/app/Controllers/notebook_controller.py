@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import List
 from uuid import UUID
 
+import time
 from fastapi import Depends, Response, status
 
 from app.Services.notebook_service import NotebookService
@@ -30,9 +31,14 @@ class NotebookController:
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
     ) -> List[NotebookFolderReadWithCount]:
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START list_my_folders controller")
         folders = await service.get_all_folders(user_id=current_user.id)
         # Explicitly cast to the correct schema to avoid loading the `notes` relationship
-        return [NotebookFolderReadWithCount.model_validate(f) for f in folders]
+        result = [NotebookFolderReadWithCount.model_validate(f) for f in folders]
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END list_my_folders controller. Duration: {end_time - start_time:.4f}s")
+        return result
 
     async def create_folder(
         self,
@@ -40,8 +46,13 @@ class NotebookController:
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
     ) -> NotebookFolderReadWithCount:
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START create_folder controller")
         folder = await service.create_folder(folder_in=folder_in, user_id=current_user.id)
-        return NotebookFolderReadWithCount.model_validate(folder)
+        result = NotebookFolderReadWithCount.model_validate(folder)
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END create_folder controller. Duration: {end_time - start_time:.4f}s")
+        return result
 
     async def update_folder(
         self,
@@ -50,10 +61,15 @@ class NotebookController:
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
     ) -> NotebookFolderReadWithCount:
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START update_folder controller")
         folder = await service.update_folder(
             folder_id=folder_id, folder_in=folder_in, user_id=current_user.id
         )
-        return NotebookFolderReadWithCount.model_validate(folder)
+        result = NotebookFolderReadWithCount.model_validate(folder)
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END update_folder controller. Duration: {end_time - start_time:.4f}s")
+        return result
 
     async def delete_folder(
         self,
@@ -97,7 +113,12 @@ class NotebookController:
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
     ) -> NoteRead:
-        return await service.get_note(note_id=note_id, user_id=current_user.id)
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START get_note controller")
+        result = await service.get_note(note_id=note_id, user_id=current_user.id)
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END get_note controller. Duration: {end_time - start_time:.4f}s")
+        return result
 
     async def get_note_by_trade_id(
         self,
@@ -116,10 +137,15 @@ class NotebookController:
         current_user: CurrentUser = Depends(get_current_user),
         service: NotebookService = Depends(),
     ) -> NoteReadBasic:
+        start_time = time.time()
+        print(f"NOTEBOOK_TIMING: START update_note controller")
         note = await service.update_note(
             note_id=note_id, note_in=note_in, user_id=current_user.id
         )
-        return NoteReadBasic.model_validate(note)
+        result = NoteReadBasic.model_validate(note)
+        end_time = time.time()
+        print(f"NOTEBOOK_TIMING: END update_note controller. Duration: {end_time - start_time:.4f}s")
+        return result
 
     async def delete_note(
         self,
