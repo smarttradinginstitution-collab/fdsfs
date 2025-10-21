@@ -54,16 +54,19 @@ class Trade(Base):
         UUID(as_uuid=True),
         ForeignKey("public.assets.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     platform_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.platforms.id"),
-        nullable=True
+        nullable=True,
+        index=True,
     )
     import_run_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.import_runs.id"),
-        nullable=True
+        nullable=True,
+        index=True,
     )
     playbook_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
@@ -92,7 +95,8 @@ class Trade(Base):
     status: Mapped[TradeStatus] = mapped_column(
         Enum(TradeStatus, name="trade_status", schema="public"),
         nullable=False,
-        default=TradeStatus.closed
+        default=TradeStatus.closed,
+        index=True,
     )
 
     # Financial details
