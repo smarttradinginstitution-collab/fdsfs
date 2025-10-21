@@ -222,10 +222,11 @@ onMounted(() => {
         <BaseButton @click="router.push({ name: 'trades' })">Back to Trades</BaseButton>
       </div>
     </template>
+
+    <!-- Modals outside the v-else block but inside the main div -->
     <EditTradeDetailsModal v-if="trade" v-model="isEditModalOpen" :trade="trade" @save="handleUpdateTradeDetails" />
     <ImageMetadataModal :show="isMetadataModalOpen" :image="selectedImageForEdit" @close="isMetadataModalOpen = false" />
     <ImageLightbox v-if="imagesForCurrentTrade.length > 0" :images="imagesForCurrentTrade" :current-index="lightboxCurrentIndex" :show="isLightboxOpen" @close="closeLightbox" @next="nextImage" @prev="prevImage" />
-    </template>
   </div>
 </template>
 
