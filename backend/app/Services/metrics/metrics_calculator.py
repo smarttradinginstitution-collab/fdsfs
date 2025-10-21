@@ -181,29 +181,32 @@ class MetricsCalculator:
     def get_equity_curve(self) -> Dict[str, List[Any]]:
         """
         Generates the data required for plotting an equity curve.
+        Returns labels as date objects to comply with Pydantic schema.
         """
         if self.trade_count == 0:
+            # Return initial balance but no labels, as there are no trades/dates
             return {"labels": [], "data": [float(self.initial_balance)]}
 
-        # Use exit timestamps for the labels of the equity curve
+        # Use exit timestamps (as date objects) for the labels of the equity curve
         labels = [
-            (t.exit_timestamp or t.entry_timestamp).strftime('%Y-%m-%d %H:%M')
+            (t.exit_timestamp or t.entry_timestamp).date()
             for t in self.trades
         ]
 
         # Calculate the cumulative P/L over time
         cumulative_pnl = np.cumsum(self.pnl_series)
 
-        # Create the equity curve data points
+        # Create the equity curve data points, starting with the initial balance
         equity_curve_data = [float(self.initial_balance)] + [
             float(self.initial_balance) + float(pnl) for pnl in cumulative_pnl
         ]
 
-        # The labels should align with the data points after the initial balance
-        # So we add a placeholder for the initial state
-        full_labels = ["Initial"] + labels
+        # The data list has one more item (initial balance) than the labels list.
+        # The frontend will need to handle this, e.g., by adding an "Initial" label
+        # or by aligning the data points to the labels. For API correctness, we
+        # return only the dates corresponding to trades.
 
-        return {"labels": full_labels, "data": equity_curve_data}
+        return {"labels": labels, "data": equity_curve_data}
 
     def calculate_roi(self, net_pnl: Optional[Decimal] = None) -> float:
         """Calculates the Return on Investment (ROI) based on initial balance."""
