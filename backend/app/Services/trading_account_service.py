@@ -114,7 +114,7 @@ class TradingAccountService:
         # to ensure all metrics are calculated correctly.
         # This is a simplified approach; a more optimized version might
         # store start/end dates or use a different method to get the range.
-        all_trades = await self.trade_repo.list_by_trading_account_id(account_id)
+        all_trades = await self.trade_repo.list_all_by_trading_account_id(account_id)
 
         account = await self.repo.get_by_id(account_id)
         if not account:

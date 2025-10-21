@@ -66,13 +66,38 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().first()
 
-    async def list_by_trading_account_id(
-        self, trading_account_id: UUID
-    ) -> List[Trade]:
-        """Elenca tutti i trade per un dato trading account."""
+    async def list_all_by_trading_account_id(self, trading_account_id: UUID) -> List[Trade]:
+        """Elenca TUTTI i trade per un dato trading account, senza paginazione."""
         query = self._get_trade_query().where(Trade.trading_account_id == trading_account_id)
         result = await self.db.execute(query)
         return result.unique().scalars().all()
+
+    async def list_by_trading_account_id(
+        self, trading_account_id: UUID, limit: int, offset: int
+    ) -> tuple[List[Trade], int]:
+        """
+        Elenca i trade per un dato trading account con paginazione e restituisce
+        anche il conteggio totale dei trade.
+        """
+        # Query per contare il numero totale di trade
+        count_query = select(func.count()).select_from(Trade).where(
+            Trade.trading_account_id == trading_account_id
+        )
+        total_count_result = await self.db.execute(count_query)
+        total_count = total_count_result.scalar_one()
+
+        # Query per recuperare la "fetta" di trade per la pagina corrente
+        query = (
+            self._get_trade_query()
+            .where(Trade.trading_account_id == trading_account_id)
+            .order_by(Trade.entry_timestamp.desc()) # Ordinamento cronologico
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.db.execute(query)
+        trades = result.unique().scalars().all()
+
+        return trades, total_count
 
     async def get_trades_for_dna_analysis(
         self,
@@ -182,6 +207,44 @@ class TradeRepository:
         result = await self.db.execute(query)
         return result.unique().scalars().all()
 
+    async def get_filtered_trades_paginated(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date,
+        limit: int,
+        offset: int
+    ) -> tuple[List[Trade], int]:
+        """Recupera i trade filtrati per data con paginazione."""
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        base_where = [
+            Trade.trading_account_id == trading_account_id,
+            Trade.entry_timestamp >= start_datetime,
+            Trade.entry_timestamp <= end_datetime,
+        ]
+
+        # Query per contare il totale
+        count_query = select(func.count()).select_from(Trade).where(*base_where)
+        total_count_result = await self.db.execute(count_query)
+        total_count = total_count_result.scalar_one()
+
+        # Query per prendere la pagina di risultati
+        query = (
+            self._get_trade_query()
+            .where(*base_where)
+            .order_by(Trade.entry_timestamp.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.db.execute(query)
+        trades = result.unique().scalars().all()
+
+        return trades, total_count
+
     async def get_trade_by_id_simple(self, trade_id: UUID) -> Optional[Trade]:
         """Recupera un trade per ID senza controlli di appartenenza."""
         query = self._get_trade_query().where(Trade.id == trade_id)
@@ -239,278 +302,6 @@ class TradeRepository:
         trade.rules_followed = rules
 
         # Il commit verrà gestito dal service layer
-
-    async def get_aggregated_performance_stats(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> dict[str, Any]:
-        """
-        Calcola le metriche di performance aggregate direttamente nel database per la massima efficienza.
-        """
-        from datetime import datetime, time
-        from sqlalchemy import cast, Numeric
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        # Filtri comuni per le query
-        filters = [
-            Trade.trading_account_id == trading_account_id,
-            Trade.entry_timestamp >= start_datetime,
-            Trade.entry_timestamp <= end_datetime,
-            Trade.p_l.isnot(None)
-        ]
-
-        # Definizioni delle aggregazioni
-        query_aggs = [
-            func.sum(Trade.p_l).label("net_pnl"),
-            func.count(Trade.id).label("trade_count"),
-            func.count(case((Trade.p_l > 0, 1))).label("winning_trades"),
-            func.count(case((Trade.p_l < 0, 1))).label("losing_trades"),
-            func.sum(case((Trade.p_l > 0, Trade.p_l), else_=0)).label("gross_profit"),
-            func.sum(case((Trade.p_l < 0, Trade.p_l), else_=0)).label("gross_loss"),
-            func.max(Trade.p_l).label("largest_profit"),
-            func.min(Trade.p_l).label("largest_loss"),
-            func.avg(Trade.r_multiple).label("avg_realized_rr")
-        ]
-
-        stmt = select(*query_aggs).where(*filters)
-
-        result = await self.db.execute(stmt)
-        stats = result.mappings().first()
-
-        # Se non ci sono trade, restituisce una struttura dati vuota/default
-        if not stats or stats['trade_count'] == 0:
-            return {
-                "net_pnl": 0.0, "trade_count": 0, "winning_trades": 0, "losing_trades": 0,
-                "breakeven_trades": 0, "gross_profit": 0.0, "gross_loss": 0.0,
-                "avg_win": 0.0, "avg_loss": 0.0, "largest_profit": 0.0, "largest_loss": 0.0,
-                "avg_realized_rr": 0.0,
-            }
-
-        # Post-elaborazione dei risultati per calcolare medie e valori derivati
-        win_count = stats['winning_trades'] or 0
-        loss_count = stats['losing_trades'] or 0
-        total_count = stats['trade_count'] or 0
-
-        processed_stats = {
-            "net_pnl": float(stats['net_pnl'] or 0.0),
-            "trade_count": total_count,
-            "winning_trades": win_count,
-            "losing_trades": loss_count,
-            "breakeven_trades": total_count - (win_count + loss_count),
-            "gross_profit": float(stats['gross_profit'] or 0.0),
-            "gross_loss": abs(float(stats['gross_loss'] or 0.0)),
-            "avg_win": (float(stats['gross_profit']) / win_count) if win_count > 0 else 0.0,
-            "avg_loss": abs(float(stats['gross_loss']) / loss_count) if loss_count > 0 else 0.0,
-            "largest_profit": float(stats['largest_profit'] or 0.0),
-            "largest_loss": float(stats['largest_loss'] or 0.0),
-            "avg_realized_rr": float(stats['avg_realized_rr'] or 0.0),
-        }
-
-        return processed_stats
-
-    async def get_calendar_data_aggregated(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola i dati aggregati per la vista calendario direttamente nel database.
-        """
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        trade_date_col = func.date(Trade.entry_timestamp).label("date")
-
-        stmt = (
-            select(
-                trade_date_col,
-                func.sum(Trade.p_l).label("pnl"),
-                func.count(Trade.id).label("trade_count"),
-                func.count(case((Trade.p_l > 0, 1))).label("winning_trades_count"),
-            )
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-            )
-            .group_by(trade_date_col)
-            .order_by(trade_date_col)
-        )
-
-        result = await self.db.execute(stmt)
-        # Restituisce una lista di dizionari, facile da mappare in Pydantic
-        return result.mappings().all()
-
-    async def get_stats_by_strategy(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola le statistiche aggregate raggruppate per playbook (strategia).
-        """
-        from datetime import datetime, time
-        from app.Models.playbook import Playbook
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        stmt = (
-            select(
-                Playbook.title.label("strategy_name"),
-                func.count(Trade.id).label("trade_count"),
-                func.sum(Trade.p_l).label("total_pnl"),
-                func.count(case((Trade.p_l > 0, 1))).label("winning_trades"),
-            )
-            .join(Playbook, Trade.playbook_id == Playbook.id)
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-                Trade.playbook_id.isnot(None),
-            )
-            .group_by(Playbook.title)
-        )
-
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
-
-    async def get_equity_curve_aggregated(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola i punti della curva di equità usando le Window Functions di SQL.
-        """
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        # Subquery per ordinare i trade e calcolare il P&L cumulativo
-        subquery = (
-            select(
-                Trade.entry_timestamp.label("timestamp"),
-                func.sum(Trade.p_l).over(
-                    order_by=Trade.entry_timestamp
-                ).label("cumulative_pnl")
-            )
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None)
-            )
-            .subquery()
-        )
-
-        # Query principale per selezionare i dati dalla subquery
-        stmt = select(
-            subquery.c.timestamp.label("label"),
-            subquery.c.cumulative_pnl.label("value")
-        ).order_by(subquery.c.timestamp)
-
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
-
-    async def get_daily_pnl_stats(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola il P&L totale per ogni giorno in un dato intervallo di date.
-        Questo è un mattoncino fondamentale per calcolare i totali mensili,
-        settimanali e i giorni vincenti/perdenti.
-        """
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        trade_date_col = func.date(Trade.entry_timestamp).label("trade_date")
-
-        stmt = (
-            select(
-                trade_date_col,
-                func.sum(Trade.p_l).label("daily_pnl")
-            )
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-            )
-            .group_by(trade_date_col)
-        )
-
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
-
-    async def get_stats_by_day_of_week(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola le statistiche aggregate raggruppate per giorno della settimana.
-        'isodow' in PostgreSQL: Lunedì (1) a Domenica (7)
-        """
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        from sqlalchemy.ext.compiler import compiles
-        from sqlalchemy.sql.expression import FunctionElement
-
-        class dow_isodow(FunctionElement):
-            name = 'isodow'
-            inherit_cache = True
-
-        @compiles(dow_isodow, 'postgresql')
-        def pg_isodow(element, compiler, **kw):
-            return "EXTRACT(isodow FROM %s)" % compiler.process(element.clauses)
-
-        @compiles(dow_isodow, 'sqlite')
-        def sqlite_isodow(element, compiler, **kw):
-            # In SQLite, %w is 0 for Sunday. ISO week day is 7 for Sunday.
-            return "CASE CAST(strftime('%%w', %s) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%%w', %s) AS INTEGER) END" % (
-                compiler.process(element.clauses), compiler.process(element.clauses)
-            )
-
-        day_of_week = dow_isodow(Trade.entry_timestamp).label("day_of_week")
-
-        stmt = (
-            select(
-                day_of_week,
-                func.sum(Trade.p_l).label("total_pnl"),
-                func.count(Trade.id).label("trade_count"),
-            )
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-            )
-            .group_by(day_of_week)
-        )
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
 
     async def get_tag_performance_stats(
         self,

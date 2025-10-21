@@ -51,6 +51,11 @@ export const useTradesStore = defineStore('trades', {
     selectedTrade: null,
     isTradeLoading: false,
     dataSignature: null, // Aggiunto per tracciare lo stato dei dati caricati
+    // Paginazione
+    currentPage: 0,
+    tradesPerPage: 30,
+    totalTrades: 0,
+    hasMorePages: true,
   }),
 
   getters: {
@@ -380,9 +385,22 @@ export const useTradesStore = defineStore('trades', {
      * Può recuperare tutti i trade o applicare i filtri della dashboard.
      * @param {object} options - Opzioni per il fetch.
      * @param {boolean} options.ignoreFilters - Se true, carica tutti i trade senza filtri.
+     * @param {boolean} options.loadMore - Se true, carica la pagina successiva. Se false, resetta e carica la prima pagina.
      */
-    async fetchTrades(options = { ignoreFilters: false }) {
+    async fetchTrades(options = { ignoreFilters: false, loadMore: false }) {
+      if (this.isLoading || (!options.loadMore && !this.hasMorePages)) {
+        return;
+      }
       this.isLoading = true;
+
+      if (!options.loadMore) {
+        // Reset per un nuovo caricamento
+        this.trades = [];
+        this.currentPage = 0;
+        this.totalTrades = 0;
+        this.hasMorePages = true;
+      }
+
       const tradingAccountsStore = useTradingAccountsStore();
       const selectedAccount = tradingAccountsStore.selectedTradingAccount;
 
@@ -405,6 +423,8 @@ export const useTradesStore = defineStore('trades', {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = {
         user_timezone: userTimezone,
+        limit: this.tradesPerPage,
+        offset: this.currentPage * this.tradesPerPage,
       };
 
       if (!options.ignoreFilters) {
@@ -419,10 +439,16 @@ export const useTradesStore = defineStore('trades', {
 
       try {
         const response = await apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params });
-        this.trades = response.data.map(mapBackendTradeToFrontend);
+        const newTrades = response.data.trades.map(mapBackendTradeToFrontend);
+
+        this.trades.push(...newTrades);
+        this.totalTrades = response.data.total;
+        this.currentPage += 1;
+        this.hasMorePages = this.trades.length < this.totalTrades;
+
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
-        this.trades = [];
+        this.hasMorePages = false;
       } finally {
         this.isLoading = false;
       }

@@ -48,115 +48,71 @@ class AnalyticsService:
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> PerformanceMetrics:
         """
-        Calculates and returns main performance metrics using optimized aggregation.
+        Calculates and returns main performance metrics.
         """
-        # 1. Get aggregated stats directly from the database (fast)
-        aggregated_stats = await self.trade_repo.get_aggregated_performance_stats(
-            trading_account_id, start_date, end_date
-        )
-
-        # 2. Get the full list of trades for more complex, in-memory calculations (slower but necessary for now)
-        # This is the part we want to optimize further in the future if needed.
         calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        all_metrics = calculator.get_all_metrics()
 
-        # 3. Calculate complex metrics that are hard to do in pure SQL
-        # We pass the pre-aggregated stats to the calculator to avoid re-calculating them.
-        complex_metrics = calculator.get_all_metrics(pre_calculated_stats=aggregated_stats)
-
-        # 4. Combine the results
-        all_metrics = {**aggregated_stats, **complex_metrics}
-
-        # Map results to the PerformanceStats Pydantic schema
-        stats = PerformanceStats(**all_metrics)
+        # Map calculator results to the PerformanceStats Pydantic schema
+        stats = PerformanceStats(
+            net_pnl=all_metrics["net_pnl"],
+            roi_percentage=all_metrics["roi_percentage"],
+            gross_profit=all_metrics["gross_profit"],
+            gross_loss=all_metrics["gross_loss"],
+            win_rate=all_metrics["win_rate"],
+            trade_count=all_metrics["trade_count"],
+            winning_trades=all_metrics["winning_trades"],
+            losing_trades=all_metrics["losing_trades"],
+            breakeven_trades=all_metrics["breakeven_trades"],
+            profit_factor=all_metrics["profit_factor"],
+            profit_factor_label=all_metrics["profit_factor_label"],
+            avg_win=all_metrics["avg_win"],
+            avg_loss=all_metrics["avg_loss"],
+            largest_profit=all_metrics["largest_profit"],
+            largest_loss=all_metrics["largest_loss"],
+            max_consecutive_wins=all_metrics["max_consecutive_wins"],
+            max_consecutive_losses=all_metrics["max_consecutive_losses"],
+            average_hold_time=all_metrics["average_hold_time"],
+            expectancy=all_metrics["expectancy"],
+            average_trade_pnl=all_metrics["average_trade_pnl"],
+            avg_realized_rr=all_metrics["avg_realized_rr"],
+            max_drawdown_abs=all_metrics["max_drawdown_abs"],
+            max_drawdown_percentage=all_metrics["max_drawdown_percentage"],
+            sharpe_ratio=all_metrics["sharpe_ratio"]
+        )
         return PerformanceMetrics(stats=stats)
 
     async def get_calendar_data(
         self, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str
     ) -> List[CalendarDayData]:
         """
-        Returns data aggregated by day for the calendar view, calculated efficiently in the database.
+        Returns data aggregated by day for the calendar view.
         """
-        # La logica è stata spostata nel repository per efficienza.
-        # Il parametro user_timezone non è più necessario qui, ma lo manteniamo per compatibilità con l'API.
-        aggregated_data = await self.trade_repo.get_calendar_data_aggregated(
-            trading_account_id, start_date, end_date
-        )
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calendar_data = calculator.calculate_calendar_data()
 
-        return [CalendarDayData(**item) for item in aggregated_data]
+        return [CalendarDayData(**item) for item in calendar_data]
 
     async def get_processed_stats(
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> ProcessedStats:
         """
-        Returns aggregated stats, calculated efficiently in the database.
+        Returns aggregated stats like 'by_strategy', 'by_day_of_week', etc.
         """
-        # Le chiamate vengono eseguite in sequenza per evitare deadlock nei test con sessioni mockate.
-        # L'impatto sulle performance in produzione è minimo poiché le query sono già veloci.
-        from decimal import Decimal
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        processed_data = calculator.calculate_processed_stats()
 
-        raw_by_strategy = await self.trade_repo.get_stats_by_strategy(trading_account_id, start_date, end_date)
-        raw_by_day_of_week = await self.trade_repo.get_stats_by_day_of_week(trading_account_id, start_date, end_date)
-        raw_daily_pnl = await self.trade_repo.get_daily_pnl_stats(trading_account_id, start_date, end_date)
-
-        # 1. Process stats by strategy
-        by_strategy = {
-            item['strategy_name']: StrategyPerformance(
-                trade_count=item['trade_count'],
-                total_pnl=item['total_pnl'],
-                win_rate=(item['winning_trades'] / item['trade_count'] * 100) if item['trade_count'] > 0 else 0,
-            )
-            for item in raw_by_strategy
-        }
-        max_abs_pnl = max((abs(s.total_pnl) for s in by_strategy.values()), default=Decimal('0.0'))
-
-        # 2. Process stats by day of the week
-        day_map = {1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday", 7: "Sunday"}
-        by_day_of_week = {day: {"total_pnl": Decimal('0.0'), "trade_count": 0} for day in day_map.values()}
-        for item in raw_by_day_of_week:
-            day_name = day_map.get(item['day_of_week'])
-            if day_name:
-                by_day_of_week[day_name] = {
-                    "total_pnl": item['total_pnl'],
-                    "trade_count": item['trade_count'],
-                }
-
-        # 3. Process daily PnL to get win/loss days and monthly/weekly totals
-        winning_days = 0
-        losing_days = 0
-        breakeven_days = 0
-        monthly_totals = {}
-        weekly_totals = {}
-
-        for item in raw_daily_pnl:
-            pnl = item['daily_pnl']
-            #  SQLite returns dates as strings, so we need to parse them back to date objects
-            trade_date = date.fromisoformat(item['trade_date']) if isinstance(item['trade_date'], str) else item['trade_date']
-
-            if pnl > 0: winning_days += 1
-            elif pnl < 0: losing_days += 1
-            else: breakeven_days += 1
-
-            month_key = trade_date.strftime("%Y-%m")
-            monthly_totals[month_key] = monthly_totals.get(month_key, Decimal('0.0')) + pnl
-
-            iso_year, iso_week, _ = trade_date.isocalendar()
-            week_key = f"{iso_year}-W{iso_week:02d}"
-            if week_key not in weekly_totals:
-                weekly_totals[week_key] = {"total_pnl": Decimal('0.0'), "trading_days": set()}
-            weekly_totals[week_key]["total_pnl"] += pnl
-            weekly_totals[week_key]["trading_days"].add(trade_date)
-
-        # Finalize weekly totals by counting unique days
-        for week_key in weekly_totals:
-            weekly_totals[week_key]["trading_days"] = len(weekly_totals[week_key]["trading_days"])
-
+        # Map the nested dictionary to the required Pydantic models
         return ProcessedStats(
-            by_strategy=by_strategy,
-            max_abs_pnl_by_strategy=max_abs_pnl,
-            by_day_of_week=by_day_of_week,
-            win_loss_days=WinLossDays(winningDays=winning_days, losingDays=losing_days, breakEvenDays=breakeven_days),
-            monthly_totals=monthly_totals,
-            weekly_totals=weekly_totals
+            by_strategy={
+                name: StrategyPerformance(**data)
+                for name, data in processed_data["by_strategy"].items()
+            },
+            max_abs_pnl_by_strategy=processed_data["max_abs_pnl_by_strategy"],
+            by_day_of_week=processed_data["by_day_of_week"],
+            win_loss_days=WinLossDays(**processed_data["win_loss_days"]),
+            monthly_totals=processed_data["monthly_totals"],
+            weekly_totals=processed_data["weekly_totals"]
         )
 
     async def get_vantage_score(
@@ -214,22 +170,11 @@ class AnalyticsService:
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> EquityCurveData:
         """
-        Returns data for the equity curve chart, calculated efficiently in the database.
+        Returns data for the equity curve chart.
         """
-        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
-        initial_balance = trading_account.initial_balance if trading_account else 0.0
-
-        # La query del repo calcola il P&L cumulativo per ogni trade
-        aggregated_points = await self.trade_repo.get_equity_curve_aggregated(
-            trading_account_id, start_date, end_date
-        )
-
-        # Aggiungiamo il bilancio iniziale a ogni punto per ottenere il valore assoluto della curva
-        # Convertiamo i datetime in oggetti date per la validazione Pydantic
-        labels = [start_date] + [point['label'].date() for point in aggregated_points]
-        data = [float(initial_balance)] + [float(float(initial_balance) + float(point['value'])) for point in aggregated_points]
-
-        return EquityCurveData(labels=labels, data=data)
+        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        equity_curve_data = calculator.calculate_equity_curve()
+        return EquityCurveData(**equity_curve_data)
 
     async def get_trade_summary(
         self, trading_account_id: UUID, start_date: date, end_date: date

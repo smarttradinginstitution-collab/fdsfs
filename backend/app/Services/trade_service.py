@@ -236,24 +236,31 @@ class TradeService:
         self,
         claims: dict,
         trading_account_id: UUID,
+        limit: int,
+        offset: int,
         start_date: Optional[date] = None,
-        end_date: Optional[date] = None
-    ) -> List[TradeRead]:
+        end_date: Optional[date] = None,
+    ) -> tuple[List[TradeRead], int]:
         """
-        Elenca i trade per un trading account, con filtro opzionale per data.
+        Elenca i trade per un trading account con paginazione.
+        Filtra per data se start_date e end_date sono forniti.
         """
         await self._validate_and_get_trading_account(claims, trading_account_id)
 
         if start_date and end_date:
-            trades = await self.repo.get_filtered_trades(
+            trades, total_count = await self.repo.get_filtered_trades_paginated(
                 trading_account_id=trading_account_id,
                 start_date=start_date,
-                end_date=end_date
+                end_date=end_date,
+                limit=limit,
+                offset=offset,
             )
         else:
-            trades = await self.repo.list_by_trading_account_id(trading_account_id)
+            trades, total_count = await self.repo.list_by_trading_account_id(
+                trading_account_id=trading_account_id, limit=limit, offset=offset
+            )
 
-        return [TradeRead.model_validate(trade) for trade in trades]
+        return [TradeRead.model_validate(trade) for trade in trades], total_count
 
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
         """Aggiorna un trade esistente e ricalcola le metriche se necessario."""

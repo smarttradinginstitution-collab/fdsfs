@@ -8,23 +8,47 @@
 -->
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useTradesStore } from '@/stores/trades';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import KpiDashboard from '@/components/KpiDashboard.vue';
-import BaseButton from '@/components/ui/BaseButton.vue'; // Importiamo il componente bottone
+import BaseButton from '@/components/ui/BaseButton.vue';
 import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
 // --- STORE E STATO LOCALE ---
 const tradesStore = useTradesStore();
-const selectedTrades = ref([]); // Stato per le righe selezionate
+const selectedTrades = ref([]);
+const loader = ref(null); // Riferimento all'elemento osservato
+
+let observer;
 
 // --- LOGICA DEL COMPONENTE ---
 onMounted(() => {
-  // Se l'utente atterra direttamente su questa pagina e i trade non sono stati
-  // ancora caricati (es. tramite il login), li carichiamo ora.
+  // Carica la prima pagina solo se la lista è vuota
   if (tradesStore.trades.length === 0) {
     tradesStore.fetchTrades({ ignoreFilters: true });
+  }
+
+  // Configura l'IntersectionObserver per il caricamento infinito
+  observer = new IntersectionObserver(
+    (entries) => {
+      const firstEntry = entries[0];
+      if (firstEntry.isIntersecting && tradesStore.hasMorePages && !tradesStore.isLoading) {
+        tradesStore.fetchTrades({ ignoreFilters: true, loadMore: true });
+      }
+    },
+    { threshold: 1.0 }
+  );
+
+  if (loader.value) {
+    observer.observe(loader.value);
+  }
+});
+
+onUnmounted(() => {
+  // Pulisci l'observer quando il componente viene smontato
+  if (loader.value) {
+    observer.unobserve(loader.value);
   }
 });
 
@@ -117,6 +141,14 @@ const getPnlClass = (pnl) => {
         {{ item.strategy || '-' }}
       </template>
     </BaseTable>
+
+    <!-- Elemento per l'IntersectionObserver -->
+    <div ref="loader" class="loader-trigger"></div>
+
+    <!-- Indicatore di caricamento -->
+    <div v-if="tradesStore.isLoading && tradesStore.trades.length > 0" class="loading-indicator">
+      Loading more trades...
+    </div>
   </div>
 </template>
 
@@ -165,5 +197,16 @@ const getPnlClass = (pnl) => {
 
 .pnl-negative {
   color: var(--semantic-color-feedback-negative-text);
+}
+
+.loader-trigger {
+  height: 50px; /* Un po' di spazio per attivare l'observer prima della fine esatta della pagina */
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: var(--semantic-size-inset-lg);
+  font-style: italic;
+  color: var(--semantic-color-text-secondary);
 }
 </style>

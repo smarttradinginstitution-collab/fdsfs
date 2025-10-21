@@ -13,7 +13,7 @@ from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Router.auth import get_current_claims
 
-from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate, PaginatedTradesResponse
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -123,9 +123,11 @@ async def create_trade(
     return await controller.create_trade(claims, trade_data, service)
 
 
-@router.get("/by-trading-account/{trading_account_id}", response_model=List[TradeRead])
+@router.get("/by-trading-account/{trading_account_id}", response_model=PaginatedTradesResponse)
 async def get_trades_for_trading_account(
     trading_account_id: UUID,
+    limit: int = 20,
+    offset: int = 0,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     claims: dict = Depends(get_current_claims),
@@ -134,6 +136,8 @@ async def get_trades_for_trading_account(
     return await controller.list_trades_for_trading_account(
         claims=claims,
         trading_account_id=trading_account_id,
+        limit=limit,
+        offset=offset,
         start_date=start_date,
         end_date=end_date,
         service=service,

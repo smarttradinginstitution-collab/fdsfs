@@ -5,7 +5,6 @@ import { useUiStore } from './uiStore';
 
 export const useImageStore = defineStore('imageStore', () => {
   const imagesForCurrentTrade = ref([]);
-  const imageCache = ref({}); // Cache per le immagini per tradeId
   const isLoading = ref(false);
   const uiStore = useUiStore();
 
@@ -14,18 +13,9 @@ export const useImageStore = defineStore('imageStore', () => {
       imagesForCurrentTrade.value = [];
       return;
     }
-
-    // Controlla la cache prima di fare una chiamata API
-    if (imageCache.value[tradeId]) {
-      imagesForCurrentTrade.value = imageCache.value[tradeId];
-      return;
-    }
-
     isLoading.value = true;
     try {
       const response = await apiClient.get(`/trades/${tradeId}/images`);
-      // Salva nella cache e aggiorna lo stato
-      imageCache.value[tradeId] = response.data;
       imagesForCurrentTrade.value = response.data;
     } catch (error) {
       console.error('Error fetching images for trade:', error);

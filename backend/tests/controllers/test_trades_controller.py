@@ -70,7 +70,7 @@ async def test_create_and_get_trade(async_client: AsyncClient, db_session: Async
     list_response = await async_client.get(f"/api/v1/trades/by-trading-account/{trading_account_id}")
     assert list_response.status_code == 200
     list_data = list_response.json()
-    assert len(list_data) == 1
+    assert list_data['total'] == 1
 
 async def test_create_trade_with_related_entities_by_name(async_client: AsyncClient, db_session: AsyncSession):
     """
@@ -153,14 +153,14 @@ async def test_list_trades_with_date_filter(async_client: AsyncClient, db_sessio
     )
     assert response_filtered.status_code == 200
     filtered_data = response_filtered.json()
-    assert len(filtered_data) == 1
-    assert filtered_data[0]["symbol_snapshot"] == "TODAY_TRADE"
+    assert filtered_data['total'] == 1
+    assert filtered_data['trades'][0]["symbol_snapshot"] == "TODAY_TRADE"
 
     # 2. Testa senza filtro per data (tutti i trade)
     response_unfiltered = await async_client.get(f"/api/v1/trades/by-trading-account/{trading_account_id}")
     assert response_unfiltered.status_code == 200
     unfiltered_data = response_unfiltered.json()
-    assert len(unfiltered_data) == 3
+    assert unfiltered_data['total'] == 3
 
 
 async def test_get_trade_with_correctly_calculated_metrics(async_client: AsyncClient, db_session: AsyncSession):

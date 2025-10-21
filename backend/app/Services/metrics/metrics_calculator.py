@@ -53,77 +53,56 @@ class MetricsCalculator:
         self.gross_profit = sum(t.p_l for t in self.winning_trades_list)
         self.gross_loss = abs(sum(t.p_l for t in self.losing_trades_list))
 
-    def get_all_metrics(self, pre_calculated_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_all_metrics(self) -> Dict[str, Any]:
         """
         Returns a dictionary containing all calculated performance metrics.
-        Accepts an optional dictionary of pre-calculated stats to avoid redundant calculations.
+        This is the main method called by AnalyticsService.
         """
-        if self.trade_count == 0 and not pre_calculated_stats:
+        if self.trade_count == 0:
             return self._get_default_metrics()
 
-        base_metrics = {}
-        # If pre_calculated_stats are provided, use them. Otherwise, calculate them.
-        if pre_calculated_stats:
-            base_metrics = pre_calculated_stats
-            net_pnl = Decimal(str(base_metrics.get("net_pnl", 0.0)))
-            gross_profit = Decimal(str(base_metrics.get("gross_profit", 0.0)))
-            gross_loss = Decimal(str(base_metrics.get("gross_loss", 0.0)))
-            winning_trades_count = base_metrics.get("winning_trades", 0)
-            losing_trades_count = base_metrics.get("losing_trades", 0)
-            trade_count = base_metrics.get("trade_count", 0)
-            avg_win = Decimal(str(base_metrics.get("avg_win", 0.0)))
-            avg_loss = Decimal(str(base_metrics.get("avg_loss", 0.0)))
-        else:
-            # Fallback to in-memory calculation if no pre-calculated stats are provided
-            net_pnl = self.net_pnl
-            gross_profit = self.gross_profit
-            gross_loss = self.gross_loss
-            winning_trades_count = self.winning_trades_count
-            losing_trades_count = self.losing_trades_count
-            trade_count = self.trade_count
-            avg_win = gross_profit / winning_trades_count if winning_trades_count > 0 else Decimal('0')
-            avg_loss = gross_loss / losing_trades_count if losing_trades_count > 0 else Decimal('0')
-            base_metrics = {
-                "net_pnl": net_pnl,
-                "gross_profit": gross_profit,
-                "gross_loss": gross_loss,
-                "winning_trades": winning_trades_count,
-                "losing_trades": losing_trades_count,
-                "breakeven_trades": self.breakeven_trades_count,
-                "trade_count": trade_count,
-                "avg_win": avg_win,
-                "avg_loss": avg_loss,
-                "largest_profit": max(self.pnl_series) if any(p > 0 for p in self.pnl_series) else 0,
-                "largest_loss": min(self.pnl_series) if any(p < 0 for p in self.pnl_series) else 0,
-                "avg_realized_rr": self._calculate_avg_realized_rr(),
-            }
+        # Core Metrics
+        equity_curve_data = self.calculate_equity_curve()
+        max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(equity_curve_data['data'])
+        avg_win = self.gross_profit / self.winning_trades_count if self.winning_trades_count > 0 else Decimal('0')
+        avg_loss = self.gross_loss / self.losing_trades_count if self.losing_trades_count > 0 else Decimal('0')
+        win_rate = (self.winning_trades_count / self.trade_count) * 100 if self.trade_count > 0 else 0
+        profit_factor = self.gross_profit / self.gross_loss if self.gross_loss > 0 else None
 
-        win_rate = (winning_trades_count / trade_count) * 100 if trade_count > 0 else 0
-        profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
-
-        # These metrics still require the full trade list for now
-        # NOTA: La logica per max_drawdown è ancora qui, ma la curva stessa viene ora generata nel service.
-        # Questo calcolo è l'ultimo pezzo che richiede la lista completa dei trade.
-        temp_equity_curve = [float(self.initial_balance)] + [float(self.initial_balance) + float(pnl) for pnl in np.cumsum(self.pnl_series)]
-        max_drawdown_abs, max_drawdown_perc = self.calculate_max_drawdown(temp_equity_curve)
+        # Processed Stats
+        processed_stats = self.calculate_processed_stats()
 
         # Consolidate all metrics into a single dictionary
-        complex_metrics = {
-            "roi_percentage": self.calculate_roi(net_pnl),
-            "win_rate": win_rate, # Recalculate for consistency, it's fast
+        metrics = {
+            "net_pnl": self.net_pnl,
+            "roi_percentage": self.calculate_roi(),
+            "gross_profit": self.gross_profit,
+            "gross_loss": self.gross_loss,
+            "win_rate": win_rate,
+            "trade_count": self.trade_count,
+            "winning_trades": self.winning_trades_count,
+            "losing_trades": self.losing_trades_count,
+            "breakeven_trades": self.breakeven_trades_count,
             "profit_factor": profit_factor,
             "profit_factor_label": f"{profit_factor:.2f}" if profit_factor is not None else "∞",
-            "expectancy": self._calculate_expectancy(win_rate, avg_win, avg_loss),
-            "average_trade_pnl": net_pnl / trade_count if trade_count > 0 else 0,
-            "max_drawdown_abs": max_drawdown_abs,
-            "max_drawdown_percentage": max_drawdown_perc,
-            "sharpe_ratio": self._calculate_sharpe_ratio(),
-            # These still require iterating the list
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "largest_profit": max(self.pnl_series) if any(p > 0 for p in self.pnl_series) else 0,
+            "largest_loss": min(self.pnl_series) if any(p < 0 for p in self.pnl_series) else 0,
             "max_consecutive_wins": self._calculate_max_consecutive_wins_losses()[0],
             "max_consecutive_losses": self._calculate_max_consecutive_wins_losses()[1],
             "average_hold_time": self._calculate_average_hold_time(),
+            "expectancy": self._calculate_expectancy(win_rate, avg_win, avg_loss),
+            "average_trade_pnl": self.net_pnl / self.trade_count if self.trade_count > 0 else 0,
+            "avg_realized_rr": self._calculate_avg_realized_rr(),
+            "max_drawdown_abs": max_drawdown_abs,
+            "max_drawdown_percentage": max_drawdown_perc,
+            "sharpe_ratio": self._calculate_sharpe_ratio(),
+            "equity_curve": equity_curve_data,
+            "calendar_data": self.calculate_calendar_data(),
+            **processed_stats  # Unpack all processed stats into the main dictionary
         }
-        return {**base_metrics, **complex_metrics}
+        return metrics
 
     def get_playbook_summary_metrics(self) -> Dict[str, Any]:
         """
@@ -179,15 +158,38 @@ class MetricsCalculator:
             **default_processed
         }
 
-    def calculate_roi(self, net_pnl: Optional[Decimal] = None) -> float:
+    def calculate_roi(self) -> float:
         """Calculates the Return on Investment (ROI) based on initial balance."""
         if self.initial_balance == 0:
             return 0.0
+        return (self.net_pnl / self.initial_balance) * 100
 
-        # Use provided net_pnl if available, otherwise use the one calculated in the instance
-        pnl_to_use = net_pnl if net_pnl is not None else self.net_pnl
+    def calculate_equity_curve(self) -> Dict[str, List[Any]]:
+        """
+        Calculates the equity curve, starting from the initial balance.
+        A data point is generated for each trade to show intra-day progression.
+        It explicitly converts all Decimal types to floats for JSON serialization.
+        """
+        # Explicitly convert initial_balance to float for the first data point
+        equity_data = [float(self.initial_balance)]
+        current_balance = self.initial_balance
 
-        return (pnl_to_use / self.initial_balance) * 100
+        # The label for the initial data point is the date of the first trade, or today if no trades.
+        start_date = self.trades[0].entry_timestamp.date() if self.trades else date.today()
+        labels = [start_date]
+
+        for trade in self.trades:
+            if trade.p_l is not None:
+                current_balance += trade.p_l
+                # Convert each new data point to float before appending
+                equity_data.append(float(current_balance))
+
+                # Each new data point needs a label
+                trade_date = (trade.exit_timestamp or trade.entry_timestamp).date()
+                labels.append(trade_date)
+
+        return {"labels": labels, "data": equity_data}
+
 
     def calculate_max_drawdown(self, equity_curve: List[float]) -> (float, float):
         """
@@ -261,6 +263,108 @@ class MetricsCalculator:
             return 0.0
         average_trade_pnl = self.net_pnl / self.trade_count
         return (average_trade_pnl / pnl_std_dev) if pnl_std_dev > 0 else 0.0
+
+    def calculate_calendar_data(self) -> List[Dict[str, Any]]:
+        """Aggregates P&L and trade counts by day for the calendar view."""
+        daily_summary = {}
+        for trade in self.trades:
+            if trade.entry_timestamp:
+                trade_date = trade.entry_timestamp.date()
+                if trade_date not in daily_summary:
+                    daily_summary[trade_date] = {"pnl": 0, "trade_count": 0, "winning_trades_count": 0}
+
+                daily_summary[trade_date]["pnl"] += trade.p_l or 0
+                daily_summary[trade_date]["trade_count"] += 1
+                if trade.p_l and trade.p_l > 0:
+                    daily_summary[trade_date]["winning_trades_count"] += 1
+
+        return [
+            {
+                "date": day,
+                "pnl": data["pnl"],
+                "trade_count": data["trade_count"],
+                "winning_trades_count": data["winning_trades_count"]
+            } for day, data in daily_summary.items()
+        ]
+
+    def calculate_processed_stats(self) -> Dict[str, Any]:
+        """Calculates aggregated stats like 'by_strategy', 'by_day_of_week', etc."""
+        if not self.trades:
+            return {
+                "by_strategy": {}, "max_abs_pnl_by_strategy": 0, "by_day_of_week": {},
+                "win_loss_days": {"winningDays": 0, "losingDays": 0, "breakEvenDays": 0},
+                "monthly_totals": {}, "weekly_totals": {}
+            }
+
+        weekly_totals = {}
+        for trade in self.trades:
+            if trade.entry_timestamp:
+                trade_date = trade.entry_timestamp.date()
+                iso_year, iso_week, _ = trade_date.isocalendar()
+                week_key = f"{iso_year}-W{iso_week:02d}"
+                if week_key not in weekly_totals:
+                    weekly_totals[week_key] = {"total_pnl": Decimal('0.0'), "trading_days": set()}
+                weekly_totals[week_key]["total_pnl"] += trade.p_l or Decimal('0.0')
+                weekly_totals[week_key]["trading_days"].add(trade_date)
+
+        for week_key, data in weekly_totals.items():
+            weekly_totals[week_key]["trading_days"] = len(data["trading_days"])
+
+        by_strategy: Dict[str, Dict[str, Any]] = {}
+        by_day_of_week: Dict[str, Dict[str, Decimal]] = {
+            day: {"total_pnl": Decimal('0.0'), "trade_count": 0}
+            for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        }
+        daily_pnl: Dict[date, Decimal] = {}
+        monthly_totals: Dict[str, Decimal] = {}
+
+        for trade in self.trades:
+            if not trade.entry_timestamp or trade.p_l is None: continue
+            trade_date = trade.entry_timestamp.date()
+
+            if trade.playbook:
+                playbook = trade.playbook
+                if playbook.title not in by_strategy:
+                    by_strategy[playbook.title] = {"trade_count": 0, "total_pnl": Decimal('0.0'), "winning_trades": 0}
+                by_strategy[playbook.title]["trade_count"] += 1
+                by_strategy[playbook.title]["total_pnl"] += trade.p_l
+                if trade.p_l > 0:
+                    by_strategy[playbook.title]["winning_trades"] += 1
+
+            day_name = trade_date.strftime("%A")
+            by_day_of_week[day_name]["total_pnl"] += trade.p_l
+            by_day_of_week[day_name]["trade_count"] += 1
+
+            if trade_date not in daily_pnl: daily_pnl[trade_date] = Decimal('0.0')
+            daily_pnl[trade_date] += trade.p_l
+
+            month_key = trade_date.strftime("%Y-%m")
+            if month_key not in monthly_totals: monthly_totals[month_key] = Decimal('0.0')
+            monthly_totals[month_key] += trade.p_l
+
+        winning_days = sum(1 for pnl in daily_pnl.values() if pnl > 0)
+        losing_days = sum(1 for pnl in daily_pnl.values() if pnl < 0)
+        breakeven_days = sum(1 for pnl in daily_pnl.values() if pnl == 0)
+        win_loss_days = {"winningDays": winning_days, "losingDays": losing_days, "breakEvenDays": breakeven_days}
+
+        processed_by_strategy = {
+            name: {
+                "trade_count": data["trade_count"],
+                "total_pnl": data["total_pnl"],
+                "win_rate": (data["winning_trades"] / data["trade_count"]) * 100 if data["trade_count"] > 0 else 0
+            } for name, data in by_strategy.items()
+        }
+
+        max_abs_pnl_by_strategy = max((abs(s['total_pnl']) for s in processed_by_strategy.values()), default=0)
+
+        return {
+            "by_strategy": processed_by_strategy,
+            "max_abs_pnl_by_strategy": max_abs_pnl_by_strategy,
+            "by_day_of_week": by_day_of_week,
+            "win_loss_days": win_loss_days,
+            "monthly_totals": monthly_totals,
+            "weekly_totals": weekly_totals
+        }
 
     @staticmethod
     def calculate_for_rule(rule: RulePlaybook, total_playbook_trades: int) -> Dict[str, Any]:

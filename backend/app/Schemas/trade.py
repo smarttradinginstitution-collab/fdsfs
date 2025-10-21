@@ -117,3 +117,10 @@ class TradeFilters(BaseModel):
     max_size: Optional[float] = None
     tag_ids: Optional[List[UUID]] = None
     mistake_ids: Optional[List[UUID]] = None
+
+
+class PaginatedTradesResponse(BaseModel):
+    total: int
+    trades: List[TradeRead]
+    limit: int
+    offset: int
