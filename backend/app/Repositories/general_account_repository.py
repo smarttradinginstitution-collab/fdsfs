@@ -23,10 +23,6 @@ class GeneralAccountRepository:
         """Recupera un GeneralAccount tramite user_id, con eager loading dell'utente."""
         stmt = (
             select(GeneralAccount)
-            .options(
-                selectinload(GeneralAccount.user),
-                selectinload(GeneralAccount.images)
-            )
             .where(GeneralAccount.user_id == user_id)
         )
         result = await self.db.execute(stmt)
