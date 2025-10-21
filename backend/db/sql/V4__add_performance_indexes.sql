@@ -55,3 +55,6 @@ CREATE INDEX IF NOT EXISTS idx_trades_import_run_id ON public.trades (import_run
 CREATE INDEX IF NOT EXISTS idx_trades_status ON public.trades (status);
 CREATE INDEX IF NOT EXISTS idx_notes_folder_id ON public.notes (folder_id);
 CREATE INDEX IF NOT EXISTS idx_notes_trade_id ON public.notes (trade_id);
+
+-- Indice su user_id in user_dashboard_layouts per accelerare il recupero del layout (disallineato tra modello e DB)
+CREATE INDEX IF NOT EXISTS idx_user_dashboard_layouts_user_id ON public.user_dashboard_layouts (user_id);
