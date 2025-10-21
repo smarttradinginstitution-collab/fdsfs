@@ -10,7 +10,13 @@ from app.Router.routes import router
 from app.config import settings
 from app.Middleware.security_headers import SecurityHeadersMiddleware
 
-limiter = Limiter(key_func=get_remote_address)
+# Custom key function to exclude OPTIONS requests from rate limiting
+def key_func_excluding_options(request: Request) -> str:
+    if request.method == "OPTIONS":
+        return None
+    return get_remote_address(request)
+
+limiter = Limiter(key_func=key_func_excluding_options)
 app = FastAPI(title=settings.APP_NAME)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
