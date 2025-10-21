@@ -78,31 +78,16 @@ class PlaybookAnalyticsService:
         )
 
     def _calculate_equity_curve(self, calculator: MetricsCalculator) -> EquityCurveData:
-        """Calculates and assembles the equity curve part of the response."""
-        # The equity curve from the calculator starts with the initial balance,
-        # which is 0 for playbooks. We want to show the cumulative P&L, so we can use it directly.
-        # However, the first value is the initial balance (0), and we want to start from the first trade.
-        # Also, the labels are dates, which is correct.
+        """
+        Calculates and assembles the equity curve part of the response
+        by calling the dedicated method in MetricsCalculator.
+        """
+        equity_curve_result = calculator.get_equity_curve()
 
-        equity_curve_result = calculator.calculate_equity_curve()
-
-        # The calculator's equity curve includes the initial balance as the first point.
-        # For our chart, we want to see the progression starting from the first trade's P&L.
-        # We also need to format the dates correctly.
-
-        if not calculator.trades:
-            return EquityCurveData(labels=[], data=[])
-
-        cumulative_pnl = 0
-        data_points = []
-        labels = []
-
-        for trade in calculator.trades:
-            if trade.p_l is not None:
-                cumulative_pnl += trade.p_l
-                data_points.append(cumulative_pnl)
-                # Use exit timestamp for the label, fallback to entry.
-                trade_date = (trade.exit_timestamp or trade.entry_timestamp).strftime('%Y-%m-%d')
-                labels.append(trade_date)
-
-        return EquityCurveData(labels=labels, data=data_points)
+        # The result from get_equity_curve is already in the correct format.
+        # The first data point is the initial balance (0), and subsequent points
+        # are the cumulative P/L. The labels are also correctly formatted.
+        return EquityCurveData(
+            labels=equity_curve_result.get("labels", []),
+            data=equity_curve_result.get("data", [])
+        )

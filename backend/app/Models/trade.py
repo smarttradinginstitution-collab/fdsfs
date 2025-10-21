@@ -68,7 +68,8 @@ class Trade(Base):
     playbook_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.playbooks.id"),
-        nullable=True
+        nullable=True,
+        index=True
     )
 
 # Core trade data

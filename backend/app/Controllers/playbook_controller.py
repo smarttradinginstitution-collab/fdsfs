@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
+from app.Repositories.rule_playbook_repository import RulePlaybookRepository
 from app.Repositories.trade_repository import TradeRepository
 from app.Schemas.playbook import (
     PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
@@ -52,28 +53,67 @@ class PlaybookController:
         db: AsyncSession = Depends(get_db),
     ) -> List[PlaybookRead]:
         """
-        Lista tutti i playbook dell'utente autenticato, arricchiti con le statistiche.
+        Lista tutti i playbook dell'utente autenticato, arricchiti con le statistiche
+        sia per il playbook che per ogni regola, calcolate in modo efficiente.
         """
-        repo = PlaybookRepository(db)
-        playbooks = await repo.list_by_general_account_id_with_trades(general_account_id)
+        playbook_repo = PlaybookRepository(db)
+        playbooks_data = await playbook_repo.list_playbooks_with_stats(general_account_id)
+
+        if not playbooks_data:
+            return []
+
+        # Estrai gli ID dei playbook per la query successiva
+        playbook_ids = [item["playbook"].id for item in playbooks_data]
+
+        # Recupera le statistiche per tutte le regole di tutti i playbook in una sola query
+        rule_repo = RulePlaybookRepository(db)
+        rule_stats_map = await rule_repo.get_stats_for_rules_in_playbooks(playbook_ids)
 
         response_playbooks = []
-        for playbook in playbooks:
-            total_playbook_trades = len(playbook.trades)
-            calculator = MetricsCalculator(trades=playbook.trades, initial_balance=0.0)
-            stats_data = calculator.get_playbook_summary_metrics()
+        for item in playbooks_data:
+            playbook_orm = item["playbook"]
+            stats_data = item["stats"]
 
-            playbook_read = PlaybookRead.model_validate(playbook)
-            playbook_read.stats = PlaybookStats(**stats_data)
+            # 1. Convalida e arricchisci le statistiche del playbook
+            playbook_read = PlaybookRead.model_validate(playbook_orm)
+            # Estrai i dati grezzi per i calcoli
+            winning_trades = stats_data.get("winning_trades", 0)
+            losing_trades = stats_data.get("losing_trades", 0)
+            total_trades = stats_data.get("total_trades", 0)
+            gross_profit = stats_data.get("gross_profit", 0.0)
+            gross_loss = stats_data.get("gross_loss", 0.0)
 
-            # Calcola le metriche per ogni regola
+            # Calcola le metriche derivate
+            win_rate = (winning_trades / total_trades) * 100 if total_trades > 0 else 0
+            loss_rate = (losing_trades / total_trades) * 100 if total_trades > 0 else 0
+            profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
+            avg_winner = gross_profit / winning_trades if winning_trades > 0 else 0
+            avg_loser = gross_loss / losing_trades if losing_trades > 0 else 0
+
+            expectancy = ((win_rate / 100) * avg_winner) - ((loss_rate / 100) * avg_loser)
+
+            # Arricchisci lo schema con tutte le statistiche calcolate
+            playbook_read.stats = PlaybookStats(
+                total_trades=total_trades,
+                net_pnl=stats_data.get("total_p_l", 0.0),
+                win_rate=win_rate,
+                profit_factor=profit_factor,
+                avg_pnl=stats_data.get("avg_p_l", 0.0),
+                avg_r_multiple=stats_data.get("avg_r_multiple", 0.0),
+                avg_winner=avg_winner,
+                avg_loser=avg_loser,
+                expectancy=expectancy
+            )
+
+            # 2. Assegna le statistiche a ogni regola
             for group in playbook_read.rules_groups:
                 for rule in group.rules:
-                    # Cerca la regola corrispondente nel modello ORM per accedere ai trade associati
-                    orm_rule = next((r for g in playbook.rules_groups for r in g.rules if r.id == rule.id), None)
-                    if orm_rule:
-                        rule_metrics_data = MetricsCalculator.calculate_for_rule(orm_rule, total_playbook_trades)
-                        rule.metrics = RuleMetrics(**rule_metrics_data)
+                    rule_stats = rule_stats_map.get(rule.id)
+                    if rule_stats:
+                        rule.metrics = RuleMetrics(**rule_stats)
+                    else:
+                        # Assicura che ci sia un valore di default se la regola non ha statistiche
+                        rule.metrics = RuleMetrics(follow_rate=0, net_pnl=0, win_rate=0, profit_factor=None)
 
             response_playbooks.append(playbook_read)
 
