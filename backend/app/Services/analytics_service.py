@@ -260,9 +260,8 @@ class AnalyticsService:
         all_metrics = calculator.get_all_metrics()
         stats = PerformanceStats(**all_metrics)
 
-        # Get the equity curve for the day
-        equity_curve_data = calculator.calculate_equity_curve()
-        equity_curve = EquityCurveData(**equity_curve_data)
+        # Get the equity curve for the day by reusing the existing service method
+        equity_curve = await self.get_equity_curve(trading_account_id, day, day)
 
         # Get the list of trades for the day
         trades_for_day = [TradeRead.model_validate(trade) for trade in calculator.trades]
