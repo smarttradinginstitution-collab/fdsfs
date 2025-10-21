@@ -74,33 +74,89 @@ class AnalyticsService:
         self, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str
     ) -> List[CalendarDayData]:
         """
-        Returns data aggregated by day for the calendar view.
+        Returns data aggregated by day for the calendar view, calculated efficiently in the database.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
-        calendar_data = calculator.calculate_calendar_data()
+        # La logica è stata spostata nel repository per efficienza.
+        # Il parametro user_timezone non è più necessario qui, ma lo manteniamo per compatibilità con l'API.
+        aggregated_data = await self.trade_repo.get_calendar_data_aggregated(
+            trading_account_id, start_date, end_date
+        )
 
-        return [CalendarDayData(**item) for item in calendar_data]
+        return [CalendarDayData(**item) for item in aggregated_data]
 
     async def get_processed_stats(
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> ProcessedStats:
         """
-        Returns aggregated stats like 'by_strategy', 'by_day_of_week', etc.
+        Returns aggregated stats, calculated efficiently in the database.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
-        processed_data = calculator.calculate_processed_stats()
+        # Le chiamate vengono eseguite in sequenza per evitare deadlock nei test con sessioni mockate.
+        # L'impatto sulle performance in produzione è minimo poiché le query sono già veloci.
+        from decimal import Decimal
 
-        # Map the nested dictionary to the required Pydantic models
+        raw_by_strategy = await self.trade_repo.get_stats_by_strategy(trading_account_id, start_date, end_date)
+        raw_by_day_of_week = await self.trade_repo.get_stats_by_day_of_week(trading_account_id, start_date, end_date)
+        raw_daily_pnl = await self.trade_repo.get_daily_pnl_stats(trading_account_id, start_date, end_date)
+
+        # 1. Process stats by strategy
+        by_strategy = {
+            item['strategy_name']: StrategyPerformance(
+                trade_count=item['trade_count'],
+                total_pnl=item['total_pnl'],
+                win_rate=(item['winning_trades'] / item['trade_count'] * 100) if item['trade_count'] > 0 else 0,
+            )
+            for item in raw_by_strategy
+        }
+        max_abs_pnl = max((abs(s.total_pnl) for s in by_strategy.values()), default=Decimal('0.0'))
+
+        # 2. Process stats by day of the week
+        day_map = {1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday", 7: "Sunday"}
+        by_day_of_week = {day: {"total_pnl": Decimal('0.0'), "trade_count": 0} for day in day_map.values()}
+        for item in raw_by_day_of_week:
+            day_name = day_map.get(item['day_of_week'])
+            if day_name:
+                by_day_of_week[day_name] = {
+                    "total_pnl": item['total_pnl'],
+                    "trade_count": item['trade_count'],
+                }
+
+        # 3. Process daily PnL to get win/loss days and monthly/weekly totals
+        winning_days = 0
+        losing_days = 0
+        breakeven_days = 0
+        monthly_totals = {}
+        weekly_totals = {}
+
+        for item in raw_daily_pnl:
+            pnl = item['daily_pnl']
+            #  SQLite returns dates as strings, so we need to parse them back to date objects
+            trade_date = date.fromisoformat(item['trade_date']) if isinstance(item['trade_date'], str) else item['trade_date']
+
+            if pnl > 0: winning_days += 1
+            elif pnl < 0: losing_days += 1
+            else: breakeven_days += 1
+
+            month_key = trade_date.strftime("%Y-%m")
+            monthly_totals[month_key] = monthly_totals.get(month_key, Decimal('0.0')) + pnl
+
+            iso_year, iso_week, _ = trade_date.isocalendar()
+            week_key = f"{iso_year}-W{iso_week:02d}"
+            if week_key not in weekly_totals:
+                weekly_totals[week_key] = {"total_pnl": Decimal('0.0'), "trading_days": set()}
+            weekly_totals[week_key]["total_pnl"] += pnl
+            weekly_totals[week_key]["trading_days"].add(trade_date)
+
+        # Finalize weekly totals by counting unique days
+        for week_key in weekly_totals:
+            weekly_totals[week_key]["trading_days"] = len(weekly_totals[week_key]["trading_days"])
+
         return ProcessedStats(
-            by_strategy={
-                name: StrategyPerformance(**data)
-                for name, data in processed_data["by_strategy"].items()
-            },
-            max_abs_pnl_by_strategy=processed_data["max_abs_pnl_by_strategy"],
-            by_day_of_week=processed_data["by_day_of_week"],
-            win_loss_days=WinLossDays(**processed_data["win_loss_days"]),
-            monthly_totals=processed_data["monthly_totals"],
-            weekly_totals=processed_data["weekly_totals"]
+            by_strategy=by_strategy,
+            max_abs_pnl_by_strategy=max_abs_pnl,
+            by_day_of_week=by_day_of_week,
+            win_loss_days=WinLossDays(winningDays=winning_days, losingDays=losing_days, breakEvenDays=breakeven_days),
+            monthly_totals=monthly_totals,
+            weekly_totals=weekly_totals
         )
 
     async def get_vantage_score(
