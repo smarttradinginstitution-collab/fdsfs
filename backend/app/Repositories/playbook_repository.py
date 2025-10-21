@@ -185,6 +185,60 @@ class PlaybookRepository:
         await self.db.delete(db_obj)
         await self.db.commit()
 
+    async def get_analytics_by_playbook_id(self, playbook_id: UUID) -> Optional[Dict[str, Any]]:
+        """
+        Calcola le metriche analitiche e la curva di equità per un singolo playbook
+        utilizzando una query SQL aggregata e funzioni finestra.
+        """
+        # CTE per ottenere i trade ordinati per un playbook specifico
+        trades_cte = (
+            select(
+                Trade.p_l,
+                Trade.r_multiple,
+                Trade.exit_timestamp,
+                Trade.entry_timestamp,
+                # Calcola il P&L cumulativo usando una funzione finestra
+                func.sum(Trade.p_l).over(
+                    order_by=(func.coalesce(Trade.exit_timestamp, Trade.entry_timestamp))
+                ).label("cumulative_pnl")
+            )
+            .where(Trade.playbook_id == playbook_id, Trade.p_l.isnot(None))
+            .cte("trades_data")
+        )
+
+        # Query principale per aggregare le metriche e raccogliere i dati della curva di equità
+        stmt = (
+            select(
+                # Metriche aggregate
+                func.sum(trades_cte.c.p_l).label("net_pnl"),
+                func.count(trades_cte.c.p_l).label("trades_count"),
+                func.sum(case((trades_cte.c.p_l > 0, 1)), else_=0).label("winning_trades"),
+                func.sum(case((trades_cte.c.p_l < 0, 1)), else_=0).label("losing_trades"),
+                func.sum(case((trades_cte.c.p_l > 0, trades_cte.c.p_l)), else_=0).label("gross_profit"),
+                func.sum(case((trades_cte.c.p_l < 0, trades_cte.c.p_l)), else_=0).label("gross_loss"),
+                func.max(trades_cte.c.p_l).label("largest_profit"),
+                func.min(trades_cte.c.p_l).label("largest_loss"),
+                func.sum(trades_cte.c.r_multiple).label("total_r_multiple"),
+
+                # Dati per la curva di equità (aggregati come array)
+                func.json_agg(
+                    func.json_build_object(
+                        'date', func.coalesce(trades_cte.c.exit_timestamp, trades_cte.c.entry_timestamp),
+                        'cumulative_pnl', trades_cte.c.cumulative_pnl
+                    )
+                ).label("equity_curve_data")
+            )
+            .select_from(trades_cte)
+        )
+
+        result = await self.db.execute(stmt)
+        stats = result.first()
+
+        if not stats or stats.trades_count == 0:
+            return None
+
+        return dict(stats._asdict())
+
     async def upsert_by_title(self, general_account_id: UUID, title: str) -> Playbook:
         stmt = select(Playbook).where(Playbook.general_account_id == general_account_id, Playbook.title == title).limit(1)
         res = await self.db.execute(stmt)

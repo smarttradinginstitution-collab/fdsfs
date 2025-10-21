@@ -43,42 +43,19 @@ class RulesGroupPlaybookController:
         db: AsyncSession = Depends(get_db),
     ) -> List[RulesGroupRead]:
         """
-        Lists all rule groups for a playbook, verifying ownership and enriching
-        each rule with its performance metrics.
+        Lists all rule groups for a playbook, verifying ownership and efficiently
+        enriching each rule with its performance metrics.
         """
-        # Fetch the playbook with its trades to get total trade count and verify ownership
-        playbook_repo = PlaybookRepository(db)
-        playbook = await playbook_repo.get_by_id_with_trades(playbook_id)
-        if not playbook:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found.")
-        if not current_user.is_admin and playbook.general_account_id != general_account_id:
-            raise HTTPException(status_code=status.HTTP_43_FORBIDDEN, detail="Unauthorized access to playbook.")
+        # Step 1: Verify ownership of the playbook
+        await self._get_playbook_and_verify_ownership(playbook_id, current_user, general_account_id, db)
 
-        total_playbook_trades = len(playbook.trades)
-
-        # Fetch groups with rules and their associated trades (eagerly loaded)
+        # Step 2: Fetch groups with pre-calculated rule stats using the optimized repository method
         group_repo = RulesGroupPlaybookRepository(db)
-        groups = await group_repo.list_by_playbook_id(playbook_id)
+        groups_with_stats = await group_repo.list_groups_with_rule_stats_by_playbook_id(playbook_id)
 
-        # Build the response with calculated metrics
-        response_groups = []
-        for group in groups:
-            group_read = RulesGroupRead.model_validate(group)
-
-            # Sort rules within the group based on the 'order' attribute
-            sorted_rules = sorted(group.rules, key=lambda r: (r.order is None, r.order, r.created_at))
-
-            enriched_rules = []
-            for rule in sorted_rules:
-                metrics = MetricsCalculator.calculate_for_rule(rule, total_playbook_trades)
-
-                # Create a RuleRead schema object and attach the metrics
-                rule_read = RuleReadSchema.model_validate(rule)
-                rule_read.metrics = metrics
-                enriched_rules.append(rule_read)
-
-            group_read.rules = enriched_rules
-            response_groups.append(group_read)
+        # Step 3: Validate the data with Pydantic schemas for the response
+        # The repository method has already attached the metrics, so we just need to validate.
+        response_groups = [RulesGroupRead.model_validate(group) for group in groups_with_stats]
 
         return response_groups
 

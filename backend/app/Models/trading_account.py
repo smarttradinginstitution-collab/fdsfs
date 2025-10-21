@@ -27,6 +27,7 @@ class TradingAccount(Base):
         UUID(as_uuid=True),
         ForeignKey("public.general_accounts.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     broker_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
