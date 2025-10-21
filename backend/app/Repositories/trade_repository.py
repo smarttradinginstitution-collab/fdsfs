@@ -475,7 +475,7 @@ class TradeRepository:
                     LEFT JOIN playbooks p ON t.playbook_id = p.id
                     WHERE t.trading_account_id = :trading_account_id
                       AND t.entry_timestamp >= :start_date
-                  AND t.entry_timestamp < :end_date + INTERVAL '1 day'
+                  AND t.entry_timestamp < (:end_date::timestamp + INTERVAL '1 day')
                       AND t.p_l IS NOT NULL
                 ),
                 strategy_stats AS (
