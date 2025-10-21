@@ -88,15 +88,18 @@ class AnalyticsService:
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> ProcessedStats:
         """
-        Returns aggregated stats, calculated efficiently in the database.
+        Returns aggregated stats, calculated efficiently in the database using a single optimized query.
         """
-        # Le chiamate vengono eseguite in sequenza per evitare deadlock nei test con sessioni mockate.
-        # L'impatto sulle performance in produzione è minimo poiché le query sono già veloci.
         from decimal import Decimal
 
-        raw_by_strategy = await self.trade_repo.get_stats_by_strategy(trading_account_id, start_date, end_date)
-        raw_by_day_of_week = await self.trade_repo.get_stats_by_day_of_week(trading_account_id, start_date, end_date)
-        raw_daily_pnl = await self.trade_repo.get_daily_pnl_stats(trading_account_id, start_date, end_date)
+        # Unica chiamata al repository per ottenere tutti i dati pre-aggregati
+        aggregated_data = await self.trade_repo.get_processed_stats_aggregated(
+            trading_account_id, start_date, end_date
+        )
+
+        raw_by_strategy = aggregated_data["by_strategy"]
+        raw_by_day_of_week = aggregated_data["by_day_of_week"]
+        raw_daily_pnl = aggregated_data["daily_pnl"]
 
         # 1. Process stats by strategy
         by_strategy = {
@@ -129,8 +132,7 @@ class AnalyticsService:
 
         for item in raw_daily_pnl:
             pnl = item['daily_pnl']
-            #  SQLite returns dates as strings, so we need to parse them back to date objects
-            trade_date = date.fromisoformat(item['trade_date']) if isinstance(item['trade_date'], str) else item['trade_date']
+            trade_date = item['trade_date']
 
             if pnl > 0: winning_days += 1
             elif pnl < 0: losing_days += 1

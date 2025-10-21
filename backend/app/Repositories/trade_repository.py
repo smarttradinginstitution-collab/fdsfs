@@ -4,6 +4,9 @@ from __future__ import annotations
 from uuid import UUID
 from typing import List, Optional, Any
 from datetime import date
+from collections import defaultdict
+from decimal import Decimal
+import datetime
 
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import select, func, case, Float
@@ -15,6 +18,7 @@ from app.Models.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
 from app.Models.rule_playbook import RulePlaybook
+from app.Models.playbook import Playbook
 
 
 class TradeRepository:
@@ -349,42 +353,6 @@ class TradeRepository:
         # Restituisce una lista di dizionari, facile da mappare in Pydantic
         return result.mappings().all()
 
-    async def get_stats_by_strategy(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola le statistiche aggregate raggruppate per playbook (strategia).
-        """
-        from datetime import datetime, time
-        from app.Models.playbook import Playbook
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        stmt = (
-            select(
-                Playbook.title.label("strategy_name"),
-                func.count(Trade.id).label("trade_count"),
-                func.sum(Trade.p_l).label("total_pnl"),
-                func.count(case((Trade.p_l > 0, 1))).label("winning_trades"),
-            )
-            .join(Playbook, Trade.playbook_id == Playbook.id)
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-                Trade.playbook_id.isnot(None),
-            )
-            .group_by(Playbook.title)
-        )
-
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
-
     async def get_equity_curve_aggregated(
         self,
         trading_account_id: UUID,
@@ -422,93 +390,6 @@ class TradeRepository:
             subquery.c.cumulative_pnl.label("value")
         ).order_by(subquery.c.timestamp)
 
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
-
-    async def get_daily_pnl_stats(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola il P&L totale per ogni giorno in un dato intervallo di date.
-        Questo è un mattoncino fondamentale per calcolare i totali mensili,
-        settimanali e i giorni vincenti/perdenti.
-        """
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        trade_date_col = func.date(Trade.entry_timestamp).label("trade_date")
-
-        stmt = (
-            select(
-                trade_date_col,
-                func.sum(Trade.p_l).label("daily_pnl")
-            )
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-            )
-            .group_by(trade_date_col)
-        )
-
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
-
-    async def get_stats_by_day_of_week(
-        self,
-        trading_account_id: UUID,
-        start_date: date,
-        end_date: date,
-    ) -> list[dict[str, Any]]:
-        """
-        Calcola le statistiche aggregate raggruppate per giorno della settimana.
-        'isodow' in PostgreSQL: Lunedì (1) a Domenica (7)
-        """
-        from datetime import datetime, time
-
-        start_datetime = datetime.combine(start_date, time.min)
-        end_datetime = datetime.combine(end_date, time.max)
-
-        from sqlalchemy.ext.compiler import compiles
-        from sqlalchemy.sql.expression import FunctionElement
-
-        class dow_isodow(FunctionElement):
-            name = 'isodow'
-            inherit_cache = True
-
-        @compiles(dow_isodow, 'postgresql')
-        def pg_isodow(element, compiler, **kw):
-            return "EXTRACT(isodow FROM %s)" % compiler.process(element.clauses)
-
-        @compiles(dow_isodow, 'sqlite')
-        def sqlite_isodow(element, compiler, **kw):
-            # In SQLite, %w is 0 for Sunday. ISO week day is 7 for Sunday.
-            return "CASE CAST(strftime('%%w', %s) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%%w', %s) AS INTEGER) END" % (
-                compiler.process(element.clauses), compiler.process(element.clauses)
-            )
-
-        day_of_week = dow_isodow(Trade.entry_timestamp).label("day_of_week")
-
-        stmt = (
-            select(
-                day_of_week,
-                func.sum(Trade.p_l).label("total_pnl"),
-                func.count(Trade.id).label("trade_count"),
-            )
-            .where(
-                Trade.trading_account_id == trading_account_id,
-                Trade.entry_timestamp >= start_datetime,
-                Trade.entry_timestamp <= end_datetime,
-                Trade.p_l.isnot(None),
-            )
-            .group_by(day_of_week)
-        )
         result = await self.db.execute(stmt)
         return result.mappings().all()
 
@@ -564,6 +445,100 @@ class TradeRepository:
 
         result = await self.db.execute(stmt)
         return result.all()
+
+    async def get_processed_stats_aggregated(
+        self,
+        trading_account_id: UUID,
+        start_date: date,
+        end_date: date,
+    ) -> dict[str, Any]:
+        """
+        Calcola tutte le statistiche aggregate per l'endpoint processed-stats in un'unica query
+        per la massima efficienza, recuperando i dati grezzi e aggregandoli in Python.
+        """
+
+        start_datetime = datetime.datetime.combine(start_date, datetime.time.min)
+        end_datetime = datetime.datetime.combine(end_date, datetime.time.max)
+
+        # Query base per recuperare tutti i dati necessari in un colpo solo
+        base_query = (
+            select(
+                Trade.p_l,
+                Trade.entry_timestamp,
+                Playbook.title.label("strategy_name")
+            )
+            .outerjoin(Playbook, Trade.playbook_id == Playbook.id)
+            .where(
+                Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+                Trade.p_l.isnot(None)
+            )
+        )
+
+        trades = (await self.db.execute(base_query)).mappings().all()
+
+        # Se non ci sono trade, restituisce una struttura dati vuota/default
+        if not trades:
+            return {
+                "by_strategy": [],
+                "by_day_of_week": [],
+                "daily_pnl": []
+            }
+
+        # Elaborazione in Python
+        by_strategy = defaultdict(lambda: {"trade_count": 0, "total_pnl": Decimal("0.0"), "winning_trades": 0})
+        by_day_of_week = defaultdict(lambda: {"trade_count": 0, "total_pnl": Decimal("0.0")})
+        daily_pnl_agg = defaultdict(lambda: Decimal("0.0"))
+
+        for trade in trades:
+            pnl = trade.p_l
+            dt = trade.entry_timestamp
+            strategy = trade.strategy_name
+
+            # 1. Aggregazione per strategia
+            if strategy:
+                by_strategy[strategy]["trade_count"] += 1
+                by_strategy[strategy]["total_pnl"] += pnl
+                if pnl > 0:
+                    by_strategy[strategy]["winning_trades"] += 1
+
+            # 2. Aggregazione per giorno della settimana (usando isoweekday: 1=Lunedì, 7=Domenica)
+            # Corrisponde a isodow di PostgreSQL
+            day_index = dt.isoweekday()
+            by_day_of_week[day_index]["trade_count"] += 1
+            by_day_of_week[day_index]["total_pnl"] += pnl
+
+            # 3. Aggregazione per P&L giornaliero
+            daily_pnl_agg[dt.date()] += pnl
+
+        # Formattazione finale dei risultati in un formato simile a quello delle vecchie query
+        final_by_strategy = [
+            {
+                "strategy_name": name,
+                "trade_count": data["trade_count"],
+                "total_pnl": data["total_pnl"],
+                "winning_trades": data["winning_trades"],
+            }
+            for name, data in by_strategy.items()
+        ]
+
+        final_by_day_of_week = [
+            {
+                "day_of_week": day_index,
+                "trade_count": data["trade_count"],
+                "total_pnl": data["total_pnl"],
+            }
+            for day_index, data in by_day_of_week.items()
+        ]
+
+        final_daily_pnl = [{"trade_date": d, "daily_pnl": p} for d, p in daily_pnl_agg.items()]
+
+        return {
+            "by_strategy": final_by_strategy,
+            "by_day_of_week": final_by_day_of_week,
+            "daily_pnl": final_daily_pnl,
+        }
 
     async def get_account_balance(self, trading_account_id: UUID) -> float:
         """
