@@ -10,6 +10,8 @@ from sqlalchemy.orm import selectinload
 from app.Models.rule_playbook import RulePlaybook
 from app.Models.rules_group_playbook import RulesGroupPlaybook
 from app.Schemas.rules_group_playbook import RulesGroupCreate, RulesGroupUpdate
+from app.Repositories.rule_playbook_repository import RulePlaybookRepository
+from app.Schemas.rule_playbook import RuleMetrics
 
 
 class RulesGroupPlaybookRepository:
@@ -27,7 +29,8 @@ class RulesGroupPlaybookRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
-    async def list_by_playbook_id(self, playbook_id: UUID) -> Sequence[RulesGroupPlaybook]:
+    async def list_by_playbook_id_inefficient(self, playbook_id: UUID) -> Sequence[RulesGroupPlaybook]:
+        """ DEPRECATED: This method is inefficient as it loads all trades for all rules. """
         stmt = (
             select(RulesGroupPlaybook)
             .where(RulesGroupPlaybook.playbook_id == playbook_id)
@@ -39,6 +42,39 @@ class RulesGroupPlaybookRepository:
         )
         res = await self.db.execute(stmt)
         return res.scalars().unique().all()
+
+    async def list_groups_with_rule_stats_by_playbook_id(self, playbook_id: UUID) -> Sequence[RulesGroupPlaybook]:
+        """
+        Efficiently lists rule groups for a playbook and attaches aggregated
+        statistics to each rule without loading all trades into memory.
+        """
+        # Step 1: Fetch groups and their rules (without trades)
+        stmt = (
+            select(RulesGroupPlaybook)
+            .where(RulesGroupPlaybook.playbook_id == playbook_id)
+            .options(selectinload(RulesGroupPlaybook.rules))
+            .order_by(RulesGroupPlaybook.order.asc(), RulesGroupPlaybook.created_at.asc())
+        )
+        res = await self.db.execute(stmt)
+        groups = res.scalars().unique().all()
+
+        if not groups:
+            return []
+
+        # Step 2: Get stats for all rules in the playbook in a single query
+        rule_repo = RulePlaybookRepository(self.db)
+        rule_stats_map = await rule_repo.get_stats_for_rules_in_playbooks([playbook_id])
+
+        # Step 3: Attach stats to the rules in the fetched groups
+        for group in groups:
+            for rule in group.rules:
+                stats = rule_stats_map.get(rule.id)
+                if stats:
+                    rule.metrics = RuleMetrics(**stats)
+                else:
+                    rule.metrics = RuleMetrics(follow_rate=0, net_pnl=0, win_rate=0, profit_factor=None)
+
+        return groups
 
     async def bulk_update_order(self, group_ids: List[UUID]) -> None:
         """
