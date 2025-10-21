@@ -4,12 +4,11 @@
       <template #header>
         <span>Trade Note</span>
       </template>
-      <div v-if="isLoading" class="loading-state">
-        <p>Loading Note...</p>
-      </div>
-      <div v-else-if="store.selectedNote && store.selectedNote.trade_id === tradeId">
+      <!-- The v-if="note" check is now the primary determinant -->
+      <div v-if="note">
         <NoteEditor
-          :key="store.selectedNote.id"
+          :key="note.id"
+          :initial-note="note"
           :show-financial-data="false"
           :show-trade-details-link="false"
         />
@@ -25,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import BaseButton from '../ui/BaseButton.vue';
@@ -39,38 +38,18 @@ const props = defineProps({
   tradeDetails: {
     type: Object,
     required: true,
+  },
+  // The note object is now passed as a prop
+  note: {
+    type: Object,
+    default: null,
   }
 });
 
 const store = useNotebookStore();
-const isLoading = ref(true);
 const isCreating = ref(false);
 
-const fetchNote = async () => {
-  if (!props.tradeId) return;
-  isLoading.value = true;
-  try {
-    const fetchedNote = await store.fetchNoteByTradeId(props.tradeId);
-    if (fetchedNote) {
-      store.selectNote(fetchedNote.id);
-    } else {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
-    } else {
-      console.error("Error fetching trade note:", error);
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
-
+// The logic to create a note remains, as it's an action initiated by the user
 const createNoteForTrade = async () => {
   isCreating.value = true;
   try {
@@ -97,6 +76,10 @@ const createNoteForTrade = async () => {
       tradeId: props.tradeId,
     });
 
+    // Note: After creating, the parent view (`ReportView`) will receive the updated
+    // trade object via the store and pass the new note down as a prop,
+    // triggering a re-render automatically.
+
   } catch (error) {
     console.error("Error creating note for trade:", error);
   } finally {
@@ -104,15 +87,21 @@ const createNoteForTrade = async () => {
   }
 };
 
+// When the note prop changes, we need to inform the store so the editor can react
+watch(() => props.note, (newNote) => {
+  if (newNote) {
+    store.selectNote(newNote.id, newNote);
+  } else {
+    // If the note is null (e.g., navigating to a trade with no note), deselect it
+    store.deselectNote();
+  }
+}, { immediate: true }); // `immediate: true` ensures this runs on initial component load
+
+// We still need to ensure folders are available for the "Create Note" functionality
 onMounted(async () => {
   if (store.folders.length === 0) {
     await store.fetchFolders();
   }
-  fetchNote();
-});
-
-watch(() => props.tradeId, () => {
-  fetchNote();
 });
 
 </script>

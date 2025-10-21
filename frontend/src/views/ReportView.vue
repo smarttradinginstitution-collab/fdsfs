@@ -194,7 +194,11 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
-            <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
+            <TradeNoteEditor
+              :trade-id="trade.id"
+              :trade-details="trade"
+              :note="trade.notes && trade.notes.length > 0 ? trade.notes[0] : null"
+            />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
