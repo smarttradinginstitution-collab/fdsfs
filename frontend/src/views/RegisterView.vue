@@ -8,10 +8,12 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useUiStore } from '@/stores/uiStore';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 
 const authStore = useAuthStore();
+const uiStore = useUiStore();
 const router = useRouter();
 
 const name = ref('');
@@ -28,6 +30,7 @@ async function handleRegister() {
     return;
   }
 
+  uiStore.showLoader();
   try {
     await authStore.register(name.value, email.value, password.value, confirmPassword.value);
     // In caso di successo, il redirect con messaggio verrà gestito nello store
@@ -36,6 +39,8 @@ async function handleRegister() {
   } catch (error) {
     errorMessage.value = error.response?.data?.detail || 'Errore durante la registrazione. Riprova.';
     console.error('Registration error:', error);
+  } finally {
+    uiStore.hideLoader();
   }
 }
 </script>
@@ -82,7 +87,7 @@ async function handleRegister() {
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        <BaseButton type="submit" variant="primary" size="medium">
+        <BaseButton type="submit" variant="primary" size="medium" :is-loading="uiStore.isAppLoading">
           Registrati
         </BaseButton>
       </form>

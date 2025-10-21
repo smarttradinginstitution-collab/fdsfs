@@ -18,21 +18,34 @@ const props = defineProps({
     type: String,
     default: 'medium',
     validator: (value) => ['medium', 'small'].includes(value),
-  }
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const buttonClass = computed(() => `button button--${props.variant} button--${props.size}`);
+const buttonClass = computed(() => {
+  let classes = `button button--${props.variant} button--${props.size}`;
+  if (props.isLoading) {
+    classes += ' is-loading';
+  }
+  return classes;
+});
 </script>
 
 <script>
-  export default {
-    inheritAttrs: false
-  }
+export default {
+  inheritAttrs: false,
+};
 </script>
 
 <template>
-  <button :class="buttonClass" v-bind="$attrs">
-    <slot></slot>
+  <button :class="buttonClass" :disabled="isLoading" v-bind="$attrs">
+    <span v-if="isLoading" class="spinner"></span>
+    <span class="content" :class="{ 'is-hidden': isLoading }">
+      <slot></slot>
+    </span>
   </button>
 </template>
 
@@ -95,5 +108,33 @@ const buttonClass = computed(() => `button button--${props.variant} button--${pr
 }
 .button--danger:hover {
   background-color: var(--semantic-color-danger-hover);
+}
+
+/* Stili per lo stato di caricamento */
+.button.is-loading {
+  cursor: wait;
+}
+
+.content.is-hidden {
+  visibility: hidden;
+}
+
+.spinner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
