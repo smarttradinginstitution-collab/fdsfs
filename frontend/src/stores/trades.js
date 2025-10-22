@@ -33,6 +33,7 @@ const mapBackendTradeToFrontend = (trade) => ({
   volume: trade.position_size,
   // Manteniamo anche i campi originali se servono altrove
   ...trade,
+  rules_followed: trade.rules_followed || [], // Assicura che sia sempre un array
 });
 
 export const useTradesStore = defineStore('trades', {
@@ -908,21 +909,30 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
       const uiStore = useUiStore();
       try {
-        await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
+        // L'API restituisce direttamente la lista degli ID delle regole aggiornate.
+        const updatedRuleIds = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
 
-        // Fetch the full trade again to get all updated relations
-        // Make sure fetchTradeById returns the trade
-        await this.fetchTradeById(tradeId);
-        const updatedTrade = this.selectedTrade;
+        // Aggiorna lo stato locale senza bisogno di un fetch completo.
+        // Cerca il playbook corretto nello store dei playbook per ottenere gli oggetti regola completi.
+        const playbookStore = usePlaybookStore();
+        const tradePlaybook = playbookStore.playbooks.find(p => p.id === this.selectedTrade.playbook_id);
+        const updatedRules = tradePlaybook
+          ? tradePlaybook.rules.filter(rule => updatedRuleIds.data.includes(rule.id))
+          : [];
 
-        // Also update the trade in the main list
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.rules_followed = updatedRules;
+        }
+
+        // Aggiorna anche la lista principale dei trade.
         const index = this.trades.findIndex(t => t.id === tradeId);
         if (index !== -1) {
-          this.trades[index] = updatedTrade;
+          this.trades[index].rules_followed = updatedRules;
         }
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
-        return updatedTrade.rules_followed.map(r => r.id);
+        // Restituisce gli ID come faceva prima, per coerenza.
+        return updatedRuleIds.data;
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
