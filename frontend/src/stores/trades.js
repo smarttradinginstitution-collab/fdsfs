@@ -909,30 +909,14 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
       const uiStore = useUiStore();
       try {
-        // L'API restituisce direttamente la lista degli ID delle regole aggiornate.
-        const updatedRuleIds = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
+        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
+        const updatedRuleIds = response.data;
 
-        // Aggiorna lo stato locale senza bisogno di un fetch completo.
-        // Cerca il playbook corretto nello store dei playbook per ottenere gli oggetti regola completi.
-        const playbookStore = usePlaybookStore();
-        const tradePlaybook = playbookStore.playbooks.find(p => p.id === this.selectedTrade.playbook_id);
-        const updatedRules = tradePlaybook
-          ? tradePlaybook.rules.filter(rule => updatedRuleIds.data.includes(rule.id))
-          : [];
-
-        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
-          this.selectedTrade.rules_followed = updatedRules;
-        }
-
-        // Aggiorna anche la lista principale dei trade.
-        const index = this.trades.findIndex(t => t.id === tradeId);
-        if (index !== -1) {
-          this.trades[index].rules_followed = updatedRules;
-        }
+        // Fetch the full trade again to get all updated relations
+        await this.fetchTradeById(tradeId);
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
-        // Restituisce gli ID come faceva prima, per coerenza.
-        return updatedRuleIds.data;
+        return updatedRuleIds;
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
