@@ -22,7 +22,7 @@ const mapBackendTradeToFrontend = (trade) => ({
   type: trade.direction,
   pnl: trade.p_l,
   date: trade.entry_timestamp,
-  strategy: trade.playbook?.title ?? 'N/A',
+  playbook: trade.playbook?.title ?? '-',
   risk: trade.risk, // Assumendo che 'risk' esista o venga calcolato
   instrument: 'Stocks', // Da rendere dinamico se necessario
   commission: trade.commission, // Assumendo che esista
@@ -353,7 +353,7 @@ export const useTradesStore = defineStore('trades', {
       { key: 'p_l', text: 'Net P&L', align: 'right' },
       { key: 'net_roi', text: 'Net ROI', align: 'right' },
       { key: 'vantage_insights', text: 'Vantage Insights' },
-      { key: 'setups', text: 'Setups' },
+      { key: 'playbook', text: 'Playbook' },
     ],
 
     calendarControlsData() {

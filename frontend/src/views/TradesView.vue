@@ -124,8 +124,8 @@ const formatDuration = (minutes) => {
       <template #vantage_insights="{ item }">
         -
       </template>
-      <template #setups="{ item }">
-        {{ item.strategy || '-' }}
+      <template #playbook="{ item }">
+        {{ item.playbook || '-' }}
       </template>
     </BaseTable>
   </div>

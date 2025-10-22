@@ -82,7 +82,7 @@ const tradeTableHeaders = computed(() => [
     { key: 'duration_minutes', text: 'Duration' },
     { key: 'symbol_snapshot', text: 'Symbol' },
     { key: 'direction', text: 'Side' },
-    { key: 'setup', text: 'Playbook' },
+    { key: 'playbook', text: 'Playbook' },
     { key: 'p_l', text: 'Net P&L' },
 ]);
 
@@ -142,8 +142,8 @@ const formatDuration = (minutes) => {
             <template #p_l="{ item }">
               <span :style="pnlStyle(item.p_l)">{{ formatPnl(item.p_l) }}</span>
             </template>
-            <template #setup="{ item }">
-              <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
+            <template #playbook="{ item }">
+              <BasePill v-if="item.playbook">{{ item.playbook }}</BasePill>
             </template>
             <template #entry_timestamp="{ item }">
               {{ new Date(item.entry_timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}
