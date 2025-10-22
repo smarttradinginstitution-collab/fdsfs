@@ -34,6 +34,8 @@ const mapBackendTradeToFrontend = (trade) => ({
   is_reviewed: trade.is_reviewed,
   // Manteniamo anche i campi originali se servono altrove
   ...trade,
+  mistakes: trade.mistakes || [],
+  psychology_states: trade.psychology_states || [],
   rules_followed: trade.rules_followed || [], // Assicura che sia sempre un array
 });
 
