@@ -197,23 +197,23 @@ export const useAuthStore = defineStore('auth', () => {
     // Setup stores: .resetState()
     // Options stores: .$reset()
     // =========================================================================
-    useAnalyticsStore().resetState();
-    useDisciplineStore().resetState();
-    useFilterStore().resetState();
-    useImageStore().resetState();
-    useLabelsStore().resetState();
-    useLibraryStore().resetState();
-    useLoadingStore().resetState();
-    useNewsImpactsStore().resetState();
-    useTagsStore().resetState();
-    useTradingAccountsStore().resetState();
-    useTradingDnaStore().resetState();
-    useUiStore().resetState();
+    // useAnalyticsStore().resetState();
+    // useDisciplineStore().resetState();
+    // useFilterStore().resetState();
+    // useImageStore().resetState();
+    // useLabelsStore().resetState();
+    // useLibraryStore().resetState();
+    // useLoadingStore().resetState();
+    // useNewsImpactsStore().resetState();
+    // useTagsStore().resetState();
+    // useTradingAccountsStore().resetState();
+    // useTradingDnaStore().resetState();
+    // useUiStore().resetState();
 
-    useDashboardLayoutStore().$reset();
-    useNotebookStore().$reset();
-    usePlaybookStore().$reset();
-    useTradesStore().$reset();
+    // useDashboardLayoutStore().$reset();
+    // useNotebookStore().$reset();
+    // usePlaybookStore().$reset();
+    // useTradesStore().$reset();
     // =========================================================================
 
     try {
