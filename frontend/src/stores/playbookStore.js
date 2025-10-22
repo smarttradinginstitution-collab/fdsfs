@@ -31,6 +31,28 @@ export const usePlaybookStore = defineStore('playbooks', {
   },
 
   actions: {
+    async fetchPlaybookDetails(playbookId) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}`);
+        // We can update the playbook in the list if it's already there, or add it.
+        const index = this.playbooks.findIndex(p => p.id === playbookId);
+        if (index !== -1) {
+          this.playbooks[index] = response.data;
+        } else {
+          this.playbooks.push(response.data);
+        }
+        return response.data;
+      } catch (err) {
+        console.error(`Error fetching details for playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An unexpected error occurred.';
+        throw err; // Re-throw to let the component handle it (e.g., redirect)
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async updatePlaybook(playbookId, playbookData, ruleGroups) {
       this.isLoading = true;
       this.error = null;
