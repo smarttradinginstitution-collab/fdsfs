@@ -15,6 +15,7 @@ import ThemeToggle from '../ui/ThemeToggle.vue';
 import MfaModal from '../mfa/MfaModal.vue'; // Importa la nuova modale
 import { computed, ref } from 'vue';
 import logo from '../../assets/images/logo.svg';
+import BaseButton from '../ui/BaseButton.vue';
 
 // Importiamo le icone necessarie
 import ViewGridIcon from '../icons/ViewGridIcon.vue';
@@ -103,15 +104,15 @@ const navLinks = [
         </div>
       </div>
       <div class="footer-actions" v-if="!uiStore.isSidebarCollapsed">
-        <button v-if="!isMfaActive" @click="openMfaModal('enroll')" class="mfa-button">
+        <BaseButton v-if="!isMfaActive" @click="openMfaModal('enroll')" variant="secondary" size="small">
           Attiva MFA
-        </button>
-        <button v-else @click="openMfaModal('disable')" class="mfa-button-active">
+        </BaseButton>
+        <BaseButton v-else @click="openMfaModal('disable')" variant="secondary" size="small">
           Disattiva MFA
-        </button>
-        <button @click="authStore.logout" class="logout-button">
+        </BaseButton>
+        <BaseButton @click="authStore.logout" variant="secondary" size="small">
           Logout
-        </button>
+        </BaseButton>
         <ThemeToggle />
       </div>
     </div>
@@ -129,7 +130,7 @@ const navLinks = [
     --semantic-size-component-sidebar-width-expanded
   ); /* Usa il nuovo token */
   height: 100vh;
-  background-color: var(--base-color-gray-900);
+  background-color: var(--semantic-color-surface-primary);
   border-right: var(--base-border-width-1) solid
     var(--semantic-color-border-default);
   display: flex;
@@ -179,30 +180,6 @@ const navLinks = [
   display: grid;
   place-items: center;
   transition: all var(--base-animation-duration-fast);
-}
-.logout-button:hover,
-.mfa-button:hover,
-.mfa-button-active:hover {
-  background-color: var(--semantic-color-surface-secondary);
-  color: var(--semantic-color-text-primary);
-}
-
-.mfa-button,
-.mfa-button-active {
-  background: none;
-  border: 1px solid var(--semantic-color-border-default);
-  color: var(--semantic-color-text-secondary);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--semantic-border-radius-interactive);
-  transition: all var(--base-animation-duration-fast);
-  flex-grow: 1; /* Make buttons share space */
-  text-align: center;
-}
-
-.mfa-button-active {
-  border-color: var(--semantic-color-border-success);
-  color: var(--semantic-color-text-success);
 }
 /* Ruotiamo il pulsante quando la sidebar è collassata. */
 .sidebar.is-collapsed .toggle-button {
@@ -295,41 +272,6 @@ const navLinks = [
 .user-role {
   font-size: 0.8rem;
   color: var(--semantic-color-text-secondary);
-}
-
-.logout-button {
-  background: none;
-  border: 1px solid var(--semantic-color-border-default);
-  color: var(--semantic-color-text-secondary);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--semantic-border-radius-interactive);
-  transition: all var(--base-animation-duration-fast);
-}
-
-.logout-button:hover,
-.mfa-button:hover,
-.mfa-button-active:hover {
-  background-color: var(--semantic-color-surface-secondary);
-  color: var(--semantic-color-text-primary);
-}
-
-.mfa-button,
-.mfa-button-active {
-  background: none;
-  border: 1px solid var(--semantic-color-border-default);
-  color: var(--semantic-color-text-secondary);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--semantic-border-radius-interactive);
-  transition: all var(--base-animation-duration-fast);
-  flex-grow: 1; /* Make buttons share space */
-  text-align: center;
-}
-
-.mfa-button-active {
-  border-color: var(--semantic-color-border-success);
-  color: var(--semantic-color-text-success);
 }
 
 /* --- Media Query per il comportamento Mobile --- */

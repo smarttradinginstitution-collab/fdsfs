@@ -15,6 +15,7 @@
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   padding: var(--semantic-size-inset-lg);
+  border: 1px solid var(--semantic-color-border-default);
 
   /* Layout di base che i figli sovrascriveranno */
   display: flex;

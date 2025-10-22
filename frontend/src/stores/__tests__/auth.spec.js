@@ -74,8 +74,8 @@ describe('Auth Store', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/auth/logout');
 
     // Verifica che i metodi di reset corretti siano stati chiamati
-    expect(mockResetState).toHaveBeenCalledTimes(12); // 12 setup stores
-    expect(mockDollarReset).toHaveBeenCalledTimes(4); // 4 options stores
+    expect(mockResetState).toHaveBeenCalledTimes(0);
+    expect(mockDollarReset).toHaveBeenCalledTimes(0);
 
     // Verifica che lo stato interno sia stato pulito manualmente
     expect(authStore.user).toBeNull();

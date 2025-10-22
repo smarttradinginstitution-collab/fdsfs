@@ -93,13 +93,13 @@ export default {
 
 /* Variante Secondaria */
 .button--secondary {
-  background-color: var(--semantic-color-surface-primary);
-  color: var(--semantic-color-text-interactive);
+  background-color: transparent;
+  color: var(--semantic-color-text-primary);
   border-color: var(--semantic-color-border-default);
 }
 .button--secondary:hover {
   background-color: var(--semantic-color-surface-secondary);
-  border-color: var(--semantic-color-border-subtle);
+  border-color: var(--semantic-color-border-default);
 }
 
 /* Variante Danger */
