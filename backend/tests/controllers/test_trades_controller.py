@@ -5,7 +5,9 @@ from httpx import AsyncClient
 import uuid
 from datetime import date, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.Models import Broker
+from app.Models import Broker, Playbook
+from app.Models.rules_group_playbook import RulesGroupPlaybook
+from app.Models.rule_playbook import RulePlaybook
 
 pytestmark = pytest.mark.anyio
 
@@ -248,3 +250,61 @@ async def test_get_recent_trades_succeeds(async_client: AsyncClient, db_session:
     assert len(data) > 0
     assert "symbol_snapshot" in data[0]
     # Verifica implicitamente che non ci sia stato un ValidationError
+
+
+async def test_update_trade_rules(async_client: AsyncClient, db_session: AsyncSession):
+    """
+    Testa l'aggiornamento delle regole 'seguite' per un trade, verificando
+    che la persistenza nel database funzioni correttamente.
+    """
+    # 1. Setup: Crea un trade e un playbook con regole
+    trading_account_id = await setup_trading_account(async_client, db_session)
+
+    # Crea un playbook
+    playbook = Playbook(title="Test Playbook for Rules", description="", general_account_id=uuid.uuid4()) # L'ID qui non è cruciale per questo test
+    db_session.add(playbook)
+    await db_session.commit()
+
+    # Crea un gruppo di regole
+    rules_group = RulesGroupPlaybook(playbook_id=playbook.id, name_group="Entry Rules")
+    db_session.add(rules_group)
+    await db_session.commit()
+
+    # Crea 3 regole
+    rule1 = RulePlaybook(rules_groups_playbook_id=rules_group.id, rule="Rule 1")
+    rule2 = RulePlaybook(rules_groups_playbook_id=rules_group.id, rule="Rule 2")
+    rule3 = RulePlaybook(rules_groups_playbook_id=rules_group.id, rule="Rule 3")
+    db_session.add_all([rule1, rule2, rule3])
+    await db_session.commit()
+
+    # Crea un trade
+    trade_payload = {
+        "trading_account_id": trading_account_id,
+        "symbol_snapshot": "RULES_TEST",
+        "playbook_id": str(playbook.id),
+        "status": "closed",
+        "direction": "LONG",
+    }
+    create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
+    assert create_response.status_code == 201
+    trade_id = create_response.json()["id"]
+
+    # 2. Azione: Aggiorna le regole del trade (selezionane 2 su 3)
+    rule_ids_to_set = [str(rule1.id), str(rule3.id)]
+    update_response = await async_client.put(
+        f"/api/v1/trades/{trade_id}/rules",
+        json=rule_ids_to_set
+    )
+    assert update_response.status_code == 200
+    assert sorted(update_response.json()) == sorted(rule_ids_to_set)
+
+    # 3. Verifica: Ricarica il trade e controlla le regole associate
+    await db_session.commit() # Assicura che la transazione sia chiusa
+    get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
+    assert get_response.status_code == 200
+    trade_details = get_response.json()
+
+    assert "rules_followed" in trade_details
+    assert len(trade_details["rules_followed"]) == 2
+    followed_rule_ids = {rule["id"] for rule in trade_details["rules_followed"]}
+    assert followed_rule_ids == set(rule_ids_to_set)

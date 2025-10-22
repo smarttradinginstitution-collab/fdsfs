@@ -155,6 +155,7 @@ class TradeRepository:
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
                 joinedload(Trade.asset),
+                selectinload(Trade.rules_followed),
             )
             .join(Trade.trading_account)
             .where(TradingAccount.general_account_id == general_account_id)

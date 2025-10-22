@@ -21,6 +21,7 @@ const playbookStore = usePlaybookStore();
 const isAddingPlaybook = ref(false);
 const isDropdownOpen = ref(false);
 const localCheckedRules = ref([]);
+const isSaving = ref(false);
 
 const playbook = computed(() => props.trade.playbook);
 const ruleGroups = computed(() => playbookStore.ruleGroups);
@@ -58,10 +59,13 @@ const handleCancelAdd = () => {
 };
 
 const handleSaveChanges = async () => {
+    isSaving.value = true;
     try {
         await tradesStore.updateTradeRules(props.trade.id, localCheckedRules.value);
     } catch (error) {
         console.error('Failed to save changes:', error);
+    } finally {
+        isSaving.value = false;
     }
 };
 
@@ -107,7 +111,7 @@ onMounted(() => {
       <div class="playbook-header">
         <h3>{{ playbook.title }}</h3>
         <div class="actions">
-          <BaseButton @click="handleSaveChanges" size="small" class="save-button">Save Changes</BaseButton>
+          <BaseButton @click="handleSaveChanges" size="small" class="save-button" :is-loading="isSaving">Save Changes</BaseButton>
           <div class="dropdown-container">
             <button @click="isDropdownOpen = !isDropdownOpen" class="icon-button">
               <EllipsisVerticalIcon class="icon" />

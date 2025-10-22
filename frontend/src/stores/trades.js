@@ -33,6 +33,7 @@ const mapBackendTradeToFrontend = (trade) => ({
   volume: trade.position_size,
   // Manteniamo anche i campi originali se servono altrove
   ...trade,
+  rules_followed: trade.rules_followed || [], // Assicura che sia sempre un array
 });
 
 export const useTradesStore = defineStore('trades', {

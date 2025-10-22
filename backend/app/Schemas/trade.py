@@ -105,6 +105,7 @@ class TradeRead(TradeBase):
     playbook: Optional[PlaybookRead] = None
     news_impacts: List[NewsImpactRead] = []
     psychology_states: List[PsychologyStateRead] = []
+    rules_followed: List[RulePlaybookRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 
