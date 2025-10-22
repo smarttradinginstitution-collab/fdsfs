@@ -18,6 +18,7 @@ class TagRead(BaseModel):
 class MistakeRead(BaseModel):
     id: UUID
     name: str
+    color: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -36,6 +37,7 @@ class NewsImpactRead(BaseModel):
 class PsychologyStateRead(BaseModel):
     id: UUID
     name: str
+    color: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

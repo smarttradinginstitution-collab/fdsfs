@@ -32,10 +32,10 @@ class TradeRepository:
             select(Trade)
             .options(
                 selectinload(Trade.tags).joinedload(Tag.group),
-                joinedload(Trade.mistakes),
+                selectinload(Trade.mistakes),
                 joinedload(Trade.playbook),
-                joinedload(Trade.news_impacts),
-                joinedload(Trade.psychology_states),
+                selectinload(Trade.news_impacts),
+                selectinload(Trade.psychology_states),
                 joinedload(Trade.asset),
                 selectinload(Trade.rules_followed),
                 # Eager load the trading account to access initial_balance for ROI calculation
