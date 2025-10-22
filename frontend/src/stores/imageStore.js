@@ -87,6 +87,12 @@ export const useImageStore = defineStore('imageStore', () => {
     }
   }
 
+  function resetState() {
+    imagesForCurrentTrade.value = [];
+    imageCache.value = {};
+    isLoading.value = false;
+  }
+
   return {
     imagesForCurrentTrade,
     isLoading,
@@ -94,5 +100,6 @@ export const useImageStore = defineStore('imageStore', () => {
     uploadImage,
     updateImageMetadata,
     deleteImage,
+    resetState,
   };
 });

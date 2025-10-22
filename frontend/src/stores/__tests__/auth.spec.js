@@ -4,40 +4,36 @@ import apiClient, { setAuthToken } from '@/services/api';
 import router from '@/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mocking apiClient
+// Mocking apiClient and router
 vi.mock('@/services/api', () => ({
-  default: {
-    post: vi.fn(),
-    get: vi.fn(),
-  },
+  default: { post: vi.fn(), get: vi.fn() },
   setAuthToken: vi.fn(),
 }));
+vi.mock('@/router', () => ({ default: { push: vi.fn() } }));
 
-// Mock router
-vi.mock('@/router', () => ({
-  default: {
-    push: vi.fn(),
-  },
-}));
+// Mocks for store reset methods
+const mockResetState = vi.fn(); // For setup stores
+const mockDollarReset = vi.fn(); // For options stores
 
-// Mock all other stores to spy on their $reset method
-const mockReset = vi.fn();
-vi.mock('../analyticsStore', () => ({ useAnalyticsStore: () => ({ $reset: mockReset }) }));
-vi.mock('../dashboardLayout', () => ({ useDashboardLayoutStore: () => ({ $reset: mockReset }) }));
-vi.mock('../disciplineStore', () => ({ useDisciplineStore: () => ({ $reset: mockReset }) }));
-vi.mock('../filterStore', () => ({ useFilterStore: () => ({ $reset: mockReset }) }));
-vi.mock('../imageStore', () => ({ useImageStore: () => ({ $reset: mockReset }) }));
-vi.mock('../labelsStore', () => ({ useLabelsStore: () => ({ $reset: mockReset }) }));
-vi.mock('../libraryStore', () => ({ useLibraryStore: () => ({ $reset: mockReset }) }));
-vi.mock('../loadingStore', () => ({ useLoadingStore: () => ({ $reset: mockReset }) }));
-vi.mock('../newsImpactsStore', () => ({ useNewsImpactsStore: () => ({ $reset: mockReset }) }));
-vi.mock('../notebookStore', () => ({ useNotebookStore: () => ({ $reset: mockReset }) }));
-vi.mock('../playbookStore', () => ({ usePlaybookStore: () => ({ $reset: mockReset }) }));
-vi.mock('../tagsStore', () => ({ useTagsStore: () => ({ $reset: mockReset }) }));
-vi.mock('../trades', () => ({ useTradesStore: () => ({ $reset: mockReset }) }));
-vi.mock('../tradingAccounts', () => ({ useTradingAccountsStore: () => ({ $reset: mockReset }) }));
-vi.mock('../tradingDnaStore', () => ({ useTradingDnaStore: () => ({ $reset: mockReset }) }));
-vi.mock('../uiStore', () => ({ useUiStore: () => ({ $reset: mockReset }) }));
+// Mock all stores to spy on their reset methods
+vi.mock('../analyticsStore', () => ({ useAnalyticsStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../disciplineStore', () => ({ useDisciplineStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../filterStore', () => ({ useFilterStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../imageStore', () => ({ useImageStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../labelsStore', () => ({ useLabelsStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../libraryStore', () => ({ useLibraryStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../loadingStore', () => ({ useLoadingStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../newsImpactsStore', () => ({ useNewsImpactsStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../tagsStore', () => ({ useTagsStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../tradingAccounts', () => ({ useTradingAccountsStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../tradingDnaStore', () => ({ useTradingDnaStore: () => ({ resetState: mockResetState }) }));
+vi.mock('../uiStore', () => ({ useUiStore: () => ({ resetState: mockResetState }) }));
+
+vi.mock('../dashboardLayout', () => ({ useDashboardLayoutStore: () => ({ $reset: mockDollarReset }) }));
+vi.mock('../notebookStore', () => ({ useNotebookStore: () => ({ $reset: mockDollarReset }) }));
+vi.mock('../playbookStore', () => ({ usePlaybookStore: () => ({ $reset: mockDollarReset }) }));
+vi.mock('../trades', () => ({ useTradesStore: () => ({ $reset: mockDollarReset }) }));
+
 
 describe('Auth Store', () => {
   beforeEach(() => {
@@ -67,31 +63,30 @@ describe('Auth Store', () => {
     });
   });
 
-  it('logout action resets all stores, clears localStorage, and redirects', async () => {
+  it('logout action calls the correct reset method on all stores', async () => {
     const authStore = useAuthStore();
     const localStorageClearSpy = vi.spyOn(Storage.prototype, 'clear');
-    apiClient.post.mockResolvedValue({}); // Mock logout API call
+    apiClient.post.mockResolvedValue({});
 
     await authStore.logout();
 
     // Verifica che l'API di logout sia stata chiamata
     expect(apiClient.post).toHaveBeenCalledWith('/auth/logout');
 
-    // Verifica che tutti gli store mockati siano stati resettati (16 stores)
-    expect(mockReset).toHaveBeenCalledTimes(16);
+    // Verifica che i metodi di reset corretti siano stati chiamati
+    expect(mockResetState).toHaveBeenCalledTimes(12); // 12 setup stores
+    expect(mockDollarReset).toHaveBeenCalledTimes(4); // 4 options stores
 
-    // Verifica che lo stato interno sia stato pulito manualmente (dato che $reset non è disponibile)
+    // Verifica che lo stato interno sia stato pulito manualmente
     expect(authStore.user).toBeNull();
     expect(authStore.token).toBeNull();
     expect(authStore.generalAccount).toBeNull();
 
-    // Verifica che il token API sia stato rimosso
+    // Verifica che il token API e localStorage siano stati puliti
     expect(setAuthToken).toHaveBeenCalledWith(null);
-
-    // Verifica che localStorage sia stato pulito
     expect(localStorageClearSpy).toHaveBeenCalledTimes(1);
 
-    // Verifica che l'utente sia stato reindirizzato alla pagina di login
+    // Verifica il reindirizzamento
     expect(router.push).toHaveBeenCalledWith('/login');
   });
 });

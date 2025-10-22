@@ -112,5 +112,14 @@ export const useLibraryStore = defineStore('library', () => {
     updatePsychologyState: (id, data) => performCrudOperation('update', 'psychologyState', id, data),
     deletePsychologyState: (id) => performCrudOperation('delete', 'psychologyState', id),
 
+    resetState,
   };
+
+  function resetState() {
+    mistakes.value = [];
+    psychologyStates.value = [];
+    isLoading.value = false;
+    isSaving.value = false;
+    error.value = null;
+  }
 });

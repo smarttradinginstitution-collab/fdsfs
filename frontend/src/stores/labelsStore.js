@@ -39,11 +39,18 @@ export const useLabelsStore = defineStore('labels', () => {
     }
   }
 
+  function resetState() {
+    labels.value = {};
+    isLoading.value = {};
+    error.value = null;
+  }
+
   // --- EXPORT ---
   return {
     labels,
     isLoading,
     error,
     fetchLabelsIfNeeded,
+    resetState,
   };
 });

@@ -39,11 +39,19 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     }
   }
 
+  // Funzione per resettare lo stato
+  function resetState() {
+    tagPerformanceStats.value = [];
+    isLoading.value = false;
+    error.value = null;
+  }
+
   // --- EXPORTS ---
   return {
     tagPerformanceStats,
     isLoading,
     error,
     fetchTagPerformanceStats,
+    resetState,
   };
 });

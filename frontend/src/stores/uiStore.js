@@ -131,6 +131,25 @@ export const useUiStore = defineStore('ui', () => {
   // Initialize the theme when the store is created
   initTheme();
 
+  function resetState() {
+    isSidebarCollapsed.value = false;
+    isMobileMenuOpen.value = false;
+    isLayoutEditing.value = false;
+    isStatSelectorVisible.value = false;
+    visibleStatKeys.value = ['netPnl', 'winRate', 'profitFactor', 'trades', 'avgWin', 'avgTradePnl', 'maxDrawdownAbs'];
+    isWeeklySummaryVisible.value = true;
+    isCalendarTradeCountVisible.value = true;
+    isCalendarWinRateVisible.value = true;
+    notification.value = { show: false, message: '', type: 'success', size: 'default' };
+    isDailySummaryModalOpen.value = false;
+    isWeeklySummaryModalOpen.value = false;
+    // theme non viene resettato di proposito
+    isAppLoading.value = false;
+    loaderMessage.value = '';
+    isInitialLoadPending.value = false;
+    lightboxImageUrl.value = null;
+  }
+
   // --- EXPORTS ---
   return {
     theme,
@@ -174,5 +193,6 @@ export const useUiStore = defineStore('ui', () => {
     lightboxImageUrl,
     openLightbox,
     closeLightbox,
+    resetState,
   };
 });

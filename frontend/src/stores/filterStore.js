@@ -107,6 +107,11 @@ export const useFilterStore = defineStore('filters', () => {
   // basate sul preset di default ('30d').
   setDateRangeFromPreset(selectedPreset.value);
 
+  function resetState() {
+    setDateRangeFromPreset('30d');
+    selectedStrategy.value = 'all';
+  }
+
   // --- ESPORTAZIONE ---
   // Restituiamo le variabili e le azioni che vogliamo rendere accessibili
   // ad altri componenti e store.
@@ -119,5 +124,6 @@ export const useFilterStore = defineStore('filters', () => {
     setDateRangeFromPreset,
     setStrategyFilter,
     changeMonth,
+    resetState,
   };
 });

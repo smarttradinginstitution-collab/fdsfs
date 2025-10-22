@@ -205,6 +205,16 @@ export const useDisciplineStore = defineStore('discipline', () => {
     // ...
   }
 
+  function resetState() {
+    settings.value = null;
+    manualRules.value = [];
+    dailyChecklist.value = { manual_rules: [], automated_rules: [] };
+    heatmapData.value = [];
+    isLoading.value = false;
+    error.value = null;
+    allRules.value = [];
+  }
+
   return {
     settings,
     manualRules,
@@ -226,5 +236,6 @@ export const useDisciplineStore = defineStore('discipline', () => {
     updateManualRuleStatus,
     fetchHeatmapData,
     initializeStore,
+    resetState,
   };
 });

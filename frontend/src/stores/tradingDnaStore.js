@@ -49,6 +49,18 @@ export const useTradingDnaStore = defineStore('tradingDna', () => {
     fetchTradingDnaReport();
   }
 
+  function resetState() {
+    report.value = null;
+    isLoading.value = false;
+    error.value = null;
+    Object.assign(filters, {
+      tag_ids: [],
+      mistake_ids: [],
+      psychology_state_ids: [],
+      news_impact_ids: [],
+    });
+  }
+
   // --- EXPORTS ---
   return {
     report,
@@ -57,5 +69,6 @@ export const useTradingDnaStore = defineStore('tradingDna', () => {
     filters,
     fetchTradingDnaReport,
     updateFilters,
+    resetState,
   };
 });
