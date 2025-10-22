@@ -908,14 +908,21 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
       const uiStore = useUiStore();
       try {
-        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
-        const updatedRuleIds = response.data;
+        await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
 
         // Fetch the full trade again to get all updated relations
+        // Make sure fetchTradeById returns the trade
         await this.fetchTradeById(tradeId);
+        const updatedTrade = this.selectedTrade;
+
+        // Also update the trade in the main list
+        const index = this.trades.findIndex(t => t.id === tradeId);
+        if (index !== -1) {
+          this.trades[index] = updatedTrade;
+        }
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
-        return updatedRuleIds;
+        return updatedTrade.rules_followed.map(r => r.id);
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
