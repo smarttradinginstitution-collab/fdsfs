@@ -133,7 +133,7 @@ const handleWeekClick = (weekIndex) => {
   border-radius: var(--semantic-border-radius-surface);
   padding-block: var(--semantic-size-calendar-card-padding-block);
   padding-inline: var(--semantic-size-calendar-card-padding-inline);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-1) ;
   display: flex;
   flex-direction: column;
 }

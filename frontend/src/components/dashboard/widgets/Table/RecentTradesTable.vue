@@ -58,7 +58,7 @@ const tableSize = computed(() => (isSmallScreen.value ? 'small' : 'medium'));
   display: flex;
   flex-direction: column;
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: var(--base-border-width-1);
   border-radius: var(--semantic-border-radius-surface);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   overflow: hidden; /* Nasconde il contenuto che esce dai bordi arrotondati */

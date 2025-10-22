@@ -13,7 +13,6 @@
 .widget-card {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
-  border: 1px solid var(--semantic-color-border-default);
   box-shadow: var(--semantic-effect-shadow-elevation-low);
   display: flex;
   flex-direction: column;
