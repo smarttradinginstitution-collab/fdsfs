@@ -155,6 +155,7 @@ class TradeRepository:
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
                 joinedload(Trade.asset),
+                selectinload(Trade.rules_followed),
             )
             .join(Trade.trading_account)
             .where(TradingAccount.general_account_id == general_account_id)
@@ -240,12 +241,8 @@ class TradeRepository:
         if len(rules) != len(rule_ids):
             raise ValueError("Una o più Rule ID non sono valide.")
 
-        # Modifica la collezione in-place per garantire che SQLAlchemy rilevi il cambiamento.
-        # Svuotare e riassegnare (trade.rules_followed = rules) può non funzionare in modo affidabile
-        # in tutti gli scenari, specialmente con sessioni asincrone.
-        trade.rules_followed.clear()
-        for rule in rules:
-            trade.rules_followed.append(rule)
+        # Sostituisci la lista delle regole associate al trade
+        trade.rules_followed = rules
 
         # Il commit verrà gestito dal service layer
 

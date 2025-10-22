@@ -462,15 +462,23 @@ class TradeService:
 
         await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
-        # 2. Chiama il metodo del repository per aggiornare le regole
-        try:
-            await self.repo.update_trade_rules(db_trade, rule_ids)
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        # 2. Recupera le istanze delle regole
+        if not rule_ids:
+            rules = []
+        else:
+            rules_result = await self.db.execute(
+                select(RulePlaybook).where(RulePlaybook.id.in_(rule_ids))
+            )
+            rules = rules_result.scalars().all()
+            if len(rules) != len(set(rule_ids)):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more rule IDs are invalid.")
 
-        # 3. Commit e refresh
+        # 3. Assegna le nuove regole e lascia che SQLAlchemy gestisca la sessione
+        db_trade.rules_followed = rules
+
+        # 4. Commit e refresh
         await self.db.commit()
         await self.db.refresh(db_trade, attribute_names=['rules_followed'])
 
-        # 4. Restituisce gli ID delle regole aggiornate
+        # 5. Restituisce gli ID delle regole aggiornate
         return [rule.id for rule in db_trade.rules_followed]
