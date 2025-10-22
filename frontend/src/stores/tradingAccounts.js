@@ -102,6 +102,12 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     }
   }
 
+  function resetState() {
+    tradingAccounts.value = [];
+    selectedTradingAccount.value = null;
+    isLoading.value = false;
+  }
+
   return {
     tradingAccounts,
     selectedTradingAccount,
@@ -110,5 +116,6 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     fetchTradingAccounts,
     createTradingAccount,
     selectTradingAccount,
+    resetState,
   };
 });

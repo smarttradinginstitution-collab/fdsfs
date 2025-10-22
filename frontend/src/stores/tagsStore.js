@@ -200,6 +200,8 @@ export const useTagsStore = defineStore('tags', () => {
     updateTag,
     deleteTag,
 
+    resetState,
+
     async reorderTagGroups(groupIds) {
       const uiStore = useUiStore();
       try {
@@ -216,4 +218,14 @@ export const useTagsStore = defineStore('tags', () => {
       }
     }
   };
+
+  function resetState() {
+    tags.value = [];
+    tagGroups.value = [];
+    isLoading.value = false;
+    isSaving.value = false;
+    error.value = null;
+    isCreatingGroup.value = false;
+    creatingTagInGroupId.value = null;
+  }
 });

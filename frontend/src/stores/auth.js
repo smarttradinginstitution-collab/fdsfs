@@ -13,6 +13,17 @@ import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
 import { useTagsStore } from './tagsStore';
 import { useTradingDnaStore } from './tradingDnaStore';
+import { useAnalyticsStore } from './analyticsStore';
+import { useDashboardLayoutStore } from './dashboardLayout';
+import { useDisciplineStore } from './disciplineStore';
+import { useFilterStore } from './filterStore';
+import { useImageStore } from './imageStore';
+import { useLabelsStore } from './labelsStore';
+import { useLibraryStore } from './libraryStore';
+import { useLoadingStore } from './loadingStore';
+import { useNewsImpactsStore } from './newsImpactsStore';
+import { useTradesStore } from './trades';
+import { useTradingAccountsStore } from './tradingAccounts';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -179,22 +190,46 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    // =========================================================================
+    // RESET DEGLI STORE
+    // =========================================================================
+    // Chiama il metodo di reset corretto per ogni store.
+    // Setup stores: .resetState()
+    // Options stores: .$reset()
+    // =========================================================================
+    // useAnalyticsStore().resetState();
+    // useDisciplineStore().resetState();
+    // useFilterStore().resetState();
+    // useImageStore().resetState();
+    // useLabelsStore().resetState();
+    // useLibraryStore().resetState();
+    // useLoadingStore().resetState();
+    // useNewsImpactsStore().resetState();
+    // useTagsStore().resetState();
+    // useTradingAccountsStore().resetState();
+    // useTradingDnaStore().resetState();
+    // useUiStore().resetState();
+
+    // useDashboardLayoutStore().$reset();
+    // useNotebookStore().$reset();
+    // usePlaybookStore().$reset();
+    // useTradesStore().$reset();
+    // =========================================================================
+
     try {
       await apiClient.post('/auth/logout');
     } catch { /* noop */ }
 
-    const uiStore = useUiStore();
-    uiStore.setInitialLoadPending(false);
-
+    // Pulisce lo stato di autenticazione e il localStorage
     user.value = null;
     token.value = null;
-    generalAccount.value = null; // Pulisci il General Account
+    generalAccount.value = null;
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('generalAccount'); // Rimuovi dal localStorage
+    localStorage.clear();
     setAuthToken(null);
+
+    // Reindirizza alla pagina di login
     router.push('/login');
   }
 

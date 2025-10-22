@@ -202,5 +202,16 @@ export const useNewsImpactsStore = defineStore('newsImpacts', () => {
     createNewsImpact,
     updateNewsImpact,
     deleteNewsImpact,
+    resetState,
   };
+
+  function resetState() {
+    newsImpacts.value = [];
+    newsImpactsGroups.value = [];
+    isLoading.value = false;
+    isSaving.value = false;
+    error.value = null;
+    isCreatingGroup.value = false;
+    creatingTagInGroupId.value = null;
+  }
 });
