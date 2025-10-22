@@ -48,7 +48,8 @@ const statsGridClass = computed(() => {
           <span class="label">Net PnL</span>
         </div>
         <div class="stat-item">
-          <span class="value">{{ playbook.stats?.profit_factor ? playbook.stats.profit_factor.toFixed(2) : 'N/A' }}</span>
+          <span class="value">{{ playbook.stats?.profit_factor ? playbook.stats.profit_factor.toFixed(2) : 'N/A'
+            }}</span>
           <span class="label">Profit Factor</span>
         </div>
         <div class="stat-item">
@@ -91,7 +92,8 @@ const statsGridClass = computed(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: var(--semantic-size-stack-sm); /* Space between title and badge */
+  padding-right: var(--semantic-size-stack-sm);
+  /* Space between title and badge */
 }
 
 .trade-count {
@@ -99,8 +101,9 @@ const statsGridClass = computed(() => {
   color: var(--semantic-color-text-secondary);
   background-color: var(--semantic-color-surface-secondary);
   padding: var(--semantic-size-inset-xs) var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-pill);
-  white-space: nowrap; /* Prevent badge from wrapping */
+  border-radius: var(--semantic-border-radius-interactive);
+  white-space: nowrap;
+  /* Prevent badge from wrapping */
 }
 
 /* The grid for all the stats inside the widget's content area */
@@ -136,7 +139,8 @@ const statsGridClass = computed(() => {
 .donut-chart-container {
   width: 40px;
   height: 40px;
-  flex-shrink: 0; /* Prevent chart from shrinking */
+  flex-shrink: 0;
+  /* Prevent chart from shrinking */
 }
 
 .stat-value-label {
@@ -147,7 +151,8 @@ const statsGridClass = computed(() => {
 
 .stat-item .value {
   font: var(--semantic-font-style-body-sm);
-  font-weight: 600; /* Medium weight to make it stand out */
+  font-weight: 600;
+  /* Medium weight to make it stand out */
   color: var(--semantic-color-text-primary);
 }
 
