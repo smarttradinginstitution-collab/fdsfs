@@ -15,6 +15,7 @@ import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
+import { CheckCircleIcon } from '@heroicons/vue/24/solid';
 
 // --- STATE ---
 const route = useRoute();
@@ -166,7 +167,17 @@ onMounted(() => {
             <p class="trade-date">{{ tradeDate }}</p>
           </div>
           <div class="action-buttons">
-            <button class="action-button">Mark as reviewed</button>
+            <BaseButton
+              :is-loading="isLoading"
+              :class="{
+                'reviewed-button': trade.is_reviewed,
+                'action-button': !trade.is_reviewed
+              }"
+              @click="tradesStore.toggleReviewedStatus(trade.id)"
+            >
+              <CheckCircleIcon v-if="trade.is_reviewed" class="reviewed-icon" />
+              {{ trade.is_reviewed ? 'Reviewed' : 'Mark as reviewed' }}
+            </BaseButton>
             <button class="action-button">Replay</button>
             <button class="action-button">Share</button>
           </div>
@@ -299,6 +310,29 @@ onMounted(() => {
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+.reviewed-button {
+  background-color: var(--semantic-color-feedback-positive-surface);
+  color: var(--semantic-color-feedback-positive-text);
+  border-color: var(--semantic-color-feedback-positive-text);
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-gap-sm);
+  padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-interactive);
+  font: var(--semantic-font-style-button-label-medium);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.8;
+  }
+}
+
+.reviewed-icon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .report-content {

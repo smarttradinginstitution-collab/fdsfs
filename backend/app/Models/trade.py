@@ -13,6 +13,8 @@ from sqlalchemy import (
     func,
     String,
     Enum,
+    Boolean,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -97,6 +99,9 @@ class Trade(Base):
         nullable=False,
         default=TradeStatus.closed,
         index=True,
+    )
+    is_reviewed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
     )
 
     # Financial details

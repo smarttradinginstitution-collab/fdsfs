@@ -48,6 +48,7 @@ class RulePlaybookRead(BaseModel):
 
 
 class TradeBase(BaseModel):
+    is_reviewed: Optional[bool] = None
     symbol_snapshot: Optional[str] = None
     p_l: Optional[float] = None
     stop_loss_price: Optional[float] = None
