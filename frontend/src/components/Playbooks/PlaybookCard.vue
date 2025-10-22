@@ -38,27 +38,27 @@ async function handleDelete(closeMenu) {
 </script>
 
 <template>
-  <router-link :to="{ name: 'playbook-detail', params: { id: playbook.id } }" class="playbook-card-link">
-    <BaseWidget>
-      <template #header>
-        <div class="card-header">
-          <div class="header-left">
-            <h3 class="widget-title">{{ playbook.title }}</h3>
-            <span class="trade-count">{{ playbook.stats?.total_trades || 0 }} Trades</span>
-          </div>
-          <ActionsMenu @click.stop.prevent>
-            <template #content="{ closeMenu }">
-              <router-link :to="{ name: 'playbook-edit', params: { id: playbook.id } }" class="menu-item" @click="closeMenu">
-                Edit
-              </router-link>
-              <div class="menu-item menu-item-danger" @click="handleDelete(closeMenu)">
-                Delete
-              </div>
-            </template>
-          </ActionsMenu>
+  <BaseWidget>
+    <template #header>
+      <div class="card-header">
+        <div class="header-left">
+          <h3 class="widget-title">{{ playbook.title }}</h3>
+          <span class="trade-count">{{ playbook.stats?.total_trades || 0 }} Trades</span>
         </div>
-      </template>
+        <ActionsMenu @click.stop>
+          <template #content="{ closeMenu }">
+            <router-link :to="{ name: 'playbook-edit', params: { id: playbook.id } }" class="menu-item" @click="closeMenu">
+              Edit
+            </router-link>
+            <div class="menu-item menu-item-danger" @click="handleDelete(closeMenu)">
+              Delete
+            </div>
+          </template>
+        </ActionsMenu>
+      </div>
+    </template>
 
+    <router-link :to="{ name: 'playbook-detail', params: { id: playbook.id } }" class="playbook-card-link">
       <div class="stats-grid" :class="statsGridClass">
         <!-- Win Rate with Doughnut Chart -->
         <div class="stat-item win-rate-stat">
@@ -94,8 +94,8 @@ async function handleDelete(closeMenu) {
           <span class="label">Avg. Loser</span>
         </div>
       </div>
-    </BaseWidget>
-  </router-link>
+    </router-link>
+  </BaseWidget>
 </template>
 
 <style scoped>
