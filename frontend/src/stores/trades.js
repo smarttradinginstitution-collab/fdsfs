@@ -347,6 +347,7 @@ export const useTradesStore = defineStore('trades', {
       { key: 'symbol_snapshot', text: 'Symbol' },
       { key: 'status', text: 'Status' },
       { key: 'exit_timestamp', text: 'Close Date' },
+      { key: 'duration_minutes', text: 'Duration' },
       { key: 'entry_price', text: 'Entry Price', align: 'right' },
       { key: 'exit_price', text: 'Exit Price', align: 'right' },
       { key: 'p_l', text: 'Net P&L', align: 'right' },

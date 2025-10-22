@@ -50,6 +50,13 @@ const getPnlClass = (pnl) => {
   if (pnl < 0) return 'pnl-negative';
   return '';
 };
+
+const formatDuration = (minutes) => {
+  if (minutes === null || minutes === undefined) return '-';
+  const mins = Math.floor(minutes);
+  const secs = Math.round((minutes - mins) * 60);
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
 </script>
 
 <template>
@@ -85,6 +92,10 @@ const getPnlClass = (pnl) => {
       </template>
       <template #exit_timestamp="{ item }">
         {{ formatDate(item.exit_timestamp) }}
+      </template>
+
+      <template #duration_minutes="{ item }">
+        {{ formatDuration(item.duration_minutes) }}
       </template>
 
       <!-- Slot per i valori numerici -->

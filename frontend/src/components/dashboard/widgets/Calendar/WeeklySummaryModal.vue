@@ -96,7 +96,7 @@ const tradeTableHeaders = computed(() => [
 ]);
 
 const formatDuration = (minutes) => {
-  if (minutes === null || minutes === undefined) return 'N/A';
+  if (minutes === null || minutes === undefined) return '-';
   const mins = Math.floor(minutes);
   const secs = Math.round((minutes - mins) * 60);
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
