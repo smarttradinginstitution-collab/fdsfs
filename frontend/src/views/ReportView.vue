@@ -313,9 +313,9 @@ onMounted(() => {
 }
 
 .reviewed-button {
-  background-color: var(--semantic-color-success-default);
-  color: var(--semantic-color-text-inverted-primary);
-  border-color: var(--semantic-color-success-default);
+  background-color: var(--semantic-color-feedback-positive-surface);
+  color: var(--semantic-color-feedback-positive-text);
+  border-color: var(--semantic-color-feedback-positive-text);
   display: flex;
   align-items: center;
   gap: var(--semantic-size-gap-sm);
@@ -326,7 +326,7 @@ onMounted(() => {
   transition: background-color 0.2s ease;
 
   &:hover:not(:disabled) {
-    background-color: var(--semantic-color-success-emphasized);
+    opacity: 0.8;
   }
 }
 
