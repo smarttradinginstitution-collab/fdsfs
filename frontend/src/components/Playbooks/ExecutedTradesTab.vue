@@ -62,6 +62,7 @@
       :show="isDeleteModalVisible"
       title="Delete Trade"
       :message="`Are you sure you want to delete this trade for ${tradeToDelete?.symbol_snapshot}? This action cannot be undone.`"
+      :is-confirming="isDeleting"
       @close="isDeleteModalVisible = false"
       @confirm="handleConfirmDelete"
     />
@@ -107,6 +108,7 @@ const getStatusClass = (pnl) => {
 // --- Delete Logic ---
 const isDeleteModalVisible = ref(false);
 const tradeToDelete = ref(null);
+const isDeleting = ref(false);
 
 const promptDelete = (trade) => {
   tradeToDelete.value = trade;
@@ -114,11 +116,15 @@ const promptDelete = (trade) => {
 };
 
 const handleConfirmDelete = async () => {
-  if (tradeToDelete.value) {
+  if (!tradeToDelete.value) return;
+  isDeleting.value = true;
+  try {
     await tradesStore.deleteTrade(tradeToDelete.value.id);
+  } finally {
+    isDeleteModalVisible.value = false;
+    tradeToDelete.value = null;
+    isDeleting.value = false;
   }
-  isDeleteModalVisible.value = false;
-  tradeToDelete.value = null;
 };
 
 // --- Pagination Logic ---

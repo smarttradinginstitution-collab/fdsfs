@@ -32,6 +32,7 @@
       :show="isGroupDeleteModalVisible"
       title="Delete Group"
       :message="`Are you sure you want to delete the group '${group.name}'? This will also delete all tags within it.`"
+      :is-confirming="isDeleting"
       @close="isGroupDeleteModalVisible = false"
       @confirm="handleConfirmDeleteGroup"
     />
@@ -40,6 +41,7 @@
       :show="isTagDeleteModalVisible"
       title="Delete Tag"
       message="Are you sure you want to delete this tag? This action cannot be undone."
+      :is-confirming="isDeleting"
       @close="isTagDeleteModalVisible = false"
       @confirm="handleConfirmDeleteTag"
     />
@@ -109,10 +111,16 @@ const saveGroupEdit = async () => {
 const isGroupDeleteModalVisible = ref(false);
 const isTagDeleteModalVisible = ref(false);
 const tagToDelete = ref(null);
+const isDeleting = ref(false);
 
 const handleConfirmDeleteGroup = async () => {
-  await store.deleteTagGroup(props.group.id);
-  isGroupDeleteModalVisible.value = false;
+  isDeleting.value = true;
+  try {
+    await store.deleteTagGroup(props.group.id);
+    isGroupDeleteModalVisible.value = false;
+  } finally {
+    isDeleting.value = false;
+  }
 };
 
 const promptDeleteTag = (tag) => {
@@ -122,9 +130,14 @@ const promptDeleteTag = (tag) => {
 
 const handleConfirmDeleteTag = async () => {
   if (!tagToDelete.value) return;
-  await store.deleteTag(tagToDelete.value.id);
-  isTagDeleteModalVisible.value = false;
-  tagToDelete.value = null;
+  isDeleting.value = true;
+  try {
+    await store.deleteTag(tagToDelete.value.id);
+    isTagDeleteModalVisible.value = false;
+    tagToDelete.value = null;
+  } finally {
+    isDeleting.value = false;
+  }
 };
 </script>
 

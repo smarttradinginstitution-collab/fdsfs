@@ -11,6 +11,7 @@
       :show="isDeleteModalVisible"
       title="Delete Item"
       :message="`Are you sure you want to delete this item? This action cannot be undone.`"
+      :is-confirming="isDeleting"
       @close="isDeleteModalVisible = false"
       @confirm="handleConfirmDelete"
     />
@@ -82,6 +83,7 @@ const isCreating = ref(false);
 // --- Deletion Logic ---
 const isDeleteModalVisible = ref(false);
 const itemToDelete = ref(null);
+const isDeleting = ref(false);
 
 const promptDelete = (item) => {
   itemToDelete.value = item;
@@ -90,13 +92,21 @@ const promptDelete = (item) => {
 
 const handleConfirmDelete = async () => {
   if (!itemToDelete.value) return;
-  if (props.isGrouped) {
-    await newsImpactsStore.deleteNewsImpact(itemToDelete.value.id);
-  } else {
-    await props.deleteAction(itemToDelete.value.id);
+  isDeleting.value = true;
+  try {
+    if (props.isGrouped) {
+      await newsImpactsStore.deleteNewsImpact(itemToDelete.value.id);
+    } else {
+      await props.deleteAction(itemToDelete.value.id);
+    }
+    isDeleteModalVisible.value = false;
+    itemToDelete.value = null;
+  } catch (error) {
+    console.error('Failed to delete item:', error);
+    // Optionally, show an error message to the user
+  } finally {
+    isDeleting.value = false;
   }
-  isDeleteModalVisible.value = false;
-  itemToDelete.value = null;
 };
 
 // --- Create/Update Logic ---

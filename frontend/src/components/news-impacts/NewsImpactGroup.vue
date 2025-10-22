@@ -29,6 +29,7 @@
       :show="isGroupDeleteModalVisible"
       title="Delete Group"
       :message="`Are you sure you want to delete the group '${group.name}'? This will also delete all impacts within it.`"
+      :is-confirming="isDeleting"
       @close="isGroupDeleteModalVisible = false"
       @confirm="handleConfirmDeleteGroup"
     />
@@ -37,6 +38,7 @@
       :show="isImpactDeleteModalVisible"
       title="Delete News Impact"
       message="Are you sure you want to delete this news impact? This action cannot be undone."
+      :is-confirming="isDeleting"
       @close="isImpactDeleteModalVisible = false"
       @confirm="handleConfirmDeleteImpact"
     />
@@ -105,10 +107,16 @@ const saveGroupEdit = async () => {
 const isGroupDeleteModalVisible = ref(false);
 const isImpactDeleteModalVisible = ref(false);
 const impactToDelete = ref(null);
+const isDeleting = ref(false);
 
 const handleConfirmDeleteGroup = async () => {
-  await store.deleteNewsImpactGroup(props.group.id);
-  isGroupDeleteModalVisible.value = false;
+  isDeleting.value = true;
+  try {
+    await store.deleteNewsImpactGroup(props.group.id);
+    isGroupDeleteModalVisible.value = false;
+  } finally {
+    isDeleting.value = false;
+  }
 };
 
 const promptDeleteImpact = (impact) => {
@@ -118,9 +126,14 @@ const promptDeleteImpact = (impact) => {
 
 const handleConfirmDeleteImpact = async () => {
   if (!impactToDelete.value) return;
-  await store.deleteNewsImpact(impactToDelete.value.id);
-  isImpactDeleteModalVisible.value = false;
-  impactToDelete.value = null;
+  isDeleting.value = true;
+  try {
+    await store.deleteNewsImpact(impactToDelete.value.id);
+    isImpactDeleteModalVisible.value = false;
+    impactToDelete.value = null;
+  } finally {
+    isDeleting.value = false;
+  }
 };
 </script>
 

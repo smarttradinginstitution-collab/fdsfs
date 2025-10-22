@@ -31,17 +31,17 @@
       :show="isGroupDeleteModalVisible"
       title="Delete Rule Group"
       :message="`Are you sure you want to delete the group '${group.name_group}'? This will also delete all rules within it.`"
+      :is-confirming="isDeleting"
       @close="isGroupDeleteModalVisible = false"
       @confirm="handleConfirmDeleteGroup"
-      @closed="onGroupModalClosed"
     />
     <ConfirmationModal
       :show="isRuleDeleteModalVisible"
       title="Delete Rule"
       message="Are you sure you want to delete this rule? This action cannot be undone."
+      :is-confirming="isDeleting"
       @close="isRuleDeleteModalVisible = false"
       @confirm="handleConfirmDeleteRule"
-      @closed="onRuleModalClosed"
     />
 
     <!-- Rules List -->
@@ -130,14 +130,18 @@ const saveEdit = async () => {
 };
 
 const isGroupDeleteModalVisible = ref(false);
-const handleConfirmDeleteGroup = () => {
-  isGroupDeleteModalVisible.value = false;
-};
-const onGroupModalClosed = async () => {
-  await store.deleteRuleGroup({
-    playbookId: props.group.playbook_id,
-    groupId: props.group.id,
-  });
+const isDeleting = ref(false);
+const handleConfirmDeleteGroup = async () => {
+  isDeleting.value = true;
+  try {
+    await store.deleteRuleGroup({
+      playbookId: props.group.playbook_id,
+      groupId: props.group.id,
+    });
+  } finally {
+    isGroupDeleteModalVisible.value = false;
+    isDeleting.value = false;
+  }
 };
 
 const isRuleDeleteModalVisible = ref(false);
@@ -148,17 +152,19 @@ const promptDeleteRule = (rule) => {
   isRuleDeleteModalVisible.value = true;
 };
 
-const handleConfirmDeleteRule = () => {
-  isRuleDeleteModalVisible.value = false;
-};
-
-const onRuleModalClosed = async () => {
+const handleConfirmDeleteRule = async () => {
   if (!ruleToDelete.value) return;
-  await store.deleteRule({
-    playbookId: props.group.playbook_id,
-    ruleId: ruleToDelete.value.id,
-  });
-  ruleToDelete.value = null;
+  isDeleting.value = true;
+  try {
+    await store.deleteRule({
+      playbookId: props.group.playbook_id,
+      ruleId: ruleToDelete.value.id,
+    });
+  } finally {
+    isRuleDeleteModalVisible.value = false;
+    ruleToDelete.value = null;
+    isDeleting.value = false;
+  }
 };
 </script>
 
