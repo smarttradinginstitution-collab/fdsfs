@@ -18,7 +18,7 @@
           @keyup.enter="saveGroupEdit"
           @keyup.esc="cancelGroupEditing"
         />
-        <BaseButton size="small" @click="saveGroupEdit" :loading="isSaving">Save</BaseButton>
+        <BaseButton size="small" @click="saveGroupEdit" :is-loading="isSaving">Save</BaseButton>
         <BaseButton size="small" variant="secondary" @click="cancelGroupEditing">Cancel</BaseButton>
       </div>
     </div>

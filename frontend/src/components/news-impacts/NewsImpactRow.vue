@@ -29,7 +29,7 @@
         </ActionsMenu>
       </template>
       <template v-else>
-        <BaseButton size="small" @click="saveEdit" :loading="isSaving">Save</BaseButton>
+        <BaseButton size="small" @click="saveEdit" :is-loading="isSaving">Save</BaseButton>
         <BaseButton size="small" variant="secondary" @click="cancelEditing">Cancel</BaseButton>
       </template>
     </div>

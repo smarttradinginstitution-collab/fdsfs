@@ -22,7 +22,7 @@
           v-for="item in items"
           :key="item.id"
           :item="item"
-          :is-saving="store.isSaving"
+          :is-saving="isSaving"
           @update="handleUpdate"
           @delete="promptDelete"
         />
@@ -34,7 +34,7 @@
             v-for="item in group.news_impacts"
             :key="item.id"
             :item="item"
-            :is-saving="store.isSaving"
+            :is-saving="isSaving"
             @update="handleUpdate"
             @delete="promptDelete"
           />
@@ -42,7 +42,7 @@
       </template>
       <LibraryItemCreator
         v-if="isCreating"
-        :is-saving="store.isSaving"
+        :is-saving="isSaving"
         :is-grouped="isGrouped"
         :groups="groups"
         @save="handleCreate"
@@ -72,6 +72,7 @@ const props = defineProps({
   updateAction: { type: Function, required: false },
   deleteAction: { type: Function, required: false },
   isGrouped: { type: Boolean, default: false },
+  isSaving: { type: Boolean, default: false },
 });
 
 const store = useLibraryStore();

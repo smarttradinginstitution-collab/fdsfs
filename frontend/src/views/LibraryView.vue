@@ -40,6 +40,7 @@
             :create-action="libraryStore.createMistake"
             :update-action="libraryStore.updateMistake"
             :delete-action="libraryStore.deleteMistake"
+            :is-saving="libraryStore.isSaving"
           />
           <LibraryManagementCard
             v-if="activeTab === 'psychology'"
@@ -48,6 +49,7 @@
             :create-action="libraryStore.createPsychologyState"
             :update-action="libraryStore.updatePsychologyState"
             :delete-action="libraryStore.deletePsychologyState"
+            :is-saving="libraryStore.isSaving"
           />
         </div>
         <TagManagementTab v-if="activeTab === 'tags'" />
