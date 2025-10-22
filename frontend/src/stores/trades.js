@@ -31,6 +31,7 @@ const mapBackendTradeToFrontend = (trade) => ({
   ticks: trade.ticks, // Assumendo che esista
   bestExit: trade.best_exit, // Assumendo che esista
   volume: trade.position_size,
+  is_reviewed: trade.is_reviewed,
   // Manteniamo anche i campi originali se servono altrove
   ...trade,
   rules_followed: trade.rules_followed || [], // Assicura che sia sempre un array
@@ -921,6 +922,49 @@ export const useTradesStore = defineStore('trades', {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
         throw error;
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async toggleReviewedStatus(tradeId) {
+      const uiStore = useUiStore();
+      const trade = this.trades.find(t => t.id === tradeId) || this.selectedTrade;
+
+      if (!trade) {
+        uiStore.showNotification({ message: 'Trade not found.', type: 'danger' });
+        return;
+      }
+
+      const originalStatus = trade.is_reviewed;
+      const newStatus = !originalStatus;
+
+      // Optimistic update
+      trade.is_reviewed = newStatus;
+      if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+        this.selectedTrade.is_reviewed = newStatus;
+      }
+
+      this.isTradeLoading = true;
+
+      try {
+        const response = await apiClient.put(`/trades/${tradeId}`, { is_reviewed: newStatus });
+        const updatedTrade = mapBackendTradeToFrontend(response.data);
+
+        // Update state with confirmed data from backend
+        trade.is_reviewed = updatedTrade.is_reviewed;
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.is_reviewed = updatedTrade.is_reviewed;
+        }
+
+      } catch (error) {
+        // Rollback on error
+        trade.is_reviewed = originalStatus;
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          this.selectedTrade.is_reviewed = originalStatus;
+        }
+        console.error('Error updating trade review status:', error);
+        uiStore.showNotification({ message: 'Failed to update review status.', type: 'danger' });
       } finally {
         this.isTradeLoading = false;
       }
