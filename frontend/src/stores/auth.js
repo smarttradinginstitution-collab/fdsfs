@@ -13,6 +13,17 @@ import { usePlaybookStore } from './playbookStore';
 import { useNotebookStore } from './notebookStore';
 import { useTagsStore } from './tagsStore';
 import { useTradingDnaStore } from './tradingDnaStore';
+import { useAnalyticsStore } from './analyticsStore';
+import { useDashboardLayoutStore } from './dashboardLayout';
+import { useDisciplineStore } from './disciplineStore';
+import { useFilterStore } from './filterStore';
+import { useImageStore } from './imageStore';
+import { useLabelsStore } from './labelsStore';
+import { useLibraryStore } from './libraryStore';
+import { useLoadingStore } from './loadingStore';
+import { useNewsImpactsStore } from './newsImpactsStore';
+import { useTradesStore } from './trades';
+import { useTradingAccountsStore } from './tradingAccounts';
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
@@ -179,22 +190,40 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    // Prima di tutto, resetta tutti gli store al loro stato iniziale.
+    // Questo garantisce che non rimangano dati "sporchi" in memoria
+    // da sessioni precedenti.
+    useAnalyticsStore().$reset();
+    useDashboardLayoutStore().$reset();
+    useDisciplineStore().$reset();
+    useFilterStore().$reset();
+    useImageStore().$reset();
+    useLabelsStore().$reset();
+    useLibraryStore().$reset();
+    useLoadingStore().$reset();
+    useNewsImpactsStore().$reset();
+    useNotebookStore().$reset();
+    usePlaybookStore().$reset();
+    useTagsStore().$reset();
+    useTradesStore().$reset();
+    useTradingAccountsStore().$reset();
+    useTradingDnaStore().$reset();
+    useUiStore().$reset();
+
     try {
       await apiClient.post('/auth/logout');
     } catch { /* noop */ }
 
-    const uiStore = useUiStore();
-    uiStore.setInitialLoadPending(false);
-
+    // Pulisce lo stato di autenticazione e il localStorage
     user.value = null;
     token.value = null;
-    generalAccount.value = null; // Pulisci il General Account
+    generalAccount.value = null;
     mfaChallenge.value = null;
     mfaAal1Token.value = null;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('generalAccount'); // Rimuovi dal localStorage
+    localStorage.clear(); // Usa clear() per una pulizia completa
     setAuthToken(null);
+
+    // Reindirizza alla pagina di login
     router.push('/login');
   }
 
