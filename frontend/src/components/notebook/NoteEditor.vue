@@ -27,9 +27,11 @@ import {
 // Store and other components
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useUiStore } from '../../stores/uiStore';
+import { usePnlFormatting } from '@/composables/usePnlFormatting';
 
 const store = useNotebookStore();
 const uiStore = useUiStore();
+const { pnlStyle, formatPnl } = usePnlFormatting();
 
 const props = defineProps({
   showFinancialData: {
@@ -185,17 +187,6 @@ const formatPercentage = (value) => {
     return `${(value * 100).toFixed(2)}%`;
 };
 
-const pnlClass = (pnl) => {
-  if (typeof pnl !== 'number') return 'pnl-neutral';
-  return pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
-};
-
-const formattedPnl = (pnl) => {
-    if (pnl === null || pnl === undefined) return '$0.00';
-    const sign = pnl >= 0 ? '+' : '-';
-    return `${sign}$${Math.abs(pnl).toFixed(2)}`;
-};
-
 const statsGrid = computed(() => {
     if (!financialData.value || !financialData.value.stats) return null;
     const stats = financialData.value.stats;
@@ -203,10 +194,10 @@ const statsGrid = computed(() => {
         col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${stats.win_rate.toFixed(1)}%` } ],
         col2: [ { label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }, ],
         col3: [
-          { label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
-          { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true },
+          { label: 'Gross Profit', value: formatPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
+          { label: 'Gross Loss', value: formatPnl(stats.gross_loss, true), rawValue: stats.gross_loss, isPnl: true, isLoss: true },
         ],
-        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
+        col4: [ { label: 'Net P&L', value: formatPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
     };
 });
 
@@ -289,8 +280,8 @@ onBeforeUnmount(() => {
     <div class="pnl-container" v-if="financialData">
       <div class="pnl-display">
         <strong>Net P&L: </strong>
-        <span :class="pnlClass(financialData?.net_pnl)">
-          {{ formatCurrency(financialData?.net_pnl) }}
+        <span :style="pnlStyle(financialData?.net_pnl)">
+          {{ formatPnl(financialData?.net_pnl) }}
         </span>
       </div>
       <router-link
@@ -322,7 +313,7 @@ onBeforeUnmount(() => {
         <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
           <div v-for="stat in col" :key="stat.label" class="stat-cell">
             <span class="stat-label">{{ stat.label }}</span>
-            <span v-if="stat.isPnl" class="stat-value" :style="pnlClass(stat.rawValue)">{{ stat.value }}</span>
+            <span v-if="stat.isPnl" class="stat-value" :style="pnlStyle(stat.rawValue, stat.isLoss)">{{ stat.value }}</span>
             <span v-else class="stat-value">{{ stat.value }}</span>
           </div>
         </div>

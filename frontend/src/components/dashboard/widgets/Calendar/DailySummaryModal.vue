@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useUiStore } from '@/stores/uiStore';
 import { useTradesStore } from '@/stores/trades';
 import { useNotebookStore } from '@/stores/notebookStore';
+import { usePnlFormatting } from '@/composables/usePnlFormatting';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import IconButton from '@/components/ui/IconButton.vue';
@@ -16,6 +17,7 @@ const uiStore = useUiStore();
 const tradesStore = useTradesStore();
 const notebookStore = useNotebookStore();
 const router = useRouter();
+const { pnlStyle, formatPnl } = usePnlFormatting();
 
 const summaryData = computed(() => tradesStore.activeSummary);
 const isLoading = computed(() => tradesStore.isSummaryLoading);
@@ -55,23 +57,11 @@ const handleAddDailyNote = async () => {
   }
 };
 
-const pnlStyle = (pnl) => {
-  if (pnl > 0) return { color: 'var(--semantic-color-feedback-positive-text)' };
-  if (pnl < 0) return { color: 'var(--semantic-color-feedback-negative-text)' };
-  return {};
-};
-
 const formattedDate = computed(() => {
   if (!summaryData.value || !summaryData.value.startDate) return '';
   const date = new Date(summaryData.value.startDate);
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 });
-
-const formattedPnl = (pnl) => {
-    if (pnl === null || pnl === undefined) return '$0.00';
-    const sign = pnl >= 0 ? '+' : '-';
-    return `${sign}$${Math.abs(pnl).toFixed(2)}`;
-};
 
 const statsGrid = computed(() => {
     if (!summaryData.value || !summaryData.value.stats) return null;
@@ -80,10 +70,10 @@ const statsGrid = computed(() => {
         col1: [ { label: 'Total Trades', value: stats.trade_count }, { label: 'Winrate', value: `${stats.win_rate.toFixed(1)}%` } ],
         col2: [ { label: 'Winners', value: stats.winning_trades }, { label: 'Losers', value: stats.losing_trades }, ],
         col3: [
-          { label: 'Gross Profit', value: formattedPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
-          { label: 'Gross Loss', value: formattedPnl(stats.gross_loss), rawValue: stats.gross_loss, isPnl: true },
+          { label: 'Gross Profit', value: formatPnl(stats.gross_profit), rawValue: stats.gross_profit, isPnl: true },
+          { label: 'Gross Loss', value: formatPnl(stats.gross_loss, true), rawValue: stats.gross_loss, isPnl: true, isLoss: true },
         ],
-        col4: [ { label: 'Net P&L', value: formattedPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
+        col4: [ { label: 'Net P&L', value: formatPnl(stats.net_pnl), rawValue: stats.net_pnl, isPnl: true }, { label: 'Profit Factor', value: stats.profit_factor_label } ]
     };
 });
 
@@ -117,7 +107,7 @@ const formatDuration = (minutes) => {
         <div class="header-left">
           <div class="header-info">
             <span class="date">{{ formattedDate }}</span>
-            <span :style="pnlStyle(summaryData.stats.net_pnl)">Net P&L {{ formattedPnl(summaryData.stats.net_pnl) }}</span>
+            <span :style="pnlStyle(summaryData.stats.net_pnl)">Net P&L {{ formatPnl(summaryData.stats.net_pnl) }}</span>
           </div>
           <BaseButton variant="secondary" size="small" @click="handleAddDailyNote">Add Note</BaseButton>
         </div>
@@ -140,7 +130,7 @@ const formatDuration = (minutes) => {
             <div class="stat-col" v-for="col in statsGrid" :key="col[0].label">
                 <div v-for="stat in col" :key="stat.label" class="stat-cell">
                     <span class="stat-label">{{ stat.label }}</span>
-                    <span v-if="stat.isPnl" class="stat-value" :style="pnlStyle(stat.rawValue)">{{ stat.value }}</span>
+                    <span v-if="stat.isPnl" class="stat-value" :style="pnlStyle(stat.rawValue, stat.isLoss)">{{ stat.value }}</span>
                     <span v-else class="stat-value">{{ stat.value }}</span>
                 </div>
             </div>
@@ -150,7 +140,7 @@ const formatDuration = (minutes) => {
         <div class="table-wrapper">
           <BaseTable :headers="tradeTableHeaders" :items="summaryData.trades" size="x-small">
             <template #p_l="{ item }">
-              <span :style="pnlStyle(item.p_l)">{{ formattedPnl(item.p_l) }}</span>
+              <span :style="pnlStyle(item.p_l)">{{ formatPnl(item.p_l) }}</span>
             </template>
             <template #setup="{ item }">
               <BasePill v-if="item.setup">{{ item.setup }}</BasePill>
