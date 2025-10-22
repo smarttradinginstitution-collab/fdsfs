@@ -279,6 +279,12 @@ class TradeRepository:
         await self.db.refresh(db_trade)
         return db_trade
 
+    async def update_review_status(self, trade: Trade, is_reviewed: bool) -> Trade:
+        """Aggiorna lo stato di revisione di un trade."""
+        trade.is_reviewed = is_reviewed
+        # Il service layer gestirà il commit e il refresh.
+        return trade
+
     async def delete_trade(self, db_trade: Trade) -> None:
         """Elimina un trade."""
         await self.db.delete(db_trade)

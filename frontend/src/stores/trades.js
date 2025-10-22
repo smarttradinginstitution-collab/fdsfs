@@ -951,7 +951,7 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
 
       try {
-        const response = await apiClient.put(`/trades/${tradeId}`, { is_reviewed: newStatus });
+        const response = await apiClient.patch(`/trades/${tradeId}/review`, { is_reviewed: newStatus });
         const updatedTrade = mapBackendTradeToFrontend(response.data);
 
         // Update state with confirmed data from backend

@@ -121,3 +121,6 @@ class TradeFilters(BaseModel):
     max_size: Optional[float] = None
     tag_ids: Optional[List[UUID]] = None
     mistake_ids: Optional[List[UUID]] = None
+
+class TradeReviewUpdate(BaseModel):
+    is_reviewed: bool
