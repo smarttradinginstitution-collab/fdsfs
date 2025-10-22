@@ -25,9 +25,66 @@ export const usePlaybookStore = defineStore('playbooks', {
     allPlaybooks(state) {
       return state.playbooks;
     },
+    getPlaybookById: (state) => (id) => {
+      return state.playbooks.find((playbook) => playbook.id === id);
+    },
   },
 
   actions: {
+    async updatePlaybook(playbookId, playbookData, ruleGroups) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        // Step 1: Update the playbook details
+        await apiClient.put(`/playbooks/${playbookId}`, playbookData);
+
+        // Step 2: Handle rules (this is a simplified example, a real implementation might be more complex)
+        // For now, let's assume we just re-create the rules
+        // First, delete existing rule groups
+        const existingGroups = await apiClient.get(`/playbooks/${playbookId}/rule-groups/`);
+        for (const group of existingGroups.data) {
+          await apiClient.delete(`/rule-groups/${group.id}`);
+        }
+
+        // Then, create new ones
+        for (const group of ruleGroups) {
+          const groupPayload = { name_group: group.title, playbook_id: playbookId };
+          const groupResponse = await apiClient.post(`/playbooks/${playbookId}/rule-groups/`, groupPayload);
+          const newGroup = groupResponse.data;
+          for (const rule of group.rules) {
+            const rulePayload = { rule: rule.description, rules_groups_playbook_id: newGroup.id };
+            await apiClient.post(`/rule-groups/${newGroup.id}/rules/`, rulePayload);
+          }
+        }
+
+        // Fetch the updated list to ensure data consistency
+        await this.fetchPlaybooks();
+      } catch (err) {
+        console.error(`Error updating playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An error occurred during playbook update.';
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async deletePlaybook(playbookId) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        await apiClient.delete(`/playbooks/${playbookId}`);
+        // Remove the playbook from the local state
+        this.playbooks = this.playbooks.filter(p => p.id !== playbookId);
+      } catch (err) {
+        console.error(`Error deleting playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An unexpected error occurred while deleting the playbook.';
+        // Re-throw the error so the component knows the operation failed
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async fetchPlaybooks() {
       const authStore = useAuthStore();
       if (!authStore.isAuthenticated) {

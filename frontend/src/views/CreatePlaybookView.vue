@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
@@ -14,9 +14,14 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 
 const router = useRouter();
+const route = useRoute();
 const playbookStore = usePlaybookStore();
 const uiStore = useUiStore();
 const ruleGroupManagerRef = ref(null);
+
+const playbookId = ref(null);
+const isEditMode = computed(() => !!playbookId.value);
+const pageTitle = computed(() => isEditMode.value ? 'Edit Playbook' : 'Create Playbook');
 
 const playbookData = ref({
   title: '',
@@ -26,6 +31,22 @@ const playbookData = ref({
   private: false,
 });
 const error = ref(null);
+
+onMounted(async () => {
+  if (route.params.id) {
+    playbookId.value = route.params.id;
+    const existingPlaybook = playbookStore.getPlaybookById(playbookId.value);
+    if (existingPlaybook) {
+      playbookData.value = { ...existingPlaybook };
+    } else {
+      // If not in store, maybe it's a direct navigation. Try fetching.
+      // This part is complex because we would need an endpoint to fetch a single playbook.
+      // For now, we assume the playbook is in the store. If not, redirect.
+      console.warn('Playbook not found in store, redirecting.');
+      router.push('/playbooks');
+    }
+  }
+});
 
 const currentStep = ref(0);
 const steps = [
@@ -64,10 +85,15 @@ const submitPlaybookWithRules = async () => {
   error.value = null;
   try {
     const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
-    router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
+    if (isEditMode.value) {
+      await playbookStore.updatePlaybook(playbookId.value, playbookData.value, ruleGroups);
+      router.push({ name: 'playbook-detail', params: { id: playbookId.value } });
+    } else {
+      const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
+      router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
+    }
   } catch (err) {
-    console.error("Failed to create playbook with rules:", err);
+    console.error("Failed to save playbook with rules:", err);
     error.value = playbookStore.error || 'An unknown error occurred during save.';
   } finally {
     uiStore.hideLoader();
@@ -86,7 +112,7 @@ const submitPlaybookWithRules = async () => {
                 <ArrowLeftIcon />
               </IconButton>
             </div>
-            <!-- Header title can be added here if needed -->
+            <h2 class="page-title">{{ pageTitle }}</h2>
           </div>
         </template>
         <div class="page-content">
@@ -135,7 +161,7 @@ const submitPlaybookWithRules = async () => {
           <div class="form-actions">
             <BaseButton variant="secondary" @click="cancelCreation" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
             <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
-              {{ isLastStep ? 'Save' : 'Next' }}
+              {{ isLastStep ? (isEditMode ? 'Update' : 'Save') : 'Next' }}
             </BaseButton>
           </div>
         </div>
