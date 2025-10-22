@@ -122,6 +122,8 @@ class TradeService:
         trade_dict = trade_data.model_dump(exclude={
             'tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states',
         })
+        if 'is_reviewed' not in trade_dict or trade_dict['is_reviewed'] is None:
+            trade_dict['is_reviewed'] = False
 
         # Calcola l'R-Multiple corretto da salvare nel DB
         # Calcola tutte le metriche per ottenere l'r_multiple da salvare
@@ -482,3 +484,17 @@ class TradeService:
 
         # 5. Restituisce gli ID delle regole aggiornate
         return [rule.id for rule in db_trade.rules_followed]
+
+    async def toggle_trade_review_status(self, claims: dict, trade_id: UUID) -> Optional[TradeRead]:
+        """Toggles the 'reviewed' status of a trade without heavy recalculations."""
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            return None
+
+        # Validate that the trade belongs to the user
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        # Toggle the review status using the new repository method
+        updated_trade = await self.repo.toggle_review_status(db_trade)
+
+        return TradeRead.model_validate(updated_trade)

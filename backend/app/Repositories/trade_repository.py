@@ -657,6 +657,13 @@ class TradeRepository:
         )
         return count_result.scalar_one()
 
+    async def toggle_review_status(self, trade: Trade) -> Trade:
+        """Toggles the 'reviewed' status of a trade."""
+        trade.is_reviewed = not trade.is_reviewed
+        await self.db.commit()
+        await self.db.refresh(trade, attribute_names=['is_reviewed'])
+        return trade
+
     async def get_trade_stats_by_day_for_date_range(
         self, trading_account_id: UUID, start_date: date, end_date: date
     ) -> dict[date, dict[str, int]]:

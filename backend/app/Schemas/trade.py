@@ -89,6 +89,7 @@ class TradeRead(TradeBase):
     id: UUID
     created_at: datetime
     trading_account_id: UUID
+    is_reviewed: bool = False
     is_linked_to_note: bool = False # Campo per indicare se il trade è già linkato a una nota
 
     gross_p_l: Optional[float] = None

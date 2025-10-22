@@ -176,6 +176,15 @@ async def delete_trade(
     return await controller.delete_trade(claims, trade_id, service)
 
 
+@router.post("/{trade_id}/toggle-review", response_model=TradeRead, summary="Toggle the 'reviewed' status of a trade")
+async def toggle_trade_review_status(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.toggle_trade_review_status(claims, trade_id, service)
+
+
 # --- Trade <> Tag Association ---
 from app.Schemas.tag import TagRead
 

@@ -308,3 +308,40 @@ async def test_update_trade_rules(async_client: AsyncClient, db_session: AsyncSe
     assert len(trade_details["rules_followed"]) == 2
     followed_rule_ids = {rule["id"] for rule in trade_details["rules_followed"]}
     assert followed_rule_ids == set(rule_ids_to_set)
+
+
+async def test_toggle_trade_review_status(async_client: AsyncClient, db_session: AsyncSession):
+    """
+    Tests that the dedicated endpoint for toggling the 'reviewed' status works correctly.
+    """
+    # 1. Setup: Create a trade
+    trading_account_id = await setup_trading_account(async_client, db_session)
+    trade_payload = {
+        "trading_account_id": trading_account_id,
+        "symbol_snapshot": "REVIEW_TEST",
+        "status": "closed",
+        "direction": "LONG",
+    }
+    create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
+    assert create_response.status_code == 201
+    trade_data = create_response.json()
+    trade_id = trade_data["id"]
+
+    # Verify initial state is not reviewed
+    assert not trade_data["is_reviewed"]
+
+    # 2. Action: Call the toggle endpoint
+    toggle_response = await async_client.post(f"/api/v1/trades/{trade_id}/toggle-review")
+    assert toggle_response.status_code == 200
+    updated_trade = toggle_response.json()
+
+    # 3. Verify: Check that the status is now true
+    assert updated_trade["is_reviewed"] is True
+
+    # 4. Action: Call the toggle endpoint again
+    toggle_response_2 = await async_client.post(f"/api/v1/trades/{trade_id}/toggle-review")
+    assert toggle_response_2.status_code == 200
+    updated_trade_2 = toggle_response_2.json()
+
+    # 5. Verify: Check that the status is now false
+    assert updated_trade_2["is_reviewed"] is False

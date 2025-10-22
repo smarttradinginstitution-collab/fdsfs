@@ -235,3 +235,20 @@ class TradesController:
         Handles the request to update the 'followed' rules for a specific trade.
         """
         return await service.update_trade_rules(claims, trade_id, rule_ids)
+
+    async def toggle_trade_review_status(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> TradeRead:
+        """
+        Handles the request to toggle the 'reviewed' status of a trade.
+        """
+        updated_trade = await service.toggle_trade_review_status(claims, trade_id)
+        if not updated_trade:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Trade not found or does not belong to the user.",
+            )
+        return updated_trade
