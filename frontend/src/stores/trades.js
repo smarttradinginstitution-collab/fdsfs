@@ -18,21 +18,13 @@ import apiClient from '../services/api';
  * @returns {object} L'oggetto trade nel formato utilizzato dal frontend.
  */
 const mapBackendTradeToFrontend = (trade) => ({
-  id: trade.id,
-  type: trade.direction,
+  // Clona prima l'oggetto originale per mantenere tutti i campi
+  ...trade,
+
+  // Ora sovrascrivi o aggiungi i campi personalizzati per il frontend
   pnl: trade.p_l,
   date: trade.entry_timestamp,
-  playbook: trade.playbook?.title ?? '-',
-  risk: trade.risk, // Assumendo che 'risk' esista o venga calcolato
-  instrument: 'Stocks', // Da rendere dinamico se necessario
-  commission: trade.commission, // Assumendo che esista
-  netROI: trade.net_roi, // Assumendo che esista
-  rMultiple: trade.r_multiple, // Assumendo che esista
-  ticks: trade.ticks, // Assumendo che esista
-  bestExit: trade.best_exit, // Assumendo che esista
-  volume: trade.position_size,
-  // Manteniamo anche i campi originali se servono altrove
-  ...trade,
+  playbook: trade.playbook?.title ?? '-', // Questo ora sovrascriverà l'oggetto playbook
   rules_followed: trade.rules_followed || [], // Assicura che sia sempre un array
 });
 
