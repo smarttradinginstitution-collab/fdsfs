@@ -13,7 +13,7 @@ from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Router.auth import get_current_claims
 
-from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate
+from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate, TradeReviewUpdate
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -165,6 +165,17 @@ async def update_trade(
     service: TradeService = Depends(),
 ):
     return await controller.update_trade(claims, trade_id, trade_data, service)
+
+
+@router.patch("/{trade_id}/review", response_model=TradeRead)
+async def update_trade_review_status(
+    trade_id: UUID,
+    trade_data: TradeReviewUpdate,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    # Poiché non esiste un controller separato, chiamiamo direttamente il service
+    return await service.update_review_status(claims, trade_id, trade_data)
 
 
 @router.delete("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)

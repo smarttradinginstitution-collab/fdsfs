@@ -18,7 +18,7 @@ from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Services.trading_account_service import TradingAccountService
-from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
+from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead, TradeReviewUpdate
 from app.Models.enums import TradeDirection
 from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
@@ -320,6 +320,20 @@ class TradeService:
         await trading_account_service.recalculate_account_metrics(trading_account_id)
 
         return TradeRead.model_validate(db_trade)
+
+    async def update_review_status(self, claims: dict, trade_id: UUID, update_data: TradeReviewUpdate) -> TradeRead:
+        """Aggiorna lo stato di revisione di un trade."""
+        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        if not db_trade:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
+
+        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
+
+        updated_trade = await self.repo.update_review_status(db_trade, update_data.is_reviewed)
+
+        await self.repo.commit_and_refresh(updated_trade)
+
+        return TradeRead.model_validate(updated_trade)
 
     async def delete_trade(self, claims: dict, trade_id: UUID) -> bool:
         """Elimina un trade, verificando l'appartenenza."""

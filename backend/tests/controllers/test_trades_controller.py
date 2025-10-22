@@ -308,3 +308,47 @@ async def test_update_trade_rules(async_client: AsyncClient, db_session: AsyncSe
     assert len(trade_details["rules_followed"]) == 2
     followed_rule_ids = {rule["id"] for rule in trade_details["rules_followed"]}
     assert followed_rule_ids == set(rule_ids_to_set)
+
+
+async def test_update_trade_review_status(async_client: AsyncClient, db_session: AsyncSession):
+    """Testa l'aggiornamento dello stato 'is_reviewed' di un trade tramite l'endpoint PATCH dedicato."""
+    # 1. Setup: Crea un account di trading e un trade
+    trading_account_id = await setup_trading_account(async_client, db_session)
+    trade_payload = {
+        "trading_account_id": trading_account_id,
+        "symbol_snapshot": "REVIEW_TEST",
+        "is_reviewed": False  # Stato iniziale
+    }
+    create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
+    assert create_response.status_code == 201
+    created_trade = create_response.json()
+    trade_id = created_trade["id"]
+    assert not created_trade["is_reviewed"]
+
+    # 2. Azione: Aggiorna lo stato a True
+    patch_response_true = await async_client.patch(
+        f"/api/v1/trades/{trade_id}/review",
+        json={"is_reviewed": True}
+    )
+
+    # 3. Verifica 1
+    assert patch_response_true.status_code == 200
+    updated_trade_true = patch_response_true.json()
+    assert updated_trade_true["is_reviewed"] is True
+
+    # 4. Azione: Aggiorna lo stato a False
+    patch_response_false = await async_client.patch(
+        f"/api/v1/trades/{trade_id}/review",
+        json={"is_reviewed": False}
+    )
+
+    # 5. Verifica 2
+    assert patch_response_false.status_code == 200
+    updated_trade_false = patch_response_false.json()
+    assert updated_trade_false["is_reviewed"] is False
+
+    # 6. Verifica 3 (Consistenza DB)
+    get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
+    assert get_response.status_code == 200
+    final_trade_state = get_response.json()
+    assert final_trade_state["is_reviewed"] is False
