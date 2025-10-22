@@ -10,6 +10,7 @@ const tradingAccountsStore = useTradingAccountsStore();
 
 const newAccountName = ref('');
 const errorMessage = ref('');
+const isCreating = ref(false);
 
 // Carica i conti di trading quando il componente viene montato
 onMounted(() => {
@@ -29,7 +30,7 @@ async function handleCreateAccount() {
     return;
   }
   errorMessage.value = '';
-
+  isCreating.value = true;
   try {
     // Il broker_id è opzionale e non viene inviato, sarà null di default
     const newAccount = await tradingAccountsStore.createTradingAccount({
@@ -42,6 +43,8 @@ async function handleCreateAccount() {
   } catch (error) {
     errorMessage.value = 'Errore durante la creazione dell\'account. Riprova.';
     console.error(error);
+  } finally {
+    isCreating.value = false;
   }
 }
 </script>
@@ -87,7 +90,7 @@ async function handleCreateAccount() {
           <div v-if="errorMessage" class="error-message">
             {{ errorMessage }}
           </div>
-          <BaseButton type="submit" variant="primary" size="medium">
+          <BaseButton type="submit" variant="primary" size="medium" :is-loading="isCreating">
             Crea e Continua
           </BaseButton>
         </form>

@@ -131,9 +131,8 @@ const handleSubmit = () => {
     </fieldset>
 
     <div class="form-actions">
-      <BaseButton type="submit" :disabled="tradesStore.isLoading">
-        <LoadingSpinner v-if="tradesStore.isLoading" />
-        <span v-else>Save Trade</span>
+      <BaseButton type="submit" :is-loading="tradesStore.isLoading">
+        Save Trade
       </BaseButton>
     </div>
   </form>

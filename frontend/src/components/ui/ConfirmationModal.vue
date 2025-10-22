@@ -9,7 +9,7 @@
     <template #footer>
       <div class="footer-actions">
         <BaseButton @click="$emit('close')" variant="secondary">Cancel</BaseButton>
-        <BaseButton @click="$emit('confirm')" variant="danger">Confirm</BaseButton>
+        <BaseButton @click="$emit('confirm')" variant="danger" :is-loading="isConfirming">Confirm</BaseButton>
       </div>
     </template>
   </BaseModal>
@@ -31,6 +31,10 @@ defineProps({
   message: {
     type: String,
     default: 'Are you sure you want to proceed?',
+  },
+  isConfirming: {
+    type: Boolean,
+    default: false,
   },
 });
 

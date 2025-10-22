@@ -11,6 +11,7 @@
       :show="isDeleteModalVisible"
       title="Delete Item"
       :message="`Are you sure you want to delete this item? This action cannot be undone.`"
+      :is-confirming="isDeleting"
       @close="isDeleteModalVisible = false"
       @confirm="handleConfirmDelete"
     />
@@ -22,7 +23,7 @@
           v-for="item in items"
           :key="item.id"
           :item="item"
-          :is-saving="store.isSaving"
+          :is-saving="isSaving"
           @update="handleUpdate"
           @delete="promptDelete"
         />
@@ -34,7 +35,7 @@
             v-for="item in group.news_impacts"
             :key="item.id"
             :item="item"
-            :is-saving="store.isSaving"
+            :is-saving="isSaving"
             @update="handleUpdate"
             @delete="promptDelete"
           />
@@ -42,7 +43,7 @@
       </template>
       <LibraryItemCreator
         v-if="isCreating"
-        :is-saving="store.isSaving"
+        :is-saving="isSaving"
         :is-grouped="isGrouped"
         :groups="groups"
         @save="handleCreate"
@@ -72,6 +73,7 @@ const props = defineProps({
   updateAction: { type: Function, required: false },
   deleteAction: { type: Function, required: false },
   isGrouped: { type: Boolean, default: false },
+  isSaving: { type: Boolean, default: false },
 });
 
 const store = useLibraryStore();
@@ -81,6 +83,7 @@ const isCreating = ref(false);
 // --- Deletion Logic ---
 const isDeleteModalVisible = ref(false);
 const itemToDelete = ref(null);
+const isDeleting = ref(false);
 
 const promptDelete = (item) => {
   itemToDelete.value = item;
@@ -89,13 +92,21 @@ const promptDelete = (item) => {
 
 const handleConfirmDelete = async () => {
   if (!itemToDelete.value) return;
-  if (props.isGrouped) {
-    await newsImpactsStore.deleteNewsImpact(itemToDelete.value.id);
-  } else {
-    await props.deleteAction(itemToDelete.value.id);
+  isDeleting.value = true;
+  try {
+    if (props.isGrouped) {
+      await newsImpactsStore.deleteNewsImpact(itemToDelete.value.id);
+    } else {
+      await props.deleteAction(itemToDelete.value.id);
+    }
+    isDeleteModalVisible.value = false;
+    itemToDelete.value = null;
+  } catch (error) {
+    console.error('Failed to delete item:', error);
+    // Optionally, show an error message to the user
+  } finally {
+    isDeleting.value = false;
   }
-  isDeleteModalVisible.value = false;
-  itemToDelete.value = null;
 };
 
 // --- Create/Update Logic ---

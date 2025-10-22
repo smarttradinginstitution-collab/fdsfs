@@ -18,6 +18,7 @@ const emit = defineEmits(['close']);
 
 const imageStore = useImageStore();
 const localImage = ref({});
+const isSaving = ref(false);
 
 const imagePhases = ['Pre-Entrata', 'Entrata', 'Gestione', 'Uscita', 'Post-Analisi'];
 const imageCategories = ['Analisi Tecnica', 'Analisi Fondamentale', 'News', 'Psicologia', 'Altro'];
@@ -32,17 +33,23 @@ watch(() => props.image, (newImage) => {
 
 const saveChanges = async () => {
   if (!localImage.value.id) return;
-
-  const updateData = {
-    description: localImage.value.description,
-    category: localImage.value.category,
-    phase: localImage.value.phase,
-    is_primary_before: localImage.value.is_primary_before,
-    is_primary_after: localImage.value.is_primary_after,
-  };
-
-  await imageStore.updateImageMetadata(localImage.value.id, updateData);
-  emit('close');
+  isSaving.value = true;
+  try {
+    const updateData = {
+      description: localImage.value.description,
+      category: localImage.value.category,
+      phase: localImage.value.phase,
+      is_primary_before: localImage.value.is_primary_before,
+      is_primary_after: localImage.value.is_primary_after,
+    };
+    await imageStore.updateImageMetadata(localImage.value.id, updateData);
+    emit('close');
+  } catch (error) {
+    console.error('Failed to save image metadata:', error);
+    // Qui si potrebbe mostrare un messaggio di errore all'utente
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 const closeModal = () => {
@@ -92,7 +99,7 @@ const closeModal = () => {
     </div>
     <template #footer>
       <BaseButton @click="closeModal" variant="secondary">Cancel</BaseButton>
-      <BaseButton @click="saveChanges" variant="primary">Save Changes</BaseButton>
+      <BaseButton @click="saveChanges" variant="primary" :is-loading="isSaving">Save Changes</BaseButton>
     </template>
   </BaseModal>
 </template>

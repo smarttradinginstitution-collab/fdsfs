@@ -29,7 +29,7 @@
             <ColorSelector v-model="newTagColor" />
             <div class="creator-actions">
               <BaseButton size="small" variant="secondary" @click="cancelCreation">Cancel</BaseButton>
-              <BaseButton size="small" @click="handleCreateTag" :loading="store.isSaving">Create</BaseButton>
+              <BaseButton size="small" @click="handleCreateTag" :is-loading="store.isSaving">Create</BaseButton>
             </div>
           </div>
 

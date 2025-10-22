@@ -7,7 +7,7 @@
     />
     <ColorSelector v-model="tagColor" />
     <div class="actions">
-      <BaseButton @click="onSave" :disabled="!tagName.trim()" :loading="isSaving">Save</BaseButton>
+      <BaseButton @click="onSave" :disabled="!tagName.trim()" :is-loading="isSaving">Save</BaseButton>
       <BaseButton @click="onCancel" variant="secondary">Cancel</BaseButton>
     </div>
   </div>

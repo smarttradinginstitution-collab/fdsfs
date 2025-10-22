@@ -7,7 +7,7 @@
     />
     <ColorSelector v-model="impactColor" />
     <div class="actions">
-      <BaseButton @click="onSave" :disabled="!impactName.trim()" :loading="isSaving">Save</BaseButton>
+      <BaseButton @click="onSave" :disabled="!impactName.trim()" :is-loading="isSaving">Save</BaseButton>
       <BaseButton @click="onCancel" variant="secondary">Cancel</BaseButton>
     </div>
   </div>

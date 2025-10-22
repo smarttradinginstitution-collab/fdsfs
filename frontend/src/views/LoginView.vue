@@ -33,6 +33,7 @@ onMounted(() => {
 
 async function handleLogin() {
   errorMessage.value = '';
+  uiStore.showLoader();
   try {
     const result = await authStore.login(email.value, password.value);
     if (result.mfaRequired) {
@@ -42,17 +43,22 @@ async function handleLogin() {
   } catch (error) {
     errorMessage.value = error.response?.data?.detail || 'Credenziali non valide o errore inatteso.';
     console.error(error);
+  } finally {
+    uiStore.hideLoader();
   }
 }
 
 async function handleMfaVerification() {
   errorMessage.value = '';
+  uiStore.showLoader();
   try {
     await authStore.verifyMfaAndLogin(otpCode.value);
     // La redirezione avviene nello store dopo la verifica
   } catch (error) {
     errorMessage.value = error.response?.data?.detail || 'Codice OTP non valido o errore inatteso.';
     console.error(error);
+  } finally {
+    uiStore.hideLoader();
   }
 }
 </script>
@@ -89,7 +95,7 @@ async function handleMfaVerification() {
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        <BaseButton type="submit" variant="primary" size="medium">
+        <BaseButton type="submit" variant="primary" size="medium" :is-loading="uiStore.isAppLoading">
           Accedi
         </BaseButton>
       </form>
@@ -111,7 +117,7 @@ async function handleMfaVerification() {
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        <BaseButton type="submit" variant="primary" size="medium">
+        <BaseButton type="submit" variant="primary" size="medium" :is-loading="uiStore.isAppLoading">
           Verifica Codice
         </BaseButton>
       </form>

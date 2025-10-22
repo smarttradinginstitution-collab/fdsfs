@@ -8,7 +8,7 @@
       @keyup.esc="onCancel"
     />
     <div class="actions">
-      <BaseButton @click="onSave" :disabled="!groupName.trim()" :loading="isSaving">Save</BaseButton>
+      <BaseButton @click="onSave" :disabled="!groupName.trim()" :is-loading="isSaving">Save</BaseButton>
       <BaseButton @click="onCancel" variant="secondary">Cancel</BaseButton>
     </div>
   </div>
