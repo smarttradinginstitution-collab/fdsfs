@@ -16,6 +16,8 @@ import { useUiStore } from '../stores/uiStore';
 import { useFilterStore } from '../stores/filterStore';
 import { useDashboardLayoutStore } from '../stores/dashboardLayout';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import { useAnalyticsStore } from '@/stores/analyticsStore';
+import { storeToRefs } from 'pinia';
 import DailySummaryModal from '../components/dashboard/widgets/Calendar/DailySummaryModal.vue';
 import WeeklySummaryModal from '../components/dashboard/widgets/Calendar/WeeklySummaryModal.vue';
 import StatSelectorPanel from '../components/dashboard/zones/StatSelectorPanel.vue';
@@ -25,6 +27,8 @@ const uiStore = useUiStore();
 const filterStore = useFilterStore();
 const dashboardLayoutStore = useDashboardLayoutStore();
 const tradingAccountsStore = useTradingAccountsStore();
+const analyticsStore = useAnalyticsStore();
+const { soaAnalysisData, isSoaLoading } = storeToRefs(analyticsStore);
 
 const layout = computed(() => dashboardLayoutStore.layout);
 
@@ -58,10 +62,10 @@ onMounted(() => {
 watch(
   () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
   () => {
-    // Quando i filtri cambiano, aggiorniamo solo i dati della dashboard.
     tradesStore.fetchAllDataForDashboard();
+    analyticsStore.fetchSoaAnalysis();
   },
-  { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
+  { deep: true, immediate: true }
 );
 
 // Watch for the user finishing layout editing
@@ -97,6 +101,9 @@ watch(
 
     <!-- Stats Grid -->
     <StatsZone />
+
+    <!-- SOA Widget -->
+    <SoaDashboardWidget :analysisData="soaAnalysisData" :isLoading="isSoaLoading" class="mb-6"/>
 
     <!-- Charts Zone -->
     <DashboardZone

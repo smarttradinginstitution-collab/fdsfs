@@ -134,8 +134,16 @@ class SOAService:
         }
         headline_insight = self._generate_headline_insight(parametric_optimization, r_autocorrelation)
 
+        clusters_summary = self.get_clusters_summary()
+        total_trades = sum(cluster['trade_count'] for cluster in clusters_summary.values())
+        cluster_percentages = {
+            label: (summary['trade_count'] / total_trades) * 100 if total_trades > 0 else 0
+            for label, summary in clusters_summary.items()
+        }
+
         return {
-            "clusters_summary": self.get_clusters_summary(),
+            "clusters_summary": clusters_summary,
+            "cluster_percentages": cluster_percentages,
             "causal_analysis": causal_analysis,
             "parametric_optimization": parametric_optimization,
             "predictive_metrics": {

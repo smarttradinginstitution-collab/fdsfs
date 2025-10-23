@@ -81,6 +81,7 @@ class StructuredAdvice(BaseModel):
 class SOAOverallAnalysis(BaseModel):
     """The main response model for the complete Strength & Opportunity Analysis."""
     clusters_summary: Dict[str, SOAClusterSummarySchema] = Field(..., description="Summary of average characteristics for each identified trade cluster.")
+    cluster_percentages: Dict[str, float] = Field({}, description="Percentage of trades belonging to each cluster.")
     causal_analysis: SOACausalAnalysisSchema = Field(..., description="Analysis of how different attributes (playbooks, tags, etc.) correlate with clusters.")
     parametric_optimization: Dict[str, Any] = Field(..., description="Results of SL/TP optimization and duration-based expectancy analysis.")
     predictive_metrics: Dict[str, Any] = Field(..., description="Metrics with potential predictive value, like R-multiple autocorrelation.")
