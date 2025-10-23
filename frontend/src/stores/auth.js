@@ -210,10 +210,10 @@ export const useAuthStore = defineStore('auth', () => {
     // useTradingDnaStore().resetState();
     // useUiStore().resetState();
 
-    // useDashboardLayoutStore().resetState();
-    // useNotebookStore().resetState();
-    // usePlaybookStore().resetState();
-    // useTradesStore().resetState();
+    // useDashboardLayoutStore().$reset();
+    // useNotebookStore().$reset();
+    // usePlaybookStore().$reset();
+    // useTradesStore().$reset();
     // =========================================================================
 
     try {

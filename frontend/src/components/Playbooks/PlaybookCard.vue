@@ -46,7 +46,7 @@ async function handleDelete(closeMenu) {
           <span class="trade-count">{{ playbook.stats?.total_trades || 0 }} Trades</span>
         </div>
         <ActionsMenu @click.stop>
-          <template #content="{ closeMenu }">
+          <template #default="{ closeMenu }">
             <router-link :to="{ name: 'playbook-edit', params: { id: playbook.id } }" class="menu-item" @click="closeMenu">
               Edit
             </router-link>
