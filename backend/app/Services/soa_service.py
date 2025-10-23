@@ -55,9 +55,26 @@ class SOAService:
     def run_full_analysis(self):
         """
         Orchestra l'esecuzione di tutte le analisi SOA e restituisce i risultati combinati.
+        Restituisce sempre una struttura dati valida per lo schema Pydantic.
         """
         if self.df.empty:
-            return {}
+            # Ritorna una struttura dati di default se non ci sono trade validi
+            return {
+                "clusters_summary": {},
+                "causal_analysis": {
+                    'playbook': [], 'tag': [], 'mistake': [],
+                    'psychology': [], 'news': [], 'rule': []
+                },
+                "parametric_optimization": {
+                    "sl_tp": {},
+                    "duration_expectancy": [],
+                },
+                "predictive_metrics": {
+                    "r_autocorrelation": 0.0,
+                },
+                "trade_details": [],
+                "headline_insight": "Nessun trade disponibile per l'analisi.",
+            }
 
         # Livello 1: Clustering
         self.cluster_trades()
@@ -292,9 +309,18 @@ class SOAService:
     def calculate_drawdown_zscore(self, daily_balances: List[Dict]) -> Dict:
         """
         Calcola lo Z-score del drawdown corrente basato sulla serie storica dei saldi.
+        Restituisce sempre una struttura dati completa e valida per lo schema Pydantic.
         """
+        # Valori di default che garantiscono la validazione Pydantic
+        default_return = {
+            "z_score": 0.0,
+            "current_drawdown_usd": 0.0,
+            "average_drawdown_usd": 0.0,
+            "stddev_drawdown_usd": 0.0
+        }
+
         if not daily_balances or len(daily_balances) < 2:
-            return {"z_score": 0, "current_drawdown": 0}
+            return default_return
 
         df_balance = pd.DataFrame(daily_balances)
         df_balance['date'] = pd.to_datetime(df_balance['date'])
@@ -306,23 +332,27 @@ class SOAService:
 
         drawdowns = df_balance[df_balance['drawdown'] < 0]['drawdown']
 
+        current_drawdown = df_balance['drawdown'].iloc[-1]
+
         if drawdowns.empty:
-            return {"z_score": 0, "current_drawdown": 0}
+            default_return["current_drawdown_usd"] = current_drawdown if current_drawdown < 0 else 0.0
+            return default_return
 
         avg_drawdown = drawdowns.mean()
         std_drawdown = drawdowns.std()
-        current_drawdown = df_balance['drawdown'].iloc[-1]
 
+        # Se non c'è deviazione, lo z-score non è calcolabile in modo significativo
         if std_drawdown == 0 or pd.isna(std_drawdown):
             z_score = 0.0
         else:
+            # Lo Z-score ha senso solo se siamo in drawdown
             z_score = (current_drawdown - avg_drawdown) / std_drawdown if current_drawdown < 0 else 0.0
 
         return {
             "z_score": z_score,
             "current_drawdown_usd": current_drawdown,
             "average_drawdown_usd": avg_drawdown,
-            "stddev_drawdown_usd": std_drawdown
+            "stddev_drawdown_usd": std_drawdown if pd.notna(std_drawdown) else 0.0
         }
 
 # Esempio di utilizzo (per sviluppo e test)

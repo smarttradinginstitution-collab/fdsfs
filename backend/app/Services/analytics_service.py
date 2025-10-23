@@ -315,10 +315,8 @@ class AnalyticsService:
             trading_account_id, start_date, end_date
         )
 
-        if not trades:
-            return None
-
         # 2. Arricchisci ogni trade con metriche e vettori SOA
+        # La logica per gestire l'assenza di trade è ora centralizzata nel SOAService
         enriched_trades_data = []
         for trade in trades:
             trade_dict = trade.to_dict() # Converte il modello SQLAlchemy in dizionario
