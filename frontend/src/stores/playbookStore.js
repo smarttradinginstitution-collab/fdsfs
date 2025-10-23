@@ -53,32 +53,11 @@ export const usePlaybookStore = defineStore('playbooks', {
       }
     },
 
-    async updatePlaybook(playbookId, playbookData, ruleGroups) {
+    async updatePlaybook(playbookId, playbookData) {
       this.isLoading = true;
       this.error = null;
       try {
-        // Step 1: Update the playbook details
         await apiClient.put(`/playbooks/${playbookId}`, playbookData);
-
-        // Step 2: Handle rules (this is a simplified example, a real implementation might be more complex)
-        // For now, let's assume we just re-create the rules
-        // First, delete existing rule groups
-        const existingGroups = await apiClient.get(`/playbooks/${playbookId}/rule-groups/`);
-        for (const group of existingGroups.data) {
-          await apiClient.delete(`/rule-groups/${group.id}`);
-        }
-
-        // Then, create new ones
-        for (const group of ruleGroups) {
-          const groupPayload = { name_group: group.title, playbook_id: playbookId };
-          const groupResponse = await apiClient.post(`/playbooks/${playbookId}/rule-groups/`, groupPayload);
-          const newGroup = groupResponse.data;
-          for (const rule of group.rules) {
-            const rulePayload = { rule: rule.description, rules_groups_playbook_id: newGroup.id };
-            await apiClient.post(`/rule-groups/${newGroup.id}/rules/`, rulePayload);
-          }
-        }
-
         // Fetch the updated list to ensure data consistency
         await this.fetchPlaybooks();
       } catch (err) {
@@ -254,7 +233,7 @@ export const usePlaybookStore = defineStore('playbooks', {
           rule,
         });
         await this.fetchRuleGroups(playbookId); // Refresh the entire list
-      } catch (err) {
+      } catch (err)
         console.error('Error creating rule:', err);
         this.ruleGroupsError = err.response?.data?.detail || 'Failed to create new rule.';
       } finally {

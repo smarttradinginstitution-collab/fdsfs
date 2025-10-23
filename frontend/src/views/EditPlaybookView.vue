@@ -78,7 +78,11 @@ const submitPlaybookUpdate = async () => {
   error.value = null;
   try {
     const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    await playbookStore.updatePlaybook(playbookId.value, playbookData.value, ruleGroups);
+    const finalPlaybookData = {
+      ...playbookData.value,
+      rule_groups: ruleGroups,
+    };
+    await playbookStore.updatePlaybook(playbookId.value, finalPlaybookData);
     router.push({ name: 'playbook-detail', params: { id: playbookId.value } });
   } catch (err) {
     console.error("Failed to update playbook with rules:", err);
