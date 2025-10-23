@@ -75,7 +75,8 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
 
     # --- 4. Calcolo Net ROI (indipendente dal resto) ---
     if pnl is not None and initial_balance > 0:
-        metrics["net_roi"] = (pnl / initial_balance) * 100
+        # Assicura che entrambi gli operandi siano Decimal per evitare TypeError
+        metrics["net_roi"] = (pnl / Decimal(initial_balance)) * 100
 
     # --- 5. Calcolo dei Vettori SOA ---
     trade_risk = metrics.get("trade_risk")
