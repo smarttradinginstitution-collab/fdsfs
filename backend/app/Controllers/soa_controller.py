@@ -27,7 +27,7 @@ async def get_soa_analysis(
     """
     Endpoint per eseguire l'analisi SOA completa.
     """
-    analytics_service = AnalyticsService(db)
+    analytics_service = AnalyticsService(db=db)
     soa_results = await analytics_service.get_soa_analysis(
         trading_account_id=trading_account_id,
         start_date=start_date,

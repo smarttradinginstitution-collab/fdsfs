@@ -37,7 +37,7 @@ class AnalyticsService:
     Service layer for handling analytics requests.
     Acts as an orchestrator that fetches data and uses MetricsCalculator for calculations.
     """
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.trade_repo = TradeRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
