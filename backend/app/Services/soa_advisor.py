@@ -1,16 +1,16 @@
 # app/Services/soa_advisor.py
 from typing import Dict, Any, Optional
 
-def generate_sl_advice(avg_user_sl_r: Optional[float], sl_opt_p95: Optional[float]) -> Optional[str]:
+def generate_sl_advice(avg_user_stress_ratio: Optional[float], sl_opt_p95: Optional[float]) -> Optional[str]:
     """Genera consiglio basato sull'ottimizzazione dello Stop Loss."""
-    if avg_user_sl_r is None or sl_opt_p95 is None or avg_user_sl_r <= 0 or sl_opt_p95 <= 0:
-        return None # Dati insufficienti
+    if avg_user_stress_ratio is None or sl_opt_p95 is None or avg_user_stress_ratio <= 0 or sl_opt_p95 <= 0:
+        return "Nessun trade vincente nel periodo selezionato per calcolare l'ottimizzazione dello Stop Loss."
 
-    diff_percentage = ((sl_opt_p95 - avg_user_sl_r) / avg_user_sl_r) * 100
+    diff_percentage = ((sl_opt_p95 - avg_user_stress_ratio) / avg_user_stress_ratio) * 100
 
     if diff_percentage > 15: # Se l'ottimale è significativamente più ampio (>15%)
         return (
-            f"**Stop Loss Troppo Stretto:** Il tuo SL medio ({avg_user_sl_r:.2f} R) è "
+            f"**Stop Loss Troppo Stretto:** Il tuo SL medio ({avg_user_stress_ratio:.2f} R) è "
             f"significativamente più stretto dello SL ottimale suggerito ({sl_opt_p95:.2f} R), "
             f"calcolato sul 95% dei tuoi trade vincenti. Stai probabilmente tagliando vincite "
             f"a causa del rumore. **Azione:** Considera di testare uno SL più ampio "
@@ -18,14 +18,14 @@ def generate_sl_advice(avg_user_sl_r: Optional[float], sl_opt_p95: Optional[floa
         )
     elif diff_percentage < -15: # Se l'ottimale è significativamente più stretto (raro, ma possibile)
         return (
-             f"**Stop Loss Potenzialmente Troppo Ampio:** Il tuo SL medio ({avg_user_sl_r:.2f} R) è "
+             f"**Stop Loss Potenzialmente Troppo Ampio:** Il tuo SL medio ({avg_user_stress_ratio:.2f} R) è "
              f"più ampio di quanto necessario per la maggior parte dei tuoi trade vincenti ({sl_opt_p95:.2f} R). "
              f"**Azione:** Potresti valutare se uno SL leggermente più stretto (es. {sl_opt_p95:.2f} R) "
              f"migliora il R:R senza impattare troppo il Win Rate."
         )
     else: # Se sono vicini
          return (
-             f"**Stop Loss Ben Calibrato:** Il tuo SL medio ({avg_user_sl_r:.2f} R) è ben allineato "
+             f"**Stop Loss Ben Calibrato:** Il tuo SL medio ({avg_user_stress_ratio:.2f} R) è ben allineato "
              f"con lo SL ottimale suggerito ({sl_opt_p95:.2f} R) per i tuoi trade vincenti. "
              f"Buona gestione del rischio iniziale."
          )
@@ -33,7 +33,7 @@ def generate_sl_advice(avg_user_sl_r: Optional[float], sl_opt_p95: Optional[floa
 def generate_tp_advice(avg_user_planned_tp_r: Optional[float], tp_median: Optional[float]) -> Optional[str]:
     """Genera consiglio basato sull'ottimizzazione del Take Profit."""
     if avg_user_planned_tp_r is None or tp_median is None or avg_user_planned_tp_r <= 0 or tp_median <= 0:
-        return None
+        return "Nessun trade vincente nel periodo selezionato per calcolare l'ottimizzazione del Take Profit."
 
     diff_percentage = ((avg_user_planned_tp_r - tp_median) / tp_median) * 100
 
@@ -99,18 +99,18 @@ def generate_structured_advice(soa_results: Dict[str, Any]) -> Dict[str, Any]:
     advice = {}
 
     # Estrai i dati necessari da soa_results (usa .get() per sicurezza)
-    optimization_data = soa_results.get("parametric_optimization", {}).get("sl_tp", {})
+    optimization_data = soa_results.get("parametric_optimization", {})
     predictive_data = soa_results.get("predictive_metrics", {})
     drawdown_data = soa_results.get("drawdown_z_score", {})
 
     # Genera consigli
     advice["sl_advice"] = generate_sl_advice(
-        optimization_data.get("avg_user_sl_r"),
-        optimization_data.get("sl_opt_p95")
+        optimization_data.get("avg_user_stress_ratio"), # Corretto
+        optimization_data.get("sl_optimal_p95") # Corretto
     )
     advice["tp_advice"] = generate_tp_advice(
         optimization_data.get("avg_user_planned_tp_r"),
-        optimization_data.get("tp_median")
+        optimization_data.get("tp_optimal_median") # Corretto
     )
     advice["psychological_advice"] = generate_psychological_advice(
         predictive_data.get("r_autocorrelation"),

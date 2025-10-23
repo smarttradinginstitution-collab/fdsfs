@@ -32,14 +32,10 @@ class SOAService:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
         # 3. Filtro trade non validi per l'analisi
-        # Fase 3a: dropna
         cols_for_dropna = ['trade_risk', 'p_l', 'duration_minutes']
-
         df = df.dropna(subset=cols_for_dropna)
 
-        # Fase 3b: trade_risk > 0
         if not df.empty:
-
             df = df[df['trade_risk'] > 0]
 
         # 4. Calcolo Deviazione Durata (DD) - Z-score
@@ -106,18 +102,21 @@ class SOAService:
 
         # Calcolo medie utente e headline insight
         user_averages = self._calculate_user_averages()
-        sl_tp_optimization.update(user_averages) # Aggiungo le medie utente ai dati di ottimizzazione
 
-        headline_insight = self._generate_headline_insight(sl_tp_optimization, r_autocorrelation)
+        # Uniamo tutti i dati di ottimizzazione in un unico dizionario "piatto"
+        parametric_optimization = {
+            **sl_tp_optimization,
+            **user_averages,
+            "duration_expectancy": duration_expectancy
+        }
+
+        headline_insight = self._generate_headline_insight(parametric_optimization, r_autocorrelation)
 
 
         return {
             "clusters_summary": self.get_clusters_summary(),
             "causal_analysis": causal_analysis,
-            "parametric_optimization": {
-                "sl_tp": sl_tp_optimization,
-                "duration_expectancy": duration_expectancy,
-            },
+            "parametric_optimization": parametric_optimization,
             "predictive_metrics": {
                 "r_autocorrelation": r_autocorrelation,
             },
@@ -258,16 +257,25 @@ class SOAService:
         df_win = self.df[self.df['p_l'] > 0].copy()
 
         if df_win.empty:
-            return {}
+            return {
+                "sl_optimal_p90": None, "sl_optimal_p95": None,
+                "tp_optimal_median": None, "tp_optimal_mean": None
+            }
 
-        df_win['stress_ratio'] = (df_win['mae_usd'] / df_win['trade_risk']).replace([np.inf, -np.inf], np.nan)
-        df_win['potential_r'] = (df_win['mfe_usd'] / df_win['trade_risk']).replace([np.inf, -np.inf], np.nan)
+        stress_ratio_series = (df_win['mae_usd'] / df_win['trade_risk']).replace([np.inf, -np.inf], np.nan).dropna()
+        potential_r_series = (df_win['mfe_usd'] / df_win['trade_risk']).replace([np.inf, -np.inf], np.nan).dropna()
+
+        if stress_ratio_series.empty or potential_r_series.empty:
+            return {
+                "sl_optimal_p90": None, "sl_optimal_p95": None,
+                "tp_optimal_median": None, "tp_optimal_mean": None
+            }
 
         return {
-            "sl_optimal_p90": df_win['stress_ratio'].quantile(0.90),
-            "sl_optimal_p95": df_win['stress_ratio'].quantile(0.95),
-            "tp_optimal_median": df_win['potential_r'].median(),
-            "tp_optimal_mean": df_win['potential_r'].mean(),
+            "sl_optimal_p90": float(stress_ratio_series.quantile(0.90)),
+            "sl_optimal_p95": float(stress_ratio_series.quantile(0.95)),
+            "tp_optimal_median": float(potential_r_series.median()),
+            "tp_optimal_mean": float(potential_r_series.mean()),
         }
 
     def analyze_expectancy_by_duration(self, n_deciles: int = 10) -> List[Dict]:
