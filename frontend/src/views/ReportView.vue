@@ -143,15 +143,21 @@ const selectTradeFromStore = async (tradeId) => {
 };
 
 // --- LIFECYCLE & WATCHERS ---
+// --- LIFECYCLE & WATCHERS ---
 watch(() => route.params.id, (newId) => {
   if (newId) {
     selectTradeFromStore(newId);
   }
-});
+}, { immediate: true });
 
-onMounted(() => {
-  selectTradeFromStore(route.params.id);
-});
+// Questo watcher sincronizza lo stato della nota quando il trade viene aggiornato
+// (es. dopo aver salvato le regole del playbook).
+watch(trade, (newTrade) => {
+  if (newTrade && newTrade.notes) {
+    const note = newTrade.notes[0]; // Prende la prima nota, se esiste
+    notebookStore.setSelectedNoteFromData(note);
+  }
+}, { deep: true });
 </script>
 
 <template>
