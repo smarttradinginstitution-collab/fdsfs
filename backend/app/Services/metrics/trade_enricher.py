@@ -11,14 +11,20 @@ def _to_decimal_or_none(value: Any) -> Optional[Decimal]:
     except (InvalidOperation, TypeError):
         return None
 
-def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: Decimal) -> Dict[str, Any]:
+def enrich_trade_with_all_metrics(
+    trade_data: Dict[str, Any],
+    initial_balance: Decimal,
+    duration_minutes: Optional[float] = None
+) -> Dict[str, Any]:
     """
-    Calcola tutte le metriche avanzate per un singolo trade, inclusi i Vettori SOA.
+    Calcola tutte le metriche avanzate per un singolo trade, inclusi i Vettori SOA e la durata.
     """
     # --- Inizializzazione di tutte le metriche a None ---
     metrics = {
         "trade_risk": None, "realized_r_multiple": None, "net_roi": None,
         "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None,
+        # Aggiungiamo la durata qui per centralizzare l'arricchimento
+        "duration_minutes": duration_minutes,
         # Vettori SOA
         "SN": None, "EP": None, "RRv": None, "ES": None, "RER": None
     }

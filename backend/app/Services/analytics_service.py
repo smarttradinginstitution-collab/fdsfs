@@ -330,7 +330,11 @@ class AnalyticsService:
             trade_dict['rule_ids'] = [rule.id for rule in trade.rules_followed]
 
             # Arricchimento
-            soa_metrics = enrich_trade_with_all_metrics(trade_dict, initial_balance)
+            soa_metrics = enrich_trade_with_all_metrics(
+                trade_data=trade_dict,
+                initial_balance=initial_balance,
+                duration_minutes=getattr(trade, 'duration_minutes', None) # Passa la durata qui
+            )
             trade_dict.update(soa_metrics)
             enriched_trades_data.append(trade_dict)
 
