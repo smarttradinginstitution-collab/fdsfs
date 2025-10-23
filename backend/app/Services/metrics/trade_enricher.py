@@ -13,12 +13,14 @@ def _to_decimal_or_none(value: Any) -> Optional[Decimal]:
 
 def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: Decimal) -> Dict[str, Any]:
     """
-    Calcola tutte le metriche avanzate per un singolo trade con una logica di calcolo robusta e corretta.
+    Calcola tutte le metriche avanzate per un singolo trade, inclusi i Vettori SOA.
     """
     # --- Inizializzazione di tutte le metriche a None ---
     metrics = {
         "trade_risk": None, "realized_r_multiple": None, "net_roi": None,
-        "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None
+        "mae_usd": None, "mfe_usd": None, "planned_target": None, "planned_r_multiple": None,
+        # Vettori SOA
+        "SN": None, "EP": None, "RRv": None, "ES": None, "RER": None
     }
 
     # --- Parsing sicuro dei dati di input ---
@@ -74,5 +76,46 @@ def enrich_trade_with_all_metrics(trade_data: Dict[str, Any], initial_balance: D
     # --- 4. Calcolo Net ROI (indipendente dal resto) ---
     if pnl is not None and initial_balance > 0:
         metrics["net_roi"] = (pnl / initial_balance) * 100
+
+    # --- 5. Calcolo dei Vettori SOA ---
+    trade_risk = metrics.get("trade_risk")
+    mae_usd = metrics.get("mae_usd")
+    mfe_usd = metrics.get("mfe_usd")
+    realized_r = metrics.get("realized_r_multiple")
+    planned_r = metrics.get("planned_r_multiple")
+
+    # SN: stress_normalizzato
+    if mae_usd is not None and trade_risk and trade_risk > 0:
+        metrics["SN"] = mae_usd / trade_risk
+
+    # EP: efficienza_profitto (solo per trade in profitto)
+    if pnl is not None and pnl > 0:
+        if mfe_usd is not None and mfe_usd > 0:
+            metrics["EP"] = pnl / mfe_usd
+        else:
+            metrics["EP"] = Decimal(0) # Profitto senza MFE positivo, efficienza 0
+    elif pnl is not None and pnl <= 0:
+        metrics["EP"] = Decimal(0)
+
+    # RRv: rapporto_reversal & ES: efficienza_stop (solo per trade in perdita)
+    if pnl is not None and pnl < 0:
+        if trade_risk and trade_risk > 0:
+            if mfe_usd is not None:
+                metrics["RRv"] = mfe_usd / trade_risk
+            if mae_usd is not None:
+                metrics["ES"] = mae_usd / trade_risk
+        else: # Perdita senza rischio definito, vettori a 0
+            metrics["RRv"] = Decimal(0)
+            metrics["ES"] = Decimal(0)
+    elif pnl is not None and pnl >= 0:
+        metrics["RRv"] = Decimal(0)
+        metrics["ES"] = Decimal(0)
+
+
+    # RER: rapporto_esecuzione_rr
+    if realized_r is not None and planned_r and planned_r > 0:
+        metrics["RER"] = realized_r / planned_r
+    elif realized_r is not None and (planned_r is None or planned_r <= 0):
+        metrics["RER"] = None # Non calcolabile se il piano non era valido
 
     return metrics

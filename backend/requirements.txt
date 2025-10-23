@@ -25,3 +25,5 @@ alembic==1.16.5
 beautifulsoup4
 lxml
 cachetools==6.2.1
+scikit-learn
+pandas

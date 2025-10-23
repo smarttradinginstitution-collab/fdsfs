@@ -5,6 +5,13 @@ from datetime import date
 from typing import List, Dict, Any
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from decimal import Decimal
+
+# Nuove importazioni per SOA
+from app.Services.soa_service import SOAService
+from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
+from app.Schemas.soa import SOAOverallAnalysis
+
 
 from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
@@ -30,7 +37,7 @@ class AnalyticsService:
     Service layer for handling analytics requests.
     Acts as an orchestrator that fetches data and uses MetricsCalculator for calculations.
     """
-    def __init__(self, db: AsyncSession = Depends(get_db)):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.trade_repo = TradeRepository(db)
         self.trading_account_repo = TradingAccountRepository(db)
@@ -286,3 +293,62 @@ class AnalyticsService:
             end_date=end_date,
         )
         return [TagPerformanceStat.model_validate(row) for row in raw_stats]
+
+    async def get_soa_analysis(
+        self, trading_account_id: UUID, start_date: date, end_date: date, general_account_id: UUID
+    ) -> SOAOverallAnalysis:
+        """
+        Orchestra l'analisi SOA completa, assicurandosi che l'utente abbia i permessi.
+        """
+        # 1. Recupera dati necessari e verifica l'autorizzazione
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+        if not trading_account or trading_account.general_account_id != general_account_id:
+            return None # Il controller gestirà l'errore HTTP
+
+        initial_balance = trading_account.initial_balance
+
+        # Assicurati che il metodo carichi tutte le relazioni M-to-M
+        trades = await self.trade_repo.get_filtered_trades(
+            trading_account_id, start_date, end_date
+        )
+        daily_balances = await self.trading_account_repo.get_daily_balances(
+            trading_account_id, start_date, end_date
+        )
+
+        if not trades:
+            return None
+
+        # 2. Arricchisci ogni trade con metriche e vettori SOA
+        enriched_trades_data = []
+        for trade in trades:
+            trade_dict = trade.to_dict() # Converte il modello SQLAlchemy in dizionario
+            # Aggiungi gli ID delle relazioni per l'analisi
+            trade_dict['tag_ids'] = [tag.id for tag in trade.tags]
+            trade_dict['mistake_ids'] = [mistake.id for mistake in trade.mistakes]
+            trade_dict['psychology_state_ids'] = [ps.id for ps in trade.psychology_states]
+            trade_dict['news_impact_ids'] = [ni.id for ni in trade.news_impacts]
+            trade_dict['rule_ids'] = [rule.id for rule in trade.rules_followed]
+
+            # Arricchimento
+            soa_metrics = enrich_trade_with_all_metrics(trade_dict, initial_balance)
+            trade_dict.update(soa_metrics)
+            enriched_trades_data.append(trade_dict)
+
+        # 3. Istanzia ed esegui SOAService
+        soa_service = SOAService(enriched_trades_data)
+        analysis_results = soa_service.run_full_analysis()
+        drawdown_z_score_results = soa_service.calculate_drawdown_zscore(daily_balances)
+
+        # 4. Assembla e mappa i risultati sullo schema Pydantic
+        # Nota: Potrebbe essere necessario mappare i nomi degli attributi se non corrispondono
+        # agli alias Pydantic. Qui assumiamo una corrispondenza diretta per semplicità.
+        final_result = {
+            "clusters_summary": analysis_results.get("clusters_summary"),
+            "causal_analysis": analysis_results.get("causal_analysis"),
+            "parametric_optimization": analysis_results.get("parametric_optimization"),
+            "predictive_metrics": analysis_results.get("predictive_metrics"),
+            "drawdown_z_score": drawdown_z_score_results,
+            "trade_details": analysis_results.get("trade_details"),
+        }
+
+        return SOAOverallAnalysis.model_validate(final_result)

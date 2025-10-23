@@ -160,3 +160,7 @@ class Trade(Base):
         secondary=trades_rules_association,
         back_populates="trades"
     )
+
+    def to_dict(self):
+        """Converts the trade object to a dictionary."""
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
