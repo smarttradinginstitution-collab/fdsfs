@@ -48,15 +48,21 @@ const isCreating = ref(false);
 
 const fetchNote = async () => {
   if (!props.tradeId) return;
+
+  // Se la nota corretta è già selezionata, non fare nulla.
+  if (store.selectedNote && store.selectedNote.trade_id === props.tradeId) {
+    isLoading.value = false;
+    return;
+  }
+
   isLoading.value = true;
   try {
     const fetchedNote = await store.fetchNoteByTradeId(props.tradeId);
     if (fetchedNote) {
       store.selectNote(fetchedNote.id);
     } else {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
+      // Se non viene trovata nessuna nota, assicurati di deselezionare qualsiasi nota precedente
+      store.deselectNote();
     }
   } catch (error) {
     if (error.response && error.response.status === 404) {

@@ -123,6 +123,9 @@ const selectTradeFromStore = async (tradeId) => {
       const note = tradesStore.selectedTrade.notes?.[0]; // Prende la prima nota, se esiste
       notebookStore.setSelectedNoteFromData(note);
 
+      // Imposta direttamente i dati finanziari
+      notebookStore.setFinancialDataFromTrade(tradesStore.selectedTrade);
+
     } else {
       // Se il trade non è stato caricato, svuota entrambi gli store
       imageStore.setImagesForCurrentTrade([]);

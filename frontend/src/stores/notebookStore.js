@@ -361,12 +361,28 @@ export const useNotebookStore = defineStore('notebook', {
 
     selectNote(noteId) {
       this.selectedNoteId = noteId;
-      this.fetchFinancialDataForSelectedNote();
+      // La chiamata a fetchFinancialDataForSelectedNote è stata rimossa.
+      // Sarà gestita dal componente/vista che ha più contesto.
     },
 
     deselectNote() {
         this.selectedNoteId = null;
         this.financialData = null; // Clear financial data when no note is selected
+    },
+
+    setFinancialDataFromTrade(trade) {
+      if (!trade) {
+        this.financialData = null;
+        return;
+      }
+      // Costruisce l'oggetto financialData usando i dati già presenti nel trade
+      const totalCommissions = (trade.fees || 0) + (trade.commissions || 0);
+      this.financialData = {
+        gross_pnl: trade.gross_p_l,
+        total_commissions: totalCommissions,
+        net_pnl: trade.p_l,
+        net_roi: trade.net_roi,
+      };
     },
 
     setSelectedNoteFromData(noteObject) {
