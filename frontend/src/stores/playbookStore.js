@@ -25,9 +25,67 @@ export const usePlaybookStore = defineStore('playbooks', {
     allPlaybooks(state) {
       return state.playbooks;
     },
+    getPlaybookById: (state) => (id) => {
+      return state.playbooks.find((playbook) => playbook.id === id);
+    },
   },
 
   actions: {
+    async fetchPlaybookDetails(playbookId) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}`);
+        // We can update the playbook in the list if it's already there, or add it.
+        const index = this.playbooks.findIndex(p => p.id === playbookId);
+        if (index !== -1) {
+          this.playbooks[index] = response.data;
+        } else {
+          this.playbooks.push(response.data);
+        }
+        return response.data;
+      } catch (err) {
+        console.error(`Error fetching details for playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An unexpected error occurred.';
+        throw err; // Re-throw to let the component handle it (e.g., redirect)
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updatePlaybook(playbookId, playbookData) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        await apiClient.put(`/playbooks/${playbookId}`, playbookData);
+        // Fetch the updated list to ensure data consistency
+        await this.fetchPlaybooks();
+      } catch (err) {
+        console.error(`Error updating playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An error occurred during playbook update.';
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async deletePlaybook(playbookId) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        await apiClient.delete(`/playbooks/${playbookId}`);
+        // Remove the playbook from the local state
+        this.playbooks = this.playbooks.filter(p => p.id !== playbookId);
+      } catch (err) {
+        console.error(`Error deleting playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An unexpected error occurred while deleting the playbook.';
+        // Re-throw the error so the component knows the operation failed
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async fetchPlaybooks() {
       const authStore = useAuthStore();
       if (!authStore.isAuthenticated) {
@@ -97,21 +155,6 @@ export const usePlaybookStore = defineStore('playbooks', {
       }
     },
 
-    async fetchPlaybookAnalytics(playbookId) {
-      this.isAnalyticsLoading = true;
-      this.error = null;
-      this.currentPlaybookAnalytics = null; // Reset before fetching
-      try {
-        const response = await apiClient.get(`/playbooks/${playbookId}/analytics`);
-        this.currentPlaybookAnalytics = response.data;
-      } catch (err) {
-        console.error(`Error fetching analytics for playbook ${playbookId}:`, err);
-        this.error = err.response?.data?.detail || 'An unexpected error occurred fetching playbook analytics.';
-      } finally {
-        this.isAnalyticsLoading = false;
-      }
-    },
-
     async fetchRuleGroups(playbookId) {
       this.isRuleGroupsLoading = true;
       this.ruleGroupsError = null;
@@ -124,6 +167,21 @@ export const usePlaybookStore = defineStore('playbooks', {
         this.ruleGroups = []; // Reset on error
       } finally {
         this.isRuleGroupsLoading = false;
+      }
+    },
+
+    async fetchPlaybookAnalytics(playbookId) {
+      this.isAnalyticsLoading = true;
+      this.error = null;
+      this.currentPlaybookAnalytics = null; // Reset before fetching
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}/analytics`);
+        this.currentPlaybookAnalytics = response.data;
+      } catch (err) {
+        console.error(`Error fetching analytics for playbook ${playbookId}:`, err);
+        this.error = err.response?.data?.detail || 'An unexpected error occurred fetching playbook analytics.';
+      } finally {
+        this.isAnalyticsLoading = false;
       }
     },
 

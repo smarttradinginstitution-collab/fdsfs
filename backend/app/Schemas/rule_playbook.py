@@ -33,3 +33,9 @@ class RuleRead(RuleBase):
     order: Optional[int] = None
     created_at: datetime
     metrics: Optional[RuleMetrics] = None
+
+
+# Schema for creating/updating a rule within a playbook update
+class RuleUpsert(RuleBase):
+    id: Optional[UUID] = None
+    rule: str = Field(..., description="The content of the rule is required")

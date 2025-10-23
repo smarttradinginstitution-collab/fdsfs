@@ -6,7 +6,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 # Forward reference per RuleRead, che verrà definito in un altro file.
-from app.Schemas.rule_playbook import RuleRead
+from app.Schemas.rule_playbook import RuleRead, RuleUpsert
 
 # Schema di base con i campi comuni
 class RulesGroupBase(BaseModel):
@@ -41,3 +41,10 @@ class RulesGroupRead(RulesGroupBase):
 
 # Rebuild the model to resolve the forward reference to RuleRead
 RulesGroupRead.model_rebuild()
+
+
+# Schema for creating/updating a rule group within a playbook update
+class RulesGroupUpsert(RulesGroupBase):
+    id: Optional[UUID] = None
+    name_group: str = Field(..., description="The name of the group is required")
+    rules: List[RuleUpsert] = []

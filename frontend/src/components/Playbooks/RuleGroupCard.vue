@@ -26,7 +26,7 @@ watch(localGroup, (newGroup) => {
 const addRule = () => {
   localGroup.value.rules.push({
     id: uuidv4(), // Temporary frontend ID
-    description: '',
+    rule: '',
   });
 };
 
@@ -50,12 +50,12 @@ const updateRule = (updatedRule) => {
       </div>
       <BaseInput
         v-if="isEditing"
-        v-model="localGroup.title"
+        v-model="localGroup.name_group"
         @blur="isEditing = false"
         @keyup.enter="isEditing = false"
         class="title-input"
       />
-      <div v-else class="group-title" @click="isEditing = true">{{ localGroup.title }}</div>
+      <div v-else class="group-title" @click="isEditing = true">{{ localGroup.name_group }}</div>
       <div class="header-actions">
         <button @click="isEditing = !isEditing" class="action-btn">{{ isEditing ? 'Save' : 'Edit' }}</button>
         <button @click="$emit('delete:group')" class="action-btn delete-btn">Delete</button>

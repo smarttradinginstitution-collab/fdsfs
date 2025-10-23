@@ -70,6 +70,12 @@ const router = createRouter({
       meta: { title: 'Playbook Detail' },
     },
     {
+      path: '/playbooks/:id/edit',
+      name: 'playbook-edit',
+      component: () => import('../views/EditPlaybookView.vue'),
+      meta: { title: 'Edit Playbook' },
+    },
+    {
       path: '/analytics',
       name: 'analytics',
       component: () => import('../views/AnalyticsView.vue'),

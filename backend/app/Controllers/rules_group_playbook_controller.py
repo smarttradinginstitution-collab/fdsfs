@@ -98,7 +98,7 @@ class RulesGroupPlaybookController:
 
         await self._get_playbook_and_verify_ownership(group_to_update.playbook_id, current_user, general_account_id, db)
 
-        updated_group = await repo.update(db_obj=group_to_update, obj_in=group_data)
+        updated_group = await repo.update(db_obj=group_to_update, obj_in=group_data.model_dump(exclude_unset=True))
         return RulesGroupRead.model_validate(updated_group)
 
     async def delete_group(

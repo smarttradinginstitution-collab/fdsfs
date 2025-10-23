@@ -29,6 +29,15 @@ class RulesGroupPlaybookRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def get_by_playbook_id(self, playbook_id: UUID) -> Sequence[RulesGroupPlaybook]:
+        stmt = (
+            select(RulesGroupPlaybook)
+            .where(RulesGroupPlaybook.playbook_id == playbook_id)
+            .order_by(RulesGroupPlaybook.order.asc(), RulesGroupPlaybook.created_at.asc())
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+
     async def list_by_playbook_id_inefficient(self, playbook_id: UUID) -> Sequence[RulesGroupPlaybook]:
         """ DEPRECATED: This method is inefficient as it loads all trades for all rules. """
         stmt = (
@@ -97,15 +106,33 @@ class RulesGroupPlaybookRepository:
         await self.db.refresh(db_group)
         return await self.get_by_id(db_group.id) # Ricarica per avere le rules
 
-    async def update(self, db_obj: RulesGroupPlaybook, obj_in: RulesGroupUpdate) -> RulesGroupPlaybook:
-        update_data = obj_in.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
+    async def create_with_playbook_id(self, obj_in: dict, playbook_id: UUID) -> RulesGroupPlaybook:
+        # Rimuovi 'id' se presente, perché è per un nuovo oggetto
+        obj_in.pop('id', None)
+        # Le regole vengono gestite separatamente dal controller
+        obj_in.pop('rules', None)
+        db_group = RulesGroupPlaybook(**obj_in, playbook_id=playbook_id)
+        self.db.add(db_group)
+        await self.db.commit()
+        await self.db.refresh(db_group)
+        return db_group
+
+    async def update(self, db_obj: RulesGroupPlaybook, obj_in: dict) -> RulesGroupPlaybook:
+        # Rimuovi 'id' e 'rules' che non devono essere aggiornati direttamente
+        obj_in.pop('id', None)
+        obj_in.pop('rules', None)
+        for field, value in obj_in.items():
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
         await self.db.refresh(db_obj)
-        return await self.get_by_id(db_obj.id) # Ricarica per avere le rules
+        return db_obj
 
     async def delete(self, db_obj: RulesGroupPlaybook) -> None:
         await self.db.delete(db_obj)
         await self.db.commit()
+
+    async def delete_by_id(self, group_id: UUID) -> None:
+        db_obj = await self.get_by_id(group_id)
+        if db_obj:
+            await self.delete(db_obj)

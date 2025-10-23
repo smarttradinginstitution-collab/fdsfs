@@ -24,7 +24,7 @@ class RulePlaybookRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
-    async def list_by_group_id(self, group_id: UUID) -> Sequence[RulePlaybook]:
+    async def get_by_group_id(self, group_id: UUID) -> Sequence[RulePlaybook]:
         stmt = (
             select(RulePlaybook)
             .where(RulePlaybook.rules_groups_playbook_id == group_id)
@@ -54,9 +54,17 @@ class RulePlaybookRepository:
         await self.db.refresh(db_rule)
         return db_rule
 
-    async def update(self, db_obj: RulePlaybook, obj_in: RuleUpdate) -> RulePlaybook:
-        update_data = obj_in.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
+    async def create_with_group_id(self, obj_in: dict, group_id: UUID) -> RulePlaybook:
+        obj_in.pop('id', None)
+        db_rule = RulePlaybook(**obj_in, rules_groups_playbook_id=group_id)
+        self.db.add(db_rule)
+        await self.db.commit()
+        await self.db.refresh(db_rule)
+        return db_rule
+
+    async def update(self, db_obj: RulePlaybook, obj_in: dict) -> RulePlaybook:
+        obj_in.pop('id', None)
+        for field, value in obj_in.items():
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
@@ -66,6 +74,11 @@ class RulePlaybookRepository:
     async def delete(self, db_obj: RulePlaybook) -> None:
         await self.db.delete(db_obj)
         await self.db.commit()
+
+    async def delete_by_id(self, rule_id: UUID) -> None:
+        db_obj = await self.get_by_id(rule_id)
+        if db_obj:
+            await self.delete(db_obj)
 
     async def get_stats_for_rules_in_playbooks(self, playbook_ids: List[UUID]) -> Dict[UUID, Dict[str, Any]]:
         """

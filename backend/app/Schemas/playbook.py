@@ -5,9 +5,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
-# La classe RulesGroupRead verrà importata in seguito.
-# Pydantic e FastAPI gestiscono i forward reference (stringhe)
-# in modo da non dover importare subito.
+from app.Schemas.rules_group_playbook import RulesGroupRead, RulesGroupUpsert
 
 
 # Schema di base con i campi comuni
@@ -29,7 +27,7 @@ class PlaybookCreate(PlaybookBase):
 
 # Schema per l'aggiornamento di un playbook (usato nel body delle richieste PUT/PATCH)
 class PlaybookUpdate(PlaybookBase):
-    pass # title, description e private sono già opzionali in PlaybookBase
+    rules_groups: List[RulesGroupUpsert] = []
 
 # Schema per le statistiche calcolate di un playbook
 class PlaybookStats(BaseModel):

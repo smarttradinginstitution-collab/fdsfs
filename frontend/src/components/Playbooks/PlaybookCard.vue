@@ -1,8 +1,12 @@
 <script setup>
 import { defineProps, computed } from 'vue';
+import { usePlaybookStore } from '@/stores/playbookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import DoughnutChart from './DoughnutChart.vue';
 import { formatCurrency } from '@/services/formatters.js';
+import ActionsMenu from '@/components/ui/ActionsMenu.vue';
+
+const playbookStore = usePlaybookStore();
 
 const props = defineProps({
   playbook: {
@@ -18,18 +22,43 @@ const props = defineProps({
 const statsGridClass = computed(() => {
   return props.layout === 'grid' ? 'layout-grid' : '';
 });
+
+async function handleDelete(closeMenu) {
+  closeMenu();
+  if (window.confirm('Are you sure you want to delete this playbook?')) {
+    try {
+      await playbookStore.deletePlaybook(props.playbook.id);
+      // Optionally, show a success notification here
+    } catch (error) {
+      // Optionally, show an error notification here
+      console.error('Failed to delete playbook:', error);
+    }
+  }
+}
 </script>
 
 <template>
-  <router-link :to="{ name: 'playbook-detail', params: { id: playbook.id } }" class="playbook-card-link">
-    <BaseWidget>
-      <template #header>
-        <div class="card-header">
+  <BaseWidget>
+    <template #header>
+      <div class="card-header">
+        <div class="header-left">
           <h3 class="widget-title">{{ playbook.title }}</h3>
           <span class="trade-count">{{ playbook.stats?.total_trades || 0 }} Trades</span>
         </div>
-      </template>
+        <ActionsMenu @click.stop>
+          <template #default="{ closeMenu }">
+            <router-link :to="{ name: 'playbook-edit', params: { id: playbook.id } }" class="menu-item" @click="closeMenu">
+              Edit
+            </router-link>
+            <div class="menu-item menu-item-danger" @click="handleDelete(closeMenu)">
+              Delete
+            </div>
+          </template>
+        </ActionsMenu>
+      </div>
+    </template>
 
+    <router-link :to="{ name: 'playbook-detail', params: { id: playbook.id } }" class="playbook-card-link">
       <div class="stats-grid" :class="statsGridClass">
         <!-- Win Rate with Doughnut Chart -->
         <div class="stat-item win-rate-stat">
@@ -65,8 +94,8 @@ const statsGridClass = computed(() => {
           <span class="label">Avg. Loser</span>
         </div>
       </div>
-    </BaseWidget>
-  </router-link>
+    </router-link>
+  </BaseWidget>
 </template>
 
 <style scoped>
@@ -83,6 +112,15 @@ const statsGridClass = computed(() => {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
+  /* This will allow the title to take up available space and truncate */
+  overflow: hidden;
+  flex: 1;
 }
 
 .widget-title {
