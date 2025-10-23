@@ -233,7 +233,7 @@ export const usePlaybookStore = defineStore('playbooks', {
           rule,
         });
         await this.fetchRuleGroups(playbookId); // Refresh the entire list
-      } catch (err)
+      } catch (err) {
         console.error('Error creating rule:', err);
         this.ruleGroupsError = err.response?.data?.detail || 'Failed to create new rule.';
       } finally {
