@@ -5,6 +5,14 @@ from datetime import date
 from typing import List, Dict, Any
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from decimal import Decimal
+
+# Nuove importazioni per SOA
+from app.Services.soa_service import SOAService
+from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
+from app.Services.soa_advisor import generate_structured_advice
+from app.Schemas.soa import SOAOverallAnalysis, StructuredAdvice
+
 
 from app.Infrastructure.db import get_db
 from app.Repositories.trade_repository import TradeRepository
@@ -286,3 +294,86 @@ class AnalyticsService:
             end_date=end_date,
         )
         return [TagPerformanceStat.model_validate(row) for row in raw_stats]
+
+    async def get_soa_analysis(
+        self, trading_account_id: UUID, start_date: date, end_date: date, general_account_id: UUID
+    ) -> Optional[SOAOverallAnalysis]:
+        """Orchestrates the full Strength & Opportunity Analysis (SOA).
+
+        This method acts as a high-level orchestrator. It:
+        1.  Verifies user authorization for the requested trading account.
+        2.  Fetches all necessary trade and daily balance data from the repositories.
+        3.  Enriches each trade with detailed metrics using the trade_enricher.
+        4.  Instantiates the SOAService to perform the core numerical analysis.
+        5.  Calls the soa_advisor to translate numerical results into textual advice.
+        6.  Assembles the final, comprehensive `SOAOverallAnalysis` object.
+
+        Args:
+            trading_account_id (UUID): The ID of the trading account to analyze.
+            start_date (date): The start date of the analysis period.
+            end_date (date): The end date of the analysis period.
+            general_account_id (UUID): The user's general account ID for authorization.
+
+        Returns:
+            Optional[SOAOverallAnalysis]: The complete analysis results, or None if
+            the user is unauthorized or no trades exist in the period.
+        """
+        # 1. Recupera dati necessari e verifica l'autorizzazione
+        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
+        if not trading_account or trading_account.general_account_id != general_account_id:
+            return None # Il controller gestirà l'errore HTTP
+
+        initial_balance = trading_account.initial_balance
+
+        # Assicurati che il metodo carichi tutte le relazioni M-to-M
+        trades = await self.trade_repo.get_filtered_trades(
+            trading_account_id, start_date, end_date
+        )
+        daily_balances = await self.trading_account_repo.get_daily_balances(
+            trading_account_id, start_date, end_date
+        )
+
+        # 2. Arricchisci ogni trade con metriche e vettori SOA
+        # La logica per gestire l'assenza di trade è ora centralizzata nel SOAService
+        enriched_trades_data = []
+        for trade in trades:
+            trade_dict = trade.to_dict() # Converte il modello SQLAlchemy in dizionario
+            # Aggiungi gli ID delle relazioni per l'analisi
+            trade_dict['tag_ids'] = [tag.id for tag in trade.tags]
+            trade_dict['mistake_ids'] = [mistake.id for mistake in trade.mistakes]
+            trade_dict['psychology_state_ids'] = [ps.id for ps in trade.psychology_states]
+            trade_dict['news_impact_ids'] = [ni.id for ni in trade.news_impacts]
+            trade_dict['rule_ids'] = [rule.id for rule in trade.rules_followed]
+
+            # Arricchimento
+            soa_metrics = enrich_trade_with_all_metrics(
+                trade_data=trade_dict,
+                initial_balance=initial_balance,
+                duration_minutes=getattr(trade, 'duration_minutes', None) # Passa la durata qui
+            )
+            trade_dict.update(soa_metrics)
+            enriched_trades_data.append(trade_dict)
+
+        # 3. Istanzia ed esegui SOAService
+        soa_service = SOAService(enriched_trades_data)
+        analysis_results = soa_service.run_full_analysis()
+        drawdown_z_score_results = soa_service.calculate_drawdown_zscore(daily_balances)
+
+        # 4. Genera consigli strutturati basati sui risultati numerici
+        # Combiniamo i risultati perché l'advisor potrebbe aver bisogno di entrambi
+        all_numeric_results = {**analysis_results, "drawdown_z_score": drawdown_z_score_results}
+        structured_advice = generate_structured_advice(all_numeric_results)
+
+        # 5. Assembla e mappa i risultati finali sullo schema Pydantic
+        final_result = {
+            "clusters_summary": analysis_results.get("clusters_summary"),
+            "causal_analysis": analysis_results.get("causal_analysis"),
+            "parametric_optimization": analysis_results.get("parametric_optimization"),
+            "predictive_metrics": analysis_results.get("predictive_metrics"),
+            "drawdown_z_score": drawdown_z_score_results,
+            "trade_details": analysis_results.get("trade_details"),
+            "headline_insight": analysis_results.get("headline_insight"),
+            "structured_advice": structured_advice, # Aggiungiamo i consigli qui
+        }
+
+        return SOAOverallAnalysis.model_validate(final_result)

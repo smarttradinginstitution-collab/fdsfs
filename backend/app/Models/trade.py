@@ -160,3 +160,21 @@ class Trade(Base):
         secondary=trades_rules_association,
         back_populates="trades"
     )
+
+    def to_dict(self):
+        """
+        Converts the trade object to a dictionary, handling data types correctly.
+        """
+        from decimal import Decimal
+        import datetime
+
+        result = {}
+        for c in self.__table__.columns:
+            value = getattr(self, c.name)
+            if isinstance(value, Decimal):
+                result[c.name] = float(value)
+            elif isinstance(value, (datetime.datetime, datetime.date)):
+                result[c.name] = value.isoformat()
+            else:
+                result[c.name] = value
+        return result
