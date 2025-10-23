@@ -93,9 +93,14 @@ export const useImageStore = defineStore('imageStore', () => {
     isLoading.value = false;
   }
 
+  function setImagesForCurrentTrade(images) {
+    imagesForCurrentTrade.value = images || [];
+  }
+
   return {
     imagesForCurrentTrade,
     isLoading,
+    setImagesForCurrentTrade,
     fetchImagesForTrade,
     uploadImage,
     updateImageMetadata,

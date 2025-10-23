@@ -7,9 +7,9 @@
       <div v-if="isLoading" class="loading-state">
         <p>Loading Note...</p>
       </div>
-      <div v-else-if="store.selectedNote && store.selectedNote.trade_id === tradeId">
+      <div v-else-if="note">
         <NoteEditor
-          :key="store.selectedNote.id"
+          :key="note.id"
           :show-financial-data="false"
           :show-trade-details-link="false"
         />
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useNotebookStore } from '../../stores/notebookStore';
 import BaseWidget from '../layout/BaseWidget.vue';
 import BaseButton from '../ui/BaseButton.vue';
@@ -39,37 +39,20 @@ const props = defineProps({
   tradeDetails: {
     type: Object,
     required: true,
-  }
+  },
+  // La nota viene ora passata direttamente come prop
+  note: {
+    type: Object,
+    default: null,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const store = useNotebookStore();
-const isLoading = ref(true);
 const isCreating = ref(false);
-
-const fetchNote = async () => {
-  if (!props.tradeId) return;
-  isLoading.value = true;
-  try {
-    const fetchedNote = await store.fetchNoteByTradeId(props.tradeId);
-    if (fetchedNote) {
-      store.selectNote(fetchedNote.id);
-    } else {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      if (store.selectedNote?.trade_id === props.tradeId) {
-        store.deselectNote();
-      }
-    } else {
-      console.error("Error fetching trade note:", error);
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
 
 const createNoteForTrade = async () => {
   isCreating.value = true;
@@ -103,18 +86,6 @@ const createNoteForTrade = async () => {
     isCreating.value = false;
   }
 };
-
-onMounted(async () => {
-  if (store.folders.length === 0) {
-    await store.fetchFolders();
-  }
-  fetchNote();
-});
-
-watch(() => props.tradeId, () => {
-  fetchNote();
-});
-
 </script>
 
 <style lang="scss" scoped>

@@ -158,6 +158,22 @@ class TradesController:
             )
         return trade
 
+
+    async def get_trade_with_all_data(
+        self,
+        claims: dict,
+        trade_id: UUID,
+        service: TradeService,
+    ) -> TradeRead:
+        trade = await service.get_trade_with_all_data(claims, trade_id)
+        if not trade:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Trade non trovato o non appartenente all'utente.",
+            )
+        return trade
+
+
     async def update_trade(
         self,
         claims: dict,

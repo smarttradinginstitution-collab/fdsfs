@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 
 from pydantic import BaseModel, Field, ConfigDict
 from app.Models.enums import FolderType, SystemFolderIdentifier
-from .trade import TradeRead
+# from .trade import TradeRead  <- Rimosso per evitare import circolare
 from .note_template import NoteTemplateRead
 
 # --- Note Schemas ---
@@ -30,7 +30,7 @@ class NoteRead(NoteBase):
     id: UUID
     folder_id: UUID
     trade_id: Optional[UUID] = None
-    trade: Optional[TradeRead] = None # Include full trade details
+    trade: Optional['TradeRead'] = None # Include full trade details
     templates: List[NoteTemplateRead] = []
     created_at: datetime
     updated_at: datetime

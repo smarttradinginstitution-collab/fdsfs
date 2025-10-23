@@ -18,7 +18,9 @@ from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.news_impact_repository import NewsImpactRepository
 from app.Repositories.psychology_state_repository import PsychologyStateRepository
 from app.Services.trading_account_service import TradingAccountService
-from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead, TradeReviewUpdate
+from app.Schemas.trade import (
+    TradeCreate, TradeUpdate, TradeRead, TradeReviewUpdate, TradeWithDataRead
+)
 from app.Models.enums import TradeDirection
 from app.Schemas.tag import TagRead
 from app.Infrastructure.db import get_db
@@ -207,6 +209,61 @@ class TradeService:
             setattr(trade_read, model_field, float(value) if value is not None else None)
 
         return trade_read
+
+
+    async def get_trade_with_all_data(self, claims: dict, trade_id: UUID) -> Optional[TradeWithDataRead]:
+        """
+        Recupera un singolo trade con tutte le sue relazioni, verificando l'appartenenza
+        e arricchendolo con dati calcolati.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
+
+        trade = await self.repo.get_by_id_with_all_data(trade_id, general_account.id)
+        if not trade:
+            return None # O solleva 404 se il trade non esiste o non appartiene all'utente
+
+        # L'arricchimento dei dati calcolati richiede il trading_account, che è già caricato
+        trading_account = trade.trading_account
+        if not trading_account:
+             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Dettagli del conto di trading non trovati.")
+
+        trade_data_dict = {
+            "entry_price": trade.entry_price,
+            "exit_price": trade.exit_price,
+            "stop_loss_price": trade.stop_loss_price,
+            "take_profit_price": trade.take_profit_price,
+            "p_l": trade.p_l,
+            "direction": trade.direction.value if isinstance(trade.direction, TradeDirection) else trade.direction,
+            "lowest_price_during_trade": trade.lowest_price_during_trade,
+            "highest_price_during_trade": trade.highest_price_during_trade,
+            "position_size": trade.position_size,
+        }
+
+        all_metrics = enrich_trade_with_all_metrics(
+            trade_data=trade_data_dict,
+            initial_balance=Decimal(trading_account.initial_balance or '0.0')
+        )
+
+        trade_read = TradeWithDataRead.model_validate(trade)
+
+        mappings = {
+            "realized_r_multiple": "r_multiple",
+            "trade_risk": "trade_risk",
+            "net_roi": "net_roi",
+            "mae_usd": "mae_usd",
+            "mfe_usd": "mfe_usd",
+            "planned_target": "planned_target",
+            "planned_r_multiple": "planned_r_multiple",
+        }
+        for metric_key, model_field in mappings.items():
+            value = all_metrics.get(metric_key)
+            setattr(trade_read, model_field, float(value) if value is not None else None)
+
+        return trade_read
+
 
     async def get_recent_trades(self, claims: dict) -> List[TradeRead]:
         """

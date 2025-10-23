@@ -13,6 +13,7 @@ import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useImageStore } from '@/stores/imageStore';
+import { useNotebookStore } from '@/stores/notebookStore';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { CheckCircleIcon } from '@heroicons/vue/24/solid';
@@ -22,6 +23,7 @@ const route = useRoute();
 const router = useRouter();
 const tradesStore = useTradesStore();
 const imageStore = useImageStore();
+const notebookStore = useNotebookStore();
 
 const isPageLoading = ref(true);
 const activeTab = ref('stats');
@@ -106,22 +108,29 @@ const prevImage = () => {
 };
 
 const selectTradeFromStore = async (tradeId) => {
+  isPageLoading.value = true;
   error.value = null;
   try {
-    const tradeFromList = tradesStore.trades.find(t => t.id === tradeId);
+    // Chiama la nuova azione che carica tutto in una sola volta
+    await tradesStore.fetchTradeWithAllData(tradeId);
 
-    // Usa una Promise.all per eseguire le chiamate in parallelo
-    const promises = [];
-    if (tradeFromList) {
-      tradesStore.selectedTrade = { ...tradeFromList };
+    // Se necessario, popola altri store con i dati ricevuti
+    if (tradesStore.selectedTrade) {
+      // Aggiorna lo store delle immagini
+      imageStore.setImagesForCurrentTrade(tradesStore.selectedTrade.images || []);
+
+      // Aggiorna lo store delle note
+      const note = tradesStore.selectedTrade.notes?.[0]; // Prende la prima nota, se esiste
+      notebookStore.setSelectedNoteFromData(note);
+
+      // Imposta direttamente i dati finanziari
+      notebookStore.setFinancialDataFromTrade(tradesStore.selectedTrade);
+
     } else {
-      isPageLoading.value = true;
-      console.warn(`Trade ${tradeId} non trovato nello store, lo carico singolarmente.`);
-      promises.push(tradesStore.fetchTradeById(tradeId));
+      // Se il trade non è stato caricato, svuota entrambi gli store
+      imageStore.setImagesForCurrentTrade([]);
+      notebookStore.deselectNote();
     }
-    promises.push(imageStore.fetchImagesForTrade(tradeId));
-
-    await Promise.all(promises);
 
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
@@ -205,7 +214,12 @@ onMounted(() => {
           </div>
 
           <div class="right-column">
-            <TradeNoteEditor :trade-id="trade.id" :trade-details="trade" />
+            <TradeNoteEditor
+              :trade-id="trade.id"
+              :trade-details="trade"
+              :note="notebookStore.selectedNote"
+              :is-loading="isLoading"
+            />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
               <div v-if="primaryBeforeImage || primaryAfterImage" class="chart-comparison">
