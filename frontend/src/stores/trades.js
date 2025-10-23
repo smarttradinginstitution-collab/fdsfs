@@ -974,8 +974,8 @@ export const useTradesStore = defineStore('trades', {
         this.selectedTrade.is_reviewed = newStatus;
       }
 
-      this.isTradeLoading = true;
-
+      // Rimosso isTradeLoading per evitare il ricaricamento di componenti non correlati.
+      // Il pulsante in ReportView gestisce già il suo stato di caricamento.
       try {
         const response = await apiClient.patch(`/trades/${tradeId}/review`, { is_reviewed: newStatus });
         const updatedTrade = mapBackendTradeToFrontend(response.data);
@@ -994,8 +994,6 @@ export const useTradesStore = defineStore('trades', {
         }
         console.error('Error updating trade review status:', error);
         uiStore.showNotification({ message: 'Failed to update review status.', type: 'danger' });
-      } finally {
-        this.isTradeLoading = false;
       }
     },
   },
