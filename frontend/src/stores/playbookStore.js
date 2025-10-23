@@ -155,6 +155,21 @@ export const usePlaybookStore = defineStore('playbooks', {
       }
     },
 
+    async fetchRuleGroups(playbookId) {
+      this.isRuleGroupsLoading = true;
+      this.ruleGroupsError = null;
+      try {
+        const response = await apiClient.get(`/playbooks/${playbookId}/rule-groups/`);
+        this.ruleGroups = response.data;
+      } catch (err) {
+        console.error(`Error fetching rule groups for playbook ${playbookId}:`, err);
+        this.ruleGroupsError = err.response?.data?.detail || 'An unexpected error occurred fetching rule groups.';
+        this.ruleGroups = []; // Reset on error
+      } finally {
+        this.isRuleGroupsLoading = false;
+      }
+    },
+
     async fetchPlaybookAnalytics(playbookId) {
       this.isAnalyticsLoading = true;
       this.error = null;

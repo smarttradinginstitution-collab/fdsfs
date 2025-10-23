@@ -1,11 +1,23 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, defineProps, watchEffect } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import draggable from 'vuedraggable';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import RuleGroupCard from './RuleGroupCard.vue';
 
+const props = defineProps({
+  initialGroups: {
+    type: Array,
+    default: () => [],
+  },
+});
+
 const ruleGroups = ref([]);
+
+watchEffect(() => {
+  // Deep copy to prevent modifying the original prop
+  ruleGroups.value = JSON.parse(JSON.stringify(props.initialGroups));
+});
 
 const addGroup = () => {
   ruleGroups.value.push({

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
@@ -16,6 +17,7 @@ import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 const router = useRouter();
 const route = useRoute();
 const playbookStore = usePlaybookStore();
+const { ruleGroups } = storeToRefs(playbookStore);
 const uiStore = useUiStore();
 const ruleGroupManagerRef = ref(null);
 
@@ -34,10 +36,15 @@ const error = ref(null);
 onMounted(async () => {
   playbookId.value = route.params.id;
   try {
-    const existingPlaybook = await playbookStore.fetchPlaybookDetails(playbookId.value);
-    playbookData.value = { ...existingPlaybook };
+    // Fetch both playbook details and rule groups in parallel
+    await Promise.all([
+      playbookStore.fetchPlaybookDetails(playbookId.value).then(data => {
+        playbookData.value = { ...data };
+      }),
+      playbookStore.fetchRuleGroups(playbookId.value),
+    ]);
   } catch (err) {
-    console.error('Failed to fetch playbook details, redirecting.', err);
+    console.error('Failed to fetch playbook data, redirecting.', err);
     router.push('/playbooks');
   }
 });
@@ -144,7 +151,11 @@ const submitPlaybookUpdate = async () => {
 
           <!-- Step 2: Rules -->
           <div v-if="currentStep === 1" class="form-content">
-            <RuleGroupManager ref="ruleGroupManagerRef" :playbook-id="playbookId" />
+            <RuleGroupManager
+              ref="ruleGroupManagerRef"
+              :playbook-id="playbookId"
+              :initial-groups="ruleGroups"
+            />
           </div>
 
           <div v-if="error" class="error-message">{{ error }}</div>
