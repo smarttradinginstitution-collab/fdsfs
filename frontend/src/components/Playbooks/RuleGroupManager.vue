@@ -22,7 +22,7 @@ watchEffect(() => {
 const addGroup = () => {
   ruleGroups.value.push({
     id: uuidv4(), // Temporary frontend ID for list rendering
-    title: 'New Group',
+    name_group: 'New Group',
     rules: [],
   });
 };

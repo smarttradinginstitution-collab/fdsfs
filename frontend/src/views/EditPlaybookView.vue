@@ -36,13 +36,8 @@ const error = ref(null);
 onMounted(async () => {
   playbookId.value = route.params.id;
   try {
-    // Fetch both playbook details and rule groups in parallel
-    await Promise.all([
-      playbookStore.fetchPlaybookDetails(playbookId.value).then(data => {
-        playbookData.value = { ...data };
-      }),
-      playbookStore.fetchRuleGroups(playbookId.value),
-    ]);
+    const data = await playbookStore.fetchPlaybookDetails(playbookId.value);
+    playbookData.value = { ...data };
   } catch (err) {
     console.error('Failed to fetch playbook data, redirecting.', err);
     router.push('/playbooks');
@@ -87,7 +82,7 @@ const submitPlaybookUpdate = async () => {
     const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
     const finalPlaybookData = {
       ...playbookData.value,
-      rule_groups: ruleGroups,
+      rules_groups: ruleGroups,
     };
     await playbookStore.updatePlaybook(playbookId.value, finalPlaybookData);
     router.push({ name: 'playbook-detail', params: { id: playbookId.value } });
@@ -154,7 +149,7 @@ const submitPlaybookUpdate = async () => {
             <RuleGroupManager
               ref="ruleGroupManagerRef"
               :playbook-id="playbookId"
-              :initial-groups="ruleGroups"
+              :initial-groups="playbookData.rules_groups"
             />
           </div>
 

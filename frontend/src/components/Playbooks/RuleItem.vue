@@ -24,7 +24,7 @@ watch(localRule, (newRule) => {
 <template>
   <div class="rule-item">
     <BaseInput
-      v-model="localRule.description"
+      v-model="localRule.rule"
       placeholder="Enter rule description..."
       class="rule-input"
     />

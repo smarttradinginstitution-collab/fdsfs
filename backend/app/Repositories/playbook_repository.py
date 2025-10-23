@@ -40,6 +40,14 @@ class PlaybookRepository:
         stmt = (
             select(Playbook)
             .where(Playbook.id == playbook_id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
+    async def get_by_id_with_relations(self, playbook_id: UUID) -> Optional[Playbook]:
+        stmt = (
+            select(Playbook)
+            .where(Playbook.id == playbook_id)
             .options(
                 selectinload(Playbook.rules_groups)
                 .selectinload(RulesGroupPlaybook.rules)
@@ -166,10 +174,13 @@ class PlaybookRepository:
         await self.db.commit()
         await self.db.refresh(db_playbook)
         # Ricarica l'oggetto con le relazioni per essere sicuri che siano caricate
-        return await self.get_by_id(db_playbook.id)
+        return await self.get_by_id_with_relations(db_playbook.id)
 
-    async def update(self, db_obj: Playbook, obj_in: PlaybookUpdate) -> Playbook:
-        update_data = obj_in.model_dump(exclude_unset=True)
+    async def update(self, db_obj: Playbook, obj_in: PlaybookUpdate | dict) -> Playbook:
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.model_dump(exclude_unset=True)
 
         if 'title' in update_data and update_data['title'] != db_obj.title:
             await self._check_duplicate_title(db_obj.general_account_id, update_data['title'], db_obj.id)
@@ -178,8 +189,85 @@ class PlaybookRepository:
             setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
-        await self.db.refresh(db_obj)
-        return await self.get_by_id(db_obj.id)
+        # await self.db.refresh(db_obj) # Let the controller refetch the whole object later
+        return db_obj
+
+    async def update_with_rules(self, db_obj: Playbook, obj_in: PlaybookUpdate) -> Playbook:
+        # 1. Update Playbook's own fields
+        playbook_update_data = obj_in.model_dump(exclude_unset=True, exclude={'rules_groups'})
+        if playbook_update_data:
+            if 'title' in playbook_update_data and playbook_update_data['title'] != db_obj.title:
+                await self._check_duplicate_title(db_obj.general_account_id, playbook_update_data['title'], db_obj.id)
+            for field, value in playbook_update_data.items():
+                setattr(db_obj, field, value)
+            self.db.add(db_obj)
+
+        # 2. Synchronize Rules and Groups
+        incoming_groups_map = {g.id: g for g in obj_in.rules_groups if g.id}
+        existing_groups_map = {g.id: g for g in db_obj.rules_groups}
+
+        # Delete groups that are not in the incoming list
+        for group_id, group in existing_groups_map.items():
+            if group_id not in incoming_groups_map:
+                await self.db.delete(group)
+
+        # Update existing groups and their rules, or create new ones
+        for i, group_data in enumerate(obj_in.rules_groups):
+            group = None
+            if group_data.id and group_data.id in existing_groups_map:
+                # Update existing group
+                group = existing_groups_map[group_data.id]
+                group.name_group = group_data.name_group
+                group.order = i
+            else:
+                # Create new group
+                group = RulesGroupPlaybook(
+                    name_group=group_data.name_group,
+                    playbook_id=db_obj.id,
+                    order=i
+                )
+                self.db.add(group)
+
+            # Synchronize rules within the group
+            incoming_rules_map = {r.id: r for r in group_data.rules if r.id}
+            existing_rules_map = {r.id: r for r in group.rules}
+
+            # Delete rules not in the incoming list
+            for rule_id, rule in existing_rules_map.items():
+                if rule_id not in incoming_rules_map:
+                    await self.db.delete(rule)
+
+            # Update or create rules
+            for j, rule_data in enumerate(group_data.rules):
+                rule = None
+                if rule_data.id and rule_data.id in existing_rules_map:
+                    # Update existing rule
+                    rule = existing_rules_map[rule_data.id]
+                    rule.rule = rule_data.rule
+                    rule.order = j
+                else:
+                    # Create new rule
+                    rule = RulePlaybook(
+                        rule=rule_data.rule,
+                        rules_groups_playbook_id=group.id,
+                        order=j
+                    )
+                    # Associate with group if it's new
+                    if not group.id:
+                        group.rules.append(rule)
+                    else: # if group is not new
+                        self.db.add(rule)
+
+
+        await self.db.commit()
+
+        # Eagerly load relationships to return a complete object
+        await self.db.refresh(db_obj, attribute_names=['rules_groups'])
+        for group in db_obj.rules_groups:
+            await self.db.refresh(group, attribute_names=['rules'])
+
+        return db_obj
+
 
     async def delete(self, db_obj: Playbook) -> None:
         await self.db.delete(db_obj)
@@ -255,7 +343,7 @@ class PlaybookRepository:
         res_ins = await self.db.execute(stmt_ins)
         new_id = res_ins.scalar_one()
         await self.db.commit()
-        return await self.get_by_id(new_id)
+        return await self.get_by_id_with_relations(new_id)
 
     async def list_all_playbooks_grouped_by_account(self) -> Sequence[GeneralAccount]:
         """
