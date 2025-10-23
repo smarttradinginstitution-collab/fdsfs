@@ -33,7 +33,7 @@ onMounted(() => {
       <p>Loading playbooks...</p>
     </div>
     <div v-else-if="playbooks.length === 0" class="empty-state">
-      <p>No playbooks found. <router-link :to="{ name: 'playbooks-list' }">Create one</router-link>.</p>
+      <p>No playbooks found. <router-link :to="{ name: 'playbooks' }">Create one</router-link>.</p>
     </div>
     <div v-else class="playbook-list">
       <label v-for="playbook in playbooks" :key="playbook.id" class="playbook-item">
