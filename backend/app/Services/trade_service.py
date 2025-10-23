@@ -522,9 +522,9 @@ class TradeService:
         # Restituisce la lista aggiornata di etichette
         return getattr(db_trade, label_type)
 
-    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> List[UUID]:
+    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> TradeRead:
         """
-        Aggiorna le regole 'seguite' per un trade, verificando l'appartenenza e la validità delle regole.
+        Aggiorna le regole 'seguite' per un trade e restituisce l'intero oggetto Trade aggiornato.
         """
         # 1. Recupera il trade e verifica che l'utente sia il proprietario
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)
@@ -544,12 +544,13 @@ class TradeService:
             if len(rules) != len(set(rule_ids)):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more rule IDs are invalid.")
 
-        # 3. Assegna le nuove regole e lascia che SQLAlchemy gestisca la sessione
+        # 3. Assegna le nuove regole
         db_trade.rules_followed = rules
 
         # 4. Commit e refresh
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['rules_followed'])
+        # Refresh the trade object with all its relationships for the response
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
-        # 5. Restituisce gli ID delle regole aggiornate
-        return [rule.id for rule in db_trade.rules_followed]
+        # 5. Restituisce l'oggetto Trade completo
+        return TradeRead.model_validate(db_trade)

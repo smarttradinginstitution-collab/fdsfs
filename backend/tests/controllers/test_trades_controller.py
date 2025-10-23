@@ -296,9 +296,14 @@ async def test_update_trade_rules(async_client: AsyncClient, db_session: AsyncSe
         json=rule_ids_to_set
     )
     assert update_response.status_code == 200
-    assert sorted(update_response.json()) == sorted(rule_ids_to_set)
 
-    # 3. Verifica: Ricarica il trade e controlla le regole associate
+    # 3. Verifica: La risposta dovrebbe contenere il trade aggiornato
+    updated_trade = update_response.json()
+    assert updated_trade["id"] == trade_id
+    followed_rule_ids = {rule["id"] for rule in updated_trade["rules_followed"]}
+    assert followed_rule_ids == set(rule_ids_to_set)
+
+    # 4. Verifica extra: Ricarica il trade e controlla le regole associate
     await db_session.commit() # Assicura che la transazione sia chiusa
     get_response = await async_client.get(f"/api/v1/trades/{trade_id}")
     assert get_response.status_code == 200

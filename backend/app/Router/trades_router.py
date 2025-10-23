@@ -294,7 +294,7 @@ async def update_trade_news_impacts(
     return await controller.update_trade_labels(claims, trade_id, label_ids, "news_impacts", service)
 
 
-@router.put("/{trade_id}/rules", response_model=List[UUID], summary="Update the 'followed' rules for a trade")
+@router.put("/{trade_id}/rules", response_model=TradeRead, summary="Update the 'followed' rules for a trade")
 async def update_trade_rules(
     trade_id: UUID,
     rule_ids: List[UUID],
