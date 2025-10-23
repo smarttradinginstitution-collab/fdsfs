@@ -925,34 +925,25 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async updateTradeRules(tradeId, ruleIds) {
-      this.isTradeLoading = true;
+      // NON impostare isTradeLoading = true qui, perché causa il ricaricamento di altri componenti.
+      // Il componente chiamante (TradePlaybookWidget) gestisce il proprio stato di caricamento.
       const uiStore = useUiStore();
       try {
-        // L'API ora restituisce solo un array di ID delle regole, non l'intero trade.
         const updatedRuleIds = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
 
-        // Aggiorna solo le regole nel trade selezionato, senza ricaricare tutto l'oggetto.
-        // Questo evita di sovrascrivere le modifiche non salvate in altre parti (es. note).
         if (this.selectedTrade && this.selectedTrade.id === tradeId) {
-          // NOTA: Lo stato si aspetta oggetti regola completi, non solo ID.
-          // Poiché il componente che salva (`TradePlaybookWidget`) gestisce già
-          // lo stato delle regole in modo indipendente, la cosa più sicura da fare qui è
-          // non modificare affatto lo stato del `selectedTrade`. La modifica è stata salvata
-          // correttamente nel backend. Alla prossima navigazione o ricaricamento completo,
-          // i dati saranno coerenti. Questo evita qualsiasi effetto collaterale indesiderato.
+          // Non facciamo nulla allo stato `selectedTrade` per evitare di sovrascrivere
+          // le modifiche locali non salvate.
         }
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
 
-        // Restituisce gli ID per coerenza con la risposta dell'API.
         return updatedRuleIds;
 
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
         throw error;
-      } finally {
-        this.isTradeLoading = false;
       }
     },
 
