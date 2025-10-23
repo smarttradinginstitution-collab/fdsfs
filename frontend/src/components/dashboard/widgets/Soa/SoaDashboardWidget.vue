@@ -12,11 +12,8 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SoaDonutChart :clusters-summary="soaAnalysisData.clusters_summary" />
         <div class="flex flex-col justify-between space-y-4">
-          <OptimizationGauges :sl-tp-data="soaAnalysisData.parametric_optimization.sl_tp" />
-          <PsychologicalAlerts
-            :predictive-metrics="soaAnalysisData.predictive_metrics"
-            :drawdown-z-score="soaAnalysisData.drawdown_z_score"
-          />
+          <OptimizationGauges :advice="soaAnalysisData.structured_advice" />
+          <PsychologicalAlerts :advice="soaAnalysisData.structured_advice" />
         </div>
       </div>
     </div>
