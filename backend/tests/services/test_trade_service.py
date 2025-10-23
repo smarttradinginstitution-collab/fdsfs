@@ -273,3 +273,46 @@ async def test_delete_trade_not_found(trade_service: TradeService, mock_claims):
     result = await trade_service.delete_trade(mock_claims, trade_id)
 
     assert result is False
+
+async def test_update_trade_rules_succeeds(trade_service: TradeService, mock_claims):
+    trade_id = uuid4()
+    rule_ids = [uuid4(), uuid4()]
+
+    general_account = MagicMock()
+    general_account.id = uuid4()
+    trading_account = MagicMock()
+    trading_account.id = uuid4()
+    trading_account.general_account_id = general_account.id
+
+    db_trade = create_mock_trade(as_enum=True)
+    db_trade.id = trade_id
+    db_trade.trading_account_id = trading_account.id
+
+    trade_service.repo.get_trade_by_id_simple.return_value = db_trade
+    trade_service.general_account_repo.get_by_user_id.return_value = general_account
+    trade_service.trading_account_repo.get_by_id.return_value = trading_account
+
+    # Mock the database execution for fetching rules
+    mock_rule_1 = MagicMock()
+    mock_rule_1.id = rule_ids[0]
+    mock_rule_2 = MagicMock()
+    mock_rule_2.id = rule_ids[1]
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [mock_rule_1, mock_rule_2]
+    trade_service.db.execute = AsyncMock(return_value=mock_result)
+
+    trade_service.db.commit = AsyncMock()
+    # When refresh is called, update the rules_followed attribute
+    async def mock_refresh(trade, attribute_names):
+        trade.rules_followed = [mock_rule_1, mock_rule_2]
+    trade_service.db.refresh = AsyncMock(side_effect=mock_refresh)
+
+
+    result = await trade_service.update_trade_rules(mock_claims, trade_id, rule_ids)
+
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert all(isinstance(item, type(uuid4())) for item in result)
+    assert set(result) == set(rule_ids)
+    trade_service.db.commit.assert_called_once()
+    trade_service.db.refresh.assert_called_once_with(db_trade, attribute_names=['rules_followed'])

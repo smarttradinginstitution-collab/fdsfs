@@ -925,23 +925,34 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async updateTradeRules(tradeId, ruleIds) {
-      this.isTradeLoading = true;
       const uiStore = useUiStore();
+      const playbookStore = usePlaybookStore();
       try {
-        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
-        const updatedRuleIds = response.data;
+        const updatedRuleIds = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
 
-        // Fetch the full trade again to get all updated relations
-        await this.fetchTradeById(tradeId);
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          // Aggiorna lo stato locale in modo mirato per riflettere le modifiche.
+          // Questo è necessario affinché l'interfaccia utente sia coerente dopo il salvataggio
+          // senza richiedere un ricaricamento completo della pagina.
+
+          // 1. Appiattisci tutte le regole disponibili da tutti i gruppi.
+          const allRules = playbookStore.ruleGroups.flatMap(group => group.rules);
+
+          // 2. Filtra per trovare gli oggetti regola completi che corrispondono agli ID aggiornati.
+          const updatedRuleObjects = allRules.filter(rule => updatedRuleIds.data.includes(rule.id));
+
+          // 3. Aggiorna solo la proprietà `rules_followed` del trade selezionato.
+          this.selectedTrade.rules_followed = updatedRuleObjects;
+        }
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
-        return updatedRuleIds;
+
+        return updatedRuleIds.data;
+
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
         throw error;
-      } finally {
-        this.isTradeLoading = false;
       }
     },
 

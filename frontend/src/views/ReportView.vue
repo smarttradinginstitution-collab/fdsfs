@@ -143,15 +143,13 @@ const selectTradeFromStore = async (tradeId) => {
 };
 
 // --- LIFECYCLE & WATCHERS ---
+// --- LIFECYCLE & WATCHERS ---
 watch(() => route.params.id, (newId) => {
   if (newId) {
     selectTradeFromStore(newId);
   }
-});
+}, { immediate: true });
 
-onMounted(() => {
-  selectTradeFromStore(route.params.id);
-});
 </script>
 
 <template>
