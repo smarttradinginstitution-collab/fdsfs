@@ -1,10 +1,16 @@
 <template>
-  <div class="relative">
+  <div class="relative w-full h-48 md:h-full flex items-center justify-center">
     <Doughnut :data="chartData" :options="chartOptions" />
   </div>
 </template>
 
 <script setup>
+/**
+ * @file SoaDonutChart.vue
+ * @description
+ * Renders a Doughnut chart to visualize the distribution of trades across
+ * different SOA clusters.
+ */
 import { computed } from 'vue';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -12,6 +18,12 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const props = defineProps({
+  /**
+   * The cluster summary object from the SOA analysis.
+   * Keys are cluster labels (e.g., 'A'), and values are objects
+   * containing cluster metrics, including 'trade_count'.
+   * @type {Object}
+   */
   clustersSummary: {
     type: Object,
     required: true,
@@ -21,22 +33,18 @@ const props = defineProps({
 const chartData = computed(() => {
   const labels = Object.keys(props.clustersSummary);
   const data = labels.map(label => props.clustersSummary[label].trade_count);
-  const backgroundColors = labels.map(label => {
-    switch (label) {
-      case 'A': return 'var(--semantic-color-feedback-positive-default)';
-      case 'B': return 'var(--semantic-color-feedback-warning-default)';
-      case 'C': return 'var(--semantic-color-feedback-neutral-default)';
-      case 'D': return 'var(--semantic-color-feedback-negative-default)';
-      case 'E': return 'var(--semantic-color-background-neutral-subtle)';
-      default: return 'var(--semantic-color-background-neutral-subtle)';
-    }
-  });
 
   return {
-    labels: labels.map(label => `Cluster ${label}`),
+    labels: labels,
     datasets: [
       {
-        backgroundColor: backgroundColors,
+        backgroundColor: [
+          '#4A90E2', // Blue
+          '#F5A623', // Orange
+          '#BD10E0', // Purple
+          '#7ED321', // Green
+          '#D0021B', // Red
+        ],
         data: data,
       },
     ],
@@ -49,23 +57,10 @@ const chartOptions = {
   plugins: {
     legend: {
       position: 'right',
+      labels: {
+        color: '#FFFFFF', // White text for legend
+      },
     },
-    tooltip: {
-      callbacks: {
-        label: function(context) {
-          let label = context.label || '';
-          if (label) {
-            label += ': ';
-          }
-          if (context.parsed !== null) {
-            const total = context.dataset.data.reduce((acc, value) => acc + value, 0);
-            const percentage = ((context.raw / total) * 100).toFixed(2);
-            label += `${context.raw} trades (${percentage}%)`;
-          }
-          return label;
-        }
-      }
-    }
   },
 };
 </script>

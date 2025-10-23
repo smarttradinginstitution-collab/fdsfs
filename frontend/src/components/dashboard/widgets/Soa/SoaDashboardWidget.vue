@@ -2,7 +2,7 @@
   <div class="rounded-lg bg-neutral-800 p-4">
     <h3 class="text-lg font-semibold mb-4">Diagnosi Performance SOA 🧠</h3>
     <div v-if="isSoaLoading" class="flex items-center justify-center h-48">
-      <p>Loading SOA Analysis...</p> <!-- Placeholder per uno skeleton loader -->
+      <p>Loading SOA Analysis...</p>
     </div>
     <div v-else-if="soaError" class="flex items-center justify-center h-48">
       <p class="text-red-500">{{ soaError }}</p>
@@ -24,7 +24,14 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue';
+/**
+ * @file SoaDashboardWidget.vue
+ * @description
+ * This is the main container widget for the Strength & Opportunity Analysis (SOA)
+ * dashboard. It orchestrates data fetching from the analyticsStore and passes
+ * the relevant data down to its child components for rendering.
+ */
+import { onMounted } from 'vue';
 import { useAnalyticsStore } from '@/stores/analyticsStore';
 import { storeToRefs } from 'pinia';
 import HeadlineInsight from './HeadlineInsight.vue';

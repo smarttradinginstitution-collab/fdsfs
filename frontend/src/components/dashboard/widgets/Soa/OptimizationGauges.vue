@@ -16,16 +16,33 @@
 </template>
 
 <script setup>
+/**
+ * @file OptimizationGauges.vue
+ * @description
+ * Displays textual advice for Stop Loss and Take Profit optimization.
+ * This component receives pre-formatted advice from the backend and renders it
+ * as HTML, including simple markdown like bolding.
+ */
 import { computed } from 'vue';
 
 const props = defineProps({
+  /**
+   * The structured advice object from the SOA analysis.
+   * @type {Object}
+   * @property {string|null} sl_advice - Textual advice for Stop Loss.
+   * @property {string|null} tp_advice - Textual advice for Take Profit.
+   */
   advice: {
     type: Object,
     required: true,
   },
 });
 
-// Funzione per convertire il markdown in HTML
+/**
+ * Converts simple markdown (bold) to HTML.
+ * @param {string} text - The input text with markdown.
+ * @returns {string} The formatted HTML string.
+ */
 const formatMarkdown = (text) => {
   if (!text) return '';
   return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');

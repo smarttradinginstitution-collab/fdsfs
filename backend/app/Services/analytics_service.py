@@ -297,9 +297,26 @@ class AnalyticsService:
 
     async def get_soa_analysis(
         self, trading_account_id: UUID, start_date: date, end_date: date, general_account_id: UUID
-    ) -> SOAOverallAnalysis:
-        """
-        Orchestra l'analisi SOA completa, assicurandosi che l'utente abbia i permessi.
+    ) -> Optional[SOAOverallAnalysis]:
+        """Orchestrates the full Strength & Opportunity Analysis (SOA).
+
+        This method acts as a high-level orchestrator. It:
+        1.  Verifies user authorization for the requested trading account.
+        2.  Fetches all necessary trade and daily balance data from the repositories.
+        3.  Enriches each trade with detailed metrics using the trade_enricher.
+        4.  Instantiates the SOAService to perform the core numerical analysis.
+        5.  Calls the soa_advisor to translate numerical results into textual advice.
+        6.  Assembles the final, comprehensive `SOAOverallAnalysis` object.
+
+        Args:
+            trading_account_id (UUID): The ID of the trading account to analyze.
+            start_date (date): The start date of the analysis period.
+            end_date (date): The end date of the analysis period.
+            general_account_id (UUID): The user's general account ID for authorization.
+
+        Returns:
+            Optional[SOAOverallAnalysis]: The complete analysis results, or None if
+            the user is unauthorized or no trades exist in the period.
         """
         # 1. Recupera dati necessari e verifica l'autorizzazione
         trading_account = await self.trading_account_repo.get_by_id(trading_account_id)

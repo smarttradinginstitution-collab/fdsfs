@@ -3,21 +3,45 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from scipy.stats import zscore, pearsonr
 
 class SOAService:
-    """
-    Servizio per l'analisi avanzata dei trade (SOA - Strength & Opportunity Analysis).
+    """Service for advanced Strength & Opportunity Analysis (SOA) of trades.
+
+    This service takes raw trade data, preprocesses it into a pandas DataFrame,
+    and provides methods for clustering, causal analysis, and parametric
+    optimization. It is designed to be the computational core of the SOA feature.
+
+    Attributes:
+        raw_trades (List[Dict[str, Any]]): The initial list of trade dictionaries.
+        df (pd.DataFrame): The preprocessed and cleaned pandas DataFrame used
+            for all analyses.
     """
     def __init__(self, trades_data: List[Dict[str, Any]]):
+        """Initializes the SOAService with a list of raw trade data.
+
+        Args:
+            trades_data (List[Dict[str, Any]]): A list of dictionaries, where
+                each dictionary represents a trade with its enriched metrics.
+        """
         self.raw_trades = trades_data
         self.df = self._preprocess_data()
 
     def _preprocess_data(self) -> pd.DataFrame:
-        """
-        Converte i dati grezzi dei trade in un DataFrame Pandas, calcola le metriche
-        necessarie e pulisce i dati per l'analisi.
+        """Converts raw trade data into a cleaned pandas DataFrame for analysis.
+
+        This private method performs several key steps:
+        1.  Constructs a DataFrame from the raw data.
+        2.  Converts all numerical metrics from Decimal/str to float, coercing errors.
+        3.  Filters out invalid trades by dropping rows with NaN in critical columns
+            (`trade_risk`, `p_l`, `duration_minutes`).
+        4.  Ensures all trades have a positive `trade_risk`.
+        5.  Calculates the Duration Deviation (DD) as a z-score of `duration_minutes`.
+        6.  Fills any remaining NaN values in SOA vectors with 0.
+
+        Returns:
+            pd.DataFrame: A cleaned and prepared DataFrame ready for analysis.
         """
         if not self.raw_trades:
             return pd.DataFrame()
@@ -45,24 +69,28 @@ class SOAService:
             df['DD'] = 0.0
 
         # 5. Gestione NaN strategica per i vettori SOA
-        # I valori condizionali (EP, RRv, ES) sono già a 0 se non applicabili (da enricher)
-        # Riempiamo eventuali NaN rimanenti nei vettori con 0, assumendo assenza del fenomeno
         soa_vectors = ['SN', 'EP', 'RRv', 'ES', 'RER', 'DD']
         for vector in soa_vectors:
             if vector not in df.columns:
-                df[vector] = 0.0 # Aggiungi colonna se non esiste
+                df[vector] = 0.0
         df[soa_vectors] = df[soa_vectors].fillna(0)
-
 
         return df
 
-    def run_full_analysis(self):
-        """
-        Orchestra l'esecuzione di tutte le analisi SOA e restituisce i risultati combinati.
-        Restituisce sempre una struttura dati valida per lo schema Pydantic.
+    def run_full_analysis(self) -> Dict[str, Any]:
+        """Orchestrates the execution of all SOA analysis levels.
+
+        This is the main public method that calls all the individual analysis
+        steps and assembles their results into a single, comprehensive dictionary.
+        It handles the edge case of no valid trades by returning a default,
+        empty structure that conforms to the API schema.
+
+        Returns:
+            Dict[str, Any]: A nested dictionary containing the results of all
+            analysis, including clustering, causal analysis, parametric
+            optimization, predictive metrics, and trade details.
         """
         if self.df.empty:
-            # Ritorna una struttura dati di default se non ci sono trade validi
             return {
                 "clusters_summary": {},
                 "causal_analysis": {
@@ -70,8 +98,13 @@ class SOAService:
                     'psychology': [], 'news': [], 'rule': []
                 },
                 "parametric_optimization": {
-                    "sl_tp": {},
-                    "duration_expectancy": [],
+                    "sl_optimal_p90": None,
+                    "sl_optimal_p95": None,
+                    "tp_optimal_median": None,
+                    "tp_optimal_mean": None,
+                    "avg_user_stress_ratio": 0.0,
+                    "avg_user_planned_tp_r": 0.0,
+                    "duration_expectancy": []
                 },
                 "predictive_metrics": {
                     "r_autocorrelation": 0.0,
@@ -80,10 +113,7 @@ class SOAService:
                 "headline_insight": "Nessun trade disponibile per l'analisi.",
             }
 
-        # Livello 1: Clustering
         self.cluster_trades()
-
-        # Livello 2: Analisi Causale
         causal_analysis = {
             'playbook': self.analyze_clusters_by_attribute('playbook_id'),
             'tag': self.analyze_clusters_by_attribute('tag_ids', explode=True),
@@ -92,26 +122,17 @@ class SOAService:
             'news': self.analyze_clusters_by_attribute('news_impact_ids', explode=True),
             'rule': self.analyze_clusters_by_attribute('rule_ids', explode=True)
         }
-
-        # Livello 3: Ottimizzazione Parametrica
         sl_tp_optimization = self.optimize_sl_tp()
         duration_expectancy = self.analyze_expectancy_by_duration()
-
-        # Livello 4: Metriche Predittive
         r_autocorrelation = self.calculate_r_autocorrelation()
-
-        # Calcolo medie utente e headline insight
         user_averages = self._calculate_user_averages()
 
-        # Uniamo tutti i dati di ottimizzazione in un unico dizionario "piatto"
         parametric_optimization = {
             **sl_tp_optimization,
             **user_averages,
             "duration_expectancy": duration_expectancy
         }
-
         headline_insight = self._generate_headline_insight(parametric_optimization, r_autocorrelation)
-
 
         return {
             "clusters_summary": self.get_clusters_summary(),
@@ -124,16 +145,17 @@ class SOAService:
             "headline_insight": headline_insight,
         }
 
-    def _calculate_user_averages(self) -> Dict:
-        """Calcola lo stress ratio medio e il TP pianificato medio dall'utente."""
+    def _calculate_user_averages(self) -> Dict[str, float]:
+        """Calculates the user's average stress ratio and planned R-multiple for TP.
+
+        Returns:
+            Dict[str, float]: A dictionary containing the user's average metrics.
+        """
         if self.df.empty:
             return {"avg_user_stress_ratio": 0.0, "avg_user_planned_tp_r": 0.0}
 
-        # Calcola lo stress ratio per ogni trade e poi fanne la media
         stress_ratio = (self.df['mae_usd'] / self.df['trade_risk']).replace([np.inf, -np.inf], np.nan)
         avg_stress_ratio = stress_ratio.dropna().mean()
-
-        # Per TP, la media del planned_r_multiple è la metrica più diretta
         avg_tp_r = self.df['planned_r_multiple'].dropna().mean()
 
         return {
@@ -142,80 +164,86 @@ class SOAService:
         }
 
     def _generate_headline_insight(self, sl_tp_data: Dict, r_autocorr: float) -> str:
-        """Genera un insight testuale basato sui dati più critici."""
+        """Generates a brief, actionable text insight based on critical metrics.
 
-        # Logica di esempio, da affinare
+        Args:
+            sl_tp_data (Dict): The dictionary of SL/TP optimization results.
+            r_autocorr (float): The calculated R-multiple autocorrelation.
+
+        Returns:
+            str: A formatted string with the most important insight.
+        """
         if sl_tp_data.get('sl_optimal_p95', 0) > sl_tp_data.get('avg_user_stress_ratio', 0) * 1.5:
              return "⚠ Stop Loss potenzialmente troppo stretti: rischi di uscite premature."
-
         if abs(r_autocorr) > 0.3:
             return f"🧠 Pattern psicologico rilevato: l'esito di un trade sembra influenzare il successivo (Autocorr: {r_autocorr:.2f})."
-
-        # Aggiungere qui altre logiche, es. analisi P/L cluster
-
         return "✅ Analisi completata. Nessun alert critico rilevato."
 
-
     def cluster_trades(self, n_clusters: int = 5) -> None:
-        """
-        Esegue il clustering K-Means sui vettori SOA + DD.
+        """Performs K-Means clustering on the SOA vectors.
+
+        This method standardizes the 6 SOA vectors + DD, runs K-Means, and adds
+        'cluster_id' and 'cluster_label' columns to the DataFrame.
+
+        Args:
+            n_clusters (int): The number of clusters to form.
         """
         soa_vectors = ['SN', 'EP', 'RRv', 'ES', 'RER', 'DD']
-
-        # Assicurati che tutte le colonne esistano, anche se vuote
         for col in soa_vectors:
             if col not in self.df.columns:
                 self.df[col] = 0.0
 
         X = self.df[soa_vectors].values
-
         if X.shape[0] < n_clusters:
-            # Non ci sono abbastanza dati per formare i cluster richiesti
             self.df['cluster_id'] = 0
             return
 
-        # Standardizzazione dei dati
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
-
-        # Esecuzione KMeans
         kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
         self.df['cluster_id'] = kmeans.fit_predict(X_scaled)
-
-        # Mappatura opzionale a etichette
         cluster_map = {i: chr(65 + i) for i in range(n_clusters)}
         self.df['cluster_label'] = self.df['cluster_id'].map(cluster_map)
 
-    def get_clusters_summary(self) -> Dict:
-        """
-        Restituisce un riepilogo delle caratteristiche medie di ogni cluster.
+    def get_clusters_summary(self) -> Dict[str, Any]:
+        """Generates a summary of the average characteristics of each cluster.
+
+        Returns:
+            Dict[str, Any]: A dictionary where keys are cluster labels and
+            values are dictionaries of the mean metric values for that cluster.
         """
         if 'cluster_id' not in self.df.columns:
             return {}
 
         soa_vectors = ['SN', 'EP', 'RRv', 'ES', 'RER', 'DD', 'p_l', 'realized_r_multiple', 'duration_minutes']
         summary = self.df.groupby('cluster_label')[soa_vectors].mean().to_dict(orient='index')
-
-        # Aggiungi conteggio trade per cluster
         counts = self.df.groupby('cluster_label').size().to_dict()
         for label, count in counts.items():
             if label in summary:
                 summary[label]['trade_count'] = count
-
         return summary
 
     def analyze_clusters_by_attribute(self, attribute_col: str, explode: bool = False) -> List[Dict]:
-        """
-        Analizza la relazione tra un attributo (es. playbook, tag) e i cluster.
-        Restituisce sempre una lista di dizionari per la validazione Pydantic.
+        """Analyzes the relationship between a trade attribute and the clusters.
+
+        This method groups trades by a specific attribute (e.g., 'playbook_id' or
+        'tag_ids') and calculates the distribution and performance across clusters
+        for that attribute.
+
+        Args:
+            attribute_col (str): The DataFrame column name of the attribute to analyze.
+            explode (bool): If True, the method will "explode" list-like entries
+                in the attribute column (for many-to-many relationships like tags).
+
+        Returns:
+            List[Dict]: A list of dictionaries, each representing the performance
+            of an attribute value within a specific cluster.
         """
         if attribute_col not in self.df.columns or 'cluster_label' not in self.df.columns:
             return []
 
         df_analysis = self.df.copy()
-
         if explode:
-            # Gestione delle liste di ID per relazioni M-to-M
             df_analysis = df_analysis.dropna(subset=[attribute_col])
             df_analysis = df_analysis[df_analysis[attribute_col].apply(lambda x: isinstance(x, list) and len(x) > 0)]
             if df_analysis.empty:
@@ -223,14 +251,10 @@ class SOAService:
             df_analysis = df_analysis.explode(attribute_col)
 
         df_analysis = df_analysis.dropna(subset=[attribute_col, 'cluster_label'])
-
         if df_analysis.empty:
             return []
 
-        # Calcoli principali
         grouped = df_analysis.groupby([attribute_col, 'cluster_label'])
-
-        # Conteggio, P/L totale, e medie dei vettori SOA
         agg_metrics = {
             'p_l': ['count', 'sum'],
             'SN': 'mean', 'EP': 'mean', 'RRv': 'mean',
@@ -240,19 +264,24 @@ class SOAService:
         result.columns = ['_'.join(col).strip() for col in result.columns.values]
         result = result.rename(columns={'p_l_count': 'trade_count', 'p_l_sum': 'total_pnl'})
 
-        # Calcolo P(Cluster | Attributo)
         total_counts_per_attribute = df_analysis.groupby(attribute_col).size()
         result['probability'] = result.index.map(lambda x: result.loc[x, 'trade_count'] / total_counts_per_attribute[x[0]])
-
         result = result.reset_index()
-        # Rinomina la colonna ID per corrispondere all'alias Pydantic 'attribute_col'
         result = result.rename(columns={attribute_col: 'attribute_col'})
 
         return result.to_dict(orient='records')
 
-    def optimize_sl_tp(self) -> Dict:
-        """
-        Calcola i livelli ottimali di Stop Loss e Take Profit basati sui dati storici.
+    def optimize_sl_tp(self) -> Dict[str, Optional[float]]:
+        """Calculates optimal Stop Loss and Take Profit levels from historical data.
+
+        This analysis is performed only on winning trades (p_l > 0).
+        - SL is optimized based on the 'stress ratio' (mae_usd / trade_risk).
+        - TP is optimized based on the 'potential_r' (mfe_usd / trade_risk).
+
+        Returns:
+            Dict[str, Optional[float]]: A dictionary with optimal p90/p95 SL
+            and median/mean TP values. Returns None for values if calculation
+            is not possible (e.g., no winning trades).
         """
         df_win = self.df[self.df['p_l'] > 0].copy()
 
@@ -279,29 +308,30 @@ class SOAService:
         }
 
     def analyze_expectancy_by_duration(self, n_deciles: int = 10) -> List[Dict]:
-        """
-        Calcola l'aspettativa (Expectancy) per decili di durata dei trade.
+        """Calculates trading expectancy across deciles of trade duration.
+
+        Args:
+            n_deciles (int): The number of groups (quantiles) to split the
+                duration data into.
+
+        Returns:
+            List[Dict]: A list of dictionaries, each containing the expectancy
+            and other stats for a duration decile.
         """
         if 'duration_minutes' not in self.df.columns or self.df['duration_minutes'].nunique() < n_deciles:
             return []
 
         self.df['duration_decile'] = pd.qcut(self.df['duration_minutes'], q=n_deciles, labels=False, duplicates='drop')
-
         grouped = self.df.groupby('duration_decile')
-
         results = []
         for name, group in grouped:
             wins = group[group['p_l'] > 0]
             losses = group[group['p_l'] <= 0]
-
             win_rate = len(wins) / len(group) if len(group) > 0 else 0
             loss_rate = 1 - win_rate
-
             avg_win = wins['p_l'].mean() if not wins.empty else 0
             avg_loss = losses['p_l'].mean() if not losses.empty else 0
-
-            expectancy = (win_rate * avg_win) + (loss_rate * avg_loss) # avg_loss è già negativo
-
+            expectancy = (win_rate * avg_win) + (loss_rate * avg_loss)
             results.append({
                 "decile": name,
                 "avg_duration": group['duration_minutes'].mean(),
@@ -311,38 +341,51 @@ class SOAService:
                 "avg_loss_pnl": avg_loss,
                 "trade_count": len(group)
             })
-
         return results
 
     def calculate_r_autocorrelation(self, lag: int = 1) -> float:
-        """
-        Calcola l'autocorrelazione dei Realized R-multiples.
+        """Calculates the autocorrelation of Realized R-multiples.
+
+        This metric can indicate psychological patterns, such as a tendency
+        for performance to be influenced by the previous trade's outcome.
+
+        Args:
+            lag (int): The lag (number of trades back) to use for the
+                autocorrelation calculation.
+
+        Returns:
+            float: The autocorrelation coefficient, between -1 and 1.
         """
         if self.df['realized_r_multiple'].nunique() <= 1:
-            return 0.0 # Varianza nulla, autocorrelazione non definita
+            return 0.0
 
         df_sorted = self.df.sort_values(by='exit_timestamp').dropna(subset=['realized_r_multiple'])
-
         if len(df_sorted) < lag + 2:
             return 0.0
 
         autocorr = df_sorted['realized_r_multiple'].autocorr(lag=lag)
         return autocorr if pd.notna(autocorr) else 0.0
 
-
     def calculate_drawdown_zscore(self, daily_balances: List[Dict]) -> Dict:
+        """Calculates the Z-score of the current drawdown.
+
+        This metric indicates how statistically significant the current drawdown
+        is compared to the historical average drawdown.
+
+        Args:
+            daily_balances (List[Dict]): A list of dictionaries, each with 'date'
+                and 'balance' keys.
+
+        Returns:
+            Dict: A dictionary containing the z_score and other drawdown stats,
+            always conforming to the Pydantic schema.
         """
-        Calcola lo Z-score del drawdown corrente basato sulla serie storica dei saldi.
-        Restituisce sempre una struttura dati completa e valida per lo schema Pydantic.
-        """
-        # Valori di default che garantiscono la validazione Pydantic
         default_return = {
             "z_score": 0.0,
             "current_drawdown_usd": 0.0,
             "average_drawdown_usd": 0.0,
             "stddev_drawdown_usd": 0.0
         }
-
         if not daily_balances or len(daily_balances) < 2:
             return default_return
 
@@ -350,12 +393,9 @@ class SOAService:
         df_balance['date'] = pd.to_datetime(df_balance['date'])
         df_balance = df_balance.sort_values(by='date')
         df_balance['balance'] = pd.to_numeric(df_balance['balance'])
-
         df_balance['peak_balance'] = df_balance['balance'].expanding().max()
         df_balance['drawdown'] = df_balance['balance'] - df_balance['peak_balance']
-
         drawdowns = df_balance[df_balance['drawdown'] < 0]['drawdown']
-
         current_drawdown = df_balance['drawdown'].iloc[-1]
 
         if drawdowns.empty:
@@ -364,12 +404,9 @@ class SOAService:
 
         avg_drawdown = drawdowns.mean()
         std_drawdown = drawdowns.std()
-
-        # Se non c'è deviazione, lo z-score non è calcolabile in modo significativo
         if std_drawdown == 0 or pd.isna(std_drawdown):
             z_score = 0.0
         else:
-            # Lo Z-score ha senso solo se siamo in drawdown
             z_score = (current_drawdown - avg_drawdown) / std_drawdown if current_drawdown < 0 else 0.0
 
         return {
@@ -378,8 +415,3 @@ class SOAService:
             "average_drawdown_usd": avg_drawdown,
             "stddev_drawdown_usd": std_drawdown if pd.notna(std_drawdown) else 0.0
         }
-
-# Esempio di utilizzo (per sviluppo e test)
-if __name__ == '__main__':
-    # Qui andrebbero i dati di esempio
-    pass
