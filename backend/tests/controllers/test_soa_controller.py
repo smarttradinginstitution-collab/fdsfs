@@ -7,6 +7,7 @@ from unittest.mock import patch, AsyncMock
 import uuid
 from app.main import app
 from app.Router.dependencies import get_current_general_account_id
+from app.Schemas.soa import SOAOverallAnalysis
 
 # Lo useremo per il test end-to-end
 @pytest.mark.asyncio
@@ -18,18 +19,28 @@ async def test_get_soa_analysis_endpoint(
         return uuid.uuid4()
     app.dependency_overrides[get_current_general_account_id] = override_get_current_general_account_id
     # Mock del servizio per evitare chiamate reali al DB e logica complessa
-    mock_soa_result = {
-        "clusters_summary": {},
-        "causal_analysis": {
+    mock_soa_result = SOAOverallAnalysis(
+        clusters_summary={},
+        causal_analysis={
             "playbook": [], "tag": [], "mistake": [], "psychology": [], "news": [], "rule": []
         },
-        "parametric_optimization": {},
-        "predictive_metrics": {},
-        "drawdown_z_score": {
-            "z_score": 0.0, "current_drawdown_usd": 0.0, "average_drawdown_usd": 0.0, "stddev_drawdown_usd": 0.0
+        parametric_optimization={},
+        predictive_metrics={},
+        drawdown_z_score={
+            "z_score": 0.0,
+            "current_drawdown_usd": 0.0,
+            "average_drawdown_usd": 0.0,
+            "stddev_drawdown_usd": 0.0
         },
-        "trade_details": []
-    }
+        trade_details=[],
+        headline_insight="Test Insight",
+        structured_advice={
+            "sl_advice": "Test SL advice",
+            "tp_advice": "Test TP advice",
+            "psychological_advice": "Test psychological advice"
+        },
+        error=None
+    )
 
     with patch('app.Services.analytics_service.AnalyticsService.get_soa_analysis', new_callable=AsyncMock) as mock_get_soa:
         mock_get_soa.return_value = mock_soa_result

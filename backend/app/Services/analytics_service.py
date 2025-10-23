@@ -10,7 +10,8 @@ from decimal import Decimal
 # Nuove importazioni per SOA
 from app.Services.soa_service import SOAService
 from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
-from app.Schemas.soa import SOAOverallAnalysis
+from app.Services.soa_advisor import generate_structured_advice
+from app.Schemas.soa import SOAOverallAnalysis, StructuredAdvice
 
 
 from app.Infrastructure.db import get_db
@@ -341,9 +342,12 @@ class AnalyticsService:
         analysis_results = soa_service.run_full_analysis()
         drawdown_z_score_results = soa_service.calculate_drawdown_zscore(daily_balances)
 
-        # 4. Assembla e mappa i risultati sullo schema Pydantic
-        # Nota: Potrebbe essere necessario mappare i nomi degli attributi se non corrispondono
-        # agli alias Pydantic. Qui assumiamo una corrispondenza diretta per semplicità.
+        # 4. Genera consigli strutturati basati sui risultati numerici
+        # Combiniamo i risultati perché l'advisor potrebbe aver bisogno di entrambi
+        all_numeric_results = {**analysis_results, "drawdown_z_score": drawdown_z_score_results}
+        structured_advice = generate_structured_advice(all_numeric_results)
+
+        # 5. Assembla e mappa i risultati finali sullo schema Pydantic
         final_result = {
             "clusters_summary": analysis_results.get("clusters_summary"),
             "causal_analysis": analysis_results.get("causal_analysis"),
@@ -351,6 +355,8 @@ class AnalyticsService:
             "predictive_metrics": analysis_results.get("predictive_metrics"),
             "drawdown_z_score": drawdown_z_score_results,
             "trade_details": analysis_results.get("trade_details"),
+            "headline_insight": analysis_results.get("headline_insight"),
+            "structured_advice": structured_advice, # Aggiungiamo i consigli qui
         }
 
         return SOAOverallAnalysis.model_validate(final_result)

@@ -65,6 +65,12 @@ class SOADrawdownZScoreSchema(BaseModel):
     average_drawdown_usd: float
     stddev_drawdown_usd: float
 
+class StructuredAdvice(BaseModel):
+    sl_advice: Optional[str] = None
+    tp_advice: Optional[str] = None
+    psychological_advice: Optional[str] = None
+    # Aggiungi altri campi consiglio se necessario (es. cluster_advice)
+
 class SOAOverallAnalysis(BaseModel):
     clusters_summary: Dict[str, SOAClusterSummarySchema]
     causal_analysis: SOACausalAnalysisSchema
@@ -72,4 +78,6 @@ class SOAOverallAnalysis(BaseModel):
     predictive_metrics: Dict[str, Any]
     drawdown_z_score: SOADrawdownZScoreSchema
     trade_details: List[Dict[str, Any]]
+    structured_advice: StructuredAdvice # Aggiungi questo campo
     headline_insight: Optional[str] = None
+    error: Optional[str] = None
