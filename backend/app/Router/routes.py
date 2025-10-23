@@ -223,6 +223,14 @@ router.include_router(
     dependencies=[Depends(get_current_claims)],
 )
 
+# Aggiungo il nuovo router SOA qui per coerenza
+from app.Router import soa_router
+router.include_router(
+    soa_router.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_claims)],
+)
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 🛡️ DISCIPLINE (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────

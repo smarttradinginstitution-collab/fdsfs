@@ -41,7 +41,7 @@ async def test_get_soa_analysis_endpoint(
 
         # Effettua la richiesta all'endpoint
         response = await async_client.get(
-            f"/analytics/{trading_account_id}/soa",
+            f"/api/v1/analytics/{trading_account_id}/soa",
             params={"start_date": str(start_date), "end_date": str(end_date)}
         )
 
@@ -73,7 +73,7 @@ async def test_get_soa_analysis_endpoint_no_data(async_client: AsyncClient):
         end_date = date(2023, 1, 31)
 
         response = await async_client.get(
-            f"/analytics/{trading_account_id}/soa",
+            f"/api/v1/analytics/{trading_account_id}/soa",
             params={"start_date": str(start_date), "end_date": str(end_date)}
         )
 
