@@ -522,9 +522,9 @@ class TradeService:
         # Restituisce la lista aggiornata di etichette
         return getattr(db_trade, label_type)
 
-    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> TradeRead:
+    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> List[UUID]:
         """
-        Aggiorna le regole 'seguite' per un trade e restituisce l'intero oggetto Trade aggiornato.
+        Aggiorna le regole 'seguite' per un trade.
         """
         # 1. Recupera il trade e verifica che l'utente sia il proprietario
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)
@@ -549,8 +549,7 @@ class TradeService:
 
         # 4. Commit e refresh
         await self.db.commit()
-        # Refresh the trade object with all its relationships for the response
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
+        await self.db.refresh(db_trade, attribute_names=['rules_followed'])
 
-        # 5. Restituisce l'oggetto Trade completo
-        return TradeRead.model_validate(db_trade)
+        # 5. Restituisce la lista degli ID delle regole aggiornate
+        return [rule.id for rule in db_trade.rules_followed]

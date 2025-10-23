@@ -928,20 +928,25 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
       const uiStore = useUiStore();
       try {
-        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
-        const updatedTrade = mapBackendTradeToFrontend(response.data);
+        // L'API ora restituisce solo un array di ID delle regole, non l'intero trade.
+        const updatedRuleIds = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
 
-        // Update the selected trade directly without fetching
-        this.selectedTrade = updatedTrade;
-
-        // Also update the trade in the main list if it exists
-        const index = this.trades.findIndex(t => t.id === tradeId);
-        if (index !== -1) {
-          this.trades[index] = updatedTrade;
+        // Aggiorna solo le regole nel trade selezionato, senza ricaricare tutto l'oggetto.
+        // Questo evita di sovrascrivere le modifiche non salvate in altre parti (es. note).
+        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
+          // NOTA: Lo stato si aspetta oggetti regola completi, non solo ID.
+          // Poiché il componente che salva (`TradePlaybookWidget`) gestisce già
+          // lo stato delle regole in modo indipendente, la cosa più sicura da fare qui è
+          // non modificare affatto lo stato del `selectedTrade`. La modifica è stata salvata
+          // correttamente nel backend. Alla prossima navigazione o ricaricamento completo,
+          // i dati saranno coerenti. Questo evita qualsiasi effetto collaterale indesiderato.
         }
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
-        return updatedTrade.rules_followed;
+
+        // Restituisce gli ID per coerenza con la risposta dell'API.
+        return updatedRuleIds;
+
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
