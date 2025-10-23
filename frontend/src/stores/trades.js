@@ -387,6 +387,11 @@ export const useTradesStore = defineStore('trades', {
      * @param {boolean} options.ignoreFilters - Se true, carica tutti i trade senza filtri.
      */
     async fetchTrades(options = { ignoreFilters: false }) {
+      // LOCK: Previene fetch multiple se una è già in corso.
+      if (this.isLoading) {
+        console.log("Fetch dei trade già in corso. Salto la richiesta duplicata.");
+        return;
+      }
       this.isLoading = true;
       const tradingAccountsStore = useTradingAccountsStore();
       const selectedAccount = tradingAccountsStore.selectedTradingAccount;

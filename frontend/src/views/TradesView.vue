@@ -21,11 +21,9 @@ const selectedTrades = ref([]); // Stato per le righe selezionate
 
 // --- LOGICA DEL COMPONENTE ---
 onMounted(() => {
-  // Se l'utente atterra direttamente su questa pagina e i trade non sono stati
-  // ancora caricati (es. tramite il login), li carichiamo ora.
-  if (tradesStore.trades.length === 0) {
-    tradesStore.fetchTrades({ ignoreFilters: true });
-  }
+  // Carichiamo sempre la lista completa dei trade quando il componente viene montato.
+  // L'azione `fetchTrades` ha un lock interno per prevenire chiamate multiple.
+  tradesStore.fetchTrades({ ignoreFilters: true });
 });
 
 const handleBulkDelete = () => {

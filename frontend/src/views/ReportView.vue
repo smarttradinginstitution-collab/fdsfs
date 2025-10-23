@@ -110,32 +110,37 @@ const prevImage = () => {
 const selectTradeFromStore = async (tradeId) => {
   isPageLoading.value = true;
   error.value = null;
+
   try {
-    // Chiama la nuova azione che carica tutto in una sola volta
-    await tradesStore.fetchTradeWithAllData(tradeId);
+    // Cerca il trade nei dati già caricati
+    const existingTrade = tradesStore.trades.find(t => t.id === tradeId);
 
-    // Se necessario, popola altri store con i dati ricevuti
-    if (tradesStore.selectedTrade) {
-      // Aggiorna lo store delle immagini
-      imageStore.setImagesForCurrentTrade(tradesStore.selectedTrade.images || []);
-
-      // Aggiorna lo store delle note
-      const note = tradesStore.selectedTrade.notes?.[0]; // Prende la prima nota, se esiste
+    if (existingTrade) {
+      // Se trovato, usa i dati locali per un caricamento istantaneo
+      tradesStore.selectedTrade = existingTrade;
+      // Popola gli altri store come faceva prima
+      imageStore.setImagesForCurrentTrade(existingTrade.images || []);
+      const note = existingTrade.notes?.[0];
       notebookStore.setSelectedNoteFromData(note);
-
-      // Imposta direttamente i dati finanziari
-      notebookStore.setFinancialDataFromTrade(tradesStore.selectedTrade);
-
+      notebookStore.setFinancialDataFromTrade(existingTrade);
     } else {
-      // Se il trade non è stato caricato, svuota entrambi gli store
-      imageStore.setImagesForCurrentTrade([]);
-      notebookStore.deselectNote();
-    }
+      // FALLBACK: Se non trovato (es. link diretto), carica dall'API
+      console.warn(`Trade ${tradeId} non trovato in locale. Eseguo il fallback all'API.`);
+      await tradesStore.fetchTradeWithAllData(tradeId);
 
+      if (tradesStore.selectedTrade) {
+        imageStore.setImagesForCurrentTrade(tradesStore.selectedTrade.images || []);
+        const note = tradesStore.selectedTrade.notes?.[0];
+        notebookStore.setSelectedNoteFromData(note);
+        notebookStore.setFinancialDataFromTrade(tradesStore.selectedTrade);
+      } else {
+        imageStore.setImagesForCurrentTrade([]);
+        notebookStore.deselectNote();
+      }
+    }
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
     error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
     tradesStore.selectedTrade = null;
   } finally {
     isPageLoading.value = false;
