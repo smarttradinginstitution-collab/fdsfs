@@ -18,6 +18,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     originalStats: null,
     defaultLayout: {
       charts: [
+        { i: 'soaWidget' }, // Aggiunto come primo widget
         { i: 'vantageScore' },
         { i: 'rrDistribution' },
         { i: 'cumulativePnl' },
@@ -29,8 +30,8 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
     },
     widgetConfig: {
       charts: {
-        max: 3,
-        allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl'],
+        max: 4,
+        allowed: ['vantageScore', 'rrDistribution', 'cumulativePnl', 'soaWidget'],
       },
       main: {
         max: 2,
@@ -38,6 +39,7 @@ export const useDashboardLayoutStore = defineStore('dashboardLayout', {
       },
     },
     availableWidgets: [
+        { i: 'soaWidget', name: 'Diagnosi SOA' },
         { i: 'vantageScore', name: 'Vantage Score' },
         { i: 'rrDistribution', name: 'R:R Distribution' },
         { i: 'cumulativePnl', name: 'Cumulative P&L' },

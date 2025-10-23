@@ -5,6 +5,7 @@ import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistr
 import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
 import CalendarHeatmap from '../components/dashboard/widgets/Calendar/CalendarHeatmap.vue';
 import RecentTradesTable from '../components/dashboard/widgets/Table/RecentTradesTable.vue';
+import SoaDashboardWidget from '../components/dashboard/widgets/Soa/SoaDashboardWidget.vue'; // Importa il nuovo widget
 import DashboardZone from '../components/dashboard/zones/DashboardZone.vue';
 import StatsZone from '../components/dashboard/zones/StatsZone.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
@@ -33,6 +34,7 @@ const widgetComponents = {
   'cumulativePnl': CumulativePnlWidget,
   'calendar': CalendarHeatmap,
   'recentTrades': RecentTradesTable,
+  'soaWidget': SoaDashboardWidget, // Aggiungi il nuovo widget
 };
 
 const onLayoutDragEnd = ({ zone, event }) => {

@@ -7,6 +7,9 @@ class SOASL_TPOptimizationSchema(BaseModel):
     sl_optimal_p95: Optional[float] = Field(None, description="Livello ottimale di Stop Loss (95° percentile dello stress ratio)")
     tp_optimal_median: Optional[float] = Field(None, description="Livello ottimale di Take Profit (mediana del potential R)")
     tp_optimal_mean: Optional[float] = Field(None, description="Livello ottimale di Take Profit (media del potential R)")
+    avg_user_stress_ratio: Optional[float] = Field(None, description="Stress ratio medio utilizzato dall'utente")
+    avg_user_planned_tp_r: Optional[float] = Field(None, description="TP medio in R pianificato dall'utente")
+
 
 class SOADurationExpectancySchema(BaseModel):
     decile: int
@@ -69,3 +72,4 @@ class SOAOverallAnalysis(BaseModel):
     predictive_metrics: Dict[str, Any]
     drawdown_z_score: SOADrawdownZScoreSchema
     trade_details: List[Dict[str, Any]]
+    headline_insight: Optional[str] = None

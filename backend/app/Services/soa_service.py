@@ -79,6 +79,13 @@ class SOAService:
         # Livello 4: Metriche Predittive
         r_autocorrelation = self.calculate_r_autocorrelation()
 
+        # Calcolo medie utente e headline insight
+        user_averages = self._calculate_user_averages()
+        sl_tp_optimization.update(user_averages) # Aggiungo le medie utente ai dati di ottimizzazione
+
+        headline_insight = self._generate_headline_insight(sl_tp_optimization, r_autocorrelation)
+
+
         return {
             "clusters_summary": self.get_clusters_summary(),
             "causal_analysis": causal_analysis,
@@ -89,8 +96,41 @@ class SOAService:
             "predictive_metrics": {
                 "r_autocorrelation": r_autocorrelation,
             },
-            "trade_details": self.df.to_dict(orient='records') # Include cluster_id
+            "trade_details": self.df.to_dict(orient='records'),
+            "headline_insight": headline_insight,
         }
+
+    def _calculate_user_averages(self) -> Dict:
+        """Calcola lo stress ratio medio e il TP pianificato medio dall'utente."""
+        if self.df.empty:
+            return {"avg_user_stress_ratio": 0.0, "avg_user_planned_tp_r": 0.0}
+
+        # Calcola lo stress ratio per ogni trade e poi fanne la media
+        stress_ratio = (self.df['mae_usd'] / self.df['trade_risk']).replace([np.inf, -np.inf], np.nan)
+        avg_stress_ratio = stress_ratio.dropna().mean()
+
+        # Per TP, la media del planned_r_multiple è la metrica più diretta
+        avg_tp_r = self.df['planned_r_multiple'].dropna().mean()
+
+        return {
+            "avg_user_stress_ratio": avg_stress_ratio,
+            "avg_user_planned_tp_r": avg_tp_r,
+        }
+
+    def _generate_headline_insight(self, sl_tp_data: Dict, r_autocorr: float) -> str:
+        """Genera un insight testuale basato sui dati più critici."""
+
+        # Logica di esempio, da affinare
+        if sl_tp_data.get('sl_optimal_p95', 0) > sl_tp_data.get('avg_user_stress_ratio', 0) * 1.5:
+             return "⚠ Stop Loss potenzialmente troppo stretti: rischi di uscite premature."
+
+        if abs(r_autocorr) > 0.3:
+            return f"🧠 Pattern psicologico rilevato: l'esito di un trade sembra influenzare il successivo (Autocorr: {r_autocorr:.2f})."
+
+        # Aggiungere qui altre logiche, es. analisi P/L cluster
+
+        return "✅ Analisi completata. Nessun alert critico rilevato."
+
 
     def cluster_trades(self, n_clusters: int = 5) -> None:
         """
