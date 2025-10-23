@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTradesStore } from '@/stores/trades';
 import { usePlaybookStore } from '@/stores/playbookStore';
+import { useUiStore } from '@/stores/uiStore';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid';
 import PlaybookSelectionForm from '@/components/reports/PlaybookSelectionForm.vue';
@@ -17,6 +18,7 @@ const props = defineProps({
 const router = useRouter();
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
+const uiStore = useUiStore();
 
 const isAddingPlaybook = ref(false);
 const isDropdownOpen = ref(false);
@@ -62,8 +64,10 @@ const handleSaveChanges = async () => {
     isSaving.value = true;
     try {
         await tradesStore.updateTradeRules(props.trade.id, localCheckedRules.value);
+        uiStore.showNotification({ message: 'Playbook updated successfully.' });
     } catch (error) {
         console.error('Failed to save changes:', error);
+        uiStore.showNotification({ message: 'Failed to update playbook.', type: 'danger' });
     } finally {
         isSaving.value = false;
     }
@@ -111,7 +115,7 @@ onMounted(() => {
       <div class="playbook-header">
         <h3>{{ playbook.title }}</h3>
         <div class="actions">
-          <BaseButton @click="handleSaveChanges" size="small" class="save-button" :is-loading="isSaving">Save Changes</BaseButton>
+          <BaseButton type="button" @click="handleSaveChanges" size="small" class="save-button" :is-loading="isSaving">Save Changes</BaseButton>
           <div class="dropdown-container">
             <button @click="isDropdownOpen = !isDropdownOpen" class="icon-button">
               <EllipsisVerticalIcon class="icon" />
