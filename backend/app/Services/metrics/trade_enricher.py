@@ -64,6 +64,7 @@ def enrich_trade_with_all_metrics(
         if sl and entry:
             metrics["trade_risk"] = abs(entry - sl) * value_per_point
 
+
         # Realized R-Multiple
         if metrics["trade_risk"] and metrics["trade_risk"] > 0 and pnl is not None:
             metrics["realized_r_multiple"] = pnl / metrics["trade_risk"]

@@ -26,13 +26,21 @@ class SOAService:
         df = pd.DataFrame(self.raw_trades)
 
         # 2. Conversione Decimal in float e gestione tipi
-        for col in ['p_l', 'trade_risk', 'mae_usd', 'mfe_usd', 'realized_r_multiple', 'planned_r_multiple', 'duration_minutes', 'SN', 'EP', 'RRv', 'ES', 'RER']:
+        cols_to_convert = ['p_l', 'trade_risk', 'mae_usd', 'mfe_usd', 'realized_r_multiple', 'planned_r_multiple', 'duration_minutes', 'SN', 'EP', 'RRv', 'ES', 'RER']
+        for col in cols_to_convert:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
         # 3. Filtro trade non validi per l'analisi
-        df = df.dropna(subset=['trade_risk', 'p_l', 'duration_minutes'])
-        df = df[df['trade_risk'] > 0]
+        # Fase 3a: dropna
+        cols_for_dropna = ['trade_risk', 'p_l', 'duration_minutes']
+
+        df = df.dropna(subset=cols_for_dropna)
+
+        # Fase 3b: trade_risk > 0
+        if not df.empty:
+
+            df = df[df['trade_risk'] > 0]
 
         # 4. Calcolo Deviazione Durata (DD) - Z-score
         if not df.empty and df['duration_minutes'].nunique() > 1:
@@ -197,12 +205,13 @@ class SOAService:
 
         return summary
 
-    def analyze_clusters_by_attribute(self, attribute_col: str, explode: bool = False) -> Dict:
+    def analyze_clusters_by_attribute(self, attribute_col: str, explode: bool = False) -> List[Dict]:
         """
         Analizza la relazione tra un attributo (es. playbook, tag) e i cluster.
+        Restituisce sempre una lista di dizionari per la validazione Pydantic.
         """
         if attribute_col not in self.df.columns or 'cluster_label' not in self.df.columns:
-            return {}
+            return []
 
         df_analysis = self.df.copy()
 
@@ -211,10 +220,13 @@ class SOAService:
             df_analysis = df_analysis.dropna(subset=[attribute_col])
             df_analysis = df_analysis[df_analysis[attribute_col].apply(lambda x: isinstance(x, list) and len(x) > 0)]
             if df_analysis.empty:
-                return {}
+                return []
             df_analysis = df_analysis.explode(attribute_col)
 
         df_analysis = df_analysis.dropna(subset=[attribute_col, 'cluster_label'])
+
+        if df_analysis.empty:
+            return []
 
         # Calcoli principali
         grouped = df_analysis.groupby([attribute_col, 'cluster_label'])
@@ -233,7 +245,11 @@ class SOAService:
         total_counts_per_attribute = df_analysis.groupby(attribute_col).size()
         result['probability'] = result.index.map(lambda x: result.loc[x, 'trade_count'] / total_counts_per_attribute[x[0]])
 
-        return result.reset_index().to_dict(orient='records')
+        result = result.reset_index()
+        # Rinomina la colonna ID per corrispondere all'alias Pydantic 'attribute_col'
+        result = result.rename(columns={attribute_col: 'attribute_col'})
+
+        return result.to_dict(orient='records')
 
     def optimize_sl_tp(self) -> Dict:
         """
