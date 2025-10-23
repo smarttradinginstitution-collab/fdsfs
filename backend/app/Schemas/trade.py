@@ -4,7 +4,13 @@ from __future__ import annotations
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
+
 from pydantic import BaseModel, Field, ConfigDict
+
+from app.Schemas.asset import AssetRead
+from app.Schemas.notebook import NoteRead
+from app.Schemas.image import ImageRead
+from app.Schemas.platform import PlatformSummary as PlatformRead
 
 # Schemi per le entità relazionate, per usarle in TradeRead
 class TagRead(BaseModel):
@@ -124,3 +130,43 @@ class TradeFilters(BaseModel):
 
 class TradeReviewUpdate(BaseModel):
     is_reviewed: bool
+
+
+# Schemi di base per relazioni non complesse
+class TradingAccountReadBasic(BaseModel):
+    id: UUID
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ImportRunReadBasic(BaseModel):
+    id: UUID
+    file_name: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TradeWithDataRead(TradeRead):
+    # Relazioni one-to-one / many-to-one
+    trading_account: Optional[TradingAccountReadBasic] = None
+    asset: Optional[AssetRead] = None
+    platform: Optional[PlatformRead] = None
+    import_run: Optional[ImportRunReadBasic] = None
+    playbook: Optional[PlaybookRead] = None # Già presente in TradeRead
+
+    # Relazioni one-to-many / many-to-many
+    notes: List[NoteRead] = []
+    images: List[ImageRead] = []
+    tags: List[TagRead] = [] # Già presente in TradeRead
+    mistakes: List[MistakeRead] = [] # Già presente in TradeRead
+    news_impacts: List[NewsImpactRead] = [] # Già presente in TradeRead
+    psychology_states: List[PsychologyStateRead] = [] # Già presente in TradeRead
+    rules_followed: List[RulePlaybookRead] = [] # Già presente in TradeRead
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Risolve i riferimenti circolari dopo che tutti i modelli sono stati definiti
+NoteRead.model_rebuild()

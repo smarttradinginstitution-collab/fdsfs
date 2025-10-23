@@ -369,6 +369,24 @@ export const useNotebookStore = defineStore('notebook', {
         this.financialData = null; // Clear financial data when no note is selected
     },
 
+    setSelectedNoteFromData(noteObject) {
+      if (!noteObject || !noteObject.id) {
+        this.deselectNote();
+        return;
+      }
+
+      // Aggiungi o aggiorna la nota nell'elenco globale
+      const index = this.notes.findIndex(n => n.id === noteObject.id);
+      if (index !== -1) {
+        this.notes[index] = noteObject;
+      } else {
+        this.notes.push(noteObject);
+      }
+
+      // Imposta la nota come selezionata
+      this.selectNote(noteObject.id);
+    },
+
     async fetchFinancialDataForSelectedNote() {
       this.financialData = null; // Reset on each call
       if (!this.selectedNote) return;

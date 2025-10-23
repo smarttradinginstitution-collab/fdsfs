@@ -13,7 +13,7 @@ from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Router.auth import get_current_claims
 
-from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate, TradeReviewUpdate
+from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate, TradeReviewUpdate, TradeWithDataRead
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -155,6 +155,15 @@ async def get_trade(
     service: TradeService = Depends(),
 ):
     return await controller.get_trade(claims, trade_id, service)
+
+
+@router.get("/with-data/{trade_id}", response_model=TradeWithDataRead, summary="Get a trade with all its related data")
+async def get_trade_with_all_data(
+    trade_id: UUID,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.get_trade_with_all_data(claims, trade_id, service)
 
 
 @router.put("/{trade_id}", response_model=TradeRead)

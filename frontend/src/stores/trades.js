@@ -758,6 +758,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchTradeById(tradeId) {
       this.isTradeLoading = true;
+      this.selectedTrade = null; // Svuota i dati vecchi immediatamente
       try {
         const response = await apiClient.get(`/trades/${tradeId}`);
         this.selectedTrade = mapBackendTradeToFrontend(response.data);
@@ -765,6 +766,20 @@ export const useTradesStore = defineStore('trades', {
         console.error(`Errore nel recupero del trade ${tradeId}:`, error);
         this.selectedTrade = null;
         // Potremmo voler mostrare un errore all'utente qui
+      } finally {
+        this.isTradeLoading = false;
+      }
+    },
+
+    async fetchTradeWithAllData(tradeId) {
+      this.isTradeLoading = true;
+      this.selectedTrade = null; // Svuota i dati vecchi immediatamente
+      try {
+        const response = await apiClient.get(`/trades/with-data/${tradeId}`);
+        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+      } catch (error) {
+        console.error(`Errore nel recupero completo del trade ${tradeId}:`, error);
+        this.selectedTrade = null;
       } finally {
         this.isTradeLoading = false;
       }

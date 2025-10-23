@@ -41,15 +41,23 @@ class TradeRepository:
         return (
             select(Trade, duration_minutes)
             .options(
+                # Many-to-one
+                joinedload(Trade.trading_account),
+                joinedload(Trade.asset),
+                joinedload(Trade.platform),
+                joinedload(Trade.import_run),
+                joinedload(Trade.playbook),
+
+                # One-to-many
+                selectinload(Trade.notes),
+                selectinload(Trade.images),
+
+                # Many-to-many
                 selectinload(Trade.tags).joinedload(Tag.group),
                 selectinload(Trade.mistakes),
-                joinedload(Trade.playbook),
                 selectinload(Trade.news_impacts),
                 selectinload(Trade.psychology_states),
-                joinedload(Trade.asset),
                 selectinload(Trade.rules_followed),
-                # Eager load the trading account to access initial_balance for ROI calculation
-                joinedload(Trade.trading_account),
             )
         )
 
@@ -73,6 +81,29 @@ class TradeRepository:
         self, trade_id: UUID, general_account_id: UUID
     ) -> Optional[Trade]:
         """Recupera un trade per ID, assicurandosi che appartenga al general account corretto."""
+        query = (
+            self._get_trade_query()
+            .join(Trade.trading_account)
+            .where(
+                Trade.id == trade_id,
+                TradingAccount.general_account_id == general_account_id,
+            )
+        )
+        result = await self.db.execute(query)
+        row = result.unique().first()
+        if row:
+            trade, duration = row
+            trade.duration_minutes = duration
+            return trade
+        return None
+
+    async def get_by_id_with_all_data(
+        self, trade_id: UUID, general_account_id: UUID
+    ) -> Optional[Trade]:
+        """
+        Recupera un trade per ID con tutte le sue relazioni caricate,
+        assicurandosi che appartenga al general account corretto.
+        """
         query = (
             self._get_trade_query()
             .join(Trade.trading_account)
