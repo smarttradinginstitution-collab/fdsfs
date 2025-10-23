@@ -135,7 +135,7 @@ class TradeReviewUpdate(BaseModel):
 # Schemi di base per relazioni non complesse
 class TradingAccountReadBasic(BaseModel):
     id: UUID
-    name: str
+    label: str
 
     model_config = ConfigDict(from_attributes=True)
 

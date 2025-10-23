@@ -14,6 +14,7 @@ from sqlalchemy import select, func, case, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Models.trade import Trade
+from app.Models.note import Note
 from app.Models.tag import Tag
 from app.Models.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
@@ -48,8 +49,8 @@ class TradeRepository:
                 joinedload(Trade.import_run),
                 joinedload(Trade.playbook),
 
-                # One-to-many
-                selectinload(Trade.notes),
+                # One-to-many and their nested relationships
+                selectinload(Trade.notes).selectinload(Note.templates),
                 selectinload(Trade.images),
 
                 # Many-to-many
