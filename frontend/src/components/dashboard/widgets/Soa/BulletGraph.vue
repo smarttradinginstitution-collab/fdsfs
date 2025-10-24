@@ -66,16 +66,26 @@ const chartOptions = computed(() => ({
     enabled: true,
     formatter: (val) => `${val.toFixed(2)}R`,
     style: {
-      colors: ['#fff'],
+      colors: ['#000'],
       fontSize: '12px',
     },
-    offsetX: 30,
+    offsetX: -20,
+    background: {
+      enabled: true,
+      foreColor: '#fff',
+      borderRadius: 2,
+      padding: 4,
+      opacity: 0.9,
+      borderWidth: 1,
+      borderColor: '#fff'
+    }
   },
   xaxis: {
     categories: [props.title],
     labels: { show: false },
     axisBorder: { show: false },
     axisTicks: { show: false },
+    max: Math.max(...props.ranges.map(r => r.value), props.target, props.value) * 1.1
   },
   yaxis: {
     labels: { show: false },

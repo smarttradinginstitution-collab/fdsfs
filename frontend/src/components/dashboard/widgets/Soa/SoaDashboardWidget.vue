@@ -18,9 +18,9 @@
     <div v-else-if="!analysisData || analysisData.error" class="flex items-center justify-center h-64">
       <p class="text-gray-400">{{ analysisData?.error || "Nessun dato disponibile per l'analisi." }}</p>
     </div>
-    <div v-else class="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <div v-else class="grid grid-cols-12 gap-6">
       <!-- Sezione 1: Diagnosi e Cluster -->
-      <div class="col-span-12 md:col-span-4 p-4 bg-neutral-800 rounded-lg">
+      <div class="col-span-4 p-4 bg-neutral-800 rounded-lg">
         <h3 class="flex items-center gap-2 font-semibold mb-3">
           <SvgIcon name="microscope" size="20" />
           Diagnosi Qualità Esecutiva
@@ -30,7 +30,7 @@
       </div>
 
       <!-- Sezione 2: Ottimizzazione Parametrica -->
-      <div class="col-span-12 md:col-span-5 p-4 bg-neutral-800 rounded-lg">
+      <div class="col-span-5 p-4 bg-neutral-800 rounded-lg">
         <h3 class="flex items-center gap-2 font-semibold mb-3">
           <SvgIcon name="wrench" size="20" />
           Leve di Ottimizzazione R:R
@@ -50,7 +50,7 @@
       </div>
 
       <!-- Sezione 3: Pattern Comportamentali -->
-      <div class="col-span-12 md:col-span-3 p-4 bg-neutral-800 rounded-lg">
+      <div class="col-span-3 p-4 bg-neutral-800 rounded-lg">
         <h3 class="flex items-center gap-2 font-semibold mb-3">
           <SvgIcon name="brain" size="20" />
           Monitoraggio Psicologico

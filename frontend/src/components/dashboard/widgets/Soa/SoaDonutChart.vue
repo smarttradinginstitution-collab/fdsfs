@@ -1,6 +1,7 @@
 <template>
   <div class="relative w-full h-48 md:h-full flex items-center justify-center">
-    <Doughnut :data="chartData" :options="chartOptions" />
+    <Doughnut v-if="chartData.datasets.length > 0 && chartData.datasets[0].data.length > 0" :data="chartData" :options="chartOptions" />
+    <p v-else class="text-gray-400">No cluster data available.</p>
   </div>
 </template>
 

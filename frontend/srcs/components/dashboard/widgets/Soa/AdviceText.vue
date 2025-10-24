@@ -1,7 +1,5 @@
 <template>
-  <p class="advice-text">
-    <slot>{{ displayText }}</slot>
-  </p>
+  <p class="advice-text" v-html="formattedText"></p>
 </template>
 
 <script setup>
@@ -14,11 +12,12 @@ const props = defineProps({
   }
 });
 
-const displayText = computed(() => {
-  if (props.text && props.text.includes('404:')) {
+const formattedText = computed(() => {
+  if (!props.text || props.text.includes('404:')) {
     return '';
   }
-  return props.text;
+  // A simple markdown-to-html conversion for bold text
+  return props.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 });
 </script>
 
