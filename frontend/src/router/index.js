@@ -136,12 +136,13 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'dashboard' });
     }
 
-    // Fetch trading accounts if they haven't been loaded yet.
-    // This is crucial for users who reload the page on a protected route.
+    // Fetch trading accounts only if they haven't been loaded yet.
     if (tradingAccountsStore.tradingAccounts.length === 0) {
+      // Wait for the fetch to complete before making routing decisions.
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
+    // Now that we're sure the data is loaded, we can safely check the state.
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
     const hasSelectedAccounts = tradingAccountsStore.tradingAccounts.some(acc => acc.is_selected);
 

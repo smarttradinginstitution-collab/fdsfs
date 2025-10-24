@@ -32,7 +32,7 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
     isLoading.value = true;
     try {
-      const { data } = await apiClient.get('/me/trading-accounts');
+      const { data } = await apiClient.get('/trading-accounts/');
       tradingAccounts.value = data;
       // After fetching accounts, if any are selected, trigger dashboard data load
       if (hasSelectedAccounts.value) {
