@@ -58,7 +58,13 @@ def create_mock_trade(as_enum: bool = False):
     trade = MagicMock()
     trade.id = uuid4()
     trade.symbol_snapshot = "AAPL"
-    trade.direction = MagicMock(value="LONG") if as_enum else "LONG"
+    if as_enum:
+        # Simulate an enum object with a .value attribute for Pydantic's from_attributes
+        direction_mock = MagicMock()
+        direction_mock.value = "LONG"
+        trade.direction = direction_mock
+    else:
+        trade.direction = "LONG"
     trade.asset_id = uuid4()
     trade.trading_account_id = uuid4()
     trade.playbook = MagicMock(id=uuid4(), title="My Playbook")
@@ -295,8 +301,10 @@ async def test_update_trade_rules_succeeds(trade_service: TradeService, mock_cla
     # Mock the database execution for fetching rules
     mock_rule_1 = MagicMock()
     mock_rule_1.id = rule_ids[0]
+    mock_rule_1.rule = "Test Rule 1"  # Add the missing attribute for Pydantic validation
     mock_rule_2 = MagicMock()
     mock_rule_2.id = rule_ids[1]
+    mock_rule_2.rule = "Test Rule 2"  # Add the missing attribute for Pydantic validation
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_rule_1, mock_rule_2]
     trade_service.db.execute = AsyncMock(return_value=mock_result)
@@ -304,15 +312,26 @@ async def test_update_trade_rules_succeeds(trade_service: TradeService, mock_cla
     trade_service.db.commit = AsyncMock()
     # When refresh is called, update the rules_followed attribute
     async def mock_refresh(trade, attribute_names):
+        # Ensure all required attributes are present for validation
         trade.rules_followed = [mock_rule_1, mock_rule_2]
-    trade_service.db.refresh = AsyncMock(side_effect=mock_refresh)
+        trade.tags = []
+        trade.mistakes = []
+        trade.playbook = None
+        trade.news_impacts = []
+        trade.psychology_states = []
+        trade.asset = None
+        # Convert the mock enum back to a string value before Pydantic validation
+        if hasattr(trade.direction, 'value'):
+            trade.direction = trade.direction.value
 
+    trade_service.db.refresh = AsyncMock(side_effect=mock_refresh)
 
     result = await trade_service.update_trade_rules(mock_claims, trade_id, rule_ids)
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(item, type(uuid4())) for item in result)
-    assert set(result) == set(rule_ids)
+    # Assert that the result is a Pydantic model and contains the correct data
+    assert isinstance(result, TradeRead)
+    assert result.id == trade_id
+    assert len(result.rules_followed) == 2
+    assert result.rules_followed[0].id == rule_ids[0]
     trade_service.db.commit.assert_called_once()
-    trade_service.db.refresh.assert_called_once_with(db_trade, attribute_names=['rules_followed'])
+    trade_service.db.refresh.assert_called_once_with(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])

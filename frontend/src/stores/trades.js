@@ -926,28 +926,18 @@ export const useTradesStore = defineStore('trades', {
 
     async updateTradeRules(tradeId, ruleIds) {
       const uiStore = useUiStore();
-      const playbookStore = usePlaybookStore();
       try {
-        const updatedRuleIds = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
+        // La chiamata API ora restituisce l'intero oggetto trade aggiornato
+        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
+        const updatedTrade = mapBackendTradeToFrontend(response.data);
 
-        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
-          // Aggiorna lo stato locale in modo mirato per riflettere le modifiche.
-          // Questo è necessario affinché l'interfaccia utente sia coerente dopo il salvataggio
-          // senza richiedere un ricaricamento completo della pagina.
-
-          // 1. Appiattisci tutte le regole disponibili da tutti i gruppi.
-          const allRules = playbookStore.ruleGroups.flatMap(group => group.rules);
-
-          // 2. Filtra per trovare gli oggetti regola completi che corrispondono agli ID aggiornati.
-          const updatedRuleObjects = allRules.filter(rule => updatedRuleIds.data.includes(rule.id));
-
-          // 3. Aggiorna solo la proprietà `rules_followed` del trade selezionato.
-          this.selectedTrade.rules_followed = updatedRuleObjects;
-        }
+        // Sostituisci l'oggetto `selectedTrade` nello store con quello nuovo.
+        // Questa è un'operazione atomica che Vue può gestire in modo efficiente.
+        this.selectedTrade = updatedTrade;
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
 
-        return updatedRuleIds.data;
+        return updatedTrade; // Restituisce l'intero trade aggiornato
 
       } catch (error) {
         console.error('Error updating trade rules:', error);
