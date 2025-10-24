@@ -773,7 +773,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchTradeWithAllData(tradeId) {
       this.isTradeLoading = true;
-      this.selectedTrade = null; // Svuota i dati vecchi immediatamente
+      // NON impostare a null per evitare sfarfallio
       try {
         const response = await apiClient.get(`/trades/with-data/${tradeId}`);
         this.selectedTrade = mapBackendTradeToFrontend(response.data);
