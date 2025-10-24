@@ -1,11 +1,11 @@
 <template>
   <div class="bullet-graph-container">
-    <apexchart
+    <VueApexCharts
       type="bar"
       height="100"
       :options="chartOptions"
       :series="series"
-    ></apexchart>
+    ></VueApexCharts>
   </div>
 </template>
 

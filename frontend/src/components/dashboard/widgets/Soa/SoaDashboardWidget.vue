@@ -25,7 +25,7 @@
           <SvgIcon name="microscope" size="20" />
           Diagnosi Qualità Esecutiva
         </h3>
-        <HeadlineInsight :text="analysisData.headline_insight" :icon="headlineIcon" />
+        <HeadlineInsight :headline="analysisData.headline_insight" :icon="headlineIcon" />
         <SOADonutChart :data="analysisData.cluster_percentages" class="mt-4" />
       </div>
 
