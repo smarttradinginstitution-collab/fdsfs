@@ -21,13 +21,14 @@ const props = defineProps({
 });
 
 const icon = ref(null);
+const icons = import.meta.glob('../../assets/icons/*.svg', { as: 'raw' });
 
 async function loadIcon() {
-  try {
-    const iconModule = await import(`../../assets/icons/${props.name}.svg?raw`);
-    icon.value = iconModule.default;
-  } catch (e) {
-    console.error(`Could not load icon: ${props.name}`, e);
+  const iconPath = `../../assets/icons/${props.name}.svg`;
+  if (icons[iconPath]) {
+    icon.value = await icons[iconPath]();
+  } else {
+    console.error(`Icon not found: ${props.name}`);
     icon.value = null;
   }
 }
