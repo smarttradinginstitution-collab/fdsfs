@@ -119,6 +119,12 @@ const selectTradeFromStore = async (tradeId) => {
       // Aggiorna lo store delle immagini
       imageStore.setImagesForCurrentTrade(tradesStore.selectedTrade.images || []);
 
+      // Assicurati che le cartelle siano caricate prima di impostare la nota,
+      // per evitare race condition e stati incoerenti.
+      if (notebookStore.folders.length === 0) {
+        await notebookStore.fetchFolders();
+      }
+
       // Aggiorna lo store delle note
       const note = tradesStore.selectedTrade.notes?.[0]; // Prende la prima nota, se esiste
       notebookStore.setSelectedNoteFromData(note);

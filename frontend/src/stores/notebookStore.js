@@ -401,6 +401,12 @@ export const useNotebookStore = defineStore('notebook', {
 
       // Imposta la nota come selezionata
       this.selectNote(noteObject.id);
+
+      // Assicurati che anche la cartella della nota sia selezionata.
+      // Questo è fondamentale per mantenere uno stato coerente.
+      if (this.selectedFolderId !== noteObject.folder_id) {
+        this.selectedFolderId = noteObject.folder_id;
+      }
     },
 
     async fetchFinancialDataForSelectedNote() {
