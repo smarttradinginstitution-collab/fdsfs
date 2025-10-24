@@ -2,7 +2,7 @@
   <BaseWidget>
     <template #title>
       <div class="flex items-center gap-2">
-        <IconAnalyze size="24" />
+        <SvgIcon name="analyze" size="24" />
         <span>Sintesi Predittiva SOA</span>
       </div>
     </template>
@@ -22,7 +22,7 @@
       <!-- Sezione 1: Diagnosi e Cluster -->
       <div class="col-span-12 md:col-span-4 p-4 bg-neutral-800 rounded-lg">
         <h3 class="flex items-center gap-2 font-semibold mb-3">
-          <IconMicroscope size="20" />
+          <SvgIcon name="microscope" size="20" />
           Diagnosi Qualità Esecutiva
         </h3>
         <HeadlineInsight :text="analysisData.headline_insight" :icon="headlineIcon" />
@@ -32,7 +32,7 @@
       <!-- Sezione 2: Ottimizzazione Parametrica -->
       <div class="col-span-12 md:col-span-5 p-4 bg-neutral-800 rounded-lg">
         <h3 class="flex items-center gap-2 font-semibold mb-3">
-          <IconWrench size="20" />
+          <SvgIcon name="wrench" size="20" />
           Leve di Ottimizzazione R:R
         </h3>
         <div class="flex flex-col gap-4">
@@ -52,7 +52,7 @@
       <!-- Sezione 3: Pattern Comportamentali -->
       <div class="col-span-12 md:col-span-3 p-4 bg-neutral-800 rounded-lg">
         <h3 class="flex items-center gap-2 font-semibold mb-3">
-          <IconBrain size="20" />
+          <SvgIcon name="brain" size="20" />
           Monitoraggio Psicologico
         </h3>
         <div v-if="shouldShowAutocorrAlert || shouldShowDrawdownAlert" class="flex flex-col gap-3">
@@ -74,7 +74,7 @@
           />
         </div>
         <div v-else class="flex items-center gap-2 text-green-400">
-          <IconCircleCheck size="20" />
+          <SvgIcon name="circle-check" size="20" />
           <span>Pattern Stabili</span>
         </div>
       </div>
@@ -91,7 +91,7 @@ import AdviceText from './AdviceText.vue';
 import BulletGraph from './BulletGraph.vue';
 import AlertItem from './AlertItem.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
-import { IconAnalyze, IconMicroscope, IconWrench, IconBrain, IconCircleCheck } from '@tabler/icons-vue';
+import SvgIcon from '@/components/ui/SvgIcon.vue';
 
 const props = defineProps({
   analysisData: {

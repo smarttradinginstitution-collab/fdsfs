@@ -1,6 +1,6 @@
 <template>
   <div class="alert-item" :title="tooltip">
-    <component :is="iconComponent" class="icon" :class="iconClass" />
+    <SvgIcon :name="iconName" class="icon" :class="iconClass" />
     <div class="text-content">
       <span class="value">{{ formattedValue }}</span>
       <span class="label">{{ label }}</span>
@@ -10,7 +10,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { IconBrain, IconGraph } from '@tabler/icons-vue';
+import SvgIcon from '@/components/ui/SvgIcon.vue';
 
 const props = defineProps({
   type: {
@@ -36,8 +36,8 @@ const props = defineProps({
   }
 });
 
-const iconComponent = computed(() => {
-  return props.type === 'autocorrelation' ? IconBrain : IconGraph;
+const iconName = computed(() => {
+  return props.type === 'autocorrelation' ? 'brain' : 'graph';
 });
 
 const isAlertActive = computed(() => {
