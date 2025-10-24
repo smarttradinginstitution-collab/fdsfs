@@ -122,7 +122,7 @@ const selectTradeFromStore = async (tradeId) => {
       // Assicurati che le cartelle siano caricate prima di impostare la nota,
       // per evitare race condition e stati incoerenti.
       if (notebookStore.folders.length === 0) {
-        await notebookStore.fetchFolders();
+        await notebookStore.fetchFolders({ selectDefault: false });
       }
 
       // Aggiorna lo store delle note
