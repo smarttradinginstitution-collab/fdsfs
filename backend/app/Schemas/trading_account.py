@@ -13,6 +13,7 @@ class TradingAccountRead(BaseModel):
     general_account_id: UUID
     broker_id: Optional[UUID] = None
     label: Optional[str] = None
+    is_selected: bool  # Aggiunto campo per lo stato di selezione
     created_at: datetime
     initial_balance: Optional[Decimal] = Field(None, max_digits=10, decimal_places=2)
     currency: Optional[str] = None
@@ -30,3 +31,7 @@ class TradingAccountCreate(BaseModel):
     broker_id: UUID
     initial_balance: Decimal = Field(..., max_digits=10, decimal_places=2)
     currency: str
+
+
+class TradingAccountSelectionUpdate(BaseModel):
+    trading_account_ids: list[UUID]

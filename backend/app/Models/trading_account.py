@@ -35,6 +35,7 @@ class TradingAccount(Base):
         nullable=False,
     )
     label: Mapped[Optional[str]] = mapped_column(String)
+    is_selected: Mapped[bool] = mapped_column(default=False, server_default="false", nullable=False)
     initial_balance: Mapped[Optional[float]] = mapped_column()
     total_pnl: Mapped[Optional[float]] = mapped_column(default=0)
     currency: Mapped[Optional[str]] = mapped_column(String(3))

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -488,12 +488,33 @@ router.include_router(
 # 📈 TRADING ACCOUNTS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import trading_account_router
+from app.Controllers import trading_account_controller
+from app.Schemas.trading_account import TradingAccountSelectionUpdate
 
 router.include_router(
     trading_account_router.router,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
+
+# Endpoint specifico per l'aggiornamento della selezione
+router_me_trading_accounts = APIRouter(
+    prefix="/api/v1/me/trading-accounts",
+    tags=["Trading Accounts"],
+    dependencies=[Depends(get_current_claims)],
+)
+
+@router_me_trading_accounts.put("/selection", status_code=status.HTTP_204_NO_CONTENT)
+async def update_selection(
+    selection_data: TradingAccountSelectionUpdate,
+    claims: dict = Depends(get_current_claims),
+    service: trading_account_controller.TradingAccountService = Depends(),
+):
+    await trading_account_controller.update_my_trading_account_selection(
+        selection_data, claims, service
+    )
+
+router.include_router(router_me_trading_accounts)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 💹 TRADES (protetto: user)

@@ -151,3 +151,22 @@ class TradingAccountService:
         account.total_pnl = metrics.stats.net_pnl
         # Add other metrics to be updated here
         await self.db.commit()
+
+    async def update_selection_for_user(
+        self, claims: dict, selected_ids: List[UUID]
+    ) -> None:
+        """
+        Aggiorna in blocco quali Trading Accounts sono contrassegnati come 'selezionati'.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="General Account non trovato.",
+            )
+
+        await self.repo.bulk_update_selection(
+            general_account_id=general_account.id,
+            selected_ids=selected_ids,
+        )

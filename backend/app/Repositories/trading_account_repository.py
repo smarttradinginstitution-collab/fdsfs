@@ -4,7 +4,7 @@ from __future__ import annotations
 from uuid import UUID
 from typing import Optional, List
 
-from sqlalchemy import select, func, Date
+from sqlalchemy import select, func, Date, update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, timedelta
@@ -53,6 +53,35 @@ class TradingAccountRepository:
         await self.db.commit()
         await self.db.refresh(db_account)
         return db_account
+
+    async def bulk_update_selection(
+        self, general_account_id: UUID, selected_ids: List[UUID]
+    ):
+        """
+        Aggiorna in modo efficiente quali account sono selezionati per un dato General Account.
+        """
+        # 1. Deseleziona tutti gli account per questo general account
+        stmt_deselect = (
+            update(TradingAccount)
+            .where(TradingAccount.general_account_id == general_account_id)
+            .values(is_selected=False)
+        )
+        await self.db.execute(stmt_deselect)
+
+        # 2. Seleziona solo gli ID forniti
+        if selected_ids:
+            stmt_select = (
+                update(TradingAccount)
+                .where(
+                    TradingAccount.general_account_id == general_account_id,
+                    TradingAccount.id.in_(selected_ids),
+                )
+                .values(is_selected=True)
+            )
+            await self.db.execute(stmt_select)
+
+        await self.db.commit()
+
 
     async def get_daily_balances(self, account_id: UUID, start_date: date, end_date: date) -> List[dict]:
         """
