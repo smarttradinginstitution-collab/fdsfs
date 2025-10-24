@@ -18,21 +18,19 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const props = defineProps({
-  /**
-   * The cluster summary object from the SOA analysis.
-   * Keys are cluster labels (e.g., 'A'), and values are objects
-   * containing cluster metrics, including 'trade_count'.
-   * @type {Object}
-   */
-  clustersSummary: {
+  data: {
     type: Object,
-    required: true,
+    default: () => ({}),
   },
 });
 
 const chartData = computed(() => {
-  const labels = Object.keys(props.clustersSummary);
-  const data = labels.map(label => props.clustersSummary[label].trade_count);
+  if (!props.data || Object.keys(props.data).length === 0) {
+    return { labels: [], datasets: [] };
+  }
+
+  const labels = Object.keys(props.data);
+  const chartValues = Object.values(props.data);
 
   return {
     labels: labels,
@@ -45,7 +43,7 @@ const chartData = computed(() => {
           '#7ED321', // Green
           '#D0021B', // Red
         ],
-        data: data,
+        data: chartValues,
       },
     ],
   };
