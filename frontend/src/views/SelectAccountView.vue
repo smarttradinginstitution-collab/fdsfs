@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -8,35 +8,71 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 const router = useRouter();
 const tradingAccountsStore = useTradingAccountsStore();
 
+// --- STATE FOR NEW ACCOUNT CREATION ---
 const newAccountName = ref('');
-const errorMessage = ref('');
 const isCreating = ref(false);
 
-// Carica i conti di trading quando il componente viene montato
+// --- STATE FOR ACCOUNT SELECTION ---
+const selectedAccountIds = ref([]);
+const isSubmitting = ref(false);
+const errorMessage = ref('');
+
+
+// --- LIFECYCLE HOOKS ---
+
+// Fetch accounts when component is mounted
 onMounted(() => {
   tradingAccountsStore.fetchTradingAccounts();
 });
 
-// Funzione per selezionare un account esistente
-function handleSelectAccount(account) {
-  tradingAccountsStore.selectTradingAccount(account);
-  router.push('/');
+// Sync local selection state with the store's state once accounts are loaded
+watchEffect(() => {
+  if (tradingAccountsStore.tradingAccounts.length > 0) {
+    selectedAccountIds.value = tradingAccountsStore.tradingAccounts
+      .filter(acc => acc.is_selected)
+      .map(acc => acc.id);
+  }
+});
+
+
+// --- HANDLERS ---
+
+/**
+ * Handles the submission of the account selection form.
+ */
+async function handleSelectionSubmit() {
+  if (isSubmitting.value) return;
+
+  isSubmitting.value = true;
+  errorMessage.value = '';
+  try {
+    await tradingAccountsStore.updateAccountSelection(selectedAccountIds.value);
+    router.push('/');
+  } catch (error) {
+    errorMessage.value = 'Errore durante l\'aggiornamento della selezione. Riprova.';
+    console.error(error);
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 
-// Funzione per creare un nuovo account
+/**
+ * Handles the creation of a new trading account.
+ */
 async function handleCreateAccount() {
   if (!newAccountName.value.trim()) {
     errorMessage.value = 'Il nome dell\'account non può essere vuoto.';
     return;
   }
+
   errorMessage.value = '';
   isCreating.value = true;
   try {
-    // Il broker_id è opzionale e non viene inviato, sarà null di default
     const newAccount = await tradingAccountsStore.createTradingAccount({
       label: newAccountName.value,
     });
-    // Lo store seleziona già il nuovo account, quindi reindirizziamo
+    // The store now re-fetches and the backend auto-selects the new account.
+    // The router guard will redirect to the dashboard automatically.
     if (newAccount) {
       router.push('/');
     }
@@ -53,30 +89,55 @@ async function handleCreateAccount() {
   <div class="select-account-view">
     <div class="container">
       <div class="header">
-        <h1>Seleziona un Account di Trading</h1>
-        <p v-if="tradingAccountsStore.hasTradingAccounts">Scegli con quale account operare.</p>
+        <h1>Seleziona Account di Trading</h1>
+        <p v-if="tradingAccountsStore.hasTradingAccounts">
+          Scegli con quali account operare. Puoi selezionarne più di uno.
+        </p>
         <p v-else>Non hai ancora un account di trading. Creane uno per iniziare.</p>
       </div>
 
-      <!-- Sezione di caricamento -->
-      <div v-if="tradingAccountsStore.isLoading" class="loading-state">
+      <!-- Loading State -->
+      <div v-if="tradingAccountsStore.isLoading && !tradingAccountsStore.hasTradingAccounts" class="loading-state">
         <p>Caricamento...</p>
       </div>
 
-      <!-- Elenco degli account esistenti -->
-      <div v-else-if="tradingAccountsStore.hasTradingAccounts" class="accounts-list">
-        <div
-          v-for="account in tradingAccountsStore.tradingAccounts"
-          :key="account.id"
-          class="account-item"
-          @click="handleSelectAccount(account)"
-        >
-          <span class="account-label">{{ account.label || 'Senza nome' }}</span>
-          <span class="account-broker">{{ account.broker_id || 'Nessun broker' }}</span>
+      <!-- Existing Accounts Selection Form -->
+      <form v-else-if="tradingAccountsStore.hasTradingAccounts" class="selection-form" @submit.prevent="handleSelectionSubmit">
+        <div class="accounts-list">
+          <label
+            v-for="account in tradingAccountsStore.tradingAccounts"
+            :key="account.id"
+            class="account-item"
+            :class="{ 'is-selected': selectedAccountIds.includes(account.id) }"
+          >
+            <input
+              type="checkbox"
+              :value="account.id"
+              v-model="selectedAccountIds"
+              class="account-checkbox"
+            />
+            <span class="account-label">{{ account.label || 'Senza nome' }}</span>
+            <span class="account-broker">{{ account.broker?.name || 'Nessun broker' }}</span>
+          </label>
         </div>
-      </div>
 
-      <!-- Form di creazione nuovo account -->
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
+        <BaseButton
+          type="submit"
+          variant="primary"
+          size="medium"
+          :is-loading="isSubmitting"
+          :disabled="selectedAccountIds.length === 0"
+          class="submit-button"
+        >
+          Continua
+        </BaseButton>
+      </form>
+
+      <!-- New Account Creation Form -->
       <div v-else class="creation-form-container">
         <h2>Crea il tuo primo Account</h2>
         <form class="creation-form" @submit.prevent="handleCreateAccount">
@@ -86,7 +147,6 @@ async function handleCreateAccount() {
             placeholder="Es. Conto Primario"
             required
           />
-          <!-- Come richiesto, il broker non viene selezionato qui per ora -->
           <div v-if="errorMessage" class="error-message">
             {{ errorMessage }}
           </div>
@@ -100,6 +160,7 @@ async function handleCreateAccount() {
 </template>
 
 <style scoped>
+/* General Layout */
 .select-account-view {
   display: flex;
   justify-content: center;
@@ -119,6 +180,7 @@ async function handleCreateAccount() {
   margin: var(--semantic-size-gutter-screen);
 }
 
+/* Header */
 .header {
   text-align: center;
   margin-bottom: var(--semantic-size-stack-lg);
@@ -135,11 +197,31 @@ async function handleCreateAccount() {
   color: var(--semantic-color-text-secondary);
 }
 
+/* States */
 .loading-state {
   text-align: center;
   padding: var(--semantic-size-stack-xl);
   font: var(--semantic-font-style-body-lg);
   color: var(--semantic-color-text-secondary);
+}
+
+.error-message {
+  background-color: var(--semantic-color-surface-negative-subtle);
+  color: var(--semantic-color-text-negative);
+  border: 1px solid var(--semantic-color-border-negative);
+  padding: var(--semantic-size-inset-md);
+  border-radius: var(--semantic-border-radius-interactive);
+  font: var(--semantic-font-style-body-sm);
+  text-align: center;
+  margin-top: var(--semantic-size-stack-sm);
+}
+
+
+/* Selection Form */
+.selection-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-lg);
 }
 
 .accounts-list {
@@ -149,10 +231,11 @@ async function handleCreateAccount() {
 }
 
 .account-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: var(--semantic-size-inset-lg);
+  gap: var(--semantic-size-inline-md);
+  padding: var(--semantic-size-inset-md);
   background-color: var(--semantic-color-surface-subtle);
   border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
@@ -165,6 +248,17 @@ async function handleCreateAccount() {
   border-color: var(--semantic-color-border-hover);
 }
 
+.account-item.is-selected {
+  background-color: var(--semantic-color-surface-selected-subtle);
+  border-color: var(--semantic-color-border-selected);
+}
+
+.account-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--semantic-color-border-selected);
+}
+
 .account-label {
   font: var(--semantic-font-style-body-lg-bold);
   color: var(--semantic-color-text-primary);
@@ -173,8 +267,15 @@ async function handleCreateAccount() {
 .account-broker {
   font: var(--semantic-font-style-body-sm);
   color: var(--semantic-color-text-disabled);
+  justify-self: end;
 }
 
+.submit-button {
+  width: 100%;
+}
+
+
+/* Creation Form */
 .creation-form-container {
   margin-top: var(--semantic-size-stack-lg);
 }
@@ -190,15 +291,5 @@ async function handleCreateAccount() {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
-}
-
-.error-message {
-  background-color: var(--semantic-color-surface-negative-subtle);
-  color: var(--semantic-color-text-negative);
-  border: 1px solid var(--semantic-color-border-negative);
-  padding: var(--semantic-size-inset-md);
-  border-radius: var(--semantic-border-radius-interactive);
-  font: var(--semantic-font-style-body-sm);
-  text-align: center;
 }
 </style>

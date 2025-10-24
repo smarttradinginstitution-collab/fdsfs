@@ -13,42 +13,32 @@ import { useTradesStore } from './trades';
 export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   // --- STATE ---
   const tradingAccounts = ref([]);
-  const selectedTradingAccount = ref(JSON.parse(localStorage.getItem('selectedTradingAccount')) || null);
   const isLoading = ref(false);
 
   // --- GETTERS ---
   const hasTradingAccounts = computed(() => tradingAccounts.value.length > 0);
+  const selectedAccounts = computed(() => tradingAccounts.value.filter(acc => acc.is_selected));
+  const hasSelectedAccounts = computed(() => selectedAccounts.value.length > 0);
 
   // --- ACTIONS ---
 
   /**
    * Recupera i conti di trading dell'utente dal backend.
-   * Richiede che l'utente sia autenticato.
+   * L'elenco include lo stato di selezione (is_selected).
    */
   async function fetchTradingAccounts() {
     const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
-      console.log("Utente non autenticato, impossibile recuperare i trading accounts.");
-      return;
-    }
+    if (!authStore.isAuthenticated) return;
 
     isLoading.value = true;
     try {
-      const { data } = await apiClient.get('/trading-accounts/');
+      const { data } = await apiClient.get('/me/trading-accounts');
       tradingAccounts.value = data;
-
-      const isSelectedAccountValid = selectedTradingAccount.value && data.some(acc => acc.id === selectedTradingAccount.value.id);
-
-      if (isSelectedAccountValid) {
-        // Se l'account in memoria è valido, attiva il caricamento dei dati per quell'account.
-        // Dobbiamo assicurarci che l'oggetto completo sia selezionato.
-        const fullAccount = data.find(acc => acc.id === selectedTradingAccount.value.id);
-        selectTradingAccount(fullAccount);
-      } else {
-        // Se non c'è un account valido, pulisci la selezione.
-        selectTradingAccount(null);
+      // After fetching accounts, if any are selected, trigger dashboard data load
+      if (hasSelectedAccounts.value) {
+        const tradesStore = useTradesStore();
+        tradesStore.fetchAllDataForDashboard();
       }
-
     } catch (error) {
       console.error("Errore nel recupero dei trading accounts:", error);
       tradingAccounts.value = [];
@@ -58,22 +48,19 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Crea un nuovo conto di trading.
-   * @param {object} accountData - I dati per il nuovo account (es. { label, broker_id }).
+   * Crea un nuovo conto di trading. Il backend imposta questo nuovo account come unico selezionato.
+   * @param {object} accountData - Dati per il nuovo account (es. { label }).
    */
   async function createTradingAccount(accountData) {
     const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
-      throw new Error("Utente non autenticato.");
-    }
+    if (!authStore.isAuthenticated) throw new Error("Utente non autenticato.");
 
     isLoading.value = true;
     try {
-      const { data } = await apiClient.post('/trading-accounts/', accountData);
-      tradingAccounts.value.push(data);
-      // Opzionale: seleziona automaticamente il nuovo account creato
-      selectTradingAccount(data);
-      return data;
+      const { data: newAccount } = await apiClient.post('/trading-accounts/', accountData);
+      // Dopo la creazione, ricarichiamo tutti gli account per ottenere lo stato di selezione aggiornato
+      await fetchTradingAccounts();
+      return newAccount;
     } catch (error) {
       console.error("Errore nella creazione del trading account:", error);
       throw error;
@@ -83,39 +70,59 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
   }
 
   /**
-   * Imposta il conto di trading attivo e avvia il pre-caricamento dei dati.
-   * @param {object | null} account - L'oggetto del conto da selezionare o null.
+   * Aggiorna la selezione dei conti di trading sul backend.
+   * @param {string[]} selectedIds - Un array di ID dei conti da impostare come selezionati.
    */
-  function selectTradingAccount(account) {
-    selectedTradingAccount.value = account;
+  async function updateAccountSelection(selectedIds) {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) throw new Error("Utente non autenticato.");
 
-    if (account) {
-      localStorage.setItem('selectedTradingAccount', JSON.stringify(account));
-      // Avvia il caricamento di tutti i dati per l'account selezionato.
+    try {
+      // API per aggiornare in blocco la selezione
+      await apiClient.put('/me/trading-accounts/selection', {
+        trading_account_ids: selectedIds
+      });
+
+      // Aggiorna lo stato locale per riflettere immediatamente la selezione
+      tradingAccounts.value = tradingAccounts.value.map(account => ({
+        ...account,
+        is_selected: selectedIds.includes(account.id),
+      }));
+
+      // Avvia il caricamento dei dati per i nuovi account selezionati
       const tradesStore = useTradesStore();
-      tradesStore.fetchAllDataForDashboard();
-    } else {
-      localStorage.removeItem('selectedTradingAccount');
-      // Qui potremmo voler pulire i dati dei trade, se necessario.
-      const tradesStore = useTradesStore();
-      tradesStore.$reset(); // Resetta lo store dei trade a stato iniziale
+      if (selectedIds.length > 0) {
+        tradesStore.fetchAllDataForDashboard();
+      } else {
+        tradesStore.$reset(); // Se nessun account è selezionato, pulisce i dati
+      }
+
+    } catch (error) {
+      console.error("Errore nell'aggiornamento della selezione degli account:", error);
+      throw error;
     }
   }
 
+  /**
+   * Resetta lo stato dello store.
+   */
   function resetState() {
     tradingAccounts.value = [];
-    selectedTradingAccount.value = null;
     isLoading.value = false;
   }
 
   return {
+    // State
     tradingAccounts,
-    selectedTradingAccount,
     isLoading,
+    // Getters
     hasTradingAccounts,
+    selectedAccounts,
+    hasSelectedAccounts,
+    // Actions
     fetchTradingAccounts,
     createTradingAccount,
-    selectTradingAccount,
+    updateAccountSelection,
     resetState,
   };
 });
