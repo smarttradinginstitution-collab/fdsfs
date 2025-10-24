@@ -201,19 +201,26 @@ const statsGrid = computed(() => {
     };
 });
 
-watch(note, (newNote, oldNote) => {
-  if (newNote && editor.value) {
-    if (!oldNote || newNote.id !== oldNote.id) {
+watch(note, (newNote) => {
+  if (!editor.value) return;
+
+  const isEditorEmpty = !editor.value.getText().trim();
+
+  if (newNote) {
+    const isContentDifferent = JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON());
+
+    if (editableTitle.value !== newNote.title) {
       editableTitle.value = newNote.title;
-      if (JSON.stringify(newNote.content) !== JSON.stringify(editor.value.getJSON())) {
-          editor.value.commands.setContent(newNote.content, false);
-      }
     }
-  } else if (!newNote && editor.value) {
+    // Aggiorna il contenuto solo se l'editor è vuoto o se il contenuto in arrivo è diverso
+    if (isEditorEmpty || isContentDifferent) {
+      editor.value.commands.setContent(newNote.content, false);
+    }
+  } else {
     editableTitle.value = '';
     editor.value.commands.clearContent();
   }
-}, { deep: true });
+}, { deep: true, immediate: true });
 
 const saveNote = async () => {
     if (!editor.value || !note.value || isSaving.value) return;
