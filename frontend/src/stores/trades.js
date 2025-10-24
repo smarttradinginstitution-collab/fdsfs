@@ -789,22 +789,18 @@ export const useTradesStore = defineStore('trades', {
       this.isTradeLoading = true;
       const uiStore = useUiStore();
       try {
-        const response = await apiClient.put(`/trades/${tradeId}`, payload);
-        const updatedTrade = mapBackendTradeToFrontend(response.data);
+        await apiClient.put(`/trades/${tradeId}`, payload);
 
-        // Update the selected trade with the new data
-        this.selectedTrade = updatedTrade;
+        // RICARICA L'INTERO TRADE per assicurarti che tutti i dati (inclusi MFE/MAE) siano aggiornati.
+        await this.fetchTradeWithAllData(tradeId);
 
-        // Also update the trade in the main list
+        // Aggiorna anche l'elenco principale dei trade, se presente.
         const index = this.trades.findIndex(t => t.id === tradeId);
         if (index !== -1) {
-          this.trades[index] = updatedTrade;
+          this.trades[index] = this.selectedTrade;
         }
 
         uiStore.showNotification({ message: 'Trade updated successfully!', type: 'success' });
-
-        // Refresh dashboard stats to reflect changes
-        // await this.fetchAllDataForDashboard(); // RIMOSSO: Questo causava il rallentamento
 
       } catch (error) {
         console.error('Error updating trade:', error);
@@ -927,17 +923,14 @@ export const useTradesStore = defineStore('trades', {
     async updateTradeRules(tradeId, ruleIds) {
       const uiStore = useUiStore();
       try {
-        // La chiamata API ora restituisce l'intero oggetto trade aggiornato
-        const response = await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
-        const updatedTrade = mapBackendTradeToFrontend(response.data);
+        await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
 
-        // Sostituisci l'oggetto `selectedTrade` nello store con quello nuovo.
-        // Questa è un'operazione atomica che Vue può gestire in modo efficiente.
-        this.selectedTrade = updatedTrade;
+        // RICARICA L'INTERO TRADE per assicurarti che tutti i dati (inclusi MFE/MAE) siano aggiornati.
+        await this.fetchTradeWithAllData(tradeId);
 
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
 
-        return updatedTrade; // Restituisce l'intero trade aggiornato
+        return this.selectedTrade; // Restituisce l'intero trade aggiornato
 
       } catch (error) {
         console.error('Error updating trade rules:', error);
