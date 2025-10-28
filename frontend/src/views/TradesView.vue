@@ -8,25 +8,55 @@
 -->
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useTradesStore } from '@/stores/trades';
+import { useAnalyticsStore } from '@/stores/analyticsStore';
+import { storeToRefs } from 'pinia';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import KpiDashboard from '@/components/KpiDashboard.vue';
-import BaseButton from '@/components/ui/BaseButton.vue'; // Importiamo il componente bottone
+import BaseButton from '@/components/ui/BaseButton.vue';
+import ClusterBadge from '@/components/soa/ClusterBadge.vue';
 import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
 // --- STORE E STATO LOCALE ---
 const tradesStore = useTradesStore();
-const selectedTrades = ref([]); // Stato per le righe selezionate
+const analyticsStore = useAnalyticsStore();
+const { soaAnalysisData } = storeToRefs(analyticsStore);
+const selectedTrades = ref([]);
+const enrichedTrades = ref([]);
 
 // --- LOGICA DEL COMPONENTE ---
 onMounted(() => {
-  // Se l'utente atterra direttamente su questa pagina e i trade non sono stati
-  // ancora caricati (es. tramite il login), li carichiamo ora.
-  if (tradesStore.trades.length === 0) {
-    tradesStore.fetchTrades({ ignoreFilters: true });
-  }
+  tradesStore.fetchTrades({ ignoreFilters: true });
+  analyticsStore.fetchSoaAnalysis();
 });
+
+// Watch for changes in both trades and SOA data to merge them
+watch([() => tradesStore.trades, soaAnalysisData], ([newTrades, newSoaData]) => {
+  if (newTrades.length > 0 && newSoaData?.trade_details) {
+    const soaMap = new Map(newSoaData.trade_details.map(t => [t.id, t]));
+    enrichedTrades.value = newTrades.map(trade => ({
+      ...trade,
+      cluster_label: soaMap.get(trade.id)?.cluster_label,
+    }));
+  } else {
+    enrichedTrades.value = newTrades; // fallback to original trades
+  }
+  applyFilters(); // Apply filters whenever data changes
+}, { immediate: true });
+
+const selectedClusters = ref([]);
+const filteredTrades = ref([]);
+
+const applyFilters = () => {
+  if (selectedClusters.value.length === 0) {
+    filteredTrades.value = enrichedTrades.value;
+  } else {
+    filteredTrades.value = enrichedTrades.value.filter(trade =>
+      selectedClusters.value.includes(trade.cluster_label)
+    );
+  }
+};
 
 const handleBulkDelete = () => {
   if (selectedTrades.value.length === 0) {
@@ -74,9 +104,18 @@ const formatDuration = (minutes) => {
       </BaseButton>
     </div>
 
+    <!-- Filtri aggiuntivi -->
+    <div class="flex items-center space-x-4 mb-4">
+      <span class="font-semibold">Filtra per Cluster:</span>
+      <div v-for="cluster in ['A', 'B', 'C', 'D', 'E']" :key="cluster" class="flex items-center">
+        <input type="checkbox" :id="`cluster-${cluster}`" :value="cluster" v-model="selectedClusters" @change="applyFilters" class="mr-1">
+        <label :for="`cluster-${cluster}`">{{ cluster }}</label>
+      </div>
+    </div>
+
     <BaseTable
       :headers="tradesStore.tradeHeaders"
-      :items="tradesStore.trades"
+      :items="filteredTrades"
       v-model:selected="selectedTrades"
     >
       <!-- Slot per la cella dello stato -->
@@ -126,6 +165,11 @@ const formatDuration = (minutes) => {
       </template>
       <template #setups="{ item }">
         {{ item.strategy || '-' }}
+      </template>
+
+      <!-- Slot per il nuovo Cluster Badge -->
+      <template #cluster_label="{ item }">
+        <ClusterBadge :cluster-label="item.cluster_label" />
       </template>
     </BaseTable>
   </div>

@@ -23,6 +23,9 @@ export const useFilterStore = defineStore('filters', () => {
   // Nuovo stato per il filtro per strategia
   const selectedStrategy = ref('all'); // 'all' indica nessun filtro
 
+  // Nuovo stato per il filtro per cluster SOA
+  const selectedClusters = ref([]); // Array vuoto indica nessun filtro
+
   // Disabilitazione del passaggio al mese successivo quando si è nel mese corrente
   const canGoNext = ref(true);
 
@@ -31,6 +34,11 @@ export const useFilterStore = defineStore('filters', () => {
   // `setStrategyFilter` aggiorna la strategia selezionata.
   function setStrategyFilter(strategy) {
     selectedStrategy.value = strategy;
+  }
+
+  // `setClusterFilter` aggiorna i cluster selezionati.
+  function setClusterFilter(clusters) {
+    selectedClusters.value = clusters;
   }
 
   // `changeMonth` aggiorna l'intervallo al mese precedente/successivo.
@@ -110,6 +118,7 @@ export const useFilterStore = defineStore('filters', () => {
   function resetState() {
     setDateRangeFromPreset('30d');
     selectedStrategy.value = 'all';
+    selectedClusters.value = [];
   }
 
   // --- ESPORTAZIONE ---
@@ -120,9 +129,11 @@ export const useFilterStore = defineStore('filters', () => {
     startDate,
     endDate,
     selectedStrategy,
+    selectedClusters,
     canGoNext,
     setDateRangeFromPreset,
     setStrategyFilter,
+    setClusterFilter,
     changeMonth,
     resetState,
   };

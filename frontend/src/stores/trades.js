@@ -349,6 +349,7 @@ export const useTradesStore = defineStore('trades', {
       { key: 'entry_timestamp', text: 'Open Date' },
       { key: 'symbol_snapshot', text: 'Symbol' },
       { key: 'status', text: 'Status' },
+      { key: 'cluster_label', text: 'SOA Cluster' },
       { key: 'exit_timestamp', text: 'Close Date' },
       { key: 'duration_minutes', text: 'Duration' },
       { key: 'entry_price', text: 'Entry Price', align: 'right' },
