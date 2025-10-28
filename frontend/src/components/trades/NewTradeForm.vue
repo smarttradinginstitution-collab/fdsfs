@@ -132,7 +132,7 @@ const handleSubmit = () => {
       <legend>Core Information</legend>
       <div class="grid-group grid-group-3-col">
         <BaseInput v-model="form.symbol_snapshot" label="Symbol" placeholder="e.g., AAPL" />
-        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'long', text: 'Long'}, {value: 'short', text: 'Short'}]" />
+        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'LONG', text: 'Long'}, {value: 'SHORT', text: 'Short'}]" />
         <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
       </div>
     </fieldset>
