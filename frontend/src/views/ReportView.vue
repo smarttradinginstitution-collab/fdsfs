@@ -26,6 +26,7 @@ const imageStore = useImageStore();
 const notebookStore = useNotebookStore();
 
 const isPageLoading = ref(true);
+const isUpdating = ref(false); // Local state for update operations
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
@@ -85,6 +86,16 @@ const handleEditImage = (image) => {
 const handleUpdateTradeDetails = async (payload) => {
   if (trade.value) {
     await tradesStore.updateTrade(trade.value.id, payload);
+  }
+};
+
+const toggleReviewedStatus = async () => {
+  if (!trade.value) return;
+  isUpdating.value = true;
+  try {
+    await tradesStore.toggleReviewedStatus(trade.value.id);
+  } finally {
+    isUpdating.value = false;
   }
 };
 
@@ -179,12 +190,12 @@ watch(() => route.params.id, (newId) => {
           </div>
           <div class="action-buttons">
             <BaseButton
-              :is-loading="isLoading"
+              :is-loading="isUpdating"
               :class="{
                 'reviewed-button': trade.is_reviewed,
                 'action-button': !trade.is_reviewed
               }"
-              @click="tradesStore.toggleReviewedStatus(trade.id)"
+              @click="toggleReviewedStatus"
             >
               <CheckCircleIcon v-if="trade.is_reviewed" class="reviewed-icon" />
               {{ trade.is_reviewed ? 'Reviewed' : 'Mark as reviewed' }}

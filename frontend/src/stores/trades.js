@@ -786,27 +786,20 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async updateTrade(tradeId, payload) {
-      this.isTradeLoading = true;
       const uiStore = useUiStore();
       try {
         await apiClient.put(`/trades/${tradeId}`, payload);
+        await this.fetchTradeWithAllData(tradeId); // Re-fetch full data silently
 
-        // RICARICA L'INTERO TRADE per assicurarti che tutti i dati (inclusi MFE/MAE) siano aggiornati.
-        await this.fetchTradeWithAllData(tradeId);
-
-        // Aggiorna anche l'elenco principale dei trade, se presente.
         const index = this.trades.findIndex(t => t.id === tradeId);
         if (index !== -1) {
           this.trades[index] = this.selectedTrade;
         }
 
         uiStore.showNotification({ message: 'Trade updated successfully!', type: 'success' });
-
       } catch (error) {
         console.error('Error updating trade:', error);
         uiStore.showNotification({ message: 'Failed to update trade.', type: 'danger' });
-      } finally {
-        this.isTradeLoading = false;
       }
     },
 
@@ -924,14 +917,9 @@ export const useTradesStore = defineStore('trades', {
       const uiStore = useUiStore();
       try {
         await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
-
-        // RICARICA L'INTERO TRADE per assicurarti che tutti i dati (inclusi MFE/MAE) siano aggiornati.
-        await this.fetchTradeWithAllData(tradeId);
-
+        await this.fetchTradeWithAllData(tradeId); // Re-fetch full data silently
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
-
-        return this.selectedTrade; // Restituisce l'intero trade aggiornato
-
+        return this.selectedTrade;
       } catch (error) {
         console.error('Error updating trade rules:', error);
         uiStore.showNotification({ message: 'Failed to update playbook rules.', type: 'danger' });
@@ -949,32 +937,22 @@ export const useTradesStore = defineStore('trades', {
       }
 
       const originalStatus = trade.is_reviewed;
-      const newStatus = !originalStatus;
+      trade.is_reviewed = !originalStatus; // Optimistic update
 
-      // Optimistic update
-      trade.is_reviewed = newStatus;
-      if (this.selectedTrade && this.selectedTrade.id === tradeId) {
-        this.selectedTrade.is_reviewed = newStatus;
-      }
-
-      // Rimosso isTradeLoading per evitare il ricaricamento di componenti non correlati.
-      // Il pulsante in ReportView gestisce già il suo stato di caricamento.
       try {
-        const response = await apiClient.patch(`/trades/${tradeId}/review`, { is_reviewed: newStatus });
+        const response = await apiClient.patch(`/trades/${tradeId}/review`, { is_reviewed: trade.is_reviewed });
         const updatedTrade = mapBackendTradeToFrontend(response.data);
 
-        // Update state with confirmed data from backend
-        trade.is_reviewed = updatedTrade.is_reviewed;
+        // Final update with confirmed data
+        const tradeInList = this.trades.find(t => t.id === tradeId);
+        if (tradeInList) {
+          tradeInList.is_reviewed = updatedTrade.is_reviewed;
+        }
         if (this.selectedTrade && this.selectedTrade.id === tradeId) {
           this.selectedTrade.is_reviewed = updatedTrade.is_reviewed;
         }
-
       } catch (error) {
-        // Rollback on error
-        trade.is_reviewed = originalStatus;
-        if (this.selectedTrade && this.selectedTrade.id === tradeId) {
-          this.selectedTrade.is_reviewed = originalStatus;
-        }
+        trade.is_reviewed = originalStatus; // Rollback on error
         console.error('Error updating trade review status:', error);
         uiStore.showNotification({ message: 'Failed to update review status.', type: 'danger' });
       }
