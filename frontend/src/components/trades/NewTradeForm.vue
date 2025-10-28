@@ -29,7 +29,7 @@ onMounted(() => {
   labelsStore.fetchLabelsIfNeeded('mistakes');
   labelsStore.fetchLabelsIfNeeded('psychology-states');
   labelsStore.fetchLabelsIfNeeded('tags');
-  newsImpactsStore.fetchNewsImpacts();
+  newsImpactsStore.fetchAllNewsImpactsData();
 });
 
 const playbooksOptions = computed(() =>
