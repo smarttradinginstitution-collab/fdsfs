@@ -62,16 +62,6 @@ const rulesOptions = computed(() => {
   );
 });
 
-// Carica le regole associate quando un playbook viene selezionato
-watch(() => form.value.playbook_id, (newPlaybookId) => {
-  if (newPlaybookId) {
-    playbookStore.fetchRuleGroups(newPlaybookId);
-  }
-  // Resetta le regole selezionate se il playbook cambia
-  form.value.rules_followed_ids = [];
-});
-
-
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
@@ -94,6 +84,15 @@ const getInitialFormState = () => ({
 });
 
 const form = ref(getInitialFormState());
+
+// Carica le regole associate quando un playbook viene selezionato
+watch(() => form.value.playbook_id, (newPlaybookId) => {
+  if (newPlaybookId) {
+    playbookStore.fetchRuleGroups(newPlaybookId);
+  }
+  // Resetta le regole selezionate se il playbook cambia
+  form.value.rules_followed_ids = [];
+});
 
 const handleSubmit = () => {
   const tradeData = { ...form.value };
