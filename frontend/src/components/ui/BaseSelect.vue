@@ -9,11 +9,11 @@
 
 <script setup>
 // --- PROPS ---
-defineProps({
-  // `modelValue` è il valore attualmente selezionato nel menu.
-  // È la prop usata da `v-model`.
+const props = defineProps({
+  // `modelValue` può essere una stringa/numero per selezione singola,
+  // o un array per selezione multipla.
   modelValue: {
-    type: [String, Number],
+    type: [String, Number, Array],
     default: '',
   },
   // `label` è l'etichetta da mostrare sopra il menu.
@@ -22,23 +22,30 @@ defineProps({
     default: '',
   },
   // `options` è un array di oggetti che popola le opzioni del menu.
-  // Ogni oggetto deve avere una chiave `value` e una `text`.
-  // Esempio: [{ value: '1', text: 'Opzione 1' }]
   options: {
     type: Array,
     required: true,
   },
+  // `multiple` abilita la selezione multipla.
+  multiple: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // --- EMITS ---
-// Definiamo l'evento per far funzionare `v-model`.
 const emit = defineEmits(['update:modelValue']);
 
 // --- GESTIONE EVENTI ---
-// Funzione chiamata quando l'utente seleziona una nuova opzione.
 function onChange(event) {
-  // Emettiamo il nuovo valore selezionato.
-  emit('update:modelValue', event.target.value);
+  if (props.multiple) {
+    // Per la selezione multipla, raccogliamo i valori di tutte le opzioni selezionate.
+    const selectedValues = Array.from(event.target.selectedOptions).map(option => option.value);
+    emit('update:modelValue', selectedValues);
+  } else {
+    // Per la selezione singola, emettiamo solo il singolo valore.
+    emit('update:modelValue', event.target.value);
+  }
 }
 </script>
 
@@ -46,10 +53,12 @@ function onChange(event) {
   <div class="select-wrapper">
     <label v-if="label" class="select-label">{{ label }}</label>
     <div class="select-container">
-      <!-- Questo è l'elemento <select> nativo del browser. -->
-      <select class="select-field" :value="modelValue" @change="onChange">
-        <!-- Usiamo `v-for` per creare un tag `<option>` per ogni
-             elemento nell'array `options` ricevuto tramite props. -->
+      <select
+        class="select-field"
+        :value="modelValue"
+        :multiple="multiple"
+        @change="onChange"
+      >
         <option v-for="option in options" :key="option.value" :value="option.value">
           {{ option.text }}
         </option>

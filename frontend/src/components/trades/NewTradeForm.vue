@@ -8,20 +8,73 @@
 -->
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useTradesStore } from '@/stores/trades';
+import { usePlaybookStore } from '@/stores/playbookStore';
+import { useLabelsStore } from '@/stores/labelsStore';
+import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import BaseSelect from '../ui/BaseSelect.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const tradesStore = useTradesStore();
+const playbookStore = usePlaybookStore();
+const labelsStore = useLabelsStore();
+const newsImpactsStore = useNewsImpactsStore();
 const emit = defineEmits(['submit']);
+
+onMounted(() => {
+  playbookStore.fetchPlaybooks();
+  labelsStore.fetchLabelsIfNeeded('mistakes');
+  labelsStore.fetchLabelsIfNeeded('psychology-states');
+  labelsStore.fetchLabelsIfNeeded('tags');
+  newsImpactsStore.fetchNewsImpacts();
+});
+
+const playbooksOptions = computed(() =>
+  playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
+);
+
+const mistakesOptions = computed(() =>
+  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, text: m.name }))
+);
+
+const psychologyStatesOptions = computed(() =>
+  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, text: p.name }))
+);
+
+const tagsOptions = computed(() =>
+  (labelsStore.labels.tags || []).map(t => ({ value: t.id, text: t.name }))
+);
+
+import { watch } from 'vue';
+
+const newsImpactsOptions = computed(() =>
+  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, text: ni.name }))
+);
+
+const rulesOptions = computed(() => {
+  if (!playbookStore.ruleGroups) return [];
+  // Appiattisce i gruppi di regole in una singola lista di opzioni
+  return playbookStore.ruleGroups.flatMap(group =>
+    group.rules.map(rule => ({ value: rule.id, text: `(${group.name_group}) ${rule.rule}` }))
+  );
+});
+
+// Carica le regole associate quando un playbook viene selezionato
+watch(() => form.value.playbook_id, (newPlaybookId) => {
+  if (newPlaybookId) {
+    playbookStore.fetchRuleGroups(newPlaybookId);
+  }
+  // Resetta le regole selezionate se il playbook cambia
+  form.value.rules_followed_ids = [];
+});
+
 
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
-  setup: '',
   direction: null,
   entry_price: null,
   exit_price: null,
@@ -32,12 +85,12 @@ const getInitialFormState = () => ({
   highest_price_during_trade: null,
   entry_timestamp: null,
   exit_timestamp: null,
-  notes: '',
-  notes_pre_trade: '',
-  notes_post_trade: '',
-  emotional_state: '',
-  mistakes: '', // Verrà inviato come stringa, il backend si aspetta una lista
-  tags: '',       // Verrà inviato come stringa, il backend si aspetta una lista
+  playbook_id: null,
+  tag_ids: [],
+  mistake_ids: [],
+  news_impact_ids: [],
+  psychology_state_ids: [],
+  rules_followed_ids: [],
 });
 
 const form = ref(getInitialFormState());
@@ -46,8 +99,6 @@ const handleSubmit = () => {
   const tradeData = { ...form.value };
 
   // Converte i timestamp locali in stringhe ISO UTC.
-  // new Date('YYYY-MM-DDTHH:mm') crea una data nel fuso orario del browser.
-  // .toISOString() la converte in una stringa UTC standard.
   if (tradeData.entry_timestamp) {
     tradeData.entry_timestamp = new Date(tradeData.entry_timestamp).toISOString();
   }
@@ -55,18 +106,12 @@ const handleSubmit = () => {
     tradeData.exit_timestamp = new Date(tradeData.exit_timestamp).toISOString();
   }
 
-  // Converte le stringhe di 'mistakes' e 'tags' in array
-  if (tradeData.mistakes) {
-    tradeData.mistakes = tradeData.mistakes.split(',').map(s => s.trim()).filter(Boolean);
-  } else {
-    tradeData.mistakes = [];
-  }
-
-  if (tradeData.tags) {
-    tradeData.tags = tradeData.tags.split(',').map(s => s.trim()).filter(Boolean);
-  } else {
-    tradeData.tags = [];
-  }
+  // Assicura che i campi ID siano sempre array, anche se vuoti
+  tradeData.tag_ids = tradeData.tag_ids || [];
+  tradeData.mistake_ids = tradeData.mistake_ids || [];
+  tradeData.news_impact_ids = tradeData.news_impact_ids || [];
+  tradeData.psychology_state_ids = tradeData.psychology_state_ids || [];
+  tradeData.rules_followed_ids = tradeData.rules_followed_ids || [];
 
   emit('submit', tradeData);
   form.value = getInitialFormState();
@@ -86,11 +131,26 @@ const handleSubmit = () => {
 
     <fieldset class="form-section">
       <legend>Core Information</legend>
-      <div class="grid-group grid-group-4-col">
+      <div class="grid-group grid-group-3-col">
         <BaseInput v-model="form.symbol_snapshot" label="Symbol" placeholder="e.g., AAPL" />
         <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
         <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
-        <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Playbook & Associations</legend>
+      <div class="grid-group grid-group-1-col">
+        <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" />
+      </div>
+       <div class="grid-group grid-group-2-col associations-group">
+        <BaseSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" :multiple="true" />
+        <BaseSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" :multiple="true" />
+        <BaseSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" :multiple="true" />
+        <BaseSelect v-model="form.psychology_state_ids" label="Psychology States" :options="psychologyStatesOptions" :multiple="true" />
+      </div>
+      <div v-if="rulesOptions.length > 0" class="grid-group grid-group-1-col associations-group">
+        <BaseSelect v-model="form.rules_followed_ids" label="Rules Followed" :options="rulesOptions" :multiple="true" />
       </div>
     </fieldset>
 
@@ -107,28 +167,6 @@ const handleSubmit = () => {
       </div>
     </fieldset>
 
-    <fieldset class="form-section">
-      <legend>Analysis & Review</legend>
-      <div class="grid-group grid-group-3-col">
-        <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
-        <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
-        <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
-      </div>
-      <div class="grid-group grid-group-2-col notes-group">
-        <div class="textarea-group">
-          <label>Pre-Trade Notes</label>
-          <textarea v-model="form.notes_pre_trade" rows="4"></textarea>
-        </div>
-        <div class="textarea-group">
-          <label>Post-Trade Notes</label>
-          <textarea v-model="form.notes_post_trade" rows="4"></textarea>
-        </div>
-      </div>
-       <div class="textarea-group">
-        <label>General Notes</label>
-        <textarea v-model="form.notes" rows="4"></textarea>
-      </div>
-    </fieldset>
 
     <div class="form-actions">
       <BaseButton type="submit" :is-loading="tradesStore.isLoading">
