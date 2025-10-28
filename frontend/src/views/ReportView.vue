@@ -231,7 +231,7 @@ watch(() => route.params.id, (newId) => {
               :trade-id="trade.id"
               :trade-details="trade"
               :note="notebookStore.selectedNote"
-              :is-loading="isLoading"
+              :is-loading="isPageLoading"
             />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>
