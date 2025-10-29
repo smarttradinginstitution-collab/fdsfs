@@ -16,9 +16,11 @@ export const useFilterStore = defineStore('filters', () => {
   const selectedPreset = ref('30d');
 
   // `startDate` e `endDate` memorizzano l'intervallo di date calcolato.
-  // Vengono inizializzati chiamando subito l'azione per il preset di default.
-  const startDate = ref(null);
+  // Vengono inizializzati con un valore predefinito robusto per evitare di inviare `null` al backend.
   const endDate = ref(new Date());
+  const initialStartDate = new Date();
+  initialStartDate.setDate(endDate.value.getDate() - 30);
+  const startDate = ref(initialStartDate);
 
   // Nuovo stato per il filtro per strategia
   const selectedStrategy = ref('all'); // 'all' indica nessun filtro
