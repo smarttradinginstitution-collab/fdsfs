@@ -47,6 +47,9 @@ async function handleSelectionSubmit() {
   errorMessage.value = '';
   try {
     await tradingAccountsStore.updateAccountSelection(selectedAccountIds.value);
+    // After saving, we must re-fetch the accounts to ensure the store and router guards
+    // have the absolute latest state before navigating.
+    await tradingAccountsStore.fetchTradingAccounts();
     router.push('/');
   } catch (error) {
     errorMessage.value = 'Errore durante l\'aggiornamento della selezione. Riprova.';
