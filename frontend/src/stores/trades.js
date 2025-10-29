@@ -387,13 +387,13 @@ export const useTradesStore = defineStore('trades', {
      * @param {boolean} options.ignoreFilters - Se true, carica tutti i trade senza filtri.
      */
     async fetchTrades(options = { ignoreFilters: false }) {
-      this.isLoading = true;
+      // this.isLoading = true; // Rimosso: gestito dall'orchestratore
       const tradingAccountsStore = useTradingAccountsStore();
 
       if (tradingAccountsStore.selectedAccounts.length === 0) {
         console.log("Nessun trading account selezionato. Non carico i trade.");
         this.trades = [];
-        this.isLoading = false;
+        // this.isLoading = false; // Rimosso: gestito dall'orchestratore
         return;
       }
 
@@ -430,9 +430,8 @@ export const useTradesStore = defineStore('trades', {
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
         this.trades = [];
-      } finally {
-        this.isLoading = false;
       }
+      // Rimosso blocco finally per centralizzare la gestione di isLoading
     },
 
     /**
