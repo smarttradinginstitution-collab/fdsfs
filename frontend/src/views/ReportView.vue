@@ -120,50 +120,43 @@ const selectTradeFromStore = async (tradeId) => {
   isPageLoading.value = true;
   error.value = null;
   try {
-    // Chiama la nuova azione che carica tutto in una sola volta
     await tradesStore.fetchTradeWithAllData(tradeId);
-
-    // Se necessario, popola altri store con i dati ricevuti
-    if (tradesStore.selectedTrade) {
-      // Aggiorna lo store delle immagini
-      imageStore.setImagesForCurrentTrade(tradesStore.selectedTrade.images || []);
-
-      // Assicurati che le cartelle siano caricate prima di impostare la nota,
-      // per evitare race condition e stati incoerenti.
-      if (notebookStore.folders.length === 0) {
-        await notebookStore.fetchFolders({ selectDefault: false });
-      }
-
-      // Aggiorna lo store delle note
-      const note = tradesStore.selectedTrade.notes?.[0]; // Prende la prima nota, se esiste
-      notebookStore.setSelectedNoteFromData(note);
-
-      // Imposta direttamente i dati finanziari
-      notebookStore.setFinancialDataFromTrade(tradesStore.selectedTrade);
-
-    } else {
-      // Se il trade non è stato caricato, svuota entrambi gli store
-      imageStore.setImagesForCurrentTrade([]);
-      notebookStore.deselectNote();
-    }
-
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
     error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
-    tradesStore.selectedTrade = null;
   } finally {
     isPageLoading.value = false;
   }
 };
 
 // --- LIFECYCLE & WATCHERS ---
-// --- LIFECYCLE & WATCHERS ---
 watch(() => route.params.id, (newId) => {
   if (newId) {
     selectTradeFromStore(newId);
   }
 }, { immediate: true });
+
+// Watcher reattivo per sincronizzare gli store dipendenti quando il trade cambia.
+watch(trade, async (newTrade, oldTrade) => {
+  if (!newTrade) {
+    imageStore.setImagesForCurrentTrade([]);
+    notebookStore.deselectNote();
+    return;
+  }
+
+  // Imposta immagini e dati finanziari ad ogni aggiornamento
+  imageStore.setImagesForCurrentTrade(newTrade.images || []);
+  notebookStore.setFinancialDataFromTrade(newTrade);
+
+  // Imposta la nota SOLO se l'ID del trade cambia (cioè, è un nuovo trade)
+  if (!oldTrade || newTrade.id !== oldTrade.id) {
+    if (notebookStore.folders.length === 0) {
+      await notebookStore.fetchFolders({ selectDefault: false });
+    }
+    const note = newTrade.notes?.[0];
+    notebookStore.setSelectedNoteFromData(note);
+  }
+});
 
 </script>
 
