@@ -166,7 +166,7 @@ async def get_trade_with_all_data(
     return await controller.get_trade_with_all_data(claims, trade_id, service)
 
 
-@router.put("/{trade_id}", response_model=TradeRead)
+@router.put("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_trade(
     trade_id: UUID,
     trade_data: TradeUpdate,
@@ -174,7 +174,8 @@ async def update_trade(
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
 ):
-    return await controller.update_trade(claims, trade_id, trade_data, service, background_tasks)
+    await controller.update_trade(claims, trade_id, trade_data, service, background_tasks)
+    return
 
 
 @router.patch("/{trade_id}/review", response_model=TradeRead)

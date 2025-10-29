@@ -230,11 +230,10 @@ async def test_update_trade_succeeds(trade_service: TradeService, mock_claims, m
     trade_service.general_account_repo.get_by_user_id.return_value = general_account
     trade_service.trading_account_repo.get_by_id.return_value = trading_account
     trade_service.db.commit = AsyncMock()
-    trade_service.db.refresh = AsyncMock()
 
     result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
 
-    assert result is not None
+    assert result is True
     trade_service.repo.get_trade_by_id_simple.assert_called_once_with(trade_id)
     trade_service.db.commit.assert_called_once()
     background_tasks.add_task.assert_called_once()
@@ -250,7 +249,7 @@ async def test_update_trade_not_found(trade_service: TradeService, mock_claims):
 
     result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
 
-    assert result is None
+    assert result is False
 
 async def test_delete_trade_succeeds(trade_service: TradeService, mock_claims, mocker):
     mocker.patch('app.Services.trading_account_service.TradingAccountService.recalculate_account_metrics', new_callable=AsyncMock)

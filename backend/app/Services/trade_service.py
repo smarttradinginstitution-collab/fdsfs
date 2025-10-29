@@ -312,11 +312,15 @@ class TradeService:
 
         return [TradeRead.model_validate(trade) for trade in trades]
 
-    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate, background_tasks: BackgroundTasks) -> Optional[TradeRead]:
-        """Aggiorna un trade esistente e schedula il ricalcolo delle metriche in background."""
+    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate, background_tasks: BackgroundTasks) -> bool:
+        """
+        Aggiorna un trade in modo efficiente, non restituisce dati (None)
+        e schedula il ricalcolo delle metriche in background.
+        Restituisce True in caso di successo, False se il trade non viene trovato.
+        """
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not db_trade:
-            return None
+            return False
 
         trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
@@ -370,13 +374,13 @@ class TradeService:
             db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
+        # Non eseguire il refresh per ottimizzare i tempi di risposta
 
         # Schedula il ricalcolo delle metriche in background
         trading_account_service = TradingAccountService(self.db)
         background_tasks.add_task(trading_account_service.recalculate_account_metrics, trading_account_id)
 
-        return TradeRead.model_validate(db_trade)
+        return True
 
     async def update_review_status(self, claims: dict, trade_id: UUID, update_data: TradeReviewUpdate) -> TradeRead:
         """Aggiorna lo stato di revisione di un trade."""
