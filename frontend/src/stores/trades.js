@@ -389,9 +389,8 @@ export const useTradesStore = defineStore('trades', {
     async fetchTrades(options = { ignoreFilters: false }) {
       this.isLoading = true;
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
 
-      if (!selectedAccount) {
+      if (tradingAccountsStore.selectedAccounts.length === 0) {
         console.log("Nessun trading account selezionato. Non carico i trade.");
         this.trades = [];
         this.isLoading = false;
@@ -423,7 +422,10 @@ export const useTradesStore = defineStore('trades', {
       }
 
       try {
-        const response = await apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params });
+        const payload = {
+          trading_account_ids: tradingAccountsStore.selectedAccounts.map(acc => acc.id)
+        };
+        const response = await apiClient.post('/trades/by-trading-accounts', payload, { params });
         this.trades = response.data.map(mapBackendTradeToFrontend);
       } catch (error) {
         console.error('Errore nel recupero dei trade:', error);
@@ -463,7 +465,7 @@ export const useTradesStore = defineStore('trades', {
       this.activeSummary = null;
 
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
       if (!selectedAccount) {
         console.error("Nessun trading account selezionato per il riepilogo.");
         this.isSummaryLoading = false;
@@ -515,7 +517,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchDashboardStats() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
       if (!selectedAccount) return;
 
       const filterStore = useFilterStore();
@@ -540,7 +542,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchCalendarData() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
       if (!selectedAccount) return;
 
       const filterStore = useFilterStore();
@@ -566,7 +568,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchVantageScore() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
       if (!selectedAccount) return;
 
       const filterStore = useFilterStore();
@@ -591,7 +593,7 @@ export const useTradesStore = defineStore('trades', {
       this.isLoading = true;
       try {
         const tradingAccountsStore = useTradingAccountsStore();
-        const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+        const selectedAccount = tradingAccountsStore.selectedAccounts[0];
 
         if (!selectedAccount) {
           console.error('Nessun trading account selezionato, impossibile aggiungere il trade.');
@@ -650,7 +652,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchProcessedStats() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
       if (!selectedAccount) return;
 
       const filterStore = useFilterStore();
@@ -673,7 +675,7 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchEquityCurve() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedTradingAccount;
+      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
       if (!selectedAccount) return;
 
       const filterStore = useFilterStore();

@@ -13,7 +13,7 @@ from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
 from app.Router.auth import get_current_claims
 
-from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate, TradeReviewUpdate, TradeWithDataRead
+from app.Schemas.trade import TradeRead, TradeCreate, TradeUpdate, TradeReviewUpdate, TradeWithDataRead, TradeQuery
 from app.Schemas.analytics import (
     PerformanceMetrics,
     CalendarDayData,
@@ -121,6 +121,23 @@ async def create_trade(
     service: TradeService = Depends(),
 ):
     return await controller.create_trade(claims, trade_data, service)
+
+
+@router.post("/by-trading-accounts", response_model=List[TradeRead], summary="Get trades for multiple trading accounts")
+async def get_trades_for_trading_accounts_bulk(
+    query: TradeQuery,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    claims: dict = Depends(get_current_claims),
+    service: TradeService = Depends(),
+):
+    return await controller.list_trades_for_trading_accounts_bulk(
+        claims=claims,
+        trading_account_ids=query.trading_account_ids,
+        start_date=start_date,
+        end_date=end_date,
+        service=service,
+    )
 
 
 @router.get("/by-trading-account/{trading_account_id}", response_model=List[TradeRead])

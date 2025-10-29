@@ -136,6 +136,21 @@ class TradesController:
             end_date=end_date,
         )
 
+    async def list_trades_for_trading_accounts_bulk(
+        self,
+        claims: dict,
+        trading_account_ids: List[UUID],
+        start_date: Optional[date],
+        end_date: Optional[date],
+        service: TradeService,
+    ) -> list[TradeRead]:
+        return await service.list_trades_by_trading_accounts_bulk(
+            claims=claims,
+            trading_account_ids=trading_account_ids,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
     async def list_recent_trades(
         self,
         claims: dict,

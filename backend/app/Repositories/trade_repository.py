@@ -134,6 +134,31 @@ class TradeRepository:
             trades.append(trade)
         return trades
 
+    async def get_filtered_trades_bulk(
+        self,
+        trading_account_ids: List[UUID],
+        start_date: date,
+        end_date: date
+    ) -> List[Trade]:
+        """Recupera i trade filtrati per un intervallo di date per una lista di account."""
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        query = self._get_trade_query().where(
+            Trade.trading_account_id.in_(trading_account_ids),
+            Trade.entry_timestamp >= start_datetime,
+            Trade.entry_timestamp <= end_datetime
+        )
+        result = await self.db.execute(query)
+        rows = result.unique().all()
+        trades = []
+        for trade, duration in rows:
+            trade.duration_minutes = duration
+            trades.append(trade)
+        return trades
+
     async def get_trades_for_dna_analysis(
         self,
         general_account_id: UUID,

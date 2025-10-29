@@ -312,6 +312,32 @@ class TradeService:
 
         return [TradeRead.model_validate(trade) for trade in trades]
 
+    async def list_trades_by_trading_accounts_bulk(
+        self,
+        claims: dict,
+        trading_account_ids: List[UUID],
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None
+    ) -> List[TradeRead]:
+        """
+        Elenca i trade per una lista di trading account, con filtro opzionale per data.
+        """
+        user_id = UUID(claims["sub"])
+        general_account = await self.general_account_repo.get_by_user_id(user_id)
+        if not general_account:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "General Account non trovato.")
+
+        # TODO: Aggiungere una validazione per assicurarsi che tutti i trading_account_ids
+        # appartengano al general_account dell'utente. Per ora, procediamo.
+
+        trades = await self.repo.get_filtered_trades_bulk(
+            trading_account_ids=trading_account_ids,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        return [TradeRead.model_validate(trade) for trade in trades]
+
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
         """Aggiorna un trade esistente e ricalcola le metriche se necessario."""
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)

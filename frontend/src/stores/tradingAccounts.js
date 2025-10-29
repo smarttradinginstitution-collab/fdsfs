@@ -34,11 +34,6 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     try {
       const { data } = await apiClient.get('/trading-accounts/');
       tradingAccounts.value = data;
-      // After fetching accounts, if any are selected, trigger dashboard data load
-      if (hasSelectedAccounts.value) {
-        const tradesStore = useTradesStore();
-        tradesStore.fetchAllDataForDashboard();
-      }
     } catch (error) {
       console.error("Errore nel recupero dei trading accounts:", error);
       tradingAccounts.value = [];

@@ -170,3 +170,6 @@ class TradeWithDataRead(TradeRead):
 
 # Risolve i riferimenti circolari dopo che tutti i modelli sono stati definiti
 NoteRead.model_rebuild()
+
+class TradeQuery(BaseModel):
+    trading_account_ids: List[UUID]
