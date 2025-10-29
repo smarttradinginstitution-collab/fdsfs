@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import date
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 
 from app.Controllers.trades_controller import TradesController
 from app.Services.trade_service import TradeService
@@ -170,10 +170,11 @@ async def get_trade_with_all_data(
 async def update_trade(
     trade_id: UUID,
     trade_data: TradeUpdate,
+    background_tasks: BackgroundTasks,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
 ):
-    return await controller.update_trade(claims, trade_id, trade_data, service)
+    return await controller.update_trade(claims, trade_id, trade_data, service, background_tasks)
 
 
 @router.patch("/{trade_id}/review", response_model=TradeRead)

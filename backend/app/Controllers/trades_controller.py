@@ -5,7 +5,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import date
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, BackgroundTasks
 
 from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
@@ -180,8 +180,9 @@ class TradesController:
         trade_id: UUID,
         trade_data: TradeUpdate,
         service: TradeService,
+        background_tasks: BackgroundTasks,
     ) -> TradeRead:
-        updated_trade = await service.update_trade(claims, trade_id, trade_data)
+        updated_trade = await service.update_trade(claims, trade_id, trade_data, background_tasks)
         if not updated_trade:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

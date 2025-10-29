@@ -4,7 +4,7 @@ from uuid import uuid4
 from decimal import Decimal
 from datetime import datetime
 
-from fastapi import HTTPException
+from fastapi import HTTPException, BackgroundTasks
 
 from app.Services.trade_service import TradeService
 from app.Schemas.trade import TradeCreate, TradeUpdate, TradeRead
@@ -206,7 +206,8 @@ async def test_create_trade_succeeds(trade_service: TradeService, mock_claims, m
     trade_service.db.commit.assert_called_once()
 
 async def test_update_trade_succeeds(trade_service: TradeService, mock_claims, mocker):
-    mocker.patch('app.Services.trading_account_service.TradingAccountService.recalculate_account_metrics', new_callable=AsyncMock)
+    recalculate_mock = mocker.patch('app.Services.trading_account_service.TradingAccountService.recalculate_account_metrics', new_callable=AsyncMock)
+    background_tasks = MagicMock(spec=BackgroundTasks)
 
     trade_id = uuid4()
     trade_update = TradeUpdate(
@@ -231,19 +232,23 @@ async def test_update_trade_succeeds(trade_service: TradeService, mock_claims, m
     trade_service.db.commit = AsyncMock()
     trade_service.db.refresh = AsyncMock()
 
-    result = await trade_service.update_trade(mock_claims, trade_id, trade_update)
+    result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
 
     assert result is not None
     trade_service.repo.get_trade_by_id_simple.assert_called_once_with(trade_id)
     trade_service.db.commit.assert_called_once()
+    background_tasks.add_task.assert_called_once()
+    # Ensure the original mock was not called directly
+    recalculate_mock.assert_not_called()
 
 async def test_update_trade_not_found(trade_service: TradeService, mock_claims):
     trade_id = uuid4()
     trade_update = TradeUpdate()
+    background_tasks = MagicMock(spec=BackgroundTasks)
 
     trade_service.repo.get_trade_by_id_simple.return_value = None
 
-    result = await trade_service.update_trade(mock_claims, trade_id, trade_update)
+    result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
 
     assert result is None
 

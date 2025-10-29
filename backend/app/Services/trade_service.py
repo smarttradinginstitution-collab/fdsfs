@@ -6,7 +6,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, BackgroundTasks
 from datetime import date
 
 from app.Repositories.trade_repository import TradeRepository
@@ -312,8 +312,8 @@ class TradeService:
 
         return [TradeRead.model_validate(trade) for trade in trades]
 
-    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
-        """Aggiorna un trade esistente e ricalcola le metriche se necessario."""
+    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate, background_tasks: BackgroundTasks) -> Optional[TradeRead]:
+        """Aggiorna un trade esistente e schedula il ricalcolo delle metriche in background."""
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)
         if not db_trade:
             return None
@@ -372,9 +372,9 @@ class TradeService:
         await self.db.commit()
         await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
-        # Recalculate account metrics
+        # Schedula il ricalcolo delle metriche in background
         trading_account_service = TradingAccountService(self.db)
-        await trading_account_service.recalculate_account_metrics(trading_account_id)
+        background_tasks.add_task(trading_account_service.recalculate_account_metrics, trading_account_id)
 
         return TradeRead.model_validate(db_trade)
 
