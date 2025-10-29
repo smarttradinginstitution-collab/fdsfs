@@ -134,6 +134,31 @@ class TradeRepository:
             trades.append(trade)
         return trades
 
+    async def get_filtered_trades_for_multiple_accounts(
+        self,
+        trading_account_ids: List[UUID],
+        start_date: date,
+        end_date: date
+    ) -> List[Trade]:
+        """Recupera i trade filtrati per un intervallo di date per una lista di account."""
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        query = self._get_trade_query().where(
+            Trade.trading_account_id.in_(trading_account_ids),
+            Trade.entry_timestamp >= start_datetime,
+            Trade.entry_timestamp <= end_datetime
+        ).order_by(Trade.entry_timestamp) # Ensure chronological order for calculations
+        result = await self.db.execute(query)
+        rows = result.unique().all()
+        trades = []
+        for trade, duration in rows:
+            trade.duration_minutes = duration
+            trades.append(trade)
+        return trades
+
     async def get_filtered_trades_bulk(
         self,
         trading_account_ids: List[UUID],
@@ -390,6 +415,29 @@ class TradeRepository:
             Trade.p_l.isnot(None)
         ]
 
+    async def get_aggregated_performance_stats_for_multiple_accounts(
+        self,
+        trading_account_ids: List[UUID],
+        start_date: date,
+        end_date: date,
+    ) -> dict[str, Any]:
+        """
+        Calcola le metriche di performance aggregate per una lista di account.
+        """
+        from datetime import datetime, time
+        from sqlalchemy import cast, Numeric
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Filtri comuni per le query
+        filters = [
+            Trade.trading_account_id.in_(trading_account_ids),
+            Trade.entry_timestamp >= start_datetime,
+            Trade.entry_timestamp <= end_datetime,
+            Trade.p_l.isnot(None)
+        ]
+
         # Definizioni delle aggregazioni
         query_aggs = [
             func.sum(Trade.p_l).label("net_pnl"),
@@ -476,6 +524,42 @@ class TradeRepository:
         # Restituisce una lista di dizionari, facile da mappare in Pydantic
         return result.mappings().all()
 
+    async def get_calendar_data_aggregated_for_multiple_accounts(
+        self,
+        trading_account_ids: List[UUID],
+        start_date: date,
+        end_date: date,
+    ) -> list[dict[str, Any]]:
+        """
+        Calcola i dati aggregati per la vista calendario per una lista di account.
+        """
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        trade_date_col = func.date(Trade.entry_timestamp).label("date")
+
+        stmt = (
+            select(
+                trade_date_col,
+                func.sum(Trade.p_l).label("pnl"),
+                func.count(Trade.id).label("trade_count"),
+                func.count(case((Trade.p_l > 0, 1))).label("winning_trades_count"),
+            )
+            .where(
+                Trade.trading_account_id.in_(trading_account_ids),
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+                Trade.p_l.isnot(None),
+            )
+            .group_by(trade_date_col)
+            .order_by(trade_date_col)
+        )
+
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
+
     async def get_equity_curve_aggregated(
         self,
         trading_account_id: UUID,
@@ -500,6 +584,37 @@ class TradeRepository:
             )
             .where(
                 Trade.trading_account_id == trading_account_id,
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+                Trade.p_l.isnot(None)
+            )
+            .subquery()
+        )
+
+    async def get_equity_curve_aggregated_for_multiple_accounts(
+        self,
+        trading_account_ids: List[UUID],
+        start_date: date,
+        end_date: date,
+    ) -> list[dict[str, Any]]:
+        """
+        Calcola i punti della curva di equità per una lista di account.
+        """
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Subquery per ordinare i trade e calcolare il P&L cumulativo
+        subquery = (
+            select(
+                Trade.entry_timestamp.label("timestamp"),
+                func.sum(Trade.p_l).over(
+                    order_by=Trade.entry_timestamp
+                ).label("cumulative_pnl")
+            )
+            .where(
+                Trade.trading_account_id.in_(trading_account_ids),
                 Trade.entry_timestamp >= start_datetime,
                 Trade.entry_timestamp <= end_datetime,
                 Trade.p_l.isnot(None)
@@ -569,25 +684,74 @@ class TradeRepository:
         result = await self.db.execute(stmt)
         return result.all()
 
-    async def get_processed_stats_aggregated(
+    async def get_tag_performance_stats_for_multiple_accounts(
         self,
-        trading_account_id: UUID,
+        trading_account_ids: List[UUID],
+        start_date: date,
+        end_date: date,
+    ) -> List[Any]:
+        """
+        Calcola le statistiche di performance per ogni tag per una lista di account.
+        """
+        from datetime import datetime, time
+
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+
+        # Define aggregate functions
+        total_pnl = func.sum(Trade.p_l).label("total_pnl")
+        total_trades = func.count(Trade.id).label("total_trades")
+
+        # Calculate win rate safely, avoiding division by zero
+        winning_trades = func.count(case((Trade.p_l > 0, 1)))
+        win_rate = case(
+            (total_trades > 0, (winning_trades.cast(Float) * 100 / total_trades)),
+            else_=0.0
+        ).label("win_rate")
+
+        # Calculate average R-Multiple, handling NULLs and defaulting to 0
+        avg_r_multiple = func.coalesce(func.avg(Trade.r_multiple), 0.0).label("avg_r_multiple")
+
+        stmt = (
+            select(
+                Tag.id.label("tag_id"),
+                Tag.name.label("tag_name"),
+                Tag.color.label("tag_color"),
+                total_pnl,
+                total_trades,
+                win_rate,
+                avg_r_multiple,
+            )
+            .select_from(Tag)
+            .join(TradesTags.__table__, Tag.id == TradesTags.__table__.c.tag_id)
+            .join(Trade, Trade.id == TradesTags.__table__.c.trade_id)
+            .where(
+                Trade.trading_account_id.in_(trading_account_ids),
+                Trade.entry_timestamp >= start_datetime,
+                Trade.entry_timestamp <= end_datetime,
+            )
+            .group_by(Tag.id, Tag.name, Tag.color)
+            .order_by(total_pnl.desc())
+        )
+
+        result = await self.db.execute(stmt)
+        return result.all()
+
+    async def get_processed_stats_aggregated_for_multiple_accounts(
+        self,
+        trading_account_ids: List[UUID],
         start_date: date,
         end_date: date,
     ) -> dict[str, Any]:
         """
-        Calcola tutte le statistiche aggregate per l'endpoint processed-stats, utilizzando
-        una query ottimizzata per PostgreSQL in produzione e un fallback per SQLite nei test.
+        Calcola tutte le statistiche aggregate per una lista di account.
         """
-        # Determina il dialetto del DB per decidere quale implementazione usare
         dialect = self.db.bind.dialect.name
 
-        # Implementazione ottimizzata per PostgreSQL
         if dialect == 'postgresql':
             from sqlalchemy import text
             from datetime import timedelta
 
-            # Calcola la data di fine inclusiva in Python per evitare logica complessa in SQL
             end_date_inclusive = end_date + timedelta(days=1)
 
             sql_query = text("""
@@ -600,7 +764,7 @@ class TradeRepository:
                         DATE(t.entry_timestamp) AS trade_date
                     FROM trades t
                     LEFT JOIN playbooks p ON t.playbook_id = p.id
-                    WHERE t.trading_account_id = :trading_account_id
+                    WHERE t.trading_account_id = ANY(:trading_account_ids)
                       AND t.entry_timestamp >= :start_date
                       AND t.entry_timestamp < :end_date_inclusive
                       AND t.p_l IS NOT NULL
@@ -620,7 +784,7 @@ class TradeRepository:
                 SELECT (SELECT by_strategy FROM strategy_stats), (SELECT by_day_of_week FROM day_of_week_stats), (SELECT daily_pnl FROM daily_pnl_stats);
             """)
             result = await self.db.execute(sql_query, {
-                "trading_account_id": trading_account_id,
+                "trading_account_ids": trading_account_ids,
                 "start_date": start_date,
                 "end_date_inclusive": end_date_inclusive
             })
@@ -638,7 +802,7 @@ class TradeRepository:
                 select(Trade.p_l, Trade.entry_timestamp, Playbook.title.label("strategy_name"))
                 .outerjoin(Playbook, Trade.playbook_id == Playbook.id)
                 .where(
-                    Trade.trading_account_id == trading_account_id,
+                    Trade.trading_account_id.in_(trading_account_ids),
                     Trade.entry_timestamp >= datetime.datetime.combine(start_date, datetime.time.min),
                     Trade.entry_timestamp <= datetime.datetime.combine(end_date, datetime.time.max),
                     Trade.p_l.isnot(None)

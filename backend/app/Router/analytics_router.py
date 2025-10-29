@@ -17,16 +17,17 @@ router = APIRouter(
 controller = AnalyticsController()
 
 from app.Services.analytics_service import AnalyticsService
+from app.Schemas.analytics_query import AnalyticsQuery
 
-@router.get("/tags-performance/{trading_account_id}", response_model=List[TagPerformanceStat])
+@router.post("/tags-performance", response_model=List[TagPerformanceStat])
 async def get_tags_performance(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     service: AnalyticsService = Depends(),
 ):
     return await controller.get_tags_performance_stats(
-        trading_account_id=trading_account_id,
+        trading_account_ids=query.trading_account_ids,
         start_date=start_date,
         end_date=end_date,
         service=service,

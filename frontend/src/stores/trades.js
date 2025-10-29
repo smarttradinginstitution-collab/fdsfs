@@ -464,65 +464,53 @@ export const useTradesStore = defineStore('trades', {
       this.isSummaryLoading = true;
       this.activeSummary = null;
 
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
-      if (!selectedAccount) {
-        console.error("Nessun trading account selezionato per il riepilogo.");
-        this.isSummaryLoading = false;
-        return;
+      const payload = this._getAnalyticsPayload();
+      if (!payload) {
+          console.error("Nessun account di trading selezionato per il riepilogo.");
+          this.isSummaryLoading = false;
+          return;
       }
 
-      const filterStore = useFilterStore();
+      // Sovrascrivi le date con quelle fornite a questa funzione specifica
       const toYYYYMMDD = (date) => {
-        if (!date) return null;
-        const d = new Date(date);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          if (!date) return null;
+          const d = new Date(date);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       };
-
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const params = {
-        start_date: toYYYYMMDD(dateRange.startDate),
-        end_date: toYYYYMMDD(dateRange.endDate),
-        user_timezone: userTimezone,
-      };
-
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        params.setups = [filterStore.selectedStrategy];
-      }
+      payload.params.start_date = toYYYYMMDD(dateRange.startDate);
+      payload.params.end_date = toYYYYMMDD(dateRange.endDate);
 
       try {
-        // Eseguiamo le due chiamate in parallelo per efficienza
-        const [summaryResponse, tradesResponse] = await Promise.all([
-          apiClient.get(`/trades/summary/${selectedAccount.id}`, { params }),
-          apiClient.get(`/trades/by-trading-account/${selectedAccount.id}`, { params })
-        ]);
+          const [summaryResponse, tradesResponse] = await Promise.all([
+              apiClient.post('/trades/summary', payload.body, { params: payload.params }),
+              apiClient.post('/trades/by-trading-accounts', payload.body, { params: payload.params })
+          ]);
 
-        const fetchedTrades = tradesResponse.data.map(mapBackendTradeToFrontend);
+          const fetchedTrades = tradesResponse.data.map(mapBackendTradeToFrontend);
 
-        this.activeSummary = {
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate,
-          trades: fetchedTrades,
-          stats: summaryResponse.data.stats,
-          cumulativePnlForChart: summaryResponse.data.cumulative_pnl_series,
-        };
-
+          this.activeSummary = {
+              startDate: dateRange.startDate,
+              endDate: dateRange.endDate,
+              trades: fetchedTrades,
+              stats: summaryResponse.data.stats,
+              cumulativePnlForChart: summaryResponse.data.cumulative_pnl_series,
+          };
       } catch (error) {
-        console.error('Errore nel recupero del riepilogo del trade:', error);
-        this.activeSummary = { error: 'Failed to load summary.' };
+          console.error('Errore nel recupero del riepilogo del trade:', error);
+          this.activeSummary = { error: 'Failed to load summary.' };
       } finally {
-        this.isSummaryLoading = false;
+          this.isSummaryLoading = false;
       }
     },
 
-    async fetchDashboardStats() {
+    _getAnalyticsPayload() {
       const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
-      if (!selectedAccount) return;
+      if (tradingAccountsStore.selectedAccounts.length === 0) {
+        return null;
+      }
 
       const filterStore = useFilterStore();
       const params = {
-        // Rimuoviamo trading_account_id dai parametri, verrà inserito nell'URL
         start_date: filterStore.startDate?.toISOString().split('T')[0],
         end_date: filterStore.endDate?.toISOString().split('T')[0],
       };
@@ -531,9 +519,19 @@ export const useTradesStore = defineStore('trades', {
         params.setups = [filterStore.selectedStrategy];
       }
 
+      const body = {
+        trading_account_ids: tradingAccountsStore.selectedAccounts.map(acc => acc.id),
+      };
+
+      return { body, params };
+    },
+
+    async fetchDashboardStats() {
+      const payload = this._getAnalyticsPayload();
+      if (!payload) return;
+
       try {
-        // L'ID del conto è ora parte dell'URL, come per le altre chiamate
-        const response = await apiClient.get(`/trades/performance/metrics/${selectedAccount.id}`, { params });
+        const response = await apiClient.post('/trades/performance/metrics', payload.body, { params: payload.params });
         this.dashboardStats = response.data;
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -541,25 +539,14 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchCalendarData() {
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
-      if (!selectedAccount) return;
+      const payload = this._getAnalyticsPayload();
+      if (!payload) return;
 
-      const filterStore = useFilterStore();
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      const params = {
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
-        user_timezone: userTimezone,
-      };
-
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        params.setups = [filterStore.selectedStrategy];
-      }
+      payload.params.user_timezone = userTimezone;
 
       try {
-        const response = await apiClient.get(`/trades/calendar/data/${selectedAccount.id}`, { params });
+        const response = await apiClient.post('/trades/calendar/data', payload.body, { params: payload.params });
         this.calendarData = response.data;
       } catch (error) {
         console.error('Error fetching calendar data:', error);
@@ -567,21 +554,11 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchVantageScore() {
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
-      if (!selectedAccount) return;
-
-      const filterStore = useFilterStore();
-      const params = {
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
-      };
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        params.setups = [filterStore.selectedStrategy];
-      }
+      const payload = this._getAnalyticsPayload();
+      if (!payload) return;
 
       try {
-        const response = await apiClient.get(`/trades/vantage-score/${selectedAccount.id}`, { params });
+        const response = await apiClient.post('/trades/vantage-score', payload.body, { params: payload.params });
         this.vantageScore = response.data;
       } catch (error) {
         console.error('Error fetching vantage score:', error);
@@ -651,21 +628,11 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchProcessedStats() {
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
-      if (!selectedAccount) return;
-
-      const filterStore = useFilterStore();
-      const params = {
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
-      };
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        params.setups = [filterStore.selectedStrategy];
-      }
+      const payload = this._getAnalyticsPayload();
+      if (!payload) return;
 
       try {
-        const response = await apiClient.get(`/trades/processed-stats/${selectedAccount.id}`, { params });
+        const response = await apiClient.post('/trades/processed-stats', payload.body, { params: payload.params });
         this.processedStats = response.data;
       } catch (error) {
         console.error('Error fetching processed stats:', error);
@@ -674,21 +641,11 @@ export const useTradesStore = defineStore('trades', {
     },
 
     async fetchEquityCurve() {
-      const tradingAccountsStore = useTradingAccountsStore();
-      const selectedAccount = tradingAccountsStore.selectedAccounts[0];
-      if (!selectedAccount) return;
-
-      const filterStore = useFilterStore();
-      const params = {
-        start_date: filterStore.startDate?.toISOString().split('T')[0],
-        end_date: filterStore.endDate?.toISOString().split('T')[0],
-      };
-      if (filterStore.selectedStrategy && filterStore.selectedStrategy.toLowerCase() !== 'all') {
-        params.setups = [filterStore.selectedStrategy];
-      }
+      const payload = this._getAnalyticsPayload();
+      if (!payload) return;
 
       try {
-        const response = await apiClient.get(`/trades/equity-curve/${selectedAccount.id}`, { params });
+        const response = await apiClient.post('/trades/equity-curve', payload.body, { params: payload.params });
         this.equityCurve = response.data;
       } catch (error) {
         console.error('Error fetching equity curve:', error);

@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import date
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
 from app.Controllers.trades_controller import TradesController
 from app.Services.trade_service import TradeService
@@ -24,6 +24,7 @@ from app.Schemas.analytics import (
     TradeFinancialSummary,
     DailySummary,
 )
+from app.Schemas.analytics_query import AnalyticsQuery
 
 controller = TradesController()
 
@@ -34,74 +35,74 @@ router = APIRouter(
 )
 
 # --- Endpoint di Analisi ---
-@router.get("/performance/metrics/{trading_account_id}", response_model=PerformanceMetrics)
+@router.post("/performance/metrics", response_model=PerformanceMetrics)
 async def get_performance_metrics(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_performance_metrics(trading_account_id, start_date, end_date, service)
+    return await controller.get_performance_metrics(query.trading_account_ids, start_date, end_date, service)
 
 
-@router.get("/calendar/data/{trading_account_id}", response_model=List[CalendarDayData])
+@router.post("/calendar/data", response_model=List[CalendarDayData])
 async def get_calendar_data(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     user_timezone: str,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_calendar_data(trading_account_id, start_date, end_date, user_timezone, service)
+    return await controller.get_calendar_data(query.trading_account_ids, start_date, end_date, user_timezone, service)
 
 
-@router.get("/processed-stats/{trading_account_id}", response_model=ProcessedStats)
+@router.post("/processed-stats", response_model=ProcessedStats)
 async def get_processed_stats(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_processed_stats(trading_account_id, start_date, end_date, service)
+    return await controller.get_processed_stats(query.trading_account_ids, start_date, end_date, service)
 
 
-@router.get("/vantage-score/{trading_account_id}", response_model=VantageScoreData)
+@router.post("/vantage-score", response_model=VantageScoreData)
 async def get_vantage_score(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_vantage_score(trading_account_id, start_date, end_date, service)
+    return await controller.get_vantage_score(query.trading_account_ids, start_date, end_date, service)
 
 
-@router.get("/equity-curve/{trading_account_id}", response_model=EquityCurveData)
+@router.post("/equity-curve", response_model=EquityCurveData)
 async def get_equity_curve(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_equity_curve(trading_account_id, start_date, end_date, service)
+    return await controller.get_equity_curve(query.trading_account_ids, start_date, end_date, service)
 
 
-@router.get("/summary/{trading_account_id}", response_model=TradeSummary)
+@router.post("/summary", response_model=TradeSummary)
 async def get_trade_summary(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     start_date: date,
     end_date: date,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_trade_summary(trading_account_id, start_date, end_date, service)
+    return await controller.get_trade_summary(query.trading_account_ids, start_date, end_date, service)
 
 
-@router.get("/daily-summary/{trading_account_id}/{day}", response_model=DailySummary, summary="Get a full summary for a single day")
+@router.post("/daily-summary/{day}", response_model=DailySummary, summary="Get a full summary for a single day")
 async def get_daily_summary(
-    trading_account_id: UUID,
+    query: AnalyticsQuery,
     day: date,
     service: AnalyticsService = Depends(),
 ):
-    return await controller.get_daily_summary(trading_account_id, day, service)
+    return await controller.get_daily_summary(query.trading_account_ids, day, service)
 
 
 @router.get("/{trade_id}/financial_summary", response_model=TradeFinancialSummary, summary="Get a financial summary for a single trade")

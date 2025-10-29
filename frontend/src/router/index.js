@@ -136,39 +136,28 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'dashboard' });
     }
 
-    // Fetch trading accounts only if they haven't been loaded yet.
+    // Fetch trading accounts if they haven't been loaded yet.
+    // This is crucial for users who reload the page on a protected route.
     if (tradingAccountsStore.tradingAccounts.length === 0) {
-      // Wait for the fetch to complete before making routing decisions.
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
-    // Now that we're sure the data is loaded, we can safely check the state.
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccounts = tradingAccountsStore.tradingAccounts.some(acc => acc.is_selected);
+    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
 
-    // New, more robust routing logic to prevent redirect loops.
-    // The logic is now based on the user's setup status.
-
-    // STATUS 1: Setup is complete (user has accounts and a selection)
-    if (hasAccounts && hasSelectedAccounts) {
-      // If setup is complete, prevent access to setup pages.
-      if (to.name === 'add-account' || to.name === 'select-account') {
-        return next({ name: 'dashboard' });
-      }
-    }
-    // STATUS 2: User has accounts but no selection
-    else if (hasAccounts && !hasSelectedAccounts) {
-      // They must select an account, unless they are already on the selection page.
-      if (to.name !== 'select-account') {
-        return next({ name: 'select-account' });
-      }
-    }
-    // STATUS 3: User has no accounts at all
-    else if (!hasAccounts) {
-      // They must create an account, unless they are already on the creation page.
-      if (to.name !== 'add-account') {
-        return next({ name: 'add-account' });
-      }
+    // Handle routing based on account status
+    if (to.name === 'add-account') {
+      // If user has accounts, they shouldn't be on the 'add-account' page
+      if (hasAccounts) return next({ name: 'dashboard' });
+    } else if (to.name === 'select-account') {
+      // If user has NO accounts, they must go to the 'add-account' page first
+      if (!hasAccounts) return next({ name: 'add-account' });
+      // If user has already selected an account, send them to the dashboard
+      if (hasSelectedAccount) return next({ name: 'dashboard' });
+    } else if (authRequired) {
+      // For any other protected page, enforce the setup flow
+      if (!hasAccounts) return next({ name: 'add-account' });
+      if (!hasSelectedAccount) return next({ name: 'select-account' });
     }
   }
 

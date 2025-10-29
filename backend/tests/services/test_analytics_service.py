@@ -82,7 +82,7 @@ async def test_get_performance_metrics_integration(db_session: AsyncSession, set
 
     # Act
     result = await service.get_performance_metrics(
-        trading_account_id=trading_account_id,
+        trading_account_ids=[trading_account_id],
         start_date=date(2023, 1, 1),
         end_date=date(2023, 12, 31)
     )
@@ -118,7 +118,7 @@ async def test_get_processed_stats_integration(db_session: AsyncSession, setup_t
 
     # Act
     result = await service.get_processed_stats(
-        trading_account_id=trading_account_id,
+        trading_account_ids=[trading_account_id],
         start_date=date(2023, 1, 1),
         end_date=date(2023, 12, 31)
     )
@@ -160,7 +160,7 @@ async def test_get_vantage_score_integration(db_session: AsyncSession, setup_tes
 
     # Act
     result = await service.get_vantage_score(
-        trading_account_id=trading_account_id,
+        trading_account_ids=[trading_account_id],
         start_date=date(2023, 1, 1),
         end_date=date(2023, 12, 31)
     )

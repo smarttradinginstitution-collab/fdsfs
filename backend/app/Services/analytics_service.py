@@ -52,57 +52,61 @@ class AnalyticsService:
 
         return MetricsCalculator(trades, initial_balance)
 
+    async def _get_aggregated_calculator(self, trading_account_ids: List[UUID], start_date: date, end_date: date) -> MetricsCalculator:
+        """Helper method to get trades for multiple accounts and instantiate the calculator."""
+        all_trades = await self.trade_repo.get_filtered_trades_for_multiple_accounts(trading_account_ids, start_date, end_date)
+
+        total_initial_balance = 0.0
+        for acc_id in trading_account_ids:
+            trading_account = await self.trading_account_repo.get_by_id(acc_id)
+            if trading_account:
+                total_initial_balance += trading_account.initial_balance or 0.0
+
+        return MetricsCalculator(all_trades, total_initial_balance)
+
     async def get_performance_metrics(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date
     ) -> PerformanceMetrics:
         """
-        Calculates and returns main performance metrics using optimized aggregation.
+        Calculates and returns main performance metrics using optimized aggregation for multiple accounts.
         """
-        # 1. Get aggregated stats directly from the database (fast)
-        aggregated_stats = await self.trade_repo.get_aggregated_performance_stats(
-            trading_account_id, start_date, end_date
+        aggregated_stats = await self.trade_repo.get_aggregated_performance_stats_for_multiple_accounts(
+            trading_account_ids, start_date, end_date
         )
 
-        # 2. Get the full list of trades for more complex, in-memory calculations (slower but necessary for now)
-        # This is the part we want to optimize further in the future if needed.
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_aggregated_calculator(trading_account_ids, start_date, end_date)
 
-        # 3. Calculate complex metrics that are hard to do in pure SQL
-        # We pass the pre-aggregated stats to the calculator to avoid re-calculating them.
         complex_metrics = calculator.get_all_metrics(pre_calculated_stats=aggregated_stats)
 
-        # 4. Combine the results
         all_metrics = {**aggregated_stats, **complex_metrics}
 
-        # Map results to the PerformanceStats Pydantic schema
         stats = PerformanceStats(**all_metrics)
         return PerformanceMetrics(stats=stats)
 
     async def get_calendar_data(
-        self, trading_account_id: UUID, start_date: date, end_date: date, user_timezone: str
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date, user_timezone: str
     ) -> List[CalendarDayData]:
         """
-        Returns data aggregated by day for the calendar view, calculated efficiently in the database.
+        Returns data aggregated by day for the calendar view for multiple accounts.
         """
-        # La logica è stata spostata nel repository per efficienza.
-        # Il parametro user_timezone non è più necessario qui, ma lo manteniamo per compatibilità con l'API.
-        aggregated_data = await self.trade_repo.get_calendar_data_aggregated(
-            trading_account_id, start_date, end_date
+        aggregated_data = await self.trade_repo.get_calendar_data_aggregated_for_multiple_accounts(
+            trading_account_ids, start_date, end_date
         )
 
+        # The repository now returns data aggregated across all specified accounts.
         return [CalendarDayData(**item) for item in aggregated_data]
 
     async def get_processed_stats(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date
     ) -> ProcessedStats:
         """
-        Returns aggregated stats, calculated efficiently in the database using a single optimized query.
+        Returns aggregated stats for multiple accounts, calculated efficiently in the database.
         """
         from decimal import Decimal
 
-        # Unica chiamata al repository per ottenere tutti i dati già aggregati dal DB
-        aggregated_data = await self.trade_repo.get_processed_stats_aggregated(
-            trading_account_id, start_date, end_date
+        # A single call to the repository gets all data aggregated from the DB for multiple accounts
+        aggregated_data = await self.trade_repo.get_processed_stats_aggregated_for_multiple_accounts(
+            trading_account_ids, start_date, end_date
         )
 
         raw_by_strategy = aggregated_data["by_strategy"]
@@ -170,13 +174,12 @@ class AnalyticsService:
         )
 
     async def get_vantage_score(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date
     ) -> VantageScoreData:
         """
-        Calculates and returns the Vantage Score and its components.
-        This logic remains here as it's a specific interpretation of the base metrics.
+        Calculates and returns the Vantage Score and its components for multiple accounts.
         """
-        calculator = await self._get_calculator(trading_account_id, start_date, end_date)
+        calculator = await self._get_aggregated_calculator(trading_account_ids, start_date, end_date)
         metrics = calculator.get_all_metrics()
 
         if metrics["trade_count"] < 5:
@@ -221,35 +224,34 @@ class AnalyticsService:
         )
 
     async def get_equity_curve(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date
     ) -> EquityCurveData:
         """
-        Returns data for the equity curve chart, calculated efficiently in the database.
+        Returns data for the equity curve chart for multiple accounts.
         """
-        trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
-        initial_balance = trading_account.initial_balance if trading_account else 0.0
+        total_initial_balance = 0.0
+        for acc_id in trading_account_ids:
+            trading_account = await self.trading_account_repo.get_by_id(acc_id)
+            if trading_account:
+                total_initial_balance += trading_account.initial_balance
 
-        # La query del repo calcola il P&L cumulativo per ogni trade
-        aggregated_points = await self.trade_repo.get_equity_curve_aggregated(
-            trading_account_id, start_date, end_date
+        aggregated_points = await self.trade_repo.get_equity_curve_aggregated_for_multiple_accounts(
+            trading_account_ids, start_date, end_date
         )
 
-        # Aggiungiamo il bilancio iniziale a ogni punto per ottenere il valore assoluto della curva
-        # Convertiamo i datetime in oggetti date per la validazione Pydantic
         labels = [start_date] + [point['label'].date() for point in aggregated_points]
-        data = [float(initial_balance)] + [float(float(initial_balance) + float(point['value'])) for point in aggregated_points]
+        data = [float(total_initial_balance)] + [float(float(total_initial_balance) + float(point['value'])) for point in aggregated_points]
 
         return EquityCurveData(labels=labels, data=data)
 
     async def get_trade_summary(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date
     ) -> TradeSummary:
         """
-        Returns a complete summary of trades for a given period.
+        Returns a complete summary of trades for a given period for multiple accounts.
         """
-        # We can call the other methods in this service to build the summary
-        performance_metrics = await self.get_performance_metrics(trading_account_id, start_date, end_date)
-        equity_curve = await self.get_equity_curve(trading_account_id, start_date, end_date)
+        performance_metrics = await self.get_performance_metrics(trading_account_ids, start_date, end_date)
+        equity_curve = await self.get_equity_curve(trading_account_ids, start_date, end_date)
 
         return TradeSummary(
             stats=performance_metrics.stats,
@@ -257,23 +259,18 @@ class AnalyticsService:
         )
 
     async def get_daily_summary(
-        self, trading_account_id: UUID, day: date
+        self, trading_account_ids: List[UUID], day: date
     ) -> DailySummary:
         """
-        Returns a complete summary for a single day, including stats,
-        chart data, and the list of trades.
+        Returns a complete summary for a single day for multiple accounts.
         """
-        # Re-use the existing helper to get a calculator scoped to the specific day
-        calculator = await self._get_calculator(trading_account_id, day, day)
+        calculator = await self._get_aggregated_calculator(trading_account_ids, day, day)
 
-        # Get all base metrics from the calculator
         all_metrics = calculator.get_all_metrics()
         stats = PerformanceStats(**all_metrics)
 
-        # Get the equity curve for the day by reusing the existing service method
-        equity_curve = await self.get_equity_curve(trading_account_id, day, day)
+        equity_curve = await self.get_equity_curve(trading_account_ids, day, day)
 
-        # Get the list of trades for the day
         trades_for_day = [TradeRead.model_validate(trade) for trade in calculator.trades]
 
         return DailySummary(
@@ -283,13 +280,13 @@ class AnalyticsService:
         )
 
     async def get_tag_performance_stats(
-        self, trading_account_id: UUID, start_date: date, end_date: date
+        self, trading_account_ids: List[UUID], start_date: date, end_date: date
     ) -> List[TagPerformanceStat]:
         """
-        Calculates and returns performance statistics for each tag.
+        Calculates and returns performance statistics for each tag across multiple accounts.
         """
-        raw_stats = await self.trade_repo.get_tag_performance_stats(
-            trading_account_id=trading_account_id,
+        raw_stats = await self.trade_repo.get_tag_performance_stats_for_multiple_accounts(
+            trading_account_ids=trading_account_ids,
             start_date=start_date,
             end_date=end_date,
         )
