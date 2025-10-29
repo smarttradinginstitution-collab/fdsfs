@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch, ref } from 'vue';
+import { computed, onMounted, watch, ref, watchEffect } from 'vue';
 import VantageScoreWidget from '../components/dashboard/widgets/charts/VantageScoreWidget.vue';
 import RrDistributionWidget from '../components/dashboard/widgets/charts/RrDistributionWidget.vue';
 import CumulativePnlWidget from '../components/dashboard/widgets/charts/CumulativePnlWidget.vue';
