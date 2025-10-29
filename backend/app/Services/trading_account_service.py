@@ -163,9 +163,9 @@ class TradingAccountService:
 
     async def update_selection_for_user(
         self, claims: dict, selected_ids: List[UUID]
-    ) -> None:
+    ) -> List[TradingAccountRead]:
         """
-        Aggiorna in blocco quali Trading Accounts sono contrassegnati come 'selezionati'.
+        Aggiorna la selezione e restituisce l'elenco completo e aggiornato degli account.
         """
         user_id = UUID(claims["sub"])
         general_account = await self.general_account_repo.get_by_user_id(user_id)
@@ -175,7 +175,19 @@ class TradingAccountService:
                 detail="General Account non trovato.",
             )
 
-        await self.repo.bulk_update_selection(
+        # Il repository ora restituisce l'elenco aggiornato
+        updated_accounts = await self.repo.bulk_update_selection(
             general_account_id=general_account.id,
             selected_ids=selected_ids,
         )
+
+        # Arricchisce i dati con le info del broker, come nel metodo `get_...`
+        accounts_with_broker_info = []
+        for acc in updated_accounts:
+            account_read = TradingAccountRead.model_validate(acc)
+            if acc.broker:
+                account_read.broker = acc.broker
+                account_read.broker_name = acc.broker.name
+            accounts_with_broker_info.append(account_read)
+
+        return accounts_with_broker_info

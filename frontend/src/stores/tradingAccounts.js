@@ -73,16 +73,15 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
     if (!authStore.isAuthenticated) throw new Error("Utente non autenticato.");
 
     try {
-      // API per aggiornare in blocco la selezione
-      // API per aggiornare in blocco la selezione
-      await apiClient.put('/me/trading-accounts/selection', {
-        trading_account_ids: selectedIds
-      });
+      // L'API PUT ora restituisce l'elenco aggiornato degli account.
+      const { data: updatedAccounts } = await apiClient.put(
+        '/me/trading-accounts/selection',
+        { trading_account_ids: selectedIds }
+      );
 
-      // FORZA L'AGGIORNAMENTO: Dopo il successo, ricarica i dati dal server
-      // per garantire che lo stato locale sia perfettamente sincronizzato con il database.
-      // Questo previene race conditions con la guardia di navigazione del router.
-      await fetchTradingAccounts();
+      // Aggiorniamo direttamente lo stato con la risposta, eliminando la necessità
+      // di un secondo fetch e risolvendo la race condition in modo definitivo.
+      tradingAccounts.value = updatedAccounts;
 
       // Se nessun account è selezionato, pulisce lo store dei trades.
       if (selectedIds.length === 0) {

@@ -4,13 +4,18 @@
 # Questo file contiene la logica di business per la gestione dei Trading Accounts.
 from __future__ import annotations
 
+from typing import List
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 
 # Importa il servizio che gestisce la logica di interazione con il database.
 from app.Services.trading_account_service import TradingAccountService
 # Importa gli schemi Pydantic per la validazione dei dati.
-from app.Schemas.trading_account import TradingAccountCreate, TradingAccountSelectionUpdate
+from app.Schemas.trading_account import (
+    TradingAccountCreate,
+    TradingAccountSelectionUpdate,
+    TradingAccountRead,
+)
 # Importa la dipendenza per ottenere i dati dell'utente autenticato.
 from app.Router.auth import get_current_claims
 
@@ -62,11 +67,12 @@ async def update_my_trading_account_selection(
     selection_data: TradingAccountSelectionUpdate,
     claims: dict = Depends(get_current_claims),
     service: TradingAccountService = Depends(),
-):
+) -> List[TradingAccountRead]:
     """
-    Aggiorna in blocco quali Trading Accounts sono contrassegnati come 'selezionati'.
+    Aggiorna la selezione degli account e restituisce l'elenco aggiornato.
     """
-    await service.update_selection_for_user(
+    # Il servizio ora restituisce l'elenco aggiornato, che viene passato
+    # direttamente come risposta JSON con uno status 200 OK.
+    return await service.update_selection_for_user(
         claims=claims, selected_ids=selection_data.trading_account_ids
     )
-    return

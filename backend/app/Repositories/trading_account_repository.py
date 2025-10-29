@@ -66,11 +66,11 @@ class TradingAccountRepository:
 
     async def bulk_update_selection(
         self, general_account_id: UUID, selected_ids: List[UUID]
-    ):
+    ) -> List[TradingAccount]:
         """
-        Aggiorna in modo efficiente quali account sono selezionati per un dato General Account.
+        Aggiorna quali account sono selezionati e restituisce l'elenco aggiornato.
         """
-        # 1. Deseleziona tutti gli account per questo general account
+        # 1. Deseleziona tutti gli account
         stmt_deselect = (
             update(TradingAccount)
             .where(TradingAccount.general_account_id == general_account_id)
@@ -90,7 +90,11 @@ class TradingAccountRepository:
             )
             await self.db.execute(stmt_select)
 
+        # Commit delle modifiche prima di ricaricare
         await self.db.commit()
+
+        # 3. Restituisce l'elenco aggiornato di tutti gli account
+        return await self.list_by_general_account_id(general_account_id)
 
 
     async def get_daily_balances(self, account_id: UUID, start_date: date, end_date: date) -> List[dict]:
