@@ -1,176 +1,106 @@
+
 <template>
-  <div class="multiselect-container" ref="containerRef">
-    <div class="selected-items-wrapper" @click="toggleDropdown">
-      <div v-if="selectedOptions.length === 0" class="placeholder">{{ placeholder }}</div>
-      <div v-else class="pills-container">
-        <BasePill v-for="option in selectedOptions" :key="option.value" class="pill">
-          {{ option.label }}
-          <span class="remove-pill" @click.stop="removeOption(option)">&times;</span>
-        </BasePill>
-      </div>
-      <span class="chevron" :class="{ 'is-open': isOpen }">&#9662;</span>
-    </div>
-    <div v-if="isOpen" class="options-list">
-      <div
-        v-for="option in options"
-        :key="option.value"
-        class="option-item"
-        :class="{ 'is-selected': isSelected(option) }"
-        @click="toggleOption(option)"
-      >
-        {{ option.label }}
-      </div>
-    </div>
+  <div class="multiselect-wrapper">
+    <label v-if="label" class="multiselect-label">{{ label }}</label>
+    <VueMultiselect
+      :model-value="modelValue"
+      @update:model-value="emit('update:modelValue', $event)"
+      :options="options"
+      :multiple="true"
+      :taggable="true"
+      @tag="addTag"
+      :placeholder="placeholder"
+      label="text"
+      track-by="value"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import BasePill from './BasePill.vue';
+import VueMultiselect from 'vue-multiselect';
 
-const props = defineProps({
+defineProps({
   modelValue: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   options: {
     type: Array,
-    required: true, // expecting [{ value: '...', label: '...' }]
+    required: true
+  },
+  label: {
+    type: String,
+    default: ''
   },
   placeholder: {
     type: String,
-    default: 'Select options...',
-  },
-});
-
-const emit = defineEmits(['update:modelValue']);
-
-const isOpen = ref(false);
-const containerRef = ref(null);
-
-const selectedValues = ref([...props.modelValue]);
-
-const selectedOptions = computed(() => {
-  return props.options.filter(opt => selectedValues.value.includes(opt.value));
-});
-
-const isSelected = (option) => {
-  return selectedValues.value.includes(option.value);
-};
-
-const toggleDropdown = () => {
-  isOpen.value = !isOpen.value;
-};
-
-const closeDropdown = () => {
-  isOpen.value = false;
-};
-
-const toggleOption = (option) => {
-  const index = selectedValues.value.indexOf(option.value);
-  if (index > -1) {
-    selectedValues.value.splice(index, 1);
-  } else {
-    selectedValues.value.push(option.value);
-  }
-};
-
-const removeOption = (option) => {
-  const index = selectedValues.value.indexOf(option.value);
-  if (index > -1) {
-    selectedValues.value.splice(index, 1);
-  }
-};
-
-watch(selectedValues, (newValue) => {
-  emit('update:modelValue', newValue);
-});
-
-watch(() => props.modelValue, (newValue) => {
-  if (JSON.stringify(newValue) !== JSON.stringify(selectedValues.value)) {
-    selectedValues.value = [...newValue];
+    default: 'Select options'
   }
 });
 
-const handleClickOutside = (event) => {
-  if (containerRef.value && !containerRef.value.contains(event.target)) {
-    closeDropdown();
-  }
+const emit = defineEmits(['update:modelValue', 'tag']);
+
+const addTag = (newTag) => {
+  // Emitting a custom event to handle tag creation if needed
+  emit('tag', newTag);
 };
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
 </script>
 
-<style scoped>
-.multiselect-container {
-  position: relative;
-  width: 100%;
-}
-.selected-items-wrapper {
+<style lang="scss">
+/* Stile per adattarsi al design system */
+.multiselect-wrapper {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: var(--semantic-size-inset-sm);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
-  min-height: 38px; /* Match BaseInput height */
-}
-.placeholder {
-  color: var(--semantic-color-text-placeholder);
-  padding: 4px;
-}
-.pills-container {
-  display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--semantic-size-stack-xs);
+  width: 100%;
+
+  .multiselect-label {
+    font-family: var(--semantic-font-style-label-md-font-family);
+    font-size: var(--semantic-font-style-label-md-font-size);
+    font-weight: var(--semantic-font-style-label-md-font-weight);
+    color: var(--semantic-color-text-secondary);
+  }
 }
-.pill {
-  display: flex;
-  align-items: center;
-  padding-right: 8px;
-}
-.remove-pill {
-  margin-left: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.chevron {
-  margin-left: auto;
-  color: var(--semantic-color-text-secondary);
-  transition: transform 0.2s;
-}
-.chevron.is-open {
-  transform: rotate(180deg);
-}
-.options-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: var(--semantic-color-surface-primary);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  margin-top: 4px;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
-}
-.option-item {
-  padding: var(--semantic-size-inset-md);
-  cursor: pointer;
-}
-.option-item:hover {
-  background-color: var(--semantic-color-surface-secondary);
-}
-.option-item.is-selected {
-  background-color: var(--semantic-color-surface-brand);
-  color: var(--semantic-color-text-on-brand);
+
+.multiselect {
+  .multiselect__tags {
+    background-color: var(--semantic-color-surface-primary);
+    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+    border-radius: var(--semantic-border-radius-interactive);
+    padding: var(--semantic-size-inset-sm);
+    min-height: 40px; /* Altezza simile a BaseInput */
+  }
+
+  .multiselect__tag {
+    background-color: var(--semantic-color-surface-accent);
+    color: var(--semantic-color-text-on-brand);
+    border-radius: var(--semantic-border-radius-pill);
+  }
+
+  .multiselect__tag-icon::after {
+    color: var(--semantic-color-text-on-brand);
+  }
+
+  .multiselect__input, .multiselect__single {
+    background-color: transparent;
+    color: var(--semantic-color-text-primary);
+  }
+
+  .multiselect__content-wrapper {
+    background-color: var(--semantic-color-surface-primary);
+    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+    border-top: none;
+  }
+
+  .multiselect__option--highlight {
+    background-color: var(--semantic-color-surface-accent);
+    color: var(--semantic-color-text-on-brand);
+  }
+
+  .multiselect__option--selected {
+    background-color: var(--semantic-color-surface-secondary);
+    color: var(--semantic-color-text-primary);
+    font-weight: 600;
+  }
 }
 </style>

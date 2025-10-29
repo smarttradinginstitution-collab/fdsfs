@@ -16,6 +16,7 @@ import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import BaseSelect from '../ui/BaseSelect.vue';
+import BaseMultiSelect from '../ui/BaseMultiSelect.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const tradesStore = useTradesStore();
@@ -65,7 +66,7 @@ const rulesOptions = computed(() => {
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
-  direction: null,
+  direction: 'LONG', // Default to LONG
   entry_price: null,
   exit_price: null,
   stop_loss_price: null,
@@ -76,11 +77,12 @@ const getInitialFormState = () => ({
   entry_timestamp: null,
   exit_timestamp: null,
   playbook_id: null,
-  tag_ids: [],
-  mistake_ids: [],
-  news_impact_ids: [],
-  psychology_state_ids: [],
-  rules_followed_ids: [],
+  // Store full objects for multiselect v-model
+  tags: [],
+  mistakes: [],
+  news_impacts: [],
+  psychology_states: [],
+  rules_followed: [],
 });
 
 const form = ref(getInitialFormState());
@@ -91,28 +93,40 @@ watch(() => form.value.playbook_id, (newPlaybookId) => {
     playbookStore.fetchRuleGroups(newPlaybookId);
   }
   // Resetta le regole selezionate se il playbook cambia
-  form.value.rules_followed_ids = [];
+  form.value.rules_followed = [];
 });
 
 const handleSubmit = () => {
-  const tradeData = { ...form.value };
+  // Create a deep copy to avoid mutating the reactive form state directly
+  const formSnapshot = JSON.parse(JSON.stringify(form.value));
 
-  // Converte i timestamp locali in stringhe ISO UTC.
-  if (tradeData.entry_timestamp) {
-    tradeData.entry_timestamp = new Date(tradeData.entry_timestamp).toISOString();
+  // Extract just the IDs from the selected objects for the payload
+  const payload = {
+    ...formSnapshot,
+    playbook_id: formSnapshot.playbook_id, // This is already just the ID from BaseSelect
+    tag_ids: formSnapshot.tags.map(tag => tag.value),
+    mistake_ids: formSnapshot.mistakes.map(mistake => mistake.value),
+    news_impact_ids: formSnapshot.news_impacts.map(impact => impact.value),
+    psychology_state_ids: formSnapshot.psychology_states.map(state => state.value),
+    rules_followed_ids: formSnapshot.rules_followed.map(rule => rule.value),
+  };
+
+  // Remove the object arrays from the payload
+  delete payload.tags;
+  delete payload.mistakes;
+  delete payload.news_impacts;
+  delete payload.psychology_states;
+  delete payload.rules_followed;
+
+  // Convert timestamps to ISO strings
+  if (payload.entry_timestamp) {
+    payload.entry_timestamp = new Date(payload.entry_timestamp).toISOString();
   }
-  if (tradeData.exit_timestamp) {
-    tradeData.exit_timestamp = new Date(tradeData.exit_timestamp).toISOString();
+  if (payload.exit_timestamp) {
+    payload.exit_timestamp = new Date(payload.exit_timestamp).toISOString();
   }
 
-  // Assicura che i campi ID siano sempre array, anche se vuoti
-  tradeData.tag_ids = tradeData.tag_ids || [];
-  tradeData.mistake_ids = tradeData.mistake_ids || [];
-  tradeData.news_impact_ids = tradeData.news_impact_ids || [];
-  tradeData.psychology_state_ids = tradeData.psychology_state_ids || [];
-  tradeData.rules_followed_ids = tradeData.rules_followed_ids || [];
-
-  emit('submit', tradeData);
+  emit('submit', payload);
   form.value = getInitialFormState();
 };
 </script>
@@ -143,13 +157,13 @@ const handleSubmit = () => {
         <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" />
       </div>
        <div class="grid-group grid-group-2-col associations-group">
-        <BaseSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" :multiple="true" />
-        <BaseSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" :multiple="true" />
-        <BaseSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" :multiple="true" />
-        <BaseSelect v-model="form.psychology_state_ids" label="Psychology States" :options="psychologyStatesOptions" :multiple="true" />
+        <BaseMultiSelect v-model="form.tags" label="Tags" :options="tagsOptions" placeholder="Select tags" />
+        <BaseMultiSelect v-model="form.mistakes" label="Mistakes" :options="mistakesOptions" placeholder="Select mistakes" />
+        <BaseMultiSelect v-model="form.news_impacts" label="News Impacts" :options="newsImpactsOptions" placeholder="Select news impacts" />
+        <BaseMultiSelect v-model="form.psychology_states" label="Psychology States" :options="psychologyStatesOptions" placeholder="Select psychology states" />
       </div>
       <div v-if="rulesOptions.length > 0" class="grid-group grid-group-1-col associations-group">
-        <BaseSelect v-model="form.rules_followed_ids" label="Rules Followed" :options="rulesOptions" :multiple="true" />
+        <BaseMultiSelect v-model="form.rules_followed" label="Rules Followed" :options="rulesOptions" placeholder="Select rules followed" />
       </div>
     </fieldset>
 
