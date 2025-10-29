@@ -2,22 +2,20 @@
 <template>
   <div class="multiselect-wrapper">
     <label v-if="label" class="multiselect-label">{{ label }}</label>
-    <VueMultiselect
+    <Multiselect
       :model-value="modelValue"
       @update:model-value="emit('update:modelValue', $event)"
       :options="options"
-      :multiple="true"
-      :taggable="true"
-      @tag="addTag"
+      mode="tags"
+      :searchable="true"
       :placeholder="placeholder"
-      label="text"
-      track-by="value"
+      :close-on-select="false"
     />
   </div>
 </template>
 
 <script setup>
-import VueMultiselect from 'vue-multiselect';
+import Multiselect from '@vueform/multiselect';
 
 defineProps({
   modelValue: {
@@ -38,72 +36,45 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'tag']);
-
-const addTag = (newTag) => {
-  // Emitting a custom event to handle tag creation if needed
-  emit('tag', newTag);
-};
+const emit = defineEmits(['update:modelValue']);
 </script>
 
-<!-- Import global styles for vue-multiselect -->
-<style src="vue-multiselect/dist/vue-multiselect.css"></style>
+<!-- Import global styles for @vueform/multiselect -->
+<style src="@vueform/multiselect/themes/default.css"></style>
 
 <style lang="scss">
-/* Stile per adattarsi al design system */
+/* Stile per adattarsi al design system (variabili --ms-*) */
 .multiselect-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
-  width: 100%;
+  --ms-bg: var(--semantic-color-surface-primary);
+  --ms-border-color: var(--semantic-color-border-default);
+  --ms-border-radius: var(--semantic-border-radius-interactive);
+  --ms-ring-color: transparent; // No focus ring, use box-shadow
+  --ms-placeholder-color: var(--semantic-color-text-placeholder);
+  --ms-font-size: var(--semantic-font-style-body-base-font-size);
+  --ms-line-height: 1.4;
+
+  --ms-tag-bg: var(--semantic-color-surface-accent);
+  --ms-tag-color: var(--semantic-color-text-on-brand);
+  --ms-tag-radius: var(--semantic-border-radius-pill);
+
+  --ms-dropdown-bg: var(--semantic-color-surface-primary);
+  --ms-dropdown-border-color: var(--semantic-color-border-default);
+
+  --ms-option-bg-pointed: var(--semantic-color-surface-accent);
+  --ms-option-color-pointed: var(--semantic-color-text-on-brand);
+  --ms-option-bg-selected: var(--semantic-color-surface-secondary);
+  --ms-option-color-selected: var(--semantic-color-text-primary);
 
   .multiselect-label {
     font-family: var(--semantic-font-style-label-md-font-family);
     font-size: var(--semantic-font-style-label-md-font-size);
     font-weight: var(--semantic-font-style-label-md-font-weight);
     color: var(--semantic-color-text-secondary);
-  }
-}
-
-.multiselect {
-  .multiselect__tags {
-    background-color: var(--semantic-color-surface-primary);
-    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-    border-radius: var(--semantic-border-radius-interactive);
-    padding: var(--semantic-size-inset-sm);
-    min-height: 40px; /* Altezza simile a BaseInput */
+    margin-bottom: var(--semantic-size-stack-xs);
   }
 
-  .multiselect__tag {
-    background-color: var(--semantic-color-surface-accent);
-    color: var(--semantic-color-text-on-brand);
-    border-radius: var(--semantic-border-radius-pill);
-  }
-
-  .multiselect__tag-icon::after {
-    color: var(--semantic-color-text-on-brand);
-  }
-
-  .multiselect__input, .multiselect__single {
-    background-color: transparent;
-    color: var(--semantic-color-text-primary);
-  }
-
-  .multiselect__content-wrapper {
-    background-color: var(--semantic-color-surface-primary);
-    border: var(--base-border-width-1) solid var(--semantic-color-border-default);
-    border-top: none;
-  }
-
-  .multiselect__option--highlight {
-    background-color: var(--semantic-color-surface-accent);
-    color: var(--semantic-color-text-on-brand);
-  }
-
-  .multiselect__option--selected {
-    background-color: var(--semantic-color-surface-secondary);
-    color: var(--semantic-color-text-primary);
-    font-weight: 600;
+  .multiselect.is-active {
+     box-shadow: var(--semantic-effect-shadow-focus-ring);
   }
 }
 </style>

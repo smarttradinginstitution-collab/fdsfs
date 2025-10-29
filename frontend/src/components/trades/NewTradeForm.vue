@@ -34,39 +34,39 @@ onMounted(() => {
 });
 
 const playbooksOptions = computed(() =>
-  playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
+  playbookStore.playbooks.map(p => ({ value: p.id, label: p.title }))
 );
 
 const mistakesOptions = computed(() =>
-  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, text: m.name }))
+  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
 );
 
 const psychologyStatesOptions = computed(() =>
-  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, text: p.name }))
+  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.name }))
 );
 
 const tagsOptions = computed(() =>
-  (labelsStore.labels.tags || []).map(t => ({ value: t.id, text: t.name }))
+  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.name }))
 );
 
 import { watch } from 'vue';
 
 const newsImpactsOptions = computed(() =>
-  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, text: ni.name }))
+  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.name }))
 );
 
 const rulesOptions = computed(() => {
   if (!playbookStore.ruleGroups) return [];
   // Appiattisce i gruppi di regole in una singola lista di opzioni
   return playbookStore.ruleGroups.flatMap(group =>
-    group.rules.map(rule => ({ value: rule.id, text: `(${group.name_group}) ${rule.rule}` }))
+    group.rules.map(rule => ({ value: rule.id, label: `(${group.name_group}) ${rule.rule}` }))
   );
 });
 
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
-  direction: 'LONG', // Default to LONG
+  direction: 'LONG',
   entry_price: null,
   exit_price: null,
   stop_loss_price: null,
@@ -77,12 +77,11 @@ const getInitialFormState = () => ({
   entry_timestamp: null,
   exit_timestamp: null,
   playbook_id: null,
-  // Store full objects for multiselect v-model
-  tags: [],
-  mistakes: [],
-  news_impacts: [],
-  psychology_states: [],
-  rules_followed: [],
+  tag_ids: [],
+  mistake_ids: [],
+  news_impact_ids: [],
+  psychology_state_ids: [],
+  rules_followed_ids: [],
 });
 
 const form = ref(getInitialFormState());
@@ -92,31 +91,11 @@ watch(() => form.value.playbook_id, (newPlaybookId) => {
   if (newPlaybookId) {
     playbookStore.fetchRuleGroups(newPlaybookId);
   }
-  // Resetta le regole selezionate se il playbook cambia
-  form.value.rules_followed = [];
+  form.value.rules_followed_ids = [];
 });
 
 const handleSubmit = () => {
-  // Create a deep copy to avoid mutating the reactive form state directly
-  const formSnapshot = JSON.parse(JSON.stringify(form.value));
-
-  // Extract just the IDs from the selected objects for the payload
-  const payload = {
-    ...formSnapshot,
-    playbook_id: formSnapshot.playbook_id, // This is already just the ID from BaseSelect
-    tag_ids: formSnapshot.tags.map(tag => tag.value),
-    mistake_ids: formSnapshot.mistakes.map(mistake => mistake.value),
-    news_impact_ids: formSnapshot.news_impacts.map(impact => impact.value),
-    psychology_state_ids: formSnapshot.psychology_states.map(state => state.value),
-    rules_followed_ids: formSnapshot.rules_followed.map(rule => rule.value),
-  };
-
-  // Remove the object arrays from the payload
-  delete payload.tags;
-  delete payload.mistakes;
-  delete payload.news_impacts;
-  delete payload.psychology_states;
-  delete payload.rules_followed;
+  const payload = { ...form.value };
 
   // Convert timestamps to ISO strings
   if (payload.entry_timestamp) {
