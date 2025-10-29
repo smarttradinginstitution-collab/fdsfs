@@ -141,7 +141,13 @@ class TradeRepository:
         end_date: date
     ) -> List[Trade]:
         """Recupera i trade filtrati per un intervallo di date per una lista di account."""
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -166,7 +172,13 @@ class TradeRepository:
         end_date: date
     ) -> List[Trade]:
         """Recupera i trade filtrati per un intervallo di date per una lista di account."""
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -304,7 +316,13 @@ class TradeRepository:
         end_date: date
     ) -> List[Trade]:
         """Recupera i trade filtrati per un intervallo di date, includendo l'intero giorno di fine."""
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -424,8 +442,14 @@ class TradeRepository:
         """
         Calcola le metriche di performance aggregate per una lista di account.
         """
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
         from sqlalchemy import cast, Numeric
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -533,7 +557,13 @@ class TradeRepository:
         """
         Calcola i dati aggregati per la vista calendario per una lista di account.
         """
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -600,7 +630,13 @@ class TradeRepository:
         """
         Calcola i punti della curva di equità per una lista di account.
         """
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -693,7 +729,13 @@ class TradeRepository:
         """
         Calcola le statistiche di performance per ogni tag per una lista di account.
         """
-        from datetime import datetime, time
+        from datetime import datetime, time, date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
 
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
@@ -746,11 +788,18 @@ class TradeRepository:
         """
         Calcola tutte le statistiche aggregate per una lista di account.
         """
+        from datetime import date, timedelta
+
+        # Se le date non sono fornite, imposta un intervallo di default (es. ultimi 30 giorni)
+        if end_date is None:
+            end_date = date.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
+
         dialect = self.db.bind.dialect.name
 
         if dialect == 'postgresql':
             from sqlalchemy import text
-            from datetime import timedelta
 
             end_date_inclusive = end_date + timedelta(days=1)
 
