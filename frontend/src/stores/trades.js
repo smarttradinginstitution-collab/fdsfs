@@ -773,7 +773,6 @@ export const useTradesStore = defineStore('trades', {
 
     async fetchTradeWithAllData(tradeId) {
       this.isTradeLoading = true;
-      // NON impostare a null per evitare sfarfallio
       try {
         const response = await apiClient.get(`/trades/with-data/${tradeId}`);
         this.selectedTrade = mapBackendTradeToFrontend(response.data);
@@ -785,11 +784,21 @@ export const useTradesStore = defineStore('trades', {
       }
     },
 
+    async refreshSelectedTrade(tradeId) {
+      try {
+        const response = await apiClient.get(`/trades/with-data/${tradeId}`);
+        this.selectedTrade = mapBackendTradeToFrontend(response.data);
+      } catch (error) {
+        console.error(`Error silently refreshing trade ${tradeId}:`, error);
+        // Non impostare a null per non causare sfarfallio
+      }
+    },
+
     async updateTrade(tradeId, payload) {
       const uiStore = useUiStore();
       try {
         await apiClient.put(`/trades/${tradeId}`, payload);
-        await this.fetchTradeWithAllData(tradeId); // Re-fetch full data silently
+        await this.refreshSelectedTrade(tradeId);
 
         const index = this.trades.findIndex(t => t.id === tradeId);
         if (index !== -1) {
@@ -917,7 +926,7 @@ export const useTradesStore = defineStore('trades', {
       const uiStore = useUiStore();
       try {
         await apiClient.put(`/trades/${tradeId}/rules`, ruleIds);
-        await this.fetchTradeWithAllData(tradeId); // Re-fetch full data silently
+        await this.refreshSelectedTrade(tradeId);
         uiStore.showNotification({ message: 'Playbook rules updated successfully!', type: 'success' });
         return this.selectedTrade;
       } catch (error) {
