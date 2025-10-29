@@ -84,12 +84,11 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
         is_selected: selectedIds.includes(account.id),
       }));
 
-      // Avvia il caricamento dei dati per i nuovi account selezionati
-      const tradesStore = useTradesStore();
-      if (selectedIds.length > 0) {
-        tradesStore.fetchAllDataForDashboard();
-      } else {
-        tradesStore.$reset(); // Se nessun account è selezionato, pulisce i dati
+      // I dati verranno caricati dalla DashboardView dopo la navigazione.
+      // Rimuoviamo il trigger da qui per evitare race conditions.
+      if (selectedIds.length === 0) {
+        const tradesStore = useTradesStore();
+        tradesStore.$reset();
       }
 
     } catch (error) {

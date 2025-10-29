@@ -56,10 +56,17 @@ onMounted(() => {
 
 // Watch for filter changes and refetch all dashboard data
 watch(
-  () => [filterStore.startDate, filterStore.endDate, filterStore.selectedStrategy],
+  () => [
+    filterStore.startDate,
+    filterStore.endDate,
+    filterStore.selectedStrategy,
+    tradingAccountsStore.selectedAccounts
+  ],
   () => {
-    // Quando i filtri cambiano, aggiorniamo solo i dati della dashboard.
-    tradesStore.fetchAllDataForDashboard();
+    // Quando i filtri o la selezione degli account cambiano, aggiorniamo i dati.
+    if (tradingAccountsStore.hasSelectedAccounts) {
+      tradesStore.fetchAllDataForDashboard();
+    }
   },
   { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
 );

@@ -38,10 +38,19 @@ class TradingAccountService:
                 detail="L'utente non ha un General Account. Creane uno prima.",
             )
 
+        # Prima di creare, deseleziona tutti gli altri account
+        await self.repo.deselect_all_accounts(general_account.id)
+
         db_account = await self.repo.create_trading_account(
             general_account_id=general_account.id,
             account_data=account_data,
         )
+
+        # Imposta il nuovo account come selezionato
+        db_account.is_selected = True
+        await self.db.commit()
+        await self.db.refresh(db_account)
+
 
         # Dopo la creazione, ricarica l'account con la relazione del broker per
         # garantire che la risposta API sia completa e non causi errori.

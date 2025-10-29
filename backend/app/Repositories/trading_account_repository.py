@@ -54,6 +54,16 @@ class TradingAccountRepository:
         await self.db.refresh(db_account)
         return db_account
 
+    async def deselect_all_accounts(self, general_account_id: UUID):
+        """Deseleziona tutti i trading account per un dato general account."""
+        stmt = (
+            update(TradingAccount)
+            .where(TradingAccount.general_account_id == general_account_id)
+            .values(is_selected=False)
+        )
+        await self.db.execute(stmt)
+        # Il commit verrà gestito dal service layer che chiama questa funzione.
+
     async def bulk_update_selection(
         self, general_account_id: UUID, selected_ids: List[UUID]
     ):
