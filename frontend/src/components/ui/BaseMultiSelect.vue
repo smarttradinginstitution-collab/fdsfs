@@ -46,6 +46,9 @@ const addTag = (newTag) => {
 };
 </script>
 
+<!-- Import global styles for vue-multiselect -->
+<style src="vue-multiselect/dist/vue-multiselect.css"></style>
+
 <style lang="scss">
 /* Stile per adattarsi al design system */
 .multiselect-wrapper {

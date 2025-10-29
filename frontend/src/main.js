@@ -15,7 +15,6 @@ import { setAuthToken } from '@/services/api'; // (AGGIUNTA) helper per impostar
 // --- IMPORTAZIONI DEI PLUGIN ---
 import FloatingVue from 'floating-vue';
 import 'floating-vue/dist/style.css';
-import 'vue-multiselect/dist/vue-multiselect.css';
 
 
 // --- IMPORTAZIONI DEGLI STILI GLOBALI ---
