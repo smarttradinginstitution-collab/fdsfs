@@ -120,7 +120,27 @@ const selectTradeFromStore = async (tradeId) => {
   isPageLoading.value = true;
   error.value = null;
   try {
+    // Questa azione carica il trade e tutti i suoi dati correlati nello store.
     await tradesStore.fetchTradeWithAllData(tradeId);
+    const currentTrade = tradesStore.selectedTrade;
+
+    // Sincronizza gli store dipendenti QUI, prima che il caricamento della pagina finisca.
+    if (currentTrade) {
+      imageStore.setImagesForCurrentTrade(currentTrade.images || []);
+      notebookStore.setFinancialDataFromTrade(currentTrade);
+
+      // Logica per caricare la nota specifica del trade.
+      if (notebookStore.folders.length === 0) {
+        await notebookStore.fetchFolders({ selectDefault: false });
+      }
+      const note = currentTrade.notes?.[0];
+      notebookStore.setSelectedNoteFromData(note);
+
+    } else {
+      // Pulisce gli store se il trade non viene trovato.
+      imageStore.setImagesForCurrentTrade([]);
+      notebookStore.deselectNote();
+    }
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
     error.value = "Impossibile caricare i dati del trade.";
@@ -136,25 +156,15 @@ watch(() => route.params.id, (newId) => {
   }
 }, { immediate: true });
 
-// Watcher reattivo per sincronizzare gli store dipendenti quando il trade cambia.
-watch(trade, async (newTrade, oldTrade) => {
-  if (!newTrade) {
-    imageStore.setImagesForCurrentTrade([]);
-    notebookStore.deselectNote();
-    return;
-  }
-
-  // Imposta immagini e dati finanziari ad ogni aggiornamento
-  imageStore.setImagesForCurrentTrade(newTrade.images || []);
-  notebookStore.setFinancialDataFromTrade(newTrade);
-
-  // Imposta la nota SOLO se l'ID del trade cambia (cioè, è un nuovo trade)
-  if (!oldTrade || newTrade.id !== oldTrade.id) {
-    if (notebookStore.folders.length === 0) {
-      await notebookStore.fetchFolders({ selectDefault: false });
-    }
-    const note = newTrade.notes?.[0];
-    notebookStore.setSelectedNoteFromData(note);
+// Watcher reattivo per sincronizzare gli store dipendenti quando i dati del trade cambiano.
+// La logica di caricamento iniziale (con la nota) è ora gestita in `selectTradeFromStore`.
+// Questo watcher si occupa solo di mantenere i dati dipendenti sincronizzati durante gli aggiornamenti.
+watch(trade, (newTrade) => {
+  if (newTrade) {
+    // Ad ogni aggiornamento del trade, aggiorna le immagini e i dati finanziari nella nota.
+    // Questo garantisce che se il P&L cambia, il titolo della nota si aggiorni.
+    imageStore.setImagesForCurrentTrade(newTrade.images || []);
+    notebookStore.setFinancialDataFromTrade(newTrade);
   }
 });
 
