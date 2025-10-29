@@ -18,6 +18,7 @@ const form = ref({});
 watch(() => props.trade, (newTrade) => {
   if (newTrade) {
     form.value = {
+      gross_p_l: newTrade.gross_p_l ?? '',
       take_profit_price: newTrade.take_profit_price ?? '',
       stop_loss_price: newTrade.stop_loss_price ?? '',
       highest_price_during_trade: newTrade.highest_price_during_trade ?? '',
@@ -26,6 +27,13 @@ watch(() => props.trade, (newTrade) => {
     };
   }
 }, { immediate: true });
+
+const netPnl = computed(() => {
+  const grossPnl = parseFloat(form.value.gross_p_l) || 0;
+  const commissions = parseFloat(form.value.commissions) || 0;
+  const fees = parseFloat(props.trade.fees) || 0; // Fees are not editable in this modal
+  return (grossPnl - commissions - fees).toFixed(2);
+});
 
 const highLowTooltipText = computed(() => {
     if(!props.trade.direction) return "Set the trade direction first.";
@@ -94,14 +102,27 @@ const closeModal = () => {
             <InfoIcon class="info-icon" />
           </div>
         </div>
-        <BaseInput
-          v-model="form.commissions"
-          label="Commissions"
-          type="number"
-          step="any"
-          placeholder="Enter commissions"
-        />
       </div>
+
+      <div class="pnl-section">
+        <BaseInput
+            v-model="form.gross_p_l"
+            label="Gross P&L"
+            type="number"
+            step="any"
+        />
+        <BaseInput
+            v-model="form.commissions"
+            label="Commissions"
+            type="number"
+            step="any"
+        />
+        <div class="net-pnl-display">
+            <label class="net-pnl-label">Net P&L (Calculated)</label>
+            <span class="net-pnl-value">{{ netPnl }}</span>
+        </div>
+      </div>
+
       <div class="form-actions">
         <BaseButton @click="closeModal" type="button" variant="secondary">Cancel</BaseButton>
         <BaseButton type="submit" variant="primary">Save Changes</BaseButton>
@@ -121,6 +142,33 @@ const closeModal = () => {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--semantic-size-stack-md);
+}
+
+.pnl-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--semantic-size-stack-md);
+  align-items: flex-end; /* Align items to the bottom */
+  border-top: 1px solid var(--semantic-color-border-default);
+  padding-top: var(--semantic-size-stack-lg);
+}
+
+.net-pnl-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-xs);
+  padding-bottom: 8px; /* Adjust to align with input fields */
+}
+
+.net-pnl-label {
+  font-size: var(--font-size-sm);
+  color: var(--semantic-color-text-secondary);
+}
+
+.net-pnl-value {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--semantic-color-text-primary);
 }
 
 .input-with-info {

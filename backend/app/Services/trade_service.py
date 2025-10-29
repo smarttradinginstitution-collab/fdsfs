@@ -123,6 +123,10 @@ class TradeService:
             'psychology_state_ids', 'rules_followed_ids'
         })
 
+        # Se il P&L netto è fornito ma il P&L lordo non lo è, li impostiamo uguali.
+        if trade_dict.get("p_l") is not None and trade_dict.get("gross_p_l") is None:
+            trade_dict["gross_p_l"] = trade_dict["p_l"]
+
         # Arricchisci il trade con metriche calcolate
         all_metrics = enrich_trade_with_all_metrics(
             trade_data=trade_dict,
@@ -342,9 +346,15 @@ class TradeService:
         # Recalculate Net P/L if gross_p_l, fees, or commissions change
         pl_recalculation_needed = any(field in update_dict for field in ['gross_p_l', 'fees', 'commissions'])
         if pl_recalculation_needed:
-            gross_pnl = Decimal(str(db_trade.gross_p_l)) if db_trade.gross_p_l is not None else Decimal('0.0')
-            fees = Decimal(str(db_trade.fees)) if db_trade.fees is not None else Decimal('0.0')
-            commissions = Decimal(str(db_trade.commissions)) if db_trade.commissions is not None else Decimal('0.0')
+            # Assicurati di usare i valori aggiornati da update_dict se presenti, altrimenti usa quelli esistenti
+            gross_pnl_val = update_dict.get('gross_p_l', db_trade.gross_p_l)
+            fees_val = update_dict.get('fees', db_trade.fees)
+            commissions_val = update_dict.get('commissions', db_trade.commissions)
+
+            gross_pnl = Decimal(str(gross_pnl_val)) if gross_pnl_val is not None else Decimal('0.0')
+            fees = Decimal(str(fees_val)) if fees_val is not None else Decimal('0.0')
+            commissions = Decimal(str(commissions_val)) if commissions_val is not None else Decimal('0.0')
+
             db_trade.p_l = gross_pnl - fees - commissions
 
         # Recalculate R-Multiple if P/L was recalculated or if other relevant fields changed
