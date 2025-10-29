@@ -54,22 +54,27 @@ onMounted(() => {
   dashboardLayoutStore.fetchLayout();
 });
 
-// Watch for filter changes and refetch all dashboard data
-watch(
-  () => [
-    filterStore.startDate,
-    filterStore.endDate,
-    filterStore.selectedStrategy,
-    tradingAccountsStore.selectedAccounts
-  ],
-  () => {
-    // Quando i filtri o la selezione degli account cambiano, aggiorniamo i dati.
-    if (tradingAccountsStore.hasSelectedAccounts) {
-      tradesStore.fetchAllDataForDashboard();
-    }
-  },
-  { deep: true, immediate: true } // `immediate: true` per caricare i dati al primo render
-);
+// --- Data Fetching ---
+onMounted(() => {
+  dashboardLayoutStore.fetchLayout();
+});
+
+// watchEffect
+// Questo watchEffect gestisce il caricamento dei dati in modo reattivo e robusto.
+// Si attiverà automaticamente al caricamento del componente e ogni volta che
+// una delle sue dipendenze (filtri o account selezionati) cambia.
+watchEffect(() => {
+  // Leggiamo le dipendenze in modo che watchEffect possa tracciarle.
+  const startDate = filterStore.startDate;
+  const endDate = filterStore.endDate;
+  const strategy = filterStore.selectedStrategy;
+  const hasSelection = tradingAccountsStore.hasSelectedAccounts;
+
+  // La condizione di guardia è esplicita: carica i dati solo se c'è una selezione.
+  if (hasSelection) {
+    tradesStore.fetchAllDataForDashboard();
+  }
+});
 
 // Watch for the user finishing layout editing
 watch(
