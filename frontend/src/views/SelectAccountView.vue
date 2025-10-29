@@ -46,11 +46,14 @@ async function handleSelectionSubmit() {
   isSubmitting.value = true;
   errorMessage.value = '';
   try {
+    // Chiama l'azione dello store, che ora gestisce internamente sia l'aggiornamento
+    // via API sia il successivo re-fetch per la sincronizzazione.
     await tradingAccountsStore.updateAccountSelection(selectedAccountIds.value);
-    // After saving, we must re-fetch the accounts to ensure the store and router guards
-    // have the absolute latest state before navigating.
-    await tradingAccountsStore.fetchTradingAccounts();
+
+    // Una volta che l'azione è completata (e lo stato è sincronizzato),
+    // possiamo reindirizzare in sicurezza alla dashboard.
     router.push('/');
+
   } catch (error) {
     errorMessage.value = 'Errore durante l\'aggiornamento della selezione. Riprova.';
     console.error(error);

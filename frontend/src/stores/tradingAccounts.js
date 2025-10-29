@@ -74,18 +74,17 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
     try {
       // API per aggiornare in blocco la selezione
+      // API per aggiornare in blocco la selezione
       await apiClient.put('/me/trading-accounts/selection', {
         trading_account_ids: selectedIds
       });
 
-      // Aggiorna lo stato locale per riflettere immediatamente la selezione
-      tradingAccounts.value = tradingAccounts.value.map(account => ({
-        ...account,
-        is_selected: selectedIds.includes(account.id),
-      }));
+      // FORZA L'AGGIORNAMENTO: Dopo il successo, ricarica i dati dal server
+      // per garantire che lo stato locale sia perfettamente sincronizzato con il database.
+      // Questo previene race conditions con la guardia di navigazione del router.
+      await fetchTradingAccounts();
 
-      // I dati verranno caricati dalla DashboardView dopo la navigazione.
-      // Rimuoviamo il trigger da qui per evitare race conditions.
+      // Se nessun account è selezionato, pulisce lo store dei trades.
       if (selectedIds.length === 0) {
         const tradesStore = useTradesStore();
         tradesStore.$reset();

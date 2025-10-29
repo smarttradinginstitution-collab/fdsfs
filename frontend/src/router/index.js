@@ -136,28 +136,36 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'dashboard' });
     }
 
-    // Fetch trading accounts if they haven't been loaded yet.
-    // This is crucial for users who reload the page on a protected route.
+    // --- Account-based Routing Logic ---
+    // Fetch accounts only if they haven't been loaded. This is crucial for users
+    // who reload the page or land directly on a protected route.
     if (tradingAccountsStore.tradingAccounts.length === 0) {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+    const hasSelectedAccounts = tradingAccountsStore.hasSelectedAccounts;
 
-    // Handle routing based on account status
-    if (to.name === 'add-account') {
-      // If user has accounts, they shouldn't be on the 'add-account' page
-      if (hasAccounts) return next({ name: 'dashboard' });
-    } else if (to.name === 'select-account') {
-      // If user has NO accounts, they must go to the 'add-account' page first
-      if (!hasAccounts) return next({ name: 'add-account' });
-      // If user has already selected an account, send them to the dashboard
-      if (hasSelectedAccount) return next({ name: 'dashboard' });
-    } else if (authRequired) {
-      // For any other protected page, enforce the setup flow
-      if (!hasAccounts) return next({ name: 'add-account' });
-      if (!hasSelectedAccount) return next({ name: 'select-account' });
+    // A. User has NO trading accounts at all.
+    // They must be forced to the 'add-account' page.
+    if (!hasAccounts) {
+      if (to.name !== 'add-account') {
+        return next({ name: 'add-account' });
+      }
+    }
+    // B. User has accounts, but NONE are selected.
+    // They must be forced to the 'select-account' page.
+    else if (!hasSelectedAccounts) {
+      if (to.name !== 'select-account') {
+        return next({ name: 'select-account' });
+      }
+    }
+    // C. User has accounts and at least one is selected.
+    // They should not be able to access the setup pages.
+    else {
+      if (to.name === 'select-account' || to.name === 'add-account') {
+        return next({ name: 'dashboard' });
+      }
     }
   }
 
