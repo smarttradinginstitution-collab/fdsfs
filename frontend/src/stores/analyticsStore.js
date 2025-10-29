@@ -1,17 +1,44 @@
+
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue'; // Aggiunto 'computed'
 import apiClient from '../services/api';
 import { useTradingAccountsStore } from './tradingAccounts';
 import { useFilterStore } from './filterStore';
 
 export const useAnalyticsStore = defineStore('analytics', () => {
   // --- STATE ---
+  const soaAnalysisData = ref(null);
+  const isSoaLoading = ref(false);
+  const soaError = ref(null);
+
+  // Per mantenere compatibilità con altri componenti se necessario
   const tagPerformanceStats = ref([]);
-  const soaAnalysisData = ref(null); // Nuovo stato per i dati SOA
   const isLoading = ref(false);
-  const isSoaLoading = ref(false); // Stato di caricamento specifico per SOA
   const error = ref(null);
-  const soaError = ref(null); // Errore specifico per SOA
+
+  // --- GETTERS (come computed properties) ---
+  /**
+   * Alias per accedere ai dati SOA, per mantere coerenza con il codice
+   * che lo utilizzava in precedenza.
+   */
+  const soaAnalysis = computed(() => soaAnalysisData.value);
+
+  /**
+   * Calcola e restituisce una lista ordinata di ID di cluster unici
+   * presenti nei dati dell'analisi.
+   * @returns {Array<string>} - Un array di ID di cluster unici e ordinati.
+   */
+  const uniqueClusters = computed(() => {
+    if (!soaAnalysisData.value?.cluster_analysis?.trade_clusters) {
+      return [];
+    }
+    const clusterIds = soaAnalysisData.value.cluster_analysis.trade_clusters.map(
+      (tc) => tc.cluster_id
+    );
+    // Usiamo Set per ottenere valori unici e poi sort per ordinarli
+    return [...new Set(clusterIds)].sort();
+  });
+
 
   // --- ACTIONS ---
   async function fetchSoaAnalysis() {
@@ -36,7 +63,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     } catch (err) {
       console.error('Error fetching SOA analysis:', err);
       soaError.value = err.response?.data?.detail || 'Failed to load SOA data.';
-      soaAnalysisData.value = null;
+      soaAnalysisData.value = null; // Resetta i dati in caso di errore
     } finally {
       isSoaLoading.value = false;
     }
@@ -70,7 +97,6 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     }
   }
 
-  // Funzione per resettare lo stato
   function resetState() {
     tagPerformanceStats.value = [];
     soaAnalysisData.value = null;
@@ -82,12 +108,17 @@ export const useAnalyticsStore = defineStore('analytics', () => {
 
   // --- EXPORTS ---
   return {
+    // State
     tagPerformanceStats,
-    soaAnalysisData,
+    soaAnalysisData, // Esponiamo il ref originale
     isLoading,
     isSoaLoading,
     error,
     soaError,
+    // Getters
+    soaAnalysis, // Alias
+    uniqueClusters, // Nuovo getter
+    // Actions
     fetchTagPerformanceStats,
     fetchSoaAnalysis,
     resetState,

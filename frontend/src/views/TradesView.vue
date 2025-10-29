@@ -2,61 +2,74 @@
 // =============================================================================
 // FILE: views/TradesView.vue
 // DESCRIZIONE: Questo componente rappresenta la "vista" della pagina "My Trades".
-// Il suo unico scopo è mostrare una tabella con la lista completa di tutti
-// i trade registrati dall'utente.
+// Mostra una tabella con la lista completa di tutti i trade, arricchita con
+// i dati di clustering SOA (Strength & Opportunity Analysis).
+// Include filtri per cluster e azioni di massa.
 // =============================================================================
 -->
-
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useTradesStore } from '@/stores/trades';
 import { useAnalyticsStore } from '@/stores/analyticsStore';
-import { storeToRefs } from 'pinia';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import KpiDashboard from '@/components/KpiDashboard.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import ClusterBadge from '@/components/soa/ClusterBadge.vue';
+import ClusterBadge from '@/components/ClusterBadge.vue';
 import { formatDate, formatCurrency, formatPercentage } from '@/utils/formatters.js';
 
-// --- STORE E STATO LOCALE ---
+// --- STORES E STATO LOCALE ---
 const tradesStore = useTradesStore();
 const analyticsStore = useAnalyticsStore();
-const { soaAnalysisData } = storeToRefs(analyticsStore);
 const selectedTrades = ref([]);
-const enrichedTrades = ref([]);
+const selectedCluster = ref(null); // Stato per il filtro del cluster
 
-// --- LOGICA DEL COMPONENTE ---
-onMounted(() => {
-  tradesStore.fetchTrades({ ignoreFilters: true });
-  analyticsStore.fetchSoaAnalysis();
+// --- DATI COMPUTATI ---
+// Unisce i trade con i dati SOA quando entrambi sono disponibili.
+const tradesWithSoaData = computed(() => {
+  if (!tradesStore.trades.length || !analyticsStore.soaAnalysis?.cluster_analysis?.trade_clusters) {
+    return [];
+  }
+  return tradesStore.trades.map(trade => {
+    const soaData = analyticsStore.soaAnalysis.cluster_analysis.trade_clusters.find(
+      soa => soa.trade_id === trade.id
+    );
+    return {
+      ...trade,
+      cluster_id: soaData ? soaData.cluster_id : null,
+    };
+  });
 });
 
-// Watch for changes in both trades and SOA data to merge them
-watch([() => tradesStore.trades, soaAnalysisData], ([newTrades, newSoaData]) => {
-  if (newTrades.length > 0 && newSoaData?.trade_details) {
-    const soaMap = new Map(newSoaData.trade_details.map(t => [t.id, t]));
-    enrichedTrades.value = newTrades.map(trade => ({
-      ...trade,
-      cluster_label: soaMap.get(trade.id)?.cluster_label,
-    }));
-  } else {
-    enrichedTrades.value = newTrades; // fallback to original trades
-  }
-  applyFilters(); // Apply filters whenever data changes
-}, { immediate: true });
-
-const selectedClusters = ref([]);
-const filteredTrades = ref([]);
-
+// --- LOGICA DI FILTRAGGIO ---
 const applyFilters = () => {
-  if (selectedClusters.value.length === 0) {
-    filteredTrades.value = enrichedTrades.value;
+  let params = {};
+  if (selectedCluster.value) {
+    const filteredTradeIds = tradesWithSoaData.value
+      .filter(trade => trade.cluster_id === selectedCluster.value)
+      .map(trade => trade.id);
+
+    // Se nessun trade corrisponde al cluster, passiamo un array vuoto per non restituire nulla.
+    params.trade_ids = filteredTradeIds.length > 0 ? filteredTradeIds : [];
   } else {
-    filteredTrades.value = enrichedTrades.value.filter(trade =>
-      selectedClusters.value.includes(trade.cluster_label)
-    );
+    // Se nessun filtro è selezionato, potremmo voler mostrare tutti i trade.
+    // Il backend gestisce un array vuoto come "nessun filtro specifico per ID".
+    params.trade_ids = [];
   }
+  tradesStore.setTradeIdFilter(params.trade_ids);
 };
+
+// --- WATCHERS ---
+// Applica i filtri quando il cluster selezionato cambia.
+watch(selectedCluster, applyFilters, { immediate: true });
+
+// --- LOGICA DEL COMPONENTE ---
+onMounted(async () => {
+  // Carica i dati SOA e i trade in parallelo.
+  await Promise.all([
+    analyticsStore.fetchSoaAnalysis(),
+    tradesStore.fetchTrades({ ignoreFilters: true }),
+  ]);
+});
 
 const handleBulkDelete = () => {
   if (selectedTrades.value.length === 0) {
@@ -69,6 +82,7 @@ const handleBulkDelete = () => {
   }
 };
 
+// --- FUNZIONI DI FORMATTAZIONE ---
 const getStatusClass = (pnl) => {
   if (pnl > 0) return 'status-win';
   if (pnl < 0) return 'status-loss';
@@ -87,6 +101,7 @@ const formatDuration = (minutes) => {
   const secs = Math.round((minutes - mins) * 60);
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
+
 </script>
 
 <template>
@@ -95,6 +110,17 @@ const formatDuration = (minutes) => {
     <KpiDashboard />
 
     <div class="table-actions">
+      <!-- Filtro per Cluster -->
+      <div class="filter-container">
+        <label for="cluster-filter">Filter by Cluster:</label>
+        <select id="cluster-filter" v-model="selectedCluster" class="cluster-select">
+          <option :value="null">All Clusters</option>
+          <option v-for="cluster in analyticsStore.uniqueClusters" :key="cluster" :value="cluster">
+            Cluster {{ cluster }}
+          </option>
+        </select>
+      </div>
+
       <BaseButton
         @click="handleBulkDelete"
         variant="secondary"
@@ -104,20 +130,17 @@ const formatDuration = (minutes) => {
       </BaseButton>
     </div>
 
-    <!-- Filtri aggiuntivi -->
-    <div class="flex items-center space-x-4 mb-4">
-      <span class="font-semibold">Filtra per Cluster:</span>
-      <div v-for="cluster in ['A', 'B', 'C', 'D', 'E']" :key="cluster" class="flex items-center">
-        <input type="checkbox" :id="`cluster-${cluster}`" :value="cluster" v-model="selectedClusters" @change="applyFilters" class="mr-1">
-        <label :for="`cluster-${cluster}`">{{ cluster }}</label>
-      </div>
-    </div>
-
     <BaseTable
-      :headers="tradesStore.tradeHeaders"
-      :items="filteredTrades"
+      :headers="tradesStore.tradeHeadersWithSoa"
+      :items="tradesStore.filteredTrades"
       v-model:selected="selectedTrades"
     >
+      <!-- Slot per il cluster SOA -->
+      <template #cluster_id="{ item }">
+        <ClusterBadge v-if="item.cluster_id" :cluster-id="item.cluster_id" />
+        <span v-else>-</span>
+      </template>
+
       <!-- Slot per la cella dello stato -->
       <template #status="{ item }">
         <span class="status-pill" :class="getStatusClass(item.p_l)">
@@ -132,7 +155,6 @@ const formatDuration = (minutes) => {
       <template #exit_timestamp="{ item }">
         {{ formatDate(item.exit_timestamp) }}
       </template>
-
       <template #duration_minutes="{ item }">
         {{ formatDuration(item.duration_minutes) }}
       </template>
@@ -144,33 +166,15 @@ const formatDuration = (minutes) => {
       <template #exit_price="{ item }">
         {{ item.exit_price ? `$${item.exit_price.toFixed(2)}` : '-' }}
       </template>
-
-      <!-- Slot per Net P&L con colore condizionale -->
       <template #p_l="{ item }">
-        <span :class="getPnlClass(item.p_l)">
-          {{ formatCurrency(item.p_l) }}
-        </span>
+        <span :class="getPnlClass(item.p_l)">{{ formatCurrency(item.p_l) }}</span>
       </template>
-
-      <!-- Slot per Net ROI con colore condizionale -->
       <template #net_roi="{ item }">
-         <span :class="getPnlClass(item.p_l)">
-          {{ formatPercentage(item.net_roi) }}
-        </span>
+        <span :class="getPnlClass(item.p_l)">{{ formatPercentage(item.net_roi) }}</span>
       </template>
+      <template #vantage_insights="{ item }">-</template>
+      <template #setups="{ item }">{{ item.strategy || '-' }}</template>
 
-      <!-- Slot per colonne senza dati -->
-      <template #vantage_insights="{ item }">
-        -
-      </template>
-      <template #setups="{ item }">
-        {{ item.strategy || '-' }}
-      </template>
-
-      <!-- Slot per il nuovo Cluster Badge -->
-      <template #cluster_label="{ item }">
-        <ClusterBadge :cluster-label="item.cluster_label" />
-      </template>
     </BaseTable>
   </div>
 </template>
@@ -191,13 +195,35 @@ const formatDuration = (minutes) => {
 
 .table-actions {
   display: flex;
-  justify-content: flex-end; // Allinea il pulsante a destra
-  padding-bottom: var(--semantic-size-stack-md); // Spazio sotto il pulsante
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--semantic-size-stack-md);
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-size-stack-sm);
+
+  label {
+    font: var(--semantic-font-style-label-md);
+    color: var(--semantic-color-text-secondary);
+  }
+
+  .cluster-select {
+    // Stili base per il select
+    padding: var(--semantic-size-inset-sm);
+    border-radius: var(--semantic-border-radius-pill);
+    border: 1px solid var(--semantic-color-border-default);
+    background-color: var(--semantic-color-surface-primary);
+    color: var(--semantic-color-text-primary);
+    font: var(--semantic-font-style-body-md);
+  }
 }
 
 .status-pill {
   display: inline-block;
-  padding: var(--semantic-size-badge-padding-y) var(--semantic-size-badge-padding-x); // Uso i token specifici per i badge per un controllo migliore
+  padding: var(--semantic-size-badge-padding-y) var(--semantic-size-badge-padding-x);
   border-radius: var(--semantic-border-radius-tag);
   font: var(--semantic-font-style-label-sm);
   line-height: 1;
