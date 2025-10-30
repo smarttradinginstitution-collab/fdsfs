@@ -142,6 +142,20 @@ router.beforeEach(async (to, from, next) => {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
+    // --- LOGICA DI SELEZIONE AUTOMATICA ---
+    // Se nessun account è già stato selezionato (es. da localStorage),
+    // cerca un account con 'is_selected' = true e impostalo come attivo.
+    if (!tradingAccountsStore.selectedTradingAccount && tradingAccountsStore.hasTradingAccounts) {
+      const defaultAccount = tradingAccountsStore.tradingAccounts.find(acc => acc.is_selected);
+      if (defaultAccount) {
+        // Se troviamo un account di default, lo selezioniamo.
+        // La action 'selectTradingAccount' aggiornerà lo stato e il localStorage.
+        tradingAccountsStore.selectTradingAccount(defaultAccount);
+      }
+    }
+    // --- FINE LOGICA DI SELEZIONE AUTOMATICA ---
+
+
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
     const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
 
