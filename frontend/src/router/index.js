@@ -142,22 +142,22 @@ router.beforeEach(async (to, from, next) => {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
+    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
+    let hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount.value;
+
     // --- LOGICA DI SELEZIONE AUTOMATICA ---
     // Se nessun account è già stato selezionato (es. da localStorage),
     // cerca un account con 'is_selected' = true e impostalo come attivo.
-    if (!tradingAccountsStore.selectedTradingAccount && tradingAccountsStore.hasTradingAccounts) {
+    if (!hasSelectedAccount && hasAccounts) {
       const defaultAccount = tradingAccountsStore.tradingAccounts.find(acc => acc.is_selected);
       if (defaultAccount) {
         // Se troviamo un account di default, lo selezioniamo.
-        // La action 'selectTradingAccount' aggiornerà lo stato e il localStorage.
         tradingAccountsStore.selectTradingAccount(defaultAccount);
+        // Aggiorniamo il nostro flag locale IMMEDIATAMENTE dopo la selezione per evitare race conditions.
+        hasSelectedAccount = true;
       }
     }
     // --- FINE LOGICA DI SELEZIONE AUTOMATICA ---
-
-
-    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
 
     // Handle routing based on account status
     if (to.name === 'add-account') {
