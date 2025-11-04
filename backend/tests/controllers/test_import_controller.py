@@ -123,6 +123,21 @@ async def test_import_fails_with_too_many_files(async_client: AsyncClient, db_se
     assert "Cannot upload more than 5 files at once" in response.json()['detail']
 
 @pytest.fixture
+def valid_ninjatrader_csv_content():
+    """A fixture for valid NinjaTrader 8 CSV content."""
+    return """Trade number;Instrument;Account;Strategy;Market pos.;Qty;Entry price;Exit price;Entry time;Exit time;Profit;Commission;Clearing Fee;Exchange Fee;IP Fee;NFA Fee
+1;MNQ DEC25;SIM-123;;Long;1;26000,00;26050,00;28/10/2025 10:00:00;28/10/2025 10:05:00;100,00 $;2,50 $;0,50 $;1,00 $;0,25 $;0,25 $
+""".encode('utf-8')
+
+@pytest.fixture
+def ninjatrader_csv_with_errors_content():
+    """A fixture for NinjaTrader 8 CSV with one valid and one invalid row."""
+    return """Trade number;Instrument;Account;Strategy;Market pos.;Qty;Entry price;Exit price;Entry time;Exit time;Profit
+1;MNQ DEC25;SIM-123;;Long;1;26000,00;26050,00;28/10/2025 10:00:00;28/10/2025 10:05:00;100,00 $
+2;NQ DEC25;SIM-123;;Short;1;27000,00;27050,00;INVALID-DATE;29/10/2025 11:00:00;-150,00 $
+""".encode('utf-8')
+
+@pytest.fixture
 def valid_mt5_html_content():
     """A fixture for a valid MT5 HTML report content."""
     return b"""
@@ -190,3 +205,86 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
     assert inserted_trade is not None
     assert float(inserted_trade.p_l) == -189.56
     assert inserted_trade.position_size == 2.0
+
+async def test_import_ninjatrader_success(async_client: AsyncClient, db_session: AsyncSession, valid_ninjatrader_csv_content):
+    """
+    Test successful import of a NinjaTrader 8 CSV report.
+    """
+    trading_account_id = await setup_trading_account(async_client, db_session)
+
+    files = {'file': ('ninjatrader_report.csv', valid_ninjatrader_csv_content, 'text/csv')}
+
+    response = await async_client.post(
+        f"/api/v1/import/ninjatrader/{trading_account_id}",
+        files=files
+    )
+
+    assert response.status_code == 202
+    import_run_data = response.json()
+    assert import_run_data['status'] == 'queued'
+
+    import_run_id = import_run_data['id']
+
+    # Poll for completion
+    for _ in range(10):
+        await asyncio.sleep(3)
+        status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
+        if status_response.status_code == 200 and status_response.json()['status'] == 'applied':
+            break
+
+    final_status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
+    assert final_status_response.status_code == 200
+    final_run_data = final_status_response.json()
+
+    assert final_run_data['status'] == 'applied'
+    assert final_run_data['total_rows'] == 1
+    assert final_run_data['inserted_count'] == 1
+
+    result = await db_session.execute(
+        select(Trade).where(Trade.import_run_id == uuid.UUID(import_run_id))
+    )
+    inserted_trade = result.scalars().first()
+    assert inserted_trade is not None
+    assert inserted_trade.p_l == 100.0
+    assert inserted_trade.symbol_snapshot == "MNQ DEC25"
+    assert inserted_trade.commissions == 2.50
+    assert inserted_trade.fees == pytest.approx(0.50 + 1.00 + 0.25 + 0.25)
+
+async def test_import_ninjatrader_with_errors(async_client: AsyncClient, db_session: AsyncSession, ninjatrader_csv_with_errors_content):
+    """
+    Test import of a NinjaTrader CSV with one valid and one invalid row.
+    It should import the valid trade and report the error for the invalid one.
+    """
+    trading_account_id = await setup_trading_account(async_client, db_session)
+
+    files = {'file': ('report_with_errors.csv', ninjatrader_csv_with_errors_content, 'text/csv')}
+
+    response = await async_client.post(
+        f"/api/v1/import/ninjatrader/{trading_account_id}",
+        files=files
+    )
+
+    assert response.status_code == 202
+    import_run_id = response.json()['id']
+
+    for _ in range(10):
+        await asyncio.sleep(3)
+        status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
+        if status_response.status_code == 200 and status_response.json()['status'] == 'applied':
+            break
+
+    final_status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
+    assert final_status_response.status_code == 200
+    final_run_data = final_status_response.json()
+
+    assert final_run_data['status'] == 'applied'
+    assert final_run_data['total_rows'] == 2
+    assert final_run_data['inserted_count'] == 1
+    assert final_run_data['skipped_count'] == 1
+    assert final_run_data['error_message'] is not None
+
+    import json
+    error_data = json.loads(final_run_data['error_message'])
+    assert len(error_data) == 1
+    assert error_data[0]['line'] == 3
+    assert "INVALID-DATE" in error_data[0]['data']['Entry time']

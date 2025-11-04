@@ -1,6 +1,7 @@
 # backend/app/Services/import_service.py
 import uuid
 import hashlib
+import json
 from typing import List, Dict, Any
 from decimal import Decimal
 
@@ -13,6 +14,7 @@ from app.Models.trade import Trade
 from app.Models.enums import ImportSourceType
 from app.Services.tradovate_parser import TradovateParser
 from app.Services.mt5_parser import Mt5Parser
+from app.Services.ninjatrader_parser import NinjaTraderParser
 from app.Services.trade_service import TradeService
 from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 from app.Repositories.trading_account_repository import TradingAccountRepository
@@ -194,3 +196,75 @@ class ImportService:
             select(ImportRun).where(ImportRun.id == import_run_id)
         )
         return result.scalars().first()
+
+    async def process_ninjatrader_import(
+        self, import_run_id: uuid.UUID, file_content: bytes
+    ):
+        """
+        The main background task for processing a NinjaTrader 8 CSV file.
+        """
+        import_run = await self.get_import_run(import_run_id)
+        if not import_run:
+            return
+
+        trading_account = await self.trading_account_repo.get_by_id(import_run.trading_account_id)
+        initial_balance = Decimal(trading_account.initial_balance if trading_account else '0.0')
+
+        import_run.status = "parsing"
+        file_hash = hashlib.sha256(file_content).hexdigest()
+        import_run.file_sha256 = file_hash
+        await self.db.commit()
+
+        try:
+            parser = NinjaTraderParser()
+            parsed_trades, parsing_errors = parser.parse_csv(file_content)
+
+            import_run.total_rows = len(parsed_trades) + len(parsing_errors)
+            import_run.skipped_count = len(parsing_errors)
+            if parsing_errors:
+                import_run.error_message = json.dumps(parsing_errors)
+
+            import_run.status = "applying"
+            await self.db.commit()
+
+        except Exception as e:
+            import_run.status = "failed"
+            import_run.error_message = f"Failed to parse NinjaTrader file: {e}"
+            await self.db.commit()
+            return
+
+        inserted_count = 0
+        updated_count = 0
+
+        for trade_data in parsed_trades:
+            trade_data["trading_account_id"] = import_run.trading_account_id
+            trade_data["import_run_id"] = import_run.id
+
+            all_metrics = enrich_trade_with_all_metrics(
+                trade_data=trade_data,
+                initial_balance=initial_balance
+            )
+            r_multiple = all_metrics.get("realized_r_multiple")
+            trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
+
+            dedupe_key = trade_data.get("dedupe_key")
+            result = await self.db.execute(select(Trade).where(Trade.dedupe_key == dedupe_key))
+            existing_trade = result.scalars().first()
+
+            if existing_trade:
+                for key, value in trade_data.items():
+                    setattr(existing_trade, key, value)
+                updated_count += 1
+            else:
+                new_trade = Trade(**trade_data)
+                self.db.add(new_trade)
+                inserted_count += 1
+
+        await self.db.flush()
+
+        import_run.status = "applied"
+        import_run.inserted_count = inserted_count
+        import_run.updated_count = updated_count
+        import_run.finished_at = func.now()
+
+        await self.db.commit()
