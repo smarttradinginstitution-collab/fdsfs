@@ -49,6 +49,13 @@ router.get(
     summary="Get the status of an import run",
 )(import_controller.get_import_status)
 
+router.post(
+    "/ninjatrader/{trading_account_id}",
+    response_model=ImportRunRead,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Import trades from NinjaTrader 8 CSV file",
+)(import_controller.import_ninjatrader_trades)
+
 # Rotta per importare i trade da un file CSV di NinjaTrader 8.
 router.post(
     "/ninjatrader/{trading_account_id}",

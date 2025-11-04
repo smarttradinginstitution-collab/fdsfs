@@ -32,9 +32,9 @@ class Platform(Base):
 
     # Relationships
     trades: Mapped[list["Trade"]] = relationship("Trade", back_populates="platform")
-    brokers: Mapped[list["Broker"]] = relationship(
-        secondary="public.broker_platforms", back_populates="platforms"
-    )
+    # brokers: Mapped[list["Broker"]] = relationship(
+    #     secondary="public.broker_platforms", back_populates="platforms"
+    # )
     asset_aliases: Mapped[list["AssetAlias"]] = relationship(
         "AssetAlias", back_populates="platform", cascade="all, delete-orphan"
     )

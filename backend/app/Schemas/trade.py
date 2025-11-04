@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.Schemas.asset import AssetRead
 from app.Schemas.notebook import NoteRead
 from app.Schemas.image import ImageRead
-from app.Schemas.platform import PlatformSummary as PlatformRead
+from app.Schemas.platform import PlatformRead
 
 # Schemi per le entità relazionate, per usarle in TradeRead
 class TagRead(BaseModel):

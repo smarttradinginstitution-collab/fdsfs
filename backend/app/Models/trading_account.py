@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
     from app.Models.broker import Broker
     from app.Models.trade import Trade
+    from app.Models.platform import Platform
+    from app.Models.platform import Platform
 
 
 class TradingAccount(Base):
@@ -34,6 +36,16 @@ class TradingAccount(Base):
         ForeignKey("public.brokers.id"),
         nullable=False,
     )
+    platform_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.platforms.id"),
+        nullable=True,
+    )
+    platform_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.platforms.id"),
+        nullable=True,
+    )
     label: Mapped[Optional[str]] = mapped_column(String)
     initial_balance: Mapped[Optional[float]] = mapped_column()
     total_pnl: Mapped[Optional[float]] = mapped_column(default=0)
@@ -49,6 +61,8 @@ class TradingAccount(Base):
     broker: Mapped[Optional["Broker"]] = relationship(
         "Broker", back_populates="trading_accounts"
     )
+    platform: Mapped[Optional["Platform"]] = relationship()
+    platform: Mapped[Optional["Platform"]] = relationship()
     trades: Mapped[list["Trade"]] = relationship(
         "Trade", back_populates="trading_account"
     )

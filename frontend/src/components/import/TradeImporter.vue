@@ -37,20 +37,38 @@ const handleUpload = async () => {
 
   const firstFile = files.value[0];
   const isHtml = firstFile.name.toLowerCase().endsWith('.html');
+  const platformName = tradingAccountsStore.selectedTradingAccount?.platform?.name;
 
   let endpoint = '';
   const formData = new FormData();
 
   if (isHtml) {
+    // Gestione specifica per MT5 (HTML)
     if (files.value.length > 1) {
-       uiStore.showNotification({ message: 'For MT5 import, only the first selected HTML file will be processed.', type: 'warning' });
+      uiStore.showNotification({ message: 'For MT5 import, only the first selected HTML file will be processed.', type: 'warning' });
     }
-    formData.append('file', firstFile); // MT5 endpoint expects a single 'file'
+    formData.append('file', firstFile);
     endpoint = `/import/mt5/${selectedAccountId.value}`;
+
+  } else if (platformName) {
+    // Logica dinamica basata sulla piattaforma per i file CSV
+    const platformSlug = platformName.toLowerCase().replace(' 8', '').replace(/\s+/g, ''); // "NinjaTrader 8" -> "ninjatrader"
+    endpoint = `/import/${platformSlug}/${selectedAccountId.value}`;
+
+    // La maggior parte degli import si aspetta un singolo file, tranne Tradovate.
+    if (platformSlug === 'tradovate') {
+        files.value.forEach(file => formData.append('files', file));
+    } else {
+        formData.append('file', firstFile);
+    }
+
   } else {
-    files.value.forEach(file => {
-      formData.append('files', file); // Tradovate endpoint expects 'files'
+    // Fallback per account senza piattaforma (vecchia logica per Tradovate)
+    uiStore.showNotification({
+      message: 'No platform associated with this account. Falling back to Tradovate import.',
+      type: 'info'
     });
+    files.value.forEach(file => formData.append('files', file));
     endpoint = `/import/tradovate/${selectedAccountId.value}`;
   }
 

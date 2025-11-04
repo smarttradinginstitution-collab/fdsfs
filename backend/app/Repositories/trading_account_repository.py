@@ -23,7 +23,10 @@ class TradingAccountRepository:
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.id == account_id)
-            .options(joinedload(TradingAccount.broker))
+            .options(
+                joinedload(TradingAccount.broker),
+                joinedload(TradingAccount.platform)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
@@ -33,7 +36,10 @@ class TradingAccountRepository:
         stmt = (
             select(TradingAccount)
             .where(TradingAccount.general_account_id == general_account_id)
-            .options(joinedload(TradingAccount.broker))
+            .options(
+                joinedload(TradingAccount.broker),
+                joinedload(TradingAccount.platform)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()

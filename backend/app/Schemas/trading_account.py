@@ -6,18 +6,21 @@ from pydantic import BaseModel, Field
 from decimal import Decimal
 
 from .broker import BrokerRead
+from .platform import PlatformRead
 
 
 class TradingAccountRead(BaseModel):
     id: UUID
     general_account_id: UUID
     broker_id: Optional[UUID] = None
+    platform_id: Optional[UUID] = None
     label: Optional[str] = None
     created_at: datetime
     initial_balance: Optional[Decimal] = Field(None, max_digits=10, decimal_places=2)
     currency: Optional[str] = None
     broker_name: Optional[str] = Field(None, alias='broker_name')
     broker: Optional[BrokerRead] = None
+    platform: Optional[PlatformRead] = None
 
     model_config = {
         "from_attributes": True,
