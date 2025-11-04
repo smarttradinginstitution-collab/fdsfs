@@ -58,7 +58,9 @@ class TradeRepository:
                 selectinload(Trade.mistakes),
                 selectinload(Trade.news_impacts),
                 selectinload(Trade.psychology_states),
-                selectinload(Trade.rules_followed),
+                # Use joinedload for rules_followed to ensure they are loaded
+                # for modification in the playbook deletion cleanup logic.
+                joinedload(Trade.rules_followed),
             )
         )
 
@@ -184,15 +186,18 @@ class TradeRepository:
         return trades
 
     async def list_by_playbook_id(self, playbook_id: UUID) -> List[Trade]:
-        """Elenca tutti i trade per un dato playbook."""
-        query = self._get_trade_query().where(Trade.playbook_id == playbook_id)
+        """
+        Elenca tutti i trade per un dato playbook, caricando esplicitamente le regole seguite
+        per consentirne la modifica e la pulizia.
+        """
+        query = (
+            select(Trade)
+            .where(Trade.playbook_id == playbook_id)
+            .options(selectinload(Trade.rules_followed))
+        )
         result = await self.db.execute(query)
-        rows = result.unique().all()
-        trades = []
-        for trade, duration in rows:
-            trade.duration_minutes = duration
-            trades.append(trade)
-        return trades
+        # Non c'è la colonna 'duration' qui, quindi usiamo scalars()
+        return result.scalars().unique().all()
 
     async def list_recent_by_general_account_id(
         self, general_account_id: UUID, limit: int = 20
