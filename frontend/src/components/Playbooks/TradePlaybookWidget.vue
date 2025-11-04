@@ -84,18 +84,9 @@ const handleRemove = async () => {
   isDropdownOpen.value = false;
 };
 
-watch(() => props.trade.playbook, (newPlaybook, oldPlaybook) => {
-  // Se il playbook cambia (o viene rimosso), azzera le regole selezionate localmente.
-  // Questo previene che le regole di un vecchio playbook vengano salvate con uno nuovo.
-  if (newPlaybook?.id !== oldPlaybook?.id) {
-    localCheckedRules.value = [];
-  }
-
+watch(() => props.trade.playbook, (newPlaybook) => {
   if (newPlaybook) {
     playbookStore.fetchRuleGroups(newPlaybook.id);
-  } else {
-    // Se il playbook viene rimosso, svuota anche i gruppi di regole visualizzati.
-    playbookStore.clearRuleGroups();
   }
 }, { immediate: true });
 

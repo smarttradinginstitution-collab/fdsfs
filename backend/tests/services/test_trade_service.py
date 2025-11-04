@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from uuid import uuid4, UUID
 from decimal import Decimal
 from datetime import datetime
 
@@ -50,7 +50,7 @@ async def test_validate_and_get_trading_account_invalid(trade_service: TradeServ
     assert excinfo.value.status_code == 404
     assert "Trading Account non valido o non appartenente all'utente" in excinfo.value.detail
 
-def create_mock_trade(as_enum: bool = False):
+def create_mock_trade(as_enum: bool = False, trading_account_id: UUID = None):
     """
     Helper function to create a detailed mock Trade object for Pydantic validation.
     `as_enum` controls if the direction is a mock with a .value or a plain string.
@@ -66,7 +66,7 @@ def create_mock_trade(as_enum: bool = False):
     else:
         trade.direction = "LONG"
     trade.asset_id = uuid4()
-    trade.trading_account_id = uuid4()
+    trade.trading_account_id = trading_account_id or uuid4()
     trade.playbook = MagicMock(id=uuid4(), title="My Playbook")
     trade.tags = []
     trade.mistakes = []
@@ -208,25 +208,17 @@ async def test_create_trade_succeeds(trade_service: TradeService, mock_claims, m
 async def test_update_trade_succeeds(trade_service: TradeService, mock_claims, mocker):
     recalculate_mock = mocker.patch('app.Services.trading_account_service.TradingAccountService.recalculate_account_metrics', new_callable=AsyncMock)
     background_tasks = MagicMock(spec=BackgroundTasks)
-
     trade_id = uuid4()
-    trade_update = TradeUpdate(
-        direction="SHORT",
-        p_l=Decimal("-5.0")
-    )
+    trade_update = TradeUpdate(direction="SHORT", p_l=Decimal("-5.0"))
+    general_account = MagicMock(id=uuid4())
+    trading_account = MagicMock(id=uuid4(), general_account_id=general_account.id, initial_balance="10000.0")
+    db_trade = create_mock_trade(as_enum=True, trading_account_id=trading_account.id)
 
-    general_account = MagicMock()
-    general_account.id = uuid4()
-    trading_account = MagicMock()
-    trading_account.id = uuid4()
-    trading_account.general_account_id = general_account.id
-    trading_account.initial_balance = "10000.0"
+    # Mock the direct DB call
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = db_trade
+    trade_service.db.execute = AsyncMock(return_value=mock_result)
 
-    db_trade = create_mock_trade(as_enum=True)
-    db_trade.id = trade_id
-    db_trade.trading_account_id = trading_account.id
-
-    trade_service.repo.get_trade_by_id_simple.return_value = db_trade
     trade_service.general_account_repo.get_by_user_id.return_value = general_account
     trade_service.trading_account_repo.get_by_id.return_value = trading_account
     trade_service.db.commit = AsyncMock()
@@ -234,10 +226,9 @@ async def test_update_trade_succeeds(trade_service: TradeService, mock_claims, m
     result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
 
     assert result is True
-    trade_service.repo.get_trade_by_id_simple.assert_called_once_with(trade_id)
+    trade_service.db.execute.assert_called_once()
     trade_service.db.commit.assert_called_once()
     background_tasks.add_task.assert_called_once()
-    # Ensure the original mock was not called directly
     recalculate_mock.assert_not_called()
 
 async def test_update_trade_not_found(trade_service: TradeService, mock_claims):
@@ -245,11 +236,57 @@ async def test_update_trade_not_found(trade_service: TradeService, mock_claims):
     trade_update = TradeUpdate()
     background_tasks = MagicMock(spec=BackgroundTasks)
 
-    trade_service.repo.get_trade_by_id_simple.return_value = None
+    # Mock the DB call to return no trade
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    trade_service.db.execute = AsyncMock(return_value=mock_result)
 
     result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
 
     assert result is False
+
+async def test_update_trade_clears_rules_when_playbook_changes(trade_service: TradeService, mock_claims, mocker):
+    background_tasks = MagicMock(spec=BackgroundTasks)
+    trade_id = uuid4()
+    original_playbook_id = uuid4()
+    new_playbook_id = uuid4()
+
+    # Setup trade with existing playbook and rules
+    db_trade = create_mock_trade(as_enum=True)
+    db_trade.id = trade_id
+    db_trade.playbook_id = original_playbook_id
+    db_trade.rules_followed = [MagicMock(), MagicMock()]
+
+    # Mock the database fetch to return our trade
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = db_trade
+    trade_service.db.execute = AsyncMock(return_value=mock_result)
+
+    # Mock other dependencies
+    general_account = MagicMock(id=uuid4())
+    trading_account = MagicMock(id=uuid4(), general_account_id=general_account.id)
+    db_trade.trading_account_id = trading_account.id # Align the trade with the mocked account
+    trade_service.general_account_repo.get_by_user_id.return_value = general_account
+    trade_service.trading_account_repo.get_by_id.return_value = trading_account
+
+    # Mock the playbook fetch
+    mock_playbook = MagicMock(id=new_playbook_id, general_account_id=general_account.id)
+    trade_service.playbook_repo.get_by_id.return_value = mock_playbook
+
+    trade_service.db.commit = AsyncMock()
+
+    # The update data changes the playbook_id
+    trade_update = TradeUpdate(playbook_id=new_playbook_id)
+
+    # Execute the update
+    result = await trade_service.update_trade(mock_claims, trade_id, trade_update, background_tasks)
+
+    # Assertions
+    assert result is True
+    assert db_trade.rules_followed == [] # Crucial check: rules should be cleared
+    assert db_trade.playbook_id == new_playbook_id
+    trade_service.db.commit.assert_called_once()
+
 
 async def test_delete_trade_succeeds(trade_service: TradeService, mock_claims, mocker):
     mocker.patch('app.Services.trading_account_service.TradingAccountService.recalculate_account_metrics', new_callable=AsyncMock)

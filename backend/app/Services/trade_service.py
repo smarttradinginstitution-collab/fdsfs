@@ -314,17 +314,27 @@ class TradeService:
 
     async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate, background_tasks: BackgroundTasks) -> bool:
         """
-        Aggiorna un trade in modo efficiente, non restituisce dati (None)
-        e schedula il ricalcolo delle metriche in background.
+        Aggiorna un trade in modo efficiente. Se il playbook_id viene modificato o rimosso,
+        azzera automaticamente le regole associate. Schedula il ricalcolo delle metriche
+        in background e non restituisce dati per ottimizzare le performance.
         Restituisce True in caso di successo, False se il trade non viene trovato.
         """
-        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+        # Carica il trade con le regole per poterle modificare
+        stmt = select(Trade).where(Trade.id == trade_id).options(selectinload(Trade.rules_followed))
+        result = await self.db.execute(stmt)
+        db_trade = result.scalars().first()
+
         if not db_trade:
             return False
 
         trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_id', 'news_impacts', 'psychology_state_ids'})
+
+        # Logica di pulizia automatica delle regole
+        if "playbook_id" in update_data.model_fields_set and db_trade.playbook_id != update_data.playbook_id:
+            db_trade.rules_followed = []
+
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 

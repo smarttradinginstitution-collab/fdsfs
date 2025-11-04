@@ -31,11 +31,6 @@ export const usePlaybookStore = defineStore('playbooks', {
   },
 
   actions: {
-    clearRuleGroups() {
-      this.ruleGroups = [];
-      this.ruleGroupsError = null;
-    },
-
     async fetchPlaybookDetails(playbookId) {
       this.isLoading = true;
       this.error = null;
