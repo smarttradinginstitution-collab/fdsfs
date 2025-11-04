@@ -26,6 +26,7 @@ const imageStore = useImageStore();
 const notebookStore = useNotebookStore();
 
 const isPageLoading = ref(true);
+const isUpdating = ref(false); // Local state for update operations
 const activeTab = ref('stats');
 const isEditModalOpen = ref(false);
 const isMetadataModalOpen = ref(false);
@@ -85,8 +86,16 @@ const handleEditImage = (image) => {
 const handleUpdateTradeDetails = async (payload) => {
   if (trade.value) {
     await tradesStore.updateTrade(trade.value.id, payload);
-    // After a successful update, force a refresh of all account data
-    await tradesStore.fetchAllDataForDashboard();
+  }
+};
+
+const toggleReviewedStatus = async () => {
+  if (!trade.value) return;
+  isUpdating.value = true;
+  try {
+    await tradesStore.toggleReviewedStatus(trade.value.id);
+  } finally {
+    isUpdating.value = false;
   }
 };
 
@@ -111,44 +120,53 @@ const selectTradeFromStore = async (tradeId) => {
   isPageLoading.value = true;
   error.value = null;
   try {
-    // Chiama la nuova azione che carica tutto in una sola volta
+    // Questa azione carica il trade e tutti i suoi dati correlati nello store.
     await tradesStore.fetchTradeWithAllData(tradeId);
+    const currentTrade = tradesStore.selectedTrade;
 
-    // Se necessario, popola altri store con i dati ricevuti
-    if (tradesStore.selectedTrade) {
-      // Aggiorna lo store delle immagini
-      imageStore.setImagesForCurrentTrade(tradesStore.selectedTrade.images || []);
+    // Sincronizza gli store dipendenti QUI, prima che il caricamento della pagina finisca.
+    if (currentTrade) {
+      imageStore.setImagesForCurrentTrade(currentTrade.images || []);
+      notebookStore.setFinancialDataFromTrade(currentTrade);
 
-      // Aggiorna lo store delle note
-      const note = tradesStore.selectedTrade.notes?.[0]; // Prende la prima nota, se esiste
+      // Logica per caricare la nota specifica del trade.
+      if (notebookStore.folders.length === 0) {
+        await notebookStore.fetchFolders({ selectDefault: false });
+      }
+      const note = currentTrade.notes?.[0];
       notebookStore.setSelectedNoteFromData(note);
 
-      // Imposta direttamente i dati finanziari
-      notebookStore.setFinancialDataFromTrade(tradesStore.selectedTrade);
-
     } else {
-      // Se il trade non è stato caricato, svuota entrambi gli store
+      // Pulisce gli store se il trade non viene trovato.
       imageStore.setImagesForCurrentTrade([]);
       notebookStore.deselectNote();
     }
-
   } catch (e) {
     console.error("Errore nel caricamento del trade:", e);
     error.value = "Impossibile caricare i dati del trade.";
-    // Assicurati che il trade selezionato sia nullo in caso di errore
-    tradesStore.selectedTrade = null;
   } finally {
     isPageLoading.value = false;
   }
 };
 
 // --- LIFECYCLE & WATCHERS ---
-// --- LIFECYCLE & WATCHERS ---
 watch(() => route.params.id, (newId) => {
   if (newId) {
     selectTradeFromStore(newId);
   }
 }, { immediate: true });
+
+// Watcher reattivo per sincronizzare gli store dipendenti quando i dati del trade cambiano.
+// La logica di caricamento iniziale (con la nota) è ora gestita in `selectTradeFromStore`.
+// Questo watcher si occupa solo di mantenere i dati dipendenti sincronizzati durante gli aggiornamenti.
+watch(trade, (newTrade) => {
+  if (newTrade) {
+    // Ad ogni aggiornamento del trade, aggiorna le immagini e i dati finanziari nella nota.
+    // Questo garantisce che se il P&L cambia, il titolo della nota si aggiorni.
+    imageStore.setImagesForCurrentTrade(newTrade.images || []);
+    notebookStore.setFinancialDataFromTrade(newTrade);
+  }
+});
 
 </script>
 
@@ -175,12 +193,12 @@ watch(() => route.params.id, (newId) => {
           </div>
           <div class="action-buttons">
             <BaseButton
-              :is-loading="isLoading"
+              :is-loading="isUpdating"
               :class="{
                 'reviewed-button': trade.is_reviewed,
                 'action-button': !trade.is_reviewed
               }"
-              @click="tradesStore.toggleReviewedStatus(trade.id)"
+              @click="toggleReviewedStatus"
             >
               <CheckCircleIcon v-if="trade.is_reviewed" class="reviewed-icon" />
               {{ trade.is_reviewed ? 'Reviewed' : 'Mark as reviewed' }}
@@ -216,7 +234,7 @@ watch(() => route.params.id, (newId) => {
               :trade-id="trade.id"
               :trade-details="trade"
               :note="notebookStore.selectedNote"
-              :is-loading="isLoading"
+              :is-loading="isPageLoading"
             />
             <BaseWidget class="visual-analysis-widget">
               <h3 class="widget-title">Visual Analysis</h3>

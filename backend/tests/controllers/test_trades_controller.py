@@ -305,9 +305,12 @@ async def test_update_trade_rules(async_client: AsyncClient, db_session: AsyncSe
 
     # 3. Verifica della Risposta API
     response_data = update_response.json()
-    assert isinstance(response_data, list)
-    assert len(response_data) == 2
-    assert set(response_data) == set(rule_ids_to_set)
+    assert isinstance(response_data, dict)
+    assert response_data["id"] == trade_id
+    assert "rules_followed" in response_data
+    assert len(response_data["rules_followed"]) == 2
+    returned_rule_ids = {rule["id"] for rule in response_data["rules_followed"]}
+    assert returned_rule_ids == set(rule_ids_to_set)
 
     # 4. Verifica della Persistenza nel DB
     get_response = await async_client.get(f"/api/v1/trades/{trade_id}")

@@ -8,7 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.Schemas.asset import AssetRead
-from app.Schemas.notebook import NoteRead
+from app.Schemas.notebook import NoteRead, NoteReadMinimal
 from app.Schemas.image import ImageRead
 from app.Schemas.platform import PlatformSummary as PlatformRead
 
@@ -157,7 +157,7 @@ class TradeWithDataRead(TradeRead):
     playbook: Optional[PlaybookRead] = None # Già presente in TradeRead
 
     # Relazioni one-to-many / many-to-many
-    notes: List[NoteRead] = []
+    notes: List[NoteReadMinimal] = []
     images: List[ImageRead] = []
     tags: List[TagRead] = [] # Già presente in TradeRead
     mistakes: List[MistakeRead] = [] # Già presente in TradeRead

@@ -6,7 +6,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, BackgroundTasks
 from datetime import date
 
 from app.Repositories.trade_repository import TradeRepository
@@ -312,15 +312,29 @@ class TradeService:
 
         return [TradeRead.model_validate(trade) for trade in trades]
 
-    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate) -> Optional[TradeRead]:
-        """Aggiorna un trade esistente e ricalcola le metriche se necessario."""
-        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
+    async def update_trade(self, claims: dict, trade_id: UUID, update_data: TradeUpdate, background_tasks: BackgroundTasks) -> bool:
+        """
+        Aggiorna un trade in modo efficiente. Se il playbook_id viene modificato o rimosso,
+        azzera automaticamente le regole associate. Schedula il ricalcolo delle metriche
+        in background e non restituisce dati per ottimizzare le performance.
+        Restituisce True in caso di successo, False se il trade non viene trovato.
+        """
+        # Carica il trade con le regole per poterle modificare
+        stmt = select(Trade).where(Trade.id == trade_id).options(selectinload(Trade.rules_followed))
+        result = await self.db.execute(stmt)
+        db_trade = result.scalars().first()
+
         if not db_trade:
-            return None
+            return False
 
         trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_id', 'news_impacts', 'psychology_state_ids'})
+
+        # Logica di pulizia automatica delle regole
+        if "playbook_id" in update_data.model_fields_set and db_trade.playbook_id != update_data.playbook_id:
+            db_trade.rules_followed = []
+
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
 
@@ -370,13 +384,13 @@ class TradeService:
             db_trade.psychology_states = await self._get_related_entities(general_account_id, PsychologyState, update_data.psychology_state_ids)
 
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
+        # Non eseguire il refresh per ottimizzare i tempi di risposta
 
-        # Recalculate account metrics
+        # Schedula il ricalcolo delle metriche in background
         trading_account_service = TradingAccountService(self.db)
-        await trading_account_service.recalculate_account_metrics(trading_account_id)
+        background_tasks.add_task(trading_account_service.recalculate_account_metrics, trading_account_id)
 
-        return TradeRead.model_validate(db_trade)
+        return True
 
     async def update_review_status(self, claims: dict, trade_id: UUID, update_data: TradeReviewUpdate) -> TradeRead:
         """Aggiorna lo stato di revisione di un trade."""
@@ -522,9 +536,9 @@ class TradeService:
         # Restituisce la lista aggiornata di etichette
         return getattr(db_trade, label_type)
 
-    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> List[UUID]:
+    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> TradeRead:
         """
-        Aggiorna le regole 'seguite' per un trade.
+        Aggiorna le regole 'seguite' per un trade e restituisce l'intero trade aggiornato.
         """
         # 1. Recupera il trade e verifica che l'utente sia il proprietario
         db_trade = await self.repo.get_trade_by_id_simple(trade_id)
@@ -547,9 +561,9 @@ class TradeService:
         # 3. Assegna le nuove regole
         db_trade.rules_followed = rules
 
-        # 4. Commit e refresh
+        # 4. Commit e refresh completo per caricare tutte le relazioni necessarie
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['rules_followed'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
 
-        # 5. Restituisce la lista degli ID delle regole aggiornate
-        return [rule.id for rule in db_trade.rules_followed]
+        # 5. Restituisce l'oggetto trade aggiornato
+        return TradeRead.model_validate(db_trade)

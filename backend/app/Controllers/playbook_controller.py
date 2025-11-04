@@ -12,6 +12,7 @@ from app.Repositories.playbook_repository import PlaybookRepository
 from app.Repositories.rule_playbook_repository import RulePlaybookRepository
 from app.Repositories.rules_group_playbook_repository import RulesGroupPlaybookRepository
 from app.Repositories.trade_repository import TradeRepository
+from app.Services.playbook_service import PlaybookService
 from app.Schemas.playbook import (
     PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
 )
@@ -184,9 +185,10 @@ class PlaybookController:
         current_user: CurrentUser = Depends(get_current_user),
         general_account_id: UUID = Depends(get_current_general_account_id),
         db: AsyncSession = Depends(get_db),
+        playbook_service: PlaybookService = Depends(),
     ) -> dict:
         """
-        Elimina un playbook, verificando la proprietà.
+        Elimina un playbook, verificando la proprietà e pulendo i trade associati.
         """
         repo = PlaybookRepository(db)
         playbook_to_delete = await repo.get_by_id(playbook_id)
@@ -197,7 +199,7 @@ class PlaybookController:
         if not current_user.is_admin and playbook_to_delete.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        await repo.delete(db_obj=playbook_to_delete)
+        await playbook_service.delete_playbook_and_cleanup_trades(playbook_to_delete=playbook_to_delete)
 
         return {"ok": True, "detail": "Playbook eliminato con successo."}
 

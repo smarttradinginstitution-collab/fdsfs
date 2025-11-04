@@ -5,7 +5,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import date
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, BackgroundTasks
 
 from app.Services.trade_service import TradeService
 from app.Services.analytics_service import AnalyticsService
@@ -180,14 +180,14 @@ class TradesController:
         trade_id: UUID,
         trade_data: TradeUpdate,
         service: TradeService,
-    ) -> TradeRead:
-        updated_trade = await service.update_trade(claims, trade_id, trade_data)
-        if not updated_trade:
+        background_tasks: BackgroundTasks,
+    ) -> None:
+        success = await service.update_trade(claims, trade_id, trade_data, background_tasks)
+        if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Trade non trovato o non appartenente all'utente.",
             )
-        return updated_trade
 
     async def delete_trade(
         self,

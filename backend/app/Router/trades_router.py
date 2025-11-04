@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import date
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 
 from app.Controllers.trades_controller import TradesController
 from app.Services.trade_service import TradeService
@@ -166,14 +166,16 @@ async def get_trade_with_all_data(
     return await controller.get_trade_with_all_data(claims, trade_id, service)
 
 
-@router.put("/{trade_id}", response_model=TradeRead)
+@router.put("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_trade(
     trade_id: UUID,
     trade_data: TradeUpdate,
+    background_tasks: BackgroundTasks,
     claims: dict = Depends(get_current_claims),
     service: TradeService = Depends(),
 ):
-    return await controller.update_trade(claims, trade_id, trade_data, service)
+    await controller.update_trade(claims, trade_id, trade_data, service, background_tasks)
+    return
 
 
 @router.patch("/{trade_id}/review", response_model=TradeRead)
@@ -294,7 +296,7 @@ async def update_trade_news_impacts(
     return await controller.update_trade_labels(claims, trade_id, label_ids, "news_impacts", service)
 
 
-@router.put("/{trade_id}/rules", response_model=List[UUID], summary="Update the 'followed' rules for a trade")
+@router.put("/{trade_id}/rules", response_model=TradeRead, summary="Update the 'followed' rules for a trade")
 async def update_trade_rules(
     trade_id: UUID,
     rule_ids: List[UUID],

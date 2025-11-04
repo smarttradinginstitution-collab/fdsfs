@@ -52,21 +52,19 @@ export const useNotebookStore = defineStore('notebook', {
   actions: {
     // --- FOLDER ACTIONS ---
 
-    async fetchFolders() {
+    async fetchFolders(options = { selectDefault: true }) {
       this.isLoadingFolders = true;
       this.error = null;
       try {
         const response = await apiClient.get('/notebook/folders');
         this.folders = response.data;
 
-        // If no folder is selected, or the selected one no longer exists,
-        // select the first folder by default.
         const selectedFolderExists = this.folders.some(f => f.id === this.selectedFolderId);
-        if (!this.selectedFolderId || !selectedFolderExists) {
+        if (options.selectDefault && (!this.selectedFolderId || !selectedFolderExists)) {
           if (this.folders.length > 0) {
             this.selectFolder(this.folders[0].id);
           } else {
-            this.notes = []; // No folders, so no notes
+            this.notes = [];
           }
         }
       } catch (err) {
@@ -401,6 +399,12 @@ export const useNotebookStore = defineStore('notebook', {
 
       // Imposta la nota come selezionata
       this.selectNote(noteObject.id);
+
+      // Assicurati che anche la cartella della nota sia selezionata.
+      // Questo è fondamentale per mantenere uno stato coerente.
+      if (this.selectedFolderId !== noteObject.folder_id) {
+        this.selectedFolderId = noteObject.folder_id;
+      }
     },
 
     async fetchFinancialDataForSelectedNote() {

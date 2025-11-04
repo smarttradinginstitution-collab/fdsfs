@@ -36,6 +36,17 @@ class NoteRead(NoteBase):
     updated_at: datetime
     title: str
 
+class NoteReadMinimal(NoteBase):
+    """A minimal Note schema that excludes the nested Trade object to avoid circular dependencies."""
+    id: UUID
+    folder_id: UUID
+    trade_id: Optional[UUID] = None
+    # 'trade' field is intentionally omitted
+    templates: List[NoteTemplateRead] = []
+    created_at: datetime
+    updated_at: datetime
+    title: str
+
 
 # --- NotebookFolder Schemas ---
 
