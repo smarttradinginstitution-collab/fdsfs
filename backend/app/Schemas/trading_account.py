@@ -13,6 +13,7 @@ class TradingAccountRead(BaseModel):
     general_account_id: UUID
     broker_id: Optional[UUID] = None
     label: Optional[str] = None
+    is_selected: bool
     created_at: datetime
     initial_balance: Optional[Decimal] = Field(None, max_digits=10, decimal_places=2)
     currency: Optional[str] = None

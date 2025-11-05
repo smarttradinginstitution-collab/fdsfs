@@ -142,20 +142,34 @@ router.beforeEach(async (to, from, next) => {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
-    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+    // --- LOGICA DI SELEZIONE AUTOMATICA E ROUTING ---
 
-    // Handle routing based on account status
+    // Controlliamo se un account è già stato selezionato (es. da localStorage).
+    // Usiamo lo stato direttamente, che Pinia gestisce correttamente.
+    let hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+
+    // Se nessun account è selezionato, proviamo a trovarne uno di default.
+    if (!hasSelectedAccount && tradingAccountsStore.hasTradingAccounts) {
+      const defaultAccount = tradingAccountsStore.tradingAccounts.find(acc => acc.is_selected);
+      if (defaultAccount) {
+        // Se lo troviamo, lo selezioniamo.
+        tradingAccountsStore.selectTradingAccount(defaultAccount);
+        // Aggiorniamo il nostro flag locale per riflettere immediatamente la selezione.
+        hasSelectedAccount = true;
+      }
+    }
+
+    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
+
+    // Logica di routing finale, basata sullo stato aggiornato.
     if (to.name === 'add-account') {
-      // If user has accounts, they shouldn't be on the 'add-account' page
       if (hasAccounts) return next({ name: 'dashboard' });
     } else if (to.name === 'select-account') {
-      // If user has NO accounts, they must go to the 'add-account' page first
       if (!hasAccounts) return next({ name: 'add-account' });
-      // If user has already selected an account, send them to the dashboard
+      // Se ora abbiamo un account selezionato (manuale o auto), andiamo alla dashboard.
       if (hasSelectedAccount) return next({ name: 'dashboard' });
     } else if (authRequired) {
-      // For any other protected page, enforce the setup flow
+      // Per tutte le altre pagine protette, facciamo i soliti controlli.
       if (!hasAccounts) return next({ name: 'add-account' });
       if (!hasSelectedAccount) return next({ name: 'select-account' });
     }

@@ -38,6 +38,7 @@ class TradingAccount(Base):
     initial_balance: Mapped[Optional[float]] = mapped_column()
     total_pnl: Mapped[Optional[float]] = mapped_column(default=0)
     currency: Mapped[Optional[str]] = mapped_column(String(3))
+    is_selected: Mapped[bool] = mapped_column(default=False, nullable=False)
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
