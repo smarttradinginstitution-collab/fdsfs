@@ -18,6 +18,8 @@ export const useTradingAccountsStore = defineStore('tradingAccounts', () => {
 
   // --- GETTERS ---
   const hasTradingAccounts = computed(() => tradingAccounts.value.length > 0);
+  const hasSelectedTradingAccount = computed(() => !!selectedTradingAccount.value);
+
 
   // --- ACTIONS ---
 

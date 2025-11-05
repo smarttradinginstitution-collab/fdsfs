@@ -142,34 +142,29 @@ router.beforeEach(async (to, from, next) => {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
-    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    let hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount.value;
+    // --- LOGICA DI SELEZIONE AUTOMATICA E REDIRECT ---
 
-    // --- LOGICA DI SELEZIONE AUTOMATICA ---
-    // Se nessun account è già stato selezionato (es. da localStorage),
-    // cerca un account con 'is_selected' = true e impostalo come attivo.
-    if (!hasSelectedAccount && hasAccounts) {
+    // Prima, controlliamo se un account è già selezionato (tramite il nuovo getter).
+    if (!tradingAccountsStore.hasSelectedTradingAccount) {
+      // Se nessun account è selezionato, cerchiamo un account di default.
       const defaultAccount = tradingAccountsStore.tradingAccounts.find(acc => acc.is_selected);
       if (defaultAccount) {
-        // Se troviamo un account di default, lo selezioniamo.
+        // Se lo troviamo, lo selezioniamo.
         tradingAccountsStore.selectTradingAccount(defaultAccount);
-        // Aggiorniamo il nostro flag locale IMMEDIATAMENTE dopo la selezione per evitare race conditions.
-        hasSelectedAccount = true;
       }
     }
-    // --- FINE LOGICA DI SELEZIONE AUTOMATICA ---
 
-    // Handle routing based on account status
+    // Ora, dopo il tentativo di selezione, ricontrolliamo lo stato usando sempre il getter.
+    const hasAccounts = tradingAccountsStore.hasTradingAccounts;
+    const hasSelectedAccount = tradingAccountsStore.hasSelectedTradingAccount;
+
+    // Logica di routing basata sullo stato finale e pulito.
     if (to.name === 'add-account') {
-      // If user has accounts, they shouldn't be on the 'add-account' page
       if (hasAccounts) return next({ name: 'dashboard' });
     } else if (to.name === 'select-account') {
-      // If user has NO accounts, they must go to the 'add-account' page first
       if (!hasAccounts) return next({ name: 'add-account' });
-      // If user has already selected an account, send them to the dashboard
       if (hasSelectedAccount) return next({ name: 'dashboard' });
     } else if (authRequired) {
-      // For any other protected page, enforce the setup flow
       if (!hasAccounts) return next({ name: 'add-account' });
       if (!hasSelectedAccount) return next({ name: 'select-account' });
     }
