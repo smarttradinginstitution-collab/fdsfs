@@ -140,6 +140,9 @@ router.beforeEach(async (to, from, next) => {
     // This is crucial for users who reload the page on a protected route.
     if (tradingAccountsStore.tradingAccounts.length === 0) {
       await tradingAccountsStore.fetchTradingAccounts();
+      // *** LOG DIAGNOSTICO ***
+      console.log('Account di trading caricati:', JSON.parse(JSON.stringify(tradingAccountsStore.tradingAccounts)));
+      // *** FINE LOG DIAGNOSTICO ***
     }
 
     // --- LOGICA DI SELEZIONE AUTOMATICA E ROUTING ---
