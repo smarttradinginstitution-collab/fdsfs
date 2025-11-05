@@ -142,29 +142,34 @@ router.beforeEach(async (to, from, next) => {
       await tradingAccountsStore.fetchTradingAccounts();
     }
 
-    // --- LOGICA DI SELEZIONE AUTOMATICA E REDIRECT ---
+    // --- LOGICA DI SELEZIONE AUTOMATICA E ROUTING ---
 
-    // Prima, controlliamo se un account è già selezionato (tramite il nuovo getter).
-    if (!tradingAccountsStore.hasSelectedTradingAccount) {
-      // Se nessun account è selezionato, cerchiamo un account di default.
+    // Controlliamo se un account è già stato selezionato (es. da localStorage).
+    // Usiamo lo stato direttamente, che Pinia gestisce correttamente.
+    let hasSelectedAccount = !!tradingAccountsStore.selectedTradingAccount;
+
+    // Se nessun account è selezionato, proviamo a trovarne uno di default.
+    if (!hasSelectedAccount && tradingAccountsStore.hasTradingAccounts) {
       const defaultAccount = tradingAccountsStore.tradingAccounts.find(acc => acc.is_selected);
       if (defaultAccount) {
         // Se lo troviamo, lo selezioniamo.
         tradingAccountsStore.selectTradingAccount(defaultAccount);
+        // Aggiorniamo il nostro flag locale per riflettere immediatamente la selezione.
+        hasSelectedAccount = true;
       }
     }
 
-    // Ora, dopo il tentativo di selezione, ricontrolliamo lo stato usando sempre il getter.
     const hasAccounts = tradingAccountsStore.hasTradingAccounts;
-    const hasSelectedAccount = tradingAccountsStore.hasSelectedTradingAccount;
 
-    // Logica di routing basata sullo stato finale e pulito.
+    // Logica di routing finale, basata sullo stato aggiornato.
     if (to.name === 'add-account') {
       if (hasAccounts) return next({ name: 'dashboard' });
     } else if (to.name === 'select-account') {
       if (!hasAccounts) return next({ name: 'add-account' });
+      // Se ora abbiamo un account selezionato (manuale o auto), andiamo alla dashboard.
       if (hasSelectedAccount) return next({ name: 'dashboard' });
     } else if (authRequired) {
+      // Per tutte le altre pagine protette, facciamo i soliti controlli.
       if (!hasAccounts) return next({ name: 'add-account' });
       if (!hasSelectedAccount) return next({ name: 'select-account' });
     }
