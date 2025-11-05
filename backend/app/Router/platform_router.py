@@ -10,14 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Controllers.platform_controller import PlatformController
 from app.Infrastructure.db import get_db
 from app.Router.auth import require_roles
-from app.Schemas.platform import Platform, PlatformCreate, PlatformSummary, PlatformUpdate
+from app.Schemas.platform import PlatformRead, PlatformCreate, PlatformUpdate
 
 router = APIRouter(prefix="/platforms", tags=["Platforms"])
 
 
 @router.post(
     "/",
-    response_model=Platform,
+    response_model=PlatformRead,
     status_code=201,
     dependencies=[Depends(require_roles(["admin"]))],
 )
@@ -33,7 +33,7 @@ async def create_platform(
     return await PlatformController(db).create_platform(platform_in)
 
 
-@router.get("/", response_model=List[Platform])
+@router.get("/", response_model=List[PlatformRead])
 async def read_platforms(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
@@ -45,7 +45,7 @@ async def read_platforms(
     return await PlatformController(db).get_all_platforms(skip=skip, limit=limit)
 
 
-@router.get("/brokers/", response_model=List[PlatformSummary])
+@router.get("/brokers/", response_model=List[PlatformRead])
 async def read_platforms_with_brokers(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
@@ -59,7 +59,7 @@ async def read_platforms_with_brokers(
     )
 
 
-@router.get("/{platform_id}", response_model=Platform)
+@router.get("/{platform_id}", response_model=PlatformRead)
 async def read_platform(
     platform_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -72,7 +72,7 @@ async def read_platform(
 
 @router.put(
     "/{platform_id}",
-    response_model=Platform,
+    response_model=PlatformRead,
     dependencies=[Depends(require_roles(["admin"]))],
 )
 async def update_platform(
@@ -90,7 +90,7 @@ async def update_platform(
 
 @router.delete(
     "/{platform_id}",
-    response_model=Platform,
+    response_model=PlatformRead,
     dependencies=[Depends(require_roles(["admin"]))],
 )
 async def delete_platform(
