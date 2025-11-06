@@ -109,4 +109,9 @@ const handleChange = (value) => {
 .multiselect-custom .multiselect-placeholder {
   color: var(--semantic-color-text-secondary);
 }
+
+/* togliamo il bg bianco dall'input di ricerca */
+.multiselect-custom .multiselect-search {
+  background-color: transparent;
+}
 </style>
