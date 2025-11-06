@@ -5,6 +5,7 @@ import NewTradeForm from '@/components/trades/NewTradeForm.vue';
 import { useTradesStore } from '@/stores/trades';
 import { useUiStore } from '@/stores/uiStore';
 import { useTradingAccountsStore } from '@/stores/tradingAccounts';
+import brokerService from '@/services/brokerService';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import UploadIcon from '@/components/icons/UploadIcon.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
@@ -17,6 +18,8 @@ const uiStore = useUiStore();
 const tradingAccountsStore = useTradingAccountsStore();
 
 const choice = ref(null); // 'manual' or 'import'
+const platforms = ref([]);
+const selectedPlatform = ref(null);
 
 // --- Computed Properties ---
 const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
@@ -29,10 +32,17 @@ const accountOptions = computed(() =>
 );
 
 // --- Lifecycle Hooks ---
-onMounted(() => {
-  // Ensure trading accounts are loaded when the component is mounted
+onMounted(async () => {
+  // Ensure trading accounts are loaded
   if (!tradingAccountsStore.hasTradingAccounts) {
-    tradingAccountsStore.fetchTradingAccounts();
+    await tradingAccountsStore.fetchTradingAccounts();
+  }
+  // Fetch platforms
+  try {
+    const response = await brokerService.getPlatforms();
+    platforms.value = response.data;
+  } catch (error) {
+    uiStore.showNotification({ message: 'Failed to load platforms.', type: 'error' });
   }
 });
 
@@ -118,23 +128,39 @@ const handleNewTrade = async (tradeData) => {
         <h1 class="title">Import from Broker</h1>
       </div>
 
-      <!-- Step 1: Select Trading Account -->
-      <div class="import-step">
-        <h2 class="step-title">Step 1: Select a Trading Account</h2>
-        <p class="step-description">Choose the account you want to import trades into.</p>
-        <BaseSelect
-          label="Trading Account"
-          :model-value="selectedAccountId"
-          :options="accountOptions"
-          @update:modelValue="handleAccountSelection"
-        />
-      </div>
-
-      <!-- Step 2: Upload File (shown only after account selection) -->
-      <div v-if="selectedAccountId" class="import-step">
-        <h2 class="step-title">Step 2: Upload Your File</h2>
-        <p class="step-description">Select the 'Performance' CSV file exported from your broker.</p>
-        <TradeImporter />
+      <div class="import-layout">
+        <!-- Left Column -->
+        <div class="left-column">
+          <!-- Step 1: Select Trading Account -->
+          <div class="import-step">
+            <h2 class="step-title">Step 1: Select a Trading Account</h2>
+            <p class="step-description">Choose the account you want to import trades into.</p>
+            <BaseSelect
+              label="Trading Account"
+              :model-value="selectedAccountId"
+              :options="accountOptions"
+              @update:modelValue="handleAccountSelection"
+            />
+          </div>
+          <!-- Step 2: Select Platform -->
+          <div v-if="selectedAccountId" class="import-step">
+            <h2 class="step-title">Step 2: Select a Platform</h2>
+            <p class="step-description">Choose the platform your file is from.</p>
+            <BaseSelect
+              label="Platform"
+              :model-value="selectedPlatform"
+              @update:modelValue="selectedPlatform = $event"
+              :options="platforms.map(p => ({ value: p.name, text: p.name }))"
+              placeholder="-- Please choose a platform --"
+            />
+          </div>
+        </div>
+        <!-- Right Column -->
+        <div class="right-column">
+            <div v-if="selectedAccountId && selectedPlatform" class="import-step">
+                <TradeImporter :selected-platform="selectedPlatform" />
+            </div>
+        </div>
       </div>
     </div>
   </div>
@@ -142,6 +168,22 @@ const handleNewTrade = async (tradeData) => {
 
 <style lang="scss" scoped>
 @import '@/styles/mixins';
+
+.import-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--semantic-size-stack-xl);
+
+  @include media-up('lg') {
+    grid-template-columns: 400px 1fr;
+  }
+}
+
+.left-column, .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--semantic-size-stack-xl);
+}
 
 .add-trade-container {
   padding: var(--semantic-size-inset-xl);
