@@ -8,7 +8,7 @@
 -->
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useTradesStore } from '@/stores/trades';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useLabelsStore } from '@/stores/labelsStore';
@@ -17,7 +17,6 @@ import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import BaseSelect from '../ui/BaseSelect.vue';
 import BaseMultiSelect from '../ui/BaseMultiSelect.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
@@ -37,27 +36,25 @@ const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, label: p.title }))
 );
 
+// CORREZIONE: Utilizzo dei nomi corretti delle proprietà per il label
 const mistakesOptions = computed(() =>
-  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
+  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.mistake }))
 );
 
 const psychologyStatesOptions = computed(() =>
-  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.name }))
+  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.state }))
 );
 
 const tagsOptions = computed(() =>
-  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.name }))
+  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.tag }))
 );
 
-import { watch } from 'vue';
-
 const newsImpactsOptions = computed(() =>
-  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.name }))
+  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.impact }))
 );
 
 const rulesOptions = computed(() => {
   if (!playbookStore.ruleGroups) return [];
-  // Appiattisce i gruppi di regole in una singola lista di opzioni
   return playbookStore.ruleGroups.flatMap(group =>
     group.rules.map(rule => ({ value: rule.id, label: `(${group.name_group}) ${rule.rule}` }))
   );
@@ -86,7 +83,6 @@ const getInitialFormState = () => ({
 
 const form = ref(getInitialFormState());
 
-// Carica le regole associate quando un playbook viene selezionato
 watch(() => form.value.playbook_id, (newPlaybookId) => {
   if (newPlaybookId) {
     playbookStore.fetchRuleGroups(newPlaybookId);
@@ -96,15 +92,12 @@ watch(() => form.value.playbook_id, (newPlaybookId) => {
 
 const handleSubmit = () => {
   const payload = { ...form.value };
-
-  // Convert timestamps to ISO strings
   if (payload.entry_timestamp) {
     payload.entry_timestamp = new Date(payload.entry_timestamp).toISOString();
   }
   if (payload.exit_timestamp) {
     payload.exit_timestamp = new Date(payload.exit_timestamp).toISOString();
   }
-
   emit('submit', payload);
   form.value = getInitialFormState();
 };
@@ -133,16 +126,17 @@ const handleSubmit = () => {
     <fieldset class="form-section">
       <legend>Playbook & Associations</legend>
       <div class="grid-group grid-group-1-col">
-        <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" />
+        <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" default-option-text="Select a playbook" />
       </div>
        <div class="grid-group grid-group-2-col associations-group">
-        <BaseMultiSelect v-model="form.tags" label="Tags" :options="tagsOptions" placeholder="Select tags" />
-        <BaseMultiSelect v-model="form.mistakes" label="Mistakes" :options="mistakesOptions" placeholder="Select mistakes" />
-        <BaseMultiSelect v-model="form.news_impacts" label="News Impacts" :options="newsImpactsOptions" placeholder="Select news impacts" />
-        <BaseMultiSelect v-model="form.psychology_states" label="Psychology States" :options="psychologyStatesOptions" placeholder="Select psychology states" />
+        <!-- CORREZIONE: Utilizzo dei v-model corretti (es. tag_ids invece di tags) -->
+        <BaseMultiSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" placeholder="Select tags" />
+        <BaseMultiSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" placeholder="Select mistakes" />
+        <BaseMultiSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" placeholder="Select news impacts" />
+        <BaseMultiSelect v-model="form.psychology_state_ids" label="Psychology States" :options="psychologyStatesOptions" placeholder="Select psychology states" />
       </div>
       <div v-if="rulesOptions.length > 0" class="grid-group grid-group-1-col associations-group">
-        <BaseMultiSelect v-model="form.rules_followed" label="Rules Followed" :options="rulesOptions" placeholder="Select rules followed" />
+        <BaseMultiSelect v-model="form.rules_followed_ids" label="Rules Followed" :options="rulesOptions" placeholder="Select rules followed" />
       </div>
     </fieldset>
 
@@ -159,7 +153,6 @@ const handleSubmit = () => {
       </div>
     </fieldset>
 
-
     <div class="form-actions">
       <BaseButton type="submit" :is-loading="tradesStore.isLoading">
         Save Trade
@@ -172,7 +165,7 @@ const handleSubmit = () => {
 .new-trade-form {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xl); /* Increased gap for more breathing room */
+  gap: var(--semantic-size-stack-xl);
 }
 
 .form-section {
@@ -180,8 +173,8 @@ const handleSubmit = () => {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
   padding: var(--semantic-size-inset-lg);
-  padding-top: var(--semantic-size-inset-xl); /* More space at the top */
-  margin-top: var(--semantic-size-stack-lg); /* Space for the legend */
+  padding-top: var(--semantic-size-inset-xl);
+  margin-top: var(--semantic-size-stack-lg);
   position: relative;
 }
 
@@ -211,40 +204,6 @@ const handleSubmit = () => {
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .grid-group-3-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .grid-group-2-col { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
-.notes-group {
-  margin-top: var(--semantic-size-stack-sm);
-}
-
-.textarea-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
-}
-
-.textarea-group label {
-  font: var(--semantic-font-style-label-sm);
-  color: var(--semantic-color-text-secondary);
-  margin-left: 2px;
-}
-
-textarea {
-  width: 100%;
-  padding: var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-interactive);
-  border: 1px solid var(--semantic-color-border-default);
-  background-color: var(--semantic-color-surface-page); /* Slightly different from section bg */
-  color: var(--semantic-color-text-primary);
-  font-family: inherit;
-  font-size: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-textarea:focus {
-  outline: none;
-  border-color: var(--semantic-color-border-focus);
-  box-shadow: 0 0 0 2px var(--semantic-color-border-focus);
-}
 
 .form-actions {
   margin-top: var(--semantic-size-stack-lg);
