@@ -23,8 +23,6 @@ const labelsStore = useLabelsStore();
 const newsImpactsStore = useNewsImpactsStore();
 const emit = defineEmits(['submit']);
 
-// --- LOGICA DI BUSINESS MANTENUTA ---
-
 onMounted(() => {
   playbookStore.fetchPlaybooks();
   labelsStore.fetchLabelsIfNeeded('mistakes');
@@ -33,7 +31,6 @@ onMounted(() => {
   newsImpactsStore.fetchAllNewsImpactsData();
 });
 
-// Mappatura per BaseSelect: { value, text }
 const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
 );
@@ -61,7 +58,6 @@ const rulesOptions = computed(() => {
   );
 });
 
-// Struttura del form con i nuovi campi
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
