@@ -117,6 +117,7 @@ const handleChange = (value) => {
 /* Wrapper principale per garantire lo sfondo corretto */
 .multiselect-custom .multiselect-wrapper {
   background: var(--semantic-color-surface-primary);
+  border-radius: var(--semantic-border-radius-interactive);
 }
 
 /* Testo delle opzioni nel dropdown */

@@ -129,7 +129,7 @@ function onChange(event) {
 
 /* 👇 per quando il browser apre il menu in tema scuro */
 .select-field option {
-  background: #ffffff;
-  color: #111827;
+  background: var(--semantic-color-surface-secondary);
+  color: var(--semantic-color-text-primary);
 }
 </style>
