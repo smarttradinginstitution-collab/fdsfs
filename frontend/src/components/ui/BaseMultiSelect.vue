@@ -17,7 +17,7 @@ defineProps({
   },
   mode: {
     type: String,
-    default: 'tags', // Changed from 'multiple' to 'tags' for the desired UI
+    default: 'tags',
   },
   searchable: {
     type: Boolean,
@@ -46,6 +46,8 @@ const handleChange = (value) => {
     :close-on-select="closeOnSelect"
     @change="handleChange"
     class="multiselect-custom"
+    label="label"
+    value-prop="value"
   />
 </template>
 
