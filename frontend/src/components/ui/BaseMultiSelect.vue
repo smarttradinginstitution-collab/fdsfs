@@ -82,6 +82,7 @@ const handleChange = (value) => {
   --ms-radius: var(--semantic-border-radius-interactive);
   --ms-bg: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-interactive);
   --ms-ring-color: var(--semantic-color-border-focus);
   --ms-placeholder-color: var(--semantic-color-text-primary);
   --ms-color: var(--semantic-color-text-primary);
