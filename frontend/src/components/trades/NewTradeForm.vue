@@ -15,7 +15,7 @@ import { useLabelsStore } from '@/stores/labelsStore';
 import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import BaseSelect from '../ui/BaseInput.vue'; // Sostituito BaseMultiSelect
+import BaseSelect from '../ui/BaseSelect.vue'; // CORREZIONE ERRORE DI BATTITURA
 
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
@@ -31,7 +31,6 @@ onMounted(() => {
   newsImpactsStore.fetchAllNewsImpactsData();
 });
 
-// CORREZIONE: Tutti i componenti ora usano il formato `{ value, text }` richiesto da BaseSelect
 const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
 );
