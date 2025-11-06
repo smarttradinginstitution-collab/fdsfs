@@ -54,81 +54,70 @@ const handleChange = (value) => {
 </template>
 
 <style>
-/* wrapper del campo per allinearlo agli altri input */
+/*
+  =============================================================================
+  Stili per BaseMultiSelect
+  - Sovrascrive la libreria @vueform/multiselect per il tema scuro
+  - Allinea le label allo stile di BaseSelect
+  =============================================================================
+*/
+
+/* Wrapper del campo per allinearlo agli altri input */
 .base-multiselect {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  width: 100%;
+  gap: var(--semantic-size-stack-xs);
 }
 
 .base-multiselect__label {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--semantic-color-text-primary);
+  font-family: var(--semantic-font-style-label-md-font-family);
+  font-size: var(--semantic-font-style-label-md-font-size);
+  font-weight: var(--semantic-font-style-label-md-font-weight);
+  color: var(--semantic-color-text-secondary);
 }
 
-/*
-  Soluzione Definitiva per il Tema Scuro del Multiselect
-
-  1. Variabili Globali: Sovrascriviamo le variabili CSS di default della libreria
-     per allinearle al nostro design system.
-  2. Regole Specifiche: Applichiamo regole dirette ai selettori interni
-     (es. `.multiselect-search`) per forzare lo stile corretto, superando
-     le regole di default del file `default.css` importato.
-*/
-
-/* 1. Variabili Globali */
+/* Variabili globali per sovrascrivere il tema di default */
 .multiselect-custom {
   --ms-font-size: var(--semantic-font-style-body-sm-font-size);
   --ms-radius: var(--semantic-border-radius-interactive);
-  --ms-bg: var(--semantic-color-surface-primary);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  --ms-ring-color: var(--semantic-color-border-focus);
-  --ms-placeholder-color: var(--semantic-color-text-primary);
-  --ms-color: var(--semantic-color-text-primary);
 
-  --ms-tag-bg: var(--semantic-color-interactive-primary-default);
-  --ms-tag-color: var(--semantic-color-text-on-brand);
+  /* Sfondo e testo */
+  --ms-bg: var(--semantic-color-surface-primary) !important;
+  --ms-color: var(--semantic-color-text-primary) !important;
+  --ms-placeholder-color: var(--semantic-color-text-tertiary) !important;
 
-  --ms-dropdown-bg: var(--semantic-color-surface-secondary);
-  --ms-dropdown-border-color: var(--semantic-color-border-default);
-
-  --ms-option-bg-pointed: var(--semantic-color-surface-primary);
-  --ms-option-color-pointed: var(--semantic-color-text-primary);
-  --ms-option-bg-selected: var(--semantic-color-interactive-primary-default);
-  --ms-option-color-selected: var(--semantic-color-text-on-brand);
-}
-
-/* 2. Regole Specifiche */
-
-/* Sfondo per il campo di input (sia vuoto che in modalità tags) */
-.multiselect-custom .multiselect-search,
-.multiselect-custom .multiselect-tags-search,
-.multiselect-custom .multiselect-input {
-  background: transparent;
-  color: var(--semantic-color-text-primary);
-}
-
-/* Colore del placeholder */
-.multiselect-custom .multiselect-placeholder {
-  color: var(--semantic-color-text-primary);
-}
-
-/* Wrapper principale per garantire lo sfondo corretto */
-.multiselect-custom .multiselect-wrapper {
-  background: var(--semantic-color-surface-primary);
-  border-radius: var(--semantic-border-radius-interactive);
-}
-
-/* Testo delle opzioni nel dropdown */
-.multiselect-custom .multiselect-option {
-  color: var(--semantic-color-text-primary);
-}
-
-/* Stile del bordo quando il componente è attivo/focalizzato */
-.multiselect-custom.is-active {
+  /* Bordi e focus */
+  --ms-border-width: 1px;
+  --ms-border-color: var(--semantic-color-border-default);
+  --ms-ring-width: 0px;
+  --ms-ring-color: transparent;
   box-shadow: none;
-  border-color: var(--semantic-color-border-focus);
+
+  /* Dropdown */
+  --ms-dropdown-bg: var(--semantic-color-surface-secondary) !important;
+  --ms-dropdown-border-color: var(--semantic-color-border-default) !important;
+
+  /* Opzioni */
+  --ms-option-bg-pointed: var(--semantic-color-surface-primary) !important;
+  --ms-option-color-pointed: var(--semantic-color-text-primary) !important;
+  --ms-option-bg-selected: var(--semantic-color-interactive-primary-default) !important;
+  --ms-option-color-selected: var(--semantic-color-text-on-brand) !important;
+
+  /* Tag (pills) */
+  --ms-tag-bg: var(--semantic-color-interactive-secondary-default) !important;
+  --ms-tag-color: var(--semantic-color-text-primary) !important;
+  --ms-tag-radius: var(--semantic-border-radius-pill) !important;
+}
+
+/* Forza lo sfondo del campo di ricerca interno */
+.multiselect-custom .multiselect-search {
+  background-color: transparent !important;
+}
+
+/* Stile aggiuntivo per lo stato :active (focus) */
+.multiselect-custom.is-active {
+  border-color: var(--semantic-color-border-focus) !important;
+  box-shadow: var(--semantic-effect-shadow-focus-ring) !important;
 }
 </style>
