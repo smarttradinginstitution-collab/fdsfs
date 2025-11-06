@@ -36,21 +36,21 @@ const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, label: p.title }))
 );
 
-// CORREZIONE: Utilizzo dei nomi corretti delle proprietà per il label
+// CORREZIONE DEFINITIVA: Utilizzo di `.name` per tutte le etichette
 const mistakesOptions = computed(() =>
-  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.mistake }))
+  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
 );
 
 const psychologyStatesOptions = computed(() =>
-  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.state }))
+  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.name }))
 );
 
 const tagsOptions = computed(() =>
-  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.tag }))
+  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.name }))
 );
 
 const newsImpactsOptions = computed(() =>
-  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.impact }))
+  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.name }))
 );
 
 const rulesOptions = computed(() => {
@@ -129,7 +129,6 @@ const handleSubmit = () => {
         <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" default-option-text="Select a playbook" />
       </div>
        <div class="grid-group grid-group-2-col associations-group">
-        <!-- CORREZIONE: Utilizzo dei v-model corretti (es. tag_ids invece di tags) -->
         <BaseMultiSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" placeholder="Select tags" />
         <BaseMultiSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" placeholder="Select mistakes" />
         <BaseMultiSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" placeholder="Select news impacts" />
