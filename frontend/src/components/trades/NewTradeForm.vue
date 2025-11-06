@@ -32,11 +32,12 @@ onMounted(() => {
   newsImpactsStore.fetchAllNewsImpactsData();
 });
 
+// CORREZIONE 1: BaseSelect si aspetta `{ value, text }`
 const playbooksOptions = computed(() =>
-  playbookStore.playbooks.map(p => ({ value: p.id, label: p.title }))
+  playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
 );
 
-// CORREZIONE DEFINITIVA: Utilizzo di `.name` per tutte le etichette
+// BaseMultiSelect si aspetta `{ value, label }`
 const mistakesOptions = computed(() =>
   (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
 );
@@ -118,7 +119,7 @@ const handleSubmit = () => {
       <legend>Core Information</legend>
       <div class="grid-group grid-group-3-col">
         <BaseInput v-model="form.symbol_snapshot" label="Symbol" placeholder="e.g., AAPL" />
-        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'LONG', text: 'Long'}, {value: 'SHORT', text: 'Short'}]" />
+        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'LONG', text: 'Long'}, {value: 'SHORT', 'text': 'Short'}]" />
         <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
       </div>
     </fieldset>
