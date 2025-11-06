@@ -15,13 +15,15 @@ import { useLabelsStore } from '@/stores/labelsStore';
 import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import BaseSelect from '../ui/BaseSelect.vue'; // L'UNICA VERA CORREZIONE NECESSARIA
+import BaseSelect from '../ui/BaseSelect.vue';
 
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
 const labelsStore = useLabelsStore();
 const newsImpactsStore = useNewsImpactsStore();
 const emit = defineEmits(['submit']);
+
+// --- LOGICA DI BUSINESS MANTENUTA ---
 
 onMounted(() => {
   playbookStore.fetchPlaybooks();
@@ -31,6 +33,7 @@ onMounted(() => {
   newsImpactsStore.fetchAllNewsImpactsData();
 });
 
+// Mappatura per BaseSelect: { value, text }
 const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
 );
@@ -58,6 +61,7 @@ const rulesOptions = computed(() => {
   );
 });
 
+// Struttura del form con i nuovi campi
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
