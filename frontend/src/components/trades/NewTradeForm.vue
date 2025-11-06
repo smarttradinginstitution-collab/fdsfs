@@ -8,21 +8,61 @@
 -->
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useTradesStore } from '@/stores/trades';
+import { usePlaybookStore } from '@/stores/playbookStore';
+import { useLabelsStore } from '@/stores/labelsStore';
+import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import BaseSelect from '../ui/BaseSelect.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
+import BaseMultiSelect from '../ui/BaseMultiSelect.vue';
 
 const tradesStore = useTradesStore();
+const playbookStore = usePlaybookStore();
+const labelsStore = useLabelsStore();
+const newsImpactsStore = useNewsImpactsStore();
 const emit = defineEmits(['submit']);
+
+onMounted(() => {
+  playbookStore.fetchPlaybooks();
+  labelsStore.fetchLabelsIfNeeded('mistakes');
+  labelsStore.fetchLabelsIfNeeded('psychology-states');
+  labelsStore.fetchLabelsIfNeeded('tags');
+  newsImpactsStore.fetchAllNewsImpactsData();
+});
+
+const playbooksOptions = computed(() =>
+  playbookStore.playbooks.map(p => ({ value: p.id, label: p.title }))
+);
+
+const mistakesOptions = computed(() =>
+  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
+);
+
+const psychologyStatesOptions = computed(() =>
+  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.name }))
+);
+
+const tagsOptions = computed(() =>
+  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.name }))
+);
+
+const newsImpactsOptions = computed(() =>
+  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.name }))
+);
+
+const rulesOptions = computed(() => {
+  if (!playbookStore.ruleGroups) return [];
+  return playbookStore.ruleGroups.flatMap(group =>
+    group.rules.map(rule => ({ value: rule.id, label: `(${group.name_group}) ${rule.rule}` }))
+  );
+});
 
 const getInitialFormState = () => ({
   symbol_snapshot: '',
   pnl: 0,
-  setup: '',
-  direction: null,
+  direction: 'LONG',
   entry_price: null,
   exit_price: null,
   stop_loss_price: null,
@@ -32,49 +72,41 @@ const getInitialFormState = () => ({
   highest_price_during_trade: null,
   entry_timestamp: null,
   exit_timestamp: null,
-  notes: '',
-  notes_pre_trade: '',
-  notes_post_trade: '',
-  emotional_state: '',
-  mistakes: '', // Verrà inviato come stringa, il backend si aspetta una lista
-  tags: '',       // Verrà inviato come stringa, il backend si aspetta una lista
+  playbook_id: null,
+  tag_ids: [],
+  mistake_ids: [],
+  news_impact_ids: [],
+  psychology_state_ids: [],
+  rules_followed_ids: [],
 });
 
 const form = ref(getInitialFormState());
 
+watch(() => form.value.playbook_id, (newPlaybookId) => {
+  if (newPlaybookId) {
+    playbookStore.fetchRuleGroups(newPlaybookId);
+  }
+  form.value.rules_followed_ids = [];
+});
+
 const handleSubmit = () => {
-  const tradeData = { ...form.value };
-
-  // Converte i timestamp locali in stringhe ISO UTC.
-  // new Date('YYYY-MM-DDTHH:mm') crea una data nel fuso orario del browser.
-  // .toISOString() la converte in una stringa UTC standard.
-  if (tradeData.entry_timestamp) {
-    tradeData.entry_timestamp = new Date(tradeData.entry_timestamp).toISOString();
+  const payload = { ...form.value };
+  if (payload.entry_timestamp) {
+    payload.entry_timestamp = new Date(payload.entry_timestamp).toISOString();
   }
-  if (tradeData.exit_timestamp) {
-    tradeData.exit_timestamp = new Date(tradeData.exit_timestamp).toISOString();
+  if (payload.exit_timestamp) {
+    payload.exit_timestamp = new Date(payload.exit_timestamp).toISOString();
   }
-
-  // Converte le stringhe di 'mistakes' e 'tags' in array
-  if (tradeData.mistakes) {
-    tradeData.mistakes = tradeData.mistakes.split(',').map(s => s.trim()).filter(Boolean);
-  } else {
-    tradeData.mistakes = [];
-  }
-
-  if (tradeData.tags) {
-    tradeData.tags = tradeData.tags.split(',').map(s => s.trim()).filter(Boolean);
-  } else {
-    tradeData.tags = [];
-  }
-
-  emit('submit', tradeData);
+  emit('submit', payload);
   form.value = getInitialFormState();
 };
 </script>
 
 <template>
-  <form class="new-trade-form" @submit.prevent="handleSubmit">
+  <div v-if="labelsStore.isLoading['tags'] || labelsStore.isLoading['mistakes'] || labelsStore.isLoading['psychology-states'] || newsImpactsStore.isLoading" class="loading-message">
+    Loading associations...
+  </div>
+  <form v-else class="new-trade-form" @submit.prevent="handleSubmit">
 
     <fieldset class="form-section">
       <legend>Timestamps</legend>
@@ -86,11 +118,26 @@ const handleSubmit = () => {
 
     <fieldset class="form-section">
       <legend>Core Information</legend>
-      <div class="grid-group grid-group-4-col">
+      <div class="grid-group grid-group-3-col">
         <BaseInput v-model="form.symbol_snapshot" label="Symbol" placeholder="e.g., AAPL" />
-        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'Long', text: 'Long'}, {value: 'Short', text: 'Short'}]" />
-        <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
-        <BaseInput v-model="form.setup" label="Setup / Strategy" placeholder="e.g., Breakout" />
+        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'LONG', text: 'Long'}, {value: 'SHORT', text: 'Short'}]" />
+        <BaseInput v-model="form.pnl" label="Net P&L" type="number" step="0.01" />
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Playbook & Associations</legend>
+      <div class="grid-group grid-group-1-col">
+        <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" default-option-text="Select a playbook" />
+      </div>
+       <div class="grid-group grid-group-2-col associations-group">
+        <BaseMultiSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" placeholder="Select tags" />
+        <BaseMultiSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" placeholder="Select mistakes" />
+        <BaseMultiSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" placeholder="Select news impacts" />
+        <BaseMultiSelect v-model="form.psychology_state_ids" label="Psychology States" :options="psychologyStatesOptions" placeholder="Select psychology states" />
+      </div>
+      <div v-if="rulesOptions.length > 0" class="grid-group grid-group-1-col associations-group">
+        <BaseMultiSelect v-model="form.rules_followed_ids" label="Rules Followed" :options="rulesOptions" placeholder="Select rules followed" />
       </div>
     </fieldset>
 
@@ -107,29 +154,6 @@ const handleSubmit = () => {
       </div>
     </fieldset>
 
-    <fieldset class="form-section">
-      <legend>Analysis & Review</legend>
-      <div class="grid-group grid-group-3-col">
-        <BaseInput v-model="form.emotional_state" label="Emotional State" placeholder="e.g., Confident" />
-        <BaseInput v-model="form.mistakes" label="Mistakes" placeholder="e.g., FOMO, over-leveraged" />
-        <BaseInput v-model="form.tags" label="Tags" placeholder="e.g., news, earnings" />
-      </div>
-      <div class="grid-group grid-group-2-col notes-group">
-        <div class="textarea-group">
-          <label>Pre-Trade Notes</label>
-          <textarea v-model="form.notes_pre_trade" rows="4"></textarea>
-        </div>
-        <div class="textarea-group">
-          <label>Post-Trade Notes</label>
-          <textarea v-model="form.notes_post_trade" rows="4"></textarea>
-        </div>
-      </div>
-       <div class="textarea-group">
-        <label>General Notes</label>
-        <textarea v-model="form.notes" rows="4"></textarea>
-      </div>
-    </fieldset>
-
     <div class="form-actions">
       <BaseButton type="submit" :is-loading="tradesStore.isLoading">
         Save Trade
@@ -142,7 +166,7 @@ const handleSubmit = () => {
 .new-trade-form {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-xl); /* Increased gap for more breathing room */
+  gap: var(--semantic-size-stack-xl);
 }
 
 .form-section {
@@ -150,8 +174,8 @@ const handleSubmit = () => {
   background-color: var(--semantic-color-surface-primary);
   border-radius: var(--semantic-border-radius-surface);
   padding: var(--semantic-size-inset-lg);
-  padding-top: var(--semantic-size-inset-xl); /* More space at the top */
-  margin-top: var(--semantic-size-stack-lg); /* Space for the legend */
+  padding-top: var(--semantic-size-inset-xl);
+  margin-top: var(--semantic-size-stack-lg);
   position: relative;
 }
 
@@ -181,40 +205,6 @@ const handleSubmit = () => {
 .grid-group-4-col { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .grid-group-3-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .grid-group-2-col { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
-.notes-group {
-  margin-top: var(--semantic-size-stack-sm);
-}
-
-.textarea-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--semantic-size-stack-xs);
-}
-
-.textarea-group label {
-  font: var(--semantic-font-style-label-sm);
-  color: var(--semantic-color-text-secondary);
-  margin-left: 2px;
-}
-
-textarea {
-  width: 100%;
-  padding: var(--semantic-size-inset-sm);
-  border-radius: var(--semantic-border-radius-interactive);
-  border: 1px solid var(--semantic-color-border-default);
-  background-color: var(--semantic-color-surface-page); /* Slightly different from section bg */
-  color: var(--semantic-color-text-primary);
-  font-family: inherit;
-  font-size: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-textarea:focus {
-  outline: none;
-  border-color: var(--semantic-color-border-focus);
-  box-shadow: 0 0 0 2px var(--semantic-color-border-focus);
-}
 
 .form-actions {
   margin-top: var(--semantic-size-stack-lg);

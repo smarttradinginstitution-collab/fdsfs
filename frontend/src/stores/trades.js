@@ -600,10 +600,9 @@ export const useTradesStore = defineStore('trades', {
 
         // Mappa i dati dal form al payload atteso dal backend
         const payload = {
-          trading_account_id: selectedAccount.id, // Aggiungi l'ID del conto di trading
+          trading_account_id: selectedAccount.id,
           symbol_snapshot: tradeData.symbol_snapshot,
           p_l: tradeData.pnl,
-          playbook: tradeData.playbook,
           direction: tradeData.direction,
           entry_price: tradeData.entry_price,
           exit_price: tradeData.exit_price,
@@ -614,13 +613,12 @@ export const useTradesStore = defineStore('trades', {
           highest_price_during_trade: tradeData.highest_price_during_trade,
           entry_timestamp: tradeData.entry_timestamp,
           exit_timestamp: tradeData.exit_timestamp,
-          notes: tradeData.notes,
-          notes_pre_trade: tradeData.notes_pre_trade,
-          notes_post_trade: tradeData.notes_post_trade,
-          emotional_state: tradeData.emotional_state,
-          // I campi many-to-many ora si aspettano array di ID
-          tag_ids: tradeData.tags || [], // Assumendo che 'tags' sia un array di ID
-          mistake_ids: tradeData.mistakes || [], // Assumendo che 'mistakes' sia un array di ID
+          playbook_id: tradeData.playbook_id,
+          tag_ids: tradeData.tag_ids || [],
+          mistake_ids: tradeData.mistake_ids || [],
+          news_impact_ids: tradeData.news_impact_ids || [],
+          psychology_state_ids: tradeData.psychology_state_ids || [],
+          rules_followed_ids: tradeData.rules_followed_ids || [],
         };
 
         // Rimuovi le chiavi con valori null o undefined per non inviarle al backend

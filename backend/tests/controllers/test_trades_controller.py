@@ -20,11 +20,14 @@ async def setup_broker(db_session: AsyncSession) -> str:
     await db_session.refresh(broker)
     return str(broker.id)
 
-async def setup_trading_account(client: AsyncClient, db_session: AsyncSession) -> str:
-    """Helper per creare un General e un Trading Account e restituire l'ID di quest'ultimo."""
-    await client.post("/api/v1/general-accounts/")
+async def setup_trading_account_and_get_ids(client: AsyncClient, db_session: AsyncSession) -> tuple[str, str]:
+    """Helper to create accounts and return both trading and general account IDs."""
+    ga_response = await client.post("/api/v1/general-accounts/")
+    assert ga_response.status_code == 201
+    general_account_id = ga_response.json()["id"]
+
     broker_id = await setup_broker(db_session)
-    response = await client.post(
+    ta_response = await client.post(
         "/api/v1/trading-accounts/",
         json={
             "label": "Test Trading Account",
@@ -33,8 +36,15 @@ async def setup_trading_account(client: AsyncClient, db_session: AsyncSession) -
             "currency": "USD"
         }
     )
-    assert response.status_code == 201, response.text
-    return response.json()["id"]
+    assert ta_response.status_code == 201, ta_response.text
+    trading_account_id = ta_response.json()["id"]
+    return trading_account_id, general_account_id
+
+
+async def setup_trading_account(client: AsyncClient, db_session: AsyncSession) -> str:
+    """Helper per creare un General e un Trading Account e restituire l'ID di quest'ultimo."""
+    trading_account_id, _ = await setup_trading_account_and_get_ids(client, db_session)
+    return trading_account_id
 
 async def test_create_trade_fails_without_trading_account(async_client: AsyncClient):
     """Testa che la creazione di un trade fallisca se il trading account non esiste."""
@@ -75,26 +85,47 @@ async def test_create_and_get_trade(async_client: AsyncClient, db_session: Async
     list_data = list_response.json()
     assert len(list_data) == 1
 
-async def test_create_trade_with_related_entities_by_name(async_client: AsyncClient, db_session: AsyncSession):
+async def test_create_trade_with_related_entities_by_id(async_client: AsyncClient, db_session: AsyncSession):
     """
     Testa la creazione di un trade con entità correlate (tags, mistakes, playbook)
-    passando i loro nomi come stringhe, come farebbe il frontend.
+    passando i loro ID, come richiesto dalla nuova API.
     """
-    trading_account_id = await setup_trading_account(async_client, db_session)
+    trading_account_id, general_account_id_str = await setup_trading_account_and_get_ids(async_client, db_session)
+    general_account_id = uuid.UUID(general_account_id_str)
 
+    # 1. Create related entities beforehand
+    from app.Models import Tag, Mistake, Playbook
+    from app.Models.tags_group import TagsGroup
+
+    # Need to create a dummy tag group for the tags
+    tag_group = TagsGroup(name="Test Group", general_account_id=general_account_id)
+    db_session.add(tag_group)
+    await db_session.commit()
+    await db_session.refresh(tag_group)
+
+    tag1 = Tag(name="Good Entry", group_id=tag_group.id)
+    tag2 = Tag(name="News-Driven", group_id=tag_group.id)
+    mistake1 = Mistake(name="FOMO", general_account_id=general_account_id)
+    playbook1 = Playbook(title="Opening Range Breakout", general_account_id=general_account_id, description="A test playbook")
+
+    db_session.add_all([tag1, tag2, mistake1, playbook1])
+    await db_session.commit()
+
+    # 2. Prepare payload with IDs
     trade_payload = {
         "trading_account_id": trading_account_id,
         "symbol_snapshot": "ETHUSD",
         "status": "closed",
         "direction": "SHORT",
-        "tags": ["Good Entry", "News-Driven"],
-        "mistakes": ["FOMO"],
-        "playbook": "Opening Range Breakout"
+        "tag_ids": [str(tag1.id), str(tag2.id)],
+        "mistake_ids": [str(mistake1.id)],
+        "playbook_id": str(playbook1.id)
     }
     create_response = await async_client.post("/api/v1/trades/", json=trade_payload)
     assert create_response.status_code == 201
     created_trade = create_response.json()
 
+    # 3. Assertions
     assert len(created_trade["tags"]) == 2
     returned_tags = {tag['name'] for tag in created_trade['tags']}
     assert returned_tags == {"Good Entry", "News-Driven"}
@@ -104,23 +135,6 @@ async def test_create_trade_with_related_entities_by_name(async_client: AsyncCli
 
     assert created_trade["playbook"] is not None
     assert created_trade["playbook"]["title"] == "Opening Range Breakout"
-
-    trade_payload_2 = {
-        "trading_account_id": trading_account_id,
-        "symbol_snapshot": "SOLUSD",
-        "tags": ["Good Entry"],
-        "status": "closed",
-        "direction": "LONG"
-    }
-    create_response_2 = await async_client.post("/api/v1/trades/", json=trade_payload_2)
-    assert create_response_2.status_code == 201
-    created_trade_2 = create_response_2.json()
-    assert len(created_trade_2["tags"]) == 1
-
-    good_entry_tag_from_trade1 = next(t for t in created_trade['tags'] if t['name'] == 'Good Entry')
-    good_entry_tag_from_trade2 = created_trade_2['tags'][0]
-
-    assert good_entry_tag_from_trade2['id'] == good_entry_tag_from_trade1['id']
 
 
 async def test_delete_trade(async_client: AsyncClient, db_session: AsyncSession):

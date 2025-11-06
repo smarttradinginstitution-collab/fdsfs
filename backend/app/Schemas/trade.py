@@ -74,15 +74,16 @@ class TradeBase(BaseModel):
 
 class TradeCreate(TradeBase):
     trading_account_id: UUID
-    # Campi per compatibilità con il frontend attuale
-    tags: Optional[List[str]] = Field(default_factory=list)
-    mistakes: Optional[List[str]] = Field(default_factory=list)
-    playbook: Optional[str] = None
-    news_impacts: Optional[List[str]] = Field(default_factory=list)
-    psychology_states: Optional[List[str]] = Field(default_factory=list)
+    tag_ids: Optional[List[UUID]] = Field(default_factory=list)
+    mistake_ids: Optional[List[UUID]] = Field(default_factory=list)
+    playbook_id: Optional[UUID] = None
+    news_impact_ids: Optional[List[UUID]] = Field(default_factory=list)
+    psychology_state_ids: Optional[List[UUID]] = Field(default_factory=list)
+    rules_followed_ids: Optional[List[UUID]] = Field(default_factory=list)
 
 
 class TradeUpdate(TradeBase):
+    gross_p_l: Optional[float] = None
     commissions: Optional[float] = None
     tag_ids: Optional[List[UUID]] = None  # Se presente, sostituisce le associazioni
     mistake_ids: Optional[List[UUID]] = None

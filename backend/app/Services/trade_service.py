@@ -110,23 +110,24 @@ class TradeService:
         return entities
 
     async def create_trade(self, claims: dict, trade_data: TradeCreate) -> TradeRead:
-        """Crea un nuovo trade per l'utente, calcolando e salvando l'R-Multiple corretto."""
+        """Crea un nuovo trade per l'utente, gestendo le relazioni M2M tramite ID."""
         trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, trade_data.trading_account_id)
 
-        # Recupera il trading account per ottenere il bilancio iniziale per i calcoli
         trading_account = await self.trading_account_repo.get_by_id(trading_account_id)
         if not trading_account:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Trading Account non trovato per il calcolo delle metriche.")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Trading Account non trovato.")
 
-        playbook_name = trade_data.playbook
-        psychology_names = trade_data.psychology_states or []
-
+        # Estrai i dati di base del trade e gli ID delle relazioni
         trade_dict = trade_data.model_dump(exclude={
-            'tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states',
+            'tag_ids', 'mistake_ids', 'playbook_id', 'news_impact_ids',
+            'psychology_state_ids', 'rules_followed_ids'
         })
 
-        # Calcola l'R-Multiple corretto da salvare nel DB
-        # Calcola tutte le metriche per ottenere l'r_multiple da salvare
+        # Se il P&L netto è fornito ma il P&L lordo non lo è, li impostiamo uguali.
+        if trade_dict.get("p_l") is not None and trade_dict.get("gross_p_l") is None:
+            trade_dict["gross_p_l"] = trade_dict["p_l"]
+
+        # Arricchisci il trade con metriche calcolate
         all_metrics = enrich_trade_with_all_metrics(
             trade_data=trade_dict,
             initial_balance=Decimal(trading_account.initial_balance or '0.0')
@@ -134,12 +135,29 @@ class TradeService:
         r_multiple = all_metrics.get("realized_r_multiple")
         trade_dict['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
-        # Gestione delle entità correlate
-        tags = await self._get_or_create_related_entities(general_account_id, trade_data.tags, self.tag_repo, "upsert_by_name", "name")
-        mistakes = await self._get_or_create_related_entities(general_account_id, trade_data.mistakes, self.mistake_repo, "upsert_by_name", "name")
-        news_impacts = await self._get_or_create_related_entities(general_account_id, trade_data.news_impacts, self.news_impact_repo, "upsert_by_title", "title")
-        psychology_states = await self._get_or_create_related_entities(general_account_id, psychology_names, self.psychology_state_repo, "upsert_by_state", "state")
-        playbook = await self.playbook_repo.upsert_by_title(general_account_id, title=playbook_name) if playbook_name else None
+        # Recupera le entità correlate dagli ID forniti
+        tags = await self._get_related_entities(general_account_id, Tag, trade_data.tag_ids)
+        mistakes = await self._get_related_entities(general_account_id, Mistake, trade_data.mistake_ids)
+        news_impacts = await self._get_related_entities(general_account_id, NewsImpact, trade_data.news_impact_ids)
+        psychology_states = await self._get_related_entities(general_account_id, PsychologyState, trade_data.psychology_state_ids)
+
+        # Gestione playbook (to-one)
+        playbook = None
+        if trade_data.playbook_id:
+            playbook = await self.playbook_repo.get_by_id(trade_data.playbook_id)
+            if not playbook or playbook.general_account_id != general_account_id:
+                 raise HTTPException(status.HTTP_400_BAD_REQUEST, "Playbook non valido o non appartenente all'utente.")
+
+        # Gestione regole (M2M)
+        rules_followed = []
+        if trade_data.rules_followed_ids:
+            rules_result = await self.db.execute(
+                select(RulePlaybook).where(RulePlaybook.id.in_(trade_data.rules_followed_ids))
+            )
+            rules_followed = rules_result.scalars().all()
+            if len(rules_followed) != len(set(trade_data.rules_followed_ids)):
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, "Uno o più ID di regole non sono validi.")
+
 
         # Crea l'istanza del trade includendo le relazioni
         db_trade = Trade(
@@ -148,7 +166,8 @@ class TradeService:
             mistakes=mistakes,
             playbook=playbook,
             news_impacts=news_impacts,
-            psychology_states=psychology_states
+            psychology_states=psychology_states,
+            rules_followed=rules_followed
         )
 
         self.db.add(db_trade)
@@ -341,9 +360,15 @@ class TradeService:
         # Recalculate Net P/L if gross_p_l, fees, or commissions change
         pl_recalculation_needed = any(field in update_dict for field in ['gross_p_l', 'fees', 'commissions'])
         if pl_recalculation_needed:
-            gross_pnl = Decimal(str(db_trade.gross_p_l)) if db_trade.gross_p_l is not None else Decimal('0.0')
-            fees = Decimal(str(db_trade.fees)) if db_trade.fees is not None else Decimal('0.0')
-            commissions = Decimal(str(db_trade.commissions)) if db_trade.commissions is not None else Decimal('0.0')
+            # Assicurati di usare i valori aggiornati da update_dict se presenti, altrimenti usa quelli esistenti
+            gross_pnl_val = update_dict.get('gross_p_l', db_trade.gross_p_l)
+            fees_val = update_dict.get('fees', db_trade.fees)
+            commissions_val = update_dict.get('commissions', db_trade.commissions)
+
+            gross_pnl = Decimal(str(gross_pnl_val)) if gross_pnl_val is not None else Decimal('0.0')
+            fees = Decimal(str(fees_val)) if fees_val is not None else Decimal('0.0')
+            commissions = Decimal(str(commissions_val)) if commissions_val is not None else Decimal('0.0')
+
             db_trade.p_l = gross_pnl - fees - commissions
 
         # Recalculate R-Multiple if P/L was recalculated or if other relevant fields changed

@@ -1,176 +1,111 @@
-<template>
-  <div class="multiselect-container" ref="containerRef">
-    <div class="selected-items-wrapper" @click="toggleDropdown">
-      <div v-if="selectedOptions.length === 0" class="placeholder">{{ placeholder }}</div>
-      <div v-else class="pills-container">
-        <BasePill v-for="option in selectedOptions" :key="option.value" class="pill">
-          {{ option.label }}
-          <span class="remove-pill" @click.stop="removeOption(option)">&times;</span>
-        </BasePill>
-      </div>
-      <span class="chevron" :class="{ 'is-open': isOpen }">&#9662;</span>
-    </div>
-    <div v-if="isOpen" class="options-list">
-      <div
-        v-for="option in options"
-        :key="option.value"
-        class="option-item"
-        :class="{ 'is-selected': isSelected(option) }"
-        @click="toggleOption(option)"
-      >
-        {{ option.label }}
-      </div>
-    </div>
-  </div>
-</template>
-
+<!-- frontend/src/components/ui/BaseMultiSelect.vue -->
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import BasePill from './BasePill.vue';
+import Multiselect from '@vueform/multiselect'
+import '@vueform/multiselect/themes/default.css'
 
 const props = defineProps({
   modelValue: {
-    type: Array,
-    default: () => [],
+    type: [String, Array, Object, Number, null],
+    required: true,
   },
   options: {
     type: Array,
-    required: true, // expecting [{ value: '...', label: '...' }]
+    required: true,
   },
   placeholder: {
     type: String,
-    default: 'Select options...',
+    default: 'Select options',
   },
-});
+  mode: {
+    type: String,
+    default: 'tags', // single | multiple | tags
+  },
+  searchable: {
+    type: Boolean,
+    default: true,
+  },
+  closeOnSelect: {
+    type: Boolean,
+    default: false,
+  },
+  /* questa la usi nel form: <BaseMultiSelect ... label="Tags" /> */
+  label: {
+    type: String,
+    default: '',
+  },
+})
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue'])
 
-const isOpen = ref(false);
-const containerRef = ref(null);
-
-const selectedValues = ref([...props.modelValue]);
-
-const selectedOptions = computed(() => {
-  return props.options.filter(opt => selectedValues.value.includes(opt.value));
-});
-
-const isSelected = (option) => {
-  return selectedValues.value.includes(option.value);
-};
-
-const toggleDropdown = () => {
-  isOpen.value = !isOpen.value;
-};
-
-const closeDropdown = () => {
-  isOpen.value = false;
-};
-
-const toggleOption = (option) => {
-  const index = selectedValues.value.indexOf(option.value);
-  if (index > -1) {
-    selectedValues.value.splice(index, 1);
-  } else {
-    selectedValues.value.push(option.value);
-  }
-};
-
-const removeOption = (option) => {
-  const index = selectedValues.value.indexOf(option.value);
-  if (index > -1) {
-    selectedValues.value.splice(index, 1);
-  }
-};
-
-watch(selectedValues, (newValue) => {
-  emit('update:modelValue', newValue);
-});
-
-watch(() => props.modelValue, (newValue) => {
-  if (JSON.stringify(newValue) !== JSON.stringify(selectedValues.value)) {
-    selectedValues.value = [...newValue];
-  }
-});
-
-const handleClickOutside = (event) => {
-  if (containerRef.value && !containerRef.value.contains(event.target)) {
-    closeDropdown();
-  }
-};
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
+const handleChange = (value) => {
+  emit('update:modelValue', value)
+}
 </script>
 
-<style scoped>
-.multiselect-container {
-  position: relative;
-  width: 100%;
-}
-.selected-items-wrapper {
+<template>
+  <div class="base-multiselect">
+    <label v-if="label" class="base-multiselect__label">
+      {{ label }}
+    </label>
+
+    <Multiselect :value="modelValue" :options="options" :placeholder="placeholder" :mode="mode" :searchable="searchable"
+      :close-on-select="closeOnSelect" :append-to-body="false" @change="handleChange" class="multiselect-custom"
+      label="label" value-prop="value" :object="false" />
+  </div>
+</template>
+
+<style>
+/* wrapper del campo per allinearlo agli altri input */
+.base-multiselect {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: var(--semantic-size-inset-sm);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-interactive);
-  cursor: pointer;
-  min-height: 38px; /* Match BaseInput height */
+  flex-direction: column;
+  gap: 0.25rem;
 }
-.placeholder {
-  color: var(--semantic-color-text-placeholder);
-  padding: 4px;
+
+.base-multiselect__label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--semantic-color-text-primary, #fff);
 }
-.pills-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--semantic-size-stack-xs);
+
+/* variabili del tema del multiselect */
+.multiselect-custom {
+  --ms-tag-bg: var(--semantic-color-primary-default, #3b82f6);
+  --ms-tag-color: var(--semantic-color-primary-text, #fff);
+  --ms-ring-color: var(--semantic-color-primary-focus, #3b82f6);
+  --ms-border-color: var(--semantic-color-border, #4b5563);
+  --ms-border-width: 1px;
+  --ms-radius: 0.4rem;
+  --ms-bg: var(--semantic-color-surface-secondary, #111827);
+  --ms-color: var(--semantic-color-text, #e5e7eb);
+
+  /* dropdown */
+  --ms-dropdown-bg: #ffffff;
+  --ms-option-bg-pointed: #f3f4f6;
+  --ms-option-color-pointed: #111827;
+  --ms-option-bg-selected: var(--semantic-color-primary-default, #3b82f6);
+  --ms-option-color-selected: #ffffff;
 }
-.pill {
-  display: flex;
-  align-items: center;
-  padding-right: 8px;
+
+/* il field quando è attivo */
+.multiselect-custom.is-active {
+  box-shadow: none;
 }
-.remove-pill {
-  margin-left: 8px;
-  cursor: pointer;
-  font-weight: bold;
+
+/* 👇 qui forziamo il colore del testo delle opzioni
+   ora funziona perché append-to-body=false e sono dentro il componente */
+.multiselect-custom .multiselect-option {
+  color: #111827;
 }
-.chevron {
-  margin-left: auto;
-  color: var(--semantic-color-text-secondary);
-  transition: transform 0.2s;
+
+/* per chi usa tema scuro nello sfondo del field */
+.multiselect-custom .multiselect-wrapper {
+  background: var(--semantic-color-surface-secondary, #111827);
 }
-.chevron.is-open {
-  transform: rotate(180deg);
-}
-.options-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: var(--semantic-color-surface-primary);
-  border: 1px solid var(--semantic-color-border-default);
-  border-radius: var(--semantic-border-radius-surface);
-  margin-top: 4px;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
-}
-.option-item {
-  padding: var(--semantic-size-inset-md);
-  cursor: pointer;
-}
-.option-item:hover {
-  background-color: var(--semantic-color-surface-secondary);
-}
-.option-item.is-selected {
-  background-color: var(--semantic-color-surface-brand);
-  color: var(--semantic-color-text-on-brand);
+
+/* placeholder più visibile */
+.multiselect-custom .multiselect-single-label,
+.multiselect-custom .multiselect-placeholder {
+  color: var(--semantic-color-text, #e5e7eb);
 }
 </style>
