@@ -62,28 +62,8 @@ const handleChange = (value) => {
   --ms-border-width: 1px;
   --ms-radius: 0.25rem;
   --ms-bg: var(--semantic-color-background);
-  --ms-color: var(--semantic-color-text); /* Inherited by options, causing white text */
-
-  /* FIX: Dropdown options styling */
-  --ms-dropdown-bg: #FFFFFF;
-  --ms-option-bg-pointed: #f3f4f6;
-  --ms-option-color-pointed: #111827;
-  --ms-option-bg-selected: var(--semantic-color-primary-default);
-  --ms-option-color-selected: var(--semantic-color-primary-text);
-  --ms-option-bg-selected-pointed: var(--semantic-color-primary-default);
-  --ms-option-color-selected-pointed: var(--semantic-color-primary-text);
+  --ms-color: var(--semantic-color-text);
 }
-
-/*
-  FIX: The default option text color is not controlled by a variable.
-  This rule sets a dark color for options, overriding the inherited --ms-color.
-*/
-.multiselect-custom .multiselect-option {
-  color: #111827;
-}
-
-/* The variables --ms-option-color-selected and --ms-option-color-pointed
-   will override the color for their respective states. */
 
 .multiselect-custom.is-active {
     box-shadow: none;

@@ -36,7 +36,6 @@ const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, label: p.title }))
 );
 
-// CORREZIONE DEFINITIVA: Utilizzo di `.name` per tutte le etichette
 const mistakesOptions = computed(() =>
   (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
 );
@@ -104,7 +103,10 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <form class="new-trade-form" @submit.prevent="handleSubmit">
+  <div v-if="labelsStore.isLoading['tags'] || labelsStore.isLoading['mistakes'] || labelsStore.isLoading['psychology-states'] || newsImpactsStore.isLoading" class="loading-message">
+    Loading associations...
+  </div>
+  <form v-else class="new-trade-form" @submit.prevent="handleSubmit">
 
     <fieldset class="form-section">
       <legend>Timestamps</legend>
