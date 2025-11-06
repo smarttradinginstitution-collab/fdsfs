@@ -50,8 +50,8 @@ class MetricsCalculator:
         total_classified = self.winning_trades_count + self.losing_trades_count
         self.breakeven_trades_count = len(self.trades) - total_classified
 
-        self.gross_profit = sum(t.p_l for t in self.winning_trades_list)
-        self.gross_loss = abs(sum(t.p_l for t in self.losing_trades_list))
+        self.gross_profit = sum(Decimal(str(t.p_l)) for t in self.winning_trades_list)
+        self.gross_loss = abs(sum(Decimal(str(t.p_l)) for t in self.losing_trades_list))
 
     def get_all_metrics(self, pre_calculated_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -312,16 +312,16 @@ class MetricsCalculator:
             }
 
         # Calculate Net P/L
-        net_pnl = sum(trade.p_l for trade in trades_followed if trade.p_l is not None)
+        net_pnl = sum(Decimal(str(trade.p_l)) for trade in trades_followed if trade.p_l is not None)
 
         # Calculate Win Rate
         winning_trades = [t for t in trades_followed if t.p_l is not None and t.p_l > 0]
         win_rate = (len(winning_trades) / num_trades_followed) * 100 if num_trades_followed > 0 else 0.0
 
         # Calculate Profit Factor
-        gross_profit = sum(t.p_l for t in winning_trades)
+        gross_profit = sum(Decimal(str(t.p_l)) for t in winning_trades)
         losing_trades = [t for t in trades_followed if t.p_l is not None and t.p_l < 0]
-        gross_loss = abs(sum(t.p_l for t in losing_trades))
+        gross_loss = abs(sum(Decimal(str(t.p_l)) for t in losing_trades))
 
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
 
