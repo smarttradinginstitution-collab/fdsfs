@@ -79,6 +79,7 @@ const handleChange = (value) => {
 
 /* 1. Variabili Globali */
 .multiselect-custom {
+  --ms-radius: var(--semantic-border-radius-interactive);
   --ms-bg: var(--semantic-color-surface-primary);
   --ms-border-color: var(--semantic-color-border-default);
   --ms-ring-color: var(--semantic-color-border-focus);
