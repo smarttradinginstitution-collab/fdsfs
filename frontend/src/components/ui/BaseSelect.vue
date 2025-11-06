@@ -95,7 +95,7 @@ function onChange(event) {
   cursor: pointer;
 
   font-family: var(--semantic-font-style-body-base-font-family);
-  font-size: var(--semantic-font-style-body-base-font-size);
+  font-size: var(--semantic-font-style-body-sm-font-size);
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-primary);
   border: var(--base-border-width-1) solid var(--semantic-color-border-default);

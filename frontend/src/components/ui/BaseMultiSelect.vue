@@ -79,6 +79,7 @@ const handleChange = (value) => {
 
 /* 1. Variabili Globali */
 .multiselect-custom {
+  --ms-font-size: var(--semantic-font-style-body-sm-font-size);
   --ms-radius: var(--semantic-border-radius-interactive);
   --ms-bg: var(--semantic-color-surface-primary);
   border: 1px solid var(--semantic-color-border-default);
