@@ -8,6 +8,14 @@ const brokerService = {
   getBrokers() {
     return apiClient.get('/brokers');
   },
+
+  /**
+   * Fetches a list of all available platforms from the backend.
+   * @returns {Promise<Array>} A promise that resolves to an array of platform objects.
+   */
+  getPlatforms() {
+    return apiClient.get('/platforms');
+  },
 };
 
 export default brokerService;
