@@ -70,21 +70,22 @@ const handleChange = (value) => {
 
 /* variabili del tema del multiselect */
 .multiselect-custom {
-  --ms-tag-bg: var(--semantic-color-primary-default, #3b82f6);
-  --ms-tag-color: var(--semantic-color-primary-text, #fff);
-  --ms-ring-color: var(--semantic-color-primary-focus, #3b82f6);
-  --ms-border-color: var(--semantic-color-border, #4b5563);
+  --ms-tag-bg: var(--semantic-color-interactive-primary-default);
+  --ms-tag-color: var(--semantic-color-text-on-brand);
+  --ms-ring-color: var(--semantic-color-border-focus);
+  --ms-border-color: var(--semantic-color-border-default);
   --ms-border-width: 1px;
   --ms-radius: 0.4rem;
-  --ms-bg: var(--semantic-color-surface-secondary, #111827);
-  --ms-color: var(--semantic-color-text, #e5e7eb);
+  --ms-bg: var(--semantic-color-surface-primary);
+  --ms-color: var(--semantic-color-text-primary);
 
   /* dropdown */
-  --ms-dropdown-bg: #ffffff;
-  --ms-option-bg-pointed: #f3f4f6;
-  --ms-option-color-pointed: #111827;
-  --ms-option-bg-selected: var(--semantic-color-primary-default, #3b82f6);
-  --ms-option-color-selected: #ffffff;
+  --ms-dropdown-bg: var(--semantic-color-surface-secondary);
+  --ms-dropdown-border-color: var(--semantic-color-border-default);
+  --ms-option-bg-pointed: var(--semantic-color-surface-primary);
+  --ms-option-color-pointed: var(--semantic-color-text-primary);
+  --ms-option-bg-selected: var(--semantic-color-interactive-primary-default);
+  --ms-option-color-selected: var(--semantic-color-text-on-brand);
 }
 
 /* il field quando è attivo */
@@ -95,17 +96,17 @@ const handleChange = (value) => {
 /* 👇 qui forziamo il colore del testo delle opzioni
    ora funziona perché append-to-body=false e sono dentro il componente */
 .multiselect-custom .multiselect-option {
-  color: #111827;
+  color: var(--semantic-color-text-primary);
 }
 
 /* per chi usa tema scuro nello sfondo del field */
 .multiselect-custom .multiselect-wrapper {
-  background: var(--semantic-color-surface-secondary, #111827);
+  background: var(--semantic-color-surface-primary);
 }
 
 /* placeholder più visibile */
 .multiselect-custom .multiselect-single-label,
 .multiselect-custom .multiselect-placeholder {
-  color: var(--semantic-color-text, #e5e7eb);
+  color: var(--semantic-color-text-secondary);
 }
 </style>
