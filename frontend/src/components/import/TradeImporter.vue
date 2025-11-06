@@ -7,27 +7,22 @@ import api from '@/services/api'; // Your API service
 import brokerService from '@/services/brokerService';
 import BaseButton from '@/components/ui/BaseButton.vue';
 
+const props = defineProps({
+  selectedPlatform: {
+    type: String,
+    default: null,
+  },
+});
+
 const uiStore = useUiStore();
 const files = ref([]);
 const uploadProgress = ref(0);
 const isUploading = ref(false);
 const importResult = ref(null);
-const platforms = ref([]);
-const selectedPlatform = ref(null);
 
 // This should be passed as a prop or fetched from a store
 const tradingAccountsStore = useTradingAccountsStore();
 const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
-
-
-onMounted(async () => {
-  try {
-    const response = await brokerService.getPlatforms();
-    platforms.value = response.data;
-  } catch (error) {
-    uiStore.showNotification({ message: 'Failed to load platforms.', type: 'error' });
-  }
-});
 
 const onFileChange = (event) => {
   files.value = [...event.target.files];
@@ -39,7 +34,7 @@ const handleUpload = async () => {
     accountId: selectedAccountId.value,
   });
 
-  if (!files.value.length || !selectedAccountId.value || !selectedPlatform.value) {
+  if (!files.value.length || !selectedAccountId.value || !props.selectedPlatform) {
     uiStore.showNotification({ message: 'Please select a trading account, a platform, and a file.', type: 'error' });
     return;
   }
@@ -51,7 +46,7 @@ const handleUpload = async () => {
   const formData = new FormData();
   let endpoint = '';
 
-  if (selectedPlatform.value === 'MT5') {
+  if (props.selectedPlatform === 'MT5') {
     if (!firstFile.name.toLowerCase().endsWith('.html')) {
       uiStore.showNotification({ message: 'For MT5, please upload an HTML file.', type: 'error' });
       isUploading.value = false;
@@ -62,7 +57,7 @@ const handleUpload = async () => {
     }
     formData.append('file', firstFile);
     endpoint = `/import/mt5/${selectedAccountId.value}`;
-  } else if (selectedPlatform.value === 'Tradovate') {
+  } else if (props.selectedPlatform === 'Tradovate') {
     if (!firstFile.name.toLowerCase().endsWith('.csv')) {
       uiStore.showNotification({ message: 'For Tradovate, please upload a CSV file.', type: 'error' });
       isUploading.value = false;
@@ -119,31 +114,19 @@ const pollImportStatus = (importRunId) => {
 
 <template>
   <div class="trade-importer">
-    <!-- Step 2: Select a Platform -->
-    <div class="platform-selection-section">
-      <label for="platform-select">Step 2: Select a Platform</label>
-      <select id="platform-select" v-model="selectedPlatform">
-        <option :value="null" disabled>-- Please choose a platform --</option>
-        <option v-for="platform in platforms" :key="platform.id" :value="platform.name">
-          {{ platform.name }}
-        </option>
-      </select>
-    </div>
-
     <!-- Step 3: Upload Your File (Conditional) -->
-    <div v-if="selectedPlatform === 'MT5' || selectedPlatform === 'Tradovate'">
+    <div v-if="props.selectedPlatform === 'MT5' || props.selectedPlatform === 'Tradovate'">
       <div class="file-input-section">
         <label for="file-upload" class="file-upload-label">
-          <span>Step 3: Upload Your File</span>
-          <p v-if="selectedPlatform === 'MT5'">Only .html files are accepted.</p>
-          <p v-if="selectedPlatform === 'Tradovate'">Only .csv files are accepted.</p>
+          <p v-if="props.selectedPlatform === 'MT5'">Only .html files are accepted.</p>
+          <p v-if="props.selectedPlatform === 'Tradovate'">Only .csv files are accepted.</p>
         </label>
         <input
           id="file-upload"
           type="file"
           multiple
           @change="onFileChange"
-          :accept="selectedPlatform === 'MT5' ? '.html' : '.csv'"
+          :accept="props.selectedPlatform === 'MT5' ? '.html' : '.csv'"
           :disabled="isUploading"
         />
         <div v-if="files.length" class="file-list">
@@ -154,13 +137,13 @@ const pollImportStatus = (importRunId) => {
         </div>
       </div>
     </div>
-    <div v-else-if="selectedPlatform">
-      <p>Parser coming soon for {{ selectedPlatform }}.</p>
+    <div v-else-if="props.selectedPlatform">
+      <p>Parser coming soon for {{ props.selectedPlatform }}.</p>
     </div>
 
     <BaseButton
       @click="handleUpload"
-      :disabled="isUploading || !files.length || (selectedPlatform && !['MT5', 'Tradovate'].includes(selectedPlatform))"
+      :disabled="isUploading || !files.length || (props.selectedPlatform && !['MT5', 'Tradovate'].includes(props.selectedPlatform))"
     >
       {{ isUploading ? 'Uploading...' : 'Upload and Import' }}
     </BaseButton>
