@@ -28,7 +28,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  /* questa la usi nel form: <BaseMultiSelect ... label="Tags" /> */
   label: {
     type: String,
     default: '',
@@ -65,55 +64,66 @@ const handleChange = (value) => {
 .base-multiselect__label {
   font-weight: 500;
   font-size: 0.875rem;
-  color: var(--semantic-color-text-primary, #fff);
+  color: var(--semantic-color-text-primary);
 }
 
-/* variabili del tema del multiselect */
+/*
+  Soluzione Definitiva per il Tema Scuro del Multiselect
+
+  1. Variabili Globali: Sovrascriviamo le variabili CSS di default della libreria
+     per allinearle al nostro design system.
+  2. Regole Specifiche: Applichiamo regole dirette ai selettori interni
+     (es. `.multiselect-search`) per forzare lo stile corretto, superando
+     le regole di default del file `default.css` importato.
+*/
+
+/* 1. Variabili Globali */
 .multiselect-custom {
+  --ms-bg: var(--semantic-color-surface-primary);
+  --ms-border-color: var(--semantic-color-border-default);
+  --ms-ring-color: var(--semantic-color-border-focus);
+  --ms-placeholder-color: var(--semantic-color-text-primary);
+  --ms-color: var(--semantic-color-text-primary);
+
   --ms-tag-bg: var(--semantic-color-interactive-primary-default);
   --ms-tag-color: var(--semantic-color-text-on-brand);
-  --ms-ring-color: var(--semantic-color-border-focus);
-  --ms-border-color: var(--semantic-color-border-default);
-  --ms-border-width: 1px;
-  --ms-radius: 0.4rem;
-  --ms-bg: var(--semantic-color-surface-primary);
-  --ms-color: var(--semantic-color-text-primary);
-  --ms-placeholder-color: var(--semantic-color-text-primary);
 
-  /* dropdown */
   --ms-dropdown-bg: var(--semantic-color-surface-secondary);
   --ms-dropdown-border-color: var(--semantic-color-border-default);
+
   --ms-option-bg-pointed: var(--semantic-color-surface-primary);
   --ms-option-color-pointed: var(--semantic-color-text-primary);
   --ms-option-bg-selected: var(--semantic-color-interactive-primary-default);
   --ms-option-color-selected: var(--semantic-color-text-on-brand);
 }
 
-/* il field quando è attivo */
-.multiselect-custom.is-active {
-  box-shadow: none;
-}
+/* 2. Regole Specifiche */
 
-/* 👇 qui forziamo il colore del testo delle opzioni
-   ora funziona perché append-to-body=false e sono dentro il componente */
-.multiselect-custom .multiselect-option {
+/* Sfondo per il campo di input (sia vuoto che in modalità tags) */
+.multiselect-custom .multiselect-search,
+.multiselect-custom .multiselect-tags-search,
+.multiselect-custom .multiselect-input {
+  background: transparent;
   color: var(--semantic-color-text-primary);
 }
 
-/* per chi usa tema scuro nello sfondo del field */
-.multiselect-custom .multiselect-wrapper {
-  background: var(--semantic-color-surface-primary);
-}
-
-/* placeholder più visibile */
-.multiselect-custom .multiselect-single-label,
+/* Colore del placeholder */
 .multiselect-custom .multiselect-placeholder {
   color: var(--semantic-color-text-primary);
 }
 
-/* togliamo il bg bianco dall'input di ricerca e dall'input generale */
-.multiselect-custom .multiselect-search,
-.multiselect-custom .multiselect-input {
-  background-color: transparent;
+/* Wrapper principale per garantire lo sfondo corretto */
+.multiselect-custom .multiselect-wrapper {
+  background: var(--semantic-color-surface-primary);
+}
+
+/* Testo delle opzioni nel dropdown */
+.multiselect-custom .multiselect-option {
+  color: var(--semantic-color-text-primary);
+}
+
+/* Stile del bordo quando il componente è attivo/focalizzato */
+.multiselect-custom.is-active {
+  box-shadow: none;
 }
 </style>
