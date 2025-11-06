@@ -15,8 +15,7 @@ import { useLabelsStore } from '@/stores/labelsStore';
 import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import BaseSelect from '../ui/BaseSelect.vue';
-import BaseMultiSelect from '../ui/BaseMultiSelect.vue';
+import BaseSelect from '../ui/BaseInput.vue'; // Sostituito BaseMultiSelect
 
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
@@ -32,32 +31,31 @@ onMounted(() => {
   newsImpactsStore.fetchAllNewsImpactsData();
 });
 
-// CORREZIONE 1: BaseSelect si aspetta `{ value, text }`
+// CORREZIONE: Tutti i componenti ora usano il formato `{ value, text }` richiesto da BaseSelect
 const playbooksOptions = computed(() =>
   playbookStore.playbooks.map(p => ({ value: p.id, text: p.title }))
 );
 
-// BaseMultiSelect si aspetta `{ value, label }`
 const mistakesOptions = computed(() =>
-  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, label: m.name }))
+  (labelsStore.labels.mistakes || []).map(m => ({ value: m.id, text: m.name }))
 );
 
 const psychologyStatesOptions = computed(() =>
-  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, label: p.name }))
+  (labelsStore.labels['psychology-states'] || []).map(p => ({ value: p.id, text: p.name }))
 );
 
 const tagsOptions = computed(() =>
-  (labelsStore.labels.tags || []).map(t => ({ value: t.id, label: t.name }))
+  (labelsStore.labels.tags || []).map(t => ({ value: t.id, text: t.name }))
 );
 
 const newsImpactsOptions = computed(() =>
-  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, label: ni.name }))
+  newsImpactsStore.newsImpacts.map(ni => ({ value: ni.id, text: ni.name }))
 );
 
 const rulesOptions = computed(() => {
   if (!playbookStore.ruleGroups) return [];
   return playbookStore.ruleGroups.flatMap(group =>
-    group.rules.map(rule => ({ value: rule.id, label: `(${group.name_group}) ${rule.rule}` }))
+    group.rules.map(rule => ({ value: rule.id, text: `(${group.name_group}) ${rule.rule}` }))
   );
 });
 
@@ -119,7 +117,7 @@ const handleSubmit = () => {
       <legend>Core Information</legend>
       <div class="grid-group grid-group-3-col">
         <BaseInput v-model="form.symbol_snapshot" label="Symbol" placeholder="e.g., AAPL" />
-        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'LONG', text: 'Long'}, {value: 'SHORT', 'text': 'Short'}]" />
+        <BaseSelect v-model="form.direction" label="Direction" :options="[{value: 'LONG', text: 'Long'}, {value: 'SHORT', text: 'Short'}]" />
         <BaseInput v-model.number="form.pnl" label="Net P&L" type="number" step="0.01" />
       </div>
     </fieldset>
@@ -130,13 +128,13 @@ const handleSubmit = () => {
         <BaseSelect v-model="form.playbook_id" label="Playbook" :options="playbooksOptions" default-option-text="Select a playbook" />
       </div>
        <div class="grid-group grid-group-2-col associations-group">
-        <BaseMultiSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" placeholder="Select tags" />
-        <BaseMultiSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" placeholder="Select mistakes" />
-        <BaseMultiSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" placeholder="Select news impacts" />
-        <BaseMultiSelect v-model="form.psychology_state_ids" label="Psychology States" :options="psychologyStatesOptions" placeholder="Select psychology states" />
+        <BaseSelect v-model="form.tag_ids" label="Tags" :options="tagsOptions" :multiple="true" />
+        <BaseSelect v-model="form.mistake_ids" label="Mistakes" :options="mistakesOptions" :multiple="true" />
+        <BaseSelect v-model="form.news_impact_ids" label="News Impacts" :options="newsImpactsOptions" :multiple="true" />
+        <BaseSelect v-model="form.psychology_state_ids" label="Psychology States" :options="psychologyStatesOptions" :multiple="true" />
       </div>
       <div v-if="rulesOptions.length > 0" class="grid-group grid-group-1-col associations-group">
-        <BaseMultiSelect v-model="form.rules_followed_ids" label="Rules Followed" :options="rulesOptions" placeholder="Select rules followed" />
+        <BaseSelect v-model="form.rules_followed_ids" label="Rules Followed" :options="rulesOptions" :multiple="true" />
       </div>
     </fieldset>
 
@@ -156,7 +154,7 @@ const handleSubmit = () => {
     <div class="form-actions">
       <BaseButton type="submit" :is-loading="tradesStore.isLoading">
         Save Trade
-      </BaseButton>
+      </Button>
     </div>
   </form>
 </template>
