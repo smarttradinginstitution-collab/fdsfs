@@ -78,6 +78,7 @@ const handleChange = (value) => {
   --ms-radius: 0.4rem;
   --ms-bg: var(--semantic-color-surface-primary);
   --ms-color: var(--semantic-color-text-primary);
+  --ms-placeholder-color: var(--semantic-color-text-primary);
 
   /* dropdown */
   --ms-dropdown-bg: var(--semantic-color-surface-secondary);
@@ -107,11 +108,12 @@ const handleChange = (value) => {
 /* placeholder più visibile */
 .multiselect-custom .multiselect-single-label,
 .multiselect-custom .multiselect-placeholder {
-  color: var(--semantic-color-text-secondary);
+  color: var(--semantic-color-text-primary);
 }
 
-/* togliamo il bg bianco dall'input di ricerca */
-.multiselect-custom .multiselect-search {
+/* togliamo il bg bianco dall'input di ricerca e dall'input generale */
+.multiselect-custom .multiselect-search,
+.multiselect-custom .multiselect-input {
   background-color: transparent;
 }
 </style>
