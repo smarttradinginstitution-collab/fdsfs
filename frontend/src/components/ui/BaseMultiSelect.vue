@@ -48,6 +48,7 @@ const handleChange = (value) => {
     class="multiselect-custom"
     label="label"
     value-prop="value"
+    :object="false"
   />
 </template>
 
