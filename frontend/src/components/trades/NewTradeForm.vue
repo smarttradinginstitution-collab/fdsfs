@@ -15,7 +15,7 @@ import { useLabelsStore } from '@/stores/labelsStore';
 import { useNewsImpactsStore } from '@/stores/newsImpactsStore';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
-import BaseSelect from '../ui/BaseSelect.vue'; // CORREZIONE ERRORE DI BATTITURA
+import BaseSelect from '../ui/BaseSelect.vue'; // L'UNICA VERA CORREZIONE NECESSARIA
 
 const tradesStore = useTradesStore();
 const playbookStore = usePlaybookStore();
