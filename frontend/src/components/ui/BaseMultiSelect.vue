@@ -77,47 +77,68 @@ const handleChange = (value) => {
   color: var(--semantic-color-text-secondary);
 }
 
-/* Variabili globali per sovrascrivere il tema di default */
-.multiselect-custom {
+/*
+  =============================================================================
+  Stili per BaseMultiSelect - Soluzione Definitiva
+  - Aumenta la specificità per garantire la sovrascrittura del tema di default.
+  =============================================================================
+*/
+
+/* Aumentiamo la specificità usando il wrapper .base-multiselect */
+.base-multiselect .multiselect-custom {
   --ms-font-size: var(--semantic-font-style-body-sm-font-size);
   --ms-radius: var(--semantic-border-radius-interactive);
 
   /* Sfondo e testo */
-  --ms-bg: var(--semantic-color-surface-primary) !important;
-  --ms-color: var(--semantic-color-text-primary) !important;
-  --ms-placeholder-color: var(--semantic-color-text-tertiary) !important;
+  --ms-bg: var(--semantic-color-surface-primary);
+  --ms-color: var(--semantic-color-text-primary);
+  --ms-placeholder-color: var(--semantic-color-text-tertiary);
 
   /* Bordi e focus */
   --ms-border-width: 1px;
   --ms-border-color: var(--semantic-color-border-default);
-  --ms-ring-width: 0px;
+  --ms-ring-width: 1px; /* Usiamo il ring per il focus */
   --ms-ring-color: transparent;
-  box-shadow: none;
 
   /* Dropdown */
-  --ms-dropdown-bg: var(--semantic-color-surface-secondary) !important;
-  --ms-dropdown-border-color: var(--semantic-color-border-default) !important;
+  --ms-dropdown-bg: var(--semantic-color-surface-secondary);
+  --ms-dropdown-border-color: var(--semantic-color-border-default);
 
   /* Opzioni */
-  --ms-option-bg-pointed: var(--semantic-color-surface-primary) !important;
-  --ms-option-color-pointed: var(--semantic-color-text-primary) !important;
-  --ms-option-bg-selected: var(--semantic-color-interactive-primary-default) !important;
-  --ms-option-color-selected: var(--semantic-color-text-on-brand) !important;
+  --ms-option-bg-pointed: var(--semantic-color-surface-primary);
+  --ms-option-color-pointed: var(--semantic-color-text-primary);
+  --ms-option-bg-selected: var(--semantic-color-interactive-primary-default);
+  --ms-option-color-selected: var(--semantic-color-text-on-brand);
 
   /* Tag (pills) */
-  --ms-tag-bg: var(--semantic-color-interactive-secondary-default) !important;
-  --ms-tag-color: var(--semantic-color-text-primary) !important;
-  --ms-tag-radius: var(--semantic-border-radius-pill) !important;
+  --ms-tag-bg: var(--semantic-color-interactive-secondary-default);
+  --ms-tag-color: var(--semantic-color-text-primary);
+  --ms-tag-radius: var(--semantic-border-radius-pill);
 }
 
-/* Forza lo sfondo del campo di ricerca interno */
-.multiselect-custom .multiselect-search {
-  background-color: transparent !important;
+/* Regole dirette e con alta specificità per garantire la sovrascrittura */
+
+/* Sfondo del campo principale */
+.base-multiselect .multiselect-custom .multiselect-wrapper,
+.base-multiselect .multiselect-custom .multiselect-search {
+  background-color: var(--semantic-color-surface-primary) !important;
+  color: var(--semantic-color-text-primary);
 }
 
-/* Stile aggiuntivo per lo stato :active (focus) */
-.multiselect-custom.is-active {
-  border-color: var(--semantic-color-border-focus) !important;
+/* Testo del placeholder */
+.base-multiselect .multiselect-custom .multiselect-placeholder {
+  color: var(--semantic-color-text-tertiary) !important;
+}
+
+/* Stile del bordo e focus ring */
+.base-multiselect .multiselect-custom.is-active {
+  --ms-ring-color: var(--semantic-color-border-focus) !important;
   box-shadow: var(--semantic-effect-shadow-focus-ring) !important;
+  border-color: var(--semantic-color-border-focus) !important;
+}
+
+/* Stile delle opzioni nel dropdown */
+.base-multiselect .multiselect-dropdown .multiselect-option {
+  color: var(--semantic-color-text-primary);
 }
 </style>
