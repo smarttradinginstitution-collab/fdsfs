@@ -105,7 +105,7 @@ function onChange(event) {
   border-radius: var(--semantic-border-radius-interactive);
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   padding-right: var(--semantic-size-inset-xl);
-  line-height: 1.5;
+  line-height: 1.2;
 
   transition: box-shadow var(--base-animation-duration-fast),
     border-color var(--base-animation-duration-fast);
