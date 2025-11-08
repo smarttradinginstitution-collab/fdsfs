@@ -1,6 +1,7 @@
 # backend/app/Infrastructure/storage.py
 import os
 import uuid
+import asyncio
 from supabase import create_client, Client
 from fastapi import UploadFile
 from dotenv import load_dotenv
@@ -19,26 +20,24 @@ if SUPABASE_URL and SUPABASE_KEY:
 
 async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID) -> str:
     """
-    Carica un file nello storage di Supabase e restituisce il percorso.
-
-    Il percorso è strutturato come: {import_run_id}/{nome_file_originale}
+    Carica un file nello storage di Supabase in modo non bloccante e restituisce il percorso.
     """
     if not supabase_client:
         raise ConnectionError("Supabase client non è inizializzato. Controlla le variabili d'ambiente.")
 
     content = await upload_file.read()
-    # Costruisce un percorso univoco per evitare collisioni ma mantenendo il nome del file
     storage_path = f"{import_run_id}/{upload_file.filename}"
 
     try:
-        # L'upload è un'operazione bloccante, ma la gestiamo qui
-        supabase_client.storage.from_(SUPABASE_BUCKET).upload(
+        # Esegui l'upload, che è un'operazione bloccante, in un thread separato
+        # per non bloccare l'event loop di FastAPI.
+        await asyncio.to_thread(
+            supabase_client.storage.from_(SUPABASE_BUCKET).upload,
             path=storage_path,
             file=content,
             file_options={"content-type": upload_file.content_type or "application/octet-stream"}
         )
     except Exception as e:
-        # Qui potresti loggare l'errore specifico restituito da Supabase
         raise IOError(f"Impossibile caricare il file su Supabase Storage: {e}") from e
 
     return storage_path
