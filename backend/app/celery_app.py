@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Recupera la configurazione del broker dall'ambiente, con un default per lo sviluppo locale
-BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+# Recupera la configurazione del broker dall'ambiente, con un default per lo sviluppo locale con RabbitMQ
+BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://guest:guest@localhost:5672//")
+# Per RabbitMQ, il backend dei risultati è spesso gestito diversamente o non è necessario se lo stato è nel DB.
+# Usiamo rpc:// che invia gli stati indietro tramite canali AMQP.
+RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "rpc://")
 
 # Inizializza l'applicazione Celery
 celery_app = Celery(
