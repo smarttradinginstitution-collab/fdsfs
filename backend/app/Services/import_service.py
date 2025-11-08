@@ -43,46 +43,38 @@ class ImportService:
         return new_run
 
     async def process_tradovate_import(
-        self, import_run_id: uuid.UUID, file_content: bytes
+        self, import_run_id: uuid.UUID, file_contents: List[bytes]
     ):
         """
-        The main background task for processing a Tradovate CSV file.
+        Processa una lista di file CSV di Tradovate.
         """
-        # 1. Update status to 'parsing'
         import_run = await self.get_import_run(import_run_id)
         if not import_run:
-            return  # Or log an error
+            return
+
+        await self.update_import_run_status(import_run_id, "parsing")
 
         trading_account = await self.trading_account_repo.get_by_id(import_run.trading_account_id)
         initial_balance = Decimal(trading_account.initial_balance if trading_account else '0.0')
 
-        import_run.status = "parsing"
-        file_hash = hashlib.sha256(file_content).hexdigest()
-        import_run.file_sha256 = file_hash
-        await self.db.commit()
+        parser = TradovateParser()
+        all_parsed_trades = []
+        for content in file_contents:
+            # Calcola l'hash per ogni file se necessario, o per il batch
+            # Per semplicità, qui omettiamo l'hash individuale
+            all_parsed_trades.extend(parser.parse_performance_report(content))
 
-        # 2. Parse the file
-        try:
-            parser = TradovateParser()
-            parsed_trades = parser.parse_performance_report(file_content)
-            import_run.total_rows = len(parsed_trades)
-            import_run.status = "applying"
-            await self.db.commit()
-        except Exception as e:
-            import_run.status = "failed"
-            import_run.error_message = f"Failed to parse file: {e}"
-            await self.db.commit()
-            return
+        import_run.total_rows = len(all_parsed_trades)
+        await self.update_import_run_status(import_run_id, "applying")
+        await self.db.commit() # Salva total_rows
 
-        # 3. Apply trades to the database
         inserted_count = 0
         updated_count = 0
 
-        for trade_data in parsed_trades:
+        for trade_data in all_parsed_trades:
             trade_data["trading_account_id"] = import_run.trading_account_id
             trade_data["import_run_id"] = import_run.id
 
-            # Calculate R-multiple before saving
             all_metrics = enrich_trade_with_all_metrics(
                 trade_data=trade_data,
                 initial_balance=initial_balance
@@ -90,33 +82,25 @@ class ImportService:
             r_multiple = all_metrics.get("realized_r_multiple")
             trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
-            # Database-agnostic "read-then-write" for UPSERT logic
             dedupe_key = trade_data.get("dedupe_key")
-
-            # Find existing trade by dedupe_key
-            result = await self.db.execute(
-                select(Trade).where(Trade.dedupe_key == dedupe_key)
-            )
+            result = await self.db.execute(select(Trade).where(Trade.dedupe_key == dedupe_key))
             existing_trade = result.scalars().first()
 
             if existing_trade:
-                # Update existing trade
                 for key, value in trade_data.items():
                     setattr(existing_trade, key, value)
                 updated_count += 1
             else:
-                # Create new trade
                 new_trade = Trade(**trade_data)
                 self.db.add(new_trade)
                 inserted_count += 1
 
-        await self.db.flush() # Flush to ensure all operations are pending before commit
+        await self.db.flush()
 
-        # 4. Finalize the import run
         import_run.status = "applied"
         import_run.inserted_count = inserted_count
         import_run.updated_count = updated_count
-        import_run.skipped_count = import_run.total_rows - (inserted_count + updated_count)
+        import_run.skipped_count = (import_run.total_rows or 0) - (inserted_count + updated_count)
         import_run.finished_at = func.now()
 
         await self.db.commit()
@@ -125,31 +109,23 @@ class ImportService:
         self, import_run_id: uuid.UUID, file_content: bytes
     ):
         """
-        The main background task for processing an MT5 HTML file.
+        Processa un singolo file HTML di MT5.
         """
         import_run = await self.get_import_run(import_run_id)
         if not import_run:
             return
 
+        await self.update_import_run_status(import_run_id, "parsing", file_content=file_content)
+
         trading_account = await self.trading_account_repo.get_by_id(import_run.trading_account_id)
         initial_balance = Decimal(trading_account.initial_balance if trading_account else '0.0')
 
-        import_run.status = "parsing"
-        file_hash = hashlib.sha256(file_content).hexdigest()
-        import_run.file_sha256 = file_hash
-        await self.db.commit()
+        parser = Mt5Parser()
+        parsed_trades = parser.parse_performance_report(file_content)
 
-        try:
-            parser = Mt5Parser()
-            parsed_trades = parser.parse_performance_report(file_content)
-            import_run.total_rows = len(parsed_trades)
-            import_run.status = "applying"
-            await self.db.commit()
-        except Exception as e:
-            import_run.status = "failed"
-            import_run.error_message = f"Failed to parse MT5 file: {e}"
-            await self.db.commit()
-            return
+        import_run.total_rows = len(parsed_trades)
+        await self.update_import_run_status(import_run_id, "applying")
+        await self.db.commit()
 
         inserted_count = 0
         updated_count = 0
@@ -183,14 +159,30 @@ class ImportService:
         import_run.status = "applied"
         import_run.inserted_count = inserted_count
         import_run.updated_count = updated_count
-        import_run.skipped_count = import_run.total_rows - (inserted_count + updated_count)
+        import_run.skipped_count = (import_run.total_rows or 0) - (inserted_count + updated_count)
         import_run.finished_at = func.now()
 
         await self.db.commit()
 
     async def get_import_run(self, import_run_id: uuid.UUID) -> ImportRun | None:
-        """Fetches an ImportRun by its ID."""
+        """Recupera una ImportRun dal suo ID."""
         result = await self.db.execute(
             select(ImportRun).where(ImportRun.id == import_run_id)
         )
         return result.scalars().first()
+
+    async def update_import_run_status(
+        self, import_run_id: uuid.UUID, new_status: str, error_message: str | None = None, file_content: bytes | None = None
+    ):
+        """Aggiorna lo stato di una ImportRun e opzionalmente il messaggio di errore e l'hash del file."""
+        import_run = await self.get_import_run(import_run_id)
+        if import_run:
+            import_run.status = new_status
+            if error_message:
+                import_run.error_message = error_message
+            if file_content:
+                import_run.file_sha256 = hashlib.sha256(file_content).hexdigest()
+            if new_status in ["applied", "failed"]:
+                import_run.finished_at = func.now()
+
+            await self.db.commit()
