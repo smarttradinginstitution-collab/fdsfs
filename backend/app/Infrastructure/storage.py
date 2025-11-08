@@ -9,7 +9,7 @@ load_dotenv()
 
 # Inizializza il client di Supabase usando le variabili d'ambiente
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") # Adattato al nome presente nel file .env dell'utente
 SUPABASE_BUCKET = os.getenv("SUPABASE_IMPORT_BUCKET", "imports")
 
 # Crea un'istanza del client solo se le credenziali sono disponibili
