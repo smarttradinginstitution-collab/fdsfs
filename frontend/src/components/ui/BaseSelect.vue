@@ -56,7 +56,7 @@ function onChange(event) {
     <div class="select-container">
       <select class="select-field" :value="modelValue" :multiple="multiple" @change="onChange">
         <!-- option vuota, utile per i playbook -->
-        <option v-if="!multiple && placeholder" value="">
+        <option v-if="!multiple && placeholder" value="" disabled>
           {{ placeholder }}
         </option>
 
@@ -70,6 +70,7 @@ function onChange(event) {
 </template>
 
 <style scoped>
+/* Stili principali del wrapper e della label */
 .select-wrapper {
   display: flex;
   flex-direction: column;
@@ -88,46 +89,61 @@ function onChange(event) {
   position: relative;
 }
 
+/* Stile del campo select principale */
 .select-field {
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
   cursor: pointer;
 
+  /* Utilizzo dei token semantici per garantire coerenza */
   font-family: var(--semantic-font-style-body-base-font-family);
   font-size: var(--semantic-font-style-body-sm-font-size);
   color: var(--semantic-color-text-primary);
   background-color: var(--semantic-color-surface-primary);
-  border: var(--base-border-width-1) solid var(--semantic-color-border-default);
+  border: 1px solid var(--semantic-color-border-default);
   border-radius: var(--semantic-border-radius-interactive);
   padding: var(--semantic-size-inset-sm) var(--semantic-size-inset-md);
   padding-right: var(--semantic-size-inset-xl);
+  line-height: 1.5;
+
   transition: box-shadow var(--base-animation-duration-fast),
     border-color var(--base-animation-duration-fast);
 }
 
-/* freccia custom */
+/* Placeholder style */
+.select-field:invalid,
+.select-field option[value=""] {
+  color: var(--semantic-color-text-tertiary);
+}
+
+.select-field option:not([value=""]) {
+  color: var(--semantic-color-text-primary);
+}
+
+
+/* Freccia custom per il dropdown */
 .select-container::after {
   content: '';
   position: absolute;
   top: 50%;
   right: var(--semantic-size-inset-md);
   transform: translateY(-50%);
-  width: 1em;
-  height: 1em;
+  width: 0.8em;
+  height: 0.5em;
   background-color: var(--semantic-color-text-tertiary);
-  clip-path: polygon(100% 25%, 50% 75%, 0 25%);
+  clip-path: polygon(100% 0%, 0 0%, 50% 100%);
   pointer-events: none;
-  transition: background-color var(--base-animation-duration-fast);
 }
 
+/* Stile per lo stato :focus */
 .select-field:focus {
   outline: none;
   border-color: var(--semantic-color-border-focus);
   box-shadow: var(--semantic-effect-shadow-focus-ring);
 }
 
-/* 👇 per quando il browser apre il menu in tema scuro */
+/* Stile per le opzioni nel dropdown per il tema scuro */
 .select-field option {
   background: var(--semantic-color-surface-secondary);
   color: var(--semantic-color-text-primary);

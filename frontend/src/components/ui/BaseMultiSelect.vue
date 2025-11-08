@@ -56,13 +56,11 @@ const handleChange = (value) => {
 <style>
 /*
   =============================================================================
-  Stili per BaseMultiSelect
-  - Sovrascrive la libreria @vueform/multiselect per il tema scuro
-  - Allinea le label allo stile di BaseSelect
+  Stili per BaseMultiSelect - Soluzione Definitiva
+  - Si utilizza una specificità elevata per sovrascrivere il tema di default.
   =============================================================================
 */
 
-/* Wrapper del campo per allinearlo agli altri input */
 .base-multiselect {
   display: flex;
   flex-direction: column;
@@ -77,28 +75,16 @@ const handleChange = (value) => {
   color: var(--semantic-color-text-secondary);
 }
 
-/*
-  =============================================================================
-  Stili per BaseMultiSelect - Soluzione Definitiva
-  - Aumenta la specificità per garantire la sovrascrittura del tema di default.
-  =============================================================================
-*/
-
-/* Aumentiamo la specificità usando il wrapper .base-multiselect */
+/* Sovrascrittura delle variabili CSS della libreria con alta specificità */
 .base-multiselect .multiselect-custom {
-  --ms-font-size: var(--semantic-font-style-body-sm-font-size);
-  --ms-radius: var(--semantic-border-radius-interactive);
-
-  /* Sfondo e testo */
   --ms-bg: var(--semantic-color-surface-primary);
   --ms-color: var(--semantic-color-text-primary);
-  --ms-placeholder-color: var(--semantic-color-text-tertiary);
-
-  /* Bordi e focus */
-  --ms-border-width: 1px;
   --ms-border-color: var(--semantic-color-border-default);
-  --ms-ring-width: 1px; /* Usiamo il ring per il focus */
-  --ms-ring-color: transparent;
+  --ms-border-width: 1px;
+  --ms-radius: var(--semantic-border-radius-interactive);
+  --ms-font-size: var(--semantic-font-style-body-sm-font-size);
+  --ms-line-height: 1.5;
+  --ms-placeholder-color: var(--semantic-color-text-tertiary);
 
   /* Dropdown */
   --ms-dropdown-bg: var(--semantic-color-surface-secondary);
@@ -110,35 +96,30 @@ const handleChange = (value) => {
   --ms-option-bg-selected: var(--semantic-color-interactive-primary-default);
   --ms-option-color-selected: var(--semantic-color-text-on-brand);
 
-  /* Tag (pills) */
+  /* Tag */
   --ms-tag-bg: var(--semantic-color-interactive-secondary-default);
   --ms-tag-color: var(--semantic-color-text-primary);
   --ms-tag-radius: var(--semantic-border-radius-pill);
+
+  /* Focus Ring */
+  --ms-ring-width: 0px;
+  --ms-ring-color: transparent;
 }
 
-/* Regole dirette e con alta specificità per garantire la sovrascrittura */
-
-/* Sfondo del campo principale */
-.base-multiselect .multiselect-custom .multiselect-wrapper,
-.base-multiselect .multiselect-custom .multiselect-search {
-  background-color: var(--semantic-color-surface-primary) !important;
-  color: var(--semantic-color-text-primary);
-}
-
-/* Testo del placeholder */
-.base-multiselect .multiselect-custom .multiselect-placeholder {
-  color: var(--semantic-color-text-tertiary) !important;
-}
-
-/* Stile del bordo e focus ring */
+/* Stile per lo stato attivo/focus, per garantire il bordo corretto */
 .base-multiselect .multiselect-custom.is-active {
-  --ms-ring-color: var(--semantic-color-border-focus) !important;
-  box-shadow: var(--semantic-effect-shadow-focus-ring) !important;
-  border-color: var(--semantic-color-border-focus) !important;
+  border-color: var(--semantic-color-border-focus);
+  box-shadow: var(--semantic-effect-shadow-focus-ring);
 }
 
-/* Stile delle opzioni nel dropdown */
-.base-multiselect .multiselect-dropdown .multiselect-option {
+/*
+  Forza lo sfondo degli elementi interni che potrebbero rimanere bianchi.
+  L'uso di !important qui è una misura di sicurezza finale.
+*/
+.base-multiselect .multiselect-custom .multiselect-search,
+.base-multiselect .multiselect-custom .multiselect-tags-search,
+.base-multiselect .multiselect-custom .multiselect-input {
+  background: transparent !important;
   color: var(--semantic-color-text-primary);
 }
 </style>
