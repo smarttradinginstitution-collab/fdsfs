@@ -28,7 +28,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  /* questa la usi nel form: <BaseMultiSelect ... label="Tags" /> */
   label: {
     type: String,
     default: '',
@@ -55,57 +54,72 @@ const handleChange = (value) => {
 </template>
 
 <style>
-/* wrapper del campo per allinearlo agli altri input */
+/*
+  =============================================================================
+  Stili per BaseMultiSelect - Soluzione Definitiva
+  - Si utilizza una specificità elevata per sovrascrivere il tema di default.
+  =============================================================================
+*/
+
 .base-multiselect {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  width: 100%;
+  gap: var(--semantic-size-stack-xs);
 }
 
 .base-multiselect__label {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--semantic-color-text-primary, #fff);
+  font-family: var(--semantic-font-style-label-md-font-family);
+  font-size: var(--semantic-font-style-label-md-font-size);
+  font-weight: var(--semantic-font-style-label-md-font-weight);
+  color: var(--semantic-color-text-secondary);
 }
 
-/* variabili del tema del multiselect */
-.multiselect-custom {
-  --ms-tag-bg: var(--semantic-color-primary-default, #3b82f6);
-  --ms-tag-color: var(--semantic-color-primary-text, #fff);
-  --ms-ring-color: var(--semantic-color-primary-focus, #3b82f6);
-  --ms-border-color: var(--semantic-color-border, #4b5563);
+/* Sovrascrittura delle variabili CSS della libreria con alta specificità */
+.base-multiselect .multiselect-custom {
+  --ms-bg: var(--semantic-color-surface-primary);
+  --ms-color: var(--semantic-color-text-primary);
+  --ms-border-color: var(--semantic-color-border-default);
   --ms-border-width: 1px;
-  --ms-radius: 0.4rem;
-  --ms-bg: var(--semantic-color-surface-secondary, #111827);
-  --ms-color: var(--semantic-color-text, #e5e7eb);
+  --ms-radius: var(--semantic-border-radius-interactive);
+  --ms-font-size: var(--semantic-font-style-body-sm-font-size);
+  --ms-line-height: 1.2;
+  --ms-placeholder-color: var(--semantic-color-text-tertiary);
 
-  /* dropdown */
-  --ms-dropdown-bg: #ffffff;
-  --ms-option-bg-pointed: #f3f4f6;
-  --ms-option-color-pointed: #111827;
-  --ms-option-bg-selected: var(--semantic-color-primary-default, #3b82f6);
-  --ms-option-color-selected: #ffffff;
+  /* Dropdown */
+  --ms-dropdown-bg: var(--semantic-color-surface-secondary);
+  --ms-dropdown-border-color: var(--semantic-color-border-default);
+
+  /* Opzioni */
+  --ms-option-bg-pointed: var(--semantic-color-surface-primary);
+  --ms-option-color-pointed: var(--semantic-color-text-primary);
+  --ms-option-bg-selected: var(--semantic-color-interactive-primary-default);
+  --ms-option-color-selected: var(--semantic-color-text-on-brand);
+
+  /* Tag */
+  --ms-tag-bg: var(--semantic-color-interactive-secondary-default);
+  --ms-tag-color: var(--semantic-color-text-primary);
+  --ms-tag-radius: var(--semantic-border-radius-pill);
+
+  /* Focus Ring */
+  --ms-ring-width: 0px;
+  --ms-ring-color: transparent;
 }
 
-/* il field quando è attivo */
-.multiselect-custom.is-active {
-  box-shadow: none;
+/* Stile per lo stato attivo/focus, per garantire il bordo corretto */
+.base-multiselect .multiselect-custom.is-active {
+  border-color: var(--semantic-color-border-focus);
+  box-shadow: var(--semantic-effect-shadow-focus-ring);
 }
 
-/* 👇 qui forziamo il colore del testo delle opzioni
-   ora funziona perché append-to-body=false e sono dentro il componente */
-.multiselect-custom .multiselect-option {
-  color: #111827;
-}
-
-/* per chi usa tema scuro nello sfondo del field */
-.multiselect-custom .multiselect-wrapper {
-  background: var(--semantic-color-surface-secondary, #111827);
-}
-
-/* placeholder più visibile */
-.multiselect-custom .multiselect-single-label,
-.multiselect-custom .multiselect-placeholder {
-  color: var(--semantic-color-text, #e5e7eb);
+/*
+  Forza lo sfondo degli elementi interni che potrebbero rimanere bianchi.
+  L'uso di !important qui è una misura di sicurezza finale.
+*/
+.base-multiselect .multiselect-custom .multiselect-search,
+.base-multiselect .multiselect-custom .multiselect-tags-search,
+.base-multiselect .multiselect-custom .multiselect-input {
+  background: transparent !important;
+  color: var(--semantic-color-text-primary);
 }
 </style>
