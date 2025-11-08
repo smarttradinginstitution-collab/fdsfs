@@ -83,7 +83,7 @@ const handleChange = (value) => {
   --ms-border-width: 1px;
   --ms-radius: var(--semantic-border-radius-interactive);
   --ms-font-size: var(--semantic-font-style-body-sm-font-size);
-  --ms-line-height: 1.2;
+  --ms-line-height: 1.1;
   --ms-placeholder-color: var(--semantic-color-text-tertiary);
 
   /* Dropdown */
