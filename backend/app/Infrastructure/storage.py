@@ -1,58 +1,80 @@
 # backend/app/Infrastructure/storage.py
 import os
-import uuid
-import asyncio
 from supabase import create_client, Client
 from fastapi import UploadFile
-from dotenv import load_dotenv
+import uuid
 
-load_dotenv()
-
-# Inizializza il client di Supabase usando le variabili d'ambiente
+# Inizializza il client Supabase usando le variabili d'ambiente
+# Queste credenziali danno al backend i permessi per agire come servizio (service_role)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") # Adattato al nome presente nel file .env dell'utente
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_IMPORT_BUCKET", "imports")
 
 # Crea un'istanza del client solo se le credenziali sono disponibili
-supabase_client: Client | None = None
+supabase: Client | None = None
 if SUPABASE_URL and SUPABASE_KEY:
-    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID) -> str:
     """
-    Carica un file nello storage di Supabase in modo non bloccante e restituisce il percorso.
+    Carica un file su Supabase Storage in modo asincrono.
+
+    Args:
+        upload_file: L'oggetto UploadFile di FastAPI.
+        import_run_id: L'ID della run di importazione per creare un percorso univoco.
+
+    Returns:
+        Il percorso del file nello storage.
+
+    Raises:
+        ConnectionError: Se il client Supabase non è configurato.
+        Exception: Per errori durante l'upload.
     """
-    if not supabase_client:
-        raise ConnectionError("Supabase client non è inizializzato. Controlla le variabili d'ambiente.")
+    if not supabase:
+        raise ConnectionError("Supabase client non è configurato. Controlla le variabili d'ambiente.")
 
     content = await upload_file.read()
+    # Crea un percorso univoco per evitare collisioni di nomi
     storage_path = f"{import_run_id}/{upload_file.filename}"
 
     try:
-        # Esegui l'upload, che è un'operazione bloccante, in un thread separato
-        # per non bloccare l'event loop di FastAPI.
-        await asyncio.to_thread(
-            supabase_client.storage.from_(SUPABASE_BUCKET).upload,
+        # L'SDK di Supabase per Python usa chiamate sincrone, quindi la eseguiamo
+        # in questo modo. Per un'app ad alto traffico, si potrebbe eseguire
+        # in un thread separato con `asyncio.to_thread`.
+        supabase.storage.from_(SUPABASE_BUCKET).upload(
             path=storage_path,
             file=content,
             file_options={"content-type": upload_file.content_type or "application/octet-stream"}
         )
+        return storage_path
     except Exception as e:
-        raise IOError(f"Impossibile caricare il file su Supabase Storage: {e}") from e
-
-    return storage_path
+        # Logga l'errore e rilancia per gestirlo a un livello superiore
+        print(f"Errore durante l'upload su Supabase Storage: {e}")
+        raise
 
 def download_import_file(path: str) -> bytes:
     """
-    Scarica un file dallo storage di Supabase dato il suo percorso.
-    Questa funzione è pensata per essere usata dai worker Celery.
+    Scarica un file da Supabase Storage.
+
+    Questa funzione è sincrona perché verrà eseguita all'interno di un worker Celery,
+    che opera in un contesto sincrono.
+
+    Args:
+        path: Il percorso del file da scaricare.
+
+    Returns:
+        Il contenuto del file in bytes.
+
+    Raises:
+        ConnectionError: Se il client Supabase non è configurato.
+        Exception: Per errori durante il download.
     """
-    if not supabase_client:
-        raise ConnectionError("Supabase client non è inizializzato. Controlla le variabili d'ambiente.")
+    if not supabase:
+        raise ConnectionError("Supabase client non è configurato. Controlla le variabili d'ambiente.")
 
     try:
-        # download() è un'operazione sincrona/bloccante
-        response = supabase_client.storage.from_(SUPABASE_BUCKET).download(path)
+        response = supabase.storage.from_(SUPABASE_BUCKET).download(path)
         return response
     except Exception as e:
-        raise FileNotFoundError(f"Impossibile scaricare il file da Supabase Storage al percorso {path}: {e}") from e
+        print(f"Errore durante il download da Supabase Storage: {e}")
+        raise

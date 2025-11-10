@@ -1,8 +1,9 @@
 # backend/app/Controllers/import_controller.py
-from typing import List
 import uuid
+import hashlib
 from fastapi import Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
 from app.Infrastructure.db import get_db
 from app.Router.auth import get_current_claims
@@ -12,50 +13,42 @@ from app.tasks import process_import_task
 
 async def import_tradovate_trades(
     trading_account_id: uuid.UUID,
-    files: List[UploadFile] = File(...),
+    file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     claims: dict = Depends(get_current_claims),
 ):
     """
-    Gestisce l'upload di uno o più file CSV di Tradovate, li salva nello storage
-    e avvia un task Celery per l'importazione in background.
+    Gestisce l'upload di un singolo file CSV di Tradovate.
     """
-    if not files:
+    if not file.filename.lower().endswith('.csv'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Almeno un file CSV è richiesto."
+            detail="Il file deve essere in formato CSV."
         )
-
-    # Verifica che tutti i file siano CSV
-    for file in files:
-        if not file.filename.lower().endswith('.csv'):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Il file '{file.filename}' non è un CSV valido."
-            )
 
     user_id = uuid.UUID(claims.get("sub"))
     import_service = ImportService(db)
 
-    # Crea un'unica ImportRun per l'intero lotto di file
-    file_names = ", ".join([f.filename for f in files])
-    initial_import_run = await import_service.create_initial_import_run(
+    # Legge il contenuto del file per calcolare l'hash
+    file_content = await file.read()
+    await file.seek(0) # Riporta il puntatore all'inizio del file per l'upload
+    file_hash = hashlib.sha256(file_content).hexdigest()
+
+    import_run, created = await import_service.get_or_create_import_run(
         user_id=user_id,
         trading_account_id=trading_account_id,
-        file_name=file_names,
+        file_name=file.filename,
+        file_hash=file_hash,
         source_type="csv"
     )
 
-    # Carica tutti i file su Supabase Storage e raccoglie i loro percorsi
-    storage_paths = []
-    for file in files:
-        path = await upload_import_file(file, initial_import_run.id)
-        storage_paths.append(path)
+    if created:
+        # Se la run è stata appena creata, procedi con l'upload e l'accodamento
+        storage_path = await upload_import_file(file, import_run.id)
+        process_import_task.delay(str(import_run.id), storage_path, "tradovate")
 
-    # Avvia un singolo task Celery per processare tutti i file
-    process_import_task.delay(str(initial_import_run.id), storage_paths, "tradovate")
+    return import_run
 
-    return initial_import_run
 
 async def import_mt5_trades(
     trading_account_id: uuid.UUID,
@@ -64,8 +57,7 @@ async def import_mt5_trades(
     claims: dict = Depends(get_current_claims),
 ):
     """
-    Gestisce l'upload di un file HTML di MT5, lo salva nello storage
-    e avvia un task Celery per l'importazione in background.
+    Gestisce l'upload di un file HTML di MT5.
     """
     if not file.filename.lower().endswith('.html'):
         raise HTTPException(
@@ -76,20 +68,24 @@ async def import_mt5_trades(
     user_id = uuid.UUID(claims.get("sub"))
     import_service = ImportService(db)
 
-    initial_import_run = await import_service.create_initial_import_run(
+    file_content = await file.read()
+    await file.seek(0)
+    file_hash = hashlib.sha256(file_content).hexdigest()
+
+    import_run, created = await import_service.get_or_create_import_run(
         user_id=user_id,
         trading_account_id=trading_account_id,
         file_name=file.filename,
+        file_hash=file_hash,
         source_type="html",
     )
 
-    # Carica il file su Supabase Storage
-    storage_path = await upload_import_file(file, initial_import_run.id)
+    if created:
+        storage_path = await upload_import_file(file, import_run.id)
+        process_import_task.delay(str(import_run.id), storage_path, "mt5")
 
-    # Avvia il task Celery
-    process_import_task.delay(str(initial_import_run.id), [storage_path], "mt5")
+    return import_run
 
-    return initial_import_run
 
 async def get_import_status(
     import_run_id: uuid.UUID,
@@ -97,8 +93,7 @@ async def get_import_status(
     claims: dict = Depends(get_current_claims),
 ):
     """
-    Recupera lo stato corrente di un'importazione. L'implementazione non cambia
-    poiché legge sempre lo stato dal database.
+    Recupera lo stato corrente di un'importazione.
     """
     user_id = uuid.UUID(claims.get("sub"))
     import_service = ImportService(db)

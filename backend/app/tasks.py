@@ -1,73 +1,75 @@
 # backend/app/tasks.py
 import asyncio
 import uuid
-from typing import List
 from app.celery_app import celery_app
-from app.Infrastructure.db import SessionLocal
+from app.Infrastructure.db import SessionLocal as async_session_maker # CORREZIONE: Importa con il nome corretto
 from app.Infrastructure.storage import download_import_file
 from app.Services.import_service import ImportService
 
-
-@celery_app.task(name="app.tasks.process_import_task")
-def process_import_task(import_run_id: str, storage_paths: List[str], platform: str):
+@celery_app.task(name="app.tasks.process_import_task", bind=True, max_retries=3)
+def process_import_task(self, import_run_id_str: str, storage_path: str, platform: str):
     """
-    Task Celery eseguito in background da un worker.
+    Task Celery eseguito dal worker per processare un file di importazione.
 
-    Questo task orchestra l'intero processo di importazione:
-    1. Crea una sessione di database indipendente.
-    2. Scarica i file necessari da Supabase Storage.
-    3. Invoca il servizio di importazione per processare i dati.
-    4. Gestisce gli errori, assicurando che lo stato della ImportRun sia sempre aggiornato.
+    Questa funzione è il wrapper sincrono che Celery invoca.
+    Al suo interno, avvia il loop di eventi asyncio per eseguire la logica asincrona.
+
+    Args:
+        self: L'istanza del task, per gestire retry, etc.
+        import_run_id_str: L'ID della run di importazione (come stringa).
+        storage_path: Il percorso del file in Supabase Storage.
+        platform: La piattaforma di origine (es. "mt5", "tradovate").
     """
-    asyncio.run(_process_import_async(import_run_id, storage_paths, platform))
+    try:
+        # Esegue la funzione asincrona principale e attende il suo completamento
+        asyncio.run(_process_import_async(import_run_id_str, storage_path, platform))
+    except Exception as exc:
+        # In caso di errore imprevisto, logga l'errore e ritenta il task
+        print(f"Errore durante l'esecuzione del task per l'import {import_run_id_str}: {exc}")
+        # `self.retry` solleverà un'eccezione per far ritentare a Celery,
+        # con un backoff esponenziale.
+        raise self.retry(exc=exc, countdown=60) # Riprova tra 60 secondi
 
 
-async def _process_import_async(import_run_id_str: str, storage_paths: List[str], platform: str):
+async def _process_import_async(import_run_id_str: str, storage_path: str, platform: str):
     """
-    Funzione ausiliaria asincrona che contiene la logica effettiva del task.
+    Logica asincrona per l'elaborazione del file.
     """
     import_run_id = uuid.UUID(import_run_id_str)
 
-    # 1. Crea una sessione di database dedicata per questo task
-    async with SessionLocal() as session:
+    # 1. Crea una nuova sessione di database per questo task.
+    #    Questo garantisce l'isolamento e previene problemi di sessioni condivise.
+    async with async_session_maker() as session:
         service = ImportService(session)
-        import_run = await service.get_import_run(import_run_id)
-
-        if not import_run:
-            # Se la run non esiste, non c'è nulla da fare. Loggare l'errore.
-            print(f"ERRORE CRITICO: Impossibile trovare la ImportRun con ID {import_run_id} nel task Celery.")
-            return
 
         try:
-            # Recupera i contenuti di tutti i file prima di iniziare l'elaborazione
-            file_contents = [download_import_file(path) for path in storage_paths]
+            # 2. Scarica il file da Supabase Storage.
+            #    Questa è una chiamata bloccante, quindi ideale per un worker.
+            file_content = download_import_file(storage_path)
 
-            # 2. Invoca il metodo di servizio corretto in base alla piattaforma
+            # 3. Seleziona e avvia il processo di importazione corretto
+            #    in base alla piattaforma.
             if platform.lower() == "tradovate":
-                # Per Tradovate, passiamo la lista di contenuti
-                await service.process_tradovate_import(import_run_id, file_contents)
+                await service.process_tradovate_import(import_run_id, file_content)
             elif platform.lower() == "mt5":
-                # Per MT5, ci aspettiamo un solo file
-                if len(file_contents) != 1:
-                    raise ValueError(f"MT5 si aspetta 1 file, ma ne sono stati forniti {len(file_contents)}")
-                await service.process_mt5_import(import_run_id, file_contents[0])
+                await service.process_mt5_import(import_run_id, file_content)
             else:
-                raise ValueError(f"Piattaforma sconosciuta: {platform}")
+                # Se la piattaforma non è supportata, aggiorna la run con un errore.
+                import_run = await service.get_import_run(import_run_id)
+                if import_run:
+                    import_run.status = "failed"
+                    import_run.error_message = f"Piattaforma non supportata: {platform}"
+                    await session.commit()
+                raise ValueError(f"Piattaforma non supportata: {platform}")
 
         except Exception as e:
-            # 3. Gestione centralizzata degli errori
-            # Se qualsiasi cosa va storta, aggiorniamo la run a 'failed'
-            error_message = f"Errore durante l'esecuzione del task di importazione: {type(e).__name__}: {e}"
-            print(error_message) # Logga l'errore per il debug
-
-            # Assicurati che la sessione sia ancora valida per l'aggiornamento
-            if not session.is_active:
-                session = SessionLocal()
-                service = ImportService(session)
-
-            await service.update_import_run_status(
-                import_run_id=import_run_id,
-                new_status="failed",
-                error_message=error_message
-            )
-            await session.commit()
+            # In caso di errore durante l'elaborazione, marca la run come 'failed'
+            # e registra il messaggio di errore nel database.
+            print(f"Fallimento nel processare l'import {import_run_id}: {e}")
+            import_run = await service.get_import_run(import_run_id)
+            if import_run:
+                import_run.status = "failed"
+                import_run.error_message = str(e)
+                await session.commit()
+            # Rilancia l'eccezione per farla gestire al wrapper sincrono (che farà il retry).
+            raise

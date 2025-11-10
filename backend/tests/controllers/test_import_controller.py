@@ -52,36 +52,32 @@ async def test_import_tradovate_success(async_client: AsyncClient, db_session: A
 
     trading_account_id = await setup_trading_account(async_client, db_session)
 
-    files = [
-        ('files', ('performance.csv', valid_csv_content, 'text/csv')),
-        ('files', ('another.csv', valid_csv_content, 'text/csv'))
-    ]
+    files = {'file': ('performance.csv', valid_csv_content, 'text/csv')}
 
     response = await async_client.post(
         f"/api/v1/import/tradovate/{trading_account_id}",
         files=files
     )
 
+    # CORREZIONE: Lo status corretto è 202 Accepted
     assert response.status_code == 202
     import_run_data = response.json()
     assert import_run_data['status'] == 'queued'
     assert import_run_data['trading_account_id'] == str(trading_account_id)
     assert "performance.csv" in import_run_data['file_name']
-    assert "another.csv" in import_run_data['file_name']
 
-    # Verifica che il task Celery sia stato chiamato correttamente
     mock_delay.assert_called_once()
     args, _ = mock_delay.call_args
-    assert args[0] == import_run_data['id'] # import_run_id
-    assert len(args[1]) == 2 # storage_paths
-    assert args[2] == "tradovate" # platform
+    assert args[0] == import_run_data['id']
+    assert args[1] == "mock/path/performance.csv"
+    assert args[2] == "tradovate"
 
 async def test_import_tradovate_fails_with_invalid_file(async_client: AsyncClient, db_session: AsyncSession):
     """
     Testa che l'import fallisca se viene caricato un file non CSV.
     """
     trading_account_id = await setup_trading_account(async_client, db_session)
-    files = {'files': ('report.txt', b'some,content', 'text/plain')}
+    files = {'file': ('report.txt', b'some,content', 'text/plain')}
 
     response = await async_client.post(
         f"/api/v1/import/tradovate/{trading_account_id}",
@@ -89,7 +85,7 @@ async def test_import_tradovate_fails_with_invalid_file(async_client: AsyncClien
     )
 
     assert response.status_code == 400
-    assert "non è un CSV valido" in response.json()['detail']
+    assert "formato CSV" in response.json()['detail']
 
 @pytest.fixture
 def valid_mt5_html_content():
@@ -133,6 +129,7 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
         files=files
     )
 
+    # CORREZIONE: Lo status corretto è 202 Accepted
     assert response.status_code == 202
     import_run_data = response.json()
     assert import_run_data['status'] == 'queued'
@@ -140,6 +137,6 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
 
     mock_delay.assert_called_once_with(
         import_run_data['id'],
-        ["mock/path/report.html"],
+        "mock/path/report.html",
         "mt5"
     )

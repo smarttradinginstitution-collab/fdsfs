@@ -28,4 +28,5 @@ cachetools==6.2.1
 scikit-learn
 pandas
 celery
-py-amqp
+amqp
+redis
