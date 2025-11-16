@@ -7,7 +7,7 @@ from sqlalchemy import TIMESTAMP, func, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 if TYPE_CHECKING:
     from app.Models.broker import Broker

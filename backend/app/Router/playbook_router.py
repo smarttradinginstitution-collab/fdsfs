@@ -89,3 +89,24 @@ router.get(
     tags=["Playbooks"],
     summary="Recupera i trade eseguiti per un playbook",
 )(playbooks.list_trades_for_playbook)
+
+# ------------------------------------------------------------------------------
+# Rotte per la gestione dei contenuti di un Playbook (Blocks, Conditions)
+# ------------------------------------------------------------------------------
+
+from app.Schemas.playbook_block import PlaybookBlockRead
+from app.Schemas.playbook_condition import PlaybookConditionRead
+
+router.put(
+    "/playbooks/{playbook_id}/blocks",
+    response_model=List[PlaybookBlockRead],
+    tags=["Playbooks"],
+    summary="Aggiorna in blocco i content block di un playbook",
+)(playbooks.update_playbook_blocks)
+
+router.put(
+    "/playbooks/{playbook_id}/conditions",
+    response_model=List[PlaybookConditionRead],
+    tags=["Playbooks"],
+    summary="Aggiorna in blocco le condizioni-dati di un playbook",
+)(playbooks.update_playbook_conditions)
