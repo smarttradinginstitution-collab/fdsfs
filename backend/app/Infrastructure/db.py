@@ -11,12 +11,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.pool import NullPool
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
 
 from app.config import settings
-
-Base = declarative_base()
+from app.Infrastructure.base import Base
 
 # Import all models here to ensure they are registered with SQLAlchemy's Base
 # before any operation that needs them is executed. This prevents circular

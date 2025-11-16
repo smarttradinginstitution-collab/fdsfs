@@ -10,7 +10,7 @@ from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 
 class UserDashboardLayout(Base):

@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import Table, Column, ForeignKey, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 notes_note_templates_association = Table(
     "notes_note_templates",

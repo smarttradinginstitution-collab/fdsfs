@@ -9,7 +9,7 @@ from sqlalchemy import String, Boolean, SmallInteger, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount

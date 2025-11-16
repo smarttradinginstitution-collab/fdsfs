@@ -21,7 +21,7 @@ class PlaybookAnalyticsService:
         a single, optimized database query.
         """
         # Step 1: Verify ownership (without loading all trades)
-        playbook = await self.playbook_repo.get_by_id(playbook_id)
+        playbook = await self.playbook_repo.get_by_id_with_relations(playbook_id)
         if not playbook:
             return None
         if not is_admin and playbook.general_account.user_id != current_user_id:
