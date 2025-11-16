@@ -19,7 +19,6 @@ from app.Models.tag import Tag
 from app.Models.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
-from app.Models.rule_playbook import RulePlaybook
 from app.Models.playbook import Playbook
 
 
@@ -58,9 +57,7 @@ class TradeRepository:
                 selectinload(Trade.mistakes),
                 selectinload(Trade.news_impacts),
                 selectinload(Trade.psychology_states),
-                # Use joinedload for rules_followed to ensure they are loaded
-                # for modification in the playbook deletion cleanup logic.
-                joinedload(Trade.rules_followed),
+                selectinload(Trade.condition_checks),
             )
         )
 
@@ -187,16 +184,13 @@ class TradeRepository:
 
     async def list_by_playbook_id(self, playbook_id: UUID) -> List[Trade]:
         """
-        Elenca tutti i trade per un dato playbook, caricando esplicitamente le regole seguite
-        per consentirne la modifica e la pulizia.
+        Elenca tutti i trade per un dato playbook.
         """
         query = (
             select(Trade)
             .where(Trade.playbook_id == playbook_id)
-            .options(selectinload(Trade.rules_followed))
         )
         result = await self.db.execute(query)
-        # Non c'è la colonna 'duration' qui, quindi usiamo scalars()
         return result.scalars().unique().all()
 
     async def list_recent_by_general_account_id(
@@ -233,7 +227,7 @@ class TradeRepository:
                 joinedload(Trade.news_impacts),
                 joinedload(Trade.psychology_states),
                 joinedload(Trade.asset),
-                selectinload(Trade.rules_followed),
+                selectinload(Trade.condition_checks),
                 joinedload(Trade.trading_account),
             )
             .join(Trade.trading_account)
@@ -326,26 +320,6 @@ class TradeRepository:
         """Elimina un trade."""
         await self.db.delete(db_trade)
         await self.db.commit()
-
-    async def update_trade_rules(self, trade: Trade, rule_ids: list[UUID]):
-        """
-        Aggiorna le regole 'seguite' per un trade specifico.
-        Sostituisce completamente le regole esistenti con la nuova lista.
-        """
-        # Carica le istanze complete delle regole per assicurarsi che esistano
-        rules_result = await self.db.execute(
-            select(RulePlaybook).where(RulePlaybook.id.in_(rule_ids))
-        )
-        rules = rules_result.scalars().all()
-
-        # Verifica che tutti gli ID richiesti corrispondano a regole esistenti
-        if len(rules) != len(rule_ids):
-            raise ValueError("Una o più Rule ID non sono valide.")
-
-        # Sostituisci la lista delle regole associate al trade
-        trade.rules_followed = rules
-
-        # Il commit verrà gestito dal service layer
 
     async def get_aggregated_performance_stats(
         self,

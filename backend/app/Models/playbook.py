@@ -8,12 +8,14 @@ from sqlalchemy import String, TIMESTAMP, ForeignKey, func, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
     from app.Models.trade import Trade
-    from app.Models.rules_group_playbook import RulesGroupPlaybook
+    from app.Models.playbook_block import PlaybookBlock
+    from app.Models.playbook_condition import PlaybookCondition
+    from app.Models.image import Image
 
 
 class Playbook(Base):
@@ -43,8 +45,23 @@ class Playbook(Base):
         "GeneralAccount", back_populates="playbooks"
     )
     trades: Mapped[list["Trade"]] = relationship("Trade", back_populates="playbook")
-    rules_groups: Mapped[list[RulesGroupPlaybook]] = relationship(
-        "RulesGroupPlaybook",
+
+    # New relationships to blocks and conditions
+    blocks: Mapped[list["PlaybookBlock"]] = relationship(
+        "PlaybookBlock",
+        back_populates="playbook",
+        cascade="all, delete-orphan",
+        order_by="PlaybookBlock.order",
+    )
+    conditions: Mapped[list["PlaybookCondition"]] = relationship(
+        "PlaybookCondition",
+        back_populates="playbook",
+        cascade="all, delete-orphan",
+        order_by="PlaybookCondition.order",
+    )
+    # Relationship to ideal images
+    ideal_images: Mapped[list["Image"]] = relationship(
+        "Image",
         back_populates="playbook",
         cascade="all, delete-orphan",
     )
