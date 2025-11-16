@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, Sequence, List, Dict, Any
 from uuid import UUID
 from fastapi import HTTPException, status
-from sqlalchemy import select, insert, func, case
+from sqlalchemy import select, insert, func, case, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 from app.Models.playbook import Playbook

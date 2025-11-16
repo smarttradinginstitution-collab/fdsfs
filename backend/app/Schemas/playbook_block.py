@@ -18,5 +18,4 @@ class PlaybookBlockUpdate(PlaybookBlockBase):
 class PlaybookBlockRead(PlaybookBlockBase):
     id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

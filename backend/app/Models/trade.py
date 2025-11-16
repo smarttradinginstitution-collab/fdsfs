@@ -20,7 +20,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.base import Base
-from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
+from app.Models.enums import TradeDirection, TradeStatus
+from app.Models.trade_condition_check import TradeConditionCheck
 
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount

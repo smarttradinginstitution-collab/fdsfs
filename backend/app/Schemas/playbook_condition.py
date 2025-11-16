@@ -19,5 +19,4 @@ class PlaybookConditionUpdate(PlaybookConditionBase):
 class PlaybookConditionRead(PlaybookConditionBase):
     id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
