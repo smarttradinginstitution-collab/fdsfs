@@ -4,7 +4,7 @@ from typing import Any, TYPE_CHECKING
 from sqlalchemy import String, TIMESTAMP, func, ForeignKey, Text, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 if TYPE_CHECKING:
     from app.Models.manual_rule import ManualRule

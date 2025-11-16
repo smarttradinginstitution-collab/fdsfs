@@ -7,7 +7,7 @@ from sqlalchemy import String, TIMESTAMP, func, ForeignKey, DATE
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 from app.Models.notes_note_templates import notes_note_templates_association
 
 if TYPE_CHECKING:

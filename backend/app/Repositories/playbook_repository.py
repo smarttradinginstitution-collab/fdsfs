@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Optional, Sequence, List, Dict, Any
 from uuid import UUID
 from fastapi import HTTPException, status
-from sqlalchemy import select, insert, func, case
+from sqlalchemy import select, insert, func, case, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 from app.Models.playbook import Playbook
+from app.Models.playbook_block import PlaybookBlock
+from app.Models.playbook_condition import PlaybookCondition
 from app.Models.general_account import GeneralAccount
-from app.Models.rules_group_playbook import RulesGroupPlaybook
-from app.Models.rule_playbook import RulePlaybook
 from app.Models.trade import Trade
 from app.Schemas.playbook import PlaybookCreate, PlaybookUpdate
 
@@ -49,8 +49,8 @@ class PlaybookRepository:
             select(Playbook)
             .where(Playbook.id == playbook_id)
             .options(
-                selectinload(Playbook.rules_groups)
-                .selectinload(RulesGroupPlaybook.rules)
+                selectinload(Playbook.blocks),
+                selectinload(Playbook.conditions)
             )
         )
         result = await self.db.execute(stmt)
@@ -72,28 +72,14 @@ class PlaybookRepository:
         stmt = (
             select(Playbook)
             .where(Playbook.general_account_id == general_account_id)
-            .options(selectinload(Playbook.rules_groups))
-            .order_by(Playbook.title.asc())
-        )
-        res = await self.db.execute(stmt)
-        return res.scalars().all()
-
-    async def list_by_general_account_id_with_trades(self, general_account_id: UUID) -> Sequence[Playbook]:
-        """
-        DEPRECATED: inefficient, loads all trades.
-        Use list_playbooks_with_stats instead for overviews.
-        """
-        stmt = (
-            select(Playbook)
-            .where(Playbook.general_account_id == general_account_id)
             .options(
-                selectinload(Playbook.rules_groups).selectinload(RulesGroupPlaybook.rules).selectinload(RulePlaybook.trades),
-                selectinload(Playbook.trades)  # Eager load trades
+                selectinload(Playbook.blocks),
+                selectinload(Playbook.conditions)
             )
             .order_by(Playbook.title.asc())
         )
         res = await self.db.execute(stmt)
-        return res.unique().scalars().all()
+        return res.scalars().all()
 
     async def list_playbooks_with_stats(self, general_account_id: UUID) -> List[Dict[str, Any]]:
         """
@@ -134,8 +120,8 @@ class PlaybookRepository:
             .outerjoin(trade_stats_subquery, Playbook.id == trade_stats_subquery.c.playbook_id)
             .where(Playbook.general_account_id == general_account_id)
             .options(
-                selectinload(Playbook.rules_groups)
-                .selectinload(RulesGroupPlaybook.rules)
+                selectinload(Playbook.blocks),
+                selectinload(Playbook.conditions)
             )
             .order_by(Playbook.title.asc())
         )
@@ -191,83 +177,6 @@ class PlaybookRepository:
         await self.db.commit()
         # await self.db.refresh(db_obj) # Let the controller refetch the whole object later
         return db_obj
-
-    async def update_with_rules(self, db_obj: Playbook, obj_in: PlaybookUpdate) -> Playbook:
-        # 1. Update Playbook's own fields
-        playbook_update_data = obj_in.model_dump(exclude_unset=True, exclude={'rules_groups'})
-        if playbook_update_data:
-            if 'title' in playbook_update_data and playbook_update_data['title'] != db_obj.title:
-                await self._check_duplicate_title(db_obj.general_account_id, playbook_update_data['title'], db_obj.id)
-            for field, value in playbook_update_data.items():
-                setattr(db_obj, field, value)
-            self.db.add(db_obj)
-
-        # 2. Synchronize Rules and Groups
-        incoming_groups_map = {g.id: g for g in obj_in.rules_groups if g.id}
-        existing_groups_map = {g.id: g for g in db_obj.rules_groups}
-
-        # Delete groups that are not in the incoming list
-        for group_id, group in existing_groups_map.items():
-            if group_id not in incoming_groups_map:
-                await self.db.delete(group)
-
-        # Update existing groups and their rules, or create new ones
-        for i, group_data in enumerate(obj_in.rules_groups):
-            group = None
-            if group_data.id and group_data.id in existing_groups_map:
-                # Update existing group
-                group = existing_groups_map[group_data.id]
-                group.name_group = group_data.name_group
-                group.order = i
-            else:
-                # Create new group
-                group = RulesGroupPlaybook(
-                    name_group=group_data.name_group,
-                    playbook_id=db_obj.id,
-                    order=i
-                )
-                self.db.add(group)
-
-            # Synchronize rules within the group
-            incoming_rules_map = {r.id: r for r in group_data.rules if r.id}
-            existing_rules_map = {r.id: r for r in group.rules}
-
-            # Delete rules not in the incoming list
-            for rule_id, rule in existing_rules_map.items():
-                if rule_id not in incoming_rules_map:
-                    await self.db.delete(rule)
-
-            # Update or create rules
-            for j, rule_data in enumerate(group_data.rules):
-                rule = None
-                if rule_data.id and rule_data.id in existing_rules_map:
-                    # Update existing rule
-                    rule = existing_rules_map[rule_data.id]
-                    rule.rule = rule_data.rule
-                    rule.order = j
-                else:
-                    # Create new rule
-                    rule = RulePlaybook(
-                        rule=rule_data.rule,
-                        rules_groups_playbook_id=group.id,
-                        order=j
-                    )
-                    # Associate with group if it's new
-                    if not group.id:
-                        group.rules.append(rule)
-                    else: # if group is not new
-                        self.db.add(rule)
-
-
-        await self.db.commit()
-
-        # Eagerly load relationships to return a complete object
-        await self.db.refresh(db_obj, attribute_names=['rules_groups'])
-        for group in db_obj.rules_groups:
-            await self.db.refresh(group, attribute_names=['rules'])
-
-        return db_obj
-
 
     async def delete(self, db_obj: Playbook) -> None:
         await self.db.delete(db_obj)
@@ -354,9 +263,60 @@ class PlaybookRepository:
             select(GeneralAccount)
             .options(
                 joinedload(GeneralAccount.user),
-                selectinload(GeneralAccount.playbooks).selectinload(Playbook.rules_groups)
+                selectinload(GeneralAccount.playbooks).selectinload(Playbook.blocks),
+                selectinload(GeneralAccount.playbooks).selectinload(Playbook.conditions)
             )
             .order_by(GeneralAccount.created_at.asc())
         )
         res = await self.db.execute(stmt)
         return res.scalars().unique().all()
+
+    # --------------------------------------------------------------------------
+    # Methods for Playbook Blocks
+    # --------------------------------------------------------------------------
+
+    async def create_block(self, playbook_id: UUID, block_data: dict) -> PlaybookBlock:
+        block = PlaybookBlock(playbook_id=playbook_id, **block_data)
+        self.db.add(block)
+        await self.db.commit()
+        await self.db.refresh(block)
+        return block
+
+    async def bulk_update_blocks(self, playbook_id: UUID, blocks_data: List[Dict[str, Any]]) -> List[PlaybookBlock]:
+        # Simple implementation: delete all and create new
+        # More complex implementation would involve matching by ID
+        await self.db.execute(
+            delete(PlaybookBlock).where(PlaybookBlock.playbook_id == playbook_id)
+        )
+
+        blocks = [
+            PlaybookBlock(playbook_id=playbook_id, **block_data)
+            for block_data in blocks_data
+        ]
+        self.db.add_all(blocks)
+        await self.db.commit()
+        return blocks
+
+    # --------------------------------------------------------------------------
+    # Methods for Playbook Conditions
+    # --------------------------------------------------------------------------
+
+    async def create_condition(self, playbook_id: UUID, condition_data: dict) -> PlaybookCondition:
+        condition = PlaybookCondition(playbook_id=playbook_id, **condition_data)
+        self.db.add(condition)
+        await self.db.commit()
+        await self.db.refresh(condition)
+        return condition
+
+    async def bulk_update_conditions(self, playbook_id: UUID, conditions_data: List[Dict[str, Any]]) -> List[PlaybookCondition]:
+        await self.db.execute(
+            delete(PlaybookCondition).where(PlaybookCondition.playbook_id == playbook_id)
+        )
+
+        conditions = [
+            PlaybookCondition(playbook_id=playbook_id, **condition_data)
+            for condition_data in conditions_data
+        ]
+        self.db.add_all(conditions)
+        await self.db.commit()
+        return conditions
