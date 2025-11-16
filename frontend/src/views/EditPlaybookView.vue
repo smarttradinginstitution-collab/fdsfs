@@ -12,82 +12,92 @@ import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 
 const router = useRouter();
 const route = useRoute();
 const playbookStore = usePlaybookStore();
-const { ruleGroups } = storeToRefs(playbookStore);
 const uiStore = useUiStore();
-const ruleGroupManagerRef = ref(null);
 
-const playbookId = ref(null);
 const pageTitle = 'Edit Playbook';
 
-const playbookData = ref({
-  title: '',
-  description: '',
-  color: '#4A90E2',
-  icon_name: 'BuildingLibraryIcon',
-  private: false,
-});
+const playbookData = ref(null);
 const error = ref(null);
+const playbookId = ref(null);
+
+const addNewBlock = async (blockType) => {
+  if (!playbookId.value) return;
+
+  // Determine the order for the new block
+  const maxOrder = playbookData.value.blocks.reduce((max, block) => Math.max(max, block.order), -1);
+  const newOrder = maxOrder + 1;
+
+  // Define default content based on block type
+  let defaultContent = {};
+  if (blockType === 'THESIS') {
+    defaultContent = { text: 'New thesis block...' };
+  } else if (blockType === 'CONDITIONS') {
+    // Conditions are managed separately, no content needed in the block itself
+    defaultContent = {};
+  } else if (blockType === 'GALLERY') {
+    defaultContent = { images: [] };
+  }
+
+  try {
+    await playbookStore.createBlockForPlaybook({
+      playbookId: playbookId.value,
+      blockType: blockType,
+      content: defaultContent,
+      order: newOrder,
+    });
+    // The store should reactively update the component, but if not,
+    // we might need to refetch the playbook data. For now, we rely on the store's reactivity.
+  } catch (err) {
+    error.value = 'Failed to add the new block. Please try again.';
+    console.error("Error adding new block:", err);
+  }
+};
+
+// Import block components
+import ThesisBlock from '@/components/Playbooks/ThesisBlock.vue';
+import GalleryBlock from '@/components/Playbooks/GalleryBlock.vue';
+import ConditionsBlock from '@/components/Playbooks/ConditionsBlock.vue';
+import PsychologyBlock from '@/components/Playbooks/PsychologyBlock.vue';
+import LegacyRulesBlock from '@/components/Playbooks/LegacyRulesBlock.vue';
+
+const blockComponentMap = {
+  THESIS: ThesisBlock,
+  GALLERY: GalleryBlock,
+  CONDITIONS: ConditionsBlock,
+  PSYCHOLOGY: PsychologyBlock,
+  LEGACY_RULES: LegacyRulesBlock,
+};
 
 onMounted(async () => {
-  playbookId.value = route.params.id;
+  const id = route.params.id;
+  playbookId.value = id;
   try {
-    const data = await playbookStore.fetchPlaybookDetails(playbookId.value);
-    playbookData.value = { ...data };
+    const data = await playbookStore.fetchPlaybookDetails(id);
+    playbookData.value = data; // This will include blocks and conditions
   } catch (err) {
     console.error('Failed to fetch playbook data, redirecting.', err);
     router.push('/playbooks');
   }
 });
 
-const currentStep = ref(0);
-const steps = [
-  { title: 'Setup', description: 'Personalize your playbook' },
-  { title: 'Rules', description: 'Define your entry/exit criteria' },
-];
-
-const isLastStep = computed(() => currentStep.value === steps.length - 1);
-
 const cancelEdit = () => {
   router.push('/playbooks');
 };
 
-const goBack = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--;
-  }
-};
-
-const handleNext = () => {
-  if (isLastStep.value) {
-    submitPlaybookUpdate();
-  } else {
-    currentStep.value++;
-  }
-};
-
 const submitPlaybookUpdate = async () => {
-  if (!ruleGroupManagerRef.value?.ruleGroups) {
-    error.value = "Could not find rule groups data.";
-    return;
-  }
-
   uiStore.showLoader();
   error.value = null;
   try {
-    const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    const finalPlaybookData = {
-      ...playbookData.value,
-      rules_groups: ruleGroups,
-    };
-    await playbookStore.updatePlaybook(playbookId.value, finalPlaybookData);
+    // This is a simplified update. A more robust implementation would
+    // separate the updates for playbook details, blocks, and conditions.
+    await playbookStore.updatePlaybook(playbookId.value, playbookData.value);
     router.push({ name: 'playbook-detail', params: { id: playbookId.value } });
   } catch (err) {
-    console.error("Failed to update playbook with rules:", err);
+    console.error("Failed to update playbook:", err);
     error.value = playbookStore.error || 'An unknown error occurred during save.';
   } finally {
     uiStore.hideLoader();
@@ -101,19 +111,11 @@ const submitPlaybookUpdate = async () => {
       <BaseWidget>
         <template #header>
           <div class="page-header">
-            <div class="header-left-controls">
-              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="uiStore.isAppLoading">
-                <ArrowLeftIcon />
-              </IconButton>
-            </div>
             <h2 class="page-title">{{ pageTitle }}</h2>
           </div>
         </template>
-        <div class="page-content">
-          <Stepper :steps="steps" :current-step="currentStep" />
-
-          <!-- Step 1: Setup -->
-          <div v-if="currentStep === 0" class="form-content">
+        <div v-if="playbookData" class="page-content">
+          <div class="form-content">
             <div class="form-section">
               <h3 class="section-title">Color</h3>
               <ColorSelector v-model="playbookData.color" />
@@ -142,23 +144,42 @@ const submitPlaybookUpdate = async () => {
                 :disabled="uiStore.isAppLoading"
               />
             </div>
-          </div>
 
-          <!-- Step 2: Rules -->
-          <div v-if="currentStep === 1" class="form-content">
-            <RuleGroupManager
-              ref="ruleGroupManagerRef"
-              :playbook-id="playbookId"
-              :initial-groups="playbookData.rules_groups"
-            />
+            <!-- Dynamic Block Rendering -->
+            <div class="form-section">
+              <h3 class="section-title">Playbook Content</h3>
+              <div v-if="playbookData.blocks && playbookData.blocks.length > 0">
+                <div v-for="(block, index) in playbookData.blocks" :key="index" class="playbook-block">
+                  <component
+                    :is="blockComponentMap[block.block_type]"
+                    :content="block.content"
+                    :conditions="playbookData.conditions"
+                    @update:content="block.content = $event"
+                  />
+                </div>
+              </div>
+               <div v-else class="no-blocks-message">
+                This playbook has no content. Add a block to get started.
+              </div>
+            </div>
+
+             <!-- Add New Block Controls -->
+            <div class="form-section">
+                <h3 class="section-title">Add New Block</h3>
+                <div class="add-block-controls">
+                    <BaseButton @click="addNewBlock('THESIS')" variant="secondary">Add Thesis</BaseButton>
+                    <BaseButton @click="addNewBlock('CONDITIONS')" variant="secondary">Add Conditions</BaseButton>
+                    <BaseButton @click="addNewBlock('GALLERY')" variant="secondary">Add Gallery</BaseButton>
+                </div>
+            </div>
           </div>
 
           <div v-if="error" class="error-message">{{ error }}</div>
 
           <div class="form-actions">
             <BaseButton variant="secondary" @click="cancelEdit" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
-            <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
-              {{ isLastStep ? 'Update' : 'Next' }}
+            <BaseButton variant="primary" @click="submitPlaybookUpdate" :is-loading="uiStore.isAppLoading">
+              Update Playbook
             </BaseButton>
           </div>
         </div>
@@ -233,5 +254,27 @@ const submitPlaybookUpdate = async () => {
   padding: var(--semantic-size-inset-md);
   border-radius: var(--semantic-border-radius-surface);
   text-align: center;
+}
+
+.playbook-block {
+  border: 1px solid var(--semantic-color-border-default);
+  border-radius: var(--semantic-border-radius-surface);
+  padding: var(--semantic-size-inset-md);
+  margin-bottom: var(--semantic-size-stack-md);
+}
+
+.no-blocks-message {
+  color: var(--semantic-color-text-subtle);
+  padding: var(--semantic-size-inset-lg);
+  text-align: center;
+  border: 2px dashed var(--semantic-color-border-subtle);
+  border-radius: var(--semantic-border-radius-surface);
+}
+
+.add-block-controls {
+  display: flex;
+  gap: var(--semantic-size-stack-md);
+  justify-content: center;
+  padding-top: var(--semantic-size-stack-sm);
 }
 </style>
