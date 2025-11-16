@@ -9,14 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Infrastructure.db import get_db
 from app.Repositories.playbook_repository import PlaybookRepository
-from app.Repositories.rule_playbook_repository import RulePlaybookRepository
-from app.Repositories.rules_group_playbook_repository import RulesGroupPlaybookRepository
 from app.Repositories.trade_repository import TradeRepository
 from app.Services.playbook_service import PlaybookService
 from app.Schemas.playbook import (
     PlaybookCreate, PlaybookRead, PlaybookUpdate, PlaybookAdminRead, PlaybookStats, PlaybookAnalytics
 )
-from app.Schemas.rule_playbook import RuleMetrics
+from app.Schemas.playbook_block import PlaybookBlockRead, PlaybookBlockCreate
+from app.Schemas.playbook_condition import PlaybookConditionRead
 from app.Schemas.trade import TradeRead
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 from app.Services.metrics.metrics_calculator import MetricsCalculator
@@ -64,13 +63,6 @@ class PlaybookController:
         if not playbooks_data:
             return []
 
-        # Estrai gli ID dei playbook per la query successiva
-        playbook_ids = [item["playbook"].id for item in playbooks_data]
-
-        # Recupera le statistiche per tutte le regole di tutti i playbook in una sola query
-        rule_repo = RulePlaybookRepository(db)
-        rule_stats_map = await rule_repo.get_stats_for_rules_in_playbooks(playbook_ids)
-
         response_playbooks = []
         for item in playbooks_data:
             playbook_orm = item["playbook"]
@@ -107,16 +99,6 @@ class PlaybookController:
                 expectancy=expectancy
             )
 
-            # 2. Assegna le statistiche a ogni regola
-            for group in playbook_read.rules_groups:
-                for rule in group.rules:
-                    rule_stats = rule_stats_map.get(rule.id)
-                    if rule_stats:
-                        rule.metrics = RuleMetrics(**rule_stats)
-                    else:
-                        # Assicura che ci sia un valore di default se la regola non ha statistiche
-                        rule.metrics = RuleMetrics(follow_rate=0, net_pnl=0, win_rate=0, profit_factor=None)
-
             response_playbooks.append(playbook_read)
 
         return response_playbooks
@@ -141,6 +123,36 @@ class PlaybookController:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
         return PlaybookRead.model_validate(playbook)
+
+    async def create_block(
+        self,
+        playbook_id: UUID,
+        block_data: PlaybookBlockCreate,
+        current_user: CurrentUser = Depends(get_current_user),
+        general_account_id: UUID = Depends(get_current_general_account_id),
+        db: AsyncSession = Depends(get_db),
+        playbook_service: PlaybookService = Depends(),
+    ) -> PlaybookBlockRead:
+        """
+        Crea un nuovo blocco per un playbook esistente.
+        """
+        # First, verify the playbook exists and the user has access.
+        repo = PlaybookRepository(db)
+        playbook = await repo.get_by_id(playbook_id)
+
+        if not playbook:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook non trovato.")
+
+        if not current_user.is_admin and playbook.general_account_id != general_account_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
+
+        # Now, call the service to create the block
+        new_block = await playbook_service.create_playbook_block(
+            playbook_id=playbook_id,
+            block_data=block_data
+        )
+
+        return PlaybookBlockRead.model_validate(new_block)
 
     async def create_playbook(
         self,
@@ -175,9 +187,12 @@ class PlaybookController:
         if not current_user.is_admin and playbook_to_update.general_account_id != general_account_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso non autorizzato.")
 
-        updated_playbook = await repo.update_with_rules(db_obj=playbook_to_update, obj_in=playbook_data)
+        updated_playbook = await repo.update(db_obj=playbook_to_update, obj_in=playbook_data)
 
-        return PlaybookRead.model_validate(updated_playbook)
+        # After updating, we need to fetch the relations again to return the full object
+        refreshed_playbook = await repo.get_by_id_with_relations(updated_playbook.id)
+
+        return PlaybookRead.model_validate(refreshed_playbook)
 
     async def delete_playbook(
         self,
@@ -249,3 +264,39 @@ class PlaybookController:
         trade_repo = TradeRepository(db)
         trades = await trade_repo.list_by_playbook_id(playbook_id)
         return [TradeRead.model_validate(trade) for trade in trades]
+
+    # --- Methods for Blocks and Conditions ---
+
+    async def update_playbook_blocks(
+        self,
+        playbook_id: UUID,
+        blocks_data: List[dict],
+        current_user: CurrentUser = Depends(get_current_user),
+        general_account_id: UUID = Depends(get_current_general_account_id),
+        db: AsyncSession = Depends(get_db),
+    ) -> List[PlaybookBlockRead]:
+        repo = PlaybookRepository(db)
+        playbook = await repo.get_by_id(playbook_id)
+
+        if not playbook or playbook.general_account_id != general_account_id:
+            raise HTTPException(status_code=404, detail="Playbook not found")
+
+        blocks = await repo.bulk_update_blocks(playbook_id, blocks_data)
+        return [PlaybookBlockRead.model_validate(b) for b in blocks]
+
+    async def update_playbook_conditions(
+        self,
+        playbook_id: UUID,
+        conditions_data: List[dict],
+        current_user: CurrentUser = Depends(get_current_user),
+        general_account_id: UUID = Depends(get_current_general_account_id),
+        db: AsyncSession = Depends(get_db),
+    ) -> List[PlaybookConditionRead]:
+        repo = PlaybookRepository(db)
+        playbook = await repo.get_by_id(playbook_id)
+
+        if not playbook or playbook.general_account_id != general_account_id:
+            raise HTTPException(status_code=404, detail="Playbook not found")
+
+        conditions = await repo.bulk_update_conditions(playbook_id, conditions_data)
+        return [PlaybookConditionRead.model_validate(c) for c in conditions]

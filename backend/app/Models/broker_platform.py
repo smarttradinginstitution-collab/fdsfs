@@ -8,7 +8,7 @@ from sqlalchemy import TIMESTAMP, ForeignKey, func, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 class BrokerPlatform(Base):
     __tablename__ = "broker_platforms"

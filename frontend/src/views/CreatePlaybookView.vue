@@ -1,22 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import IconButton from '@/components/ui/IconButton.vue';
-import ArrowLeftIcon from '@/components/icons/ArrowLeftIcon.vue';
-import Stepper from '@/components/ui/Stepper.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
 
 const router = useRouter();
 const playbookStore = usePlaybookStore();
 const uiStore = useUiStore();
-const ruleGroupManagerRef = ref(null);
 
 const playbookData = ref({
   title: '',
@@ -27,47 +22,19 @@ const playbookData = ref({
 });
 const error = ref(null);
 
-const currentStep = ref(0);
-const steps = [
-  { title: 'Setup', description: 'Personalize your playbook' },
-  { title: 'Rules', description: 'Define your entry/exit criteria' },
-];
-
-const isLastStep = computed(() => currentStep.value === steps.length - 1);
-
 const cancelCreation = () => {
   router.push('/playbooks');
 };
 
-const goBack = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--;
-  }
-};
-
-const handleNext = () => {
-  if (isLastStep.value) {
-    submitPlaybookWithRules();
-  } else {
-    playbookStore.setNewPlaybookDetails(playbookData.value);
-    currentStep.value++;
-  }
-};
-
-const submitPlaybookWithRules = async () => {
-  if (!ruleGroupManagerRef.value?.ruleGroups) {
-    error.value = "Could not find rule groups data.";
-    return;
-  }
-
+const submitPlaybook = async () => {
   uiStore.showLoader();
   error.value = null;
   try {
-    const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    const newPlaybook = await playbookStore.createPlaybookWithRules(ruleGroups);
-    router.push({ name: 'playbook-detail', params: { id: newPlaybook.id } });
+    const newPlaybook = await playbookStore.createPlaybook(playbookData.value);
+    // Redirect to the new edit view for the created playbook
+    router.push({ name: 'edit-playbook', params: { id: newPlaybook.id } });
   } catch (err) {
-    console.error("Failed to create playbook with rules:", err);
+    console.error("Failed to create playbook:", err);
     error.value = playbookStore.error || 'An unknown error occurred during save.';
   } finally {
     uiStore.hideLoader();
@@ -81,19 +48,11 @@ const submitPlaybookWithRules = async () => {
       <BaseWidget>
         <template #header>
           <div class="page-header">
-            <div class="header-left-controls">
-              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="uiStore.isAppLoading">
-                <ArrowLeftIcon />
-              </IconButton>
-            </div>
-            <!-- Header title can be added here if needed -->
+            <h2 class="page-title">Create New Playbook</h2>
           </div>
         </template>
         <div class="page-content">
-          <Stepper :steps="steps" :current-step="currentStep" />
-
-          <!-- Step 1: Setup -->
-          <div v-if="currentStep === 0" class="form-content">
+          <div class="form-content">
             <div class="form-section">
               <h3 class="section-title">Color</h3>
               <ColorSelector v-model="playbookData.color" />
@@ -124,18 +83,12 @@ const submitPlaybookWithRules = async () => {
             </div>
           </div>
 
-          <!-- Step 2: Rules -->
-          <div v-if="currentStep === 1" class="form-content">
-            <RuleGroupManager ref="ruleGroupManagerRef" />
-          </div>
-
-
           <div v-if="error" class="error-message">{{ error }}</div>
 
           <div class="form-actions">
             <BaseButton variant="secondary" @click="cancelCreation" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
-            <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
-              {{ isLastStep ? 'Save' : 'Next' }}
+            <BaseButton variant="primary" @click="submitPlaybook" :is-loading="uiStore.isAppLoading">
+              Create and Continue
             </BaseButton>
           </div>
         </div>
@@ -162,13 +115,13 @@ const submitPlaybookWithRules = async () => {
 
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   width: 100%;
 }
 
-.header-left-controls {
-  min-width: 36px;
+.page-title {
+  font: var(--semantic-font-style-headline-lg);
 }
 
 .page-content {

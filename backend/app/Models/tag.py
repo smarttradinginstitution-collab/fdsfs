@@ -8,7 +8,7 @@ from sqlalchemy import String, ForeignKey, func, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 if TYPE_CHECKING:
     from app.Models.tags_group import TagsGroup
