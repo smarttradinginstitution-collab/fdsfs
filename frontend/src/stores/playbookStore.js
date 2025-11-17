@@ -44,12 +44,13 @@ export const usePlaybookStore = defineStore('playbooks', {
       }
     },
 
-    async createBlockForPlaybook({ playbookId, blockType, content, order }) {
+    async createBlockForPlaybook({ playbookId, block_type, title, content, order }) {
         this.isLoading = true;
         this.error = null;
         try {
             const response = await apiClient.post(`/playbooks/${playbookId}/blocks`, {
-                block_type: blockType,
+                block_type: block_type,
+                title: title,
                 content: content,
                 order: order,
             });

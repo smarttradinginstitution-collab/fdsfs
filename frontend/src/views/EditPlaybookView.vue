@@ -37,17 +37,38 @@ onMounted(async () => {
 });
 
 const addNewBlock = async () => {
-  const newBlockName = prompt("Enter the title for the new block:", "e.g., Entry Criteria");
-  if (newBlockName && playbookId.value) {
+  const blockTypeInput = prompt("Enter the block type (e.g., RULES, THESIS, GALLERY):", "RULES");
+  if (!blockTypeInput) return; // User cancelled
+
+  const blockType = blockTypeInput.toUpperCase();
+  const validTypes = ["RULES", "THESIS", "GALLERY", "CONDITIONS", "PSYCHOLOGY", "LEGACY_RULES"];
+  if (!validTypes.includes(blockType)) {
+    alert(`Invalid block type. Please use one of: ${validTypes.join(', ')}`);
+    return;
+  }
+
+  const title = prompt(`Enter the title for the new ${blockType} block:`);
+  if (!title) return; // User cancelled
+
+  if (playbookId.value) {
     uiStore.showLoader();
     try {
-      // The content field is now a complex object for groups
-      const defaultContent = { groups: [] };
+      let defaultContent = {};
+      if (blockType === 'RULES' || blockType === 'CONDITIONS') {
+        defaultContent = { groups: [] };
+      } else if (blockType === 'THESIS') {
+        defaultContent = { html: "<p>Write your thesis here...</p>" };
+      } else if (blockType === 'GALLERY') {
+        defaultContent = { images: [] };
+      }
+
       await playbookStore.createBlockForPlaybook({
         playbookId: playbookId.value,
-        title: newBlockName,
+        block_type: blockType,
+        title: title,
         content: defaultContent,
       });
+
       // Refetch to get the updated list of blocks
       playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
     } catch (err) {
