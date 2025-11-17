@@ -34,7 +34,7 @@ from app.Router.auth import get_current_claims
 from app.Models import (
     auth_user, role, tag, trade, trades_tags, user_dashboard_layout, user_role,
     general_account, trading_account, broker, asset, asset_class, mistake,
-    playbook, news_impact, psychology_state, trades_mistakes,
+    playbook, playbook_block, news_impact, psychology_state, trades_mistakes,
     trades_news_impacts, trades_psychology
 )
 from app.Models.auth_user import AuthUser

@@ -41,7 +41,6 @@ class NoteRepository:
                 joinedload(Trade.playbook),
                 selectinload(Trade.news_impacts),
                 selectinload(Trade.psychology_states),
-                selectinload(Trade.rules_followed),
             ),
             selectinload(Note.templates),
         ]

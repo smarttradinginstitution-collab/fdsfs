@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
-from app.Schemas.rules_group_playbook import RulesGroupRead, RulesGroupUpsert
+from app.Schemas.playbook_block import PlaybookBlockRead
 
 
 # Schema di base con i campi comuni
@@ -27,7 +27,7 @@ class PlaybookCreate(PlaybookBase):
 
 # Schema per l'aggiornamento di un playbook (usato nel body delle richieste PUT/PATCH)
 class PlaybookUpdate(PlaybookBase):
-    rules_groups: List[RulesGroupUpsert] = []
+    pass
 
 # Schema per le statistiche calcolate di un playbook
 class PlaybookStats(BaseModel):
@@ -46,7 +46,7 @@ class PlaybookRead(PlaybookBase):
     created_at: datetime
     description: str
     private: bool
-    rules_groups: List["RulesGroupRead"] = []
+    blocks: List["PlaybookBlockRead"] = []
     stats: Optional[PlaybookStats] = None
 
 
