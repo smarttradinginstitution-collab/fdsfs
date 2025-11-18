@@ -5,11 +5,12 @@ from __future__ import annotations
 import uuid
 from typing import Any, TYPE_CHECKING, Optional
 
-from sqlalchemy import TIMESTAMP, func, ForeignKey, String
+from sqlalchemy import TIMESTAMP, func, ForeignKey, String, Enum
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.base import Base
+from app.Models.enums import PlaybookBlockType
 
 if TYPE_CHECKING:
     from app.Models.playbook import Playbook
@@ -26,6 +27,9 @@ class PlaybookBlock(Base):
         UUID(as_uuid=True),
         ForeignKey("public.playbooks.id", ondelete="CASCADE"),
         nullable=False,
+    )
+    block_type: Mapped[PlaybookBlockType] = mapped_column(
+        Enum(PlaybookBlockType, native_enum=False), nullable=False, default=PlaybookBlockType.CONDITIONS
     )
     title: Mapped[str] = mapped_column(String, nullable=False, default="New Block")
     content: Mapped[Optional[dict]] = mapped_column(
