@@ -10,6 +10,7 @@ import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import SmartBlock from '@/components/Playbooks/SmartBlock.vue';
+import AddBlockModal from '@/components/Playbooks/AddBlockModal.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -36,18 +37,28 @@ onMounted(async () => {
   }
 });
 
-const addNewBlock = async () => {
-  const newBlockName = prompt("Enter the title for the new block:", "e.g., Entry Criteria");
-  if (newBlockName && playbookId.value) {
+const isModalVisible = ref(false);
+
+const handleCreateBlock = async (blockData) => {
+  isModalVisible.value = false;
+  if (playbookId.value) {
     uiStore.showLoader();
     try {
-      // The content field is now a complex object for groups
-      const defaultContent = { groups: [] };
+      let defaultContent = {};
+      if (blockData.block_type === 'RULES') {
+        defaultContent = { groups: [] };
+      } else if (blockData.block_type === 'THESIS') {
+        defaultContent = { html: "<p>Write your thesis here...</p>" };
+      } else if (blockData.block_type === 'GALLERY') {
+        defaultContent = { images: [] };
+      }
+
       await playbookStore.createBlockForPlaybook({
         playbookId: playbookId.value,
-        title: newBlockName,
+        ...blockData,
         content: defaultContent,
       });
+
       // Refetch to get the updated list of blocks
       playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
     } catch (err) {
@@ -136,7 +147,7 @@ const savePlaybookDetails = async () => {
             </div>
 
             <div class="add-block-section">
-                <BaseButton @click="addNewBlock" variant="primary" size="lg">
+                <BaseButton @click="isModalVisible = true" variant="primary" size="lg">
                     + Add New Content Block
                 </BaseButton>
             </div>
@@ -146,6 +157,12 @@ const savePlaybookDetails = async () => {
         </div>
       </BaseWidget>
     </div>
+
+    <AddBlockModal
+      v-if="isModalVisible"
+      @close="isModalVisible = false"
+      @create-block="handleCreateBlock"
+    />
   </div>
 </template>
 

@@ -29,8 +29,6 @@ class SystemFolderIdentifier(str, enum.Enum):
     SESSION_RECAP = "SESSION_RECAP"
 
 class PlaybookBlockType(str, enum.Enum):
+    RULES = "RULES"
     THESIS = "THESIS"
     GALLERY = "GALLERY"
-    CONDITIONS = "CONDITIONS"
-    PSYCHOLOGY = "PSYCHOLOGY"
-    LEGACY_RULES = "LEGACY_RULES"
