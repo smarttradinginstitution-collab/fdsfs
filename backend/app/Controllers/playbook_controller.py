@@ -20,11 +20,30 @@ from app.Schemas.trade import TradeRead
 from app.Router.dependencies import get_current_user, get_current_general_account_id, CurrentUser
 from app.Services.metrics.metrics_calculator import MetricsCalculator
 from app.Services.playbook_analytics_service import PlaybookAnalyticsService
+from app.Services.image_service import ImageService
+from app.Schemas.image import ImageRead
+from fastapi import UploadFile, File, Form
 
 
 class PlaybookController:
     def __init__(self) -> None:
         pass
+
+    async def upload_playbook_image(
+        self,
+        playbook_id: UUID,
+        file: UploadFile = File(...),
+        description: str | None = Form(None),
+        current_user: CurrentUser = Depends(get_current_user),
+        image_service: ImageService = Depends(),
+    ) -> ImageRead:
+        new_image = await image_service.upload_playbook_image(
+            file=file,
+            user_id=current_user.id,
+            playbook_id=playbook_id,
+            description=description,
+        )
+        return ImageRead.model_validate(new_image)
 
     async def list_all_playbooks_for_admin(
         self,

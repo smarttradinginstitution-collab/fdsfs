@@ -93,6 +93,20 @@ router.get(
 )(playbooks.list_trades_for_playbook)
 
 # ------------------------------------------------------------------------------
+# Rotte per la gestione delle Immagini di un Playbook
+# ------------------------------------------------------------------------------
+from app.Schemas.image import ImageRead
+
+router.post(
+    "/playbooks/{playbook_id}/images",
+    response_model=ImageRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Playbooks"],
+    summary="Carica una nuova immagine per un playbook",
+)(playbooks.upload_playbook_image)
+
+
+# ------------------------------------------------------------------------------
 # Rotte per la gestione dei Blocchi di un Playbook
 # ------------------------------------------------------------------------------
 

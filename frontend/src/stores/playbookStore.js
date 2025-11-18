@@ -44,12 +44,13 @@ export const usePlaybookStore = defineStore('playbooks', {
       }
     },
 
-    async createBlockForPlaybook({ playbookId, blockType, content, order }) {
+    async createBlockForPlaybook({ playbookId, block_type, title, content, order }) {
         this.isLoading = true;
         this.error = null;
         try {
             const response = await apiClient.post(`/playbooks/${playbookId}/blocks`, {
-                block_type: blockType,
+                block_type: block_type,
+                title: title,
                 content: content,
                 order: order,
             });
@@ -199,6 +200,30 @@ export const usePlaybookStore = defineStore('playbooks', {
         this.error = err.response?.data?.detail || 'An unexpected error occurred fetching playbook analytics.';
       } finally {
         this.isAnalyticsLoading = false;
+      }
+    },
+
+    async uploadPlaybookImage({ playbookId, file }) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await apiClient.post(
+          `/playbooks/${playbookId}/images`,
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          }
+        );
+        return response.data; // Restituisce i dati della nuova immagine
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        this.error = err.response?.data?.detail || 'Failed to upload image.';
+        throw err;
+      } finally {
+        this.isLoading = false;
       }
     },
 
