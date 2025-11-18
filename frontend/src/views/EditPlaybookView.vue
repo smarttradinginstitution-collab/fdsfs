@@ -10,6 +10,7 @@ import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import SmartBlock from '@/components/Playbooks/SmartBlock.vue';
+import AddBlockModal from '@/components/Playbooks/AddBlockModal.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -36,18 +37,28 @@ onMounted(async () => {
   }
 });
 
-const addNewBlock = async () => {
-  const newBlockName = prompt("Enter the title for the new block:", "e.g., Entry Criteria");
-  if (newBlockName && playbookId.value) {
+const isModalVisible = ref(false);
+
+const handleCreateBlock = async (blockData) => {
+  isModalVisible.value = false;
+  if (playbookId.value) {
     uiStore.showLoader();
     try {
-      // The content field is now a complex object for groups
-      const defaultContent = { groups: [] };
+      let defaultContent = {};
+      if (blockData.block_type === 'RULES') {
+        defaultContent = { groups: [] };
+      } else if (blockData.block_type === 'THESIS') {
+        defaultContent = { html: "<p>Write your thesis here...</p>" };
+      } else if (blockData.block_type === 'GALLERY') {
+        defaultContent = { images: [] };
+      }
+
       await playbookStore.createBlockForPlaybook({
         playbookId: playbookId.value,
-        title: newBlockName,
+        ...blockData,
         content: defaultContent,
       });
+
       // Refetch to get the updated list of blocks
       playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
     } catch (err) {
@@ -103,20 +114,24 @@ const savePlaybookDetails = async () => {
         <div class="page-content">
           <div class="form-content">
             <!-- Playbook Details Section -->
-            <div class="form-section">
-                <h3 class="section-title">Playbook Details</h3>
-                <div class="details-grid">
-                    <BaseInput v-model="playbookData.title" label="Playbook Name" id="playbook-title" @blur="savePlaybookDetails" />
-                    <BaseInput v-model="playbookData.description" label="Description" id="playbook-description" type="textarea" :rows="3" @blur="savePlaybookDetails"/>
-                    <div>
-                        <h4 class="input-label">Color</h4>
-                        <ColorSelector v-model="playbookData.color" @update:modelValue="savePlaybookDetails" />
-                    </div>
-                    <div>
-                        <h4 class="input-label">Icon</h4>
-                        <IconSelector v-model="playbookData.icon_name" @update:modelValue="savePlaybookDetails" />
-                    </div>
-                </div>
+            <div class="playbook-header-section">
+              <input
+                v-model="playbookData.title"
+                @blur="savePlaybookDetails"
+                class="input-ghost playbook-title-input"
+                placeholder="Playbook Title"
+              />
+              <textarea
+                v-model="playbookData.description"
+                @blur="savePlaybookDetails"
+                class="input-ghost playbook-description-input"
+                placeholder="Add a description..."
+                rows="1"
+              ></textarea>
+              <div class="meta-tags">
+                  <ColorSelector v-model="playbookData.color" @update:modelValue="savePlaybookDetails" />
+                  <IconSelector v-model="playbookData.icon_name" @update:modelValue="savePlaybookDetails" />
+              </div>
             </div>
 
             <!-- Blocks Section -->
@@ -136,7 +151,7 @@ const savePlaybookDetails = async () => {
             </div>
 
             <div class="add-block-section">
-                <BaseButton @click="addNewBlock" variant="primary" size="lg">
+                <BaseButton @click="isModalVisible = true" variant="primary" size="lg">
                     + Add New Content Block
                 </BaseButton>
             </div>
@@ -146,14 +161,37 @@ const savePlaybookDetails = async () => {
         </div>
       </BaseWidget>
     </div>
+
+    <AddBlockModal
+      v-if="isModalVisible"
+      @close="isModalVisible = false"
+      @create-block="handleCreateBlock"
+    />
   </div>
 </template>
 
 <style scoped>
+/* Global styles for the new design */
+:deep(.input-ghost) {
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    width: 100%;
+}
+:deep(.input-ghost:focus) {
+    background-color: var(--semantic-color-surface-subtle);
+}
+
 .edit-playbook-view {
   width: 100%;
+  min-height: 100vh;
   padding: var(--semantic-size-inset-xl);
-  background-color: var(--semantic-color-surface-primary);
+  background-color: #0F1115; /* Dark page background */
+  color: var(--semantic-color-text-primary);
 }
 .edit-playbook-container {
   width: 100%;
@@ -165,6 +203,27 @@ const savePlaybookDetails = async () => {
 }
 .page-title {
   font: var(--semantic-font-style-headline-lg);
+}
+.playbook-header-section {
+    padding-bottom: var(--semantic-size-stack-lg);
+    border-bottom: 1px solid var(--semantic-color-border-subtle);
+}
+.playbook-title-input {
+    font: var(--semantic-font-style-headline-lg);
+    font-weight: 600;
+    color: var(--semantic-color-text-primary);
+}
+.playbook-description-input {
+    font: var(--semantic-font-style-body-lg);
+    color: var(--semantic-color-text-secondary);
+    margin-top: var(--semantic-size-stack-xs);
+    resize: none;
+}
+.meta-tags {
+    display: flex;
+    align-items: center;
+    gap: var(--semantic-size-inline-md);
+    margin-top: var(--semantic-size-stack-md);
 }
 .page-content {
   display: flex;
@@ -186,18 +245,6 @@ const savePlaybookDetails = async () => {
   color: var(--semantic-color-text-primary);
   border-bottom: 1px solid var(--semantic-color-border-subtle);
   padding-bottom: var(--semantic-size-stack-sm);
-}
-.details-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--semantic-size-stack-md);
-}
-.details-grid > *:nth-child(2) { /* Description */
-    grid-column: 1 / -1;
-}
-.input-label {
-    font: var(--semantic-font-style-body-md-bold);
-    margin-bottom: var(--semantic-size-stack-xs);
 }
 .no-blocks-message {
   color: var(--semantic-color-text-subtle);
