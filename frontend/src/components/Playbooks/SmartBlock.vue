@@ -19,7 +19,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete-block']);
+const emit = defineEmits(['delete-block', 'update-block']);
 
 const route = useRoute();
 const playbookStore = usePlaybookStore();
@@ -57,6 +57,17 @@ const deleteThisBlock = () => {
         emit('delete-block', props.block.id);
     }
 };
+
+const handleContentUpdate = (newContent) => {
+    // Update local state immediately for responsiveness
+    localBlock.value.content = newContent;
+    // Emit the full block update to the parent
+    emit('update-block', {
+        id: localBlock.value.id,
+        title: localBlock.value.title,
+        content: newContent,
+    });
+};
 </script>
 
 <template>
@@ -75,6 +86,7 @@ const deleteThisBlock = () => {
         :content="localBlock.content"
         :blockId="localBlock.id"
         :blockTitle="localBlock.title"
+        @update:content="handleContentUpdate"
       />
       <div v-else class="unknown-block-type">
         <p>Unsupported block type: "{{ localBlock.block_type }}"</p>

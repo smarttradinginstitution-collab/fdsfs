@@ -86,6 +86,23 @@ const handleDeleteBlock = async (blockId) => {
     }
 };
 
+const handleUpdateBlock = async (blockUpdateData) => {
+    if (playbookId.value && blockUpdateData.id) {
+        uiStore.showLoader();
+        try {
+            await playbookStore.updateBlock(playbookId.value, blockUpdateData.id, blockUpdateData);
+            // Optionally, instead of a full refetch, you could update the local data.
+            // For simplicity and consistency with other methods here, we refetch.
+            playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
+        } catch (err)
+            error.value = 'Failed to update the block.';
+            console.error("Error updating block:", err);
+        } finally {
+            uiStore.hideLoader();
+        }
+    }
+};
+
 const savePlaybookDetails = async () => {
   uiStore.showLoader();
   error.value = null;
@@ -143,6 +160,7 @@ const savePlaybookDetails = async () => {
                     :key="block.id"
                     :block="block"
                     @delete-block="handleDeleteBlock"
+                    @update-block="handleUpdateBlock"
                 />
               </div>
               <div v-else class="no-blocks-message">
