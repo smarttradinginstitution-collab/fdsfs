@@ -1,94 +1,101 @@
+
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { storeToRefs } from 'pinia';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import IconButton from '@/components/ui/IconButton.vue';
-import ArrowLeftIcon from '@/components/icons/ArrowLeftIcon.vue';
-import Stepper from '@/components/ui/Stepper.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
 import IconSelector from '@/components/ui/IconSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
+import SmartBlock from '@/components/Playbooks/SmartBlock.vue';
+import AddBlockModal from '@/components/Playbooks/AddBlockModal.vue';
 
 const router = useRouter();
 const route = useRoute();
 const playbookStore = usePlaybookStore();
-const { ruleGroups } = storeToRefs(playbookStore);
 const uiStore = useUiStore();
-const ruleGroupManagerRef = ref(null);
 
-const playbookId = ref(null);
-const pageTitle = 'Edit Playbook';
-
-const playbookData = ref({
-  title: '',
-  description: '',
-  color: '#4A90E2',
-  icon_name: 'BuildingLibraryIcon',
-  private: false,
-});
+const playbookData = ref(null);
 const error = ref(null);
+const playbookId = computed(() => route.params.id);
 
 onMounted(async () => {
-  playbookId.value = route.params.id;
-  try {
-    const data = await playbookStore.fetchPlaybookDetails(playbookId.value);
-    playbookData.value = { ...data };
-  } catch (err) {
-    console.error('Failed to fetch playbook data, redirecting.', err);
-    router.push('/playbooks');
+  if (playbookId.value) {
+    uiStore.showLoader();
+    try {
+      // Fetch fresh data. The store might be stale.
+      const data = await playbookStore.fetchPlaybookDetails(playbookId.value);
+      playbookData.value = data;
+    } catch (err) {
+      console.error('Failed to fetch playbook data, redirecting.', err);
+      router.push('/playbooks');
+    } finally {
+      uiStore.hideLoader();
+    }
   }
 });
 
-const currentStep = ref(0);
-const steps = [
-  { title: 'Setup', description: 'Personalize your playbook' },
-  { title: 'Rules', description: 'Define your entry/exit criteria' },
-];
+const isModalVisible = ref(false);
 
-const isLastStep = computed(() => currentStep.value === steps.length - 1);
+const handleCreateBlock = async (blockData) => {
+  isModalVisible.value = false;
+  if (playbookId.value) {
+    uiStore.showLoader();
+    try {
+      let defaultContent = {};
+      if (blockData.block_type === 'RULES') {
+        defaultContent = { groups: [] };
+      } else if (blockData.block_type === 'THESIS') {
+        defaultContent = { html: "<p>Write your thesis here...</p>" };
+      } else if (blockData.block_type === 'GALLERY') {
+        defaultContent = { images: [] };
+      }
 
-const cancelEdit = () => {
-  router.push('/playbooks');
-};
+      await playbookStore.createBlockForPlaybook({
+        playbookId: playbookId.value,
+        ...blockData,
+        content: defaultContent,
+      });
 
-const goBack = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--;
+      // Refetch to get the updated list of blocks
+      playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
+    } catch (err) {
+      error.value = 'Failed to add the new block.';
+      console.error("Error adding new block:", err);
+    } finally {
+      uiStore.hideLoader();
+    }
   }
 };
 
-const handleNext = () => {
-  if (isLastStep.value) {
-    submitPlaybookUpdate();
-  } else {
-    currentStep.value++;
-  }
+const handleDeleteBlock = async (blockId) => {
+    if (playbookId.value && blockId) {
+        uiStore.showLoader();
+        try {
+            await playbookStore.deleteBlock(playbookId.value, blockId);
+            // Refetch to update the UI
+            playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
+        } catch (err) {
+            error.value = 'Failed to delete the block.';
+            console.error("Error deleting block:", err);
+        } finally {
+            uiStore.hideLoader();
+        }
+    }
 };
 
-const submitPlaybookUpdate = async () => {
-  if (!ruleGroupManagerRef.value?.ruleGroups) {
-    error.value = "Could not find rule groups data.";
-    return;
-  }
-
+const savePlaybookDetails = async () => {
   uiStore.showLoader();
   error.value = null;
   try {
-    const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    const finalPlaybookData = {
-      ...playbookData.value,
-      rules_groups: ruleGroups,
-    };
-    await playbookStore.updatePlaybook(playbookId.value, finalPlaybookData);
-    router.push({ name: 'playbook-detail', params: { id: playbookId.value } });
+    const { blocks, ...detailsToUpdate } = playbookData.value;
+    await playbookStore.updatePlaybook(playbookId.value, detailsToUpdate);
+    // Optionally show a success message
   } catch (err) {
-    console.error("Failed to update playbook with rules:", err);
-    error.value = playbookStore.error || 'An unknown error occurred during save.';
+    error.value = 'Failed to save playbook details.';
+    console.error("Failed to update playbook:", err);
   } finally {
     uiStore.hideLoader();
   }
@@ -98,134 +105,129 @@ const submitPlaybookUpdate = async () => {
 <template>
   <div class="edit-playbook-view">
     <div class="edit-playbook-container">
-      <BaseWidget>
+      <BaseWidget v-if="playbookData">
         <template #header>
           <div class="page-header">
-            <div class="header-left-controls">
-              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="uiStore.isAppLoading">
-                <ArrowLeftIcon />
-              </IconButton>
-            </div>
-            <h2 class="page-title">{{ pageTitle }}</h2>
+            <h2 class="page-title">Edit Playbook</h2>
           </div>
         </template>
         <div class="page-content">
-          <Stepper :steps="steps" :current-step="currentStep" />
+          <div class="form-content">
+            <!-- Playbook Details Section -->
+            <div class="form-section">
+                <h3 class="section-title">Playbook Details</h3>
+                <div class="details-grid">
+                    <BaseInput v-model="playbookData.title" label="Playbook Name" id="playbook-title" @blur="savePlaybookDetails" />
+                    <BaseInput v-model="playbookData.description" label="Description" id="playbook-description" type="textarea" :rows="3" @blur="savePlaybookDetails"/>
+                    <div>
+                        <h4 class="input-label">Color</h4>
+                        <ColorSelector v-model="playbookData.color" @update:modelValue="savePlaybookDetails" />
+                    </div>
+                    <div>
+                        <h4 class="input-label">Icon</h4>
+                        <IconSelector v-model="playbookData.icon_name" @update:modelValue="savePlaybookDetails" />
+                    </div>
+                </div>
+            </div>
 
-          <!-- Step 1: Setup -->
-          <div v-if="currentStep === 0" class="form-content">
+            <!-- Blocks Section -->
             <div class="form-section">
-              <h3 class="section-title">Color</h3>
-              <ColorSelector v-model="playbookData.color" />
+              <h3 class="section-title">Playbook Content</h3>
+              <div v-if="playbookData.blocks && playbookData.blocks.length > 0">
+                <SmartBlock
+                    v-for="block in playbookData.blocks"
+                    :key="block.id"
+                    :block="block"
+                    @delete-block="handleDeleteBlock"
+                />
+              </div>
+              <div v-else class="no-blocks-message">
+                This playbook has no content. Add a block to get started.
+              </div>
             </div>
-            <div class="form-section">
-              <h3 class="section-title">Icon</h3>
-              <IconSelector v-model="playbookData.icon_name" />
-            </div>
-            <div class="form-section">
-              <BaseInput
-                v-model="playbookData.title"
-                label="Playbook Name"
-                placeholder="e.g., 'Opening Range Breakout'"
-                id="playbook-title"
-                :disabled="uiStore.isAppLoading"
-              />
-            </div>
-            <div class="form-section">
-              <BaseInput
-                v-model="playbookData.description"
-                label="Description"
-                placeholder="Describe the strategy, entry/exit criteria, etc."
-                id="playbook-description"
-                type="textarea"
-                :rows="4"
-                :disabled="uiStore.isAppLoading"
-              />
-            </div>
-          </div>
 
-          <!-- Step 2: Rules -->
-          <div v-if="currentStep === 1" class="form-content">
-            <RuleGroupManager
-              ref="ruleGroupManagerRef"
-              :playbook-id="playbookId"
-              :initial-groups="playbookData.rules_groups"
-            />
+            <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="primary" size="lg">
+                    + Add New Content Block
+                </BaseButton>
+            </div>
           </div>
 
           <div v-if="error" class="error-message">{{ error }}</div>
-
-          <div class="form-actions">
-            <BaseButton variant="secondary" @click="cancelEdit" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
-            <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
-              {{ isLastStep ? 'Update' : 'Next' }}
-            </BaseButton>
-          </div>
         </div>
       </BaseWidget>
     </div>
+
+    <AddBlockModal
+      v-if="isModalVisible"
+      @close="isModalVisible = false"
+      @create-block="handleCreateBlock"
+    />
   </div>
 </template>
 
 <style scoped>
 .edit-playbook-view {
   width: 100%;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   padding: var(--semantic-size-inset-xl);
   background-color: var(--semantic-color-surface-primary);
 }
-
 .edit-playbook-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
+  margin: 0 auto;
 }
-
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+  text-align: center;
 }
-
-.header-left-controls {
-  min-width: 36px;
+.page-title {
+  font: var(--semantic-font-style-headline-lg);
 }
-
 .page-content {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
 }
-
 .form-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--semantic-size-stack-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-xl);
 }
-
 .form-section {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
-}
-
-.section-title {
-  font: var(--semantic-font-style-body-lg-bold);
-  color: var(--semantic-color-text-primary);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
   gap: var(--semantic-size-stack-md);
-  border-top: 1px solid var(--semantic-color-border-default);
-  padding-top: var(--semantic-size-stack-lg);
-  margin-top: var(--semantic-size-stack-md);
 }
-
+.section-title {
+  font: var(--semantic-font-style-headline-xs);
+  color: var(--semantic-color-text-primary);
+  border-bottom: 1px solid var(--semantic-color-border-subtle);
+  padding-bottom: var(--semantic-size-stack-sm);
+}
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--semantic-size-stack-md);
+}
+.details-grid > *:nth-child(2) { /* Description */
+    grid-column: 1 / -1;
+}
+.input-label {
+    font: var(--semantic-font-style-body-md-bold);
+    margin-bottom: var(--semantic-size-stack-xs);
+}
+.no-blocks-message {
+  color: var(--semantic-color-text-subtle);
+  padding: var(--semantic-size-inset-xl);
+  text-align: center;
+  border: 2px dashed var(--semantic-color-border-subtle);
+  border-radius: var(--semantic-border-radius-surface);
+}
+.add-block-section {
+    text-align: center;
+    padding: var(--semantic-size-stack-md) 0;
+    border-top: 1px solid var(--semantic-color-border-subtle);
+}
 .error-message {
   color: var(--semantic-color-text-danger);
   background-color: var(--semantic-color-surface-danger-subtle);

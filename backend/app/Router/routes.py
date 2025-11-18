@@ -27,12 +27,9 @@ from app.Schemas.user_dashboard_layout import UserDashboardLayoutRead, UserDashb
 from app.Schemas.stats import ProcessedStats, EquityCurveData, TradeSummary
 from app.Schemas.vantage_score import VantageScoreData
 from app.Schemas.playbook import PlaybookRead
-from app.Schemas.rules_group_playbook import RulesGroupRead
-from app.Schemas.rule_playbook import RuleRead
 
 # Risolvi i forward reference per la serializzazione nidificata
 PlaybookRead.model_rebuild()
-RulesGroupRead.model_rebuild()
 
 # Repo per diagnostica ruoli
 from app.Repositories.user_role_repository import UserRoleRepository
@@ -398,37 +395,9 @@ router.include_router(
 # 📖 PLAYBOOKS (protetto: user)
 # ──────────────────────────────────────────────────────────────────────────────
 from app.Router import playbook_router
-from app.Router import rules_group_playbook_router
-from app.Router import rule_playbook_router
 
 router.include_router(
     playbook_router.router,
-    prefix="/api/v1",
-    dependencies=[Depends(get_current_claims)],
-)
-
-# Router per i gruppi di regole (nested under playbooks)
-router.include_router(
-    rules_group_playbook_router.router,
-    prefix="/api/v1",
-    dependencies=[Depends(get_current_claims)],
-)
-# Router per i gruppi di regole (by ID)
-router.include_router(
-    rules_group_playbook_router.router_by_id,
-    prefix="/api/v1",
-    dependencies=[Depends(get_current_claims)],
-)
-
-# Router per le regole (nested under rule-groups)
-router.include_router(
-    rule_playbook_router.router,
-    prefix="/api/v1",
-    dependencies=[Depends(get_current_claims)],
-)
-# Router per le regole (by ID)
-router.include_router(
-    rule_playbook_router.router_by_id,
     prefix="/api/v1",
     dependencies=[Depends(get_current_claims)],
 )
