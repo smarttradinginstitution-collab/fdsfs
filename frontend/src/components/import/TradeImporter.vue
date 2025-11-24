@@ -21,6 +21,11 @@ const pollingInterval = ref(null);
 const tradingAccountsStore = useTradingAccountsStore();
 const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
 
+// Computed property to detect NinjaTrader variants (e.g. "NinjaTrader", "NinjaTrader 8")
+const isNinjaTrader = computed(() => {
+  return props.selectedPlatform && props.selectedPlatform.toLowerCase().includes('ninjatrader');
+});
+
 const onFileChange = (event) => {
   files.value = [...event.target.files];
 };
@@ -38,7 +43,12 @@ const handleUpload = async () => {
   const file = files.value[0];
   const formData = new FormData();
   let endpoint = '';
+
+  // Normalize platform key for backend mapping
   let platformKey = props.selectedPlatform.toLowerCase();
+  if (platformKey.includes('ninjatrader')) {
+    platformKey = 'ninjatrader';
+  }
 
   // Validazione estensione file
   const allowedExtensions = {
@@ -120,17 +130,20 @@ onUnmounted(() => {
 });
 
 const isUploadDisabled = computed(() => {
-  return isUploading.value || !files.value.length || !props.selectedPlatform || !['MT5', 'Tradovate', 'NinjaTrader'].includes(props.selectedPlatform);
+  if (!props.selectedPlatform) return true;
+  const platform = props.selectedPlatform;
+  const supported = ['MT5', 'Tradovate'].includes(platform) || isNinjaTrader.value;
+  return isUploading.value || !files.value.length || !supported;
 });
 </script>
 
 <template>
   <div class="trade-importer">
-    <div v-if="props.selectedPlatform === 'MT5' || props.selectedPlatform === 'Tradovate' || props.selectedPlatform === 'NinjaTrader'">
+    <div v-if="props.selectedPlatform === 'MT5' || props.selectedPlatform === 'Tradovate' || isNinjaTrader">
       <div class="file-input-section">
         <label for="file-upload" class="file-upload-label">
           <p v-if="props.selectedPlatform === 'MT5'">Only .html files are accepted.</p>
-          <p v-if="props.selectedPlatform === 'Tradovate' || props.selectedPlatform === 'NinjaTrader'">Only .csv files are accepted.</p>
+          <p v-if="props.selectedPlatform === 'Tradovate' || isNinjaTrader">Only .csv files are accepted.</p>
         </label>
         <input id="file-upload" type="file" @change="onFileChange" :accept="props.selectedPlatform === 'MT5' ? '.html' : '.csv'" :disabled="isUploading" />
 
