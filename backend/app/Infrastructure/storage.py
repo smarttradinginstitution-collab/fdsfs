@@ -7,7 +7,7 @@ import uuid
 # Inizializza il client Supabase usando le variabili d'ambiente
 # Queste credenziali danno al backend i permessi per agire come servizio (service_role)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_IMPORT_BUCKET", "imports")
 
 # Crea un'istanza del client solo se le credenziali sono disponibili
