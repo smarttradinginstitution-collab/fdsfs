@@ -2,18 +2,9 @@
 import os
 from celery import Celery
 
-# --- NUOVA LOGICA per usare il DB come Result Backend ---
-# Recupera l'URL del database dalle variabili d'ambiente
-DATABASE_URL = os.getenv("DATABASE_URL")
-# Costruisce l'URL per il result backend di Celery (deve iniziare con 'db+')
-# Esempio: "postgresql://..." diventa "db+postgresql://..."
-RESULT_BACKEND_DB = f"db+{DATABASE_URL}" if DATABASE_URL else None
-
 # --- Configurazione Principale ---
 BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://guest:guest@localhost:5672//")
-# Usa il database come result backend. Se l'URL del DB non è disponibile,
-# usa 'rpc://' come fallback (che non richiede dipendenze esterne).
-RESULT_BACKEND = RESULT_BACKEND_DB or "rpc://"
+RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND") or "rpc://"
 
 
 celery_app = Celery(

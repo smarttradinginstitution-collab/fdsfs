@@ -29,17 +29,20 @@ class ImportService:
         source_type: str,
     ) -> Tuple[ImportRun, bool]:
         """
-        Garantisce l'idempotenza. Cerca una run di importazione completata con lo stesso hash
-        del file per lo stesso account. Se la trova, la restituisce. Altrimenti, ne crea una nuova.
+        Garantisce l'idempotenza. Cerca una run di importazione con lo stesso hash del file
+        per lo stesso account che sia già stata completata o sia in corso.
+
+        Se la trova (in stato queued, parsing, applying, applied), la restituisce.
+        Altrimenti, ne crea una nuova.
 
         Returns:
             A tuple containing the ImportRun object and a boolean indicating if it was newly created.
         """
-        # Cerca una run esistente e completata con successo
+        # Cerca una run esistente (completata o in corso)
         stmt = select(ImportRun).where(
             ImportRun.file_sha256 == file_hash,
             ImportRun.trading_account_id == trading_account_id,
-            ImportRun.status == "applied"
+            ImportRun.status.in_(["queued", "parsing", "applying", "applied"])
         )
         result = await self.db.execute(stmt)
         existing_run = result.scalars().first()

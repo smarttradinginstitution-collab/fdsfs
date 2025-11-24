@@ -15,6 +15,7 @@ from sqlalchemy import (
     Enum,
     Boolean,
     text,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,7 +42,10 @@ if TYPE_CHECKING:
 
 class Trade(Base):
     __tablename__ = "trades"
-    __table_args__ = {"schema": "public"}
+    __table_args__ = (
+        Index('uq_trades_account_dedupe', 'trading_account_id', 'dedupe_key', unique=True, postgresql_where=text('dedupe_key IS NOT NULL')),
+        {"schema": "public"}
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4

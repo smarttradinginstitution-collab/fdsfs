@@ -1,5 +1,6 @@
 # backend/app/Infrastructure/storage.py
 import os
+import asyncio
 from supabase import create_client, Client
 from fastapi import UploadFile
 import uuid
@@ -7,7 +8,7 @@ import uuid
 # Inizializza il client Supabase usando le variabili d'ambiente
 # Queste credenziali danno al backend i permessi per agire come servizio (service_role)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_IMPORT_BUCKET", "imports")
 
 # Crea un'istanza del client solo se le credenziali sono disponibili
@@ -38,10 +39,10 @@ async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID) 
     storage_path = f"{import_run_id}/{upload_file.filename}"
 
     try:
-        # L'SDK di Supabase per Python usa chiamate sincrone, quindi la eseguiamo
-        # in questo modo. Per un'app ad alto traffico, si potrebbe eseguire
-        # in un thread separato con `asyncio.to_thread`.
-        supabase.storage.from_(SUPABASE_BUCKET).upload(
+        # L'SDK di Supabase per Python usa chiamate sincrone, quindi lo eseguiamo
+        # in un thread separato con `asyncio.to_thread` per non bloccare l'event loop.
+        await asyncio.to_thread(
+            supabase.storage.from_(SUPABASE_BUCKET).upload,
             path=storage_path,
             file=content,
             file_options={"content-type": upload_file.content_type or "application/octet-stream"}
