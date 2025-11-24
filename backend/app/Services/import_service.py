@@ -11,6 +11,7 @@ from app.Models.import_run import ImportRun
 from app.Models.trade import Trade
 from app.Services.tradovate_parser import TradovateParser
 from app.Services.mt5_parser import Mt5Parser
+from app.Services.ninjatrader_parser import NinjaTraderParser
 from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 from app.Repositories.trading_account_repository import TradingAccountRepository
 
@@ -139,6 +140,47 @@ class ImportService:
         except Exception as e:
             import_run.status = "failed"
             import_run.error_message = f"[Mt5Parser] {type(e).__name__}: {e}"
+            import_run.finished_at = func.now()
+            await self.db.commit()
+            return
+
+        inserted_count, updated_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
+
+        import_run.status = "applied"
+        import_run.inserted_count = inserted_count
+        import_run.updated_count = updated_count
+        import_run.skipped_count = (import_run.total_rows or 0) - (inserted_count + updated_count)
+        import_run.finished_at = func.now()
+        await self.db.commit()
+
+    async def process_ninjatrader_import(
+        self, import_run_id: uuid.UUID, file_content: bytes
+    ):
+        """
+        Elabora in background un file CSV di NinjaTrader.
+        """
+        import_run = await self.get_import_run(import_run_id)
+        if not import_run:
+            print(f"ERRORE: ImportRun con ID {import_run_id} non trovata.")
+            return
+
+        import_run.status = "parsing"
+        await self.db.commit()
+
+        try:
+            trading_account = await self.trading_account_repo.get_by_id(import_run.trading_account_id)
+            initial_balance = Decimal(trading_account.initial_balance if trading_account else '0.0')
+
+            parser = NinjaTraderParser()
+            parsed_trades = parser.parse_performance_report(file_content)
+
+            import_run.total_rows = len(parsed_trades)
+            import_run.status = "applying"
+            await self.db.commit()
+
+        except Exception as e:
+            import_run.status = "failed"
+            import_run.error_message = f"[NinjaTraderParser] {type(e).__name__}: {e}"
             import_run.finished_at = func.now()
             await self.db.commit()
             return

@@ -44,6 +44,7 @@ const handleUpload = async () => {
   const allowedExtensions = {
     mt5: '.html',
     tradovate: '.csv',
+    ninjatrader: '.csv',
   };
   const requiredExtension = allowedExtensions[platformKey];
 
@@ -119,17 +120,17 @@ onUnmounted(() => {
 });
 
 const isUploadDisabled = computed(() => {
-  return isUploading.value || !files.value.length || !props.selectedPlatform || !['MT5', 'Tradovate'].includes(props.selectedPlatform);
+  return isUploading.value || !files.value.length || !props.selectedPlatform || !['MT5', 'Tradovate', 'NinjaTrader'].includes(props.selectedPlatform);
 });
 </script>
 
 <template>
   <div class="trade-importer">
-    <div v-if="props.selectedPlatform === 'MT5' || props.selectedPlatform === 'Tradovate'">
+    <div v-if="props.selectedPlatform === 'MT5' || props.selectedPlatform === 'Tradovate' || props.selectedPlatform === 'NinjaTrader'">
       <div class="file-input-section">
         <label for="file-upload" class="file-upload-label">
           <p v-if="props.selectedPlatform === 'MT5'">Only .html files are accepted.</p>
-          <p v-if="props.selectedPlatform === 'Tradovate'">Only .csv files are accepted.</p>
+          <p v-if="props.selectedPlatform === 'Tradovate' || props.selectedPlatform === 'NinjaTrader'">Only .csv files are accepted.</p>
         </label>
         <input id="file-upload" type="file" @change="onFileChange" :accept="props.selectedPlatform === 'MT5' ? '.html' : '.csv'" :disabled="isUploading" />
 

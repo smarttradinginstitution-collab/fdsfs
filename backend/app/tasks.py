@@ -18,7 +18,7 @@ def process_import_task(self, import_run_id_str: str, storage_path: str, platfor
         self: L'istanza del task, per gestire retry, etc.
         import_run_id_str: L'ID della run di importazione (come stringa).
         storage_path: Il percorso del file in Supabase Storage.
-        platform: La piattaforma di origine (es. "mt5", "tradovate").
+        platform: La piattaforma di origine (es. "mt5", "tradovate", "ninjatrader").
     """
     try:
         # Esegue la funzione asincrona principale e attende il suo completamento
@@ -49,10 +49,13 @@ async def _process_import_async(import_run_id_str: str, storage_path: str, platf
 
             # 3. Seleziona e avvia il processo di importazione corretto
             #    in base alla piattaforma.
-            if platform.lower() == "tradovate":
+            platform_key = platform.lower()
+            if platform_key == "tradovate":
                 await service.process_tradovate_import(import_run_id, file_content)
-            elif platform.lower() == "mt5":
+            elif platform_key == "mt5":
                 await service.process_mt5_import(import_run_id, file_content)
+            elif platform_key == "ninjatrader":
+                await service.process_ninjatrader_import(import_run_id, file_content)
             else:
                 # Se la piattaforma non è supportata, aggiorna la run con un errore.
                 import_run = await service.get_import_run(import_run_id)
