@@ -12,13 +12,13 @@
     </div>
 
     <!-- Area di Upload -->
-    <div class="upload-area text-center py-10 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 transition-colors" @click="triggerFileInput">
+    <div class="upload-area text-center py-6 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 transition-colors" @click="triggerFileInput">
       <input type="file" ref="fileInput" @change="onFileSelect" class="hidden" accept="image/*" />
       <div class="text-gray-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
-        <p class="mt-2">Trascina un'immagine qui o <span class="font-semibold text-blue-400">clicca per selezionare</span></p>
+        <p class="mt-3 text-sm">Trascina un'immagine qui o <span class="font-semibold text-blue-400">clicca per selezionare</span></p>
         <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF fino a 10MB</p>
       </div>
     </div>
