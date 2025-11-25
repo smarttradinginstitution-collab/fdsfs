@@ -38,6 +38,12 @@ const currentEditor = computed(() => {
     return blockComponentMap[localBlock.value.block_type] || null;
 });
 
+const formattedBlockType = computed(() => {
+    if (!localBlock.value.block_type) return '';
+    const type = localBlock.value.block_type.toLowerCase();
+    return type.charAt(0).toUpperCase() + type.slice(1);
+});
+
 const saveTitle = async () => {
   uiStore.showLoader();
   try {
@@ -73,7 +79,10 @@ const handleContentUpdate = (newContent) => {
 <template>
   <div class="smart-block">
     <div class="block-header">
-      <input v-model="localBlock.title" @blur="saveTitle" class="input-ghost block-title-input" />
+      <div>
+        <span class="block-type-label">{{ formattedBlockType }}</span>
+        <input v-model="localBlock.title" @blur="saveTitle" class="input-ghost block-title-input" />
+      </div>
       <IconButton @click="deleteThisBlock" ariaLabel="Delete Block" class="delete-button">
         <TrashIcon />
       </IconButton>
@@ -115,6 +124,15 @@ const handleContentUpdate = (newContent) => {
 }
 .smart-block:hover .delete-button {
     opacity: 1;
+}
+.block-type-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #8A91A0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
 }
 .block-title-input {
     font-size: 18px;
