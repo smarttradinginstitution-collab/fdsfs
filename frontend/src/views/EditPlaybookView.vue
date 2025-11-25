@@ -11,6 +11,7 @@ import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import SmartBlock from '@/components/Playbooks/SmartBlock.vue';
 import AddBlockModal from '@/components/Playbooks/AddBlockModal.vue';
+import ImageLightbox from '@/components/ui/ImageLightbox.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -38,6 +39,29 @@ onMounted(async () => {
 });
 
 const isModalVisible = ref(false);
+
+// --- Lightbox State & Methods ---
+const isLightboxOpen = ref(false);
+const lightboxImages = ref([]);
+const lightboxCurrentIndex = ref(0);
+
+const openLightbox = ({ images, startIndex }) => {
+  lightboxImages.value = images;
+  lightboxCurrentIndex.value = startIndex;
+  isLightboxOpen.value = true;
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+};
+
+const nextImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value + 1) % lightboxImages.value.length;
+};
+
+const prevImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + lightboxImages.value.length) % lightboxImages.value.length;
+};
 
 const handleCreateBlock = async (blockData) => {
   isModalVisible.value = false;
@@ -94,13 +118,22 @@ const handleUpdateBlock = async (blockUpdateData) => {
             // Optionally, instead of a full refetch, you could update the local data.
             // For simplicity and consistency with other methods here, we refetch.
             playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
-        } catch (err)
+        } catch (err) {
             error.value = 'Failed to update the block.';
             console.error("Error updating block:", err);
         } finally {
             uiStore.hideLoader();
         }
     }
+};
+
+const getBlockDisplayName = (blockType) => {
+  const names = {
+    THESIS: 'Model Explanation',
+    RULES: 'Model Rules & Conditions',
+    GALLERY: 'Model Gallery',
+  };
+  return names[blockType] || 'Content Block';
 };
 
 const savePlaybookDetails = async () => {
@@ -155,13 +188,15 @@ const savePlaybookDetails = async () => {
             <div class="form-section">
               <h3 class="section-title">Playbook Content</h3>
               <div v-if="playbookData.blocks && playbookData.blocks.length > 0">
-                <SmartBlock
-                    v-for="block in playbookData.blocks"
-                    :key="block.id"
-                    :block="block"
-                    @delete-block="handleDeleteBlock"
-                    @update-block="handleUpdateBlock"
-                />
+                <div v-for="block in playbookData.blocks" :key="block.id" class="block-wrapper">
+                  <h4 class="block-category-title">{{ getBlockDisplayName(block.block_type) }}</h4>
+                  <SmartBlock
+                      :block="block"
+                      @delete-block="handleDeleteBlock"
+                      @update-block="handleUpdateBlock"
+                      @open-lightbox="openLightbox"
+                  />
+                </div>
               </div>
               <div v-else class="no-blocks-message">
                 This playbook has no content. Add a block to get started.
@@ -184,6 +219,16 @@ const savePlaybookDetails = async () => {
       v-if="isModalVisible"
       @close="isModalVisible = false"
       @create-block="handleCreateBlock"
+    />
+
+    <ImageLightbox
+      v-if="isLightboxOpen"
+      :images="lightboxImages"
+      :current-index="lightboxCurrentIndex"
+      :show="isLightboxOpen"
+      @close="closeLightbox"
+      @next="nextImage"
+      @prev="prevImage"
     />
   </div>
 </template>
@@ -257,6 +302,17 @@ const savePlaybookDetails = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
+}
+.block-wrapper {
+  margin-bottom: 2rem;
+}
+.block-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A91A0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
 }
 .section-title {
   font: var(--semantic-font-style-headline-xs);
