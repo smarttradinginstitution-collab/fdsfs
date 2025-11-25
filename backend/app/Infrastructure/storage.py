@@ -4,11 +4,12 @@ import asyncio
 from supabase import create_client, Client
 from fastapi import UploadFile
 import uuid
+from app.config import settings
 
-# Inizializza il client Supabase usando le variabili d'ambiente
+# Inizializza il client Supabase usando le impostazioni caricate da Pydantic
 # Queste credenziali danno al backend i permessi per agire come servizio (service_role)
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+SUPABASE_URL = settings.SUPABASE_URL
+SUPABASE_KEY = settings.SUPABASE_SERVICE_KEY
 SUPABASE_BUCKET = os.getenv("SUPABASE_IMPORT_BUCKET", "imports")
 
 # Crea un'istanza del client solo se le credenziali sono disponibili
