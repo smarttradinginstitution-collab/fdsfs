@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import String
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 
 __all__ = ["Role"]
 

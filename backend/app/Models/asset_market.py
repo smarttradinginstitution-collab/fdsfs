@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
