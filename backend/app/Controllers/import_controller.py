@@ -42,9 +42,10 @@ async def import_tradovate_trades(
         source_type="csv"
     )
 
-    if created:
-        # Se la run è stata appena creata, procedi con l'upload e l'accodamento
-        storage_path = await upload_import_file(file, import_run.id)
+    # Se è stato creato O se è in stato "queued" (magari il worker era offline), riproviamo
+    if created or import_run.status == "queued":
+        # Usiamo upsert=True nel caso il file esista già (per i retry)
+        storage_path = await upload_import_file(file, import_run.id, upsert=True)
         process_import_task.delay(str(import_run.id), storage_path, "tradovate")
 
     return import_run
@@ -80,9 +81,8 @@ async def import_ninjatrader_trades(
         source_type="csv"
     )
 
-    if created:
-        # Se la run è stata appena creata, procedi con l'upload e l'accodamento
-        storage_path = await upload_import_file(file, import_run.id)
+    if created or import_run.status == "queued":
+        storage_path = await upload_import_file(file, import_run.id, upsert=True)
         process_import_task.delay(str(import_run.id), storage_path, "ninjatrader")
 
     return import_run
@@ -118,8 +118,8 @@ async def import_mt5_trades(
         source_type="html",
     )
 
-    if created:
-        storage_path = await upload_import_file(file, import_run.id)
+    if created or import_run.status == "queued":
+        storage_path = await upload_import_file(file, import_run.id, upsert=True)
         process_import_task.delay(str(import_run.id), storage_path, "mt5")
 
     return import_run

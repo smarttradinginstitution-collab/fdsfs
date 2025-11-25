@@ -17,13 +17,14 @@ supabase: Client | None = None
 if SUPABASE_URL and SUPABASE_KEY:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID) -> str:
+async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID, upsert: bool = False) -> str:
     """
     Carica un file su Supabase Storage in modo asincrono.
 
     Args:
         upload_file: L'oggetto UploadFile di FastAPI.
         import_run_id: L'ID della run di importazione per creare un percorso univoco.
+        upsert: Se True, sovrascrive il file se esiste già.
 
     Returns:
         Il percorso del file nello storage.
@@ -39,6 +40,10 @@ async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID) 
     # Crea un percorso univoco per evitare collisioni di nomi
     storage_path = f"{import_run_id}/{upload_file.filename}"
 
+    file_options = {"content-type": upload_file.content_type or "application/octet-stream"}
+    if upsert:
+        file_options["upsert"] = "true"
+
     try:
         # L'SDK di Supabase per Python usa chiamate sincrone, quindi lo eseguiamo
         # in un thread separato con `asyncio.to_thread` per non bloccare l'event loop.
@@ -46,7 +51,7 @@ async def upload_import_file(upload_file: UploadFile, import_run_id: uuid.UUID) 
             supabase.storage.from_(SUPABASE_BUCKET).upload,
             path=storage_path,
             file=content,
-            file_options={"content-type": upload_file.content_type or "application/octet-stream"}
+            file_options=file_options
         )
         return storage_path
     except Exception as e:
