@@ -103,6 +103,15 @@ const handleUpdateBlock = async (blockUpdateData) => {
     }
 };
 
+const getBlockDisplayName = (blockType) => {
+  const names = {
+    THESIS: 'Model Explanation',
+    RULES: 'Model Rules & Conditions',
+    GALLERY: 'Model Gallery',
+  };
+  return names[blockType] || 'Content Block';
+};
+
 const savePlaybookDetails = async () => {
   uiStore.showLoader();
   error.value = null;
@@ -155,13 +164,14 @@ const savePlaybookDetails = async () => {
             <div class="form-section">
               <h3 class="section-title">Playbook Content</h3>
               <div v-if="playbookData.blocks && playbookData.blocks.length > 0">
-                <SmartBlock
-                    v-for="block in playbookData.blocks"
-                    :key="block.id"
-                    :block="block"
-                    @delete-block="handleDeleteBlock"
-                    @update-block="handleUpdateBlock"
-                />
+                <div v-for="block in playbookData.blocks" :key="block.id" class="block-wrapper">
+                  <h4 class="block-category-title">{{ getBlockDisplayName(block.block_type) }}</h4>
+                  <SmartBlock
+                      :block="block"
+                      @delete-block="handleDeleteBlock"
+                      @update-block="handleUpdateBlock"
+                  />
+                </div>
               </div>
               <div v-else class="no-blocks-message">
                 This playbook has no content. Add a block to get started.
@@ -257,6 +267,17 @@ const savePlaybookDetails = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
+}
+.block-wrapper {
+  margin-bottom: 2rem;
+}
+.block-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A91A0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
 }
 .section-title {
   font: var(--semantic-font-style-headline-xs);
