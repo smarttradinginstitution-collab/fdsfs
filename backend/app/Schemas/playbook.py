@@ -21,7 +21,7 @@ class PlaybookBase(BaseModel):
 # Schema per la creazione di un playbook (usato nel body delle richieste POST)
 class PlaybookCreate(PlaybookBase):
     title: str = Field(..., description="The title of the playbook is required for creation")
-    description: str = Field(..., description="The description of the playbook is required")
+    description: Optional[str] = Field(None, description="The description of the playbook")
     private: bool = Field(False, description="Whether the playbook is private. Defaults to False")
 
 
@@ -44,7 +44,7 @@ class PlaybookRead(PlaybookBase):
     id: UUID
     general_account_id: UUID
     created_at: datetime
-    description: str
+    description: Optional[str]
     private: bool
     blocks: List["PlaybookBlockRead"] = []
     stats: Optional[PlaybookStats] = None

@@ -19,7 +19,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete-block', 'update-block']);
+const emit = defineEmits(['delete-block', 'update-block', 'open-lightbox']);
 
 const route = useRoute();
 const playbookStore = usePlaybookStore();
@@ -87,6 +87,7 @@ const handleContentUpdate = (newContent) => {
         :blockId="localBlock.id"
         :blockTitle="localBlock.title"
         @update:content="handleContentUpdate"
+        @open-lightbox="(payload) => emit('open-lightbox', payload)"
       />
       <div v-else class="unknown-block-type">
         <p>Unsupported block type: "{{ localBlock.block_type }}"</p>

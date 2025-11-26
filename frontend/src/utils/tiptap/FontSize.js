@@ -1,4 +1,6 @@
+// frontend/src/utils/tiptap/FontSize.js
 import { Extension } from '@tiptap/core';
+import '@tiptap/extension-text-style';
 
 export const FontSize = Extension.create({
   name: 'fontSize',
@@ -21,6 +23,7 @@ export const FontSize = Extension.create({
               if (!attributes.fontSize) {
                 return {};
               }
+
               return {
                 style: `font-size: ${attributes.fontSize}`,
               };
@@ -47,3 +50,5 @@ export const FontSize = Extension.create({
     };
   },
 });
+
+export default FontSize;
