@@ -42,8 +42,20 @@ async def import_tradovate_trades(
         source_type="csv"
     )
 
-    # Se è stato creato O se è in stato "queued" (magari il worker era offline), riproviamo
-    if created or import_run.status == "queued":
+    # Se è stato creato O se è in stato "queued", "applied", "failed", riproviamo.
+    # Questo permette il re-import esplicito da parte dell'utente.
+    # Evitiamo "parsing" e "applying" per non interrompere un worker attivo.
+    if created or import_run.status in ["queued", "applied", "failed"]:
+        # Reset dello stato per garantire che il frontend veda il nuovo progresso
+        if not created:
+            import_run.status = "queued"
+            import_run.error_message = None
+            import_run.inserted_count = 0
+            import_run.updated_count = 0
+            import_run.skipped_count = 0
+            import_run.total_rows = 0
+            await db.commit()
+
         # Usiamo upsert=True nel caso il file esista già (per i retry)
         storage_path = await upload_import_file(file, import_run.id, upsert=True)
         process_import_task.delay(str(import_run.id), storage_path, "tradovate")
@@ -81,7 +93,16 @@ async def import_ninjatrader_trades(
         source_type="csv"
     )
 
-    if created or import_run.status == "queued":
+    if created or import_run.status in ["queued", "applied", "failed"]:
+        if not created:
+            import_run.status = "queued"
+            import_run.error_message = None
+            import_run.inserted_count = 0
+            import_run.updated_count = 0
+            import_run.skipped_count = 0
+            import_run.total_rows = 0
+            await db.commit()
+
         storage_path = await upload_import_file(file, import_run.id, upsert=True)
         process_import_task.delay(str(import_run.id), storage_path, "ninjatrader")
 
@@ -118,7 +139,16 @@ async def import_mt5_trades(
         source_type="html",
     )
 
-    if created or import_run.status == "queued":
+    if created or import_run.status in ["queued", "applied", "failed"]:
+        if not created:
+            import_run.status = "queued"
+            import_run.error_message = None
+            import_run.inserted_count = 0
+            import_run.updated_count = 0
+            import_run.skipped_count = 0
+            import_run.total_rows = 0
+            await db.commit()
+
         storage_path = await upload_import_file(file, import_run.id, upsert=True)
         process_import_task.delay(str(import_run.id), storage_path, "mt5")
 
