@@ -1,69 +1,42 @@
 <template>
-  <div class="toolbar-color-picker">
-    <button @click="triggerColorPicker" class="color-picker-button">
-      <slot></slot>
-      <div class="color-indicator" :style="{ backgroundColor: modelValue }"></div>
-    </button>
-    <input
-      type="color"
-      ref="colorInput"
-      :value="modelValue"
-      @input="emit('update:modelValue', $event.target.value)"
-      style="visibility: hidden; width: 0; height: 0; position: absolute;"
-    />
+  <div class="color-picker">
+    <input type="color" :value="color" @input="onInput" class="color-input" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-
-defineProps({
-  modelValue: {
+const props = defineProps({
+  color: {
     type: String,
-    required: true,
+    default: '#ffffff',
   },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:color']);
 
-const colorInput = ref(null);
-
-const triggerColorPicker = () => {
-  colorInput.value?.click();
+const onInput = (event) => {
+  emit('update:color', event.target.value);
 };
 </script>
 
-<style lang="scss" scoped>
-.toolbar-color-picker {
-  position: relative;
+<style scoped>
+.color-picker {
   display: inline-block;
-  margin: 0 0.1rem;
 }
-
-.color-picker-button {
-  position: relative;
-  background: none;
-  border: 1px solid transparent;
-  padding: 0.3rem 0.5rem;
+.color-input {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
   cursor: pointer;
+  padding: 0;
+}
+/* Hide the color input's native text/hex value display */
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.color-input::-webkit-color-swatch {
+  border: 1px solid #4a5568; /* gray-600 */
   border-radius: 4px;
-  color: var(--semantic-color-text-primary);
-  line-height: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-
-  &:hover {
-    background-color: var(--semantic-color-surface-tertiary);
-  }
-
-  .color-indicator {
-    width: 80%;
-    height: 3px;
-    border-radius: 1px;
-    margin-top: 3px;
-  }
 }
 </style>

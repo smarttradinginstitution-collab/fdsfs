@@ -18,11 +18,8 @@
 
 <script setup>
 import { defineProps } from 'vue';
-import ThesisBlock from './ThesisBlock.vue';
-import GalleryBlock from './GalleryBlock.vue';
-import ConditionsBlock from './ConditionsBlock.vue';
-import PsychologyBlock from './PsychologyBlock.vue';
-import LegacyRulesBlock from './LegacyRulesBlock.vue';
+import ThesisEditor from './ThesisEditor.vue';
+import GalleryEditor from './GalleryEditor.vue';
 
 const props = defineProps({
   playbook: {
@@ -31,12 +28,12 @@ const props = defineProps({
   },
 });
 
+import RulesEditor from './RulesEditor.vue';
+
 const blockComponentMap = {
-  THESIS: ThesisBlock,
-  GALLERY: GalleryBlock,
-  CONDITIONS: ConditionsBlock,
-  PSYCHOLOGY: PsychologyBlock,
-  LEGACY_RULES: LegacyRulesBlock,
+  RULES: RulesEditor,
+  THESIS: ThesisEditor,
+  GALLERY: GalleryEditor,
 };
 </script>
 
