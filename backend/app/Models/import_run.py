@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Optional, TYPE_CHECKING
 
-from sqlalchemy import TIMESTAMP, ForeignKey, func, Integer, Text, Enum
+from sqlalchemy import TIMESTAMP, ForeignKey, func, Integer, Text, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,7 +20,10 @@ if TYPE_CHECKING:
 
 class ImportRun(Base):
     __tablename__ = "import_runs"
-    __table_args__ = {"schema": "public"}
+    __table_args__ = (
+        UniqueConstraint('file_sha256', 'trading_account_id', name='uq_import_runs_hash_account'),
+        {"schema": "public"}
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -40,7 +43,8 @@ class ImportRun(Base):
         nullable=False
     )
     file_name: Mapped[Optional[str]] = mapped_column(Text)
-    file_sha256: Mapped[Optional[str]] = mapped_column(Text, unique=True)
+    # unique=True removed in favor of composite constraint
+    file_sha256: Mapped[Optional[str]] = mapped_column(Text)
 
     status: Mapped[str] = mapped_column(Text, nullable=False, default="queued")
     total_rows: Mapped[int] = mapped_column(Integer, default=0)

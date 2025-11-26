@@ -18,6 +18,8 @@ from .asset_market import AssetMarket
 from .asset_class import AssetClass
 from .mistake import Mistake
 from .news_impact import NewsImpact
+from .rules_group_playbook import RulesGroupPlaybook
+from .rule_playbook import RulePlaybook
 from .playbook import Playbook
 from .psychology_state import PsychologyState
 from .tags_group import TagsGroup
@@ -65,6 +67,8 @@ __all__ = [
     "Mistake",
     "NewsImpact",
     "Playbook",
+    "RulesGroupPlaybook",
+    "RulePlaybook",
     "PsychologyState",
     "TagsGroup",
     "NewsImpactsGroup",

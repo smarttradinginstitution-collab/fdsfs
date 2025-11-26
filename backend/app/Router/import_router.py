@@ -32,6 +32,14 @@ router.post(
     summary="Import trades from Tradovate CSV files",
 )(import_controller.import_tradovate_trades)
 
+# Rotta per importare i trade da file CSV di NinjaTrader.
+router.post(
+    "/ninjatrader/{trading_account_id}",
+    response_model=ImportRunRead,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Import trades from NinjaTrader CSV files",
+)(import_controller.import_ninjatrader_trades)
+
 # Rotta per importare i trade da un file HTML di MT5.
 # Anche questa operazione avvia un task in background.
 router.post(

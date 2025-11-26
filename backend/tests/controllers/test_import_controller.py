@@ -1,12 +1,10 @@
 # backend/tests/controllers/test_import_controller.py
 import pytest
-import asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 from sqlalchemy import select
 
-from app.Models.import_run import ImportRun
 from app.Models.trade import Trade
 from app.Models.broker import Broker
 
@@ -44,59 +42,42 @@ symbol,_priceFormat,_priceFormatType,_tickSize,buyFillId,sellFillId,qty,buyPrice
 NQZ5,-2,0,0.25,1,2,1,24861.0,24878.0,$340.00,09/22/2025 15:50:36,09/22/2025 15:54:58,4min 21sec
     """.strip().encode('utf-8')
 
-async def test_import_tradovate_success(async_client: AsyncClient, db_session: AsyncSession, valid_csv_content):
+async def test_import_tradovate_success(async_client: AsyncClient, db_session: AsyncSession, valid_csv_content, mocker):
     """
-    Test successful import of a Tradovate performance report.
+    Testa che il controller per l'import di Tradovate crei correttamente la ImportRun
+    e accodi il task Celery.
     """
+    mocker.patch("app.Controllers.import_controller.upload_import_file", return_value="mock/path/performance.csv")
+    mock_delay = mocker.patch("app.Controllers.import_controller.process_import_task.delay")
+
     trading_account_id = await setup_trading_account(async_client, db_session)
 
-    files = {'files': ('performance.csv', valid_csv_content, 'text/csv')}
+    files = {'file': ('performance.csv', valid_csv_content, 'text/csv')}
 
-    # 1. Upload the file
     response = await async_client.post(
         f"/api/v1/import/tradovate/{trading_account_id}",
         files=files
     )
 
+    # CORREZIONE: Lo status corretto è 202 Accepted
     assert response.status_code == 202
     import_run_data = response.json()
     assert import_run_data['status'] == 'queued'
     assert import_run_data['trading_account_id'] == str(trading_account_id)
+    assert "performance.csv" in import_run_data['file_name']
 
-    import_run_id = import_run_data['id']
+    mock_delay.assert_called_once()
+    args, _ = mock_delay.call_args
+    assert args[0] == import_run_data['id']
+    assert args[1] == "mock/path/performance.csv"
+    assert args[2] == "tradovate"
 
-    # 2. Poll for completion
-    for _ in range(10): # Poll for up to 30 seconds
-        await asyncio.sleep(3)
-        status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
-        if status_response.status_code == 200 and status_response.json()['status'] == 'applied':
-            break
-
-    final_status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
-    assert final_status_response.status_code == 200
-    final_run_data = final_status_response.json()
-
-    assert final_run_data['status'] == 'applied'
-    assert final_run_data['total_rows'] == 1
-    assert final_run_data['inserted_count'] == 1
-    assert final_run_data['skipped_count'] == 0
-
-    # 3. Verify trade was inserted in DB
-    result = await db_session.execute(
-        select(Trade).where(Trade.import_run_id == uuid.UUID(import_run_id))
-    )
-    inserted_trade = result.scalars().first()
-    assert inserted_trade is not None
-    assert inserted_trade.p_l == 340.0
-    assert inserted_trade.symbol_snapshot == "NQZ5"
-
-async def test_import_fails_without_performance_report(async_client: AsyncClient, db_session: AsyncSession):
+async def test_import_tradovate_fails_with_invalid_file(async_client: AsyncClient, db_session: AsyncSession):
     """
-    Test that the import fails if a file not named 'performance' is uploaded.
+    Testa che l'import fallisca se viene caricato un file non CSV.
     """
     trading_account_id = await setup_trading_account(async_client, db_session)
-
-    files = {'files': ('other_report.csv', b'some,content', 'text/csv')}
+    files = {'file': ('report.txt', b'some,content', 'text/plain')}
 
     response = await async_client.post(
         f"/api/v1/import/tradovate/{trading_account_id}",
@@ -104,23 +85,7 @@ async def test_import_fails_without_performance_report(async_client: AsyncClient
     )
 
     assert response.status_code == 400
-    assert "A 'Performance' report CSV file is required" in response.json()['detail']
-
-async def test_import_fails_with_too_many_files(async_client: AsyncClient, db_session: AsyncSession, valid_csv_content):
-    """
-    Test that the import fails if more than 5 files are uploaded.
-    """
-    trading_account_id = await setup_trading_account(async_client, db_session)
-
-    file_list = [('files', (f'file{i}.csv', valid_csv_content, 'text/csv')) for i in range(6)]
-
-    response = await async_client.post(
-        f"/api/v1/import/tradovate/{trading_account_id}",
-        files=file_list
-    )
-
-    assert response.status_code == 400
-    assert "Cannot upload more than 5 files at once" in response.json()['detail']
+    assert "formato CSV" in response.json()['detail']
 
 @pytest.fixture
 def valid_mt5_html_content():
@@ -149,12 +114,14 @@ def valid_mt5_html_content():
     </html>
     """
 
-async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSession, valid_mt5_html_content):
+async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSession, valid_mt5_html_content, mocker):
     """
-    Test successful import of an MT5 HTML report.
+    Testa che il controller per l'import di MT5 crei la ImportRun e accodi il task.
     """
-    trading_account_id = await setup_trading_account(async_client, db_session)
+    mocker.patch("app.Controllers.import_controller.upload_import_file", return_value="mock/path/report.html")
+    mock_delay = mocker.patch("app.Controllers.import_controller.process_import_task.delay")
 
+    trading_account_id = await setup_trading_account(async_client, db_session)
     files = {'file': ('report.html', valid_mt5_html_content, 'text/html')}
 
     response = await async_client.post(
@@ -162,31 +129,14 @@ async def test_import_mt5_success(async_client: AsyncClient, db_session: AsyncSe
         files=files
     )
 
+    # CORREZIONE: Lo status corretto è 202 Accepted
     assert response.status_code == 202
     import_run_data = response.json()
     assert import_run_data['status'] == 'queued'
     assert import_run_data['source_type'] == 'html'
 
-    import_run_id = import_run_data['id']
-
-    for _ in range(10):
-        await asyncio.sleep(3)
-        status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
-        if status_response.status_code == 200 and status_response.json()['status'] == 'applied':
-            break
-
-    final_status_response = await async_client.get(f"/api/v1/import/status/{import_run_id}")
-    assert final_status_response.status_code == 200
-    final_run_data = final_status_response.json()
-
-    assert final_run_data['status'] == 'applied'
-    assert final_run_data['total_rows'] == 1
-    assert final_run_data['inserted_count'] == 1
-
-    result = await db_session.execute(
-        select(Trade).where(Trade.import_run_id == uuid.UUID(import_run_id))
+    mock_delay.assert_called_once_with(
+        import_run_data['id'],
+        "mock/path/report.html",
+        "mt5"
     )
-    inserted_trade = result.scalars().first()
-    assert inserted_trade is not None
-    assert float(inserted_trade.p_l) == -189.56
-    assert inserted_trade.position_size == 2.0

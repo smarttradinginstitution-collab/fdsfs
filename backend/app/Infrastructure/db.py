@@ -25,6 +25,7 @@ from app.Models.asset import Asset
 from app.Models.asset_class import AssetClass
 from app.Models.auth_user import AuthUser
 from app.Models.broker import Broker
+from app.Models.broker_asset_class import BrokerAssetClass
 from app.Models.general_account import GeneralAccount
 from app.Models.mistake import Mistake
 from app.Models.news_impact import NewsImpact

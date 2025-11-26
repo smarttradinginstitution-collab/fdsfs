@@ -27,3 +27,5 @@ lxml
 cachetools==6.2.1
 scikit-learn
 pandas
+celery
+amqp
