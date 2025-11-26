@@ -47,7 +47,6 @@ from .trades_mistakes import TradesMistakes
 from .trades_news_impacts import TradesNewsImpacts
 from .trades_psychology import TradesPsychology
 from .trades_tags import TradesTags
-from .trades_rules import TradesRules
 from .notes_note_templates import notes_note_templates_association
 
 
@@ -84,6 +83,5 @@ __all__ = [
     "TradesNewsImpacts",
     "TradesPsychology",
     "TradesTags",
-    "TradesRules",
     "notes_note_templates_association",
 ]
