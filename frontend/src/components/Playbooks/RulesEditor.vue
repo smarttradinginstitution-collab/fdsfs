@@ -11,6 +11,7 @@ import IconButton from '@/components/ui/IconButton.vue';
 import Draggable from 'vuedraggable';
 import AddGroupModal from './AddGroupModal.vue';
 import AddChecklistModal from './AddChecklistModal.vue';
+import AddYesNoModal from './AddYesNoModal.vue';
 import GripVerticalIcon from '@/components/icons/GripVerticalIcon.vue';
 
 const props = defineProps({
@@ -37,6 +38,7 @@ const localContent = ref(JSON.parse(JSON.stringify(props.content)));
 
 const isGroupModalVisible = ref(false);
 const isChecklistModalVisible = ref(false);
+const isYesNoModalVisible = ref(false);
 const currentGroupForAdding = ref(null);
 
 const saveContent = async () => {
@@ -76,11 +78,28 @@ const handleAddChecklist = (checklistText) => {
     currentGroupForAdding.value.items.push({
       id: `item-${Date.now()}`,
       type: 'CHECKLIST',
-      data: { text: checklistText },
+      data: { text: checklistText, checked: false },
     });
     saveContent();
   }
   isChecklistModalVisible.value = false;
+};
+
+const openYesNoModal = (group) => {
+  currentGroupForAdding.value = group;
+  isYesNoModalVisible.value = true;
+};
+
+const handleAddYesNo = (ruleText) => {
+  if (currentGroupForAdding.value) {
+    currentGroupForAdding.value.items.push({
+      id: `item-${Date.now()}`,
+      type: 'YES_NO',
+      data: { text: ruleText, value: null }, // value can be 'yes', 'no', or null
+    });
+    saveContent();
+  }
+  isYesNoModalVisible.value = false;
 };
 
 const removeItem = (group, itemId) => {
@@ -114,9 +133,22 @@ const removeItem = (group, itemId) => {
               <div class="list-item group"> <!-- Add 'group' for hover context -->
                   <GripVerticalIcon class="drag-handle" />
 
-                  <div class="checklist-text">
-                      <div class="checkbox"></div>
-                      <input v-model="item.data.text" @blur="saveContent" class="input-ghost checklist-input" placeholder="Write a rule..." />
+                  <!-- Conditional Rendering for Item Type -->
+                  <div v-if="item.type === 'CHECKLIST'" class="item-content">
+                      <input type="checkbox" v-model="item.data.checked" @change="saveContent" class="checkbox-input" />
+                      <input v-model="item.data.text" @blur="saveContent" class="input-ghost item-text-input" placeholder="Write a rule..." />
+                  </div>
+
+                  <div v-else-if="item.type === 'YES_NO'" class="item-content">
+                      <span class="item-text">{{ item.data.text }}</span>
+                      <div class="yes-no-buttons">
+                          <button
+                              :class="['yn-button', 'yes', { selected: item.data.value === 'yes' }]"
+                              @click="item.data.value = 'yes'; saveContent()">Yes</button>
+                          <button
+                              :class="['yn-button', 'no', { selected: item.data.value === 'no' }]"
+                              @click="item.data.value = 'no'; saveContent()">No</button>
+                      </div>
                   </div>
 
                   <div class="item-actions">
@@ -130,6 +162,7 @@ const removeItem = (group, itemId) => {
 
           <div class="add-item-buttons">
               <button @click="openChecklistModal(group)" class="ghost-button">+ Add Checklist</button>
+              <button @click="openYesNoModal(group)" class="ghost-button">+ Add Yes/No</button>
           </div>
         </div>
       </template>
@@ -147,6 +180,12 @@ const removeItem = (group, itemId) => {
       v-if="isChecklistModalVisible"
       @close="isChecklistModalVisible = false"
       @add-checklist="handleAddChecklist"
+    />
+
+    <AddYesNoModal
+      v-if="isYesNoModalVisible"
+      @close="isYesNoModalVisible = false"
+      @add-rule="handleAddYesNo"
     />
   </div>
 </template>
@@ -195,23 +234,60 @@ const removeItem = (group, itemId) => {
 .list-item:hover .drag-handle {
     opacity: 1;
 }
-.checkbox {
+.item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+.checkbox-input {
     width: 1rem; /* 16px */
     height: 1rem; /* 16px */
     border: 1px solid #4B5563; /* gray-600 */
     border-radius: 4px;
     flex-shrink: 0;
+    /* Basic styling for custom checkbox appearance if needed */
 }
-.condition-text, .checklist-text {
-  display: flex; align-items: center; gap: 0.75rem; flex-grow: 1;
+.item-text {
+  flex-grow: 1;
 }
-.checklist-input {
-    font-size: 14px;
-    color: #D1D5DB; /* gray-200 */
-    font-weight: 500;
+.item-text, .item-text-input {
+  font-size: 14px;
+  color: #D1D5DB; /* gray-200 */
+  font-weight: 500;
 }
-.checklist-input::placeholder {
+.item-text-input::placeholder {
     color: #4B5563; /* gray-600 */
+}
+.yes-no-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+.yn-button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #4B5563; /* gray-600 */
+  border-radius: 6px;
+  background-color: transparent;
+  color: #9CA3AF; /* gray-400 */
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.yn-button:hover {
+  background-color: #374151; /* gray-700 */
+  color: #F9FAFB; /* gray-50 */
+}
+.yn-button.selected {
+  color: white;
+}
+.yn-button.selected.yes {
+  background-color: #166534; /* green-800 */
+  border-color: #16a34a; /* green-500 */
+}
+.yn-button.selected.no {
+  background-color: #991b1b; /* red-800 */
+  border-color: #ef4444; /* red-500 */
 }
 .item-actions {
     display: flex;

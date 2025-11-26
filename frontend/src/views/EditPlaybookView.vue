@@ -6,11 +6,13 @@ import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
-import IconSelector from '@/components/ui/IconSelector.vue';
+import EmojiSelector from '@/components/ui/EmojiSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import SmartBlock from '@/components/Playbooks/SmartBlock.vue';
 import AddBlockModal from '@/components/Playbooks/AddBlockModal.vue';
+import ImageLightbox from '@/components/ui/ImageLightbox.vue';
+import BaseTabs from '@/components/ui/BaseTabs.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -20,6 +22,14 @@ const uiStore = useUiStore();
 const playbookData = ref(null);
 const error = ref(null);
 const playbookId = computed(() => route.params.id);
+
+const activeTab = ref('main');
+const tabs = [
+  { id: 'main', label: 'MAIN' },
+  { id: 'explanation', label: 'explanation' },
+  { id: 'rules', label: 'RULES' },
+  { id: 'gallery', label: 'GALLERY' },
+];
 
 onMounted(async () => {
   if (playbookId.value) {
@@ -38,6 +48,29 @@ onMounted(async () => {
 });
 
 const isModalVisible = ref(false);
+
+// --- Lightbox State & Methods ---
+const isLightboxOpen = ref(false);
+const lightboxImages = ref([]);
+const lightboxCurrentIndex = ref(0);
+
+const openLightbox = ({ images, startIndex }) => {
+  lightboxImages.value = images;
+  lightboxCurrentIndex.value = startIndex;
+  isLightboxOpen.value = true;
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+};
+
+const nextImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value + 1) % lightboxImages.value.length;
+};
+
+const prevImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + lightboxImages.value.length) % lightboxImages.value.length;
+};
 
 const handleCreateBlock = async (blockData) => {
   isModalVisible.value = false;
@@ -94,7 +127,7 @@ const handleUpdateBlock = async (blockUpdateData) => {
             // Optionally, instead of a full refetch, you could update the local data.
             // For simplicity and consistency with other methods here, we refetch.
             playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
-        } catch (err)
+        } catch (err) {
             error.value = 'Failed to update the block.';
             console.error("Error updating block:", err);
         } finally {
@@ -102,6 +135,55 @@ const handleUpdateBlock = async (blockUpdateData) => {
         }
     }
 };
+
+const getBlockDisplayName = (blockType) => {
+  const names = {
+    THESIS: 'Model Explanation',
+    RULES: 'Model Rules & Conditions',
+    GALLERY: 'Model Gallery',
+  };
+  return names[blockType] || 'Content Block';
+};
+
+const groupedBlocks = computed(() => {
+  if (!playbookData.value || !playbookData.value.blocks) {
+    return [];
+  }
+
+  const groups = {
+    THESIS: [],
+    RULES: [],
+    GALLERY: [],
+  };
+
+  playbookData.value.blocks.forEach(block => {
+    if (groups[block.block_type]) {
+      groups[block.block_type].push(block);
+    }
+  });
+
+  const groupOrder = ['THESIS', 'RULES', 'GALLERY'];
+
+  return groupOrder
+    .map(blockType => ({
+      blockType,
+      displayName: getBlockDisplayName(blockType),
+      blocks: groups[blockType],
+    }))
+    .filter(group => group.blocks.length > 0);
+});
+
+const explanationBlocks = computed(() => {
+  return playbookData.value?.blocks.filter(b => b.block_type === 'THESIS') || [];
+});
+
+const rulesBlocks = computed(() => {
+  return playbookData.value?.blocks.filter(b => b.block_type === 'RULES') || [];
+});
+
+const galleryBlocks = computed(() => {
+  return playbookData.value?.blocks.filter(b => b.block_type === 'GALLERY') || [];
+});
 
 const savePlaybookDetails = async () => {
   uiStore.showLoader();
@@ -125,58 +207,61 @@ const savePlaybookDetails = async () => {
       <BaseWidget v-if="playbookData">
         <template #header>
           <div class="page-header">
-            <h2 class="page-title">Edit Playbook</h2>
+            <h2 class="page-title">MODEL SETTINGS</h2>
           </div>
         </template>
-        <div class="page-content">
-          <div class="form-content">
-            <!-- Playbook Details Section -->
-            <div class="playbook-header-section">
-              <input
-                v-model="playbookData.title"
-                @blur="savePlaybookDetails"
-                class="input-ghost playbook-title-input"
-                placeholder="Playbook Title"
-              />
-              <textarea
-                v-model="playbookData.description"
-                @blur="savePlaybookDetails"
-                class="input-ghost playbook-description-input"
-                placeholder="Add a description..."
-                rows="1"
-              ></textarea>
-              <div class="meta-tags">
-                  <ColorSelector v-model="playbookData.color" @update:modelValue="savePlaybookDetails" />
-                  <IconSelector v-model="playbookData.icon_name" @update:modelValue="savePlaybookDetails" />
+        <BaseTabs v-model="activeTab" :tabs="tabs">
+          <template #main>
+            <div class="form-content">
+              <!-- Playbook Details Section -->
+              <div class="playbook-header-section">
+                <div class="title-input-group">
+                  <label for="playbookTitle" class="input-label">Nome Playbook</label>
+                  <BaseInput
+                    id="playbookTitle"
+                    v-model="playbookData.title"
+                    @blur="savePlaybookDetails"
+                    placeholder="Enter Playbook Title"
+                  />
+                </div>
+                <div class="meta-tags">
+                    <ColorSelector v-model="playbookData.color" @update:modelValue="savePlaybookDetails" />
+                    <EmojiSelector v-model="playbookData.icon_name" @update:modelValue="savePlaybookDetails" />
+                </div>
               </div>
             </div>
-
-            <!-- Blocks Section -->
+          </template>
+          <template #explanation>
             <div class="form-section">
-              <h3 class="section-title">Playbook Content</h3>
-              <div v-if="playbookData.blocks && playbookData.blocks.length > 0">
-                <SmartBlock
-                    v-for="block in playbookData.blocks"
-                    :key="block.id"
-                    :block="block"
-                    @delete-block="handleDeleteBlock"
-                    @update-block="handleUpdateBlock"
-                />
+              <div v-for="block in explanationBlocks" :key="block.id" class="block-wrapper">
+                <SmartBlock :block="block" @delete-block="handleDeleteBlock" @update-block="handleUpdateBlock" @open-lightbox="openLightbox" />
               </div>
-              <div v-else class="no-blocks-message">
-                This playbook has no content. Add a block to get started.
+              <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="secondary">+ Add Explanation Block</BaseButton>
               </div>
             </div>
-
-            <div class="add-block-section">
-                <BaseButton @click="isModalVisible = true" variant="primary" size="lg">
-                    + Add New Content Block
-                </BaseButton>
+          </template>
+          <template #rules>
+            <div class="form-section">
+              <div v-for="block in rulesBlocks" :key="block.id" class="block-wrapper">
+                <SmartBlock :block="block" @delete-block="handleDeleteBlock" @update-block="handleUpdateBlock" @open-lightbox="openLightbox" />
+              </div>
+              <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="secondary">+ Add Rules Block</BaseButton>
+              </div>
             </div>
-          </div>
-
-          <div v-if="error" class="error-message">{{ error }}</div>
-        </div>
+          </template>
+          <template #gallery>
+            <div class="form-section">
+              <div v-for="block in galleryBlocks" :key="block.id" class="block-wrapper">
+                <SmartBlock :block="block" @delete-block="handleDeleteBlock" @update-block="handleUpdateBlock" @open-lightbox="openLightbox" />
+              </div>
+              <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="secondary">+ Add Gallery Block</BaseButton>
+              </div>
+            </div>
+          </template>
+        </BaseTabs>
       </BaseWidget>
     </div>
 
@@ -184,6 +269,16 @@ const savePlaybookDetails = async () => {
       v-if="isModalVisible"
       @close="isModalVisible = false"
       @create-block="handleCreateBlock"
+    />
+
+    <ImageLightbox
+      v-if="isLightboxOpen"
+      :images="lightboxImages"
+      :current-index="lightboxCurrentIndex"
+      :show="isLightboxOpen"
+      @close="closeLightbox"
+      @next="nextImage"
+      @prev="prevImage"
     />
   </div>
 </template>
@@ -226,10 +321,15 @@ const savePlaybookDetails = async () => {
     padding-bottom: var(--semantic-size-stack-lg);
     border-bottom: 1px solid var(--semantic-color-border-subtle);
 }
-.playbook-title-input {
-    font: var(--semantic-font-style-headline-lg);
-    font-weight: 600;
-    color: var(--semantic-color-text-primary);
+.title-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* 8px */
+}
+.input-label {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: var(--semantic-color-text-secondary);
 }
 .playbook-description-input {
     font: var(--semantic-font-style-body-lg);
@@ -257,6 +357,26 @@ const savePlaybookDetails = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-md);
+}
+.block-group {
+  margin-bottom: 2.5rem; /* 40px */
+}
+.blocks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* 24px */
+  margin-top: 1rem;
+}
+.block-wrapper {
+  /* No margin needed here now, gap handles it */
+}
+.block-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A91A0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
 }
 .section-title {
   font: var(--semantic-font-style-headline-xs);
