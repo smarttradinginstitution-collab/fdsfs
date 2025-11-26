@@ -18,6 +18,8 @@ from .asset_market import AssetMarket
 from .asset_class import AssetClass
 from .mistake import Mistake
 from .news_impact import NewsImpact
+from .rules_group_playbook import RulesGroupPlaybook
+from .rule_playbook import RulePlaybook
 from .playbook import Playbook
 from .psychology_state import PsychologyState
 from .tags_group import TagsGroup
@@ -45,6 +47,7 @@ from .trades_mistakes import TradesMistakes
 from .trades_news_impacts import TradesNewsImpacts
 from .trades_psychology import TradesPsychology
 from .trades_tags import TradesTags
+from .trades_rules import TradesRules
 from .notes_note_templates import notes_note_templates_association
 
 
@@ -65,6 +68,8 @@ __all__ = [
     "Mistake",
     "NewsImpact",
     "Playbook",
+    "RulesGroupPlaybook",
+    "RulePlaybook",
     "PsychologyState",
     "TagsGroup",
     "NewsImpactsGroup",
@@ -79,5 +84,6 @@ __all__ = [
     "TradesNewsImpacts",
     "TradesPsychology",
     "TradesTags",
+    "TradesRules",
     "notes_note_templates_association",
 ]

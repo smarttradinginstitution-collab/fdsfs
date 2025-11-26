@@ -1,6 +1,12 @@
 # backend/app/celery_app.py
 import os
+from dotenv import load_dotenv
 from celery import Celery
+
+# Carica esplicitamente le variabili d'ambiente dal file .env
+# Questo è cruciale per il worker che potrebbe non essere avviato
+# dalla stessa directory o con lo stesso contesto di Pydantic.
+load_dotenv()
 
 # --- Configurazione Principale ---
 BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://guest:guest@localhost:5672//")
