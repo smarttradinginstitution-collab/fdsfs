@@ -156,6 +156,8 @@ class PlaybookRepository:
         return playbooks_with_stats
 
     async def create(self, playbook_in: PlaybookCreate, general_account_id: UUID) -> Playbook:
+        from app.Models.enums import PlaybookBlockType
+
         await self._check_duplicate_title(general_account_id, playbook_in.title)
 
         db_playbook = Playbook(
@@ -163,6 +165,31 @@ class PlaybookRepository:
             general_account_id=general_account_id
         )
         self.db.add(db_playbook)
+        await self.db.flush()  # Use flush to get the playbook ID before committing
+
+        # Create default blocks
+        default_blocks = [
+            PlaybookBlock(
+                playbook_id=db_playbook.id,
+                block_type=PlaybookBlockType.THESIS,
+                title="Model Explanation",
+                content={"html": ""}
+            ),
+            PlaybookBlock(
+                playbook_id=db_playbook.id,
+                block_type=PlaybookBlockType.GALLERY,
+                title="Valid Setup",
+                content={"images": []}
+            ),
+            PlaybookBlock(
+                playbook_id=db_playbook.id,
+                block_type=PlaybookBlockType.GALLERY,
+                title="Invalid Setup",
+                content={"images": []}
+            )
+        ]
+        self.db.add_all(default_blocks)
+
         await self.db.commit()
         await self.db.refresh(db_playbook)
         # Ricarica l'oggetto con le relazioni per essere sicuri che siano caricate

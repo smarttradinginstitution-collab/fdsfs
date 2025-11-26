@@ -46,7 +46,11 @@ async def test_create_and_get_playbook(async_client: AsyncClient):
     assert created_data["private"] == playbook_data["private"]
     assert "general_account_id" in created_data
     assert "blocks" in created_data
-    assert created_data["blocks"] == []
+    assert len(created_data["blocks"]) == 3
+    block_titles = {block["title"] for block in created_data["blocks"]}
+    assert "Valid Setup" in block_titles
+    assert "Invalid Setup" in block_titles
+    assert "Model Explanation" in block_titles
 
     # Get the playbook by ID
     get_response = await async_client.get(f"/api/v1/playbooks/{playbook_id}")

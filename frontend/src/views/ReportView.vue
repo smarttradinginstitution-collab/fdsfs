@@ -8,7 +8,7 @@ import BaseWidget from '@/components/layout/BaseWidget.vue';
 import EditTradeDetailsModal from '@/components/reports/EditTradeDetailsModal.vue';
 import TradeImageGallery from '@/components/images/TradeImageGallery.vue';
 import ImageMetadataModal from '@/components/images/ImageMetadataModal.vue';
-import ImageLightbox from '@/components/images/ImageLightbox.vue';
+import ImageLightbox from '@/components/ui/ImageLightbox.vue';
 import TradeNoteEditor from '@/components/reports/TradeNoteEditor.vue';
 import PlaybookTab from '@/components/reports/PlaybookTab.vue';
 import { useTradesStore } from '@/stores/trades';
