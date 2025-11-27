@@ -217,9 +217,9 @@ class ImportService:
             existing_trade = result.scalars().first()
 
             if existing_trade:
-                for key, value in trade_data.items():
-                    setattr(existing_trade, key, value)
-                updated_count += 1
+                # Se il trade esiste già, lo skippiamo senza fare nulla.
+                # Il conteggio degli skipped verrà calcolato alla fine.
+                continue
             else:
                 new_trade = Trade(**trade_data)
                 self.db.add(new_trade)
