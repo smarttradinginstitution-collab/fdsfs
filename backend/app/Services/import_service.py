@@ -213,7 +213,12 @@ class ImportService:
             trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             dedupe_key = trade_data.get("dedupe_key")
-            result = await self.db.execute(select(Trade).where(Trade.dedupe_key == dedupe_key))
+            result = await self.db.execute(
+                select(Trade).where(
+                    Trade.dedupe_key == dedupe_key,
+                    Trade.trading_account_id == import_run.trading_account_id,
+                )
+            )
             existing_trade = result.scalars().first()
 
             if existing_trade:
