@@ -102,13 +102,13 @@ class ImportService:
             return
 
         # 4. Applica i trade al database
-        inserted_count, updated_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
+        inserted_count, updated_count, skipped_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
 
         # 5. Finalizza la run di importazione
         import_run.status = "applied"
         import_run.inserted_count = inserted_count
         import_run.updated_count = updated_count
-        import_run.skipped_count = (import_run.total_rows or 0) - (inserted_count + updated_count)
+        import_run.skipped_count = skipped_count
         import_run.finished_at = func.now()
         await self.db.commit()
 
@@ -144,12 +144,12 @@ class ImportService:
             await self.db.commit()
             return
 
-        inserted_count, updated_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
+        inserted_count, updated_count, skipped_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
 
         import_run.status = "applied"
         import_run.inserted_count = inserted_count
         import_run.updated_count = updated_count
-        import_run.skipped_count = (import_run.total_rows or 0) - (inserted_count + updated_count)
+        import_run.skipped_count = skipped_count
         import_run.finished_at = func.now()
         await self.db.commit()
 
@@ -185,21 +185,22 @@ class ImportService:
             await self.db.commit()
             return
 
-        inserted_count, updated_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
+        inserted_count, updated_count, skipped_count = await self._apply_trades_to_db(import_run, parsed_trades, initial_balance)
 
         import_run.status = "applied"
         import_run.inserted_count = inserted_count
         import_run.updated_count = updated_count
-        import_run.skipped_count = (import_run.total_rows or 0) - (inserted_count + updated_count)
+        import_run.skipped_count = skipped_count
         import_run.finished_at = func.now()
         await self.db.commit()
 
-    async def _apply_trades_to_db(self, import_run: ImportRun, parsed_trades: List[Dict], initial_balance: Decimal) -> Tuple[int, int]:
+    async def _apply_trades_to_db(self, import_run: ImportRun, parsed_trades: List[Dict], initial_balance: Decimal) -> Tuple[int, int, int]:
         """
         Metodo helper per inserire/aggiornare i trade nel database.
         """
         inserted_count = 0
         updated_count = 0
+        skipped_count = 0
 
         for trade_data in parsed_trades:
             trade_data["trading_account_id"] = import_run.trading_account_id
@@ -217,16 +218,15 @@ class ImportService:
             existing_trade = result.scalars().first()
 
             if existing_trade:
-                for key, value in trade_data.items():
-                    setattr(existing_trade, key, value)
-                updated_count += 1
+                # Se il trade esiste già, lo saltiamo senza aggiornarlo.
+                skipped_count += 1
             else:
                 new_trade = Trade(**trade_data)
                 self.db.add(new_trade)
                 inserted_count += 1
 
         await self.db.flush()
-        return inserted_count, updated_count
+        return inserted_count, updated_count, skipped_count
 
     async def get_import_run(self, import_run_id: uuid.UUID) -> ImportRun | None:
         """Recupera una ImportRun dal suo ID."""
