@@ -213,13 +213,18 @@ class ImportService:
             trade_data['r_multiple'] = float(r_multiple) if r_multiple is not None else None
 
             dedupe_key = trade_data.get("dedupe_key")
-            result = await self.db.execute(select(Trade).where(Trade.dedupe_key == dedupe_key))
+            result = await self.db.execute(
+                select(Trade).where(
+                    Trade.dedupe_key == dedupe_key,
+                    Trade.trading_account_id == import_run.trading_account_id,
+                )
+            )
             existing_trade = result.scalars().first()
 
             if existing_trade:
-                for key, value in trade_data.items():
-                    setattr(existing_trade, key, value)
-                updated_count += 1
+                # Se il trade esiste già, lo skippiamo senza fare nulla.
+                # Il conteggio degli skipped verrà calcolato alla fine.
+                continue
             else:
                 new_trade = Trade(**trade_data)
                 self.db.add(new_trade)
