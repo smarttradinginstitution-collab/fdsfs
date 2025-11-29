@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from typing import List
@@ -10,6 +11,7 @@ from app.Schemas.playbook import PlaybookRead, PlaybookCreate, PlaybookUpdate, P
 from app.Schemas.trade import TradeRead
 from app.Router.auth import require_roles
 from app.Router.dependencies import get_current_user
+from app.Schemas.playbook_block import PlaybookBlockRead, PlaybookBlockCreate, PlaybookBlockUpdate
 
 # ------------------------------------------------------------------------------
 # Istanze Controller (stateless)
@@ -89,3 +91,43 @@ router.get(
     tags=["Playbooks"],
     summary="Recupera i trade eseguiti per un playbook",
 )(playbooks.list_trades_for_playbook)
+
+# ------------------------------------------------------------------------------
+# Rotte per la gestione delle Immagini di un Playbook
+# ------------------------------------------------------------------------------
+from app.Schemas.image import ImageRead
+
+router.post(
+    "/playbooks/{playbook_id}/images",
+    response_model=ImageRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Playbooks"],
+    summary="Carica una nuova immagine per un playbook",
+)(playbooks.upload_playbook_image)
+
+
+# ------------------------------------------------------------------------------
+# Rotte per la gestione dei Blocchi di un Playbook
+# ------------------------------------------------------------------------------
+
+router.post(
+    "/playbooks/{playbook_id}/blocks",
+    response_model=PlaybookBlockRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Playbooks"],
+    summary="Crea un nuovo blocco per un playbook",
+)(playbooks.create_block)
+
+router.put(
+    "/playbooks/{playbook_id}/blocks/{block_id}",
+    response_model=PlaybookBlockRead,
+    tags=["Playbooks"],
+    summary="Aggiorna un blocco specifico di un playbook",
+)(playbooks.update_block)
+
+router.delete(
+    "/playbooks/{playbook_id}/blocks/{block_id}",
+    status_code=status.HTTP_200_OK,
+    tags=["Playbooks"],
+    summary="Elimina un blocco specifico di un playbook",
+)(playbooks.delete_block)

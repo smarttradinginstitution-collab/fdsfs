@@ -4,12 +4,13 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from sqlalchemy import func, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Infrastructure.db import Base
+from app.Infrastructure.base import Base
 from sqlalchemy.dialects.postgresql import UUID
 
 if TYPE_CHECKING:
     from app.Models.general_account import GeneralAccount
     from app.Models.trade import Trade
+    from app.Models.playbook import Playbook
 
 class Image(Base):
     __tablename__ = "images"
@@ -23,6 +24,9 @@ class Image(Base):
     )
     trade_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("public.trades.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    playbook_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("public.playbooks.id", ondelete="SET NULL"), nullable=True, index=True
     )
     filename: Mapped[str] = mapped_column(String, nullable=False)
     storage_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -42,3 +46,4 @@ class Image(Base):
     # --- Relationships ---
     general_account: Mapped["GeneralAccount"] = relationship(back_populates="images")
     trade: Mapped["Trade | None"] = relationship("Trade", foreign_keys="Image.trade_id", back_populates="images")
+    playbook: Mapped["Playbook | None"] = relationship("Playbook", foreign_keys="Image.playbook_id", back_populates="ideal_images")

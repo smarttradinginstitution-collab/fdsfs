@@ -11,8 +11,7 @@
         <span class="breadcrumb-overview">{{ activeTab }}</span>
       </div>
       <div class="header-actions">
-        <BaseButton v-if="activeTab === 'Playbook Rules'" @click="store.setCreatingGroup(true)">+ Create Group</BaseButton>
-        <BaseButton v-else variant="secondary">Share</BaseButton>
+        <BaseButton variant="secondary">Share</BaseButton>
       </div>
     </header>
 
@@ -69,8 +68,8 @@
       </div>
 
       <!-- Playbook Rules Tab -->
-      <div v-if="activeTab === 'Playbook Rules'">
-        <PlaybookRulesTab />
+      <div v-if="activeTab === 'Playbook Rules' && playbook">
+        <PlaybookRulesTab :playbook="playbook" />
       </div>
 
       <!-- Executed Trades Tab -->
@@ -126,6 +125,7 @@ const route = useRoute();
 const store = usePlaybookStore();
 
 const playbookId = computed(() => route.params.id);
+const playbook = ref(null);
 
 // Tab management
 const tabs = ['Overview', 'Playbook Rules', 'Executed Trades', 'Missed Trades', 'Notes'];
@@ -136,13 +136,11 @@ const selectTab = (tabName) => {
   // Future logic for fetching data for other tabs can go here.
 };
 
-onMounted(() => {
-  // Ensure the full list of playbooks is available for navigation etc.
-  if (store.playbooks.length === 0) {
-    store.fetchPlaybooks();
-  }
+onMounted(async () => {
   if (playbookId.value) {
-    // Fetch analytics for the overview tab regardless
+    // Fetch the full playbook details, including blocks and conditions
+    playbook.value = await store.fetchPlaybookDetails(playbookId.value);
+    // Fetch analytics for the overview tab
     store.fetchPlaybookAnalytics(playbookId.value);
   }
 });

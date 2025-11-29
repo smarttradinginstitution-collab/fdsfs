@@ -1,94 +1,200 @@
+
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { storeToRefs } from 'pinia';
 import { usePlaybookStore } from '@/stores/playbookStore';
 import { useUiStore } from '@/stores/uiStore';
 import BaseWidget from '@/components/layout/BaseWidget.vue';
-import IconButton from '@/components/ui/IconButton.vue';
-import ArrowLeftIcon from '@/components/icons/ArrowLeftIcon.vue';
-import Stepper from '@/components/ui/Stepper.vue';
 import ColorSelector from '@/components/ui/ColorSelector.vue';
-import IconSelector from '@/components/ui/IconSelector.vue';
+import EmojiSelector from '@/components/ui/EmojiSelector.vue';
 import BaseInput from '@/components/ui/BaseInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import RuleGroupManager from '@/components/Playbooks/RuleGroupManager.vue';
+import SmartBlock from '@/components/Playbooks/SmartBlock.vue';
+import AddBlockModal from '@/components/Playbooks/AddBlockModal.vue';
+import ImageLightbox from '@/components/ui/ImageLightbox.vue';
+import BaseTabs from '@/components/ui/BaseTabs.vue';
 
 const router = useRouter();
 const route = useRoute();
 const playbookStore = usePlaybookStore();
-const { ruleGroups } = storeToRefs(playbookStore);
 const uiStore = useUiStore();
-const ruleGroupManagerRef = ref(null);
 
-const playbookId = ref(null);
-const pageTitle = 'Edit Playbook';
-
-const playbookData = ref({
-  title: '',
-  description: '',
-  color: '#4A90E2',
-  icon_name: 'BuildingLibraryIcon',
-  private: false,
-});
+const playbookData = ref(null);
 const error = ref(null);
+const playbookId = computed(() => route.params.id);
 
-onMounted(async () => {
-  playbookId.value = route.params.id;
-  try {
-    const data = await playbookStore.fetchPlaybookDetails(playbookId.value);
-    playbookData.value = { ...data };
-  } catch (err) {
-    console.error('Failed to fetch playbook data, redirecting.', err);
-    router.push('/playbooks');
-  }
-});
-
-const currentStep = ref(0);
-const steps = [
-  { title: 'Setup', description: 'Personalize your playbook' },
-  { title: 'Rules', description: 'Define your entry/exit criteria' },
+const activeTab = ref('main');
+const tabs = [
+  { id: 'main', label: 'MAIN' },
+  { id: 'explanation', label: 'Explanation' },
+  { id: 'rules', label: 'RULES' },
+  { id: 'gallery', label: 'GALLERY' },
 ];
 
-const isLastStep = computed(() => currentStep.value === steps.length - 1);
+onMounted(async () => {
+  if (playbookId.value) {
+    uiStore.showLoader();
+    try {
+      // Fetch fresh data. The store might be stale.
+      const data = await playbookStore.fetchPlaybookDetails(playbookId.value);
+      playbookData.value = data;
+    } catch (err) {
+      console.error('Failed to fetch playbook data, redirecting.', err);
+      router.push('/playbooks');
+    } finally {
+      uiStore.hideLoader();
+    }
+  }
+});
 
-const cancelEdit = () => {
-  router.push('/playbooks');
+const isModalVisible = ref(false);
+
+// --- Lightbox State & Methods ---
+const isLightboxOpen = ref(false);
+const lightboxImages = ref([]);
+const lightboxCurrentIndex = ref(0);
+
+const openLightbox = ({ images, startIndex }) => {
+  lightboxImages.value = images;
+  lightboxCurrentIndex.value = startIndex;
+  isLightboxOpen.value = true;
 };
 
-const goBack = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--;
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+};
+
+const nextImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value + 1) % lightboxImages.value.length;
+};
+
+const prevImage = () => {
+  lightboxCurrentIndex.value = (lightboxCurrentIndex.value - 1 + lightboxImages.value.length) % lightboxImages.value.length;
+};
+
+const handleCreateBlock = async (blockData) => {
+  isModalVisible.value = false;
+  if (playbookId.value) {
+    uiStore.showLoader();
+    try {
+      let defaultContent = {};
+      if (blockData.block_type === 'RULES') {
+        defaultContent = { groups: [] };
+      } else if (blockData.block_type === 'THESIS') {
+        defaultContent = { html: "<p>Write your thesis here...</p>" };
+      } else if (blockData.block_type === 'GALLERY') {
+        defaultContent = { images: [] };
+      }
+
+      await playbookStore.createBlockForPlaybook({
+        playbookId: playbookId.value,
+        ...blockData,
+        content: defaultContent,
+      });
+
+      // Refetch to get the updated list of blocks
+      playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
+    } catch (err) {
+      error.value = 'Failed to add the new block.';
+      console.error("Error adding new block:", err);
+    } finally {
+      uiStore.hideLoader();
+    }
   }
 };
 
-const handleNext = () => {
-  if (isLastStep.value) {
-    submitPlaybookUpdate();
-  } else {
-    currentStep.value++;
-  }
+const handleDeleteBlock = async (blockId) => {
+    if (playbookId.value && blockId) {
+        uiStore.showLoader();
+        try {
+            await playbookStore.deleteBlock(playbookId.value, blockId);
+            // Refetch to update the UI
+            playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
+        } catch (err) {
+            error.value = 'Failed to delete the block.';
+            console.error("Error deleting block:", err);
+        } finally {
+            uiStore.hideLoader();
+        }
+    }
 };
 
-const submitPlaybookUpdate = async () => {
-  if (!ruleGroupManagerRef.value?.ruleGroups) {
-    error.value = "Could not find rule groups data.";
-    return;
+const handleUpdateBlock = async (blockUpdateData) => {
+    if (playbookId.value && blockUpdateData.id) {
+        uiStore.showLoader();
+        try {
+            await playbookStore.updateBlock(playbookId.value, blockUpdateData.id, blockUpdateData);
+            // Optionally, instead of a full refetch, you could update the local data.
+            // For simplicity and consistency with other methods here, we refetch.
+            playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
+        } catch (err) {
+            error.value = 'Failed to update the block.';
+            console.error("Error updating block:", err);
+        } finally {
+            uiStore.hideLoader();
+        }
+    }
+};
+
+const getBlockDisplayName = (blockType) => {
+  const names = {
+    THESIS: 'Model Explanation',
+    RULES: 'Model Rules & Conditions',
+    GALLERY: 'Model Gallery',
+  };
+  return names[blockType] || 'Content Block';
+};
+
+const groupedBlocks = computed(() => {
+  if (!playbookData.value || !playbookData.value.blocks) {
+    return [];
   }
 
+  const groups = {
+    THESIS: [],
+    RULES: [],
+    GALLERY: [],
+  };
+
+  playbookData.value.blocks.forEach(block => {
+    if (groups[block.block_type]) {
+      groups[block.block_type].push(block);
+    }
+  });
+
+  const groupOrder = ['THESIS', 'RULES', 'GALLERY'];
+
+  return groupOrder
+    .map(blockType => ({
+      blockType,
+      displayName: getBlockDisplayName(blockType),
+      blocks: groups[blockType],
+    }))
+    .filter(group => group.blocks.length > 0);
+});
+
+const explanationBlocks = computed(() => {
+  return playbookData.value?.blocks.filter(b => b.block_type === 'THESIS') || [];
+});
+
+const rulesBlocks = computed(() => {
+  return playbookData.value?.blocks.filter(b => b.block_type === 'RULES') || [];
+});
+
+const galleryBlocks = computed(() => {
+  return playbookData.value?.blocks.filter(b => b.block_type === 'GALLERY') || [];
+});
+
+const savePlaybookDetails = async () => {
   uiStore.showLoader();
   error.value = null;
   try {
-    const ruleGroups = ruleGroupManagerRef.value.ruleGroups;
-    const finalPlaybookData = {
-      ...playbookData.value,
-      rules_groups: ruleGroups,
-    };
-    await playbookStore.updatePlaybook(playbookId.value, finalPlaybookData);
-    router.push({ name: 'playbook-detail', params: { id: playbookId.value } });
+    const { blocks, ...detailsToUpdate } = playbookData.value;
+    await playbookStore.updatePlaybook(playbookId.value, detailsToUpdate);
+    // Optionally show a success message
   } catch (err) {
-    console.error("Failed to update playbook with rules:", err);
-    error.value = playbookStore.error || 'An unknown error occurred during save.';
+    error.value = 'Failed to save playbook details.';
+    console.error("Failed to update playbook:", err);
   } finally {
     uiStore.hideLoader();
   }
@@ -98,134 +204,198 @@ const submitPlaybookUpdate = async () => {
 <template>
   <div class="edit-playbook-view">
     <div class="edit-playbook-container">
-      <BaseWidget>
+      <BaseWidget v-if="playbookData">
         <template #header>
           <div class="page-header">
-            <div class="header-left-controls">
-              <IconButton v-if="currentStep > 0" @click="goBack" aria-label="Go back" :disabled="uiStore.isAppLoading">
-                <ArrowLeftIcon />
-              </IconButton>
-            </div>
-            <h2 class="page-title">{{ pageTitle }}</h2>
+            <h2 class="page-title">MODEL SETTINGS</h2>
           </div>
         </template>
-        <div class="page-content">
-          <Stepper :steps="steps" :current-step="currentStep" />
-
-          <!-- Step 1: Setup -->
-          <div v-if="currentStep === 0" class="form-content">
-            <div class="form-section">
-              <h3 class="section-title">Color</h3>
-              <ColorSelector v-model="playbookData.color" />
+        <BaseTabs v-model="activeTab" :tabs="tabs">
+          <template #main>
+            <div class="form-content">
+              <!-- Playbook Details Section -->
+              <div class="playbook-header-section">
+                <div class="title-input-group">
+                  <label for="playbookTitle" class="input-label">Nome Playbook</label>
+                  <BaseInput
+                    id="playbookTitle"
+                    v-model="playbookData.title"
+                    @blur="savePlaybookDetails"
+                    placeholder="Enter Playbook Title"
+                  />
+                </div>
+                <div class="meta-tags">
+                    <ColorSelector v-model="playbookData.color" @update:modelValue="savePlaybookDetails" />
+                    <EmojiSelector v-model="playbookData.icon_name" @update:modelValue="savePlaybookDetails" />
+                </div>
+              </div>
             </div>
+          </template>
+          <template #explanation>
             <div class="form-section">
-              <h3 class="section-title">Icon</h3>
-              <IconSelector v-model="playbookData.icon_name" />
+              <div v-for="block in explanationBlocks" :key="block.id" class="block-wrapper">
+                <SmartBlock :block="block" @delete-block="handleDeleteBlock" @update-block="handleUpdateBlock" @open-lightbox="openLightbox" />
+              </div>
+              <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="secondary">+ Add Explanation Block</BaseButton>
+              </div>
             </div>
+          </template>
+          <template #rules>
             <div class="form-section">
-              <BaseInput
-                v-model="playbookData.title"
-                label="Playbook Name"
-                placeholder="e.g., 'Opening Range Breakout'"
-                id="playbook-title"
-                :disabled="uiStore.isAppLoading"
-              />
+              <div v-for="block in rulesBlocks" :key="block.id" class="block-wrapper">
+                <SmartBlock :block="block" @delete-block="handleDeleteBlock" @update-block="handleUpdateBlock" @open-lightbox="openLightbox" />
+              </div>
+              <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="secondary">+ Add Rules Block</BaseButton>
+              </div>
             </div>
+          </template>
+          <template #gallery>
             <div class="form-section">
-              <BaseInput
-                v-model="playbookData.description"
-                label="Description"
-                placeholder="Describe the strategy, entry/exit criteria, etc."
-                id="playbook-description"
-                type="textarea"
-                :rows="4"
-                :disabled="uiStore.isAppLoading"
-              />
+              <div v-for="block in galleryBlocks" :key="block.id" class="block-wrapper">
+                <SmartBlock :block="block" @delete-block="handleDeleteBlock" @update-block="handleUpdateBlock" @open-lightbox="openLightbox" />
+              </div>
+              <div class="add-block-section">
+                <BaseButton @click="isModalVisible = true" variant="secondary">+ Add Gallery Block</BaseButton>
+              </div>
             </div>
-          </div>
-
-          <!-- Step 2: Rules -->
-          <div v-if="currentStep === 1" class="form-content">
-            <RuleGroupManager
-              ref="ruleGroupManagerRef"
-              :playbook-id="playbookId"
-              :initial-groups="playbookData.rules_groups"
-            />
-          </div>
-
-          <div v-if="error" class="error-message">{{ error }}</div>
-
-          <div class="form-actions">
-            <BaseButton variant="secondary" @click="cancelEdit" :disabled="uiStore.isAppLoading">Cancel</BaseButton>
-            <BaseButton variant="primary" @click="handleNext" :is-loading="uiStore.isAppLoading">
-              {{ isLastStep ? 'Update' : 'Next' }}
-            </BaseButton>
-          </div>
-        </div>
+          </template>
+        </BaseTabs>
       </BaseWidget>
     </div>
+
+    <AddBlockModal
+      v-if="isModalVisible"
+      @close="isModalVisible = false"
+      @create-block="handleCreateBlock"
+    />
+
+    <ImageLightbox
+      v-if="isLightboxOpen"
+      :images="lightboxImages"
+      :current-index="lightboxCurrentIndex"
+      :show="isLightboxOpen"
+      @close="closeLightbox"
+      @next="nextImage"
+      @prev="prevImage"
+    />
   </div>
 </template>
 
 <style scoped>
+/* Global styles for the new design */
+:deep(.input-ghost) {
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    width: 100%;
+}
+:deep(.input-ghost:focus) {
+    background-color: var(--semantic-color-surface-subtle);
+}
+
 .edit-playbook-view {
   width: 100%;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   padding: var(--semantic-size-inset-xl);
-  background-color: var(--semantic-color-surface-primary);
+  background-color: #0F1115; /* Dark page background */
+  color: var(--semantic-color-text-primary);
 }
-
 .edit-playbook-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
+  margin: 0 auto;
 }
-
 .page-header {
+  text-align: center;
+}
+.page-title {
+  font: var(--semantic-font-style-headline-lg);
+}
+.playbook-header-section {
+    padding-bottom: var(--semantic-size-stack-lg);
+    border-bottom: 1px solid var(--semantic-color-border-subtle);
+}
+.title-input-group {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+  flex-direction: column;
+  gap: 0.5rem; /* 8px */
 }
-
-.header-left-controls {
-  min-width: 36px;
+.input-label {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: var(--semantic-color-text-secondary);
 }
-
+.playbook-description-input {
+    font: var(--semantic-font-style-body-lg);
+    color: var(--semantic-color-text-secondary);
+    margin-top: var(--semantic-size-stack-xs);
+    resize: none;
+}
+.meta-tags {
+    display: flex;
+    align-items: center;
+    gap: var(--semantic-size-inline-md);
+    margin-top: var(--semantic-size-stack-md);
+}
 .page-content {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-size-stack-lg);
 }
-
 .form-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--semantic-size-stack-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-size-stack-xl);
 }
-
 .form-section {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-size-stack-sm);
-}
-
-.section-title {
-  font: var(--semantic-font-style-body-lg-bold);
-  color: var(--semantic-color-text-primary);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
   gap: var(--semantic-size-stack-md);
-  border-top: 1px solid var(--semantic-color-border-default);
-  padding-top: var(--semantic-size-stack-lg);
-  margin-top: var(--semantic-size-stack-md);
 }
-
+.block-group {
+  margin-bottom: 2.5rem; /* 40px */
+}
+.blocks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* 24px */
+  margin-top: 1rem;
+}
+.block-wrapper {
+  /* No margin needed here now, gap handles it */
+}
+.block-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A91A0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+}
+.section-title {
+  font: var(--semantic-font-style-headline-xs);
+  color: var(--semantic-color-text-primary);
+  border-bottom: 1px solid var(--semantic-color-border-subtle);
+  padding-bottom: var(--semantic-size-stack-sm);
+}
+.no-blocks-message {
+  color: var(--semantic-color-text-subtle);
+  padding: var(--semantic-size-inset-xl);
+  text-align: center;
+  border: 2px dashed var(--semantic-color-border-subtle);
+  border-radius: var(--semantic-border-radius-surface);
+}
+.add-block-section {
+    text-align: center;
+    padding: var(--semantic-size-stack-md) 0;
+    border-top: 1px solid var(--semantic-color-border-subtle);
+}
 .error-message {
   color: var(--semantic-color-text-danger);
   background-color: var(--semantic-color-surface-danger-subtle);

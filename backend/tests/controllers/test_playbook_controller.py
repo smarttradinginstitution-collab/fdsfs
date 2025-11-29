@@ -45,8 +45,12 @@ async def test_create_and_get_playbook(async_client: AsyncClient):
     assert created_data["description"] == playbook_data["description"]
     assert created_data["private"] == playbook_data["private"]
     assert "general_account_id" in created_data
-    assert "rules_groups" in created_data
-    assert created_data["rules_groups"] == []
+    assert "blocks" in created_data
+    assert len(created_data["blocks"]) == 3
+    block_titles = {block["title"] for block in created_data["blocks"]}
+    assert "Valid Setup" in block_titles
+    assert "Invalid Setup" in block_titles
+    assert "Model Explanation" in block_titles
 
     # Get the playbook by ID
     get_response = await async_client.get(f"/api/v1/playbooks/{playbook_id}")
@@ -196,111 +200,3 @@ async def test_update_playbook_with_same_title(async_client: AsyncClient):
     update_response = await async_client.put(f"/api/v1/playbooks/{playbook_id}", json=update_data)
     assert update_response.status_code == 200
     assert update_response.json()["description"] == "Updated Description"
-
-
-async def test_update_playbook_with_rules_and_groups(async_client: AsyncClient):
-    """
-    Tests the full upsert logic for a playbook, including creating,
-    updating, and deleting rule groups and rules.
-    """
-    await setup_general_account(async_client)
-
-    # 1. Create a base playbook
-    create_response = await async_client.post(
-        "/api/v1/me/playbooks",
-        json={"title": "Playbook with Rules", "description": "Complex update test."}
-    )
-    assert create_response.status_code == 201
-    playbook_id = create_response.json()["id"]
-
-    # 2. Add one group with one rule
-    update_data_1 = {
-        "title": "Playbook with Rules - Step 1",
-        "rules_groups": [
-            {
-                "name_group": "First Group",
-                "rules": [{"rule": "Initial Rule"}]
-            }
-        ]
-    }
-    update_response_1 = await async_client.put(f"/api/v1/playbooks/{playbook_id}", json=update_data_1)
-    assert update_response_1.status_code == 200
-    data_1 = update_response_1.json()
-    assert data_1["title"] == "Playbook with Rules - Step 1"
-    assert len(data_1["rules_groups"]) == 1
-    assert data_1["rules_groups"][0]["name_group"] == "First Group"
-    assert len(data_1["rules_groups"][0]["rules"]) == 1
-    assert data_1["rules_groups"][0]["rules"][0]["rule"] == "Initial Rule"
-
-    # Capture IDs for the next step
-    group1_id = data_1["rules_groups"][0]["id"]
-    rule1_id = data_1["rules_groups"][0]["rules"][0]["id"]
-
-    # 3. Update the group, update the rule, add a new rule, and add a new group
-    update_data_2 = {
-        "rules_groups": [
-            {
-                "id": group1_id,
-                "name_group": "First Group - Updated",
-                "rules": [
-                    {"id": rule1_id, "rule": "Initial Rule - Updated"},
-                    {"rule": "Second Rule"}
-                ]
-            },
-            {
-                "name_group": "Second Group",
-                "rules": [{"rule": "Third Rule"}]
-            }
-        ]
-    }
-    update_response_2 = await async_client.put(f"/api/v1/playbooks/{playbook_id}", json=update_data_2)
-    assert update_response_2.status_code == 200
-    data_2 = update_response_2.json()
-
-    # Verify the structure
-    assert len(data_2["rules_groups"]) == 2
-
-    # Verify first group (updated)
-    group1 = next((g for g in data_2["rules_groups"] if g["id"] == group1_id), None)
-    assert group1 is not None
-    assert group1["name_group"] == "First Group - Updated"
-    assert len(group1["rules"]) == 2
-
-    # Verify first rule (updated)
-    rule1 = next((r for r in group1["rules"] if r["id"] == rule1_id), None)
-    assert rule1 is not None
-    assert rule1["rule"] == "Initial Rule - Updated"
-
-    # Verify second rule (new)
-    rule2 = next((r for r in group1["rules"] if r["id"] != rule1_id), None)
-    assert rule2 is not None
-    assert rule2["rule"] == "Second Rule"
-
-    # Verify second group and its rule (new)
-    group2 = next((g for g in data_2["rules_groups"] if g["id"] != group1_id), None)
-    assert group2 is not None
-    assert group2["name_group"] == "Second Group"
-    assert len(group2["rules"]) == 1
-    assert group2["rules"][0]["rule"] == "Third Rule"
-
-    # 4. Delete the first group (which should delete its rules) and one rule from the second group
-    group2_id = group2["id"]
-    rule3_id = group2["rules"][0]["id"]
-    update_data_3 = {
-        "rules_groups": [
-            {
-                "id": group2_id,
-                "name_group": "Second Group - Unchanged", # Name shouldn't change
-                "rules": [] # Remove all rules from this group
-            }
-        ]
-    }
-    update_response_3 = await async_client.put(f"/api/v1/playbooks/{playbook_id}", json=update_data_3)
-    assert update_response_3.status_code == 200
-    data_3 = update_response_3.json()
-
-    # Verify the final state
-    assert len(data_3["rules_groups"]) == 1
-    assert data_3["rules_groups"][0]["id"] == group2_id
-    assert data_3["rules_groups"][0]["name_group"] == "Second Group - Unchanged"
-    assert len(data_3["rules_groups"][0]["rules"]) == 0

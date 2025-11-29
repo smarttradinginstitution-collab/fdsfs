@@ -16,6 +16,13 @@ class PlaybookService:
         self.playbook_repo = PlaybookRepository(db)
         self.trade_repo = TradeRepository(db)
 
+    async def create_playbook_block(self, playbook_id: UUID, block_data: "PlaybookBlockCreate") -> "PlaybookBlock":
+        """
+        Creates a new block for a given playbook.
+        """
+        new_block = await self.playbook_repo.create_block(playbook_id=playbook_id, block_in=block_data)
+        return new_block
+
     async def delete_playbook_and_cleanup_trades(self, playbook_to_delete: "Playbook") -> None:
         """
         Deletes a playbook and ensures that all associated trades are cleaned up.
@@ -27,13 +34,15 @@ class PlaybookService:
         # 1. Find all trades associated with this playbook
         trades_to_update = await self.trade_repo.list_by_playbook_id(playbook_id)
 
-        # 2. Clean up each trade
+        # 2. Clean up each trade by unlinking the playbook
+        # The `condition_checks` will be handled by DB constraints or logic elsewhere if needed.
         for trade in trades_to_update:
             trade.playbook_id = None
-            trade.rules_followed = []
             self.db.add(trade)
 
         # 3. Delete the playbook itself
+        # The relationships to blocks and conditions will be deleted automatically
+        # by the database thanks to `ON DELETE CASCADE`.
         await self.playbook_repo.delete(db_obj=playbook_to_delete)
 
         # The commit is handled by the repo's delete method, but an extra one here ensures

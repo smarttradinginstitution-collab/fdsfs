@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
-from app.Schemas.rules_group_playbook import RulesGroupRead, RulesGroupUpsert
+from app.Schemas.playbook_block import PlaybookBlockRead
 
 
 # Schema di base con i campi comuni
@@ -21,13 +21,13 @@ class PlaybookBase(BaseModel):
 # Schema per la creazione di un playbook (usato nel body delle richieste POST)
 class PlaybookCreate(PlaybookBase):
     title: str = Field(..., description="The title of the playbook is required for creation")
-    description: str = Field(..., description="The description of the playbook is required")
+    description: Optional[str] = Field(None, description="The description of the playbook")
     private: bool = Field(False, description="Whether the playbook is private. Defaults to False")
 
 
 # Schema per l'aggiornamento di un playbook (usato nel body delle richieste PUT/PATCH)
 class PlaybookUpdate(PlaybookBase):
-    rules_groups: List[RulesGroupUpsert] = []
+    pass
 
 # Schema per le statistiche calcolate di un playbook
 class PlaybookStats(BaseModel):
@@ -44,9 +44,9 @@ class PlaybookRead(PlaybookBase):
     id: UUID
     general_account_id: UUID
     created_at: datetime
-    description: str
+    description: Optional[str]
     private: bool
-    rules_groups: List["RulesGroupRead"] = []
+    blocks: List["PlaybookBlockRead"] = []
     stats: Optional[PlaybookStats] = None
 
 

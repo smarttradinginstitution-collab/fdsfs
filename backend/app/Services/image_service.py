@@ -7,8 +7,10 @@ from app.Infrastructure.db import get_db
 from app.Repositories.image_repository import ImageRepository
 from app.Repositories.general_account_repository import GeneralAccountRepository
 from app.Repositories.trade_repository import TradeRepository
+from app.Repositories.playbook_repository import PlaybookRepository
 from app.Schemas.image import ImageCreate, ImageUpdate
 from app.Models.image import Image
+from app.Models.playbook import Playbook
 from app.Services.supabase_client import get_supabase_client, SupabaseClient
 
 BUCKET_NAME = "trade_images"
@@ -24,6 +26,7 @@ class ImageService:
         self.image_repo = ImageRepository(db)
         self.general_account_repo = GeneralAccountRepository(db)
         self.trade_repo = TradeRepository(db)
+        self.playbook_repo = PlaybookRepository(db)
 
     async def _get_general_account_id(self, user_id: uuid.UUID) -> uuid.UUID:
         general_account = await self.general_account_repo.get_by_user_id(user_id)
@@ -41,14 +44,27 @@ class ImageService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User does not have access to this trade.")
         return trade
 
+    async def _authorize_user_for_playbook(self, user_id: uuid.UUID, playbook_id: uuid.UUID) -> Playbook:
+        general_account_id = await self._get_general_account_id(user_id)
+        playbook = await self.playbook_repo.get_by_id(playbook_id)
+        if not playbook:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Playbook not found.")
+        if playbook.general_account_id != general_account_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User does not have access to this playbook.")
+        return playbook
+
     async def _authorize_user_for_image(self, user_id: uuid.UUID, image_id: uuid.UUID) -> Image:
         image = await self.image_repo.get_by_id(image_id)
         if not image:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-        if not image.trade_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image is not associated with a trade.")
 
-        await self._authorize_user_for_trade(user_id, image.trade_id)
+        if image.trade_id:
+            await self._authorize_user_for_trade(user_id, image.trade_id)
+        elif image.playbook_id:
+            await self._authorize_user_for_playbook(user_id, image.playbook_id)
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image is not associated with any resource.")
+
         return image
 
     async def upload_trade_image(
@@ -60,7 +76,7 @@ class ImageService:
 
         file_extension = os.path.splitext(file.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{file_extension}"
-        storage_path = f"{general_account_id}/{trade_id}/{unique_filename}"
+        storage_path = f"trades/{general_account_id}/{trade_id}/{unique_filename}"
 
         try:
             file_content = await file.read()
@@ -74,6 +90,35 @@ class ImageService:
         image_data = ImageCreate(
             general_account_id=general_account_id, trade_id=trade_id, filename=file.filename,
             storage_path=storage_path, url=public_url, description=description, category=category, phase=phase,
+        )
+        return await self.image_repo.create(image_data)
+
+    async def upload_playbook_image(
+        self, *, file: UploadFile, user_id: uuid.UUID, playbook_id: uuid.UUID, description: str | None = None
+    ) -> Image:
+        playbook = await self._authorize_user_for_playbook(user_id, playbook_id)
+        general_account_id = playbook.general_account_id
+
+        file_extension = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+        storage_path = f"playbooks/{general_account_id}/{playbook_id}/{unique_filename}"
+
+        try:
+            file_content = await file.read()
+            self.supabase.storage.from_(BUCKET_NAME).upload(
+                path=storage_path, file=file_content, file_options={"content-type": file.content_type}
+            )
+            public_url = self.supabase.storage.from_(BUCKET_NAME).get_public_url(storage_path)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Storage operation failed: {e}")
+
+        image_data = ImageCreate(
+            general_account_id=general_account_id,
+            playbook_id=playbook_id,
+            filename=file.filename,
+            storage_path=storage_path,
+            url=public_url,
+            description=description,
         )
         return await self.image_repo.create(image_data)
 

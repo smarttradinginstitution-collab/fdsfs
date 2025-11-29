@@ -31,7 +31,6 @@ from app.Models.mistake import Mistake
 from app.Models.playbook import Playbook
 from app.Models.news_impact import NewsImpact
 from app.Models.psychology_state import PsychologyState
-from app.Models.rule_playbook import RulePlaybook
 from app.Services.metrics.trade_enricher import enrich_trade_with_all_metrics
 from app.Schemas.analytics import TradeFinancialSummary
 
@@ -148,17 +147,6 @@ class TradeService:
             if not playbook or playbook.general_account_id != general_account_id:
                  raise HTTPException(status.HTTP_400_BAD_REQUEST, "Playbook non valido o non appartenente all'utente.")
 
-        # Gestione regole (M2M)
-        rules_followed = []
-        if trade_data.rules_followed_ids:
-            rules_result = await self.db.execute(
-                select(RulePlaybook).where(RulePlaybook.id.in_(trade_data.rules_followed_ids))
-            )
-            rules_followed = rules_result.scalars().all()
-            if len(rules_followed) != len(set(trade_data.rules_followed_ids)):
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, "Uno o più ID di regole non sono validi.")
-
-
         # Crea l'istanza del trade includendo le relazioni
         db_trade = Trade(
             **trade_dict,
@@ -166,13 +154,12 @@ class TradeService:
             mistakes=mistakes,
             playbook=playbook,
             news_impacts=news_impacts,
-            psychology_states=psychology_states,
-            rules_followed=rules_followed
+            psychology_states=psychology_states
         )
 
         self.db.add(db_trade)
         await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
+        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset'])
 
         # Recalculate account metrics
         trading_account_service = TradingAccountService(self.db)
@@ -339,7 +326,7 @@ class TradeService:
         Restituisce True in caso di successo, False se il trade non viene trovato.
         """
         # Carica il trade con le regole per poterle modificare
-        stmt = select(Trade).where(Trade.id == trade_id).options(selectinload(Trade.rules_followed))
+        stmt = select(Trade).where(Trade.id == trade_id)
         result = await self.db.execute(stmt)
         db_trade = result.scalars().first()
 
@@ -349,10 +336,6 @@ class TradeService:
         trading_account_id, general_account_id = await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude={'tag_ids', 'mistake_ids', 'playbook_id', 'news_impacts', 'psychology_state_ids'})
-
-        # Logica di pulizia automatica delle regole
-        if "playbook_id" in update_data.model_fields_set and db_trade.playbook_id != update_data.playbook_id:
-            db_trade.rules_followed = []
 
         for key, value in update_dict.items():
             setattr(db_trade, key, value)
@@ -560,35 +543,3 @@ class TradeService:
 
         # Restituisce la lista aggiornata di etichette
         return getattr(db_trade, label_type)
-
-    async def update_trade_rules(self, claims: dict, trade_id: UUID, rule_ids: List[UUID]) -> TradeRead:
-        """
-        Aggiorna le regole 'seguite' per un trade e restituisce l'intero trade aggiornato.
-        """
-        # 1. Recupera il trade e verifica che l'utente sia il proprietario
-        db_trade = await self.repo.get_trade_by_id_simple(trade_id)
-        if not db_trade:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
-
-        await self._validate_and_get_trading_account(claims, db_trade.trading_account_id)
-
-        # 2. Recupera le istanze delle regole
-        if not rule_ids:
-            rules = []
-        else:
-            rules_result = await self.db.execute(
-                select(RulePlaybook).where(RulePlaybook.id.in_(rule_ids))
-            )
-            rules = rules_result.scalars().all()
-            if len(rules) != len(set(rule_ids)):
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more rule IDs are invalid.")
-
-        # 3. Assegna le nuove regole
-        db_trade.rules_followed = rules
-
-        # 4. Commit e refresh completo per caricare tutte le relazioni necessarie
-        await self.db.commit()
-        await self.db.refresh(db_trade, attribute_names=['tags', 'mistakes', 'playbook', 'news_impacts', 'psychology_states', 'asset', 'rules_followed'])
-
-        # 5. Restituisce l'oggetto trade aggiornato
-        return TradeRead.model_validate(db_trade)
