@@ -94,7 +94,7 @@ const handleUpdateBlock = async (blockUpdateData) => {
             // Optionally, instead of a full refetch, you could update the local data.
             // For simplicity and consistency with other methods here, we refetch.
             playbookData.value = await playbookStore.fetchPlaybookDetails(playbookId.value);
-        } catch (err)
+        } catch (err) {
             error.value = 'Failed to update the block.';
             console.error("Error updating block:", err);
         } finally {
