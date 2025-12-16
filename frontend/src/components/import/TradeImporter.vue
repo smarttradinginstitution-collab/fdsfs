@@ -18,6 +18,7 @@ const uploadProgress = ref(0);
 const isUploading = ref(false);
 const importResult = ref(null);
 const pollingInterval = ref(null);
+const groupingTolerance = ref(0); // Default to 0 (disabled)
 const tradingAccountsStore = useTradingAccountsStore();
 const selectedAccountId = computed(() => tradingAccountsStore.selectedTradingAccount?.id);
 
@@ -65,6 +66,11 @@ const handleUpload = async () => {
   }
 
   formData.append('file', file);
+
+  if (props.selectedPlatform === 'MT5' && groupingTolerance.value > 0) {
+      formData.append('grouping_tolerance', groupingTolerance.value);
+  }
+
   endpoint = `/import/${platformKey}/${selectedAccountId.value}`;
 
   try {
@@ -154,6 +160,21 @@ const isUploadDisabled = computed(() => {
           </ul>
         </div>
       </div>
+
+      <!-- Grouping Option for MT5 -->
+      <div v-if="props.selectedPlatform === 'MT5'" class="grouping-section">
+          <label for="grouping-tolerance">Grouping Tolerance (seconds):</label>
+          <input
+            id="grouping-tolerance"
+            type="number"
+            v-model.number="groupingTolerance"
+            min="0"
+            placeholder="0 to disable"
+            :disabled="isUploading"
+          />
+          <small>Set to 0 to disable grouping. Trades with same symbol and direction within this timeframe will be grouped.</small>
+      </div>
+
     </div>
     <div v-else-if="props.selectedPlatform">
       <p>Parser coming soon for {{ props.selectedPlatform }}.</p>
@@ -209,6 +230,21 @@ const isUploadDisabled = computed(() => {
 
 input[type="file"] {
   display: none;
+}
+
+.grouping-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.grouping-section input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 .progress-bar-container {

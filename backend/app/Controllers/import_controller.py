@@ -1,9 +1,9 @@
 # backend/app/Controllers/import_controller.py
 import uuid
 import hashlib
-from fastapi import Depends, UploadFile, File, HTTPException, status
+from fastapi import Depends, UploadFile, File, HTTPException, status, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 
 from app.Infrastructure.db import get_db
 from app.Router.auth import get_current_claims
@@ -112,6 +112,7 @@ async def import_ninjatrader_trades(
 async def import_mt5_trades(
     trading_account_id: uuid.UUID,
     file: UploadFile = File(...),
+    grouping_tolerance: Optional[int] = Form(None),
     db: AsyncSession = Depends(get_db),
     claims: dict = Depends(get_current_claims),
 ):
@@ -137,6 +138,7 @@ async def import_mt5_trades(
         file_name=file.filename,
         file_hash=file_hash,
         source_type="html",
+        grouping_tolerance=grouping_tolerance
     )
 
     if created or import_run.status in ["queued", "applied", "failed"]:
