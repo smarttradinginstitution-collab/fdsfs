@@ -18,7 +18,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 
 from app.Infrastructure.db import Base
 from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
@@ -155,9 +155,8 @@ class Trade(Base):
     # Recursive relationship
     children: Mapped[List["Trade"]] = relationship(
         "Trade",
-        backref=relationship("Trade", remote_side=[id]),
-        cascade="all, delete-orphan",
-        single_parent=True
+        backref=backref("parent_trade", remote_side=[id]),
+        cascade="all"
     )
 
     tags: Mapped[list["Tag"]] = relationship(

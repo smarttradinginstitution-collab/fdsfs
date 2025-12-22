@@ -117,6 +117,10 @@ class TradeRead(TradeBase):
     psychology_states: List[PsychologyStateRead] = []
     rules_followed: List[RulePlaybookRead] = []
 
+    # Parent/Child Relationships
+    parent_trade_id: Optional[UUID] = None
+    children: Optional[List['TradeRead']] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -171,3 +175,5 @@ class TradeWithDataRead(TradeRead):
 
 # Risolve i riferimenti circolari dopo che tutti i modelli sono stati definiti
 NoteRead.model_rebuild()
+TradeRead.model_rebuild()
+TradeWithDataRead.model_rebuild()
