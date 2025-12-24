@@ -27,3 +27,10 @@ class SystemFolderIdentifier(str, enum.Enum):
     TRADE_NOTES = "TRADE_NOTES"
     DAILY_JOURNAL = "DAILY_JOURNAL"
     SESSION_RECAP = "SESSION_RECAP"
+
+class PlaybookBlockType(str, enum.Enum):
+    THESIS = "THESIS"
+    GALLERY = "GALLERY"
+    CONDITIONS = "CONDITIONS"
+    PSYCHOLOGY = "PSYCHOLOGY"
+    LEGACY_RULES = "LEGACY_RULES"

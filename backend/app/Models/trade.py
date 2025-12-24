@@ -20,10 +20,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.Infrastructure.db import Base
-from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
-
-from app.Models.rule_playbook import trades_rules_association
+from app.Infrastructure.base import Base
+from app.Models.enums import TradeDirection, TradeStatus
+from app.Models.trade_condition_check import TradeConditionCheck
 
 if TYPE_CHECKING:
     from app.Models.trading_account import TradingAccount
@@ -37,7 +36,7 @@ if TYPE_CHECKING:
     from app.Models.playbook import Playbook
     from app.Models.news_impact import NewsImpact
     from app.Models.psychology_state import PsychologyState
-    from app.Models.rule_playbook import RulePlaybook
+    from app.Models.trade_condition_check import TradeConditionCheck
 
 
 class Trade(Base):
@@ -159,10 +158,12 @@ class Trade(Base):
     )
     notes: Mapped[list["Note"]] = relationship("Note", back_populates="trade")
     images: Mapped[list["Image"]] = relationship("Image", foreign_keys="Image.trade_id", back_populates="trade")
-    rules_followed: Mapped[List["RulePlaybook"]] = relationship(
-        "RulePlaybook",
-        secondary=trades_rules_association,
-        back_populates="trades"
+
+    # New relationship to the condition checks
+    condition_checks: Mapped[list["TradeConditionCheck"]] = relationship(
+        "TradeConditionCheck",
+        back_populates="trade",
+        cascade="all, delete-orphan",
     )
 
     def to_dict(self):
