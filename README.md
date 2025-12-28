@@ -1,6 +1,8 @@
 # Trade Vantage
 
-Trade Vantage is a comprehensive trading journal and analytics application designed to help traders track their performance, identify patterns, and improve their strategies. It features a Vue.js frontend and a FastAPI backend.
+Trade Vantage is a comprehensive trading journal and analytics application designed to help traders track their performance, identify patterns, and improve their strategies. It features a modern Vue.js frontend and a robust FastAPI backend, adhering to clean architecture principles.
+
+For a complete file structure of the project, please refer to [tree.md](tree.md).
 
 ## Key Features
 
@@ -9,20 +11,36 @@ Trade Vantage is a comprehensive trading journal and analytics application desig
 - **Strength & Opportunity Analysis (SOA)**: A sophisticated analytics engine that uses clustering and statistical analysis to provide actionable advice on strategy, risk management, and trading psychology.
 - **Discipline Tracking**: Define and track adherence to trading rules and playbooks.
 - **Notebook**: A rich-text editor for journaling and note-taking, with the ability to link notes to specific trades.
+- **Multi-Platform Import**: Import trades from platforms like NinjaTrader, MT5, and Tradovate.
 
 ## Architecture
 
-The project is a monorepo with two main components:
+The project is a monorepo divided into two main applications:
 
-- `frontend/`: A Vue.js 3 single-page application built with Vite. It uses Pinia for state management and communicates with the backend via a REST API.
-- `backend/`: A Python-based API built with FastAPI. It uses SQLAlchemy for the ORM, `asyncpg` for database communication with PostgreSQL, and `pandas`/`scikit-learn` for data analysis.
+### Backend (`backend/`)
+Built with **FastAPI**, the backend follows a strictly layered architecture to separate concerns and ensure maintainability:
+
+1.  **Controllers (`app/Controllers` & `app/Router`)**: Handle HTTP requests, input validation (Pydantic), and response formatting. They delegate business logic to Services.
+2.  **Services (`app/Services`)**: Contain the core business logic. They orchestrate operations, handle complex calculations (like SOA), and interact with Repositories for data access.
+3.  **Repositories (`app/Repositories`)**: Handle all direct database interactions using **SQLAlchemy**. This layer abstracts the database, making the service layer agnostic of the underlying storage implementation.
+4.  **Models (`app/Models`)**: Define the database schema using SQLAlchemy ORM.
+5.  **Schemas (`app/Schemas`)**: Pydantic models used for request validation and response serialization.
+
+**Tech Stack:** Python 3.11+, FastAPI, SQLAlchemy (Async), PostgreSQL, Celery (background tasks), Pandas/Scikit-learn (Analytics).
+
+### Frontend (`frontend/`)
+A Single Page Application (SPA) built with **Vue.js 3** and **Vite**.
+
+- **State Management**: Uses **Pinia** for centralized state management. Stores are modular and located in `src/stores`.
+- **UI Components**: A rich set of reusable UI components (`src/components/ui`) and feature-specific components.
+- **Styling**: Uses SCSS with a comprehensive design token system (`tokens/`) for consistent theming (Light/Dark mode).
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL database (or Supabase)
 
 ### Backend Setup
