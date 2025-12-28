@@ -24,8 +24,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- Static Files Mounting ---
 # This makes the 'static' directory available so uploaded images can be served.
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# os.makedirs("static", exist_ok=True)
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 app.add_middleware(SecurityHeadersMiddleware)
