@@ -1,51 +1,24 @@
 ./
-    backend_test_output_6.log
-    backend_test_output_8.log
-    backend_test_output.log
-    backend_test_output_10.log
-    .coverage
-    backend_test_output_5.log
-    backend_test_simple_output.log
-    backend_test_output_12.log
-    backend_test_output_3.log
-    migration_add_total_pnl_to_trading_accounts.sql
-    notebook_schema.sql
-    backend_test_output_11.log
-    README.md
-    backend_test_final_proof.log
-    backend_test_simple_output_2.log
     .gitignore
-    migration_system_folders.sql
-    backend_test_output_9.log
-    backend_test_output_16.log
-    migration_add_template_column.sql
-    uvicorn_config.py
-    frontend_server.log
-    generate_tree.py
-    backend_test_output_4.log
-    pytest.ini
-    backend_test_output_15.log
-    backend_test_output_2.log
-    backend_test_output_13.log
+    LEGGIMI.md
     Procfile
-    migration_add_images_table.sql
+    README.md
+    generator_tree.py
+    pytest.ini
     tree.md
-    snaptrade api.txt
-    backend_test_output_14.log
-    backend_test_output_7.log
-    migration.sql
+    uvicorn_config.py
     frontend/
-        vite.config.js
-        jsconfig.json
         .env
+        .gitignore
         README.md
+        index.html
+        jsconfig.json
         package.json
         sd.base.config.js
-        .gitignore
         sd.dark.config.js
-        vitest.config.js
-        index.html
         sd.light.config.js
+        vite.config.js
+        vitest.config.js
         logo/
             .svg
         tokens/
@@ -62,20 +35,20 @@
                 border/
                     radius.json
                 size/
-                    stack.json
-                    component.json
                     badge.json
                     button.json
                     calendar.json
+                    component.json
                     inset.json
+                    stack.json
             base/
                 animation/
                     duration.json
                     easing.json
                 font/
+                    fluid-size.json
                     line-height.json
                     palette.json
-                    fluid-size.json
                     size.json
                     weight.json
                 layer/
@@ -92,29 +65,29 @@
                 opacity/
                     opacity.json
                 size/
-                    spacing.json
                     fluid-spacing.json
+                    spacing.json
         src/
             App.vue
             main.js
             views/
-                DashboardView.vue
-                RegisterView.vue
-                CreatePlaybookView.vue
-                PlaybookDetailView.vue
-                LoginView.vue
-                ReportView.vue
+                AddAccountView.vue
                 AddTradeView.vue
                 AnalyticsView.vue
-                PlaybooksView.vue
-                AddAccountView.vue
+                ComponentTestView.vue
+                CreatePlaybookView.vue
+                DashboardView.vue
                 EditPlaybookView.vue
                 LibraryView.vue
-                TradesView.vue
-                SelectAccountView.vue
-                ProgressTrackerView.vue
+                LoginView.vue
                 NotebookView.vue
-                ComponentTestView.vue
+                PlaybookDetailView.vue
+                PlaybooksView.vue
+                ProgressTrackerView.vue
+                RegisterView.vue
+                ReportView.vue
+                SelectAccountView.vue
+                TradesView.vue
                 __tests__/
                     RegisterView.spec.js
             assets/
@@ -124,79 +97,79 @@
             utils/
                 formatters.js
                 tiptap/
-                    ResizableImageExtension.js
                     FontSize.js
+                    ResizableImageExtension.js
             services/
+                api.js
                 brokerService.js
                 formatters.js
-                api.js
             router/
                 index.js
             components/
                 KpiDashboard.vue
                 library/
+                    LibraryItemCreator.vue
                     LibraryItemRow.vue
                     LibraryManagementCard.vue
-                    LibraryItemCreator.vue
                 trading-dna/
                     ComboCard.vue
                 notebook/
-                    NoteEditor.vue
-                    notebook_doc.md
-                    FolderList.vue
-                    ResizableImage.vue
                     AddFolderModal.vue
-                    NoteList.vue
+                    FolderList.vue
                     NewTradeNoteModal.vue
+                    NoteEditor.vue
+                    NoteList.vue
+                    ResizableImage.vue
+                    notebook_doc.md
                 discipline/
-                    SummarySidebar.vue
-                    RulesTable.vue
-                    EditRulesModal.vue
-                    DailyChecklist.vue
                     CalendarHeatmap.vue
+                    DailyChecklist.vue
+                    EditRulesModal.vue
+                    RulesTable.vue
+                    SummarySidebar.vue
                 ui/
-                    PillTabs.vue
-                    ThemeToggle.vue
-                    ColorSelector.vue
-                    ImageLightbox.vue
-                    BasePill.vue
-                    BaseModal.vue
-                    PopoverMenu.vue
-                    ActionsMenu.vue
-                    FullScreenLoader.vue
-                    KpiCard.vue
-                    ToolbarDropdown.vue
-                    HamburgerButton.vue
-                    DropdownButton.vue
-                    BaseTabs.vue
-                    BaseInput.vue
-                    Stepper.vue
-                    HeaderInfoOverlay.vue
-                    ConfirmationModal.vue
-                    BaseButton.vue
-                    ToolbarColorPicker.vue
-                    BaseMultiSelect.vue
-                    ToastNotification.vue
-                    LoadingSpinner.vue
-                    BaseTextarea.vue
                     AccountSelector.vue
+                    ActionsMenu.vue
+                    BaseButton.vue
                     BaseCheckbox.vue
-                    IconButton.vue
-                    IconSelector.vue
+                    BaseInput.vue
+                    BaseModal.vue
+                    BaseMultiSelect.vue
+                    BasePill.vue
                     BaseSelect.vue
                     BaseTable.vue
+                    BaseTabs.vue
+                    BaseTextarea.vue
+                    ColorSelector.vue
+                    ConfirmationModal.vue
+                    DropdownButton.vue
+                    FullScreenLoader.vue
+                    HamburgerButton.vue
+                    HeaderInfoOverlay.vue
+                    IconButton.vue
+                    IconSelector.vue
+                    ImageLightbox.vue
+                    KpiCard.vue
+                    LoadingSpinner.vue
+                    PillTabs.vue
+                    PopoverMenu.vue
+                    Stepper.vue
+                    ThemeToggle.vue
+                    ToastNotification.vue
+                    ToolbarColorPicker.vue
+                    ToolbarDropdown.vue
                     __tests__/
                         IconButton.spec.js
                         ThemeToggle.spec.js
                 reports/
-                    TradeStats.vue
-                    PlaybookTab.vue
-                    PlaybookSelectionForm.vue
-                    TradeTagManager.vue
-                    TradeNoteEditor.vue
                     EditTradeDetailsModal.vue
+                    PlaybookSelectionForm.vue
+                    PlaybookTab.vue
                     TradeLabelManager.vue
                     TradeNewsImpactManager.vue
+                    TradeNoteEditor.vue
+                    TradeStats.vue
+                    TradeTagManager.vue
                     __tests__/
                         TradeLabelManager.spec.js
                 layout/
@@ -212,466 +185,439 @@
                     TradeImporter.vue
                 analytics/
                     BreakdownCard.vue
+                    MetricItem.vue
                     StrategyPerformance.vue
                     TagPerformanceChart.vue
                     WinLossDays.vue
-                    MetricItem.vue
                 trades/
                     NewTradeForm.vue
                 charts/
-                    LineChart.vue
-                    GaugeChart.vue
                     BarChart.vue
+                    GaugeChart.vue
+                    LineChart.vue
                 icons/
-                    CameraIcon.vue
-                    TrashIcon.vue
-                    DragHandleIcon.vue
+                    ArrowLeftIcon.vue
+                    ArrowRightIcon.vue
+                    BookOpenIcon.vue
+                    BuildingLibraryIcon.vue
                     CalendarIcon.vue
-                    PencilIcon.vue
+                    CameraIcon.vue
+                    ChartBarIcon.vue
+                    ChevronDownIcon.vue
+                    CloseIcon.vue
+                    DragHandleIcon.vue
+                    ErrorIcon.vue
+                    FilterIcon.vue
+                    InfoIcon.vue
                     MoonIcon.vue
+                    PencilIcon.vue
                     PlusIcon.vue
                     SettingsIcon.vue
-                    UploadIcon.vue
-                    FilterIcon.vue
-                    ArrowLeftIcon.vue
-                    ChevronDownIcon.vue
                     SparkleIcon.vue
-                    BookOpenIcon.vue
-                    ChartBarIcon.vue
-                    BuildingLibraryIcon.vue
                     SuccessIcon.vue
-                    ViewListIcon.vue
-                    InfoIcon.vue
-                    CloseIcon.vue
                     SunIcon.vue
-                    ErrorIcon.vue
-                    ViewGridIcon.vue
-                    ArrowRightIcon.vue
                     TagIcon.vue
+                    TrashIcon.vue
+                    UploadIcon.vue
+                    ViewGridIcon.vue
+                    ViewListIcon.vue
                 Playbooks/
-                    RuleGroup.vue
-                    RuleGroupCreator.vue
+                    DoughnutChart.vue
+                    ExecutedTradesTab.vue
+                    PlaybookCard.vue
                     PlaybookCardSkeleton.vue
+                    PlaybookControls.vue
                     PlaybookList.vue
                     PlaybookRulesTab.vue
-                    DoughnutChart.vue
-                    PlaybookControls.vue
-                    RuleGroupManager.vue
                     RuleCreator.vue
-                    ExecutedTradesTab.vue
-                    TradePlaybookWidget.vue
-                    RuleRow.vue
+                    RuleGroup.vue
                     RuleGroupCard.vue
+                    RuleGroupCreator.vue
+                    RuleGroupManager.vue
                     RuleItem.vue
-                    PlaybookCard.vue
+                    RuleRow.vue
+                    TradePlaybookWidget.vue
                 images/
                     ImageLightbox.vue
                     ImageMetadataModal.vue
                     TradeImageGallery.vue
                 tags/
-                    TagRow.vue
-                    GroupEditorModal.vue
-                    TagEditorModal.vue
                     GroupCreator.vue
-                    TagManagementTab.vue
-                    TagGroup.vue
-                    TagSelector.vue
-                    TagReportTab.vue
+                    GroupEditorModal.vue
                     TagCreator.vue
+                    TagEditorModal.vue
+                    TagGroup.vue
+                    TagManagementTab.vue
+                    TagReportTab.vue
+                    TagRow.vue
+                    TagSelector.vue
                 dashboard/
                     WidgetSelector.vue
                     widgets/
                         Calendar/
-                            CalendarSettings.vue
-                            DailySummaryModal.vue
                             CalendarControls.vue
                             CalendarHeatmap.vue
+                            CalendarSettings.vue
+                            DailySummaryModal.vue
                             WeeklySummaryModal.vue
                         StatCard/
-                            WinLossDonutChart.vue
                             GaugeChart.vue
+                            WinLossDonutChart.vue
                             index.vue
                         Soa/
                             HeadlineInsight.vue
                             OptimizationGauges.vue
+                            PsychologicalAlerts.vue
                             SoaDashboardWidget.vue
                             SoaDonutChart.vue
-                            PsychologicalAlerts.vue
                         Table/
                             RecentTradesTable.vue
                         charts/
-                            DailyPnlChart.vue
-                            VantageScoreWidget.vue
                             CumulativePnlWidget.vue
-                            RrDistributionWidget.vue
+                            DailyPnlChart.vue
                             EquityCurveChart.vue
+                            RrDistributionWidget.vue
+                            VantageScoreWidget.vue
                     zones/
                         DashboardZone.vue
-                        StatsZone.vue
                         StatSelectorPanel.vue
+                        StatsZone.vue
                     filters/
                         DateRangeFilter.vue
                         StrategyFilter.vue
                 news-impacts/
-                    NewsImpactManagementTab.vue
-                    NewsImpactRow.vue
+                    NewsImpactCreator.vue
                     NewsImpactGroup.vue
                     NewsImpactGroupCreator.vue
-                    NewsImpactCreator.vue
+                    NewsImpactManagementTab.vue
+                    NewsImpactRow.vue
             styles/
+                _base.css
+                _breakpoints.scss
+                _mixins.scss
                 index.css
-                tokens.css
                 tokens-dark.css
                 tokens-light.css
-                _mixins.scss
-                _breakpoints.scss
-                _base.css
+                tokens.css
             stores/
+                analyticsStore.js
+                auth.js
+                counter.js.example
+                dashboardLayout.js
+                disciplineStore.js
+                filterStore.js
+                imageStore.js
+                labelsStore.js
+                libraryStore.js
+                loadingStore.js
+                newsImpactsStore.js
+                notebookStore.js
+                playbookStore.js
+                tagsStore.js
                 trades.js
                 tradingAccounts.js
-                auth.js
-                dashboardLayout.js
-                counter.js.example
                 tradingDnaStore.js
-                playbookStore.js
-                newsImpactsStore.js
-                libraryStore.js
-                notebookStore.js
-                imageStore.js
-                analyticsStore.js
-                tagsStore.js
-                filterStore.js
                 uiStore.js
-                disciplineStore.js
-                loadingStore.js
-                labelsStore.js
                 __tests__/
-                    trades.spec.js
                     auth.spec.js
                     disciplineStore.spec.js
+                    trades.spec.js
             composables/
-                useChartResize.js
                 useChartColors.js
-                usePnlFormatting.js
+                useChartResize.js
                 useInactivityTimer.js
                 useMetricInfo.js
-        .vscode/
-            extensions.json
+                usePnlFormatting.js
         public/
             favicon.ico
         trade vantage/
-            package-lock.json
     backend/
         .env
-        .coverage
-        requirements.txt
-        README.md
         .gitignore
-        frontend_dev.log
+        README.md
         conftest.py
-        backend_test_with_pagination.log
-        body.json
-        db/
-            sql/
-                008_asset_markets.sql
-                V7__add_user_roles_index.sql
-                V8__add_is_reviewed_to_trades.sql
-                006_import_feature_enhancements.sql
-                V9__improve_import_constraints.sql
-                001_roles.sql
-                V2__create_discipline_tables.sql
-                V5__add_notebook_indexes.sql
-                V3__refactor_discipline_rules.sql
-                010_add_name_to_news_impacts.sql
-                007_remove_obsolete_trade_attributes.sql
-                V6__add_trading_account_indexes.sql
-                003_rls.sql
-                V4__add_performance_indexes.sql
-                005_trades_enrichment.sql
-                009_note_templates.sql
-                004_import_schema_base.sql
-                002_user_dashboard_layouts.sql
-        app/
+        requirements.txt
+    app/
+        __init__.py
+        celery_app.py
+        config.py
+        main.py
+        tasks.py
+        Controllers/
             __init__.py
-            celery_app.py
-            main.py
-            config.py
-            tasks.py
-            Controllers/
-                __init__.py
-                user_dashboard_layout_controller.py
-                trading_dna_controller.py
-                asset_class_controller.py
-                user_roles_controller.py
-                import_controller.py
-                soa_controller.py
-                broker_controller.py
-                psychology_state_controller.py
-                trading_account_controller.py
-                general_account_controller.py
-                tags_group_controller.py
-                rules_group_playbook_controller.py
-                trades_controller.py
-                asset_alias_controller.py
-                asset_market_controller.py
-                notebook_controller.py
-                rule_playbook_controller.py
-                auth_controller.py
-                note_template_controller.py
-                playbook_controller.py
-                mistake_controller.py
-                news_impacts_group_controller.py
-                tag_controller.py
-                asset_controller.py
-                platform_controller.py
-                roles_controller.py
-                users_controller.py
-                news_impact_controller.py
-                analytics_controller.py
-            Router/
-                rule_statistics_router.py
-                trading_account_router.py
-                asset_class_router.py
-                mistake_router.py
-                manual_rule_router.py
-                __init__.py
-                daily_checklist_router.py
-                tag_router.py
-                news_impacts_group_router.py
-                general_account_router.py
-                news_impact_router.py
-                image_router.py
-                psychology_state_router.py
-                platform_router.py
-                discipline_settings_router.py
-                asset_market_router.py
-                rules_group_playbook_router.py
-                trading_dna_router.py
-                import_router.py
-                dependencies.py
-                asset_router.py
-                auth.py
-                tags_group_router.py
-                asset_alias_router.py
-                rule_playbook_router.py
-                playbook_router.py
-                notebook_router.py
-                soa_router.py
-                routes.py
-                trades_router.py
-                broker_router.py
-                analytics_router.py
-            Utils/
-                __init__.py
-                pagination.py
-            Schemas/
-                vantage_score.py
-                daily_rule_instance_schema.py
-                tag.py
-                broker_asset_class.py
-                __init__.py
-                manual_rule_schema.py
-                rule_playbook.py
-                playbook.py
-                auth_session.py
-                role.py
-                platform.py
-                rules_group_playbook.py
-                news_impact.py
-                tags_group.py
-                discipline_settings_schema.py
-                asset_alias.py
-                soa.py
-                import_run.py
-                trading_dna.py
-                image.py
-                notebook.py
-                mistake.py
-                asset_class.py
-                user_role.py
-                asset.py
-                trade.py
-                note_template.py
-                trading_account.py
-                asset_market.py
-                analytics.py
-                general_account.py
-                trades_tags.py
-                stats.py
-                psychology_state.py
-                news_impacts_group.py
-                auth_user.py
-                user_dashboard_layout.py
-                broker.py
-                discipline/
-                    daily_rule_instance.py
-            Infrastructure/
-                supabase_service.py
-                __init__.py
-                storage.py
-                db.py
-            Middleware/
-                security_headers.py
-            Repositories/
-                platform_repository.py
-                news_impacts_group_repository.py
-                notebook_folder_repository.py
-                discipline_settings_repository.py
-                trade_repository.py
-                __init__.py
-                broker_repository.py
-                trading_account_repository.py
-                role_repository.py
-                asset_alias_repository.py
-                rule_playbook_repository.py
-                image_repository.py
-                psychology_state_repository.py
-                note_repository.py
-                tag_repository.py
-                asset_class_repository.py
-                daily_rule_instance_repository.py
-                mistake_repository.py
-                tags_group_repository.py
-                playbook_repository.py
-                general_account_repository.py
-                rules_group_playbook_repository.py
-                base_repository.py
-                asset_market_repository.py
-                manual_rule_repository.py
-                user_role_repository.py
-                broker_asset_class_repository.py
-                auth_user_repository.py
-                news_impact_repository.py
-                note_template_repository.py
-                asset_repository.py
-                user_dashboard_layout_repository.py
-            Models/
-                trades_psychology.py
-                broker_platform.py
-                enums.py
-                tag.py
-                broker_asset_class.py
-                __init__.py
-                rule_playbook.py
-                playbook.py
-                role.py
-                platform.py
-                rules_group_playbook.py
-                news_impact.py
-                tags_group.py
-                asset_alias.py
-                import_run.py
+            analytics_controller.py
+            asset_alias_controller.py
+            asset_class_controller.py
+            asset_controller.py
+            asset_market_controller.py
+            auth_controller.py
+            broker_controller.py
+            general_account_controller.py
+            import_controller.py
+            mistake_controller.py
+            news_impact_controller.py
+            news_impacts_group_controller.py
+            note_template_controller.py
+            notebook_controller.py
+            platform_controller.py
+            playbook_controller.py
+            psychology_state_controller.py
+            roles_controller.py
+            rule_playbook_controller.py
+            rules_group_playbook_controller.py
+            soa_controller.py
+            tag_controller.py
+            tags_group_controller.py
+            trades_controller.py
+            trading_account_controller.py
+            trading_dna_controller.py
+            user_dashboard_layout_controller.py
+            user_roles_controller.py
+            users_controller.py
+        Router/
+            __init__.py
+            analytics_router.py
+            asset_alias_router.py
+            asset_class_router.py
+            asset_market_router.py
+            asset_router.py
+            auth.py
+            broker_router.py
+            daily_checklist_router.py
+            dependencies.py
+            discipline_settings_router.py
+            general_account_router.py
+            image_router.py
+            import_router.py
+            manual_rule_router.py
+            mistake_router.py
+            news_impact_router.py
+            news_impacts_group_router.py
+            notebook_router.py
+            platform_router.py
+            playbook_router.py
+            psychology_state_router.py
+            routes.py
+            rule_playbook_router.py
+            rule_statistics_router.py
+            rules_group_playbook_router.py
+            soa_router.py
+            tag_router.py
+            tags_group_router.py
+            trades_router.py
+            trading_account_router.py
+            trading_dna_router.py
+        Utils/
+            __init__.py
+            pagination.py
+        Schemas/
+            __init__.py
+            analytics.py
+            asset.py
+            asset_alias.py
+            asset_class.py
+            asset_market.py
+            auth_session.py
+            auth_user.py
+            broker.py
+            broker_asset_class.py
+            daily_rule_instance_schema.py
+            discipline_settings_schema.py
+            general_account.py
+            image.py
+            import_run.py
+            manual_rule_schema.py
+            mistake.py
+            news_impact.py
+            news_impacts_group.py
+            note_template.py
+            notebook.py
+            platform.py
+            playbook.py
+            psychology_state.py
+            role.py
+            rule_playbook.py
+            rules_group_playbook.py
+            soa.py
+            stats.py
+            tag.py
+            tags_group.py
+            trade.py
+            trades_tags.py
+            trading_account.py
+            trading_dna.py
+            user_dashboard_layout.py
+            user_role.py
+            vantage_score.py
+            discipline/
                 daily_rule_instance.py
-                image.py
-                mistake.py
-                asset_class.py
-                user_role.py
-                asset.py
-                trades_mistakes.py
-                trade.py
-                note_template.py
-                trading_account.py
-                asset_market.py
-                general_account.py
-                trades_tags.py
-                discipline_settings.py
-                notes_note_templates.py
-                psychology_state.py
-                manual_rule.py
-                news_impacts_group.py
-                notebook_folder.py
-                note.py
-                discipline_rule.py
-                trades_news_impacts.py
-                auth_user.py
-                user_dashboard_layout.py
-                broker.py
-            Services/
-                mt5_parser.py
-                playbook_service.py
-                __init__.py
-                notebook_service.py
-                trading_dna_service.py
-                trade_service.py
-                jwt_service.py
-                playbook_analytics_service.py
-                import_service.py
-                general_account_service.py
-                soa_service.py
-                user_dashboard_layout_service.py
-                tradovate_parser.py
-                trading_account_service.py
-                role_service.py
-                discipline_settings_service.py
-                rule_statistics_service.py
-                image_service.py
-                ninjatrader_parser.py
-                note_template_service.py
-                broker_service.py
-                user_service.py
-                supabase_client.py
-                soa_advisor.py
-                analytics_service.py
-                metrics/
-                    trade_enricher.py
-                    metrics_calculator.py
+        Infrastructure/
+            __init__.py
+            db.py
+            storage.py
+            supabase_service.py
+        Middleware/
+            security_headers.py
+        Repositories/
+            __init__.py
+            asset_alias_repository.py
+            asset_class_repository.py
+            asset_market_repository.py
+            asset_repository.py
+            auth_user_repository.py
+            base_repository.py
+            broker_asset_class_repository.py
+            broker_repository.py
+            daily_rule_instance_repository.py
+            discipline_settings_repository.py
+            general_account_repository.py
+            image_repository.py
+            manual_rule_repository.py
+            mistake_repository.py
+            news_impact_repository.py
+            news_impacts_group_repository.py
+            note_repository.py
+            note_template_repository.py
+            notebook_folder_repository.py
+            platform_repository.py
+            playbook_repository.py
+            psychology_state_repository.py
+            role_repository.py
+            rule_playbook_repository.py
+            rules_group_playbook_repository.py
+            tag_repository.py
+            tags_group_repository.py
+            trade_repository.py
+            trading_account_repository.py
+            user_dashboard_layout_repository.py
+            user_role_repository.py
+        Models/
+            __init__.py
+            asset.py
+            asset_alias.py
+            asset_class.py
+            asset_market.py
+            auth_user.py
+            broker.py
+            broker_asset_class.py
+            broker_platform.py
+            daily_rule_instance.py
+            discipline_rule.py
+            discipline_settings.py
+            enums.py
+            general_account.py
+            image.py
+            import_run.py
+            manual_rule.py
+            mistake.py
+            news_impact.py
+            news_impacts_group.py
+            note.py
+            note_template.py
+            notebook_folder.py
+            notes_note_templates.py
+            platform.py
+            playbook.py
+            psychology_state.py
+            role.py
+            rule_playbook.py
+            rules_group_playbook.py
+            tag.py
+            tags_group.py
+            trade.py
+            trades_mistakes.py
+            trades_news_impacts.py
+            trades_psychology.py
+            trades_tags.py
+            trading_account.py
+            user_dashboard_layout.py
+            user_role.py
+        Services/
+            __init__.py
+            analytics_service.py
+            broker_service.py
+            discipline_settings_service.py
+            general_account_service.py
+            image_service.py
+            import_service.py
+            jwt_service.py
+            mt5_parser.py
+            ninjatrader_parser.py
+            note_template_service.py
+            notebook_service.py
+            playbook_analytics_service.py
+            playbook_service.py
+            role_service.py
+            rule_statistics_service.py
+            soa_advisor.py
+            soa_service.py
+            supabase_client.py
+            trade_service.py
+            trading_account_service.py
+            trading_dna_service.py
+            tradovate_parser.py
+            user_dashboard_layout_service.py
+            user_service.py
+            metrics/
+                metrics_calculator.py
+                trade_enricher.py
         tests/
             __init__.py
             repositories/
-                test_broker_repository.py
                 __init__.py
-                test_tag_repository.py
-                test_asset_market_repository.py
-                test_platform_repository.py
-                test_user_dashboard_layout_repository.py
-                test_role_repository.py
                 test_asset_class_repository.py
+                test_asset_market_repository.py
+                test_broker_repository.py
                 test_note_repository.py
+                test_platform_repository.py
+                test_role_repository.py
+                test_tag_repository.py
+                test_user_dashboard_layout_repository.py
             utils/
                 test_pagination.py
             services/
-                test_soa_service.py
+                test_analytics_service.py
+                test_discipline_settings_service.py
+                test_image_service.py
+                test_mt5_parser.py
+                test_notebook_service.py
                 test_playbook_service.py
                 test_role_service.py
-                test_user_dashboard_layout_service.py
-                test_discipline_settings_service.py
-                test_tradovate_parser.py
-                test_mt5_parser.py
-                test_image_service.py
-                test_user_service.py
+                test_soa_service.py
                 test_trade_service.py
-                test_notebook_service.py
-                test_analytics_service.py
+                test_tradovate_parser.py
+                test_user_dashboard_layout_service.py
+                test_user_service.py
                 metrics/
                     test_advanced_metrics_validation.py
                     test_metrics_calculator.py
                     test_trade_enricher.py
             controllers/
+                __init__.py
+                conftest.py
+                test_asset_alias_controller.py
+                test_asset_class_controller.py
+                test_asset_controller.py
+                test_asset_market_controller.py
+                test_auth_controller.py
+                test_broker_asset_class_controller.py
+                test_broker_controller.py
+                test_general_account_controller.py
+                test_import_controller.py
+                test_mistake_controller.py
+                test_news_impact_controller.py
                 test_news_impacts_group_controller.py
+                test_note_template_controller.py
+                test_notebook_controller.py
                 test_platform_controller.py
                 test_playbook_controller.py
-                test_note_template_controller.py
-                test_news_impact_controller.py
-                __init__.py
-                test_soa_controller.py
-                test_asset_market_controller.py
-                test_notebook_controller.py
-                test_user_roles_controller.py
-                test_asset_controller.py
-                test_broker_asset_class_controller.py
-                test_trading_account_controller.py
-                test_mistake_controller.py
-                test_rule_playbook_controller.py
-                test_tags_group_controller.py
-                test_asset_class_controller.py
-                test_import_controller.py
-                test_broker_controller.py
-                test_auth_controller.py
-                test_rules_group_playbook_controller.py
-                conftest.py
                 test_roles_controller.py
-                test_asset_alias_controller.py
-                test_user_dashboard_layout_controller.py
-                test_general_account_controller.py
-                test_users_controller.py
+                test_rule_playbook_controller.py
+                test_rules_group_playbook_controller.py
+                test_soa_controller.py
+                test_tags_group_controller.py
                 test_trades_controller.py
+                test_trading_account_controller.py
+                test_user_dashboard_layout_controller.py
+                test_user_roles_controller.py
+                test_users_controller.py
