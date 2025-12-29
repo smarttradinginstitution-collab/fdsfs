@@ -93,42 +93,219 @@ pytest tests/
 backend/
 ├── app/
 │   ├── Controllers/                    # Gestori delle richieste & delega logica
+│   │   ├── __init__.py                 # Init pacchetto Controller
 │   │   ├── analytics_controller.py     # Logica statistiche aggregate
+│   │   ├── asset_alias_controller.py   # Logica mapping asset
+│   │   ├── asset_class_controller.py   # Gestione classi asset
+│   │   ├── asset_controller.py         # Gestione asset
+│   │   ├── asset_market_controller.py  # Gestione sessioni di mercato
+│   │   ├── auth_controller.py          # Gestori autenticazione
+│   │   ├── broker_controller.py        # Gestione broker
+│   │   ├── general_account_controller.py # Gestione account utente
 │   │   ├── import_controller.py        # Caricamento file & trigger task
+│   │   ├── mistake_controller.py       # Logica tracciamento errori
+│   │   ├── news_impact_controller.py   # Logica eventi impatto notizie
+│   │   ├── news_impacts_group_controller.py # Raggruppamento impatto notizie
+│   │   ├── note_template_controller.py # Template notebook
+│   │   ├── notebook_controller.py      # Logica notebook & note
+│   │   ├── platform_controller.py      # Gestione piattaforme trading
+│   │   ├── playbook_controller.py      # Logica strategie playbook
+│   │   ├── psychology_state_controller.py # Tracciamento stati psicologici
+│   │   ├── roles_controller.py         # Gestione ruoli RBAC
+│   │   ├── rule_playbook_controller.py # Logica regole playbook
+│   │   ├── rules_group_playbook_controller.py # Raggruppamento regole
 │   │   ├── soa_controller.py           # Endpoint Strength & Opportunity Analysis
+│   │   ├── tag_controller.py           # Gestione tag
+│   │   ├── tags_group_controller.py    # Raggruppamento tag
 │   │   ├── trades_controller.py        # CRUD per i trade
-│   │   └── ...
+│   │   ├── trading_account_controller.py # Gestione conti di trading
+│   │   ├── trading_dna_controller.py   # Analisi Trading DNA
+│   │   ├── user_dashboard_layout_controller.py # Persistenza layout dashboard
+│   │   ├── user_roles_controller.py    # Associazione Utente-Ruolo
+│   │   └── users_controller.py         # Gestione profili utente
 │   ├── Infrastructure/                 # Integrazioni servizi esterni
+│   │   ├── __init__.py                 # Init pacchetto Infrastructure
 │   │   ├── db.py                       # Connessione DB & gestione sessioni
 │   │   ├── storage.py                  # Wrapper client Supabase Storage
 │   │   └── supabase_service.py         # Wrapper client Supabase Auth
 │   ├── Middleware/                     # Middleware ASGI
 │   │   └── security_headers.py         # Intestazioni di sicurezza (CORS, HSTS, ecc.)
 │   ├── Models/                         # Modelli ORM SQLAlchemy (Schema Database)
+│   │   ├── __init__.py                 # Init pacchetto Models
+│   │   ├── asset.py                    # Entità Asset
+│   │   ├── asset_alias.py              # Entità Alias Asset
+│   │   ├── asset_class.py              # Entità Classe Asset
+│   │   ├── asset_market.py             # Entità Sessione Mercato
+│   │   ├── auth_user.py                # Entità Utente
+│   │   ├── broker.py                   # Entità Broker
+│   │   ├── broker_asset_class.py       # Relazione Broker-Asset
+│   │   ├── broker_platform.py          # Relazione Broker-Piattaforma
+│   │   ├── daily_rule_instance.py      # Tracciamento regole giornaliere
+│   │   ├── discipline_rule.py          # Entità Regola Disciplina
+│   │   ├── discipline_settings.py      # Configurazione Disciplina
+│   │   ├── enums.py                    # Enumerazioni globali
+│   │   ├── general_account.py          # Entità Account Generale
+│   │   ├── image.py                    # Entità Immagine/Screenshot
+│   │   ├── import_run.py               # Tracciamento job importazione
+│   │   ├── manual_rule.py              # Entità Regola Manuale
+│   │   ├── mistake.py                  # Entità Errore
+│   │   ├── news_impact.py              # Entità Impatto Notizia
+│   │   ├── news_impacts_group.py       # Entità Gruppo Impatto Notizia
+│   │   ├── note.py                     # Entità Nota
+│   │   ├── note_template.py            # Entità Template Nota
+│   │   ├── notebook_folder.py          # Entità Cartella Notebook
+│   │   ├── notes_note_templates.py     # Relazione Nota-Template
+│   │   ├── platform.py                 # Entità Piattaforma Trading
+│   │   ├── playbook.py                 # Entità Playbook
+│   │   ├── psychology_state.py         # Entità Stato Psicologico
+│   │   ├── role.py                     # Entità Ruolo
+│   │   ├── rule_playbook.py            # Entità Regola Playbook
+│   │   ├── rules_group_playbook.py     # Entità Gruppo Regole
+│   │   ├── tag.py                      # Entità Tag
+│   │   ├── tags_group.py               # Entità Gruppo Tag
 │   │   ├── trade.py                    # Entità Trade principale
-│   │   ├── playbook.py                 # Entità Playbook & Regole
-│   │   ├── trading_dna.py              # Risultati analisi DNA
-│   │   └── ...
+│   │   ├── trades_mistakes.py          # Relazione Trade-Errore
+│   │   ├── trades_news_impacts.py      # Relazione Trade-Notizia
+│   │   ├── trades_psychology.py        # Relazione Trade-Psicologia
+│   │   ├── trades_tags.py              # Relazione Trade-Tag
+│   │   ├── trading_account.py          # Entità Conto Trading
+│   │   ├── user_dashboard_layout.py    # Entità Layout Dashboard
+│   │   └── user_role.py                # Relazione Utente-Ruolo
 │   ├── Repositories/                   # Livello Accesso Dati (CRUD)
+│   │   ├── __init__.py                 # Init pacchetto Repositories
+│   │   ├── asset_alias_repository.py   # Accesso alias asset
+│   │   ├── asset_class_repository.py   # Accesso classi asset
+│   │   ├── asset_market_repository.py  # Accesso mercati asset
+│   │   ├── asset_repository.py         # Accesso asset
+│   │   ├── auth_user_repository.py     # Accesso utenti
+│   │   ├── base_repository.py          # Classe base repository generica
+│   │   ├── broker_asset_class_repository.py # Accesso Broker-Asset
+│   │   ├── broker_repository.py        # Accesso broker
+│   │   ├── daily_rule_instance_repository.py # Accesso regole giornaliere
+│   │   ├── discipline_settings_repository.py # Accesso impostazioni disciplina
+│   │   ├── general_account_repository.py # Accesso account generale
+│   │   ├── image_repository.py         # Accesso immagini
+│   │   ├── manual_rule_repository.py   # Accesso regole manuali
+│   │   ├── mistake_repository.py       # Accesso errori
+│   │   ├── news_impact_repository.py   # Accesso impatto notizie
+│   │   ├── news_impacts_group_repository.py # Accesso gruppi impatto notizie
+│   │   ├── note_repository.py          # Accesso note
+│   │   ├── note_template_repository.py # Accesso template note
+│   │   ├── notebook_folder_repository.py # Accesso cartelle notebook
+│   │   ├── platform_repository.py      # Accesso piattaforme
+│   │   ├── playbook_repository.py      # Accesso playbook
+│   │   ├── psychology_state_repository.py # Accesso stati psicologici
+│   │   ├── role_repository.py          # Accesso ruoli
+│   │   ├── rule_playbook_repository.py # Accesso regole playbook
+│   │   ├── rules_group_playbook_repository.py # Accesso gruppi regole
+│   │   ├── tag_repository.py           # Accesso tag
+│   │   ├── tags_group_repository.py    # Accesso gruppi tag
 │   │   ├── trade_repository.py         # Query complesse per i trade
-│   │   ├── soa_repository.py           # Recupero dati per analisi
-│   │   └── ...
+│   │   ├── trading_account_repository.py # Accesso conti trading
+│   │   ├── user_dashboard_layout_repository.py # Accesso layout dashboard
+│   │   └── user_role_repository.py     # Accesso ruoli utente
 │   ├── Router/                         # Definizioni Route API
+│   │   ├── __init__.py                 # Init pacchetto Router
+│   │   ├── analytics_router.py         # Route analitiche
+│   │   ├── asset_alias_router.py       # Route alias asset
+│   │   ├── asset_class_router.py       # Route classi asset
+│   │   ├── asset_market_router.py      # Route mercati asset
+│   │   ├── asset_router.py             # Route asset
+│   │   ├── auth.py                     # Route autenticazione
+│   │   ├── broker_router.py            # Route broker
+│   │   ├── daily_checklist_router.py   # Route checklist giornaliera
+│   │   ├── dependencies.py             # Dipendenze API (Auth, ecc.)
+│   │   ├── discipline_settings_router.py # Route impostazioni disciplina
+│   │   ├── general_account_router.py   # Route account generale
+│   │   ├── image_router.py             # Route immagini
+│   │   ├── import_router.py            # Route importazione
+│   │   ├── manual_rule_router.py       # Route regole manuali
+│   │   ├── mistake_router.py           # Route errori
+│   │   ├── news_impact_router.py       # Route impatto notizie
+│   │   ├── news_impacts_group_router.py # Route gruppi impatto notizie
+│   │   ├── notebook_router.py          # Route notebook
+│   │   ├── platform_router.py          # Route piattaforme
+│   │   ├── playbook_router.py          # Route playbook
+│   │   ├── psychology_state_router.py  # Route stati psicologici
 │   │   ├── routes.py                   # Aggregatore router principale
-│   │   ├── trades_router.py            # Endpoint per /trades
-│   │   └── ...
+│   │   ├── rule_playbook_router.py     # Route regole playbook
+│   │   ├── rule_statistics_router.py   # Route statistiche regole
+│   │   ├── rules_group_playbook_router.py # Route gruppi regole
+│   │   ├── soa_router.py               # Route SOA
+│   │   ├── tag_router.py               # Route tag
+│   │   ├── tags_group_router.py        # Route gruppi tag
+│   │   ├── trades_router.py            # Route trade
+│   │   ├── trading_account_router.py   # Route conti trading
+│   │   └── trading_dna_router.py       # Route Trading DNA
 │   ├── Schemas/                        # Modelli Pydantic (Validazione)
-│   │   ├── trade.py                    # Schema Input/Output per Trades
-│   │   ├── soa.py                      # Schema per risultati Analisi
-│   │   └── ...
+│   │   ├── discipline/                 # Schemi annidati per disciplina
+│   │   ├── __init__.py                 # Init pacchetto Schemas
+│   │   ├── analytics.py                # Schemi analitici
+│   │   ├── asset.py                    # Schemi asset
+│   │   ├── asset_alias.py              # Schemi alias asset
+│   │   ├── asset_class.py              # Schemi classi asset
+│   │   ├── asset_market.py             # Schemi mercati asset
+│   │   ├── auth_session.py             # Schemi sessione auth
+│   │   ├── auth_user.py                # Schemi utente
+│   │   ├── broker.py                   # Schemi broker
+│   │   ├── broker_asset_class.py       # Schemi broker-asset
+│   │   ├── daily_rule_instance_schema.py # Schemi regola giornaliera
+│   │   ├── discipline_settings_schema.py # Schemi impostazioni disciplina
+│   │   ├── general_account.py          # Schemi account generale
+│   │   ├── image.py                    # Schemi immagine
+│   │   ├── import_run.py               # Schemi esecuzione import
+│   │   ├── manual_rule_schema.py       # Schemi regola manuale
+│   │   ├── mistake.py                  # Schemi errore
+│   │   ├── news_impact.py              # Schemi impatto notizia
+│   │   ├── news_impacts_group.py       # Schemi gruppo impatto notizia
+│   │   ├── note_template.py            # Schemi template nota
+│   │   ├── notebook.py                 # Schemi notebook
+│   │   ├── platform.py                 # Schemi piattaforma
+│   │   ├── playbook.py                 # Schemi playbook
+│   │   ├── psychology_state.py         # Schemi stato psicologico
+│   │   ├── role.py                     # Schemi ruolo
+│   │   ├── rule_playbook.py            # Schemi regola playbook
+│   │   ├── rules_group_playbook.py     # Schemi gruppo regole
+│   │   ├── soa.py                      # Schemi SOA
+│   │   ├── stats.py                    # Schemi statistiche
+│   │   ├── tag.py                      # Schemi tag
+│   │   ├── tags_group.py               # Schemi gruppo tag
+│   │   ├── trade.py                    # Schemi trade
+│   │   ├── trades_tags.py              # Schemi trade-tag
+│   │   ├── trading_account.py          # Schemi conto trading
+│   │   ├── trading_dna.py              # Schemi Trading DNA
+│   │   ├── user_dashboard_layout.py    # Schemi layout dashboard
+│   │   ├── user_role.py                # Schemi ruolo utente
+│   │   └── vantage_score.py            # Schemi punteggio vantage
 │   ├── Services/                       # Logica di Business Principale
-│   │   ├── metrics/                    # Sottomodulo per motori di calcolo
-│   │   ├── soa_service.py              # Logica Clustering & Analisi Stat (Pandas/Sklearn)
-│   │   ├── import_service.py           # Orchestra processo importazione file
-│   │   ├── mt5_parser.py               # Parser per file MetaTrader 5
-│   │   ├── ninjatrader_parser.py       # Parser per file NinjaTrader 8
-│   │   └── ...
+│   │   ├── metrics/                    # Motori calcolo metriche
+│   │   ├── __init__.py                 # Init pacchetto Services
+│   │   ├── analytics_service.py        # Logica di business analitica
+│   │   ├── broker_service.py           # Logica broker
+│   │   ├── discipline_settings_service.py # Logica disciplina
+│   │   ├── general_account_service.py  # Logica account generale
+│   │   ├── image_service.py            # Logica gestione immagini
+│   │   ├── import_service.py           # Orchestrazione importazione
+│   │   ├── jwt_service.py              # Gestione JWT
+│   │   ├── mt5_parser.py               # Parsing file MT5
+│   │   ├── ninjatrader_parser.py       # Parsing file NinjaTrader
+│   │   ├── note_template_service.py    # Logica template nota
+│   │   ├── notebook_service.py         # Logica notebook
+│   │   ├── playbook_analytics_service.py # Analitiche playbook
+│   │   ├── playbook_service.py         # Logica playbook
+│   │   ├── role_service.py             # Logica ruoli
+│   │   ├── rule_statistics_service.py  # Logica statistiche regole
+│   │   ├── soa_advisor.py              # Generazione consigli SOA
+│   │   ├── soa_service.py              # Motore calcolo SOA
+│   │   ├── supabase_client.py          # Factory client Supabase
+│   │   ├── trade_service.py            # Logica trade
+│   │   ├── trading_account_service.py  # Logica conti trading
+│   │   ├── trading_dna_service.py      # Logica Trading DNA
+│   │   ├── tradovate_parser.py         # Parsing file Tradovate
+│   │   ├── user_dashboard_layout_service.py # Logica dashboard
+│   │   └── user_service.py             # Logica utente
 │   ├── Utils/                          # Utilità condivise
+│   │   ├── __init__.py                 # Init pacchetto Utils
 │   │   └── pagination.py               # Helper per paginazione
 │   ├── celery_app.py                   # Configurazione applicazione Celery
 │   ├── config.py                       # Configurazione App (Pydantic Settings)
@@ -136,8 +313,9 @@ backend/
 │   └── tasks.py                        # Definizioni task Celery (Job asincroni)
 ├── tests/                              # Suite Pytest
 │   ├── controllers/                    # Test integrazione per endpoint API
-│   ├── services/                       # Unit test per logica di business
-│   └── repositories/                   # Test integrazione DB
+│   ├── repositories/                   # Test integrazione per Repositories
+│   ├── services/                       # Unit test per Services
+│   └── utils/                          # Unit test per Utilities
 ├── .env                                # Variabili d'ambiente (gitignored)
 ├── conftest.py                         # Fixture & config Pytest
 ├── requirements.txt                    # Dipendenze Python
