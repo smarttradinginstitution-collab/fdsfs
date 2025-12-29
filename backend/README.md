@@ -1,215 +1,145 @@
-# 🚀 FastAPI MVC + Repository (async) — Supabase DB + Auth (JWKS)
+# Trade Vantage - Backend API
 
-Backend **FastAPI** interamente **asincrono** con architettura **MVC + Repository** e **SQLAlchemy 2.0 async**.
+This is the core backend API for the Trade Vantage platform. Built with **FastAPI**, it serves as the central nervous system for data processing, analytics, and data persistence. It adheres to a strict **Clean Architecture** pattern to ensure scalability, maintainability, and testability.
 
-- **DB**: PostgreSQL su **Supabase** (`asyncpg`, `sslmode=require`)
-- **Auth seria**: verifica **JWT RS256** via **JWKS** di Supabase (offline, scalabile)
-- **Modello dati**: `auth.users` (di Supabase) + `public.roles` + **ponte** `public.user_roles`
-- **CRUD Users**: lista, dettaglio, crea (via **service** Supabase), aggiorna, elimina
-- **Qualità**: test `pytest`/`pytest-asyncio`/`httpx`, separazione conf/ambienti
-- **Niente Docker** in questa versione (solo comandi locali Windows)
+## 🏗️ Architecture & Design Patterns
 
----
+The backend is structured into distinct layers, each with a specific responsibility. Data flows from the outer layers (API) inwards to the core business logic and data access.
 
-## ✅ Requisiti
-- **Python 3.13**
-- **pip 25.2**
-- **PowerShell** (Windows)
+### 1. Presentation Layer (Routers & Controllers)
+- **Routers (`app/Router/`)**: Define the HTTP endpoints, handle dependency injection (FastAPI `Depends`), and route requests to the appropriate controllers. They also enforce authentication and authorization scopes.
+- **Controllers (`app/Controllers/`)**: The entry point for application logic. They receive Pydantic schemas, perform initial validation, and call the appropriate Service methods. They are responsible for formatting the HTTP response.
 
----
+### 2. Business Logic Layer (Services)
+- **Services (`app/Services/`)**: Contain the core business rules and use cases. This is where the "magic" happens.
+    - **SOA Service**: Handles complex statistical analysis using Pandas and Scikit-learn.
+    - **Parsers**: Dedicated services for parsing trade files from NinjaTrader, MT5, etc.
+    - **Orchestrators**: Services that coordinate multiple repositories (e.g., `ImportService` managing file uploads, parsing, and database insertion).
 
-## 🧱 Struttura del progetto
-mkdir app, app\Infrastructure, app\Models, app\Schemas, app\Repositories, app\Services, app\Controllers, app\Router, app\Utils, tests, db, db\sql
+### 3. Data Access Layer (Repositories)
+- **Repositories (`app/Repositories/`)**: Abstract the database interactions. They use **SQLAlchemy (Async)** to perform CRUD operations. This isolation allows us to swap the underlying database or optimize queries without touching business logic.
 
-```
-app/
-├─ main.py                         # Entrypoint FastAPI
-├─ config.py                       # Settings (env, DB, JWKS)
-├─ Infrastructure/
-│  ├─ db.py                        # Engine/session SQLAlchemy async (Supabase)
-│  ├─ jwks.py                      # Fetch JWKS (cache)
-│  └─ supabase_service.py          # Service per signup/patch via Admin API (async httpx)
-├─ Models/
-│  ├─ auth_user.py                 # Mappatura auth.users (schema=auth)
-│  ├─ role.py                      # public.roles
-│  └─ user_role.py                 # public.user_roles (ponte)
-├─ Schemas/
-│  ├─ auth_user.py                 # Pydantic (read/update sicuro per auth.users)
-│  ├─ role.py                      # Pydantic per roles
-│  └─ user_role.py                 # Pydantic per assegnazioni
-├─ Repositories/
-│  ├─ auth_user_repository.py      # Repo async su auth.users (read/update/delete)
-│  ├─ role_repository.py           # Repo async su roles
-│  └─ user_role_repository.py      # Repo async su user_roles (ponte)
-├─ Services/
-│  ├─ user_service.py              # Business utenti (usa repo + supabase_service)
-│  └─ role_service.py              # Business ruoli/assegnazioni
-├─ Controllers/
-│  ├─ users_controller.py          # CRUD utenti (lista/dettaglio/update/delete + create via service)
-│  ├─ roles_controller.py          # CRUD ruoli
-│  └─ user_roles_controller.py     # Assegna/rimuovi ruoli
-├─ Router/
-│  ├─ auth.py                      # Dependency: verifica JWT via JWKS + require_roles(["admin"])
-│  └─ routes.py                    # Registro centralizzato rotte (prefix /api/v1)
-└─ Utils/
-   ├─ jwt_verify_supabase.py       # Verifica RS256 con JWKS
-   └─ pagination.py                # utilità generiche
+### 4. Domain Layer (Models & Schemas)
+- **Models (`app/Models/`)**: SQLAlchemy ORM classes that map directly to PostgreSQL tables.
+- **Schemas (`app/Schemas/`)**: Pydantic models used for data validation, serialization, and type safety across the API boundary.
 
-db/
-└─ sql/
-   └─ 001_roles.sql                # DDL per public.roles + public.user_roles (FK → auth.users)
+## 🛠️ Key Technical Components
 
-tests/
-├─ conftest.py                     # Lifespan app + AsyncClient httpx
-├─ test_health.py                  # Smoke test “/”
-├─ test_roles.py                   # Test CRUD ruoli (admin)
-└─ test_users_crud.py              # Test CRUD utenti
-```
+- **FastAPI**: High-performance async web framework.
+- **PostgreSQL**: Primary relational database.
+- **SQLAlchemy (Async)**: ORM for database interactions.
+- **Celery & RabbitMQ**: Distributed task queue for handling long-running processes like:
+    - Large file imports (batch processing).
+    - Heavy analytics calculations (SOA).
+- **Supabase**:
+    - **Auth**: JWT token validation and user management.
+    - **Storage**: Object storage for trade screenshots and attachments.
+- **Pandas & Scikit-learn**: Used within specific services for data manipulation and clustering algorithms.
 
----
+## 🚀 Setup & Development
 
-## 📁 Crea la struttura (Windows / PowerShell)
+### Prerequisites
+- Python 3.11+
+- PostgreSQL
+- RabbitMQ (for Celery)
 
-> **Copia & incolla** in PowerShell nella cartella del progetto.
-
-```powershell
-# 1) Cartelle
-$dirs = @(
-  "app","app\Infrastructure","app\Models","app\Schemas","app\Repositories",
-  "app\Services","app\Controllers","app\Router","app\Utils",
-  "db\sql","tests"
-)
-$dirs | ForEach-Object { New-Item -ItemType Directory -Force -Path $_ | Out-Null }
-
-# 2) Package markers (facoltativi ma consigliati)
-$pkgs = @(
-  "app\__init__.py","app\Infrastructure\__init__.py","app\Models\__init__.py",
-  "app\Schemas\__init__.py","app\Repositories\__init__.py","app\Services\__init__.py",
-  "app\Controllers\__init__.py","app\Router\__init__.py","app\Utils\__init__.py"
-)
-$pkgs | ForEach-Object { New-Item -ItemType File -Force -Path $_ | Out-Null }
-
-# 3) File principali (vuoti, li riempirai col codice)
-$files = @(
-  "app\main.py","app\config.py",
-  "app\Infrastructure\db.py","app\Infrastructure\jwks.py","app\Infrastructure\supabase_service.py",
-  "app\Models\auth_user.py","app\Models\role.py","app\Models\user_role.py",
-  "app\Schemas\auth_user.py","app\Schemas\role.py","app\Schemas\user_role.py",
-  "app\Repositories\auth_user_repository.py","app\Repositories\role_repository.py","app\Repositories\user_role_repository.py",
-  "app\Services\user_service.py","app\Services\role_service.py",
-  "app\Controllers\users_controller.py","app\Controllers\roles_controller.py","app\Controllers\user_roles_controller.py",
-  "app\Router\auth.py","app\Router\routes.py",
-  "app\Utils\jwt_verify_supabase.py","app\Utils\pagination.py",
-  "db\sql\001_roles.sql",
-  "tests\conftest.py","tests\test_health.py","tests\test_roles.py","tests\test_users_crud.py",
-  ".env.example","requirements.txt","pytest.ini"
-)
-$files | ForEach-Object { New-Item -ItemType File -Force -Path $_ | Out-Null }
-```
-
-> Dopo aver creato i file, incolla il **codice** che ti ho fornito nei relativi percorsi (o chiedimi di rigenerarli qui).
-
----
-
-## ⚙️ Variabili d’ambiente (`.env`)
-Crea `.env` (puoi partire da `.env.example`):
+### Environment Variables
+Create a `.env` file in the `backend/` root.
 
 ```env
-APP_NAME=My FastAPI App
-ENV=dev
+# Database
+DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/tradevantage"
+DB_USER="user"
+DB_PASSWORD="password"
+DB_HOST="localhost"
+DB_PORT="5432"
+DB_NAME="tradevantage"
 
-# Supabase Postgres (usa SEMPRE sslmode=require)
-DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require
+# Environment
+ENV="dev" # or 'prod'
 
-# Supabase Auth (JWKS)
-SUPABASE_PROJECT_URL=https://<PROJECT_REF>.supabase.co
-SUPABASE_JWKS_URL=${SUPABASE_PROJECT_URL}/auth/v1/.well-known/jwks.json
-TOKEN_ISSUER=${SUPABASE_PROJECT_URL}/auth/v1
-TOKEN_AUDIENCE=authenticated
+# Supabase (Auth & Storage)
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_KEY="your-service-role-key" # For admin tasks
+SUPABASE_ANON_KEY="your-anon-key"
 
-# Supabase Admin (service) — usato SOLO per creare/patchare utenti
-SUPABASE_KEY=<SERVICE_ROLE_OR_ANON_KEY>   # per patch admin serve SERVICE ROLE
+# Celery
+CELERY_BROKER_URL="amqp://guest:guest@localhost:5672//"
+CELERY_RESULT_BACKEND="db+postgresql://user:password@localhost:5432/tradevantage"
 ```
 
----
-
-## 📦 Dipendenze
-
-### requirements.txt
-```txt
-fastapi[standard]==0.116.1
-SQLAlchemy[asyncio]==2.0.43
-asyncpg==0.30.0
-pydantic-settings==2.10.1
-python-dotenv==1.1.1
-python-jose[cryptography]==3.3.0
-httpx==0.27.2
-pytest==8.2.2
-pytest-asyncio==0.23.8
-asgi-lifespan==2.1.0
-pytest-cov==5.0.0
-```
-
-**Setup ambiente**
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
----
-
-## ▶️ Avvio (dev)
-
-```powershell
+### Running the Server
+```bash
+# Ensure you are in the backend/ directory
+source venv/bin/activate
 uvicorn app.main:app --reload
-# Docs: http://127.0.0.1:8000/docs
 ```
 
-**Autorizzazione**  
-Proteggi le rotte admin con `Authorization: Bearer <access_token_supabase>` (ottenuto da Supabase Auth).  
-La dependency `require_roles(["admin"])` verifica il token via JWKS e controlla nel DB l’associazione ruolo.
-
----
-
-## 🗃️ Modello dati (riassunto)
-
-- `auth.users` (gestita da Supabase) — **non** la creiamo noi.
-- `public.roles`: elenco ruoli app → (id, name, description)
-- `public.user_roles`: ponte utente↔ruolo → (user_id UUID → auth.users.id, role_id → roles.id, UNIQUE)
-
-**DDL iniziale**: `db/sql/001_roles.sql`
-
----
-
-## 🧩 CRUD Utenti
-
-- `GET    /api/v1/users` — lista
-- `GET    /api/v1/users/{user_id}` — dettaglio
-- `POST   /api/v1/users` — **crea** via `Infrastructure/supabase_service.py` (signup + patch)
-- `PUT    /api/v1/users/{user_id}` — aggiorna campi “safe” (email/phone/ban/meta)
-- `DELETE /api/v1/users/{user_id}` — elimina (consigliato passare da Admin API)
-
-> Tutto **async** (FastAPI + SQLAlchemy + httpx).
-
----
-
-## 🧪 Test
-
-- `tests/conftest.py` — avvio app in test con lifespan e `httpx.AsyncClient`
-- `tests/test_health.py` — verifica `/`
-- `tests/test_roles.py` — CRUD ruoli (richiede token admin o mocking)
-- `tests/test_users_crud.py` — CRUD utenti (mock del service o ambiente di test Supabase)
-
-Esecuzione:
-```powershell
-pytest -q
-pytest -q --cov=app --cov-report=term-missing
+### Running Background Workers
+```bash
+# In a separate terminal
+celery -A app.celery_app worker --loglevel=info -P solo -Q imports,celery
 ```
 
----
+### Running Tests
+```bash
+# Runs all tests with coverage
+pytest tests/
+```
 
-## ℹ️ Note
-- **RLS policy**: opzionali ma raccomandate se prevedi accessi diretti da client/Supabase SDK.
-- **Service Admin**: usa la **service role key** SOLO lato backend e SOLO dove serve (creazione/patch utente), non esporla mai al client.
+## 📂 Project Structure (Annotated)
+
+```text
+backend/
+├── app/
+│   ├── Controllers/                    # Request handlers & logic delegation
+│   │   ├── analytics_controller.py     # Aggregated stats logic
+│   │   ├── import_controller.py        # File upload & task triggering
+│   │   ├── soa_controller.py           # Strength & Opportunity Analysis endpoints
+│   │   ├── trades_controller.py        # CRUD for trades
+│   │   └── ...
+│   ├── Infrastructure/                 # External service integrations
+│   │   ├── db.py                       # Database connection & session management
+│   │   ├── storage.py                  # Supabase Storage client wrapper
+│   │   └── supabase_service.py         # Supabase Auth client wrapper
+│   ├── Middleware/                     # ASGI Middleware
+│   │   └── security_headers.py         # Security headers (CORS, HSTS, etc.)
+│   ├── Models/                         # SQLAlchemy ORM Models (Database Schema)
+│   │   ├── trade.py                    # Main Trade entity
+│   │   ├── playbook.py                 # Playbook & Rules entities
+│   │   ├── trading_dna.py              # DNA analysis results
+│   │   └── ...
+│   ├── Repositories/                   # Database Access Layer (CRUD)
+│   │   ├── trade_repository.py         # Complex queries for trades
+│   │   ├── soa_repository.py           # Data fetching for analysis
+│   │   └── ...
+│   ├── Router/                         # API Route Definitions
+│   │   ├── routes.py                   # Main router aggregator
+│   │   ├── trades_router.py            # Endpoints for /trades
+│   │   └── ...
+│   ├── Schemas/                        # Pydantic Models (Validation)
+│   │   ├── trade.py                    # Input/Output schemas for Trades
+│   │   ├── soa.py                      # Schemas for Analysis results
+│   │   └── ...
+│   ├── Services/                       # Core Business Logic
+│   │   ├── metrics/                    # Sub-module for calculation engines
+│   │   ├── soa_service.py              # Clustering & Stat Analysis logic (Pandas/Sklearn)
+│   │   ├── import_service.py           # Orchestrates file import process
+│   │   ├── mt5_parser.py               # Parser for MetaTrader 5 files
+│   │   ├── ninjatrader_parser.py       # Parser for NinjaTrader 8 files
+│   │   └── ...
+│   ├── Utils/                          # Shared utilities
+│   │   └── pagination.py               # Pagination helpers
+│   ├── celery_app.py                   # Celery application configuration
+│   ├── config.py                       # App configuration (Pydantic Settings)
+│   ├── main.py                         # FastAPI application entry point
+│   └── tasks.py                        # Celery task definitions (Async jobs)
+├── tests/                              # Pytest suite
+│   ├── controllers/                    # Integration tests for API endpoints
+│   ├── services/                       # Unit tests for business logic
+│   └── repositories/                   # DB integration tests
+├── .env                                # Environment variables (gitignored)
+├── conftest.py                         # Pytest fixtures & config
+├── requirements.txt                    # Python dependencies
+└── README.md                           # This file
+```
