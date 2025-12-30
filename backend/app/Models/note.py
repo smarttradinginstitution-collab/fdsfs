@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.Infrastructure.db import Base
-from app.Models.notes_note_templates import notes_note_templates_association
+from app.Models.Bridge.notes_note_templates import notes_note_templates_association
 
 if TYPE_CHECKING:
     from app.Models.notebook_folder import NotebookFolder
