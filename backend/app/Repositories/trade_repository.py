@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.Models.trade import Trade
 from app.Models.note import Note
 from app.Models.tag import Tag
-from app.Models.trades_tags import TradesTags
+from app.Models.Bridge.trades_tags import TradesTags
 from app.Models.trading_account import TradingAccount
 from app.Schemas.trade import TradeCreate, TradeUpdate
 from app.Models.rule_playbook import RulePlaybook
@@ -148,10 +148,10 @@ class TradeRepository:
         Fetches trades for a general account, dynamically filtering by any combination
         of provided label IDs.
         """
-        from app.Models.trades_tags import TradesTags
-        from app.Models.trades_mistakes import TradesMistakes
-        from app.Models.trades_psychology import TradesPsychology
-        from app.Models.trades_news_impacts import TradesNewsImpacts
+        from app.Models.Bridge.trades_tags import TradesTags
+        from app.Models.Bridge.trades_mistakes import TradesMistakes
+        from app.Models.Bridge.trades_psychology import TradesPsychology
+        from app.Models.Bridge.trades_news_impacts import TradesNewsImpacts
 
         query = self._get_trade_query().join(Trade.trading_account).where(
             TradingAccount.general_account_id == general_account_id
