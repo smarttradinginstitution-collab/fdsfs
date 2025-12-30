@@ -1,215 +1,323 @@
-# 🚀 FastAPI MVC + Repository (async) — Supabase DB + Auth (JWKS)
+# Trade Vantage - Backend API
 
-Backend **FastAPI** interamente **asincrono** con architettura **MVC + Repository** e **SQLAlchemy 2.0 async**.
+This is the core backend API for the Trade Vantage platform. Built with **FastAPI**, it serves as the central nervous system for data processing, analytics, and data persistence. It adheres to a strict **Clean Architecture** pattern to ensure scalability, maintainability, and testability.
 
-- **DB**: PostgreSQL su **Supabase** (`asyncpg`, `sslmode=require`)
-- **Auth seria**: verifica **JWT RS256** via **JWKS** di Supabase (offline, scalabile)
-- **Modello dati**: `auth.users` (di Supabase) + `public.roles` + **ponte** `public.user_roles`
-- **CRUD Users**: lista, dettaglio, crea (via **service** Supabase), aggiorna, elimina
-- **Qualità**: test `pytest`/`pytest-asyncio`/`httpx`, separazione conf/ambienti
-- **Niente Docker** in questa versione (solo comandi locali Windows)
+## 🏗️ Architecture & Design Patterns
 
----
+The backend is structured into distinct layers, each with a specific responsibility. Data flows from the outer layers (API) inwards to the core business logic and data access.
 
-## ✅ Requisiti
-- **Python 3.13**
-- **pip 25.2**
-- **PowerShell** (Windows)
+### 1. Presentation Layer (Routers & Controllers)
+- **Routers (`app/Router/`)**: Define the HTTP endpoints, handle dependency injection (FastAPI `Depends`), and route requests to the appropriate controllers. They also enforce authentication and authorization scopes.
+- **Controllers (`app/Controllers/`)**: The entry point for application logic. They receive Pydantic schemas, perform initial validation, and call the appropriate Service methods. They are responsible for formatting the HTTP response.
 
----
+### 2. Business Logic Layer (Services)
+- **Services (`app/Services/`)**: Contain the core business rules and use cases. This is where the "magic" happens.
+    - **SOA Service**: Handles complex statistical analysis using Pandas and Scikit-learn.
+    - **Parsers**: Dedicated services for parsing trade files from NinjaTrader, MT5, etc.
+    - **Orchestrators**: Services that coordinate multiple repositories (e.g., `ImportService` managing file uploads, parsing, and database insertion).
 
-## 🧱 Struttura del progetto
-mkdir app, app\Infrastructure, app\Models, app\Schemas, app\Repositories, app\Services, app\Controllers, app\Router, app\Utils, tests, db, db\sql
+### 3. Data Access Layer (Repositories)
+- **Repositories (`app/Repositories/`)**: Abstract the database interactions. They use **SQLAlchemy (Async)** to perform CRUD operations. This isolation allows us to swap the underlying database or optimize queries without touching business logic.
 
-```
-app/
-├─ main.py                         # Entrypoint FastAPI
-├─ config.py                       # Settings (env, DB, JWKS)
-├─ Infrastructure/
-│  ├─ db.py                        # Engine/session SQLAlchemy async (Supabase)
-│  ├─ jwks.py                      # Fetch JWKS (cache)
-│  └─ supabase_service.py          # Service per signup/patch via Admin API (async httpx)
-├─ Models/
-│  ├─ auth_user.py                 # Mappatura auth.users (schema=auth)
-│  ├─ role.py                      # public.roles
-│  └─ user_role.py                 # public.user_roles (ponte)
-├─ Schemas/
-│  ├─ auth_user.py                 # Pydantic (read/update sicuro per auth.users)
-│  ├─ role.py                      # Pydantic per roles
-│  └─ user_role.py                 # Pydantic per assegnazioni
-├─ Repositories/
-│  ├─ auth_user_repository.py      # Repo async su auth.users (read/update/delete)
-│  ├─ role_repository.py           # Repo async su roles
-│  └─ user_role_repository.py      # Repo async su user_roles (ponte)
-├─ Services/
-│  ├─ user_service.py              # Business utenti (usa repo + supabase_service)
-│  └─ role_service.py              # Business ruoli/assegnazioni
-├─ Controllers/
-│  ├─ users_controller.py          # CRUD utenti (lista/dettaglio/update/delete + create via service)
-│  ├─ roles_controller.py          # CRUD ruoli
-│  └─ user_roles_controller.py     # Assegna/rimuovi ruoli
-├─ Router/
-│  ├─ auth.py                      # Dependency: verifica JWT via JWKS + require_roles(["admin"])
-│  └─ routes.py                    # Registro centralizzato rotte (prefix /api/v1)
-└─ Utils/
-   ├─ jwt_verify_supabase.py       # Verifica RS256 con JWKS
-   └─ pagination.py                # utilità generiche
+### 4. Domain Layer (Models & Schemas)
+- **Models (`app/Models/`)**: SQLAlchemy ORM classes that map directly to PostgreSQL tables.
+- **Schemas (`app/Schemas/`)**: Pydantic models used for data validation, serialization, and type safety across the API boundary.
 
-db/
-└─ sql/
-   └─ 001_roles.sql                # DDL per public.roles + public.user_roles (FK → auth.users)
+## 🛠️ Key Technical Components
 
-tests/
-├─ conftest.py                     # Lifespan app + AsyncClient httpx
-├─ test_health.py                  # Smoke test “/”
-├─ test_roles.py                   # Test CRUD ruoli (admin)
-└─ test_users_crud.py              # Test CRUD utenti
-```
+- **FastAPI**: High-performance async web framework.
+- **PostgreSQL**: Primary relational database.
+- **SQLAlchemy (Async)**: ORM for database interactions.
+- **Celery & RabbitMQ**: Distributed task queue for handling long-running processes like:
+    - Large file imports (batch processing).
+    - Heavy analytics calculations (SOA).
+- **Supabase**:
+    - **Auth**: JWT token validation and user management.
+    - **Storage**: Object storage for trade screenshots and attachments.
+- **Pandas & Scikit-learn**: Used within specific services for data manipulation and clustering algorithms.
 
----
+## 🚀 Setup & Development
 
-## 📁 Crea la struttura (Windows / PowerShell)
+### Prerequisites
+- Python 3.11+
+- PostgreSQL
+- RabbitMQ (for Celery)
 
-> **Copia & incolla** in PowerShell nella cartella del progetto.
-
-```powershell
-# 1) Cartelle
-$dirs = @(
-  "app","app\Infrastructure","app\Models","app\Schemas","app\Repositories",
-  "app\Services","app\Controllers","app\Router","app\Utils",
-  "db\sql","tests"
-)
-$dirs | ForEach-Object { New-Item -ItemType Directory -Force -Path $_ | Out-Null }
-
-# 2) Package markers (facoltativi ma consigliati)
-$pkgs = @(
-  "app\__init__.py","app\Infrastructure\__init__.py","app\Models\__init__.py",
-  "app\Schemas\__init__.py","app\Repositories\__init__.py","app\Services\__init__.py",
-  "app\Controllers\__init__.py","app\Router\__init__.py","app\Utils\__init__.py"
-)
-$pkgs | ForEach-Object { New-Item -ItemType File -Force -Path $_ | Out-Null }
-
-# 3) File principali (vuoti, li riempirai col codice)
-$files = @(
-  "app\main.py","app\config.py",
-  "app\Infrastructure\db.py","app\Infrastructure\jwks.py","app\Infrastructure\supabase_service.py",
-  "app\Models\auth_user.py","app\Models\role.py","app\Models\user_role.py",
-  "app\Schemas\auth_user.py","app\Schemas\role.py","app\Schemas\user_role.py",
-  "app\Repositories\auth_user_repository.py","app\Repositories\role_repository.py","app\Repositories\user_role_repository.py",
-  "app\Services\user_service.py","app\Services\role_service.py",
-  "app\Controllers\users_controller.py","app\Controllers\roles_controller.py","app\Controllers\user_roles_controller.py",
-  "app\Router\auth.py","app\Router\routes.py",
-  "app\Utils\jwt_verify_supabase.py","app\Utils\pagination.py",
-  "db\sql\001_roles.sql",
-  "tests\conftest.py","tests\test_health.py","tests\test_roles.py","tests\test_users_crud.py",
-  ".env.example","requirements.txt","pytest.ini"
-)
-$files | ForEach-Object { New-Item -ItemType File -Force -Path $_ | Out-Null }
-```
-
-> Dopo aver creato i file, incolla il **codice** che ti ho fornito nei relativi percorsi (o chiedimi di rigenerarli qui).
-
----
-
-## ⚙️ Variabili d’ambiente (`.env`)
-Crea `.env` (puoi partire da `.env.example`):
+### Environment Variables
+Create a `.env` file in the `backend/` root.
 
 ```env
-APP_NAME=My FastAPI App
-ENV=dev
+# Database
+DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/tradevantage"
+DB_USER="user"
+DB_PASSWORD="password"
+DB_HOST="localhost"
+DB_PORT="5432"
+DB_NAME="tradevantage"
 
-# Supabase Postgres (usa SEMPRE sslmode=require)
-DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require
+# Environment
+ENV="dev" # or 'prod'
 
-# Supabase Auth (JWKS)
-SUPABASE_PROJECT_URL=https://<PROJECT_REF>.supabase.co
-SUPABASE_JWKS_URL=${SUPABASE_PROJECT_URL}/auth/v1/.well-known/jwks.json
-TOKEN_ISSUER=${SUPABASE_PROJECT_URL}/auth/v1
-TOKEN_AUDIENCE=authenticated
+# Supabase (Auth & Storage)
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_KEY="your-service-role-key" # For admin tasks
+SUPABASE_ANON_KEY="your-anon-key"
 
-# Supabase Admin (service) — usato SOLO per creare/patchare utenti
-SUPABASE_KEY=<SERVICE_ROLE_OR_ANON_KEY>   # per patch admin serve SERVICE ROLE
+# Celery
+CELERY_BROKER_URL="amqp://guest:guest@localhost:5672//"
+CELERY_RESULT_BACKEND="db+postgresql://user:password@localhost:5432/tradevantage"
 ```
 
----
-
-## 📦 Dipendenze
-
-### requirements.txt
-```txt
-fastapi[standard]==0.116.1
-SQLAlchemy[asyncio]==2.0.43
-asyncpg==0.30.0
-pydantic-settings==2.10.1
-python-dotenv==1.1.1
-python-jose[cryptography]==3.3.0
-httpx==0.27.2
-pytest==8.2.2
-pytest-asyncio==0.23.8
-asgi-lifespan==2.1.0
-pytest-cov==5.0.0
-```
-
-**Setup ambiente**
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
----
-
-## ▶️ Avvio (dev)
-
-```powershell
+### Running the Server
+```bash
+# Ensure you are in the backend/ directory
+source venv/bin/activate
 uvicorn app.main:app --reload
-# Docs: http://127.0.0.1:8000/docs
 ```
 
-**Autorizzazione**  
-Proteggi le rotte admin con `Authorization: Bearer <access_token_supabase>` (ottenuto da Supabase Auth).  
-La dependency `require_roles(["admin"])` verifica il token via JWKS e controlla nel DB l’associazione ruolo.
-
----
-
-## 🗃️ Modello dati (riassunto)
-
-- `auth.users` (gestita da Supabase) — **non** la creiamo noi.
-- `public.roles`: elenco ruoli app → (id, name, description)
-- `public.user_roles`: ponte utente↔ruolo → (user_id UUID → auth.users.id, role_id → roles.id, UNIQUE)
-
-**DDL iniziale**: `db/sql/001_roles.sql`
-
----
-
-## 🧩 CRUD Utenti
-
-- `GET    /api/v1/users` — lista
-- `GET    /api/v1/users/{user_id}` — dettaglio
-- `POST   /api/v1/users` — **crea** via `Infrastructure/supabase_service.py` (signup + patch)
-- `PUT    /api/v1/users/{user_id}` — aggiorna campi “safe” (email/phone/ban/meta)
-- `DELETE /api/v1/users/{user_id}` — elimina (consigliato passare da Admin API)
-
-> Tutto **async** (FastAPI + SQLAlchemy + httpx).
-
----
-
-## 🧪 Test
-
-- `tests/conftest.py` — avvio app in test con lifespan e `httpx.AsyncClient`
-- `tests/test_health.py` — verifica `/`
-- `tests/test_roles.py` — CRUD ruoli (richiede token admin o mocking)
-- `tests/test_users_crud.py` — CRUD utenti (mock del service o ambiente di test Supabase)
-
-Esecuzione:
-```powershell
-pytest -q
-pytest -q --cov=app --cov-report=term-missing
+### Running Background Workers
+```bash
+# In a separate terminal
+celery -A app.celery_app worker --loglevel=info -P solo -Q imports,celery
 ```
 
----
+### Running Tests
+```bash
+# Runs all tests with coverage
+pytest tests/
+```
 
-## ℹ️ Note
-- **RLS policy**: opzionali ma raccomandate se prevedi accessi diretti da client/Supabase SDK.
-- **Service Admin**: usa la **service role key** SOLO lato backend e SOLO dove serve (creazione/patch utente), non esporla mai al client.
+## 📂 Project Structure (Annotated)
+
+```text
+backend/
+├── app/
+│   ├── Controllers/                    # Request handlers & logic delegation
+│   │   ├── __init__.py                 # Controller package init
+│   │   ├── analytics_controller.py     # Aggregated stats logic
+│   │   ├── asset_alias_controller.py   # Asset mapping logic
+│   │   ├── asset_class_controller.py   # Asset class management
+│   │   ├── asset_controller.py         # Asset management
+│   │   ├── asset_market_controller.py  # Market session management
+│   │   ├── auth_controller.py          # Authentication handlers
+│   │   ├── broker_controller.py        # Broker management
+│   │   ├── general_account_controller.py # User account management
+│   │   ├── import_controller.py        # File upload & task triggering
+│   │   ├── mistake_controller.py       # Mistake tracking logic
+│   │   ├── news_impact_controller.py   # News impact event logic
+│   │   ├── news_impacts_group_controller.py # News impact grouping
+│   │   ├── note_template_controller.py # Notebook templates
+│   │   ├── notebook_controller.py      # Notebook & notes logic
+│   │   ├── platform_controller.py      # Trading platform management
+│   │   ├── playbook_controller.py      # Playbook strategy logic
+│   │   ├── psychology_state_controller.py # Psychology state tracking
+│   │   ├── roles_controller.py         # RBAC role management
+│   │   ├── rule_playbook_controller.py # Playbook rules logic
+│   │   ├── rules_group_playbook_controller.py # Rule grouping
+│   │   ├── soa_controller.py           # Strength & Opportunity Analysis endpoints
+│   │   ├── tag_controller.py           # Tag management
+│   │   ├── tags_group_controller.py    # Tag grouping
+│   │   ├── trades_controller.py        # CRUD for trades
+│   │   ├── trading_account_controller.py # Trading account management
+│   │   ├── trading_dna_controller.py   # Trading DNA analysis
+│   │   ├── user_dashboard_layout_controller.py # Dashboard layout persistence
+│   │   ├── user_roles_controller.py    # User-Role association
+│   │   └── users_controller.py         # User profile management
+│   ├── Infrastructure/                 # External service integrations
+│   │   ├── __init__.py                 # Infrastructure package init
+│   │   ├── db.py                       # Database connection & session management
+│   │   ├── storage.py                  # Supabase Storage client wrapper
+│   │   └── supabase_service.py         # Supabase Auth client wrapper
+│   ├── Middleware/                     # ASGI Middleware
+│   │   └── security_headers.py         # Security headers (CORS, HSTS, etc.)
+│   ├── Models/                         # SQLAlchemy ORM Models (Database Schema)
+│   │   ├── __init__.py                 # Models package init
+│   │   ├── asset.py                    # Asset entity
+│   │   ├── asset_alias.py              # Asset alias entity
+│   │   ├── asset_class.py              # Asset class entity
+│   │   ├── asset_market.py             # Market session entity
+│   │   ├── auth_user.py                # User entity
+│   │   ├── broker.py                   # Broker entity
+│   │   ├── broker_asset_class.py       # Broker-Asset relation
+│   │   ├── broker_platform.py          # Broker-Platform relation
+│   │   ├── daily_rule_instance.py      # Daily rule tracking
+│   │   ├── discipline_rule.py          # Discipline rule entity
+│   │   ├── discipline_settings.py      # Discipline configuration
+│   │   ├── enums.py                    # Global enumerations
+│   │   ├── general_account.py          # General account entity
+│   │   ├── image.py                    # Image/Screenshot entity
+│   │   ├── import_run.py               # Import job tracking
+│   │   ├── manual_rule.py              # Manual rule entity
+│   │   ├── mistake.py                  # Mistake entity
+│   │   ├── news_impact.py              # News impact entity
+│   │   ├── news_impacts_group.py       # News impact group entity
+│   │   ├── note.py                     # Note entity
+│   │   ├── note_template.py            # Note template entity
+│   │   ├── notebook_folder.py          # Notebook folder entity
+│   │   ├── notes_note_templates.py     # Note-Template relation
+│   │   ├── platform.py                 # Trading platform entity
+│   │   ├── playbook.py                 # Playbook entity
+│   │   ├── psychology_state.py         # Psychology state entity
+│   │   ├── role.py                     # Role entity
+│   │   ├── rule_playbook.py            # Playbook rule entity
+│   │   ├── rules_group_playbook.py     # Rule group entity
+│   │   ├── tag.py                      # Tag entity
+│   │   ├── tags_group.py               # Tag group entity
+│   │   ├── trade.py                    # Main Trade entity
+│   │   ├── trades_mistakes.py          # Trade-Mistake relation
+│   │   ├── trades_news_impacts.py      # Trade-News relation
+│   │   ├── trades_psychology.py        # Trade-Psychology relation
+│   │   ├── trades_tags.py              # Trade-Tag relation
+│   │   ├── trading_account.py          # Trading account entity
+│   │   ├── user_dashboard_layout.py    # Dashboard layout entity
+│   │   └── user_role.py                # User-Role relation
+│   ├── Repositories/                   # Database Access Layer (CRUD)
+│   │   ├── __init__.py                 # Repositories package init
+│   │   ├── asset_alias_repository.py   # Asset alias access
+│   │   ├── asset_class_repository.py   # Asset class access
+│   │   ├── asset_market_repository.py  # Asset market access
+│   │   ├── asset_repository.py         # Asset access
+│   │   ├── auth_user_repository.py     # User access
+│   │   ├── base_repository.py          # Generic repository base class
+│   │   ├── broker_asset_class_repository.py # Broker-Asset access
+│   │   ├── broker_repository.py        # Broker access
+│   │   ├── daily_rule_instance_repository.py # Daily rule access
+│   │   ├── discipline_settings_repository.py # Discipline settings access
+│   │   ├── general_account_repository.py # General account access
+│   │   ├── image_repository.py         # Image access
+│   │   ├── manual_rule_repository.py   # Manual rule access
+│   │   ├── mistake_repository.py       # Mistake access
+│   │   ├── news_impact_repository.py   # News impact access
+│   │   ├── news_impacts_group_repository.py # News impact group access
+│   │   ├── note_repository.py          # Note access
+│   │   ├── note_template_repository.py # Note template access
+│   │   ├── notebook_folder_repository.py # Notebook folder access
+│   │   ├── platform_repository.py      # Platform access
+│   │   ├── playbook_repository.py      # Playbook access
+│   │   ├── psychology_state_repository.py # Psychology state access
+│   │   ├── role_repository.py          # Role access
+│   │   ├── rule_playbook_repository.py # Playbook rule access
+│   │   ├── rules_group_playbook_repository.py # Rule group access
+│   │   ├── tag_repository.py           # Tag access
+│   │   ├── tags_group_repository.py    # Tag group access
+│   │   ├── trade_repository.py         # Complex queries for trades
+│   │   ├── trading_account_repository.py # Trading account access
+│   │   ├── user_dashboard_layout_repository.py # Dashboard layout access
+│   │   └── user_role_repository.py     # User-Role access
+│   ├── Router/                         # API Route Definitions
+│   │   ├── __init__.py                 # Router package init
+│   │   ├── analytics_router.py         # Analytics routes
+│   │   ├── asset_alias_router.py       # Asset alias routes
+│   │   ├── asset_class_router.py       # Asset class routes
+│   │   ├── asset_market_router.py      # Asset market routes
+│   │   ├── asset_router.py             # Asset routes
+│   │   ├── auth.py                     # Authentication routes
+│   │   ├── broker_router.py            # Broker routes
+│   │   ├── daily_checklist_router.py   # Daily checklist routes
+│   │   ├── dependencies.py             # API dependencies (Auth, etc.)
+│   │   ├── discipline_settings_router.py # Discipline settings routes
+│   │   ├── general_account_router.py   # General account routes
+│   │   ├── image_router.py             # Image routes
+│   │   ├── import_router.py            # Import routes
+│   │   ├── manual_rule_router.py       # Manual rule routes
+│   │   ├── mistake_router.py           # Mistake routes
+│   │   ├── news_impact_router.py       # News impact routes
+│   │   ├── news_impacts_group_router.py # News impact group routes
+│   │   ├── notebook_router.py          # Notebook routes
+│   │   ├── platform_router.py          # Platform routes
+│   │   ├── playbook_router.py          # Playbook routes
+│   │   ├── psychology_state_router.py  # Psychology state routes
+│   │   ├── routes.py                   # Main router aggregator
+│   │   ├── rule_playbook_router.py     # Playbook rule routes
+│   │   ├── rule_statistics_router.py   # Rule stats routes
+│   │   ├── rules_group_playbook_router.py # Rule group routes
+│   │   ├── soa_router.py               # SOA routes
+│   │   ├── tag_router.py               # Tag routes
+│   │   ├── tags_group_router.py        # Tag group routes
+│   │   ├── trades_router.py            # Trades routes
+│   │   ├── trading_account_router.py   # Trading account routes
+│   │   └── trading_dna_router.py       # Trading DNA routes
+│   ├── Schemas/                        # Pydantic Models (Validation)
+│   │   ├── discipline/                 # Nested schemas for discipline
+│   │   ├── __init__.py                 # Schemas package init
+│   │   ├── analytics.py                # Analytics schemas
+│   │   ├── asset.py                    # Asset schemas
+│   │   ├── asset_alias.py              # Asset alias schemas
+│   │   ├── asset_class.py              # Asset class schemas
+│   │   ├── asset_market.py             # Asset market schemas
+│   │   ├── auth_session.py             # Auth session schemas
+│   │   ├── auth_user.py                # User schemas
+│   │   ├── broker.py                   # Broker schemas
+│   │   ├── broker_asset_class.py       # Broker-Asset schemas
+│   │   ├── daily_rule_instance_schema.py # Daily rule schemas
+│   │   ├── discipline_settings_schema.py # Discipline settings schemas
+│   │   ├── general_account.py          # General account schemas
+│   │   ├── image.py                    # Image schemas
+│   │   ├── import_run.py               # Import run schemas
+│   │   ├── manual_rule_schema.py       # Manual rule schemas
+│   │   ├── mistake.py                  # Mistake schemas
+│   │   ├── news_impact.py              # News impact schemas
+│   │   ├── news_impacts_group.py       # News impact group schemas
+│   │   ├── note_template.py            # Note template schemas
+│   │   ├── notebook.py                 # Notebook schemas
+│   │   ├── platform.py                 # Platform schemas
+│   │   ├── playbook.py                 # Playbook schemas
+│   │   ├── psychology_state.py         # Psychology state schemas
+│   │   ├── role.py                     # Role schemas
+│   │   ├── rule_playbook.py            # Playbook rule schemas
+│   │   ├── rules_group_playbook.py     # Rule group schemas
+│   │   ├── soa.py                      # SOA schemas
+│   │   ├── stats.py                    # Statistics schemas
+│   │   ├── tag.py                      # Tag schemas
+│   │   ├── tags_group.py               # Tag group schemas
+│   │   ├── trade.py                    # Trade schemas
+│   │   ├── trades_tags.py              # Trade-Tag schemas
+│   │   ├── trading_account.py          # Trading account schemas
+│   │   ├── trading_dna.py              # Trading DNA schemas
+│   │   ├── user_dashboard_layout.py    # Dashboard layout schemas
+│   │   ├── user_role.py                # User-Role schemas
+│   │   └── vantage_score.py            # Vantage score schemas
+│   ├── Services/                       # Core Business Logic
+│   │   ├── metrics/                    # Metric calculation engines
+│   │   ├── __init__.py                 # Services package init
+│   │   ├── analytics_service.py        # Analytics business logic
+│   │   ├── broker_service.py           # Broker logic
+│   │   ├── discipline_settings_service.py # Discipline logic
+│   │   ├── general_account_service.py  # General account logic
+│   │   ├── image_service.py            # Image handling logic
+│   │   ├── import_service.py           # Import orchestration
+│   │   ├── jwt_service.py              # JWT handling
+│   │   ├── mt5_parser.py               # MT5 file parsing
+│   │   ├── ninjatrader_parser.py       # NinjaTrader file parsing
+│   │   ├── note_template_service.py    # Note template logic
+│   │   ├── notebook_service.py         # Notebook logic
+│   │   ├── playbook_analytics_service.py # Playbook analytics
+│   │   ├── playbook_service.py         # Playbook logic
+│   │   ├── role_service.py             # Role logic
+│   │   ├── rule_statistics_service.py  # Rule stats logic
+│   │   ├── soa_advisor.py              # SOA advice generation
+│   │   ├── soa_service.py              # SOA calculation engine
+│   │   ├── supabase_client.py          # Supabase client factory
+│   │   ├── trade_service.py            # Trade logic
+│   │   ├── trading_account_service.py  # Trading account logic
+│   │   ├── trading_dna_service.py      # Trading DNA logic
+│   │   ├── tradovate_parser.py         # Tradovate file parsing
+│   │   ├── user_dashboard_layout_service.py # Dashboard logic
+│   │   └── user_service.py             # User logic
+│   ├── Utils/                          # Shared utilities
+│   │   ├── __init__.py                 # Utils package init
+│   │   └── pagination.py               # Pagination helpers
+│   ├── celery_app.py                   # Celery application configuration
+│   ├── config.py                       # App configuration (Pydantic Settings)
+│   ├── main.py                         # FastAPI application entry point
+│   └── tasks.py                        # Celery task definitions (Async jobs)
+├── tests/                              # Pytest suite
+│   ├── controllers/                    # Integration tests for API endpoints
+│   ├── repositories/                   # Integration tests for Repositories
+│   ├── services/                       # Unit tests for Services
+│   └── utils/                          # Unit tests for Utilities
+├── .env                                # Environment variables (gitignored)
+├── conftest.py                         # Pytest fixtures & config
+├── requirements.txt                    # Python dependencies
+└── README.md                           # This file
+```
