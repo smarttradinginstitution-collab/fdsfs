@@ -53,6 +53,9 @@ class ImportRun(Base):
     skipped_count: Mapped[int] = mapped_column(Integer, default=0)
     error_message: Mapped[Optional[str]] = mapped_column(Text)
 
+    # New field for grouping setting
+    grouping_tolerance: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
     created_at: Mapped[Any] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )

@@ -18,7 +18,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 
 from app.Infrastructure.db import Base
 from app.Models.enums import TradeDirection, TradeStatus  # Use centralized ENUMs
@@ -44,6 +44,7 @@ class Trade(Base):
     __tablename__ = "trades"
     __table_args__ = (
         Index('uq_trades_account_dedupe', 'trading_account_id', 'dedupe_key', unique=True, postgresql_where=text('dedupe_key IS NOT NULL')),
+        Index('idx_trades_parent_trade_id', 'parent_trade_id'),
         {"schema": "public"}
     )
 
@@ -81,7 +82,14 @@ class Trade(Base):
         index=True
     )
 
-# Core trade data
+    # Parent Trade Relationship
+    parent_trade_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("public.trades.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    # Core trade data
     gross_p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
     p_l: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True) # Questo è il P&L Netto
     r_multiple: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -143,6 +151,13 @@ class Trade(Base):
     asset: Mapped[Optional["Asset"]] = relationship("Asset", back_populates="trades")
     platform: Mapped[Optional["Platform"]] = relationship("Platform", back_populates="trades")
     import_run: Mapped[Optional["ImportRun"]] = relationship("ImportRun", back_populates="trades")
+
+    # Recursive relationship
+    children: Mapped[List["Trade"]] = relationship(
+        "Trade",
+        backref=backref("parent_trade", remote_side=[id]),
+        cascade="all"
+    )
 
     tags: Mapped[list["Tag"]] = relationship(
         secondary="public.trades_tags", back_populates="trades"
